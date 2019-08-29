@@ -11,8 +11,8 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QSizePolicy,
                              QMessageBox, QWidget, QLineEdit,
                              QPushButton, QAction, QGridLayout)
 
-from ..hardware_control.Oscilloscope.hc_oscilloscope import OscilloscopeControl
-from ..hardware_control.Oscilloscope.Key4000XSCPI import Key4000XSCPI
+from hardware_control.Oscilloscope.hc_oscilloscope import OscilloscopeControl
+from hardware_control.Oscilloscope.Key4000XSCPI import Key4000XSCPI
 
 class ScopeDemo(QMainWindow):
 
@@ -24,8 +24,8 @@ class ScopeDemo(QMainWindow):
 
         self.main_widget = QWidget(self)
 
-        scpi_scope = Key4000XSCPI("TCPIP0::192.168.0.14::INSTR", False, True);
-        self.scope_ctrl = OscilloscopeControl(scpi_scope, "scope_state.json", True);
+        scpi_scope = Key4000XSCPI("TCPIP0::192.168.0.14::INSTR", False, True, True, "192.168.0.14", 5025);
+        self.scope_ctrl = OscilloscopeControl(scpi_scope, "DEFAULT", True);
 
         self.grid = QGridLayout()
         self.grid.addWidget(self.scope_ctrl, 0, 0);
@@ -36,6 +36,7 @@ class ScopeDemo(QMainWindow):
 
     def close(self):
         self.scope_ctrl.close()
+
 
 app = QApplication([]);
 ex = ScopeDemo(app);

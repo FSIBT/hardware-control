@@ -12,6 +12,7 @@
 import pyvisa
 from typing import List
 import numpy as np
+import socket
 
 def to_NR3(x:float):
     return f" {x:.6E}";
@@ -27,7 +28,7 @@ def bool_NR1(x:bool):
 
 class Key4000XSCPI:
 
-    def __init__(self, visa_addr, dummy:bool=False, print_commands:bool=False):
+    def __init__(self, visa_addr, dummy:bool=False, print_commands:bool=False, use_sockets:bool=False, ip_addr:str="", port_no=5025):
 
         self.ID = "KEY4000X";
 
@@ -37,6 +38,9 @@ class Key4000XSCPI:
         self.print_commands = print_commands;
         self.num_vert_divisions = 8;
 
+        self.use_sockets = use_sockets;
+        self.port_no = port_no;
+        self.ip_addr = ip_addr;
         self.try_connect();
 
 
@@ -52,10 +56,17 @@ class Key4000XSCPI:
         if (not self.dummy):
 
             try:
-                rm = pyvisa.ResourceManager();
-                self.scope = rm.open_resource(self.visa_addr) #Open connection
-            except: #Failed to conncet
-                online = False;
+                if (not self.use_sockets):
+                    rm = pyvisa.ResourceManager();
+                    self.scope = rm.open_resource(self.visa_addr) #Open connection
+                    # self.configure_read_waveform();
+                else:
+                    self.scope = socket.socket(socket.AF_INET, socket.SOCK_STREAM);
+                    self.scope.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 0);
+                    self.scope.connect((self.ip_addr, self.port_no));
+            except Exception as e: #Failed to conncet);
+                print(e);
+                self.online = False;
             else:
                 self.online = True;
 
@@ -67,7 +78,7 @@ class Key4000XSCPI:
     # Close connection
     #
     def close(self):
-        if (not self.dummy):
+        if (not self.dummy and self.online):
             self.scope.close();
         else:
             print('KEY4000X: closed dummy connection')
@@ -226,6 +237,22 @@ class Key4000XSCPI:
         if (not self.dummy):
             self.write(":DIG");
 
+    def read_all_waveforms(self, ch1, ch2, ch3, ch4):
+
+        wave = {};
+
+        if (not self.dummy):
+            if (ch1):
+                wave["CH1"] = self.read_waveform(1);
+            elif (ch2):
+                wave["CH2"] = self.read_waveform(2);
+            elif (ch3):
+                wave["CH3"] = self.read_waveform(3);
+            elif (ch4):
+                wave["CH4"] = self.read_waveform(4);
+
+        return wave;
+
     def single_trigger(self):
         """Tells oscilloscope to run with trigger mode set to single trigger"""
         if (not self.dummy):
@@ -252,43 +279,72 @@ class Key4000XSCPI:
     #
     #
     # Returns (V, t) as float[]
-    def read_waveform(self, channel:int, t_start:float, t_end:float):
-        """Reads a waveform from the oscilloscope. Set times to '-1' to read all
-        available points."""
+    def read_waveform(self, channel:int):
+        """Reads a waveform from the oscilloscope."""
+
+        if (self.dummy or not self.online):
+            return ([], []);
 
         #Read data from oscilloscope
-        raw_data = self.query(":WAV:DATA?"); #Read waveform data
+        try:
+            raw_data = self.query(":WAV:DATA?"); #Read waveform data
+        except:
+            self.digitize();
+            self.configure_read_waveform();
+            raw_data = self.query(":WAV:DATA?"); #Read waveform data
+
         x_orig = self.query(":WAV:XOR?"); #Read X Origin
         x_ref = self.query(":WAV:XREF?"); #Read X Reference
         x_incr = self.query(":WAV:XINC?"); #Read X Increment
 
-        x_orig = float(x_orig[0:len(x_orig)-1]); #Convert X Origin
-        x_ref = float(x_ref[0:len(x_ref)-1]); #Convert X Reference
-        x_incr = float(x_incr[0:len(x_incr)-1]); #Convert X Increment
+        try:
+            x_orig = float(x_orig[0:len(x_orig)-1]); #Convert X Origin
+            x_ref = float(x_ref[0:len(x_ref)-1]); #Convert X Reference
+            x_incr = float(x_incr[0:len(x_incr)-1]); #Convert X Increment
 
-        #Format and convert data into float[]
-        block_header = raw_data[0:10];
-        raw_data = raw_data[11:len(raw_data)-1] #Trim block header from packet & remove newline character from end
-        fmt = [float(x.strip()) for x in raw_data.split(',')]; #Break at commas, strip whitespace, convert to float, add to array
+            #Format and convert data into float[]
+            block_header = raw_data[0:10];
+            raw_data = raw_data[11:len(raw_data)-1] #Trim block header from packet & remove newline character from end
+            fmt = [float(x.strip()) for x in raw_data.split(',')]; #Break at commas, strip whitespace, convert to float, add to array
 
-        t = ((np.linspace(0, len(fmt), len(fmt), False)-x_ref)*x_incr + x_orig).tolist(); #Calculate time values
+            t = ((np.linspace(0, len(fmt), len(fmt), False)-x_ref)*x_incr + x_orig).tolist(); #Calculate time values
+        except:
+            print("ERROR: Received bad data from scope.");
+            return ([], []);
+
+
         return (fmt, t);
 
     def configure_read_waveform(self):
         """Sets the data transfer mode of the oscilloscope. Call this function
         once before reading waveform data with 'read_waveform()'. """
+
         self.write(":WAV:FORM ASC"); #Sets data format to ASCII text
         self.write(":WAV:POIN 1000"); #Set the number of points to read to 1000 (OPtions: 1000, 500, 250, 100, MAX (~4M))
         self.write(":WAV:POIN:MODE NORM"); #Set data record to transfer to 'measurement record'
         self.write(":ACQ:TYPE NORM"); #Set aquisition mode to normal
 
     def write(self, command:str):
-        self.scope.write(command);
-        if (self.print_commands):
-            print("\tKEY4000X< \""+command+"\"");
+        if (self.online and not self.dummy):
+            if (not self.use_sockets):
+                self.scope.write(command);
+            else:
+                self.scope.sendall(bytes(command+"\n", "utf-8"));
+            if (self.print_commands):
+                print(f"\tKEY4000X< \"{command}\"");
+
 
     def query(self, command:str):
-        reply = self.scope.query(command);
-        if (self.print_commands):
-            print("\tKEY4000X< \""+command+"\"");
-        return reply;
+        if (self.online and not self.dummy):
+            if (not self.use_sockets):
+                reply = self.scope.query(command);
+            else:
+                self.scope.sendall(bytes(command+"\n", "utf-8"));
+                reply_bytes = self.scope.recv(4096);
+                reply = str(reply_bytes);
+                reply = reply[2:len(reply)-3];
+            if (self.print_commands):
+                print(f"\t{self.ID}< \"{command}\"");
+            return reply;
+        else:
+            return "";

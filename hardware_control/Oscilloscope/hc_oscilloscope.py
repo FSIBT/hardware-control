@@ -6,8 +6,9 @@
 
 from typing import List
 import numpy as np
-from keysight_demo import OscilloscopeComm
 import json
+
+import time #Get rid of this guy!
 
 import pyqtgraph as pg
 from PyQt5 import QtCore
@@ -55,6 +56,7 @@ class OscilloscopeControl(QGroupBox):
         self.state_mosi_sig.connect(self.comm.get_state);
         self.action_sig.connect(self.comm.get_command);
         self.comm.state_miso_sig.connect(self.get_state);
+        self.comm.values_miso_sig.connect(self.values_received);
         #
         self.write_sig.connect(self.comm.write);
         self.query_sig.connect(self.comm.query);
@@ -77,7 +79,7 @@ class OscilloscopeControl(QGroupBox):
 
         #Create GUI
         #
-        self.disp = pg.PlotWidget();
+        self.disp = OscilloscopeDisplayWidget(self, True);
         #
         self.horiz = OscilloscopeHorizontalWidget(self);
         #
@@ -115,6 +117,11 @@ class OscilloscopeControl(QGroupBox):
 
 
     def load_state(self, filename:str):
+
+        #Get default state - this identifies all required fields
+        dflt = self.default_state();
+
+        #Read a state from file
         try:
             with open(filename) as file:
                 self.state = json.load(file);
@@ -122,6 +129,11 @@ class OscilloscopeControl(QGroupBox):
         except:
             print(f"ERROR: Failed to read file '{filename}'. Using defualt case.");
             self.state = self.default_state();
+
+        #Ensure all fields in default_state are present in the loaded state
+        for key in dflt:
+            if (not(key in self.state)):
+                self.state[key] = dflt[key];
 
     def save_state(self, filename:str):
         try:
@@ -155,9 +167,17 @@ class OscilloscopeControl(QGroupBox):
     #
     # Queries the state from the communication object
     #
-    def get_state(new_state:dict):
+    def get_state(self, new_state:dict):
         """ Gets the state from the oscilloscope. """
         self.state = new_state;
+
+    #
+    # Called when a waveform is read - updates the display
+    #
+    def values_received(self, values:dict):
+        #Do plotting here
+        self.disp.update_display(values);
+        pass
 
     def set_time_offset(self, value:float):
         self.state["time_offset"] = value;
@@ -168,7 +188,6 @@ class OscilloscopeControl(QGroupBox):
         self.send_state();
 
     def set_volts_div(self, channel:int, value:float):
-        print("SVD Called");
         self.state["volts_div"][f"CH{channel}"] = value;
         self.send_state();
 
@@ -187,9 +206,13 @@ class OscilloscopeControl(QGroupBox):
         self.send_state();
 
     def set_channel_active(self, channel:int, value:bool):
-        print(f"chan{channel} <- {value}");
-        self.state["channel_active"][f"CH{channel}"] = value;
-        self.send_state();
+        try:
+            print(f"chan{channel} <- {value}");
+            self.state["channel_active"][f"CH{channel}"] = value;
+            self.send_state();
+        except:
+            for key in self.state:
+                print(f"\t\t[\"{key}\"]")
 
     def set_BW_lim(self, channel:int, value:bool):
         self.state["BW_lim"][f"CH{channel}"] = value;
@@ -209,6 +232,8 @@ class OscilloscopeControl(QGroupBox):
 
     def single_trigger(self):
         self.action_sig.emit("SINGLE");
+        if (self.disp.single_trig_mode):
+            self.query_waveforms();
 
     def normal_trigger(self):
         self.action_sig.emit("RUN");
@@ -232,6 +257,10 @@ class OscilloscopeControl(QGroupBox):
         self.state["trigger_coupling"] = value;
         self.send_state();
 
+    def query_waveforms(self):
+        start_time = time.time();
+        self.action_sig.emit("WAVEFORMS");
+        print(f"'Control' spent {time.time()-start_time} seconds querying waveforms.");
 
     #
     # Manually send a SCPI command through the communication object to the INSTR
@@ -305,13 +334,13 @@ class OscillscopeChannelWidget(QWidget):
         self.channel_label_box = QHBoxLayout();
         self.channel_label = QLabel();
         if (color == "yellow"):
-            self.channel_label.setPixmap(QPixmap("./graphics/channel1_yellow.png"));
+            self.channel_label.setPixmap(QPixmap("../hardware_control/graphics/channel1_yellow.png"));
         elif (color == "green"):
-            self.channel_label.setPixmap(QPixmap("./graphics/channel2_green.png"));
+            self.channel_label.setPixmap(QPixmap("../hardware_control/graphics/channel2_green.png"));
         elif (color == "blue"):
-            self.channel_label.setPixmap(QPixmap("./graphics/channel3_blue.png"));
+            self.channel_label.setPixmap(QPixmap("../hardware_control/graphics/channel3_blue.png"));
         elif (color == "red"):
-            self.channel_label.setPixmap(QPixmap("./graphics/channel4_red.png"));
+            self.channel_label.setPixmap(QPixmap("../hardware_control/graphics/channel4_red.png"));
         else:
             self.channel_label.setText(f"Channel {channel}");
         self.channel_label_box.addWidget(self.channel_label);
@@ -537,6 +566,115 @@ class OscilloscopeHorizontalWidget(QWidget):
         self.master_layout.addLayout(self.form, 1, 0);
         self.setLayout(self.master_layout);
 
+class OscilloscopeDisplayWidget(QWidget):
+
+    def __init__(self, control, show_controls:bool=False, refresh:float=1):
+
+        super().__init__();
+
+        self.control = control;
+
+        self.single_trig_mode = False;
+
+        #************** DEFINE UI *********************#
+        #
+        self.display = pg.PlotWidget();
+        #
+        self.master_layout = QGridLayout();
+        self.master_layout.addWidget(self.display, 0, 0, 1, 5);
+        #
+        self.lineCH1 = pg.mkPen(color=(100, 100, 255), style=QtCore.Qt.DashLine);
+        self.lineCH2 = pg.mkPen(color=(255, 100, 100), style=QtCore.Qt.DashLine);
+        self.lineCH3 = pg.mkPen(color=(100, 255, 100), style=QtCore.Qt.DashLine);
+        self.lineCH4 = pg.mkPen(color=(200, 200, 200), style=QtCore.Qt.DashLine);
+        #
+        self.CH1 = self.display.plot(pen=self.lineCH1, symbol=None);
+        self.CH2 = self.display.plot(pen=self.lineCH2, symbol=None);
+        self.CH3 = self.display.plot(pen=self.lineCH3, symbol=None);
+        self.CH4 = self.display.plot(pen=self.lineCH4, symbol=None);
+        #
+        if (show_controls):
+            self.refresh_rate_label = QLabel("Refresh Rate (Hz): ");
+            #
+            self.refresh_rate_edit = QLineEdit();
+            self.refresh_rate_edit.setValidator(QDoubleValidator());
+            self.refresh_rate_edit.editingFinished.connect(lambda: self.refresh_rate(float(self.refresh_rate_edit.text())));
+            self.refresh_rate_edit.setText(str(refresh));
+            #
+            self.refresh_but = QPushButton();
+            self.refresh_but.setText("Refresh");
+            self.refresh_but.clicked.connect(control.query_waveforms);
+            #
+            self.refresh_mode_label =QLabel("Refresh Mode: ");
+            #
+            self.refresh_mode_drop = QComboBox();
+            self.refresh_mode_drop.addItems(["Timer", "Single Trig", "Manual"]);
+            self.refresh_mode_drop.currentIndexChanged.connect(lambda: self.set_refresh_mode(self.refresh_mode_drop.currentText()));
+            self.refresh_mode_drop.setCurrentText("Timer");
+            #
+            #
+            self.master_layout.addWidget(self.refresh_mode_label, 1, 0);
+            self.master_layout.addWidget(self.refresh_mode_drop, 1, 1);
+            self.master_layout.addWidget(self.refresh_rate_label, 1, 2);
+            self.master_layout.addWidget(self.refresh_rate_edit, 1, 3);
+            self.master_layout.addWidget(self.refresh_but, 1, 4);
+
+
+
+
+        self.setLayout(self.master_layout);
+
+        self.update_timer = QTimer(self)
+        self.update_timer.timeout.connect(control.query_waveforms);
+        self.update_timer.start(1000/refresh)
+
+    #Set refresh rate (in Hz)
+    def refresh_rate(self, rate:float):
+        self.update_timer.setInterval(1000/rate);
+
+    #Set refresh rate (in ms)
+    def refresh_period(self, period:float):
+        self.update_timer.setInterval(period);
+
+    def set_refresh_mode(self, mode:str):
+        if (mode == "Timer"):
+            if (not self.update_timer.isActive()):
+                self.update_timer.start();
+            single_trig_mode = False;
+        elif (mode == "Single Trig"):
+            if (self.update_timer.isActive()):
+                self.update_timer.stop();
+            self.single_trig_mode = True;
+        else:
+            if (self.update_timer.isActive()):
+                self.update_timer.stop();
+                print("Stop!");
+            single_trig_mode = False;
+
+
+    def update_display(self, wvfms:dict):
+        start_time = time.time();
+        if ("CH1" in wvfms):
+            self.CH1.setData(wvfms["CH1"][1], wvfms["CH1"][0]);
+        else:
+            pass;
+
+        if ("CH2" in wvfms):
+            self.CH2.setData(wvfms["CH2"][1], wvfms["CH2"][0]);
+        else:
+            pass;
+
+        if ("CH3" in wvfms):
+            self.CH3.setData(wvfms["CH3"][1], wvfms["CH3"][0]);
+        else:
+            pass;
+
+        if ("CH4" in wvfms):
+            self.CH4.setData(wvfms["CH4"][1], wvfms["CH4"][0]);
+        else:
+            pass;
+        print(f"'Widget' spent {time.time()-start_time} seconds updating waveforms.");
+
 
 
 
@@ -580,17 +718,16 @@ class OscilloscopeHorizontalWidget(QWidget):
 class OscilloscopeComm(QObject):
 
     state_miso_sig = pyqtSignal(dict);
+    values_miso_sig = pyqtSignal(dict);
 
     def __init__(self, scpi_instr):
 
         super().__init__();
 
         self.state = {}; #Read this guy in from a function?
-        self.instr_state = {}; #Contains state of instrument so it knows which keys to update
+        self.instr_state = {}; #Contains state of instrument so it knows which gs to update
 
         self.instr = scpi_instr;
-
-        self.num_vert_divisions = 8;
 
         self.instr.try_connect();
         if (not self.instr.online):
@@ -598,7 +735,7 @@ class OscilloscopeComm(QObject):
         else:
             print(f"{self.instr.ID}: Connected");
 
-        #This program needs to impliment a timer
+        #This program needs to impliment a timer to try to connect
 
     #
     # Tries to connect to the oscilloscope. Is called by the timer every second.
@@ -613,6 +750,7 @@ class OscilloscopeComm(QObject):
     def close(self):
         self.instr.close();
 
+    @pyqtSlot(str)
     def get_command(self, command:str):
 
         if (command == "SINGLE"):
@@ -621,11 +759,14 @@ class OscilloscopeComm(QObject):
             self.instr.norm_trigger();
         elif (command == "HALT"):
             self.instr.halt();
+        elif(command == "WAVEFORMS"):
+            self.send_waveform();
 
 
     #
     # Receives a state object from the control object.
     #
+    @pyqtSlot(dict)
     def get_state(self, new_state:dict):
 
         self.state = new_state;
@@ -707,8 +848,18 @@ class OscilloscopeComm(QObject):
     #
     # Sends the state object back to the control object.
     #
-    def send_state():
+    def send_state(self):
         pass;
+
+    #
+    # Reads the waveform from the oscilloscope and sends it back to the UI/control object
+    #
+    def send_waveform(self):
+        start_time = time.time();
+        wfms = self.instr.read_all_waveforms(self.state["channel_active"]["CH1"], self.state["channel_active"]["CH2"], self.state["channel_active"]["CH3"], self.state["channel_active"]["CH4"]);
+        self.values_miso_sig.emit(wfms);
+        print(f"'Comm' spent {time.time()-start_time} seconds querying + sending waveforms.");
+
 
     @pyqtSlot()
     def write(self, command):
