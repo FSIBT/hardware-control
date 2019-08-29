@@ -298,18 +298,40 @@ class Key4000XSCPI:
         x_incr = self.query(":WAV:XINC?"); #Read X Increment
 
         try:
-            x_orig = float(x_orig[0:len(x_orig)-1]); #Convert X Origin
-            x_ref = float(x_ref[0:len(x_ref)-1]); #Convert X Reference
-            x_incr = float(x_incr[0:len(x_incr)-1]); #Convert X Increment
+            # x_orig = float(x_orig[0:len(x_orig)-1]); #Convert X Origin
+            x_orig = float(x_orig[0:len(x_orig)]); #Convert X Origin
+            print(x_orig);
+        except Exception as e:
+            print("ERROR: Received bad origin from scope.");
+            print(e);
+            print(f"\t{x_orig}");
+            return ([], []);
+        try:
+            # x_ref = float(x_ref[0:len(x_ref)-1]); #Convert X Reference
+            x_ref = float(x_ref[0:len(x_ref)]); #Convert X Reference
+        except Exception as e:
+            print("ERROR: Received bad reference from scope.");
+            print(e);
+            print(f"\t{x_ref}");
+            return ([], []);
+        try:
+            # x_incr = float(x_incr[0:len(x_incr)-1]); #Convert X Increment
+            x_incr = float(x_incr[0:len(x_incr)]); #Convert X Increment
+        except Exception as e:
+            print("ERROR: Received bad increment from scope.");
+            print(e);
+            print(f"\t{x_incr}");
+            return ([], []);
 
+        try:
             #Format and convert data into float[]
             block_header = raw_data[0:10];
             raw_data = raw_data[11:len(raw_data)-1] #Trim block header from packet & remove newline character from end
             fmt = [float(x.strip()) for x in raw_data.split(',')]; #Break at commas, strip whitespace, convert to float, add to array
 
             t = ((np.linspace(0, len(fmt), len(fmt), False)-x_ref)*x_incr + x_orig).tolist(); #Calculate time values
-        except:
-            print("ERROR: Received bad data from scope.");
+        except Exception as e:
+            print("ERROR: Failed to calculate V & t.");
             return ([], []);
 
 
@@ -340,11 +362,28 @@ class Key4000XSCPI:
                 reply = self.scope.query(command);
             else:
                 self.scope.sendall(bytes(command+"\n", "utf-8"));
-                reply_bytes = self.scope.recv(4096);
+                reply_bytes = recvall(self.scope);
+                print(f"reply size: {len(reply_bytes)}")
                 reply = str(reply_bytes);
+                if (len(reply) < 100):
+                    print("\t\t"+reply);
                 reply = reply[2:len(reply)-3];
             if (self.print_commands):
                 print(f"\t{self.ID}< \"{command}\"");
             return reply;
         else:
             return "";
+
+def recvall(sock):
+    BUFF_SIZE = 4096 # 4 KiB
+    data = b''
+    while True:
+        part = sock.recv(BUFF_SIZE);
+        data += part;
+        t_str = str(part);
+        if (t_str[len(t_str)-3:len(t_str)-1] == "\\n"):
+            break;
+    return data
+
+
+#71-209
