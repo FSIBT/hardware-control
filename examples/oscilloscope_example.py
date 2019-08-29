@@ -20,22 +20,22 @@ class ScopeDemo(QMainWindow):
         super().__init__();
         self.app = app;
 
-        self.setWindowTitle('Oscilloscope Demo')
+        self.setWindowTitle('Oscilloscope Demo');
 
-        self.main_widget = QWidget(self)
+        self.main_widget = QWidget(self);
 
         scpi_scope = Key4000XSCPI("TCPIP0::192.168.0.14::INSTR", False, True, True, "192.168.0.14", 5025);
         self.scope_ctrl = OscilloscopeControl(scpi_scope, "DEFAULT", True);
 
-        self.grid = QGridLayout()
+        self.grid = QGridLayout();
         self.grid.addWidget(self.scope_ctrl, 0, 0);
         self.main_widget.setLayout(self.grid);
 
         self.setCentralWidget(self.main_widget);
-        self.show()
+        self.show();
 
     def close(self):
-        self.scope_ctrl.close()
+        self.scope_ctrl.close();
 
 
 app = QApplication([]);
