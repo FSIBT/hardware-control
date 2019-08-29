@@ -568,7 +568,7 @@ class OscilloscopeHorizontalWidget(QWidget):
 
 class OscilloscopeDisplayWidget(QWidget):
 
-    def __init__(self, control, show_controls:bool=False, refresh:float=1):
+    def __init__(self, control, show_controls:bool=False, refresh:float=.2):
 
         super().__init__();
 

@@ -241,14 +241,16 @@ class Key4000XSCPI:
 
         wave = {};
 
+        print(ch1, ch2, ch3, ch4);
+
         if (not self.dummy):
             if (ch1):
                 wave["CH1"] = self.read_waveform(1);
-            elif (ch2):
+            if (ch2):
                 wave["CH2"] = self.read_waveform(2);
-            elif (ch3):
+            if (ch3):
                 wave["CH3"] = self.read_waveform(3);
-            elif (ch4):
+            if (ch4):
                 wave["CH4"] = self.read_waveform(4);
 
         return wave;
@@ -287,6 +289,7 @@ class Key4000XSCPI:
 
         #Read data from oscilloscope
         try:
+            self.write(f":WAV:SOUR CHAN{channel}"); #Set the source channel
             raw_data = self.query(":WAV:DATA?"); #Read waveform data
         except:
             self.digitize();
