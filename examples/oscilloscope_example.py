@@ -1,3 +1,16 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""oscilloscope_example to control the hardware_control test stand
+
+Usage:
+  oscilloscope_example [--dummy]
+  oscilloscope_example [--socket]
+
+Options:
+  --dummy    use dummy connection for instruments that return semi-random data
+             so that one run the program away from the test stand
+  --socket   use sockets instead of pyvisa
+"""
 from matplotlib import pyplot as plt
 import seaborn as sns
 import sys
@@ -10,13 +23,19 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QSizePolicy,
                              QHBoxLayout, QVBoxLayout, QLabel, QCheckBox,
                              QMessageBox, QWidget, QLineEdit,
                              QPushButton, QAction, QGridLayout)
+import sys
+from docopt import docopt
+
+commands = docopt(__doc__)
+dummy = commands['--dummy']
+use_sockets = commands['--socket']
 
 from hardware_control.Oscilloscope.hc_oscilloscope import OscilloscopeControl
 from hardware_control.Oscilloscope.Key4000XSCPI import Key4000XSCPI
 
 class ScopeDemo(QMainWindow):
 
-    def __init__(self, app):
+    def __init__(self, app, use_sockets:bool):
         super().__init__();
         self.app = app;
 
@@ -24,7 +43,7 @@ class ScopeDemo(QMainWindow):
 
         self.main_widget = QWidget(self);
 
-        scpi_scope = Key4000XSCPI("TCPIP0::192.168.0.14::INSTR", False, True, True, "192.168.0.14", 5025);
+        scpi_scope = Key4000XSCPI("TCPIP0::192.168.0.14::INSTR", False, True, use_sockets, "192.168.0.14", 5025);
         self.scope_ctrl = OscilloscopeControl(scpi_scope, "DEFAULT", True);
 
         self.grid = QGridLayout();
@@ -37,8 +56,10 @@ class ScopeDemo(QMainWindow):
     def close(self):
         self.scope_ctrl.close();
 
+def main(argv):
+	app = QApplication([]);
+	ex = ScopeDemo(app, use_sockets);
+	app.aboutToQuit.connect(ex.close)
+	sys.exit(app.exec_());
 
-app = QApplication([]);
-ex = ScopeDemo(app);
-app.aboutToQuit.connect(ex.close)
-sys.exit(app.exec_());
+main(sys.argv[1:]);
