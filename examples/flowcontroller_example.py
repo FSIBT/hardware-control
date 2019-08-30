@@ -1,3 +1,14 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""Flowcontroller to control the hardware_control test stand
+
+Usage:
+  flowcontroller_example [--dummy]
+
+Options:
+  --dummy    use dummy connection for instruments that return semi-random data
+             so that one run the program away from the test stand
+"""
 from matplotlib import pyplot as plt
 import seaborn as sns
 import sys
@@ -14,6 +25,11 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QSizePolicy,
 from hardware_control.flowcontroller.hc_flowcontroller import FlowControllerControl
 from hardware_control.flowcontroller.AlicatSCPI import AlicatSCPI
 
+from docopt import docopt
+
+commands = docopt(__doc__)
+dummy = commands['--dummy']
+
 class FlowControllerDemo(QMainWindow):
 
     def __init__(self, app):
@@ -24,7 +40,7 @@ class FlowControllerDemo(QMainWindow):
 
         self.main_widget = QWidget(self)
 
-        self.instr = AlicatSCPI("TCPIP0::192.168.0.xx::INSTR", True, True);
+        self.instr = AlicatSCPI("192.168.0.15", dummy, True);
         self.instr_ctrl = FlowControllerControl(self.instr, "flowcontroller_state.json", True);
 
         self.grid = QGridLayout()
