@@ -735,14 +735,10 @@ class OscilloscopeComm(QObject):
         else:
             print(f"{self.instr.ID}: Connected");
 
-        #This program needs to impliment a timer to try to connect
-
-    #
-    # Tries to connect to the oscilloscope. Is called by the timer every second.
-    # If already connected, returns immediately.
-    #
-    def try_connect(self):
-        self.instr.try_connect();
+        #Connect timer
+        self.connect_timer = QTimer(self)
+        self.connect_timer.timeout.connect(self.instr.try_connect);
+        self.connect_timer.start(1000); #1s period
 
     #
     # Close connection
