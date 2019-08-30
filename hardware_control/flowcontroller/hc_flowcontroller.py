@@ -36,6 +36,7 @@ class FlowControllerControl(QGroupBox):
         #Connect signals and sigs
         self.state_mosi_sig.connect(self.comm.get_state);
         self.comm.state_miso_sig.connect(self.get_state);
+        self.comm.values_miso_sig.connect(self.values_received);
         #
         self.write_sig.connect(self.comm.write);
         self.query_sig.connect(self.comm.query);
@@ -66,7 +67,7 @@ class FlowControllerControl(QGroupBox):
         self.rate_edit.setText(str(self.state["rate"]));
         #
         self.form = QFormLayout();
-        self.form.addRow("Flow rate (?):", self.rate_edit);
+        self.form.addRow("Flow rate (CFM?):", self.rate_edit);
 
         self.lower_grid = QGridLayout();
         #
@@ -86,8 +87,18 @@ class FlowControllerControl(QGroupBox):
         self.pressure_label_readout = QLabel("--");
         self.pressure_label_readout.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         #
-        self.pressure_label_fix1 = QLabel(" Torr");
+        self.pressure_label_fix1 = QLabel(" Torr?");
         self.pressure_label_fix1.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        #
+        #
+        self.flow_label_fix0 = QLabel("Flow: ");
+        self.flow_label_fix0.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        #
+        self.flow_label_readout = QLabel("--");
+        self.flow_label_readout.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        #
+        self.flow_label_fix1 = QLabel(" CFM?");
+        self.flow_label_fix1.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
         #
         #Add widgets to grid layout
         self.lower_grid.addWidget(self.gas_label, 0, 0, 1, 1);
@@ -95,6 +106,10 @@ class FlowControllerControl(QGroupBox):
         self.lower_grid.addWidget(self.pressure_label_fix0, 1, 0, 1, 1);
         self.lower_grid.addWidget(self.pressure_label_readout, 1, 1, 1, 1);
         self.lower_grid.addWidget(self.pressure_label_fix1, 1, 2, 1, 1);
+        self.lower_grid.addWidget(self.flow_label_fix0, 2, 0, 1, 1);
+        self.lower_grid.addWidget(self.flow_label_readout, 2, 1, 1, 1);
+        self.lower_grid.addWidget(self.flow_label_fix1, 2, 2, 1, 1);
+
 
         #******* DEFINE OVERALL LAYOUT
         #
@@ -167,6 +182,13 @@ class FlowControllerControl(QGroupBox):
         self.send_state();
 
     #
+    # Receives values for pressure and flow rate in dict from comm object (whcih queries meter)
+    #
+    def values_received(self, values:dict):
+        self.pressure_label_readout.setText(str(values["pressure"]));
+        self.flow_label_readout.setText(str(values["flow"]));
+
+    #
     # Manually send a SCPI command through the communication object to the INSTR
     #
     def write(self, command:str):
@@ -209,6 +231,7 @@ class FlowControllerControl(QGroupBox):
 class FlowControllerComm(QObject):
 
     state_miso_sig = pyqtSignal(dict);
+    values_miso_sig = pyqtSignal(dict);
 
     def __init__(self, scpi_instr):
 
@@ -225,7 +248,14 @@ class FlowControllerComm(QObject):
         else:
             print(f"{self.instr.ID}: Connected");
 
-        #This program needs to impliment a timer
+        #Connect timer
+        self.connect_timer = QTimer(self)
+        self.connect_timer.timeout.connect(self.instr.try_connect);
+        self.connect_timer.start(1000); #1s period
+
+        self.display_timer = QTimer(self)
+        self.display_timer.timeout.connect(self.get_values);
+        self.display_timer.start(1000); #1s period
 
         #This program needs to impliment a second timer to automatically update the pressure readout
 
@@ -263,6 +293,13 @@ class FlowControllerComm(QObject):
             self.instr.set_gas(value);
         else:
             print(f"{self.instr.ID}: ERROR: Unrecognized parameter '{key}'");
+
+    #Gets flow and pressure from meter, returns it to 'control' object
+    def get_values(self):
+        vals = self.instr.get_values();
+        self.values_miso_sig.emit(vals);
+
+
 
     #
     # Sends the state object back to the control object.

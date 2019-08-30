@@ -7,26 +7,29 @@
 import pyvisa
 from typing import List
 import numpy as np
+import random
 
-def to_NR3(x:float):
-    return f" {x:.6E}";
+from pymodbus.client.sync import ModbusTcpClient as ModbusClient
 
-def to_NR1(x:int):
-    return f"{x:d}";
 
-def bool_NR1(x:bool):
-    if (x):
-        return "1";
-    else:
-        return "0";
+def converter_ulong_to_IEEE754(x):
+    a = (ctypes.c_ulong*1)(x)
+    b = ctypes.cast(a, ctypes.POINTER(ctypes.c_float))
+    return b.contents.value
+
+
+def converter_IEEE754_to_ulong(x):
+    a = (ctypes.c_float*1)(x)
+    b = ctypes.cast(a, ctypes.POINTER(ctypes.c_ulong))
+    return b.contents.value
 
 class AlicatSCPI:
 
-    def __init__(self, visa_addr, dummy:bool=False, print_commands:bool=False):
+    def __init__(self, ip_addr, dummy:bool=False, print_commands:bool=False):
 
         self.ID = "AlicatMSeries";
 
-        self.visa_addr = visa_addr;
+        self.ip_addr = ip_addr;
         self.online = False;
         self.dummy = dummy;
         self.print_commands = print_commands;
@@ -45,24 +48,22 @@ class AlicatSCPI:
             return
 
         if (not self.dummy):
-
             try:
-                rm = pyvisa.ResourceManager();
-                self.meter = rm.open_resource(self.visa_addr, send_end=True) #Open connection
+                self.meter = ModbusClient(host=self.ip_addr)
+                if (self.meter.connect()):
+                    self.online = True;
             except: #Failed to conncet
                 self.online = False;
-            else:
-                self.online = True;
 
         else:
-            print(f"{self.ID}: creating dummy connection to {self.visa_addr}");
+            print(f"{self.ID}: creating dummy connection to {self.ip_addr}");
             self.online = True
 
     #
     # Close connection
     #
     def close(self):
-        if (not self.dummy):
+        if (not self.dummy and self.online):
             self.meter.close();
         else:
             print(f"{self.ID}: closed dummy connection")
@@ -70,7 +71,7 @@ class AlicatSCPI:
     #
     # Receives a state object from the control object.
     #
-    def get_state(new_state:dict):
+    def get_state(self, new_state:dict):
         self.state = new_state;
 
         new = set(self.state.items());
@@ -79,24 +80,50 @@ class AlicatSCPI:
         diff = new - old;
 
         for param in diff:
-            update_parameter(param[0], param[1]);
+            self.update_parameter(param[0], param[1]);
             pass;
 
     def set_rate(self, value:float):
-        #"""Sets the time per division"""
+        #"""Sets the flowrate"""
+        if ((not self.dummy) and self.online):
+            value = float(self.rate_edit.text());
+            i = converter_IEEE754_to_ulong(value);
+            a = i>>16;
+            b = i & ((1<<16)-1);
+            r = self.meter.write_registers(address=1009, values=[a, b], unit=0);
+            sys.stdout.flush();
 
-        print(f"NOT YET IMPLIMENTED: Would set flowrate to {value} (units: ?).");
 
-        # if (not self.dummy):
-        #     self.write(f":TIM:SCAL {to_NR3(value)}");
 
     def set_gas(self, value:str):
-        #"""Sets the time per division"""
+        #"""Sets the gas to flow"""
+        if ((not self.dummy) and self.online):
+            gases = {'Air': 0,
+                     'Hydrogen': 6,
+                     'Argon':1,
+                     'Helium': 7}
+            self.meter.write_registers(address=999, values=[1, gases[self.gas_menu.currentText()]], unit=0)
 
-        print(f"NOT YET IMPLIMENTED: Would set gas type to {value}.");
+    def get_values(self):
+        rtn={};
+        if (not self.dummy):
+            r = self.client.read_input_registers(count=2, address=1202, unit=0)
+            a, b = r.registers
+            pressure = (a<<16) + b
+            pressure = converter_ulong_to_IEEE754(pressure)
 
-        # if (not self.dummy):
-        #     self.write(f":TIM:SCAL {to_NR3(value)}");
+            r = self.client.read_input_registers(count=2, address=1208, unit=0)
+            a, b = r.registers
+            flow = (a<<16) + b
+            flow = converter_ulong_to_IEEE754(value)
+        else:
+            pressure = random.randint(0, 10);
+            flow = random.randint(0, 10);
+
+        rtn["pressure"] = pressure;
+        rtn["flow"] =  flow;
+
+        return rtn;
 
     def write(self, command:str):
         self.scope.write(command);
@@ -107,4 +134,3 @@ class AlicatSCPI:
         reply = self.scope.query(command);
         if (self.print_commands):
             print(f"\t{self.ID}< \"{command}\" > {reply}");
-        return reply;
