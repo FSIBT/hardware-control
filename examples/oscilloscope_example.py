@@ -43,7 +43,7 @@ class ScopeDemo(QMainWindow):
 
         self.main_widget = QWidget(self);
 
-        scpi_scope = Key4000XSCPI("TCPIP0::192.168.0.14::INSTR", False, True, use_sockets, "192.168.0.14", 5025);
+        scpi_scope = Key4000XSCPI("TCPIP0::192.168.0.14::INSTR", dummy, True, use_sockets, "192.168.0.14", 5025);
         self.scope_ctrl = OscilloscopeControl(scpi_scope, "DEFAULT", True);
 
         self.grid = QGridLayout();
