@@ -7,3 +7,5 @@ dist/
 python/.eggs/
 .mypy_cache
 *.DS_*
+.eggs/*
+*.egg-info/*
