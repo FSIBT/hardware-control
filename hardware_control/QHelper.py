@@ -10,7 +10,7 @@ import pathlib
 from PyQt5 import QtCore
 from PyQt5.QtCore import QThread, QSize
 from PyQt5.QtGui import QIcon, QFont, QFontMetrics
-from PyQt5.QtWidgets import (QSizePolicy, QPushButton, QLabel, QMessageBox,
+from PyQt5.QtWidgets import (QApplication, QSizePolicy, QPushButton, QLabel, QMessageBox,
                              QHBoxLayout, QVBoxLayout, QWidget)
 from PyQt5.QtSvg import QSvgWidget
 
@@ -20,6 +20,13 @@ import matplotlib.pyplot as plt
 from matplotlib.dates import epoch2num
 import numpy as np
 
+class QApp(QApplication):
+    """Subclass of QApplication that is aware of what hardware is connected to it and can log data"""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.instruments = []
+        
 
 class QOnOff(QPushButton):
     """An On/Off button with a nice icon for on/off
