@@ -22,12 +22,15 @@ class DummyConnection():
         print('CAEN: close connection')
 
 
-class CAEN_connector(Instrument):
+class CAEN_control(Instrument):
 
-    def __init__(self, ResourceManager, dummy=False):
+    def __init__(self, ResourceManager, IP_address, IP_port, dummy=False):
         self.dummy = dummy
         self.online = False
         self.rm = ResourceManager
+
+        self.IP = IP_address
+        self.port = IP_port
 
         self.nr_errors = 0
 
@@ -40,7 +43,8 @@ class CAEN_connector(Instrument):
 
         if not self.dummy:
             try:
-                self.inst = self.rm.open_resource('TCPIP::192.168.0.1::1470::SOCKET')
+                self.inst = self.rm.open_resource(f'TCPIP::{self.IP}::{self.port}::SOCKET')
+                print('instrument caen address',self.inst)
                 self.inst.read_termination = '\r\n'
                 self.inst.write_termination = '\r\n'
                 self.online = True

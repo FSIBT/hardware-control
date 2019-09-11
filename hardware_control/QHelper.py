@@ -20,13 +20,23 @@ import matplotlib.pyplot as plt
 from matplotlib.dates import epoch2num
 import numpy as np
 
-class QApp(QApplication):
+class QHardwareApp(QApplication):
     """Subclass of QApplication that is aware of what hardware is connected to it and can log data"""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.instruments = []
-        
+
+    def add_instrument(self, widget):
+        self.instruments.append(widget)
+
+    def list_instruments(self):
+        if self.instruments:
+            print('Known instruments:')
+        else:  
+            print('No instruments known')
+        for i in self.instruments:
+            print(f'  {i.name}')
 
 class QOnOff(QPushButton):
     """An On/Off button with a nice icon for on/off

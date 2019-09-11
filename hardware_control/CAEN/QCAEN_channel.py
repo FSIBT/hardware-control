@@ -4,21 +4,19 @@ from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtWidgets import QGroupBox, QFormLayout, QLabel, QLineEdit, QHBoxLayout
 from PyQt5.QtCore import QTimer, pyqtSignal, pyqtSlot, QObject
 
-from .control import CAEN_connector
 from ..QHelper import QOnOff, QOnOffIndicator
 
 
-class CAENcommunication(QObject):
+class CAEN_communication(QObject):
     """Handle the communication with the instrument in a separate thread"""
 
     new_values_read = pyqtSignal(int, float, float, float, dict)
     toggle_enable = pyqtSignal(bool)
 
-    def __init__(self, dummy=False, parent=None):
+    def __init__(self, dummy=False, control=None, parent=None):
         super().__init__()
         self.parent = parent
-        self.rm = visa.ResourceManager()
-        self.instrument = CAEN_connector(self.rm, dummy=dummy)
+        self.instrument = control
         self.online = False
 
         self.channels = {}
@@ -81,7 +79,7 @@ class CAENcommunication(QObject):
                     self.instrument.disable_channel(channel)
 
 
-class CAENControl(QGroupBox):
+class CAEN_channel(QGroupBox):
     """A QtWidget for a single channel
 
     If several of these are used in the same app, only a single
@@ -90,8 +88,10 @@ class CAENControl(QGroupBox):
 
     write_value = pyqtSignal(int, str, float)
 
-    def __init__(self, channel, name, connector=None, dummy=False):
+    def __init__(self, parent, channel, name, connector=None, dummy=False):
         super().__init__(name)
+        parent.app.add_instrument(self)
+
         self.name = name
         self.connector = connector
         self.channel = channel
@@ -145,6 +145,9 @@ class CAENControl(QGroupBox):
 
         # set default ramp up/down speed
         self.set_ramp(self.rampspeed)
+
+    def __str__(self):
+        return f'{self.name} CAEN channel {self.channel}'
 
     def on_click(self):
         self.write_value.emit(self.channel, 'enable_channel', 1)
