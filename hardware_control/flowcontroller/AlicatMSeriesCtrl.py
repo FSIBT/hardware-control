@@ -23,7 +23,7 @@ def converter_IEEE754_to_ulong(x):
     b = ctypes.cast(a, ctypes.POINTER(ctypes.c_ulong))
     return b.contents.value
 
-class AlicatSCPI:
+class AlicatMSeriesCtrl:
 
     def __init__(self, ip_addr, dummy:bool=False, print_commands:bool=False):
 

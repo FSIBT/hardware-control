@@ -12,11 +12,12 @@ from PyQt5.QtGui import QDoubleValidator, QPixmap
 from PyQt5.QtWidgets import (QGroupBox, QVBoxLayout,
                              QLineEdit, QPushButton,
                              QHBoxLayout, QLabel, QWidget, QFormLayout, QGridLayout, QComboBox)
+from hardware_control.QHelper import QInstrument
 import copy
 
 #
 #
-class FlowControllerControl(QGroupBox):
+class QFlowController(QInstrument):
 
     #Define sigs (to call functions in communication object)
     state_mosi_sig = pyqtSignal(dict);

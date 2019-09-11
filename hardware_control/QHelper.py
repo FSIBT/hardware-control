@@ -11,7 +11,7 @@ from PyQt5 import QtCore
 from PyQt5.QtCore import QThread, QSize
 from PyQt5.QtGui import QIcon, QFont, QFontMetrics
 from PyQt5.QtWidgets import (QApplication, QSizePolicy, QPushButton, QLabel, QMessageBox,
-                             QHBoxLayout, QVBoxLayout, QWidget)
+                             QHBoxLayout, QVBoxLayout, QWidget, QGroupBox)
 from PyQt5.QtSvg import QSvgWidget
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
