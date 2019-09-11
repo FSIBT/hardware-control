@@ -7,6 +7,7 @@
 from typing import List
 import numpy as np
 import json
+import pkg_resources
 
 import time #Get rid of this guy!
 
@@ -34,7 +35,7 @@ import copy
 # the communicaiton object instance. The communication object finds the change
 # and sends the correct SCPI commands to the instrument to impliment the change.
 #
-class QOscilloscope(QGroupBox):
+class QOscilloscope(QInstrument):
 
     #Define sigs (to call functions in communication object)
     state_mosi_sig = pyqtSignal(dict);
@@ -331,19 +332,17 @@ class OscillscopeChannelWidget(QWidget):
 
         #************** DEFINE UI *********************#
 
-        self.channel_label_box = QHBoxLayout();
         self.channel_label = QLabel();
         if (color == "yellow"):
-            self.channel_label.setPixmap(QPixmap("../hardware_control/graphics/channel1_yellow.png"));
+            self.channel_label.setPixmap(QPixmap(pkg_resources.resource_filename('hardware_control', 'Oscilloscope/graphics/channel1_yellow.png')));
         elif (color == "green"):
-            self.channel_label.setPixmap(QPixmap("../hardware_control/graphics/channel2_green.png"));
+            self.channel_label.setPixmap(QPixmap(pkg_resources.resource_filename('hardware_control', 'Oscilloscope/graphics/channel2_green.png')));
         elif (color == "blue"):
-            self.channel_label.setPixmap(QPixmap("../hardware_control/graphics/channel3_blue.png"));
+            self.channel_label.setPixmap(QPixmap(pkg_resources.resource_filename('hardware_control', 'Oscilloscope/graphics/channel3_blue.png')));
         elif (color == "red"):
-            self.channel_label.setPixmap(QPixmap("../hardware_control/graphics/channel4_red.png"));
+            self.channel_label.setPixmap(QPixmap(pkg_resources.resource_filename('hardware_control', 'Oscilloscope/graphics/channel4_red.png')));
         else:
             self.channel_label.setText(f"Channel {channel}");
-        self.channel_label_box.addWidget(self.channel_label);
 
         #****** DEFINE TEXT BOXES
         #
@@ -438,7 +437,7 @@ class OscillscopeChannelWidget(QWidget):
         #******* DEFINE OVERALL LAYOUT
         #
         self.master_layout = QGridLayout();
-        self.master_layout.addLayout(self.channel_label_box, 0, 0)
+        self.master_layout.addWidget(self.channel_label, 0, 0)
         self.master_layout.addLayout(self.form, 1, 0);
         self.master_layout.addLayout(self.lower_grid, 2, 0);
         self.setLayout(self.master_layout);
@@ -455,7 +454,7 @@ class OscilloscopeTriggerWidget(QWidget):
 
         self.trigger_label_box = QHBoxLayout();
         self.trigger_label = QLabel();
-        self.trigger_label.setPixmap(QPixmap("./graphics/trigger_label.png"));
+        self.trigger_label.setPixmap(QPixmap(pkg_resources.resource_filename('hardware_control', 'Oscilloscope/graphics/trigger_label.png')));
         self.trigger_label_box.addWidget(self.trigger_label);
 
         #****** DEFINE TEXT BOXES
@@ -540,7 +539,7 @@ class OscilloscopeHorizontalWidget(QWidget):
 
         self.horizontal_label_box = QHBoxLayout();
         self.horizontal_label = QLabel();
-        self.horizontal_label.setPixmap(QPixmap("./graphics/horizontal_label.png"));
+        self.horizontal_label.setPixmap(QPixmap(pkg_resources.resource_filename('hardware_control', 'Oscilloscope/graphics/horizontal_label.png')));
         self.horizontal_label_box.addWidget(self.horizontal_label);
 
         #****** DEFINE TEXT BOXES
