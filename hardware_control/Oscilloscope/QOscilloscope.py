@@ -34,7 +34,7 @@ import copy
 # the communicaiton object instance. The communication object finds the change
 # and sends the correct SCPI commands to the instrument to impliment the change.
 #
-class OscilloscopeControl(QGroupBox):
+class QOscilloscope(QGroupBox):
 
     #Define sigs (to call functions in communication object)
     state_mosi_sig = pyqtSignal(dict);

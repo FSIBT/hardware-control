@@ -26,7 +26,7 @@ def bool_NR1(x:bool):
     else:
         return "0";
 
-class Key4000XSCPI:
+class Key4000Ctrl:
 
     def __init__(self, visa_addr, dummy:bool=False, print_commands:bool=False, use_sockets:bool=False, ip_addr:str="", port_no=5025):
 
