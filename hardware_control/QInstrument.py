@@ -1,6 +1,11 @@
+from PyQt5 import QtCore
+import json
+from PyQt5.QtWidgets import QGroupBox, QApplication
+
+
 class QInstrument(QGroupBox):
 
-    __init__(self, name:str):
+    def __init__(self, name:str):
         super().__init__(name);
         self.settings = {};
         self.value = {};
@@ -9,7 +14,7 @@ class QInstrument(QGroupBox):
 
 class HCApp(QApplication):
 
-    __init__(self):
+    def __init__(self):
         self.instruments = [];
 
     #
