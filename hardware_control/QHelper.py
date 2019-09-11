@@ -29,10 +29,16 @@ class QInstrument(QGroupBox):
         self.name = "";
         self.status = False;
 
-class HCApp(QApplication):
 
-    def __init__(self):
-        self.instruments = [];
+class QHardwareApp(QApplication):
+    """Subclass of QApplication that is aware of what hardware is connected to it and can log data"""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.instruments = []
+
+    def add_instrument(self, widget):
+        self.instruments.append(widget)
 
     #
     # Copys the settings dictionaries from each instrument into a new dictionary
@@ -66,17 +72,6 @@ class HCApp(QApplication):
         except Exception as e:
             print(f"ERROR: Failed to write file '{filename}'. State not saved.");
             print(f"\t{e}")
-
-
-class QHardwareApp(QApplication):
-    """Subclass of QApplication that is aware of what hardware is connected to it and can log data"""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.instruments = []
-
-    def add_instrument(self, widget):
-        self.instruments.append(widget)
 
     def list_instruments(self):
         if self.instruments:
