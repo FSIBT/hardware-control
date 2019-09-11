@@ -10,7 +10,7 @@ import sys
 rm = visa.ResourceManager()
 
 
-class IonGauge:
+class GP390Ctrl:
     # control of Micro-Ion ATM Ion Gauge
 
     def __init__(self, port, address, dummy=False, parent=None, pressure_limit=None):

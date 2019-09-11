@@ -72,7 +72,7 @@ class IonGaugeCommunication(QObject):
         else:
             pressure = (np.random.normal(0, 900))
             self.values_read.emit(round(pressure, 3))
-            
+
     @pyqtSlot(int, float)
     def write(self, channel, value):
         if self.online:
@@ -82,7 +82,7 @@ class IonGaugeCommunication(QObject):
             self.instrument.write(channel, value)
 
 
-class IonGaugeControl(QGroupBox):
+class QIonGauge(QGroupBox):
     write_value = pyqtSignal(int, float)
 
     def __init__(self, port, address, parent=None, dummy=False, debug=False, pressure_limit=True):
