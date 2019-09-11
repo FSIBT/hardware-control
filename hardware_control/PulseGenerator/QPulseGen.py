@@ -17,6 +17,7 @@ from PyQt5.QtGui import QDoubleValidator, QPixmap
 from PyQt5.QtWidgets import (QGroupBox, QVBoxLayout,
                              QLineEdit, QPushButton,
                              QHBoxLayout, QLabel, QWidget, QFormLayout, QGridLayout, QComboBox)
+from hardware_control.QHelper import QInstrument
 import copy
 
 #
@@ -34,7 +35,7 @@ import copy
 # the communicaiton object instance. The communication object finds the change
 # and sends the correct SCPI commands to the instrument to impliment the change.
 #
-class PulseGenControl(QGroupBox):
+class QPulseGen(QInstrument):
 
     #Define sigs (to call functions in communication object)
     state_mosi_sig = pyqtSignal(dict);

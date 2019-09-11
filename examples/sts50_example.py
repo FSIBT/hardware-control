@@ -30,12 +30,12 @@ commands = docopt(__doc__)
 dummy = commands['--dummy']
 use_sockets = commands['--socket']
 
-from hardware_control.Oscilloscope.hc_oscilloscope import OscilloscopeControl
-from hardware_control.Oscilloscope.Key4000XSCPI import Key4000XSCPI
-from hardware_control.FlowController.hc_flowcontroller import FlowControllerControl
-from hardware_control.FlowController.AlicatSCPI import AlicatSCPI
-from hardware_control.PulseGenerator.hc_pulsegen import PulseGenControl
-from hardware_control.PulseGenerator.SRSDG535Int import SRSDG535Int
+from hardware_control.Oscilloscope.QOscilloscope import QOscilloscope
+from hardware_control.Oscilloscope.Key4000XCtrl import Key4000XCtrl
+from hardware_control.FlowController.QFlowController import QFlowController
+from hardware_control.FlowController.AlicatMSeriesCtrl import AlicatMSeriesCtrl
+from hardware_control.PulseGenerator.QPulseGen import QPulseGen
+from hardware_control.PulseGenerator.SRSDG535Ctrl import SRSDG535Ctrl
 
 class STS50Demo(QMainWindow):
 
@@ -47,17 +47,17 @@ class STS50Demo(QMainWindow):
 
         self.main_widget = QWidget(self);
 
-        scpi_scope = Key4000XSCPI("TCPIP0::192.168.0.14::INSTR", dummy, True, use_sockets, "192.168.0.14", 5025);
-        self.scope_ctrl = OscilloscopeControl(scpi_scope, "DEFAULT", True);
+        scpi_scope = Key4000XCtrl("TCPIP0::192.168.0.14::INSTR", dummy, True, use_sockets, "192.168.0.14", 5025);
+        self.scope_ctrl = QOscilloscope(scpi_scope, "DEFAULT", True);
 
-        self.flow = AlicatSCPI("192.168.0.15", dummy, True);
-        self.flow_ctrl = FlowControllerControl(self.flow, "flowcontroller_state.json", True);
+        self.flow = AlicatMSeriesCtrl("192.168.0.15", dummy, True);
+        self.flow_ctrl = QFlowController(self.flow, "flowcontroller_state.json", True);
 
-        self.trig1 = SRSDG535Int("GPIB0::10::INSTR", dummy, True);
-        self.trig1_ctrl = PulseGenControl(self.trig1, "DEFAULT", True);
+        self.trig1 = SRSDG535Ctrl("GPIB0::10::INSTR", dummy, True);
+        self.trig1_ctrl = QPulseGen(self.trig1, "DEFAULT", True);
 
-        self.trig2 = SRSDG535Int("GPIB0::15::INSTR", dummy, True);
-        self.trig2_ctr = PulseGenControl(self.trig2, "DEFAULT", True);
+        self.trig2 = SRSDG535Ctrl("GPIB0::15::INSTR", dummy, True);
+        self.trig2_ctr = QPulseGen(self.trig2, "DEFAULT", True);
 
         self.grid = QGridLayout();
         self.grid.addWidget(self.scope_ctrl, 0, 0, 3, 1);

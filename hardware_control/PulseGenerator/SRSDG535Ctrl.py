@@ -26,7 +26,7 @@ def bool_NR1(x:bool):
     else:
         return "0";
 
-class SRSDG535Int:
+class SRSDG535Ctrl:
 
     def __init__(self, visa_addr, dummy:bool=False, print_commands:bool=False):
 
