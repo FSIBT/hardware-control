@@ -31,8 +31,8 @@ import copy
 # mostly just wrap SCPI commands so this UI+Communication code knows how to
 # interface with any specific scope model.
 #
-# All instrument parameters are saved in a 'state' dictionary. When a function
-# such as set_timebase() is called, it updates the state object and sends it to
+# All instrument parameters are saved in a 'settings' dictionary. When a function
+# such as set_timebase() is called, it updates the settings object and sends it to
 # the communicaiton object instance. The communication object finds the change
 # and sends the correct SCPI commands to the instrument to impliment the change.
 #
@@ -48,7 +48,7 @@ class QOscilloscope(QInstrument):
 
         super().__init__("Oscilloscope Control");
 
-        self.state = {};
+        self.settings = {};
         self.save_on_close = save_on_close;
 
         self.comm = OscilloscopeComm(scpi_instr);
@@ -68,13 +68,13 @@ class QOscilloscope(QInstrument):
         self.comm.moveToThread(self.comm_thread)
         self.comm_thread.start()
 
-        #Initialize state to correct values
+        #Initialize settings to correct values
         if (initialize_with == "INSTRUMENT"):
             self.save_on_close = False; #Can't save without filename
-            self.state = self.initialize_gui_instrument();
+            self.settings = self.initialize_gui_instrument();
         elif (initialize_with == "DEFAULT"):
             self.save_on_close = False; #Can't save without filename
-            self.state = self.default_state();
+            self.settings = self.default_state();
         else:
             self.load_state(initialize_with);
             self.filename = initialize_with;
@@ -123,34 +123,34 @@ class QOscilloscope(QInstrument):
         #Get default state - this identifies all required fields
         dflt = self.default_state();
 
-        #Read a state from file
+        #Read a settings from file
         try:
             with open(filename) as file:
-                self.state = json.load(file);
-                print(f"State for {self.comm.instr.ID} read from file '{filename}'");
+                self.settings = json.load(file);
+                print(f"settings for {self.comm.instr.ID} read from file '{filename}'");
         except:
             print(f"ERROR: Failed to read file '{filename}'. Using defualt case.");
-            self.state = self.default_state();
+            self.settings = self.default_state();
 
         #Ensure all fields in default_state are present in the loaded state
         for key in dflt:
-            if (not(key in self.state)):
-                self.state[key] = dflt[key];
+            if (not(key in self.settings)):
+                self.settings[key] = dflt[key];
 
     def save_state(self, filename:str):
         try:
             with open(filename, 'w') as file:
-                json.dump(self.state, file);
-                print(f"State for {self.comm.instr.ID} saved to file '{filename}'");
+                json.dump(self.settings, file);
+                print(f"settings for {self.comm.instr.ID} saved to file '{filename}'");
         except Exception as e:
-            print(f"ERROR: Failed to write file '{filename}'. State not saved.");
+            print(f"ERROR: Failed to write file '{filename}'. settings not saved.");
             print(f"\t{e}")
     #
     # Close connection
     #
     def close(self, filename:str=""):
 
-        #Save state if asked
+        #Save settings if asked
         if (self.save_on_close):
             self.save_state(self.filename);
 
@@ -158,20 +158,20 @@ class QOscilloscope(QInstrument):
         self.comm.close();
 
     #
-    # Sends the state to the communication object
+    # Sends the settings to the communication object
     #
     def send_state(self):
-        """ Use signals/slots to send the state dictionary to the communication
+        """ Use signals/slots to send the settings dictionary to the communication
         thread. """
-        self.state_mosi_sig.emit(self.state);
+        self.state_mosi_sig.emit(self.settings);
         pass;
 
     #
-    # Queries the state from the communication object
+    # Queries the settings from the communication object
     #
     def get_state(self, new_state:dict):
-        """ Gets the state from the oscilloscope. """
-        self.state = new_state;
+        """ Gets the settings from the oscilloscope. """
+        self.settings = new_state;
 
     #
     # Called when a waveform is read - updates the display
@@ -182,54 +182,54 @@ class QOscilloscope(QInstrument):
         pass
 
     def set_time_offset(self, value:float):
-        self.state["time_offset"] = value;
+        self.settings["time_offset"] = value;
         self.send_state();
 
     def set_timebase(self, value:float):
-        self.state["timebase"] = value;
+        self.settings["timebase"] = value;
         self.send_state();
 
     def set_volts_div(self, channel:int, value:float):
-        self.state["volts_div"][f"CH{channel}"] = value;
+        self.settings["volts_div"][f"CH{channel}"] = value;
         self.send_state();
 
     def set_offset(self, channel:int, value:float):
-        self.state["offset"][f"CH{channel}"] = value;
+        self.settings["offset"][f"CH{channel}"] = value;
         self.send_state();
 
     def set_channel_label(self, channel:int, value:str):
-        self.state["channel_label"][f"CH{channel}"] = value;
+        self.settings["channel_label"][f"CH{channel}"] = value;
         self.send_state();
 
     def set_channel_coupling(self, channel:int, value:str):
         if (value != "AC" and value != "DC"):
             value = "DC";
-        self.state["channel_coupling"][f"CH{channel}"] = value;
+        self.settings["channel_coupling"][f"CH{channel}"] = value;
         self.send_state();
 
     def set_channel_active(self, channel:int, value:bool):
         try:
             print(f"chan{channel} <- {value}");
-            self.state["channel_active"][f"CH{channel}"] = value;
+            self.settings["channel_active"][f"CH{channel}"] = value;
             self.send_state();
         except:
-            for key in self.state:
+            for key in self.settings:
                 print(f"\t\t[\"{key}\"]")
 
     def set_BW_lim(self, channel:int, value:bool):
-        self.state["BW_lim"][f"CH{channel}"] = value;
+        self.settings["BW_lim"][f"CH{channel}"] = value;
         self.send_state();
 
     def set_channel_invert(self, channel:int, value:bool):
-        self.state["channel_invert"][f"CH{channel}"] = value;
+        self.settings["channel_invert"][f"CH{channel}"] = value;
         self.send_state();
 
     def set_channel_impedance(self, channel:int, value:float):
-        self.state["channel_impedance"][f"CH{channel}"] = value;
+        self.settings["channel_impedance"][f"CH{channel}"] = value;
         self.send_state();
 
     def set_probe_atten(self, channel:int, value:float):
-        self.state["probe_atten"][f"CH{channel}"] = value;
+        self.settings["probe_atten"][f"CH{channel}"] = value;
         self.send_state();
 
     def single_trigger(self):
@@ -244,19 +244,19 @@ class QOscilloscope(QInstrument):
         self.action_sig.emit("HALT");
 
     def set_trigger_level(self, value:float):
-        self.state["trigger_level"] = value;
+        self.settings["trigger_level"] = value;
         self.send_state();
 
     def set_trigger_channel(self, value:int):
-        self.state["trigger_channel"] = value;
+        self.settings["trigger_channel"] = value;
         self.send_state();
 
     def set_trigger_edge(self, value:str):
-        self.state["trigger_edge"] = value;
+        self.settings["trigger_edge"] = value;
         self.send_state();
 
     def set_trigger_coupling(self, value:str):
-        self.state["trigger_coupling"] = value;
+        self.settings["trigger_coupling"] = value;
         self.send_state();
 
     def query_waveforms(self):
@@ -279,7 +279,7 @@ class QOscilloscope(QInstrument):
         return query_sig.emit(command);
 
     #
-    # Create a default state object if can't get state from a file
+    # Create a default settings object if can't get settings from a file
     #
     def default_state(self):
 
@@ -350,16 +350,16 @@ class OscillscopeChannelWidget(QWidget):
         self.v_div_edit = QLineEdit();
         self.v_div_edit.setValidator(QDoubleValidator());
         self.v_div_edit.editingFinished.connect(lambda: control.set_volts_div(channel, float(self.v_div_edit.text())));
-        self.v_div_edit.setText(str(control.state["volts_div"][f"CH{channel}"]));
+        self.v_div_edit.setText(str(control.settings["volts_div"][f"CH{channel}"]));
         #
         self.offset_edit = QLineEdit();
         self.offset_edit.setValidator(QDoubleValidator());
         self.offset_edit.editingFinished.connect(lambda: control.set_offset(self.channel, float(self.offset_edit.text())));
-        self.offset_edit.setText(str(control.state["offset"][f"CH{channel}"]));
+        self.offset_edit.setText(str(control.settings["offset"][f"CH{channel}"]));
         #
         self.label_edit = QLineEdit();
         self.label_edit.editingFinished.connect(lambda: control.set_channel_label( self.channel, self.label_edit.text() ));
-        self.label_edit.setText(control.state["channel_label"][f"CH{channel}"]);
+        self.label_edit.setText(control.settings["channel_label"][f"CH{channel}"]);
         #
         self.form = QFormLayout();
         self.form.addRow("Volts/Div (V):", self.v_div_edit);
@@ -375,19 +375,19 @@ class OscillscopeChannelWidget(QWidget):
         self.active_but.setText("Channel On/Off");
         self.active_but.setCheckable(True);
         self.active_but.clicked.connect(lambda: control.set_channel_active(self.channel, self.active_but.isChecked()));
-        setButtonState(self.active_but, control.state["channel_active"][f"CH{self.channel}"]);
+        setButtonState(self.active_but, control.settings["channel_active"][f"CH{self.channel}"]);
         #
         self.BW_but = QPushButton();
         self.BW_but.setText("BW Limit");
         self.BW_but.setCheckable(True);
         self.BW_but.clicked.connect(lambda: control.set_BW_lim(self.channel, self.BW_but.isChecked()));
-        setButtonState(self.BW_but, control.state["BW_lim"][f"CH{self.channel}"]);
+        setButtonState(self.BW_but, control.settings["BW_lim"][f"CH{self.channel}"]);
         #
         self.Inv_but = QPushButton();
         self.Inv_but.setText("Invert");
         self.Inv_but.setCheckable(True);
         self.Inv_but.clicked.connect(lambda: control.set_channel_invert(self.channel, self.Inv_but.isChecked()));
-        setButtonState(self.Inv_but, control.state["channel_invert"][f"CH{self.channel}"]);
+        setButtonState(self.Inv_but, control.settings["channel_invert"][f"CH{self.channel}"]);
         #
         #
         self.coupling_label = QLabel("Coupling:");
@@ -396,7 +396,7 @@ class OscillscopeChannelWidget(QWidget):
         self.coupling_drop = QComboBox();
         self.coupling_drop.addItems(["DC", "AC"]);
         self.coupling_drop.currentIndexChanged.connect(lambda: control.set_channel_coupling(self.channel, self.coupling_drop.currentText()));
-        self.coupling_drop.setCurrentText(control.state["channel_coupling"][f"CH{self.channel}"]);
+        self.coupling_drop.setCurrentText(control.settings["channel_coupling"][f"CH{self.channel}"]);
         #
         self.impedance_label = QLabel("Impedance:");
         self.impedance_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
@@ -404,7 +404,7 @@ class OscillscopeChannelWidget(QWidget):
         self.impedance_drop = QComboBox();
         self.impedance_drop.addItems(["1e6", "50"]);
         self.impedance_drop.currentIndexChanged.connect(lambda: control.set_channel_impedance(self.channel, float(self.impedance_drop.currentText())));
-        self.impedance_drop.setCurrentText(str(control.state["channel_impedance"][f"CH{self.channel}"]));
+        self.impedance_drop.setCurrentText(str(control.settings["channel_impedance"][f"CH{self.channel}"]));
         #
         self.probe_label = QLabel("Probe attenutation: ");
         self.probe_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
@@ -412,7 +412,7 @@ class OscillscopeChannelWidget(QWidget):
         self.probe_drop = QComboBox();
         self.probe_drop.addItems([".001", ".01", ".1", "1", "10", "100", "1000"]);
         self.probe_drop.currentIndexChanged.connect(lambda: control.set_probe_atten(self.channel, float(self.probe_drop.currentText())));
-        self.probe_drop.setCurrentText(str(control.state["probe_atten"][f"CH{self.channel}"]));
+        self.probe_drop.setCurrentText(str(control.settings["probe_atten"][f"CH{self.channel}"]));
         #
         #Add widgets to grid layout
         self.lower_grid.addWidget(self.active_but, 0, 0);
@@ -463,7 +463,7 @@ class OscilloscopeTriggerWidget(QWidget):
         self.level_edit = QLineEdit();
         self.level_edit.setValidator(QDoubleValidator());
         self.level_edit.editingFinished.connect(lambda: control.set_trigger_level(float(self.level_edit.text())));
-        self.level_edit.setText(str(control.state["trigger_level"]));
+        self.level_edit.setText(str(control.settings["trigger_level"]));
         #
         self.form = QFormLayout();
         self.form.addRow("Trigger Level (V):", self.level_edit);
@@ -479,7 +479,7 @@ class OscilloscopeTriggerWidget(QWidget):
         self.trig_chan_drop = QComboBox();
         self.trig_chan_drop.addItems(["1", "2", "3", "4"]);
         self.trig_chan_drop.currentIndexChanged.connect(lambda: control.set_trigger_channel(int(self.trig_chan_drop.currentText())));
-        self.trig_chan_drop.setCurrentText(str(control.state["probe_atten"]));
+        self.trig_chan_drop.setCurrentText(str(control.settings["probe_atten"]));
         #
         self.coupling_label = QLabel("Coupling:");
         self.coupling_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
@@ -487,7 +487,7 @@ class OscilloscopeTriggerWidget(QWidget):
         self.coupling_drop = QComboBox();
         self.coupling_drop.addItems(["DC", "AC"]);
         self.coupling_drop.currentIndexChanged.connect(lambda: control.set_trigger_coupling(self.coupling_drop.currentText()));
-        self.coupling_drop.setCurrentText(control.state["trigger_coupling"]);
+        self.coupling_drop.setCurrentText(control.settings["trigger_coupling"]);
         #
         self.edge_label = QLabel("Edge:");
         self.edge_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
@@ -495,7 +495,7 @@ class OscilloscopeTriggerWidget(QWidget):
         self.edge_drop = QComboBox();
         self.edge_drop.addItems(["POS", "NEG", "EITH", "ALT"]);
         self.edge_drop.currentIndexChanged.connect(lambda: control.set_trigger_edge(self.edge_drop.currentText()));
-        self.edge_drop.setCurrentText(str(control.state["trigger_edge"]));
+        self.edge_drop.setCurrentText(str(control.settings["trigger_edge"]));
         #
         self.single_but = QPushButton();
         self.single_but.setText("Single");
@@ -548,12 +548,12 @@ class OscilloscopeHorizontalWidget(QWidget):
         self.timebase_edit = QLineEdit();
         self.timebase_edit.setValidator(QDoubleValidator());
         self.timebase_edit.editingFinished.connect(lambda: control.set_timebase(float(self.timebase_edit.text())));
-        self.timebase_edit.setText(str(control.state["timebase"]));
+        self.timebase_edit.setText(str(control.settings["timebase"]));
         #
         self.time_offset_edit = QLineEdit();
         self.time_offset_edit.setValidator(QDoubleValidator());
         self.time_offset_edit.editingFinished.connect(lambda: control.set_time_offset(float(self.time_offset_edit.text())));
-        self.time_offset_edit.setText(str(control.state["time_offset"]));
+        self.time_offset_edit.setText(str(control.settings["time_offset"]));
         #
         self.form = QFormLayout();
         self.form.addRow("Time/Div (s):", self.timebase_edit);
@@ -724,8 +724,8 @@ class OscilloscopeComm(QObject):
 
         super().__init__();
 
-        self.state = {}; #Read this guy in from a function?
-        self.instr_state = {}; #Contains state of instrument so it knows which gs to update
+        self.settings = {}; #Read this guy in from a function?
+        self.instr_state = {}; #Contains settings of instrument so it knows which gs to update
 
         self.instr = scpi_instr;
 
@@ -760,17 +760,17 @@ class OscilloscopeComm(QObject):
 
 
     #
-    # Receives a state object from the control object.
+    # Receives a settings object from the control object.
     #
     @pyqtSlot(dict)
     def get_state(self, new_state:dict):
 
-        self.state = new_state;
-        for key in self.state:
-            if ((not(key in self.instr_state)) or (self.state[key] != self.instr_state[key])):
-                self.update_parameter(key, self.state[key]);
+        self.settings = new_state;
+        for key in self.settings:
+            if ((not(key in self.instr_state)) or (self.settings[key] != self.instr_state[key])):
+                self.update_parameter(key, self.settings[key]);
 
-        self.instr_state = copy.deepcopy(self.state);
+        self.instr_state = copy.deepcopy(self.settings);
 
     def update_parameter(self, key:str, value):
 
@@ -842,7 +842,7 @@ class OscilloscopeComm(QObject):
 
 
     #
-    # Sends the state object back to the control object.
+    # Sends the settings object back to the control object.
     #
     def send_state(self):
         pass;
@@ -852,7 +852,7 @@ class OscilloscopeComm(QObject):
     #
     def send_waveform(self):
         start_time = time.time();
-        wfms = self.instr.read_all_waveforms(self.state["channel_active"]["CH1"], self.state["channel_active"]["CH2"], self.state["channel_active"]["CH3"], self.state["channel_active"]["CH4"]);
+        wfms = self.instr.read_all_waveforms(self.settings["channel_active"]["CH1"], self.settings["channel_active"]["CH2"], self.settings["channel_active"]["CH3"], self.settings["channel_active"]["CH4"]);
         self.values_miso_sig.emit(wfms);
         print(f"'Comm' spent {time.time()-start_time} seconds querying + sending waveforms.");
 
@@ -873,7 +873,7 @@ def setButtonState(button:QPushButton, value:bool):
     else:
         if (button.isChecked()):
             button.toggle();
-    # if (control.state["channel_active"][f"CH{channel}"]):
+    # if (control.settings["channel_active"][f"CH{channel}"]):
     #     if (not self.active_but.isChecked()):
     #         self.active_but.toggle();
     # else:
