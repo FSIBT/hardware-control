@@ -57,10 +57,10 @@ class QHardwareApp(QApplication):
         #Write JSON file
         try:
             with open(filename, 'w') as file:
-                json.dump(app_settings, file);
-                print(f"settings for {self.comm.instr.ID} saved to file '{filename}'");
+                json.dump(app_settings, file)
+                print(f"settings for {self.comm.instr.ID} saved to file '{filename}'")
         except Exception as e:
-            print(f"ERROR: Failed to write file '{filename}'. State not saved.");
+            print(f"ERROR: Failed to write file '{filename}'. State not saved.")
             print(f"\t{e}")
 
     def list_instruments(self):
