@@ -42,10 +42,11 @@ class QHardwareApp(QApplication):
         self.instruments = []
 
     def add_instrument(self, widget):
-        self.instruments.append(widget)
-
+        # check if name is already present
         if widget.name in [x.name for x in self.instruments]:
-            raise KeyError, f"Intrument name '{widget.name}' was already present"
+            raise KeyError(f"Intrument name '{widget.name}' is already present")
+
+        self.instruments.append(widget)
 
     def save_settings(self, filename:str):
         """ Copys the settings dictionaries from each instrument into a new dictionary
@@ -73,7 +74,7 @@ class QHardwareApp(QApplication):
 
     def check_instruments(self):
         """Make sure all instruments conform to specifications"""
-        for i in self.instrument:
+        for i in self.instruments:
             try:
                 i.name
             except AttributeError:
