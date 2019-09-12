@@ -22,7 +22,7 @@ import numpy as np
 
 class QInstrument(QGroupBox):
 
-    def __init__(self, name:str, parent):
+    def __init__(self, parent, name:str):
         super().__init__(name)
         self.settings = {}
         self.value = {}
