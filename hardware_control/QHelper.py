@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from collections import defaultdict, deque
+from collections import defaultdict, deque, OrderedDict
 import datetime
 import pkg_resources
 import hashlib
@@ -24,15 +24,30 @@ class QInstrument(QGroupBox):
 
     def __init__(self, parent, name:str):
         super().__init__(name)
-        self.settings = {}
-        self.value = {}
+        self.settings = OrderedDict()
+        self.values = OrderedDict()
+        self.values_unit = []
         self.name = name
+        self.manufacturer = None
+        self.company = None
         self.status = False
 
         self.parent = parent
 
         parent.app.add_instrument(self)
 
+    def __str__(self):
+        return f'{self.manufacturer} {self.model}'
+
+    def get_header(self):
+        """Supply a header for a log file"""
+        header = f'{self.manufacturer}-{self.model}-'
+        header += '-'.join([f'{vname}[{vunit}]' for vname, vunit in zip(self.values.keys(), self.values_unit)])
+        return header
+
+    def get_values(self):
+        """Return current list of values for logging"""
+        return self.values.values()
 
 class QHardwareApp(QApplication):
     """Subclass of QApplication that is aware of what hardware is connected to it and can log data"""
@@ -79,6 +94,10 @@ class QHardwareApp(QApplication):
                 i.name
             except AttributeError:
                 print(f'Error: Instrument  {i} needs a .name')
+            if i.manufacturer is None:
+                print(f'Error: Instrument  {i} needs a .manufacturer')
+            if i.model is None:
+                print(f'Error: Instrument  {i} needs a .model')
         
 class QOnOff(QPushButton):
     """An On/Off button with a nice icon for on/off
