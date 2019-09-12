@@ -22,12 +22,16 @@ import numpy as np
 
 class QInstrument(QGroupBox):
 
-    def __init__(self, name:str):
-        super().__init__(name);
-        self.settings = {};
-        self.value = {};
-        self.name = "";
-        self.status = False;
+    def __init__(self, name:str, parent):
+        super().__init__(name)
+        self.settings = {}
+        self.value = {}
+        self.name = name
+        self.status = False
+
+        self.parent = parent
+
+        parent.app.add_instrument(self)
 
 
 class QHardwareApp(QApplication):
@@ -40,29 +44,15 @@ class QHardwareApp(QApplication):
     def add_instrument(self, widget):
         self.instruments.append(widget)
 
-    #
-    # Copys the settings dictionaries from each instrument into a new dictionary
-    # with the instrument's name serving as the key. The dictionary is then saved
-    # to a JSON file.
-    #
+        if widget.name in [x.name for x in self.instruments]:
+            raise KeyError, f"Intrument name '{widget.name}' was already present"
+
     def save_settings(self, filename:str):
-
-        app_settings = {};
-
-        #For each instrument...
-        for instr in self.instruments:
-
-            key_name = instr.name;
-
-            #Prevent duplicate keys
-            if (instr.name in app_settings):
-                num = 2;
-                while ((instr.name + "_" + str(num)) in app_settings ):
-                    num = num + 1;
-                key_name = instr.name + "_" + str(num);
-
-            #Add instrument settings to master dictionary
-            app_settings[key_name] = instr.settings;
+        """ Copys the settings dictionaries from each instrument into a new dictionary
+        with the instrument's name serving as the key. The dictionary is then saved
+        to a JSON file. """
+        
+        app_settings = {instr.name : instr.settings for instr in self.instruments}
 
         #Write JSON file
         try:
