@@ -69,8 +69,16 @@ class QHardwareApp(QApplication):
         else:
             print('No instruments known')
         for i in self.instruments:
-            print(f'  {i.name}')
+            print(f'  {i}')
 
+    def check_instruments(self):
+        """Make sure all instruments conform to specifications"""
+        for i in self.instrument:
+            try:
+                i.name
+            except AttributeError:
+                print(f'Error: Instrument  {i} needs a .name')
+        
 class QOnOff(QPushButton):
     """An On/Off button with a nice icon for on/off
 
