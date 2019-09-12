@@ -44,7 +44,6 @@ class CAEN_control(Instrument):
         if not self.dummy:
             try:
                 self.inst = self.rm.open_resource(f'TCPIP::{self.IP}::{self.port}::SOCKET')
-                print('instrument caen address',self.inst)
                 self.inst.read_termination = '\r\n'
                 self.inst.write_termination = '\r\n'
                 self.online = True
