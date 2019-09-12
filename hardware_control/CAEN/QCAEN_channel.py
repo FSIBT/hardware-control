@@ -4,7 +4,7 @@ from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtWidgets import QGroupBox, QFormLayout, QLabel, QLineEdit, QHBoxLayout
 from PyQt5.QtCore import QTimer, pyqtSignal, pyqtSlot, QObject
 
-from ..QHelper import QOnOff, QOnOffIndicator
+from ..QHelper import QOnOff, QOnOffIndicator, QInstrument
 
 
 class CAEN_communication(QObject):
@@ -79,7 +79,7 @@ class CAEN_communication(QObject):
                     self.instrument.disable_channel(channel)
 
 
-class CAEN_channel(QGroupBox):
+class CAEN_channel(QInstrument):
     """A QtWidget for a single channel
 
     If several of these are used in the same app, only a single
@@ -88,22 +88,21 @@ class CAEN_channel(QGroupBox):
 
     write_value = pyqtSignal(int, str, float)
 
-    def __init__(self, parent, channel, name, connector=None, dummy=False):
-        super().__init__(name)
-        parent.app.add_instrument(self)
+    def __init__(self, parent, channel, name, connector=None, dummy=False, model='R1470ETD'):
+        super().__init__(parent, name)
 
-        self.name = name
+        self.manufacturer = 'CAEN'
+        self.model = model
         self.connector = connector
         self.channel = channel
         self.dummy = dummy
-        self.setpoint = 0
-        self.voltage = 0
-        self.current = 0
-        self.maxV = 0
-        self.maxI = 0
+        self.settings['setpoint'] = 0
+        self.settings['maxV'] = 0
+        self.settings['maxI'] = 0
+        self.settings['rampspeed'] = 100
+        self.values['voltage'] = 0
+        self.values['current'] = 0
         self.init = False
-        self.rampspeed = 100
-        self.status = {}
 
         self.grid = QFormLayout()
 
@@ -118,18 +117,18 @@ class CAEN_channel(QGroupBox):
         self.MaxIlabel = QLabel('')
 
         # status
-        self.status = QHBoxLayout()
+        self.status_box = QHBoxLayout()
         self.status_trip = QOnOffIndicator('Trip')
         self.status_enabled = QOnOffIndicator('Enabled')
         self.status_ramping = QOnOffIndicator('Ramping')
-        self.status.addWidget(self.status_trip)
-        self.status.addWidget(self.status_enabled)
-        self.status.addWidget(self.status_ramping)
+        self.status_box.addWidget(self.status_trip)
+        self.status_box.addWidget(self.status_enabled)
+        self.status_box.addWidget(self.status_ramping)
 
         # VOLTAGE INPUT
         self.voltage_input = QLineEdit()
         self.voltage_input.setText('')
-        self.voltage_input.setValidator(QDoubleValidator(0, self.maxV, 3))
+        self.voltage_input.setValidator(QDoubleValidator(0, self.settings['maxV'], 3))
         self.voltage_input.setFixedWidth(75)
         self.voltage_input.returnPressed.connect(self.set_voltage)
 
@@ -139,12 +138,12 @@ class CAEN_channel(QGroupBox):
         self.grid.addRow('Current [uA]', self.Ilabel)
         self.grid.addRow('Max Current[uA]', self.MaxIlabel)
         self.grid.addRow('Max Voltage[V]', self.MaxVlabel)
-        self.grid.addRow('Status', self.status)
+        self.grid.addRow('Status', self.status_box)
 
         self.setLayout(self.grid)
 
         # set default ramp up/down speed
-        self.set_ramp(self.rampspeed)
+        self.set_ramp(self.settings['rampspeed'])
 
     def __str__(self):
         return f'{self.name} CAEN channel {self.channel}'
@@ -158,21 +157,21 @@ class CAEN_channel(QGroupBox):
     @pyqtSlot(int, float, float, float, dict)
     def read_values(self, channel, setpoint, voltage, current, status):
         if channel == self.channel:
-            self.setpoint = setpoint
-            self.voltage = voltage
-            self.current = current
+            self.settings['setpoint'] = setpoint
+            self.values['voltage'] = voltage
+            self.values['current'] = current
             self.status = status
 
             # only read setpoint at startup
             if not self.init:
-                self.voltage_input.setText(f'{self.setpoint}')
+                self.voltage_input.setText(f"{self.settings['setpoint']}")
                 if self.status['on_off']:
                     self.onoff.set_icon_on()
                 else:
                     self.onoff.set_icon_off()
                 self.init = True
-            self.Vlabel.setText(f'{self.voltage}')
-            self.Ilabel.setText(f'{self.current}')
+            self.Vlabel.setText(f'{self.values["voltage"]}')
+            self.Ilabel.setText(f'{self.values["current"]}')
             self.status_trip.set(self.status['tripped'])
             self.status_ramping.set(self.status['ramping_up'] + self.status['ramping_down'])
             self.status_enabled.set(not self.status['disabled'])
@@ -184,17 +183,15 @@ class CAEN_channel(QGroupBox):
             self.write_value.emit(self.channel, 'voltage', float(self.voltage_input.text()))
 
     def get_header(self):
+        """Overwrite get_header to include channel number"""
         return f'CAEN-{self.channel}-Voltage[V] CAEN-{self.channel}-Current[A]'
 
-    def get_values(self):
-        return self.voltage, self.current
-
     def set_maxV(self, voltage):
-        self.maxV = voltage
+        self.settings['maxV'] = voltage
         self.write_value.emit(self.channel, 'maxV', voltage)
         self.MaxVlabel.setText(f'{voltage}')
 
-        self.voltage_input.setValidator(QDoubleValidator(0, self.maxV, 3))
+        self.voltage_input.setValidator(QDoubleValidator(0, self.settings['maxV'], 3))
 
     def set_maxI(self, current):
         # todo: ensure that current is within limits
@@ -202,6 +199,6 @@ class CAEN_channel(QGroupBox):
         self.MaxIlabel.setText(f'{current}')
 
     def set_ramp(self, volts_per_sec):
-        self.rampspeed = volts_per_sec
-        self.write_value.emit(self.channel, 'rampup', self.rampspeed)
-        self.write_value.emit(self.channel, 'rampdown', self.rampspeed)
+        self.settings['rampspeed'] = volts_per_sec
+        self.write_value.emit(self.channel, 'rampup', self.settings['rampspeed'])
+        self.write_value.emit(self.channel, 'rampdown', self.settings['rampspeed'])
