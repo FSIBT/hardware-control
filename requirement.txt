@@ -1,0 +1,13 @@
+appdirs
+docopt
+matplotlib
+mpmath
+numpy
+pandas
+pymodbus
+pyqode.core
+pyqode.python
+pyvisa
+pyvisa-py
+scipy
+setuptools

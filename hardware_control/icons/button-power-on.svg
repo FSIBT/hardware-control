@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="10" height="10" id="svg2633" sodipodi:version="0.32" inkscape:version="0.48.0 r9654" version="1.0" sodipodi:docname="molumen_multicolor_power_buttons_5.svg" inkscape:output_extension="org.inkscape.output.svg.inkscape" sodipodi:modified="true" inkscape:export-filename="C:\Documents and Settings\Nathaniel\Desktop\molumen_multicolor_power_buttons_5_red.png" inkscape:export-xdpi="90" inkscape:export-ydpi="90">
+  <defs id="defs2635">
+    <linearGradient inkscape:collect="always" xlink:href="#linearGradient3257" id="linearGradient3762" gradientUnits="userSpaceOnUse" x1="127.19796" y1="18.49473" x2="127.19796" y2="47.546875"/>
+    <linearGradient inkscape:collect="always" xlink:href="#linearGradient3257" id="linearGradient3764" gradientUnits="userSpaceOnUse" x1="127.19796" y1="18.49473" x2="127.19796" y2="47.546875"/>
+    <linearGradient inkscape:collect="always" xlink:href="#linearGradient3257" id="linearGradient3766" gradientUnits="userSpaceOnUse" x1="127.19796" y1="18.49473" x2="127.19796" y2="47.546875"/>
+    <linearGradient id="linearGradient3257" inkscape:collect="always">
+      <stop id="stop3259" offset="0" style="stop-color:#ffffff;stop-opacity:1"/>
+      <stop id="stop3261" offset="1" style="stop-color:#ffffff;stop-opacity:0"/>
+    </linearGradient>
+    <linearGradient inkscape:collect="always" xlink:href="#linearGradient3257" id="linearGradient3768" gradientUnits="userSpaceOnUse" x1="127.19796" y1="18.49473" x2="127.19796" y2="47.546875"/>
+    <linearGradient inkscape:collect="always" xlink:href="#linearGradient3257" id="linearGradient2243" gradientUnits="userSpaceOnUse" x1="127.19796" y1="18.49473" x2="127.19796" y2="47.546875"/>
+  </defs>
+  <sodipodi:namedview id="base" pagecolor="#ffffff" bordercolor="#666666" borderopacity="1.0" gridtolerance="10000" guidetolerance="10" objecttolerance="10" inkscape:pageopacity="0.0" inkscape:pageshadow="2" inkscape:zoom="22.627417" inkscape:cx="3.4831277" inkscape:cy="3.7642884" inkscape:document-units="px" inkscape:current-layer="layer1" width="82px" height="60px" inkscape:window-width="739" inkscape:window-height="573" inkscape:window-x="75" inkscape:window-y="61" showgrid="false" fit-margin-top="0" fit-margin-left="0" fit-margin-right="0" fit-margin-bottom="0" inkscape:window-maximized="0"/>
+  <g inkscape:label="Layer 1" inkscape:groupmode="layer" id="layer1" transform="translate(-38.253875,-28.480619)">
+    <path sodipodi:type="arc" style="fill:#00ff00;fill-opacity:1;fill-rule:evenodd;stroke:none" id="path3676" sodipodi:cx="655.00006" sodipodi:cy="908.54846" sodipodi:rx="35.10146" sodipodi:ry="35.10146" d="m 690.10152,908.54846 c 0,19.386 -15.71546,35.10146 -35.10146,35.10146 -19.386,0 -35.10146,-15.71546 -35.10146,-35.10146 0,-19.386 15.71546,-35.10146 35.10146,-35.10146 19.386,0 35.10146,15.71546 35.10146,35.10146 z" transform="matrix(0.14244422,0,0,0.14244422,-50.047098,-95.936858)"/>
+    <g id="g3750" transform="matrix(0.19827532,0,0,0.21258791,-78.852477,-133.37569)" style="fill:#008000;stroke:none">
+      <path sodipodi:type="inkscape:offset" inkscape:radius="-0.66131908" inkscape:original="M 649.75 891.0625 C 641.40779 893.35756 635.28126 900.99292 635.28125 910.0625 C 635.28127 920.94545 644.11705 929.78124 655 929.78125 C 665.88295 929.78122 674.71874 920.94545 674.71875 910.0625 C 674.71873 900.98968 668.56549 893.35456 660.21875 891.0625 L 660.21875 899.15625 C 664.28467 901.11041 667.125 905.25095 667.125 910.0625 C 667.12501 916.75034 661.68785 922.1875 655 922.1875 C 648.31215 922.18751 642.875 916.75035 642.875 910.0625 C 642.87498 905.25102 645.6842 901.11044 649.75 899.15625 L 649.75 891.0625 z " xlink:href="#path22091" style="fill:#008000;fill-opacity:1;fill-rule:evenodd;stroke:none" id="path3752" inkscape:href="#path22091" d="m 649.09375,892 c -7.61853,2.48999 -13.15624,9.60548 -13.15625,18.0625 2e-5,10.525 8.5375,19.06249 19.0625,19.0625 10.525,-3e-5 19.06249,-8.5375 19.0625,-19.0625 -2e-5,-8.45792 -5.56444,-15.57409 -13.1875,-18.0625 l 0,6.8125 c 4.06728,2.13572 6.90625,6.34059 6.90625,11.25 10e-6,7.04627 -5.73497,12.78125 -12.78125,12.78125 -7.04628,10e-6 -12.78125,-5.73497 -12.78125,-12.78125 -2e-5,-4.90659 2.80869,-9.1136 6.875,-11.25 l 0,-6.8125 z" transform="matrix(0.935483,0,0,0.935483,3.100892,-64.47165)"/>
+      <path sodipodi:type="inkscape:offset" inkscape:radius="-0.60243881" inkscape:original="M 651.1875 887.3125 L 651.1875 911.125 L 658.8125 911.125 L 658.8125 887.3125 L 651.1875 887.3125 z " xlink:href="#path22093" style="fill:#008000;fill-opacity:1;fill-rule:evenodd;stroke:none" id="path3754" inkscape:href="#path22093" d="m 651.78125,887.90625 0,22.625 6.4375,0 0,-22.625 -6.4375,0 z" transform="matrix(0.935483,0,0,0.935483,3.100892,-64.47165)"/>
+    </g>
+    <g style="fill:#eeeeec;stroke:none" transform="matrix(0.19827532,0,0,0.19827529,-78.852477,-122.41011)" id="g3756">
+      <path transform="matrix(0.935483,0,0,0.935483,3.100892,-64.47165)" d="m 649.09375,892 c -7.61853,2.48999 -13.15624,9.60548 -13.15625,18.0625 2e-5,10.525 8.5375,19.06249 19.0625,19.0625 10.525,-3e-5 19.06249,-8.5375 19.0625,-19.0625 -2e-5,-8.45792 -5.56444,-15.57409 -13.1875,-18.0625 l 0,6.8125 c 4.06728,2.13572 6.90625,6.34059 6.90625,11.25 10e-6,7.04627 -5.73497,12.78125 -12.78125,12.78125 -7.04628,10e-6 -12.78125,-5.73497 -12.78125,-12.78125 -2e-5,-4.90659 2.80869,-9.1136 6.875,-11.25 l 0,-6.8125 z" inkscape:href="#path22091" id="path3758" style="fill:#eeeeec;fill-opacity:1;fill-rule:evenodd;stroke:none" xlink:href="#path22091" inkscape:original="M 649.75 891.0625 C 641.40779 893.35756 635.28126 900.99292 635.28125 910.0625 C 635.28127 920.94545 644.11705 929.78124 655 929.78125 C 665.88295 929.78122 674.71874 920.94545 674.71875 910.0625 C 674.71873 900.98968 668.56549 893.35456 660.21875 891.0625 L 660.21875 899.15625 C 664.28467 901.11041 667.125 905.25095 667.125 910.0625 C 667.12501 916.75034 661.68785 922.1875 655 922.1875 C 648.31215 922.18751 642.875 916.75035 642.875 910.0625 C 642.87498 905.25102 645.6842 901.11044 649.75 899.15625 L 649.75 891.0625 z " inkscape:radius="-0.66131908" sodipodi:type="inkscape:offset"/>
+      <path transform="matrix(0.935483,0,0,0.935483,3.100892,-64.47165)" d="m 651.78125,887.90625 0,22.625 6.4375,0 0,-22.625 -6.4375,0 z" inkscape:href="#path22093" id="path3760" style="fill:#eeeeec;fill-opacity:1;fill-rule:evenodd;stroke:none" xlink:href="#path22093" inkscape:original="M 651.1875 887.3125 L 651.1875 911.125 L 658.8125 911.125 L 658.8125 887.3125 L 651.1875 887.3125 z " inkscape:radius="-0.60243881" sodipodi:type="inkscape:offset"/>
+    </g>
+    <path transform="matrix(0.15900357,0,0,0.16686747,23.028936,25.861995)" d="m 149.62659,34.778526 c 0,8.993293 -10.04164,16.283797 -22.42863,16.283797 -12.38699,0 -22.42863,-7.290504 -22.42863,-16.283797 0,-8.993292 10.04164,-16.283796 22.42863,-16.283796 12.38699,0 22.42863,7.290504 22.42863,16.283796 z" sodipodi:ry="16.283796" sodipodi:rx="22.428625" sodipodi:cy="34.778526" sodipodi:cx="127.19796" id="path3678" style="opacity:0.75;fill:url(#linearGradient2243);fill-opacity:1;fill-rule:evenodd;stroke:none" sodipodi:type="arc"/>
+  </g>
+  <metadata>
+    <rdf:RDF>
+      <cc:Work>
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+        <cc:license rdf:resource="http://creativecommons.org/licenses/publicdomain/"/>
+        <dc:publisher>
+          <cc:Agent rdf:about="http://openclipart.org/">
+            <dc:title>Open Clip Art Library</dc:title>
+          </cc:Agent>
+        </dc:publisher>
+        <dc:title>Power off icon</dc:title>
+        <dc:date>2011-02-16T20:13:15</dc:date>
+        <dc:description>A 10x10 icon for power off coloured in red</dc:description>
+        <dc:source>http://openclipart.org/detail/119749/power-off-icon-by-chovynz</dc:source>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>chovynz</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:subject>
+          <rdf:Bag>
+            <rdf:li>clip art</rdf:li>
+            <rdf:li>clipart</rdf:li>
+            <rdf:li>icon</rdf:li>
+            <rdf:li>power</rdf:li>
+            <rdf:li>red</rdf:li>
+          </rdf:Bag>
+        </dc:subject>
+      </cc:Work>
+      <cc:License rdf:about="http://creativecommons.org/licenses/publicdomain/">
+        <cc:permits rdf:resource="http://creativecommons.org/ns#Reproduction"/>
+        <cc:permits rdf:resource="http://creativecommons.org/ns#Distribution"/>
+        <cc:permits rdf:resource="http://creativecommons.org/ns#DerivativeWorks"/>
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+</svg>

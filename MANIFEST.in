@@ -1,0 +1,2 @@
+include versioneer.py
+include hardware_control/_version.py
