@@ -24,12 +24,13 @@ class QFlowController(QInstrument):
     write_sig = pyqtSignal(str);
     query_sig = pyqtSignal(str);
 
-    def __init__(self, scpi_instr, initialize_with:str="INSTRUMENT", save_on_close:str=False, dummy=False):
+    def __init__(self, scpi_instr, window, name:str="Flow Controller", initialize_with:str="INSTRUMENT", save_on_close:str=False, dummy=False):
 
-        super().__init__("Mass Flow Controller Control");
+        super().__init__(window, name);
 
-        self.state = {};
+        self.settings = {};
         self.save_on_close = save_on_close;
+        self.name = name;
 
         self.comm = FlowControllerComm(scpi_instr);
         self.filename = "";
@@ -50,10 +51,10 @@ class QFlowController(QInstrument):
         #Initialize state to correct values
         if (initialize_with == "INSTRUMENT"):
             self.save_on_close = False; #Can't save without filename
-            self.state = self.initialize_gui_instrument();
+            self.settings = self.initialize_gui_instrument();
         elif (initialize_with == "DEFAULT"):
             self.save_on_close = False; #Can't save without filename
-            self.state = self.default_state();
+            self.settings = self.default_state();
         else:
             self.load_state(initialize_with);
             self.filename = initialize_with;
@@ -65,7 +66,7 @@ class QFlowController(QInstrument):
         self.rate_edit = QLineEdit();
         self.rate_edit.setValidator(QDoubleValidator());
         self.rate_edit.editingFinished.connect(lambda: self.set_rate(float(self.rate_edit.text())));
-        self.rate_edit.setText(str(self.state["rate"]));
+        self.rate_edit.setText(str(self.settings["rate"]));
         #
         self.form = QFormLayout();
         self.form.addRow("Flow rate (CFM?):", self.rate_edit);
@@ -80,7 +81,7 @@ class QFlowController(QInstrument):
         self.gas_drop = QComboBox();
         self.gas_drop.addItems(["Argon", "Helium", "Hydrogen", "Air"]);
         self.gas_drop.currentIndexChanged.connect(lambda: self.set_gas(self.gas_drop.currentText()));
-        self.gas_drop.setCurrentText(self.state["gas"]);
+        self.gas_drop.setCurrentText(self.settings["gas"]);
         #
         self.pressure_label_fix0 = QLabel("Pressure: ");
         self.pressure_label_fix0.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
@@ -130,16 +131,16 @@ class QFlowController(QInstrument):
     def load_state(self, filename:str):
         try:
             with open(filename) as file:
-                self.state = json.load(file);
+                self.settings = json.load(file);
                 print(f"State for {self.comm.instr.ID} read from file '{filename}'");
         except:
             print(f"ERROR: Failed to read file '{filename}'. Using defualt case.");
-            self.state = self.default_state();
+            self.settings = self.default_state();
 
     def save_state(self, filename:str):
         try:
             with open(filename, 'w') as file:
-                json.dump(self.state, file);
+                json.dump(self.settings, file);
                 print(f"State for {self.comm.instr.ID} saved to file '{filename}'");
         except Exception as e:
             print(f"ERROR: Failed to write file '{filename}'. State not saved.");
@@ -162,7 +163,7 @@ class QFlowController(QInstrument):
     def send_state(self):
         """ Use signals/slots to send the state dictionary to the communication
         thread. """
-        self.state_mosi_sig.emit(self.state);
+        self.state_mosi_sig.emit(self.settings);
         pass;
 
     #
@@ -170,16 +171,16 @@ class QFlowController(QInstrument):
     #
     def get_state(self, new_state:dict):
         """ Gets the state from the oscilloscope. """
-        self.state = new_state;
+        self.settings = new_state;
 
     def set_gas(self, gas:str):
         """Sets the gas the flow controller is to regulate"""
-        self.state["gas"] = gas;
+        self.settings["gas"] = gas;
         self.send_state();
 
     def set_rate(self, rate:float):
         """Sets the flow rate"""
-        self.state["rate"] = rate;
+        self.settings["rate"] = rate;
         self.send_state();
 
     #
@@ -238,7 +239,7 @@ class FlowControllerComm(QObject):
 
         super().__init__();
 
-        self.state = {}; #Read this guy in from a function?
+        self.settings = {}; #Read this guy in from a function?
         self.instr_state = {}; #Contains state of instrument so it knows which keys to update
 
         self.instr = scpi_instr;
@@ -279,12 +280,12 @@ class FlowControllerComm(QObject):
     #
     def get_state(self, new_state:dict):
 
-        self.state = new_state;
-        for key in self.state:
-            if ((not(key in self.instr_state)) or (self.state[key] != self.instr_state[key])):
-                self.update_parameter(key, self.state[key]);
+        self.settings = new_state;
+        for key in self.settings:
+            if ((not(key in self.instr_state)) or (self.settings[key] != self.instr_state[key])):
+                self.update_parameter(key, self.settings[key]);
 
-        self.instr_state = copy.deepcopy(self.state);
+        self.instr_state = copy.deepcopy(self.settings);
 
     def update_parameter(self, key:str, value):
 
