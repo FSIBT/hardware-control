@@ -44,9 +44,9 @@ class QOscilloscope(QInstrument):
     write_sig = pyqtSignal(str);
     query_sig = pyqtSignal(str);
 
-    def __init__(self, scpi_instr, initialize_with:str="INSTRUMENT", save_on_close:str=False):
+    def __init__(self, scpi_instr, window, name:str="Oscilloscope Control", initialize_with:str="INSTRUMENT", save_on_close:str=False):
 
-        super().__init__("Oscilloscope Control");
+        super().__init__(window, name);
 
         self.settings = {};
         self.save_on_close = save_on_close;

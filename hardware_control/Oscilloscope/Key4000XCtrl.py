@@ -241,7 +241,7 @@ class Key4000XCtrl:
 
         wave = {};
 
-        print(ch1, ch2, ch3, ch4);
+#        print(ch1, ch2, ch3, ch4);
 
         if (not self.dummy):
             if (ch1):
