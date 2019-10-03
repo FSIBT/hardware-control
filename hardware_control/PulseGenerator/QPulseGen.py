@@ -7,13 +7,14 @@
 from typing import List
 import numpy as np
 import json
+import pkg_resources
 
 import time #Get rid of this guy!
 
 import pyqtgraph as pg
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer, QThread, pyqtSignal, pyqtSlot, QObject
-from PyQt5.QtGui import QDoubleValidator, QPixmap
+from PyQt5.QtGui import QDoubleValidator, QPixmap, QIcon
 from PyQt5.QtWidgets import (QGroupBox, QVBoxLayout,
                              QLineEdit, QPushButton,
                              QHBoxLayout, QLabel, QWidget, QFormLayout, QGridLayout, QComboBox)
@@ -43,12 +44,13 @@ class QPulseGen(QInstrument):
     write_sig = pyqtSignal(str);
     query_sig = pyqtSignal(str);
 
-    def __init__(self, scpi_instr, initialize_with:str="INSTRUMENT", save_on_close:str=False):
+    def __init__(self, scpi_instr, window, name:str="Pulse Generator Control", initialize_with:str="INSTRUMENT", save_on_close:str=False):
 
-        super().__init__("Pulse Generator Control");
+        super().__init__(window, name);
 
-        self.state = {};
+        self.settings = {};
         self.save_on_close = save_on_close;
+        self.name = name;
 
         self.comm = PulseGenComm(scpi_instr);
         self.filename = "";
@@ -69,10 +71,10 @@ class QPulseGen(QInstrument):
         #Initialize state to correct values
         if (initialize_with == "INSTRUMENT"):
             self.save_on_close = False; #Can't save without filename
-            self.state = self.initialize_gui_instrument();
+            self.settings = self.initialize_gui_instrument();
         elif (initialize_with == "DEFAULT"):
             self.save_on_close = False; #Can't save without filename
-            self.state = self.default_state();
+            self.settings = self.default_state();
         else:
             self.load_state(initialize_with);
             self.filename = initialize_with;
@@ -84,10 +86,11 @@ class QPulseGen(QInstrument):
         #
         self.command_edit = QLineEdit();
         self.command_edit.editingFinished.connect(lambda: self.set_command(self.command_edit.text() ));
-        self.command_edit.setText(self.state["command"]);
+        self.command_edit.setText(self.settings["command"]);
         #
         self.trig_but = QPushButton();
         self.trig_but.setText("Trigger");
+        self.trig_but.setIcon(QIcon((QPixmap(pkg_resources.resource_filename('hardware_control', 'PulseGenerator/graphics/pulse.png')))));
         self.trig_but.setCheckable(False);
         self.trig_but.clicked.connect(self.trigger);
         #
@@ -114,21 +117,21 @@ class QPulseGen(QInstrument):
         #Read a state from file
         try:
             with open(filename) as file:
-                self.state = json.load(file);
+                self.settings = json.load(file);
                 print(f"State for {self.comm.instr.ID} read from file '{filename}'");
         except:
             print(f"ERROR: Failed to read file '{filename}'. Using defualt case.");
-            self.state = self.default_state();
+            self.settings = self.default_state();
 
         #Ensure all fields in default_state are present in the loaded state
         for key in dflt:
-            if (not(key in self.state)):
-                self.state[key] = dflt[key];
+            if (not(key in self.settings)):
+                self.settings[key] = dflt[key];
 
     def save_state(self, filename:str):
         try:
             with open(filename, 'w') as file:
-                json.dump(self.state, file);
+                json.dump(self.settings, file);
                 print(f"State for {self.comm.instr.ID} saved to file '{filename}'");
         except Exception as e:
             print(f"ERROR: Failed to write file '{filename}'. State not saved.");
@@ -151,7 +154,7 @@ class QPulseGen(QInstrument):
     def send_state(self):
         """ Use signals/slots to send the state dictionary to the communication
         thread. """
-        self.state_mosi_sig.emit(self.state);
+        self.state_mosi_sig.emit(self.settings);
         pass;
 
     #
@@ -159,10 +162,10 @@ class QPulseGen(QInstrument):
     #
     def get_state(self, new_state:dict):
         """ Gets the state from the oscilloscope. """
-        self.state = new_state;
+        self.settings = new_state;
 
     def set_command(self, command:str):
-        self.state["command"] = command;
+        self.settings["command"] = command;
         self.send_state();
 
     def trigger(self):
@@ -201,7 +204,7 @@ class PulseGenComm(QObject):
 
         super().__init__();
 
-        self.state = {}; #Read this guy in from a function?
+        self.settings = {}; #Read this guy in from a function?
         self.instr_state = {}; #Contains state of instrument so it knows which gs to update
 
         self.instr = scpi_instr;
@@ -236,12 +239,12 @@ class PulseGenComm(QObject):
     @pyqtSlot(dict)
     def get_state(self, new_state:dict):
 
-        self.state = new_state;
-        for key in self.state:
-            if ((not(key in self.instr_state)) or (self.state[key] != self.instr_state[key])):
-                self.update_parameter(key, self.state[key]);
+        self.settings = new_state;
+        for key in self.settings:
+            if ((not(key in self.instr_state)) or (self.settings[key] != self.instr_state[key])):
+                self.update_parameter(key, self.settings[key]);
 
-        self.instr_state = copy.deepcopy(self.state);
+        self.instr_state = copy.deepcopy(self.settings);
 
     def update_parameter(self, key:str, value):
 
