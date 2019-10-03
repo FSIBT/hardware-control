@@ -22,7 +22,7 @@ import numpy as np
 
 class QInstrument(QGroupBox):
 
-    def __init__(self, parent, name:str):
+    def __init__(self, window, name:str):
         super().__init__(name)
         self.settings = OrderedDict()
         self.values = OrderedDict()
@@ -32,9 +32,9 @@ class QInstrument(QGroupBox):
         self.company = None
         self.status = False
 
-        self.parent = parent
+        self.window = window #parent needs to have a field called 'app' which is an instance of 'QHardwareApp'
 
-        parent.app.add_instrument(self)
+        window.app.add_instrument(self)
 
     def __str__(self):
         return f'{self.manufacturer} {self.model}'
@@ -67,7 +67,7 @@ class QHardwareApp(QApplication):
         """ Copys the settings dictionaries from each instrument into a new dictionary
         with the instrument's name serving as the key. The dictionary is then saved
         to a JSON file. """
-        
+
         app_settings = {instr.name : instr.settings for instr in self.instruments}
 
         #Write JSON file
@@ -98,7 +98,7 @@ class QHardwareApp(QApplication):
                 print(f'Error: Instrument  {i} needs a .manufacturer')
             if i.model is None:
                 print(f'Error: Instrument  {i} needs a .model')
-        
+
 class QOnOff(QPushButton):
     """An On/Off button with a nice icon for on/off
 
