@@ -15,7 +15,7 @@ from hardware_control.QHelper import QInstrument
 import pyqtgraph as pg
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer, QThread, pyqtSignal, pyqtSlot, QObject
-from PyQt5.QtGui import QDoubleValidator, QPixmap
+from PyQt5.QtGui import QDoubleValidator, QPixmap, QIcon
 from PyQt5.QtWidgets import (QGroupBox, QVBoxLayout,
                              QLineEdit, QPushButton,
                              QHBoxLayout, QLabel, QWidget, QFormLayout, QGridLayout, QComboBox)
@@ -262,7 +262,7 @@ class QOscilloscope(QInstrument):
     def query_waveforms(self):
         start_time = time.time();
         self.action_sig.emit("WAVEFORMS");
-        print(f"'Control' spent {time.time()-start_time} seconds querying waveforms.");
+#        print(f"'Control' spent {time.time()-start_time} seconds querying waveforms.");
 
     #
     # Manually send a SCPI command through the communication object to the INSTR
@@ -379,6 +379,7 @@ class OscillscopeChannelWidget(QWidget):
         #
         self.BW_but = QPushButton();
         self.BW_but.setText("BW Limit");
+        self.BW_but.setIcon(QIcon((QPixmap(pkg_resources.resource_filename('hardware_control', 'Oscilloscope/graphics/BWlim.png')))));
         self.BW_but.setCheckable(True);
         self.BW_but.clicked.connect(lambda: control.set_BW_lim(self.channel, self.BW_but.isChecked()));
         setButtonState(self.BW_but, control.settings["BW_lim"][f"CH{self.channel}"]);
@@ -386,6 +387,7 @@ class OscillscopeChannelWidget(QWidget):
         self.Inv_but = QPushButton();
         self.Inv_but.setText("Invert");
         self.Inv_but.setCheckable(True);
+        self.Inv_but.setIcon(QIcon((QPixmap(pkg_resources.resource_filename('hardware_control', 'Oscilloscope/graphics/invert.png')))));
         self.Inv_but.clicked.connect(lambda: control.set_channel_invert(self.channel, self.Inv_but.isChecked()));
         setButtonState(self.Inv_but, control.settings["channel_invert"][f"CH{self.channel}"]);
         #
@@ -673,7 +675,7 @@ class OscilloscopeDisplayWidget(QWidget):
             self.CH4.setData(wvfms["CH4"][1], wvfms["CH4"][0]);
         else:
             pass;
-        print(f"'Widget' spent {time.time()-start_time} seconds updating waveforms.");
+#        print(f"'Widget' spent {time.time()-start_time} seconds updating waveforms.");
 
 
 
@@ -854,7 +856,7 @@ class OscilloscopeComm(QObject):
         start_time = time.time();
         wfms = self.instr.read_all_waveforms(self.settings["channel_active"]["CH1"], self.settings["channel_active"]["CH2"], self.settings["channel_active"]["CH3"], self.settings["channel_active"]["CH4"]);
         self.values_miso_sig.emit(wfms);
-        print(f"'Comm' spent {time.time()-start_time} seconds querying + sending waveforms.");
+#        print(f"'Comm' spent {time.time()-start_time} seconds querying + sending waveforms.");
 
 
     @pyqtSlot()
