@@ -25,7 +25,7 @@ class HScanTool(QGroupBox):
 
         super().__init__(name);
 
-        self.state = {};
+        self.settings = {};
         self.save_on_close = save_on_close;
         self.name = name;
         self.app = window.app;
@@ -33,10 +33,10 @@ class HScanTool(QGroupBox):
         #Initialize state to correct values
         if (initialize_with == "INSTRUMENT"):
             self.save_on_close = False; #Can't save without filename
-            self.state = self.initialize_gui_instrument();
+            self.settings = self.initialize_gui_instrument();
         elif (initialize_with == "DEFAULT"):
             self.save_on_close = False; #Can't save without filename
-            self.state = self.default_state();
+            self.settings = self.default_state();
         else:
             self.load_state(initialize_with);
             self.filename = initialize_with;
@@ -54,23 +54,23 @@ class HScanTool(QGroupBox):
         #
         self.instrument_drop = QComboBox();
         self.instrument_drop.addItems(["----------"]);
+        self.instrument_drop.setCurrentText(self.settings["instrument"]);
         self.instrument_drop.currentIndexChanged.connect(lambda: self.set_instrument(self.instrument_drop.currentText()));
-        self.instrument_drop.setCurrentText(self.state["instrument"]);
         #
         self.parameter_label = QLabel("Parameter:");
         self.parameter_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         #
         self.parameter_drop = QComboBox();
         self.parameter_drop.addItems(["----------"]);
+        self.parameter_drop.setCurrentText(self.settings["parameter"]);
         self.parameter_drop.currentIndexChanged.connect(lambda: self.set_parameter(self.parameter_drop.currentText()));
-        self.parameter_drop.setCurrentText(self.state["parameter"]);
         #
         self.values_label = QLabel("Values:");
         self.values_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         #
         self.values_edit = QLineEdit();
         self.values_edit.editingFinished.connect(lambda: self.set_values(self.values_edit.text()));
-        self.values_edit.setText(str(self.state["values"]));
+        self.values_edit.setText(str(self.settings["values"]));
         #
         self.upper_grid = QGridLayout();
         self.middle_grid = QGridLayout();
@@ -102,7 +102,7 @@ class HScanTool(QGroupBox):
         self.progress_grid.addWidget(self.progress_bar, 0, 1)
 #        self.progress_bar.setGeometry(200, 80, 250, 20);
         #
-        self.progress_bar.setValue(self.state["progress"])
+        self.progress_bar.setValue(self.settings["progress"])
 
         #******* DEFINE OVERALL LAYOUT
         #
@@ -115,10 +115,12 @@ class HScanTool(QGroupBox):
 
     def set_instrument(self, inst:str):
         print(f"Instrument set to '{inst}'");
+        self.settings["instrument"] = inst;
         
         self.parameter_drop.clear()
         params = []
         
+        #update parameters menu options
         found = False;
         for instrument in self.app.instruments:
             if (instrument.name == inst):
@@ -134,14 +136,40 @@ class HScanTool(QGroupBox):
             print(f"ERROR: Couldn't find instrument '{inst}'");
 
     def set_parameter(self, param:str):
-        pass;
+        print(f"Setting parameter to {param}");
+        self.settings["parameter"] = param;
 
     def set_values(self, new_values:str):
-        self.state["values"] = new_values;
-        pass;
+        print(f"Setting values to {new_values}");
+        self.settings["values"] = new_values;
 
     def scan(self):
-        print("Starting scan");
+        
+        i=self.settings["instrument"]
+        p=self.settings["parameter"]
+        
+        vals = self.settings["values"].split(",");
+        print(f"Starting scan\n\tInstrument: {i}\n\tParameter: {p}\n\tValues:{vals}");
+        
+        #Find instrument, get current setting for parameter
+        found = False;
+        for instr in self.app.instruments:
+            if (instr.name == self.settings["instrument"]):
+                scan_instrument = instr
+                found = True;
+                break;
+        if (not found):
+            print(f"ERROR: Failed to find instrument {i}");
+            return;
+        
+        #Scan through values
+        for v in vals:
+            if (not scan_instrument.set_setting(self.settings["parameter"], v.strip())):
+                print(f"Failed to set parameter '{p}' to value '{v}'. Exiting scan.");
+                return;
+            
+        print("Finished scan");
+            
         
     def update_instruments(self):
         self.instrument_drop.clear()
@@ -159,21 +187,21 @@ class HScanTool(QGroupBox):
         #Read a state from file
         try:
             with open(filename) as file:
-                self.state = json.load(file);
+                self.settings = json.load(file);
                 print(f"State for {self.comm.instr.ID} read from file '{filename}'");
         except:
             print(f"ERROR: Failed to read file '{filename}'. Using defualt case.");
-            self.state = self.default_state();
+            self.settings = self.default_state();
 
         #Ensure all fields in default_state are present in the loaded state
         for key in dflt:
-            if (not(key in self.state)):
-                self.state[key] = dflt[key];
+            if (not(key in self.settings)):
+                self.settings[key] = dflt[key];
 
     def save_state(self, filename:str):
         try:
             with open(filename, 'w') as file:
-                json.dump(self.state, file);
+                json.dump(self.settings, file);
                 print(f"State for {self.comm.instr.ID} saved to file '{filename}'");
         except Exception as e:
             print(f"ERROR: Failed to write file '{filename}'. State not saved.");
@@ -200,6 +228,8 @@ class HScanTool(QGroupBox):
         dflt["values"] = "";
         dflt["instrument"] = "----------";
         dflt["parameter"] = "----------";
+        dflt["action_instrument"] = "----------";
+        dflt["action_parameter"] = "----------";
         dflt["progress"] = 0;
 
         return dflt
