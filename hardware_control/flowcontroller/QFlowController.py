@@ -215,7 +215,19 @@ class QFlowController(QInstrument):
         dflt["rate"] = 0.0;
 
         return dflt
-
+    
+    def set_setting(self, parameter:str, value:str):
+        
+        if (parameter == "gas"):
+            items = [self.gas_drop.itemText(i) for i in range(self.gas_drop.count())]
+            if (value in items):
+                self.settings["gas"] = value;
+                self.gas_drop.setCurrentText(value);
+            else:
+                print(f"ERROR: '{value}' is not an option for setting '{parameter}' in instrument '{self.name}'.")
+                return False;
+            
+        return True
 
 
 
