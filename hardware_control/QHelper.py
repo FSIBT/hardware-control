@@ -48,6 +48,38 @@ class QInstrument(QGroupBox):
     def get_values(self):
         """Return current list of values for logging"""
         return self.values.values()
+    
+    def set_setting(self, parameter:str, value:str):
+        """Adjusts a parameter in 'self.settings' and updates any GUI elements to reflect the change."""
+        
+        #Find instrument, get current setting for parameter
+        try:
+            current_val = self.settings[parameter];
+        except KeyError:
+            print("ERROR: Key '{parameter}' does not exist for instrument '{self.name}'.");
+        
+        if (type(current_val) == str):
+            try:
+                self.settings[parameter] = value;
+            except:
+                print(f"ERROR: Failed to convert {type(value)} '{value}' to string.");
+                print("Exiting scan")
+                return False;
+        elif (type(current_val) == int or type(current_val) == float):
+            try:
+                self.settings[parameter] = float(value);
+            except:
+                print(f"ERROR: Failed to convert {type(value)} '{value}' to float.");
+                print("Exiting scan")
+                return False;
+            
+        else:
+            print("ERROR: Settings must have string, float, or int datatype.");
+            print(f"\tInstrument '{self.name}' setting {parameter} has type: {type(current_val)}")
+            return False;
+        
+        return True
+        
 
 class QHardwareApp(QApplication):
     """Subclass of QApplication that is aware of what hardware is connected to it and can log data"""
