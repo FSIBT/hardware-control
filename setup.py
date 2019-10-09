@@ -10,7 +10,7 @@ setup(
 			  'hardware_control.AlicatFlowMeter',
               'hardware_control.CAEN',
 			  'hardware_control.DigitalDelayGenerator',
-			  'hardware_control.flowcontroller',
+			  'hardware_control.FlowController',
 			  'hardware_control.icons',
 			  'hardware_control.IonGauge',
 			  'hardware_control.Keysight',
