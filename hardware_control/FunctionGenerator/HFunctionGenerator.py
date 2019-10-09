@@ -79,37 +79,17 @@ class HFunctionGenerator(QInstrument):
             self.load_state(initialize_with);
             self.filename = initialize_with;
 
-        #Create GUI
-        #
-#        self.disp = OscilloscopeDisplayWidget(self, True);
-#        #
-#        self.horiz = OscilloscopeHorizontalWidget(self);
-#        #
-#        self.top_panel = QGridLayout();
-#        trig = OscilloscopeTriggerWidget(self);
-#        self.top_panel.addWidget(trig, 0, 0);
-#        #
         ch1 = FunctionGeneratorChannelWidget(1, self);
         
-#        ch2 = OscillscopeChannelWidget(2, self, "green");
-#        ch3 = OscillscopeChannelWidget(3, self, "blue");
-#        ch4 = OscillscopeChannelWidget(4, self, "red");
+
         self.channel_panel = QGridLayout();
         self.channel_panel.addWidget(ch1, 0, 0);
         
         if (num_channels == 2):
             ch2 = FunctionGeneratorChannelWidget(2, self);
             self.channel_panel.addWidget(ch2, 0, 1)
-#        self.channel_panel.addWidget(ch2, 0, 1);
-#        self.channel_panel.addWidget(ch3, 0, 2);
-#        self.channel_panel.addWidget(ch4, 0, 3);
-#        #
-#
-#        #
+
         self.master_layout = QGridLayout();
-#        self.master_layout.addWidget(self.disp, 0, 0, 1, 2);
-#        self.master_layout.addWidget(self.horiz, 0, 2, 1, 1);
-#        self.master_layout.addLayout(self.top_panel, 0, 3, 1, 1);
         self.master_layout.addLayout(self.channel_panel, 1, 0, 1, 4);
 
         #
@@ -243,19 +223,6 @@ class HFunctionGenerator(QInstrument):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 #
 # Defines a UI for AWG channels
 #
@@ -338,14 +305,6 @@ class FunctionGeneratorChannelWidget(QWidget):
         self.impedance_drop.currentIndexChanged.connect(lambda: control.set_settings_and_send(f"CH{channel}_impedance", float(self.impedance_drop.currentText())));
         self.impedance_drop.setCurrentText(str(control.settings[f"CH{channel}_impedance"]));
         #
-#        self.probe_label = QLabel("Probe attenutation: ");
-#        self.probe_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-#        #
-#        self.probe_drop = QComboBox();
-#        self.probe_drop.addItems([".001", ".01", ".1", "1", "10", "100", "1000"]);
-#        self.probe_drop.currentIndexChanged.connect(lambda: control.set_probe_atten(self.channel, float(self.probe_drop.currentText())));
-#        self.probe_drop.setCurrentText(str(control.settings["probe_atten"][f"CH{self.channel}"]));
-        #
         #Add widgets to grid layout
         self.lower_grid.addWidget(self.active_but, 0, 0);
         self.lower_grid.addWidget(self.mod_but, 1, 0);
@@ -354,18 +313,6 @@ class FunctionGeneratorChannelWidget(QWidget):
         self.lower_grid.addWidget(self.waveform_drop, 2, 1);
         self.lower_grid.addWidget(self.impedance_label, 3, 0);
         self.lower_grid.addWidget(self.impedance_drop, 3, 1);
-#        self.lower_grid.addWidget(self.probe_label, 4, 0);
-#        self.lower_grid.addWidget(self.probe_drop, 4, 1);
-        #
-        # self.lower_grid.addWidget(self.active_but, 0, 0);
-        # self.lower_grid.addWidget(self.BW_but, 1, 0);
-        # self.lower_grid.addWidget(self.Inv_but, 2, 0);
-        # self.lower_grid.addWidget(self.coupling_label, 0, 1);
-        # self.lower_grid.addWidget(self.coupling_drop, 1, 1);
-        # self.lower_grid.addWidget(self.impedance_label, 2, 1);
-        # self.lower_grid.addWidget(self.impedance_drop, 3, 1);
-        # self.lower_grid.addWidget(self.probe_label, 4, 1);
-        # self.lower_grid.addWidget(self.probe_drop, 5, 1);
 
         #******* DEFINE OVERALL LAYOUT
         #
@@ -374,268 +321,6 @@ class FunctionGeneratorChannelWidget(QWidget):
         self.master_layout.addLayout(self.form, 1, 0);
         self.master_layout.addLayout(self.lower_grid, 2, 0);
         self.setLayout(self.master_layout);
-#
-##
-## Defines a UI for oscilloscope channels
-##
-#class OscilloscopeTriggerWidget(QWidget):
-#
-#    def __init__(self, control):
-#        super().__init__();
-#
-#        #************** DEFINE UI *********************#
-#
-#        self.trigger_label_box = QHBoxLayout();
-#        self.trigger_label = QLabel();
-#        self.trigger_label.setPixmap(QPixmap(pkg_resources.resource_filename('hardware_control', 'Oscilloscope/graphics/trigger_label.png')));
-#        self.trigger_label_box.addWidget(self.trigger_label);
-#
-#        #****** DEFINE TEXT BOXES
-#        #
-#        self.level_edit = QLineEdit();
-#        self.level_edit.setValidator(QDoubleValidator());
-#        self.level_edit.editingFinished.connect(lambda: control.set_trigger_level(float(self.level_edit.text())));
-#        self.level_edit.setText(str(control.settings["trigger_level"]));
-#        #
-#        self.form = QFormLayout();
-#        self.form.addRow("Trigger Level (V):", self.level_edit);
-#
-#
-#        self.lower_grid = QGridLayout();
-#
-#        #******* DEFINE BUTTONS + DROPDOWNS
-#        #
-#        self.trig_chan_label = QLabel("Channel: ");
-#        self.trig_chan_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-#        #
-#        self.trig_chan_drop = QComboBox();
-#        self.trig_chan_drop.addItems(["1", "2", "3", "4"]);
-#        self.trig_chan_drop.currentIndexChanged.connect(lambda: control.set_trigger_channel(int(self.trig_chan_drop.currentText())));
-#        self.trig_chan_drop.setCurrentText(str(control.settings["probe_atten"]));
-#        #
-#        self.coupling_label = QLabel("Coupling:");
-#        self.coupling_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-#        #
-#        self.coupling_drop = QComboBox();
-#        self.coupling_drop.addItems(["DC", "AC"]);
-#        self.coupling_drop.currentIndexChanged.connect(lambda: control.set_trigger_coupling(self.coupling_drop.currentText()));
-#        self.coupling_drop.setCurrentText(control.settings["trigger_coupling"]);
-#        #
-#        self.edge_label = QLabel("Edge:");
-#        self.edge_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-#        #
-#        self.edge_drop = QComboBox();
-#        self.edge_drop.addItems(["POS", "NEG", "EITH", "ALT"]);
-#        self.edge_drop.currentIndexChanged.connect(lambda: control.set_trigger_edge(self.edge_drop.currentText()));
-#        self.edge_drop.setCurrentText(str(control.settings["trigger_edge"]));
-#        #
-#        self.single_but = QPushButton();
-#        self.single_but.setText("Single");
-#        self.single_but.clicked.connect(lambda: control.single_trigger());
-#        #
-#        self.run_but = QPushButton();
-#        self.run_but.setText("Run");
-#        self.run_but.clicked.connect(lambda: control.normal_trigger());
-#        #
-#        self.stop_but = QPushButton();
-#        self.stop_but.setText("Stop");
-#        self.stop_but.clicked.connect(lambda: control.halt());
-#
-#        #Add widgets to grid layout
-#        self.lower_grid.addWidget(self.trig_chan_label, 0, 0);
-#        self.lower_grid.addWidget(self.trig_chan_drop, 0, 1);
-#        self.lower_grid.addWidget(self.coupling_label, 1, 0);
-#        self.lower_grid.addWidget(self.coupling_drop, 1, 1);
-#        self.lower_grid.addWidget(self.edge_label, 2, 0);
-#        self.lower_grid.addWidget(self.edge_drop, 2, 1);
-#        self.lower_grid.addWidget(self.single_but, 3, 0);
-#        self.lower_grid.addWidget(self.run_but, 3, 1);
-#        self.lower_grid.addWidget(self.stop_but, 4, 1);
-#
-#        #******* DEFINE OVERALL LAYOUT
-#        #
-#        self.master_layout = QGridLayout();
-#        self.master_layout.addLayout(self.trigger_label_box, 0, 0)
-#        self.master_layout.addLayout(self.form, 1, 0);
-#        self.master_layout.addLayout(self.lower_grid, 2, 0);
-#        self.setLayout(self.master_layout);
-#
-##
-## Defines a UI for oscilloscope channels
-##
-#class OscilloscopeHorizontalWidget(QWidget):
-#
-#    def __init__(self, control):
-#        super().__init__();
-#
-#        #************** DEFINE UI *********************#
-#
-#        self.horizontal_label_box = QHBoxLayout();
-#        self.horizontal_label = QLabel();
-#        self.horizontal_label.setPixmap(QPixmap(pkg_resources.resource_filename('hardware_control', 'Oscilloscope/graphics/horizontal_label.png')));
-#        self.horizontal_label_box.addWidget(self.horizontal_label);
-#
-#        #****** DEFINE TEXT BOXES
-#        #
-#        self.timebase_edit = QLineEdit();
-#        self.timebase_edit.setValidator(QDoubleValidator());
-#        self.timebase_edit.editingFinished.connect(lambda: control.set_timebase(float(self.timebase_edit.text())));
-#        self.timebase_edit.setText(str(control.settings["timebase"]));
-#        #
-#        self.time_offset_edit = QLineEdit();
-#        self.time_offset_edit.setValidator(QDoubleValidator());
-#        self.time_offset_edit.editingFinished.connect(lambda: control.set_time_offset(float(self.time_offset_edit.text())));
-#        self.time_offset_edit.setText(str(control.settings["time_offset"]));
-#        #
-#        self.form = QFormLayout();
-#        self.form.addRow("Time/Div (s):", self.timebase_edit);
-#        self.form.addRow("Offset (s): ", self.time_offset_edit);
-#
-#        #******* DEFINE OVERALL LAYOUT
-#        #
-#        self.master_layout = QGridLayout();
-#        self.master_layout.addLayout(self.horizontal_label_box, 0, 0)
-#        self.master_layout.addLayout(self.form, 1, 0);
-#        self.setLayout(self.master_layout);
-#
-#class OscilloscopeDisplayWidget(QWidget):
-#
-#    def __init__(self, control, show_controls:bool=False, refresh:float=.2):
-#
-#        super().__init__();
-#
-#        self.control = control;
-#
-#        self.single_trig_mode = False;
-#
-#        #************** DEFINE UI *********************#
-#        #
-#        self.display = pg.PlotWidget();
-#        #
-#        self.master_layout = QGridLayout();
-#        self.master_layout.addWidget(self.display, 0, 0, 1, 5);
-#        #
-#        self.lineCH1 = pg.mkPen(color=(100, 100, 255), style=QtCore.Qt.DashLine);
-#        self.lineCH2 = pg.mkPen(color=(255, 100, 100), style=QtCore.Qt.DashLine);
-#        self.lineCH3 = pg.mkPen(color=(100, 255, 100), style=QtCore.Qt.DashLine);
-#        self.lineCH4 = pg.mkPen(color=(200, 200, 200), style=QtCore.Qt.DashLine);
-#        #
-#        self.CH1 = self.display.plot(pen=self.lineCH1, symbol=None);
-#        self.CH2 = self.display.plot(pen=self.lineCH2, symbol=None);
-#        self.CH3 = self.display.plot(pen=self.lineCH3, symbol=None);
-#        self.CH4 = self.display.plot(pen=self.lineCH4, symbol=None);
-#        #
-#        if (show_controls):
-#            self.refresh_rate_label = QLabel("Refresh Rate (Hz): ");
-#            #
-#            self.refresh_rate_edit = QLineEdit();
-#            self.refresh_rate_edit.setValidator(QDoubleValidator());
-#            self.refresh_rate_edit.editingFinished.connect(lambda: self.refresh_rate(float(self.refresh_rate_edit.text())));
-#            self.refresh_rate_edit.setText(str(refresh));
-#            #
-#            self.refresh_but = QPushButton();
-#            self.refresh_but.setText("Refresh");
-#            self.refresh_but.clicked.connect(control.query_waveforms);
-#            #
-#            self.refresh_mode_label =QLabel("Refresh Mode: ");
-#            #
-#            self.refresh_mode_drop = QComboBox();
-#            self.refresh_mode_drop.addItems(["Timer", "Single Trig", "Manual"]);
-#            self.refresh_mode_drop.currentIndexChanged.connect(lambda: self.set_refresh_mode(self.refresh_mode_drop.currentText()));
-#            self.refresh_mode_drop.setCurrentText("Timer");
-#            #
-#            #
-#            self.master_layout.addWidget(self.refresh_mode_label, 1, 0);
-#            self.master_layout.addWidget(self.refresh_mode_drop, 1, 1);
-#            self.master_layout.addWidget(self.refresh_rate_label, 1, 2);
-#            self.master_layout.addWidget(self.refresh_rate_edit, 1, 3);
-#            self.master_layout.addWidget(self.refresh_but, 1, 4);
-#
-#
-#
-#
-#        self.setLayout(self.master_layout);
-#
-#        self.update_timer = QTimer(self)
-#        self.update_timer.timeout.connect(control.query_waveforms);
-#        self.update_timer.start(1000/refresh)
-#
-#    #Set refresh rate (in Hz)
-#    def refresh_rate(self, rate:float):
-#        self.update_timer.setInterval(1000/rate);
-#
-#    #Set refresh rate (in ms)
-#    def refresh_period(self, period:float):
-#        self.update_timer.setInterval(period);
-#
-#    def set_refresh_mode(self, mode:str):
-#        if (mode == "Timer"):
-#            if (not self.update_timer.isActive()):
-#                self.update_timer.start();
-#            single_trig_mode = False;
-#        elif (mode == "Single Trig"):
-#            if (self.update_timer.isActive()):
-#                self.update_timer.stop();
-#            self.single_trig_mode = True;
-#        else:
-#            if (self.update_timer.isActive()):
-#                self.update_timer.stop();
-#                print("Stop!");
-#            single_trig_mode = False;
-#
-#
-#    def update_display(self, wvfms:dict):
-#        start_time = time.time();
-#        if ("CH1" in wvfms):
-#            self.CH1.setData(wvfms["CH1"][1], wvfms["CH1"][0]);
-#        else:
-#            pass;
-#
-#        if ("CH2" in wvfms):
-#            self.CH2.setData(wvfms["CH2"][1], wvfms["CH2"][0]);
-#        else:
-#            pass;
-#
-#        if ("CH3" in wvfms):
-#            self.CH3.setData(wvfms["CH3"][1], wvfms["CH3"][0]);
-#        else:
-#            pass;
-#
-#        if ("CH4" in wvfms):
-#            self.CH4.setData(wvfms["CH4"][1], wvfms["CH4"][0]);
-#        else:
-#            pass;
-##        print(f"'Widget' spent {time.time()-start_time} seconds updating waveforms.");
-#
-#
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -805,9 +490,3 @@ def setButtonState(button:QPushButton, value:bool):
     else:
         if (button.isChecked()):
             button.toggle();
-    # if (control.settings["channel_active"][f"CH{channel}"]):
-    #     if (not self.active_but.isChecked()):
-    #         self.active_but.toggle();
-    # else:
-    #     if (self.active_but.isChecked()):
-    #         self.active_but.toggle();
