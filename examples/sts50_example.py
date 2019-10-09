@@ -38,6 +38,9 @@ from hardware_control.FlowController.AlicatMSeriesCtrl import AlicatMSeriesCtrl
 from hardware_control.PulseGenerator.QPulseGen import QPulseGen
 from hardware_control.PulseGenerator.SRSDG535Ctrl import SRSDG535Ctrl
 from hardware_control.ScanTool.HScanTool import HScanTool
+from hardware_control.ConnectionStatusTool.HStatusTool import HStatusTool
+from hardware_control.FunctionGenerator.HFunctionGenerator import HFunctionGenerator
+from hardware_control.FunctionGenerator.Key_Ctrl import Key_Ctrl
 
 class STS50Demo(QMainWindow):
 
@@ -52,6 +55,9 @@ class STS50Demo(QMainWindow):
         scpi_scope = Key4000XCtrl("TCPIP0::192.168.0.14::INSTR", dummy, True, use_sockets, "192.168.0.14", 5025);
         self.scope_ctrl = QOscilloscope(scpi_scope, self, "Keysight", "DEFAULT", True);
 
+        awg = Key_Ctrl("Some-address-goes-here", dummy, True, use_sockets, "192.168.0.18", 5025);
+        self.awg_ctrl = HFunctionGenerator(awg, self, "RF Generator", "DEFAULT", True, 2);
+
         self.flow = AlicatMSeriesCtrl("192.168.0.15", dummy, True);
         self.flow_ctrl = QFlowController(self.flow, self, "Flow Controller", "flowcontroller_state.json", True);
 
@@ -63,13 +69,18 @@ class STS50Demo(QMainWindow):
 
         self.scantool = HScanTool(self, "Scan Control", "DEFAULT", True);
         self.scantool.update_instruments();
+        
+        self.statustool = HStatusTool(self, "Connection Status", "DEFAULT", True);
+        self.statustool.update_instruments();
 
         self.grid = QGridLayout();
-        self.grid.addWidget(self.scope_ctrl, 0, 0, 3, 1);
-        self.grid.addWidget(self.flow_ctrl, 0, 1);
-        self.grid.addWidget(self.trig1_ctrl, 1, 1);
-        self.grid.addWidget(self.trig2_ctr, 2, 1);
-        self.grid.addWidget(self.scantool, 0, 2)
+        self.grid.addWidget(self.scope_ctrl, 0, 0, 3, 3);
+        self.grid.addWidget(self.flow_ctrl, 0, 3);
+        self.grid.addWidget(self.trig1_ctrl, 1, 3);
+        self.grid.addWidget(self.trig2_ctr, 2, 3);
+        self.grid.addWidget(self.scantool, 0, 4)
+        self.grid.addWidget(self.statustool, 2, 4)
+        self.grid.addWidget(self.awg_ctrl, 3, 0, 1, 1)
         self.main_widget.setLayout(self.grid);
 
         self.setCentralWidget(self.main_widget);
