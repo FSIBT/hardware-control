@@ -31,6 +31,7 @@ class QInstrument(QGroupBox):
         self.manufacturer = None
         self.company = None
         self.status = False
+        self.ignore = False #Dictates if instrument should be ignored by ConnectionTool and ScanTool widgets
 
         self.window = window #parent needs to have a field called 'app' which is an instance of 'QHardwareApp'
 
