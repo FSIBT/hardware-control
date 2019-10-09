@@ -5,7 +5,7 @@ import numpy as np
 import json
 import pkg_resources
 
-import time #Get rid of this guy!
+import time
 
 import pyqtgraph as pg
 from PyQt5 import QtCore
@@ -29,6 +29,7 @@ class HScanTool(QGroupBox):
         self.save_on_close = save_on_close;
         self.name = name;
         self.app = window.app;
+        self.ignore = True;
 
         #Initialize state to correct values
         if (initialize_with == "INSTRUMENT"):
@@ -87,7 +88,7 @@ class HScanTool(QGroupBox):
         
         self.scan_button = QPushButton();
         self.scan_button.setText("Scan");
-        self.scan_button.setIcon(QIcon((QPixmap(pkg_resources.resource_filename('hardware_control', 'ScanTool/graphics/arrow.png')))));
+        self.scan_button.setIcon(QIcon((QPixmap(pkg_resources.resource_filename('hardware_control', 'ScanTool/graphics/scan.png')))));
         self.scan_button.setCheckable(False);
         self.scan_button.clicked.connect(self.scan);
         
@@ -134,14 +135,23 @@ class HScanTool(QGroupBox):
             print(f"\tAdded {len(params)} items to parameter dropdown.");
         else:
             print(f"ERROR: Couldn't find instrument '{inst}'");
+            
+        self.settings["progress"] = 0;
+        self.progress_bar.setValue(self.settings["progress"])
 
     def set_parameter(self, param:str):
         print(f"Setting parameter to {param}");
         self.settings["parameter"] = param;
+        
+        self.settings["progress"] = 0;
+        self.progress_bar.setValue(self.settings["progress"])
 
     def set_values(self, new_values:str):
         print(f"Setting values to {new_values}");
         self.settings["values"] = new_values;
+        
+        self.settings["progress"] = 0;
+        self.progress_bar.setValue(self.settings["progress"])
 
     def scan(self):
         
@@ -163,11 +173,21 @@ class HScanTool(QGroupBox):
             return;
         
         #Scan through values
+        count = 0;
         for v in vals:
+            self.settings["progress"] = count/len(vals)*100;
+            print(f"\tRunning value = '{v}'\t\t{count/len(vals)*100}%");
+            self.progress_bar.setValue(self.settings["progress"])
+            
             if (not scan_instrument.set_setting(self.settings["parameter"], v.strip())):
                 print(f"Failed to set parameter '{p}' to value '{v}'. Exiting scan.");
                 return;
+            count += 1;
             
+            time.sleep(.5);
+        
+        self.settings["progress"] = 100;
+        self.progress_bar.setValue(self.settings["progress"])
         print("Finished scan");
             
         
@@ -175,6 +195,8 @@ class HScanTool(QGroupBox):
         self.instrument_drop.clear()
         names = []
         for inst in self.app.instruments:
+            if (inst.ignore):
+                continue;
             names.append(inst.name);
         self.instrument_drop.addItems(names)
         
