@@ -10,8 +10,17 @@ import pathlib
 from PyQt5 import QtCore
 from PyQt5.QtCore import QThread, QSize
 from PyQt5.QtGui import QIcon, QFont, QFontMetrics
-from PyQt5.QtWidgets import (QApplication, QSizePolicy, QPushButton, QLabel, QMessageBox,
-                             QHBoxLayout, QVBoxLayout, QWidget, QGroupBox)
+from PyQt5.QtWidgets import (
+    QApplication,
+    QSizePolicy,
+    QPushButton,
+    QLabel,
+    QMessageBox,
+    QHBoxLayout,
+    QVBoxLayout,
+    QWidget,
+    QGroupBox,
+)
 from PyQt5.QtSvg import QSvgWidget
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -20,9 +29,9 @@ import matplotlib.pyplot as plt
 from matplotlib.dates import epoch2num
 import numpy as np
 
-class QInstrument(QGroupBox):
 
-    def __init__(self, window, name:str):
+class QInstrument(QGroupBox):
+    def __init__(self, window, name: str):
         super().__init__(name)
         self.settings = OrderedDict()
         self.values = OrderedDict()
@@ -31,56 +40,69 @@ class QInstrument(QGroupBox):
         self.manufacturer = None
         self.company = None
         self.status = False
-        self.ignore = False #Dictates if instrument should be ignored by ConnectionTool and ScanTool widgets
+        self.ignore = (
+            False
+        )  # Dictates if instrument should be ignored by ConnectionTool and ScanTool widgets
 
-        self.window = window #parent needs to have a field called 'app' which is an instance of 'QHardwareApp'
+        self.window = (
+            window
+        )  # parent needs to have a field called 'app' which is an instance of 'QHardwareApp'
 
         window.app.add_instrument(self)
 
     def __str__(self):
-        return f'{self.manufacturer} {self.model}'
+        return f"{self.manufacturer} {self.model}"
 
     def get_header(self):
         """Supply a header for a log file"""
-        header = f'{self.manufacturer}-{self.model}-'
-        header += '-'.join([f'{vname}[{vunit}]' for vname, vunit in zip(self.values.keys(), self.values_unit)])
+        header = f"{self.manufacturer}-{self.model}-"
+        header += "-".join(
+            [
+                f"{vname}[{vunit}]"
+                for vname, vunit in zip(self.values.keys(), self.values_unit)
+            ]
+        )
         return header
 
     def get_values(self):
         """Return current list of values for logging"""
         return self.values.values()
-    
-    def set_setting(self, parameter:str, value:str):
+
+    def set_setting(self, parameter: str, value: str):
         """Adjusts a parameter in 'self.settings' and updates any GUI elements to reflect the change."""
-        
-        #Find instrument, get current setting for parameter
+
+        # Find instrument, get current setting for parameter
         try:
-            current_val = self.settings[parameter];
+            current_val = self.settings[parameter]
         except KeyError:
-            print("ERROR: Key '{parameter}' does not exist for instrument '{self.name}'.");
-        
-        if (type(current_val) == str):
+            print(
+                "ERROR: Key '{parameter}' does not exist for instrument '{self.name}'."
+            )
+
+        if type(current_val) == str:
             try:
-                self.settings[parameter] = value;
+                self.settings[parameter] = value
             except:
-                print(f"ERROR: Failed to convert {type(value)} '{value}' to string.");
+                print(f"ERROR: Failed to convert {type(value)} '{value}' to string.")
                 print("Exiting scan")
-                return False;
-        elif (type(current_val) == int or type(current_val) == float):
+                return False
+        elif type(current_val) == int or type(current_val) == float:
             try:
-                self.settings[parameter] = float(value);
+                self.settings[parameter] = float(value)
             except:
-                print(f"ERROR: Failed to convert {type(value)} '{value}' to float.");
+                print(f"ERROR: Failed to convert {type(value)} '{value}' to float.")
                 print("Exiting scan")
-                return False;
-            
+                return False
+
         else:
-            print("ERROR: Settings must have string, float, or int datatype.");
-            print(f"\tInstrument '{self.name}' setting {parameter} has type: {type(current_val)}")
-            return False;
-        
+            print("ERROR: Settings must have string, float, or int datatype.")
+            print(
+                f"\tInstrument '{self.name}' setting {parameter} has type: {type(current_val)}"
+            )
+            return False
+
         return True
-        
+
 
 class QHardwareApp(QApplication):
     """Subclass of QApplication that is aware of what hardware is connected to it and can log data"""
@@ -96,16 +118,16 @@ class QHardwareApp(QApplication):
 
         self.instruments.append(widget)
 
-    def save_settings(self, filename:str):
+    def save_settings(self, filename: str):
         """ Copys the settings dictionaries from each instrument into a new dictionary
         with the instrument's name serving as the key. The dictionary is then saved
         to a JSON file. """
 
-        app_settings = {instr.name : instr.settings for instr in self.instruments}
+        app_settings = {instr.name: instr.settings for instr in self.instruments}
 
-        #Write JSON file
+        # Write JSON file
         try:
-            with open(filename, 'w') as file:
+            with open(filename, "w") as file:
                 json.dump(app_settings, file)
                 print(f"settings for {self.comm.instr.ID} saved to file '{filename}'")
         except Exception as e:
@@ -114,11 +136,11 @@ class QHardwareApp(QApplication):
 
     def list_instruments(self):
         if self.instruments:
-            print('Known instruments:')
+            print("Known instruments:")
         else:
-            print('No instruments known')
+            print("No instruments known")
         for i in self.instruments:
-            print(f'  {i}')
+            print(f"  {i}")
 
     def check_instruments(self):
         """Make sure all instruments conform to specifications"""
@@ -126,11 +148,12 @@ class QHardwareApp(QApplication):
             try:
                 i.name
             except AttributeError:
-                print(f'Error: Instrument  {i} needs a .name')
+                print(f"Error: Instrument  {i} needs a .name")
             if i.manufacturer is None:
-                print(f'Error: Instrument  {i} needs a .manufacturer')
+                print(f"Error: Instrument  {i} needs a .manufacturer")
             if i.model is None:
-                print(f'Error: Instrument  {i} needs a .model')
+                print(f"Error: Instrument  {i} needs a .model")
+
 
 class QOnOff(QPushButton):
     """An On/Off button with a nice icon for on/off
@@ -145,13 +168,25 @@ class QOnOff(QPushButton):
         super().__init__()
         self.setCheckable(True)
 
-        self.onText = 'On'
-        self.offText = 'Off'
-        self.unkownText = 'status unkown'
+        self.onText = "On"
+        self.offText = "Off"
+        self.unkownText = "status unkown"
 
-        self.onIcon = QIcon(pkg_resources.resource_filename('hardware_control', 'icons/button-power-on.svg'))
-        self.offIcon = QIcon(pkg_resources.resource_filename('hardware_control', 'icons/button-power-off.svg'))
-        self.unkownIcon = QIcon(pkg_resources.resource_filename('hardware_control', 'icons/button-power-unkown.svg'))
+        self.onIcon = QIcon(
+            pkg_resources.resource_filename(
+                "hardware_control", "icons/button-power-on.svg"
+            )
+        )
+        self.offIcon = QIcon(
+            pkg_resources.resource_filename(
+                "hardware_control", "icons/button-power-off.svg"
+            )
+        )
+        self.unkownIcon = QIcon(
+            pkg_resources.resource_filename(
+                "hardware_control", "icons/button-power-unkown.svg"
+            )
+        )
 
         self.f_on = f_on
         self.f_off = f_off
@@ -218,9 +253,15 @@ class QOnOffIndicator(QSvgWidget):
 
     def __init__(self, name):
         self.name = name
-        self.onIcon = pkg_resources.resource_filename('hardware_control', 'icons/on-off-indicator-on.svg')
-        self.offIcon = pkg_resources.resource_filename('hardware_control', 'icons/on-off-indicator-off.svg')
-        self.unkownIcon = pkg_resources.resource_filename('hardware_control', 'icons/on-off-indicator-unkown.svg')
+        self.onIcon = pkg_resources.resource_filename(
+            "hardware_control", "icons/on-off-indicator-on.svg"
+        )
+        self.offIcon = pkg_resources.resource_filename(
+            "hardware_control", "icons/on-off-indicator-off.svg"
+        )
+        self.unkownIcon = pkg_resources.resource_filename(
+            "hardware_control", "icons/on-off-indicator-unkown.svg"
+        )
 
         super().__init__(self.unkownIcon)
 
@@ -263,7 +304,8 @@ class QFixedLabel(QLabel):
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         if color is not None:
             self.setStyleSheet(
-                f'color: white;background-color:{color}; padding: 5px;border: 1px solid black;')
+                f"color: white;background-color:{color}; padding: 5px;border: 1px solid black;"
+            )
 
 
 class FigureTab(QWidget):
@@ -283,10 +325,10 @@ class FigureTab(QWidget):
 
         # custom toolbar
         self.controls = QHBoxLayout()
-        self.normalizebutton = QPushButton('normalize')
+        self.normalizebutton = QPushButton("normalize")
         self.normalizebutton.clicked.connect(self.toggle_normalize)
         self.normalizebutton.setCheckable(True)
-        self.autoscalebutton = QPushButton('autoscale')
+        self.autoscalebutton = QPushButton("autoscale")
         self.autoscalebutton.clicked.connect(self.toggle_autoscale)
         self.autoscalebutton.setCheckable(True)
         self.autoscalebutton.setChecked(True)
@@ -338,15 +380,16 @@ class FigureTab(QWidget):
         xleft, xright = self.axes.get_xlim()
         ybottom, ytop = self.axes.get_ylim()
         self.axes.clear()
-        self.axes.set_xlabel('Time')
+        self.axes.set_xlabel("Time")
         for k, v in self.data.items():
             myX = np.array([x[0] for x in v])
             myY = np.array([x[1] for x in v])
             if self.normalize and len(myY) and myY.max() > 0:
-                myY = myY/myY.max()
-            self.axes.plot_date(epoch2num(myX), myY, "o-",
-                                label=k, tz='America/Los_Angeles')
-        self.axes.legend(loc='best')
+                myY = myY / myY.max()
+            self.axes.plot_date(
+                epoch2num(myX), myY, "o-", label=k, tz="America/Los_Angeles"
+            )
+        self.axes.legend(loc="best")
         if not self.autoscale:
             self.axes.set_xlim([xleft, xright])
             self.axes.set_ylim([ybottom, ytop])
@@ -392,7 +435,7 @@ class RunFunctionsThread(QThread):
 class LoggerThread(QThread):
     """Write out the data to a log file"""
 
-    def __init__(self, datadir:pathlib.PosixPath=None, dummy:bool=False):
+    def __init__(self, datadir: pathlib.PosixPath = None, dummy: bool = False):
         """Set up the logfile. Either create it or open for append"""
 
         super().__init__()
@@ -402,20 +445,20 @@ class LoggerThread(QThread):
 
         if not datadir or not datadir.is_dir():
             self.keep_running = False
-            QMessageBox.about(None, 'Error', f'Cannot find logfile directory {datadir}')
+            QMessageBox.about(None, "Error", f"Cannot find logfile directory {datadir}")
 
-        self.YYYYMMDD = datetime.datetime.today().strftime('%Y-%m-%d')
+        self.YYYYMMDD = datetime.datetime.today().strftime("%Y-%m-%d")
         logdir = datadir / self.YYYYMMDD
         logdir.mkdir(exist_ok=True, parents=True)
         self.logdir = logdir
         if dummy:
-            self.logfilename = logdir / (self.YYYYMMDD+"-dummy.txt")
+            self.logfilename = logdir / (self.YYYYMMDD + "-dummy.txt")
         else:
-            self.logfilename = logdir / (self.YYYYMMDD+".txt")
+            self.logfilename = logdir / (self.YYYYMMDD + ".txt")
 
         # check if we need to write header
         if self.logfilename.exists() and self.logfilename.is_file():
-            with self.logfilename.open('r') as f:
+            with self.logfilename.open("r") as f:
                 self.oldlength = len(f.readlines())
         else:
             self.oldlength = 0
@@ -439,13 +482,15 @@ class LoggerThread(QThread):
         self.pause = False
 
     def write_header(self):
-        self.logfile.write(f'# {self.YYYYMMDD}\n# Logfile from hardware_control run\n')
-        datastructure = 'Time[s] ' + ' '.join([e.get_header() for e in self.elements])
+        self.logfile.write(f"# {self.YYYYMMDD}\n# Logfile from hardware_control run\n")
+        datastructure = "Time[s] " + " ".join([e.get_header() for e in self.elements])
         myhash = hashlib.sha256()
-        myhash.update(datastructure.encode('utf-8'))
+        myhash.update(datastructure.encode("utf-8"))
         version = myhash.hexdigest()
-        self.logfile.write(f'# Version: {version}\n')
-        self.logfile.write(f'{datastructure}\n')  # no '#' so that it is easier for pandas to read
+        self.logfile.write(f"# Version: {version}\n")
+        self.logfile.write(
+            f"{datastructure}\n"
+        )  # no '#' so that it is easier for pandas to read
 
     def run(self):
         # wait a few seconds before starting the log, so that the
@@ -453,7 +498,7 @@ class LoggerThread(QThread):
         time.sleep(5)
 
         # now open file
-        self.logfile = self.logfilename.open('a', buffering=1)
+        self.logfile = self.logfilename.open("a", buffering=1)
 
         # add header if file is empty
         if self.oldlength == 0:
@@ -461,12 +506,12 @@ class LoggerThread(QThread):
 
         while self.keep_running:
             if not self.pause:
-                line = f'{time.time()} '
+                line = f"{time.time()} "
                 data = []
                 for e in self.elements:
                     data.extend(e.get_values())
-                line += ' '.join([str(d) for d in data])
-                self.logfile.write(line+'\n')
+                line += " ".join([str(d) for d in data])
+                self.logfile.write(line + "\n")
             self.sleep(1)
 
         self.logfile.close()

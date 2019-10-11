@@ -30,8 +30,10 @@ from PyQt5.QtWidgets import (
     QLineEdit,
     QPushButton,
     QHBoxLayout,
-    QLabel, QWidget,
-    QGridLayout, QSizePolicy
+    QLabel,
+    QWidget,
+    QGridLayout,
+    QSizePolicy,
 )
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
@@ -42,10 +44,12 @@ from pathlib import Path
 from setuptools import setup
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from .Scope_control_test import Scope
-#from .QHelper import QOnOff, QFixedLabel, FigureTab
+
+# from .QHelper import QOnOff, QFixedLabel, FigureTab
 from PyQt5.Qt import QMutex, QMutexLocker
 
 rm = visa.ResourceManager()
+
 
 class QOnOff(QPushButton):
     """An On/Off button with a nice icon for on/off
@@ -64,12 +68,9 @@ class QOnOff(QPushButton):
         self.offText = "Off"
         self.unkownText = "status unkown"
 
-        self.onIcon = QIcon(
-            'button-power-on.svg')
-        self.offIcon = QIcon(
-            'button-power-off.svg')
-        self.unkownIcon = QIcon(
-            'button-power-unkown.svg')
+        self.onIcon = QIcon("button-power-on.svg")
+        self.offIcon = QIcon("button-power-off.svg")
+        self.unkownIcon = QIcon("button-power-unkown.svg")
 
         self.f_on = f_on
         self.f_off = f_off
@@ -125,7 +126,6 @@ class QOnOff(QPushButton):
 
     def isOn(self):
         return self.isChecked()
-
 
 
 class ScopeCommunication(QObject):
@@ -199,8 +199,8 @@ class FigureTab(QWidget):
         self.autoscalebutton.clicked.connect(self.toggle_autoscale)
         self.autoscalebutton.setCheckable(True)
         self.autoscalebutton.setChecked(True)
-#        self.controls.addWidget(self.normalizebutton)
-#        self.controls.addWidget(self.autoscalebutton)
+        #        self.controls.addWidget(self.normalizebutton)
+        #        self.controls.addWidget(self.autoscalebutton)
         self.controls.addStretch(1)
 
         self.vbox = QVBoxLayout()
@@ -272,7 +272,6 @@ class ScopeControls(QGroupBox):
         self.port = port
         self.scope = Scope(self.port, dummy=dummy)
         self.mutex = QMutex()
-        
 
         #        self.onoff = QOnOff(self.on, self.off)
         self.chbox = QVBoxLayout()
@@ -332,8 +331,8 @@ class ScopeControls(QGroupBox):
         self.OnOffButtons = [self.OnOff_1, self.OnOff_2, self.OnOff_3, self.OnOff_4]
         i = 0
         while i <= 3:
-            self.OnOffButtons[i].offText = ('CH' + str(i+1) + ' OFF')
-            self.OnOffButtons[i].onText = ('CH' + str(i+1) + ' ON')
+            self.OnOffButtons[i].offText = "CH" + str(i + 1) + " OFF"
+            self.OnOffButtons[i].onText = "CH" + str(i + 1) + " ON"
             i += 1
 
         self.control_box.addWidget(self.label)
@@ -367,7 +366,6 @@ class ScopeControls(QGroupBox):
         self.control_box.addStretch(1)
         self.scope_plot = FigureTab()
 
-
         if dummy:
             self.label.setText("dummy")
         # add controls and plot to layout then set layout
@@ -384,7 +382,6 @@ class ScopeControls(QGroupBox):
         sys.stdout.flush()
         self.comm.values_read.connect(self.read)
         self.read(2)
-
 
     def on1(self):
         n = 0
@@ -404,6 +401,7 @@ class ScopeControls(QGroupBox):
             stop_cmd = "DAT:STOP"
             self.scope.cmd(n, stop_cmd)
             print("Scope stopped reading data, CH1")
+
     def on2(self):
         if not self.dummy:
             n = 1
@@ -422,6 +420,7 @@ class ScopeControls(QGroupBox):
             stop_cmd = "DAT:STOP"
             self.scope.cmd(n, stop_cmd)
             print("Scope stopped reading data, CH2")
+
     def on3(self):
         if not self.dummy:
             n = 2
@@ -433,13 +432,14 @@ class ScopeControls(QGroupBox):
             self.read(2)
             print("dummy read CH3")
             return
-    
+
     def off3(self):
         if not self.dummy:
             n = 2
             stop_cmd = "DAT:STOP"
             self.scope.cmd(n, stop_cmd)
             print("Scope stopped reading data, CH3")
+
     def on4(self):
         if not self.dummy:
             n = 3
@@ -451,7 +451,7 @@ class ScopeControls(QGroupBox):
             self.read(3)
             print("dummy read CH4")
             return
-    
+
     def off4(self):
         if not self.dummy:
             n = 3
@@ -459,7 +459,6 @@ class ScopeControls(QGroupBox):
             self.scope.cmd(n, stop_cmd)
             print("Scope stopped reading data, CH4")
 
-            
     def get_values(self):
         out = []
         for ch in self.channels:
@@ -557,7 +556,7 @@ class ScopeControls(QGroupBox):
         ):  # bottom method below reads all channels and updates all plots iteratly
             # first method is one channel at a time
             data = self.scope.read(channels[n])
-#            self.update(data, n)
+            #            self.update(data, n)
             self.update2(data, n)
             print(f"Scope Reading channel, {channels[n]}")
             return data
@@ -591,32 +590,32 @@ class ScopeControls(QGroupBox):
         n = n
         if not self.dummy:
             if n == 0:
-                self.scope_plot.axes.plot(data[0], data[1], 'b-', label="CH1 V")
-                
+                self.scope_plot.axes.plot(data[0], data[1], "b-", label="CH1 V")
+
                 print(len(data), len(data[0]))
             if n == 1:
-                self.scope_plot.axes.plot(data[0], data[1], 'r-', label="CH2 V")
-#                self.scope_plot.plot.draw()
+                self.scope_plot.axes.plot(data[0], data[1], "r-", label="CH2 V")
+                #                self.scope_plot.plot.draw()
                 print(len(data), len(data[0]))
             if n == 2:
-                self.scope_plot.axes.plot(data[0], data[1], 'g-', label="CH3 V")
-#                self.scope_plot.plot.draw()
+                self.scope_plot.axes.plot(data[0], data[1], "g-", label="CH3 V")
+                #                self.scope_plot.plot.draw()
                 print(len(data), len(data[0]))
             if n == 3:
-                self.scope_plot.axes.plot(data[0], data[1], 'y-', label="CH4 V")
-#                self.scope_plot.plot.draw()
+                self.scope_plot.axes.plot(data[0], data[1], "y-", label="CH4 V")
+                #                self.scope_plot.plot.draw()
                 print(len(data), len(data[0]))
             print("Updating Channels")
             self.scope_plot.plot.draw()
-            
+
         else:
-            t = linspace(0, 2*math.pi, 400)
+            t = linspace(0, 2 * math.pi, 400)
             a = sin(t)
             b = cos(t)
             c = a + b
-            self.scope_plot.axes.plot(t, a, 'r-', label="Random Plot")
-            self.scope_plot.axes.plot(t, b, 'g-')
-            self.scope_plot.axes.plot(t, c, 'b-')
+            self.scope_plot.axes.plot(t, a, "r-", label="Random Plot")
+            self.scope_plot.axes.plot(t, b, "g-")
+            self.scope_plot.axes.plot(t, c, "b-")
             print("generating random plot points :D")
             self.scope_plot.plot.draw()
         self.scope_plot.plot.draw()
@@ -628,4 +627,6 @@ class ScopeControls(QGroupBox):
             self.command_response.setText(response)
             return
         else:
-            self.command_response.setText("LOL you can't send commands to a dummy, dummy!")
+            self.command_response.setText(
+                "LOL you can't send commands to a dummy, dummy!"
+            )

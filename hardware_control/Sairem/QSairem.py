@@ -4,8 +4,16 @@ from .control import Sairem
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer, QThread, pyqtSignal, pyqtSlot, QObject
 from PyQt5.QtGui import QIntValidator, QDoubleValidator
-from PyQt5.QtWidgets import (QGroupBox, QVBoxLayout, QSizePolicy, QFormLayout,
-                             QPushButton, QHBoxLayout, QLabel, QLineEdit)
+from PyQt5.QtWidgets import (
+    QGroupBox,
+    QVBoxLayout,
+    QSizePolicy,
+    QFormLayout,
+    QPushButton,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+)
 from PyQt5.Qt import QMutex, QMutexLocker
 
 from ..QHelper import QOnOff
@@ -57,29 +65,36 @@ class SairemCommunication(QObject):
 
             if faults:
                 # check modbus address to get error detail
-                for i in [104,105, 108,109]:
+                for i in [104, 105, 108, 109]:
                     out = self.instrument.read(i)
                     if i == 109:
                         if out & 4:
-                            print('ERROR: Sairem: max reflected power reached!')
+                            print("ERROR: Sairem: max reflected power reached!")
                             value = self.instrument.read_reflected_power()
-                            print(f'    reflected power currently set to {value}')
+                            print(f"    reflected power currently set to {value}")
                         elif out & 8:
-                            print('ERROR: Sairem: communication error!')
+                            print("ERROR: Sairem: communication error!")
 
-            self.new_values_read.emit(setpoint, frequency, forward_power,
-                                      reflected_power, mw_on, faults, auto_on)
+            self.new_values_read.emit(
+                setpoint,
+                frequency,
+                forward_power,
+                reflected_power,
+                mw_on,
+                faults,
+                auto_on,
+            )
 
     @pyqtSlot(str, float)
     def write(self, name, value):
         if self.online:
-            if name == 'power':
+            if name == "power":
                 self.instrument.set_power(value)
-            elif name == 'frequency':
+            elif name == "frequency":
                 self.instrument.set_frequency(value)
-            elif name == 'reset_faults':
+            elif name == "reset_faults":
                 self.instrument.reset_faults()
-            elif name == 'reflected_power':
+            elif name == "reflected_power":
                 self.instrument.set_reflected_power(value)
 
     @pyqtSlot(bool)
@@ -109,7 +124,7 @@ class SairemControl(QGroupBox):
     toggle_autotuning_on_off = pyqtSignal(bool)
 
     def __init__(self, parent=None, dummy=False):
-        super().__init__('Sairem')
+        super().__init__("Sairem")
 
         self.parent = parent
         self.setpoint = 0
@@ -134,12 +149,12 @@ class SairemControl(QGroupBox):
         self.top = QHBoxLayout()
 
         self.onoff = QOnOff(self.toggle_on_off)
-        self.onoff.offText = 'MW off'
-        self.onoff.onText = 'MW on'
+        self.onoff.offText = "MW off"
+        self.onoff.onText = "MW on"
         self.top.addWidget(self.onoff)
 
-        self.faults_indicator = QLabel('no faults')
-        self.reset_faults_button = QPushButton('Reset Faults')
+        self.faults_indicator = QLabel("no faults")
+        self.reset_faults_button = QPushButton("Reset Faults")
         self.reset_faults_button.clicked.connect(self.reset_faults)
 
         self.top.addWidget(self.faults_indicator)
@@ -153,27 +168,27 @@ class SairemControl(QGroupBox):
         self.power_input.returnPressed.connect(self.set_power)
 
         self.frequency_input = QLineEdit()
-        self.frequency_input.setText('2450')
+        self.frequency_input.setText("2450")
         self.frequency_input.setValidator(QDoubleValidator(2400, 2500, 1))
         self.frequency_input.returnPressed.connect(self.set_frequency)
 
-        self.power_indicator = QLabel('123')
-        self.reflected_indicator = QLabel('321')
-        self.forward_indicator = QLabel('321')
-        self.frequency_indicator = QLabel('321')
+        self.power_indicator = QLabel("123")
+        self.reflected_indicator = QLabel("321")
+        self.forward_indicator = QLabel("321")
+        self.frequency_indicator = QLabel("321")
 
-        self.inputs.addRow('Power (set)', self.power_input)
-        self.inputs.addRow('Frequency (set)', self.frequency_input)
-        self.inputs.addRow('Power', self.power_indicator)
-        self.inputs.addRow('Reflected Power', self.reflected_indicator)
-        self.inputs.addRow('Forward Power', self.forward_indicator)
-        self.inputs.addRow('Frequency', self.frequency_indicator)
+        self.inputs.addRow("Power (set)", self.power_input)
+        self.inputs.addRow("Frequency (set)", self.frequency_input)
+        self.inputs.addRow("Power", self.power_indicator)
+        self.inputs.addRow("Reflected Power", self.reflected_indicator)
+        self.inputs.addRow("Forward Power", self.forward_indicator)
+        self.inputs.addRow("Frequency", self.frequency_indicator)
 
         self.hbox.addLayout(self.inputs)
 
         self.autotune = QOnOff(self.toggle_autotuning_on_off)
-        self.autotune.offText = 'Autotune off'
-        self.autotune.onText = 'Autotune on'
+        self.autotune.offText = "Autotune off"
+        self.autotune.onText = "Autotune on"
         self.hbox.addWidget(self.autotune)
 
         self.hbox.addStretch(1)
@@ -183,22 +198,22 @@ class SairemControl(QGroupBox):
         # start out disabled
         self.toggle_enable(False)
 
-        self.write_value.emit('reflected_power', 100)
+        self.write_value.emit("reflected_power", 100)
 
     @pyqtSlot(bool)
     def toggle_enable(self, status):
         self.setEnabled(status)
 
     def reset_faults(self):
-        self.write_value.emit('reset_faults', 0)
+        self.write_value.emit("reset_faults", 0)
 
     def set_power(self):
         value = int(self.power_input.text())
-        self.write_value.emit('power', value)
+        self.write_value.emit("power", value)
 
     def set_frequency(self):
         value = float(self.frequency_input.text())
-        self.write_value.emit('frequency', value)
+        self.write_value.emit("frequency", value)
 
     @pyqtSlot(float, float, float, float, bool, bool, bool)
     def read(self, setpoint, frequency, forward, reflected, mw_on, faults, autotune):
@@ -210,18 +225,18 @@ class SairemControl(QGroupBox):
         self.faults = faults
         self.autotune_value = autotune
 
-        self.reflected_indicator.setText(f'{self.reflected} W')
-        self.forward_indicator.setText(f'{self.forward} W')
-        self.frequency_indicator.setText(f'{self.frequency} MHz')
-        self.power_indicator.setText(f'{self.setpoint} W')
+        self.reflected_indicator.setText(f"{self.reflected} W")
+        self.forward_indicator.setText(f"{self.forward} W")
+        self.frequency_indicator.setText(f"{self.frequency} MHz")
+        self.power_indicator.setText(f"{self.setpoint} W")
         if self.faults:
-            self.faults_indicator.setText('fault')
+            self.faults_indicator.setText("fault")
         else:
-            self.faults_indicator.setText('no fault')
+            self.faults_indicator.setText("no fault")
 
         # only read at startup
         if not self.init:
-            self.power_input.setText(f'{self.setpoint}')
+            self.power_input.setText(f"{self.setpoint}")
             if mw_on:
                 self.onoff.set_icon_on()
             else:
@@ -232,9 +247,8 @@ class SairemControl(QGroupBox):
                 self.autotune.set_icon_off()
             self.init = True
 
-
     def get_header(self):
-        return 'MW-setpoint[W] MW-freq[MHz] MW-forward[W] MW-reflected[W] MW-status[on/off]'
+        return "MW-setpoint[W] MW-freq[MHz] MW-forward[W] MW-reflected[W] MW-status[on/off]"
 
     def get_values(self):
         out = [self.setpoint, self.frequency, self.forward, self.reflected, self.mw_on]

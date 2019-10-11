@@ -7,13 +7,27 @@ from PyQt5 import QtCore
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QAbstractTableModel, QVariant
 from PyQt5.QtGui import QIcon, QKeySequence, QDoubleValidator, QFont
-from PyQt5.QtWidgets import (QApplication, QMainWindow, QGroupBox,
-                             QVBoxLayout, QSizePolicy,
-                             QMessageBox, QWidget, QLayout,
-                             QShortcut, QTableView, QHeaderView,
-                             QPushButton, QAction, QGridLayout,
-                             QHBoxLayout, QFileDialog,
-                             QLabel, QCheckBox, QLineEdit)
+from PyQt5.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QGroupBox,
+    QVBoxLayout,
+    QSizePolicy,
+    QMessageBox,
+    QWidget,
+    QLayout,
+    QShortcut,
+    QTableView,
+    QHeaderView,
+    QPushButton,
+    QAction,
+    QGridLayout,
+    QHBoxLayout,
+    QFileDialog,
+    QLabel,
+    QCheckBox,
+    QLineEdit,
+)
 from PyQt5.Qt import QMutex, QMutexLocker
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -28,8 +42,8 @@ class ChannelDisplay(QVBoxLayout):
         self.voltage = 0
         self.current = 0
 
-        self.voltage_label = QFixedLabel('+000.0000 xX', color)
-        self.current_label = QFixedLabel('+000.0000 xX', color)
+        self.voltage_label = QFixedLabel("+000.0000 xX", color)
+        self.current_label = QFixedLabel("+000.0000 xX", color)
 
         self.addWidget(self.voltage_label)
         self.addWidget(self.current_label)
@@ -39,31 +53,31 @@ class ChannelDisplay(QVBoxLayout):
         self.voltage = float(voltage)
         self.current = float(current)
         if abs(self.voltage) < 1e-3:
-            self.voltage_label.setText(f'{voltage*1e3:8.3f} mV')
+            self.voltage_label.setText(f"{voltage*1e3:8.3f} mV")
         else:
-            self.voltage_label.setText(f'{voltage:8.3f}  V')
+            self.voltage_label.setText(f"{voltage:8.3f}  V")
         if abs(self.current) < 1e-3:
-            self.current_label.setText(f'{self.current*1e6:8.3f} µA')
+            self.current_label.setText(f"{self.current*1e6:8.3f} µA")
         elif abs(self.current) < 1:
-            self.current_label.setText(f'{self.current*1e3:8.3f} mA')
+            self.current_label.setText(f"{self.current*1e3:8.3f} mA")
         else:
-            self.current_label.setText(f'{self.current:8.3f}  A')
+            self.current_label.setText(f"{self.current:8.3f}  A")
 
     def get_header(self):
-        return f'{self.name}-Voltage[V] {self.name}-Current[A]'
+        return f"{self.name}-Voltage[V] {self.name}-Current[A]"
 
     def get_values(self):
         return [self.voltage, self.current]
 
     def __repr__(self):
-        return f'{self.name}: {self.voltage} V {self.current} A'
+        return f"{self.name}: {self.voltage} V {self.current} A"
 
 
 class KeysightControl(QGroupBox):
     """Control the Keysight"""
 
     def __init__(self, parent=None, rm=None, dummy=False):
-        super().__init__('Keysight')
+        super().__init__("Keysight")
         self.parent = parent
 
         self.mutex = QMutex()
@@ -75,9 +89,9 @@ class KeysightControl(QGroupBox):
         self.hbox.addWidget(self.onoff)
 
         self.channeldisplay = QGridLayout()
-        self.CH1 = ChannelDisplay('Ch1', 'maroon')
-        self.CH2 = ChannelDisplay('CH2', 'green')
-        self.CH3 = ChannelDisplay('CH3', 'blue')
+        self.CH1 = ChannelDisplay("Ch1", "maroon")
+        self.CH2 = ChannelDisplay("CH2", "green")
+        self.CH3 = ChannelDisplay("CH3", "blue")
         self.channels = [self.CH1, self.CH2, self.CH3]
         for i, c in enumerate(self.channels):
             self.channeldisplay.addLayout(c, 1, i)
@@ -85,7 +99,7 @@ class KeysightControl(QGroupBox):
 
         self.heater = QHBoxLayout()
 
-        self.setbutton = QPushButton('Set Heater Current')
+        self.setbutton = QPushButton("Set Heater Current")
         self.setbutton.clicked.connect(self.set)
 
         self.input = QLineEdit()
@@ -95,7 +109,7 @@ class KeysightControl(QGroupBox):
         self.input.setValidator(QDoubleValidator(0, 2, 3))
         self.input.returnPressed.connect(self.set)
 
-        self.label = QLabel('')
+        self.label = QLabel("")
 
         self.heater.addWidget(self.label)
         self.heater.addWidget(self.setbutton)
@@ -104,7 +118,7 @@ class KeysightControl(QGroupBox):
         self.hbox.addLayout(self.heater)
 
         if rm is None or dummy:
-            self.label.setText('no RM')
+            self.label.setText("no RM")
             self.Keysight = E36313A(ResourceManager=None, dummy=dummy)
         else:
             self.Keysight = E36313A(rm)
@@ -159,7 +173,7 @@ class KeysightControl(QGroupBox):
             ch.update(v, i)
 
     def get_header(self):
-        return ' '.join([ch.get_header() for ch in self.channels])
+        return " ".join([ch.get_header() for ch in self.channels])
 
     def get_values(self):
         out = []

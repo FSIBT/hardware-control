@@ -4,9 +4,14 @@ import time
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer, QThread, pyqtSignal, pyqtSlot, QObject
 from PyQt5.QtGui import QDoubleValidator
-from PyQt5.QtWidgets import (QGroupBox, QVBoxLayout,
-                             QLineEdit, QPushButton,
-                             QHBoxLayout, QLabel)
+from PyQt5.QtWidgets import (
+    QGroupBox,
+    QVBoxLayout,
+    QLineEdit,
+    QPushButton,
+    QHBoxLayout,
+    QLabel,
+)
 
 from .control import Adam
 
@@ -47,8 +52,8 @@ class AdamCommunication(QObject):
         if self.online:
             current, voltage, pressure = self.instrument.read()
             # normalize values from raw readout, correct some zero offset
-            current = current/10 * 3e-3 + 8.1e-6  # 10V = 100% = 3mA
-            voltage = voltage/10 * 100e3 + 420  # 10V = 100 kV
+            current = current / 10 * 3e-3 + 8.1e-6  # 10V = 100% = 3mA
+            voltage = voltage / 10 * 100e3 + 420  # 10V = 100 kV
             pressure = pressure * 100
             self.new_values_read.emit(current, voltage, pressure)
 
@@ -57,7 +62,9 @@ class AdamCommunication(QObject):
         if self.online:
             # make sure value is valid
             if value < 0 or value > 80:
-                print('WARNING: Adam: Value out of range! channel:{channel} value={value}')
+                print(
+                    "WARNING: Adam: Value out of range! channel:{channel} value={value}"
+                )
 
             # scale value to 0-10 V
             value /= 10
@@ -71,7 +78,7 @@ class AdamControl(QGroupBox):
     write_value = pyqtSignal(int, float)
 
     def __init__(self, IP, parent=None, dummy=False, hvlimit=True):
-        super().__init__('Adam')
+        super().__init__("Adam")
         self.IP = IP
         self.voltage_setpoint = 0
         self.voltage_setpoint_last = 0
@@ -88,12 +95,12 @@ class AdamControl(QGroupBox):
 
         # list values
         self.value_box = QVBoxLayout()
-        self.voltage_label = QLabel('0 V')
-        self.current_label = QLabel('0 A')
+        self.voltage_label = QLabel("0 V")
+        self.current_label = QLabel("0 A")
         self.voltage_label.setAlignment(QtCore.Qt.AlignCenter)
         self.current_label.setAlignment(QtCore.Qt.AlignCenter)
 
-        self.pressure_label = QLabel('0 mTorr')
+        self.pressure_label = QLabel("0 mTorr")
         self.pressure_label.setAlignment(QtCore.Qt.AlignCenter)
 
         self.value_box.addWidget(self.voltage_label)
@@ -102,10 +109,10 @@ class AdamControl(QGroupBox):
         self.value_box.addStretch(1)
 
         # controls
-        self.setbutton = QPushButton('Set [in kV]')
+        self.setbutton = QPushButton("Set [in kV]")
         self.setbutton.clicked.connect(self.set)
 
-        self.setbutton_zero = QPushButton('Set to 0 kV')
+        self.setbutton_zero = QPushButton("Set to 0 kV")
         self.setbutton_zero.clicked.connect(self.set_to_zero)
 
         self.input = QLineEdit()
@@ -118,7 +125,7 @@ class AdamControl(QGroupBox):
             self.input.setValidator(QDoubleValidator(0, 80, 3))
         self.input.returnPressed.connect(self.set)
 
-        self.label = QLabel('')
+        self.label = QLabel("")
 
         self.controls = QVBoxLayout()
 
@@ -130,7 +137,7 @@ class AdamControl(QGroupBox):
 
         # indicators
         self.indicators = QVBoxLayout()
-        self.interlock_label = QLabel('not-interlocked')
+        self.interlock_label = QLabel("not-interlocked")
         self.indicators.addWidget(self.interlock_label)
 
         self.hbox.addLayout(self.value_box)
@@ -139,7 +146,7 @@ class AdamControl(QGroupBox):
         self.hbox.addStretch(1)
 
         if dummy:
-            self.label.setText('dummy')
+            self.label.setText("dummy")
 
         self.setLayout(self.hbox)
 
@@ -192,9 +199,9 @@ class AdamControl(QGroupBox):
             return
 
         # calculate increase, set some max/min values in kV/s
-        ramp_rate = min(self.ramp_rate*dt, 0.5)
+        ramp_rate = min(self.ramp_rate * dt, 0.5)
 
-        diff = self.voltage_setpoint-self.voltage_setpoint_last
+        diff = self.voltage_setpoint - self.voltage_setpoint_last
         diff = min(ramp_rate, diff)
         diff = max(-ramp_rate, diff)
 
@@ -206,7 +213,7 @@ class AdamControl(QGroupBox):
         self.voltage_setpoint = float(self.input.text())
 
     def set_to_zero(self):
-        self.input.setText('0')
+        self.input.setText("0")
         self.write_value.emit(0, 0)
         self.voltage_setpoint = 0
         self.voltage_setpoint_last = 0
@@ -226,12 +233,12 @@ class AdamControl(QGroupBox):
 
         self.interlocked = value
         if self.interlocked:
-            self.interlock_label.setText('interlocked')
+            self.interlock_label.setText("interlocked")
             self.set_to_zero()
             self.input.setEnabled(False)
             self.setbutton.setEnabled(False)
         else:
-            self.interlock_label.setText('non-interlocked')
+            self.interlock_label.setText("non-interlocked")
             self.input.setEnabled(True)
             self.setbutton.setEnabled(True)
 
@@ -243,20 +250,20 @@ class AdamControl(QGroupBox):
         self.pressure = pressure
 
         if abs(self.voltage) > 1e3:
-            self.voltage_label.setText(f'{self.voltage*1e-3:.3f} kV')
+            self.voltage_label.setText(f"{self.voltage*1e-3:.3f} kV")
         else:
-            self.voltage_label.setText(f'{self.voltage:.3f} V')
+            self.voltage_label.setText(f"{self.voltage:.3f} V")
 
         if abs(self.current) < 1e-3:
-            self.current_label.setText(f'{self.current*1e6:.3f} µA')
+            self.current_label.setText(f"{self.current*1e6:.3f} µA")
         elif abs(self.current) < 1:
-            self.current_label.setText(f'{self.current*1e3:.3f} mA')
+            self.current_label.setText(f"{self.current*1e3:.3f} mA")
         else:
-            self.current_label.setText(f'{self.current:.3f} A')
-        self.pressure_label.setText(f'{self.pressure:.3f} mTorr')
+            self.current_label.setText(f"{self.current:.3f} A")
+        self.pressure_label.setText(f"{self.pressure:.3f} mTorr")
 
     def get_header(self):
-        return 'HV-Voltage[V] HV-Current[A] Pressure[mTorr]'
+        return "HV-Voltage[V] HV-Current[A] Pressure[mTorr]"
 
     def get_values(self):
         return self.voltage, self.current, self.pressure

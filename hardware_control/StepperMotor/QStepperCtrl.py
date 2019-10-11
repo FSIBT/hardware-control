@@ -9,11 +9,11 @@ class QSTM_control(QHBoxLayout):
 
         self.motor = motor
 
-        self.goto_button = QPushButton('Go to...')
-        self.up1_button = QPushButton('+1')
-        self.down1_button = QPushButton('-1')
-        self.up5_button = QPushButton('+5')
-        self.down5_button = QPushButton('-5')
+        self.goto_button = QPushButton("Go to...")
+        self.up1_button = QPushButton("+1")
+        self.down1_button = QPushButton("-1")
+        self.up5_button = QPushButton("+5")
+        self.down5_button = QPushButton("-5")
 
         self.addWidget(self.goto_button)
         self.addWidget(self.up1_button)
@@ -34,7 +34,7 @@ class QSTM_control(QHBoxLayout):
         if self.motor:
             self.motor.step(steps)
         else:
-            print('STM motor: GUI not connected')
+            print("STM motor: GUI not connected")
 
     def goto(self, motor):
         num1, ok = QInputDialog.getInt(None, "Go to...", "Enter current value")
@@ -43,7 +43,7 @@ class QSTM_control(QHBoxLayout):
             num2, ok = QInputDialog.getInt(None, "Go to", "Go to...")
             if ok:
                 diff = num2 - num1
-                self.moveto(diff*motor.rotation_per_digit)
+                self.moveto(diff * motor.rotation_per_digit)
                 motor.position = num2
 
     def up1(self):

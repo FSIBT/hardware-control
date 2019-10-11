@@ -15,7 +15,6 @@ from abc import ABC, abstractmethod
 
 
 class Instrument(ABC):
-
     @abstractmethod
     def read(self):
         """Read values from instrument.
@@ -60,4 +59,3 @@ class Instrument(ABC):
         """
 
         raise NotImplementedError
-

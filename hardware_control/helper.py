@@ -21,7 +21,7 @@ config.read(inifile)
 
 def get_data_dir():
     try:
-        path = config.get("Paths", "data").replace('"', '')
+        path = config.get("Paths", "data").replace('"', "")
         path = path.replace("'", "")
         path = Path(path)
     except (configparser.NoOptionError, configparser.NoSectionError):
@@ -36,33 +36,33 @@ def get_data_dir():
 
 
 def iterate_pairs(mylist):
-    '''Go through an iterable and return the current item and the next'''
+    """Go through an iterable and return the current item and the next"""
 
     if len(mylist) < 2:
         return
     for i, d in enumerate(mylist[:-1]):
-        yield mylist[i], mylist[i+1]
+        yield mylist[i], mylist[i + 1]
     return
 
 
 def iterate_N(mylist, number=2):
-    '''Go through an iterable and return several items at once,
-    but still go through each item as the first in a list'''
+    """Go through an iterable and return several items at once,
+    but still go through each item as the first in a list"""
 
     if len(mylist) < number:
         return
-    for i, d in enumerate(mylist[:-number+1]):
-        yield [k for k in mylist[i:i+number]]
+    for i, d in enumerate(mylist[: -number + 1]):
+        yield [k for k in mylist[i : i + number]]
     return
 
 
 def group_N(mylist, number=2):
-    '''Go through an iterable and return several items at once'''
+    """Go through an iterable and return several items at once"""
 
     if len(mylist) < number:
         return
-    for i, d in enumerate(mylist[:1-number:number]):
-        yield [k for k in mylist[i*number:i*number+number]]
+    for i, d in enumerate(mylist[: 1 - number : number]):
+        yield [k for k in mylist[i * number : i * number + number]]
     return
 
 
@@ -80,19 +80,19 @@ def find_file(name, local_only=False):
         return test
 
     # search in data_dir for file
-    result = list(data_dir.glob(f'**/{name}'))
+    result = list(data_dir.glob(f"**/{name}"))
     if len(result) == 0:
-        print(f'Could not find file {name} in {data_dir}')
+        print(f"Could not find file {name} in {data_dir}")
         if local_only:
             return None
-        print('Checking google')
+        print("Checking google")
         found = find_file_drive(name)
         return found
     elif len(result) == 1:
         return result[0]
     else:
-        print(f'more than one match for {name}')
-        print(f'using {result[0]}')
+        print(f"more than one match for {name}")
+        print(f"using {result[0]}")
         return result[0]
 
 
@@ -105,10 +105,10 @@ def find_file_drive(name):
         sys.exit(1)
 
     drive_update_listing()
-    mydirs = cachedir.glob('root-data-*')
+    mydirs = cachedir.glob("root-data-*")
     found = None
     founddir = None
-    print('Checking google cache for file')
+    print("Checking google cache for file")
     for m in mydirs:
         with m.open() as f:
             tmp = json.load(f)
@@ -117,16 +117,19 @@ def find_file_drive(name):
                 d = m.name
                 d = d[10:-5]
 
-                found = f'{d}/{i}'
+                found = f"{d}/{i}"
                 founddir = d
                 break
 
     if found:
-        print('downloading file', found)
+        print("downloading file", found)
         # download file
-        out = subprocess.check_output(f'rclone copy hardware_control:Data/{found} {data_dir}/{founddir}/',
-                                      stderr=subprocess.STDOUT, shell=True)
-        return f'{data_dir}/{found}'
+        out = subprocess.check_output(
+            f"rclone copy hardware_control:Data/{found} {data_dir}/{founddir}/",
+            stderr=subprocess.STDOUT,
+            shell=True,
+        )
+        return f"{data_dir}/{found}"
     return None
 
 
@@ -141,27 +144,30 @@ def drive_update_listing():
     # ensure directory exists
     cachedir.mkdir(parents=True, exist_ok=True)
 
-    root_dir = cachedir / 'root-data.json'
+    root_dir = cachedir / "root-data.json"
     if root_dir.exists():
         with root_dir.open() as f:
             old = json.load(f)
     else:
         old = None
 
-    print('Updating google cache')
-    out = subprocess.check_output("rclone lsjson --fast-list --drive-skip-gdocs hardware_control:Data",
-                                  stderr=subprocess.STDOUT, shell=True)
+    print("Updating google cache")
+    out = subprocess.check_output(
+        "rclone lsjson --fast-list --drive-skip-gdocs hardware_control:Data",
+        stderr=subprocess.STDOUT,
+        shell=True,
+    )
 
     datatmp = json.loads(out)
 
     # we reformat the data a bit, so that lookup is easier. We also only need the ModTime
     data = {}
     for i in datatmp:
-        if i['IsDir']:
-            data[i['Path']] = i['ModTime']
+        if i["IsDir"]:
+            data[i["Path"]] = i["ModTime"]
 
     # always save data
-    with root_dir.open('w') as f:
+    with root_dir.open("w") as f:
         json.dump(data, f)
 
     # if the timestamp didn't change, we don't need to update the listing
@@ -182,16 +188,19 @@ def drive_update_listing():
 
     # next we download listings for all directories
     for d in tqdm(needs_update):
-        mydir = cachedir / f'root-data-{d}.json'
-        out = subprocess.check_output(f"rclone lsjson -R --fast-list --drive-skip-gdocs hardware_control:Data/{d}",
-                                      stderr=subprocess.STDOUT, shell=True)
+        mydir = cachedir / f"root-data-{d}.json"
+        out = subprocess.check_output(
+            f"rclone lsjson -R --fast-list --drive-skip-gdocs hardware_control:Data/{d}",
+            stderr=subprocess.STDOUT,
+            shell=True,
+        )
 
         datatmp = json.loads(out)
         # we reformat the data a bit, so that lookup is easier. We also only need the ModTime
         data = {}
         for i in datatmp:
-            data[i['Path']] = i['ModTime']
+            data[i["Path"]] = i["ModTime"]
 
         # always save data
-        with mydir.open('w') as f:
+        with mydir.open("w") as f:
             json.dump(data, f)

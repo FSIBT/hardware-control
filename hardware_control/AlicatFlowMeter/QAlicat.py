@@ -73,7 +73,9 @@ class AlicatCommunication(QObject):
 class AlicatControl(QGroupBox):
     write_value = pyqtSignal(int, float)
 
-    def __init__(self, port, address, parent=None, dummy=False, debug=False, massflow_limit=True):
+    def __init__(
+        self, port, address, parent=None, dummy=False, debug=False, massflow_limit=True
+    ):
         super().__init__("Alicat")
         self.port = port
         self.addr = address

@@ -70,7 +70,7 @@ class IonGaugeCommunication(QObject):
             sys.stdout.flush()
             self.values_read.emit(round(pressure, 2))
         else:
-            pressure = (np.random.normal(0, 900))
+            pressure = np.random.normal(0, 900)
             self.values_read.emit(round(pressure, 3))
 
     @pyqtSlot(int, float)
@@ -85,7 +85,9 @@ class IonGaugeCommunication(QObject):
 class QIonGauge(QGroupBox):
     write_value = pyqtSignal(int, float)
 
-    def __init__(self, port, address, parent=None, dummy=False, debug=False, pressure_limit=True):
+    def __init__(
+        self, port, address, parent=None, dummy=False, debug=False, pressure_limit=True
+    ):
         super().__init__("IonGauge")
         self.port = port
         self.address = address
@@ -155,12 +157,12 @@ class QIonGauge(QGroupBox):
         # print("in funct zyx")
         # sys.stdout.flush()
 
-#        self.timer = QTimer(self)
-#        self.timer.timeout.connect(self.read())
-#        self.timer.start(1000)
+    #        self.timer = QTimer(self)
+    #        self.timer.timeout.connect(self.read())
+    #        self.timer.start(1000)
 
-        # start out disabled
-        # self.toggle_enable(False)
+    # start out disabled
+    # self.toggle_enable(False)
 
     @pyqtSlot(bool)
     def toggle_enable(self, status):
@@ -194,7 +196,7 @@ class QIonGauge(QGroupBox):
         else:
             data = self.pressure + np.random.normal(0, 900)
             pressure = round(data, 2)
-            self.pressure_label.setText(f'{pressure}')
+            self.pressure_label.setText(f"{pressure}")
 
         return round(pressure, 3)
 

@@ -6,31 +6,30 @@ import time
 from ..Instrument import Instrument
 
 
-class DummySocket():
-
+class DummySocket:
     def __init__(self, parent=None):
         self.parent = parent
-        print(f'STM motor: creating dummy connection')
-        print(f'   {self.parent.ip} {self.parent.port}')
+        print(f"STM motor: creating dummy connection")
+        print(f"   {self.parent.ip} {self.parent.port}")
 
         self.returnindex = 0
-        self.returnvalue = b'\x00\x072345'
-        print('debug', self.returnvalue)
+        self.returnvalue = b"\x00\x072345"
+        print("debug", self.returnvalue)
 
     def recvfrom(self, n):
         # print(f' STM_motor ({self.parent.ip}) recvfrom {n}')
         if self.returnindex == len(self.returnvalue):
             self.returnindex = 0
-            return b'\r', 'dummy'
+            return b"\r", "dummy"
         else:
             self.returnindex += 1
-            return chr(self.returnvalue[self.returnindex-1]).encode('ascii'), 'dummy'
+            return chr(self.returnvalue[self.returnindex - 1]).encode("ascii"), "dummy"
 
     def send(self, cmd):
-        print(f' STM_motor ({self.parent.ip}) write: {cmd}')
+        print(f" STM_motor ({self.parent.ip}) write: {cmd}")
 
     def close(self):
-        print(f' STM_motor ({self.parent.ip}) close')
+        print(f" STM_motor ({self.parent.ip}) close")
 
 
 class STM(Instrument):
@@ -68,7 +67,7 @@ class STM(Instrument):
                 # local port, since the motor remembers the IP/port and only accepts
                 # the same IP/port combination after the first command it receives
                 # (until power cycle)
-                sock.bind(('192.168.0.2', self.port))
+                sock.bind(("192.168.0.2", self.port))
                 sock.connect((self.ip, 7776))  # TCP
                 self.sock = sock
 
@@ -79,7 +78,7 @@ class STM(Instrument):
             except socket.timeout:
                 pass
             except OSError:
-                print('Motor socket not yet available')
+                print("Motor socket not yet available")
         else:
             self.sock = DummySocket(parent=self)
             self.online = True
@@ -95,39 +94,39 @@ class STM(Instrument):
         and the trailing \r. Return the result.
         """
         if not self.online:
-            return ''
+            return ""
 
         cont = True
         out = []
         while cont:
             try:
                 c, a = self.sock.recvfrom(1)
-                if c == b'\r':
+                if c == b"\r":
                     cont = False
             except socket.timeout:
                 cont = False
-                c = ''
+                c = ""
             out.append(c)
-        out = ''.join([x.decode('ascii') for x in out[2:-1]])
-        if out == '*':
+        out = "".join([x.decode("ascii") for x in out[2:-1]])
+        if out == "*":
             time.sleep(0.1)
             out = self.read()
-        if out.startswith('?'):
-            print('ERROR', out[1:])
+        if out.startswith("?"):
+            print("ERROR", out[1:])
         return out
 
     def write(self, cmd):
         # all commands need to have an op-code of 07 in front of the command
-        out = f'\0\7{cmd}\r'
+        out = f"\0\7{cmd}\r"
         try:
-            self.sock.send(out.encode('ascii'))
+            self.sock.send(out.encode("ascii"))
         except ConnectionResetError:
             self.online = False
             self.try_connect()
             if self.online:
-                self.sock.send(out.encode('ascii'))
+                self.sock.send(out.encode("ascii"))
             else:
-                print(f'STM error: command {cmd} failed')
+                print(f"STM error: command {cmd} failed")
 
     def query(self, cmd):
         self.write(cmd)
@@ -136,37 +135,37 @@ class STM(Instrument):
 
     def set_speed(self, rev_per_sec):
         """Set the speed in revolutions per second"""
-        self.query(f'VE{rev_per_sec}')
+        self.query(f"VE{rev_per_sec}")
 
     def step(self, steps):
         """Take FL 'steps'"""
-        self.query(f'FL{steps}')
+        self.query(f"FL{steps}")
 
 
 if __name__ == "__main__":
     # some code to test the instrument
-    test = STM(IPaddress='192.168.0.80', localPort=55061)
-    test.write('VE')
+    test = STM(IPaddress="192.168.0.80", localPort=55061)
+    test.write("VE")
     print(test.read())
-    print('start')
+    print("start")
     for k in range(10):
-        print('loop', k)
+        print("loop", k)
         sys.stdout.flush()
 
-        test.write('CJ')
+        test.write("CJ")
         out = test.read()
         time.sleep(2)
 
-        test.query('AL')
+        test.query("AL")
         time.sleep(0.1)
-        test.query('CE')
+        test.query("CE")
         time.sleep(0.1)
 
         # query('EP')
         # time.sleep(0.1)
 
-        test.query('SJ')
+        test.query("SJ")
         time.sleep(2)
 
-    print('end')
+    print("end")
     test.close()

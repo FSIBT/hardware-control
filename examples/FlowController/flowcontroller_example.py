@@ -17,10 +17,21 @@ from PyQt5 import QtCore
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtGui import QIcon, QIntValidator
-from PyQt5.QtWidgets import (QApplication, QMainWindow, QSizePolicy,
-                             QHBoxLayout, QVBoxLayout, QLabel, QCheckBox,
-                             QMessageBox, QWidget, QLineEdit,
-                             QPushButton, QAction, QGridLayout)
+from PyQt5.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QSizePolicy,
+    QHBoxLayout,
+    QVBoxLayout,
+    QLabel,
+    QCheckBox,
+    QMessageBox,
+    QWidget,
+    QLineEdit,
+    QPushButton,
+    QAction,
+    QGridLayout,
+)
 
 from hardware_control.FlowController.QFlowController import QFlowController
 from hardware_control.FlowController.AlicatMSeriesCtrl import AlicatMSeriesCtrl
@@ -28,32 +39,33 @@ from hardware_control.FlowController.AlicatMSeriesCtrl import AlicatMSeriesCtrl
 from docopt import docopt
 
 commands = docopt(__doc__)
-dummy = commands['--dummy']
+dummy = commands["--dummy"]
+
 
 class FlowControllerDemo(QMainWindow):
-
     def __init__(self, app):
-        super().__init__();
-        self.app = app;
+        super().__init__()
+        self.app = app
 
-        self.setWindowTitle('Flow Controller Demo')
+        self.setWindowTitle("Flow Controller Demo")
 
         self.main_widget = QWidget(self)
 
-        self.instr = AlicatMSeriesCtrl("192.168.0.15", dummy, True);
-        self.instr_ctrl = QFlowController(self.instr, "flowcontroller_state.json", True);
+        self.instr = AlicatMSeriesCtrl("192.168.0.15", dummy, True)
+        self.instr_ctrl = QFlowController(self.instr, "flowcontroller_state.json", True)
 
         self.grid = QGridLayout()
-        self.grid.addWidget(self.instr_ctrl, 0, 0);
-        self.main_widget.setLayout(self.grid);
+        self.grid.addWidget(self.instr_ctrl, 0, 0)
+        self.main_widget.setLayout(self.grid)
 
-        self.setCentralWidget(self.main_widget);
+        self.setCentralWidget(self.main_widget)
         self.show()
 
     def close(self):
         self.instr_ctrl.close()
 
-app = QApplication([]);
-ex = FlowControllerDemo(app);
+
+app = QApplication([])
+ex = FlowControllerDemo(app)
 app.aboutToQuit.connect(ex.close)
-sys.exit(app.exec_());
+sys.exit(app.exec_())
