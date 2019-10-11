@@ -47,7 +47,7 @@ class HC_Instrument(QGroupBox):
 
         self.window = (
             window
-        )  # parent needs to have a field called 'app' which is an instance of 'QHardwareApp'
+        )  # parent needs to have a field called 'app' which is an instance of 'HC_App'
 
         window.app.add_instrument(self)
 
@@ -105,7 +105,7 @@ class HC_Instrument(QGroupBox):
         return True
 
 
-class HC_HardwareApp(QApplication):
+class HC_App(QApplication):
     """Subclass of QApplication that is aware of what hardware is connected to it and can log data"""
 
     def __init__(self, *args, **kwargs):

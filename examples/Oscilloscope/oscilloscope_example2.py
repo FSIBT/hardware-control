@@ -41,7 +41,7 @@ commands = docopt(__doc__)
 dummy = commands["--dummy"]
 use_sockets = commands["--socket"]
 
-from hardware_control.base import QHardwareApp
+from hardware_control.base import HC_App
 from hardware_control.Oscilloscope.QOscilloscope import QOscilloscope
 from hardware_control.Oscilloscope.Key4000XCtrl import Key4000XCtrl
 
@@ -79,7 +79,7 @@ class ScopeWindow(QMainWindow):
 
 
 def main(argv):
-    app = QHardwareApp([])
+    app = HC_App([])
     ex = ScopeWindow(app, use_sockets)
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())
