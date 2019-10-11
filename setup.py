@@ -12,7 +12,6 @@ setup(
         "hardware_control.CAEN",
         "hardware_control.DigitalDelayGenerator",
         "hardware_control.FlowController",
-        "hardware_control.icons",
         "hardware_control.IonGauge",
         "hardware_control.Keysight",
         "hardware_control.Oscilloscope",
