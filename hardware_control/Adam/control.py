@@ -1,10 +1,10 @@
 import socket
 import numpy as np
 
-from ..Instrument import Instrument
+from ..HC_Control import HC_Control
 
 
-class Adam(Instrument):
+class Adam(HC_Control):
     """Control of Adam input/output module"""
 
     def __init__(self, IP, dummy=False):

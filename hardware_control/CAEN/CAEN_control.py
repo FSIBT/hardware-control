@@ -2,7 +2,7 @@ import random
 import sys
 import visa
 
-from ..Instrument import Instrument
+from ..HC_Control import HC_Control
 
 
 class DummyConnection:
@@ -22,7 +22,7 @@ class DummyConnection:
         print("CAEN: close connection")
 
 
-class CAEN_control(Instrument):
+class CAEN_control(HC_Control):
     def __init__(self, ResourceManager, IP_address, IP_port, dummy=False):
         self.dummy = dummy
         self.online = False

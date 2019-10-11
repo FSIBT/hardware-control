@@ -14,7 +14,7 @@ e.g. write could be write(channel, value).
 from abc import ABC, abstractmethod
 
 
-class Instrument(ABC):
+class HC_Control(ABC):
     @abstractmethod
     def read(self):
         """Read values from instrument.

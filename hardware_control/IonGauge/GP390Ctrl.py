@@ -4,7 +4,7 @@ import numpy as np
 import sys
 
 
-# from hardware_control.Instrument import Instrument
+# from hardware_control.HC_Control import HC_Control
 
 
 rm = visa.ResourceManager()

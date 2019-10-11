@@ -2,7 +2,7 @@ import numpy as np
 import sys
 from pymodbus.client.sync import ModbusSerialClient as ModbusClient
 
-from ..Instrument import Instrument
+from ..HC_Control import HC_Control
 
 
 class DummyReadReturn:
@@ -28,7 +28,7 @@ class DummyConnection:
         print("Sairem: close instrument")
 
 
-class Sairem(Instrument):
+class Sairem(HC_Control):
     """Control the microwave power supply"""
 
     def __init__(self, dummy=False):

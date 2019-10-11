@@ -30,7 +30,7 @@ from matplotlib.dates import epoch2num
 import numpy as np
 
 
-class QInstrument(QGroupBox):
+class HC_Control(QGroupBox):
     def __init__(self, window, name: str):
         super().__init__(name)
         self.settings = OrderedDict()
@@ -104,7 +104,7 @@ class QInstrument(QGroupBox):
         return True
 
 
-class QHardwareApp(QApplication):
+class HC_HardwareApp(QApplication):
     """Subclass of QApplication that is aware of what hardware is connected to it and can log data"""
 
     def __init__(self, *args, **kwargs):

@@ -3,7 +3,7 @@ import socket
 import sys
 import time
 
-from ..Instrument import Instrument
+from ..HC_Control import HC_Control
 
 
 class DummySocket:
@@ -32,7 +32,7 @@ class DummySocket:
         print(f" STM_motor ({self.parent.ip}) close")
 
 
-class STM(Instrument):
+class STM(HC_Control):
     """Control of STM motors, see manual for details
 
     The motor will remember the port and ipaddress of the first command it gets
