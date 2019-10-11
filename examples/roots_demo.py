@@ -70,7 +70,7 @@ from hardware_control.STM_motor.control import STM
 from hardware_control.STM_motor.QSTM_motor import QSTM_control
 from hardware_control.Logfile.plot_logfile import LogPlot
 
-from hardware_control.QHelper import FigureTab, RunFunctionsThread, LoggerThread
+from hardware_control.base import FigureTab, RunFunctionsThread, LoggerThread
 
 faulthandler.enable()
 

@@ -16,7 +16,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.Qt import QMutex, QMutexLocker
 
-from ..QHelper import QOnOff
+from ..base import QOnOff
 
 
 class SairemCommunication(QObject):

@@ -45,7 +45,7 @@ from setuptools import setup
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from .Scope_control_test import Scope
 
-# from .QHelper import QOnOff, QFixedLabel, FigureTab
+# from .base import QOnOff, QFixedLabel, FigureTab
 from PyQt5.Qt import QMutex, QMutexLocker
 
 rm = visa.ResourceManager()

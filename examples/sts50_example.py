@@ -41,7 +41,7 @@ commands = docopt(__doc__)
 dummy = commands["--dummy"]
 use_sockets = commands["--socket"]
 
-from hardware_control.QHelper import QHardwareApp
+from hardware_control.base import QHardwareApp
 from hardware_control.Oscilloscope.QOscilloscope import QOscilloscope
 from hardware_control.Oscilloscope.Key4000XCtrl import Key4000XCtrl
 from hardware_control.FlowController.QFlowController import QFlowController

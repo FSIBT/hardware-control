@@ -4,7 +4,7 @@ from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtWidgets import QGroupBox, QFormLayout, QLabel, QLineEdit, QHBoxLayout
 from PyQt5.QtCore import QTimer, pyqtSignal, pyqtSlot, QObject
 
-from ..QHelper import QOnOff, QOnOffIndicator, HC_Instrument
+from ..base import QOnOff, QOnOffIndicator, HC_Instrument
 
 
 class CAEN_communication(QObject):

@@ -2,7 +2,7 @@ import numpy as np
 import sys
 from pymodbus.client.sync import ModbusSerialClient as ModbusClient
 
-from ..HC_Control import HC_Control
+from ..base import HC_Control
 
 
 class DummyReadReturn:

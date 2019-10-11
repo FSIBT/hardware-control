@@ -66,7 +66,7 @@ from hardware_control.Oscilloscopes.OscilloscopeControl import OscilloscopeContr
 from hardware_control.Oscilloscopes.comm_DSOX4054A import comm_DSOX4054A
 from hardware_control.Logfile.plot_logfile import LogPlot
 
-from hardware_control.QHelper import FigureTab, RunFunctionsThread, LoggerThread
+from hardware_control.base import FigureTab, RunFunctionsThread, LoggerThread
 
 faulthandler.enable()
 

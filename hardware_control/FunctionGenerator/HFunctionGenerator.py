@@ -11,7 +11,7 @@ import pkg_resources
 
 import time  # Get rid of this guy!
 
-from hardware_control.QHelper import HC_Instrument
+from hardware_control.base import HC_Instrument
 import pyqtgraph as pg
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer, QThread, pyqtSignal, pyqtSlot, QObject

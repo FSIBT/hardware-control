@@ -2,7 +2,7 @@ import random
 import sys
 import visa
 
-from ..HC_Control import HC_Control
+from ..base import HC_Control
 
 
 class DummyConnection:

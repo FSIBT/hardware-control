@@ -3,7 +3,7 @@ import socket
 import sys
 import time
 
-from ..HC_Control import HC_Control
+from ..base import HC_Control
 
 
 class DummySocket:

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 from .control import E36313A
-from ..QHelper import QOnOff, QFixedLabel
+from ..base import QOnOff, QFixedLabel
 
 from PyQt5 import QtCore
 from PyQt5 import QtWidgets

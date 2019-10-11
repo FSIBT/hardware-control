@@ -1,7 +1,7 @@
 import socket
 import numpy as np
 
-from ..HC_Control import HC_Control
+from ..base import HC_Control
 
 
 class Adam(HC_Control):
