@@ -11,7 +11,7 @@ import pkg_resources
 
 import time  # Get rid of this guy!
 
-from hardware_control.QHelper import QInstrument
+from hardware_control.QHelper import HC_Instrument
 import pyqtgraph as pg
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer, QThread, pyqtSignal, pyqtSlot, QObject
@@ -45,7 +45,7 @@ import copy
 # the communicaiton object instance. The communication object finds the change
 # and sends the correct SCPI commands to the instrument to impliment the change.
 #
-class QOscilloscope(QInstrument):
+class QOscilloscope(HC_Instrument):
 
     # Define sigs (to call functions in communication object)
     state_mosi_sig = pyqtSignal(dict)

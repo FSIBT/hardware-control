@@ -4,7 +4,7 @@ from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtWidgets import QGroupBox, QFormLayout, QLabel, QLineEdit, QHBoxLayout
 from PyQt5.QtCore import QTimer, pyqtSignal, pyqtSlot, QObject
 
-from ..QHelper import QOnOff, QOnOffIndicator, QInstrument
+from ..QHelper import QOnOff, QOnOffIndicator, HC_Instrument
 
 
 class CAEN_communication(QObject):
@@ -84,7 +84,7 @@ class CAEN_communication(QObject):
                     self.instrument.disable_channel(channel)
 
 
-class CAEN_channel(QInstrument):
+class CAEN_channel(HC_Instrument):
     """A QtWidget for a single channel
 
     If several of these are used in the same app, only a single

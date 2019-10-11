@@ -21,7 +21,7 @@ from PyQt5.QtWidgets import (
     QGridLayout,
     QComboBox,
 )
-from hardware_control.QHelper import QInstrument
+from hardware_control.QHelper import HC_Instrument
 import copy
 
 

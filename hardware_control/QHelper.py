@@ -30,7 +30,7 @@ from matplotlib.dates import epoch2num
 import numpy as np
 
 
-class HC_Control(QGroupBox):
+class HC_Instrument(QGroupBox):
     def __init__(self, window, name: str):
         super().__init__(name)
         self.settings = OrderedDict()

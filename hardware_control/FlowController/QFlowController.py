@@ -21,12 +21,12 @@ from PyQt5.QtWidgets import (
     QGridLayout,
     QComboBox,
 )
-from hardware_control.QHelper import QInstrument
+from hardware_control.QHelper import HC_Instrument
 import copy
 
 #
 #
-class QFlowController(QInstrument):
+class QFlowController(HC_Instrument):
 
     # Define sigs (to call functions in communication object)
     state_mosi_sig = pyqtSignal(dict)
