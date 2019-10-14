@@ -25,7 +25,7 @@ from hardware_control.base import HC_Instrument
 import copy
 
 
-class HScanTool(QGroupBox):
+class HC_ScanTool(QGroupBox):
     def __init__(
         self,
         window,

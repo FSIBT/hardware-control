@@ -41,7 +41,7 @@ commands = docopt(__doc__)
 dummy = commands["--dummy"]
 use_sockets = commands["--socket"]
 
-from hardware_control.Oscilloscope.QOscilloscope import QOscilloscope
+from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
 from hardware_control.Oscilloscope.Key4000XCtrl import Key4000XCtrl
 
 
@@ -62,7 +62,7 @@ class ScopeDemo(QMainWindow):
             "192.168.0.14",
             5025,
         )
-        self.scope_ctrl = QOscilloscope(scpi_scope, "DEFAULT", True)
+        self.scope_ctrl = HC_Oscilloscope(scpi_scope, "DEFAULT", True)
 
         self.grid = QGridLayout()
         self.grid.addWidget(self.scope_ctrl, 0, 0)

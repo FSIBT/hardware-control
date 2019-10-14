@@ -25,7 +25,7 @@ from hardware_control.base import HC_Instrument
 import copy
 
 
-class HStatusTool(QGroupBox):
+class HC_StatusTool(QGroupBox):
     def __init__(
         self,
         window,

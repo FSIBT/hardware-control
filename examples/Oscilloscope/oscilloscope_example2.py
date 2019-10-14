@@ -42,7 +42,7 @@ dummy = commands["--dummy"]
 use_sockets = commands["--socket"]
 
 from hardware_control.base import HC_App
-from hardware_control.Oscilloscope.QOscilloscope import QOscilloscope
+from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
 from hardware_control.Oscilloscope.Key4000XCtrl import Key4000XCtrl
 
 
@@ -63,7 +63,7 @@ class ScopeWindow(QMainWindow):
             "192.168.0.14",
             5025,
         )
-        self.scope_ctrl = QOscilloscope(
+        self.scope_ctrl = HC_Oscilloscope(
             scpi_scope, self, "Oscilloscope Control", "DEFAULT", True
         )
 

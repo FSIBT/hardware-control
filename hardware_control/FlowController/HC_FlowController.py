@@ -26,7 +26,7 @@ import copy
 
 #
 #
-class QFlowController(HC_Instrument):
+class HC_FlowController(HC_Instrument):
 
     # Define sigs (to call functions in communication object)
     state_mosi_sig = pyqtSignal(dict)

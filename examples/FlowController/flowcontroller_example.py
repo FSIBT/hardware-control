@@ -33,7 +33,7 @@ from PyQt5.QtWidgets import (
     QGridLayout,
 )
 
-from hardware_control.FlowController.QFlowController import QFlowController
+from hardware_control.FlowController.HC_FlowController import HC_FlowController
 from hardware_control.FlowController.AlicatMSeriesCtrl import AlicatMSeriesCtrl
 
 from docopt import docopt
@@ -52,7 +52,7 @@ class FlowControllerDemo(QMainWindow):
         self.main_widget = QWidget(self)
 
         self.instr = AlicatMSeriesCtrl("192.168.0.15", dummy, True)
-        self.instr_ctrl = QFlowController(self.instr, "flowcontroller_state.json", True)
+        self.instr_ctrl = HC_FlowController(self.instr, "flowcontroller_state.json", True)
 
         self.grid = QGridLayout()
         self.grid.addWidget(self.instr_ctrl, 0, 0)

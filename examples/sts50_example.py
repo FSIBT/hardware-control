@@ -42,15 +42,15 @@ dummy = commands["--dummy"]
 use_sockets = commands["--socket"]
 
 from hardware_control.base import HC_App
-from hardware_control.Oscilloscope.QOscilloscope import QOscilloscope
+from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
 from hardware_control.Oscilloscope.Key4000XCtrl import Key4000XCtrl
-from hardware_control.FlowController.QFlowController import QFlowController
+from hardware_control.FlowController.HC_FlowController import HC_FlowController
 from hardware_control.FlowController.AlicatMSeriesCtrl import AlicatMSeriesCtrl
-from hardware_control.PulseGenerator.QPulseGen import QPulseGen
+from hardware_control.PulseGenerator.HC_PulseGen import HC_PulseGen
 from hardware_control.PulseGenerator.SRSDG535Ctrl import SRSDG535Ctrl
-from hardware_control.ScanTool.HScanTool import HScanTool
-from hardware_control.ConnectionStatusTool.HStatusTool import HStatusTool
-from hardware_control.FunctionGenerator.HFunctionGenerator import HFunctionGenerator
+from hardware_control.ScanTool.HC_ScanTool import HC_ScanTool
+from hardware_control.ConnectionStatusTool.HC_StatusTool import HC_StatusTool
+from hardware_control.FunctionGenerator.HC_FunctionGenerator import HC_FunctionGenerator
 from hardware_control.FunctionGenerator.Key_Ctrl import Key_Ctrl
 
 
@@ -71,30 +71,30 @@ class STS50Demo(QMainWindow):
             "192.168.0.14",
             5025,
         )
-        self.scope_ctrl = QOscilloscope(scpi_scope, self, "Keysight", "DEFAULT", True)
+        self.scope_ctrl = HC_Oscilloscope(scpi_scope, self, "Keysight", "DEFAULT", True)
 
         awg = Key_Ctrl(
             "Some-address-goes-here", dummy, True, use_sockets, "192.168.0.18", 5025
         )
-        self.awg_ctrl = HFunctionGenerator(
+        self.awg_ctrl = HC_FunctionGenerator(
             awg, self, "RF Generator", "DEFAULT", True, 2
         )
 
         self.flow = AlicatMSeriesCtrl("192.168.0.15", dummy, True)
-        self.flow_ctrl = QFlowController(
+        self.flow_ctrl = HC_FlowController(
             self.flow, self, "Flow Controller", "flowcontroller_state.json", True
         )
 
         self.trig1 = SRSDG535Ctrl("GPIB0::10::INSTR", dummy, True)
-        self.trig1_ctrl = QPulseGen(self.trig1, self, "Trigger 1", "DEFAULT", True)
+        self.trig1_ctrl = HC_PulseGen(self.trig1, self, "Trigger 1", "DEFAULT", True)
 
         self.trig2 = SRSDG535Ctrl("GPIB0::15::INSTR", dummy, True)
-        self.trig2_ctr = QPulseGen(self.trig2, self, "Trigger 2", "DEFAULT", True)
+        self.trig2_ctr = HC_PulseGen(self.trig2, self, "Trigger 2", "DEFAULT", True)
 
-        self.scantool = HScanTool(self, "Scan Control", "DEFAULT", True)
+        self.scantool = HC_ScanTool(self, "Scan Control", "DEFAULT", True)
         self.scantool.update_instruments()
 
-        self.statustool = HStatusTool(self, "Connection Status", "DEFAULT", True)
+        self.statustool = HC_StatusTool(self, "Connection Status", "DEFAULT", True)
         self.statustool.update_instruments()
 
         self.grid = QGridLayout()
