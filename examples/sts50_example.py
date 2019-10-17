@@ -73,12 +73,8 @@ class STS50Demo(QMainWindow):
         )
         self.scope_ctrl = HC_Oscilloscope(scpi_scope, self, "Keysight", "DEFAULT", True)
 
-        awg = Key_Ctrl(
-            "Some-address-goes-here", dummy, True, use_sockets, "192.168.0.18", 5025
-        )
-        self.awg_ctrl = HC_FunctionGenerator(
-            awg, self, "RF Generator", "DEFAULT", True, 2
-        )
+        # awg = Key_Ctrl("Some-address-goes-here", dummy, True, use_sockets, "192.168.0.18", 5025)
+        # self.awg_ctrl = HC_FunctionGenerator(awg, self, "RF Generator", "DEFAULT", True, 1)
 
         self.flow = AlicatMSeriesCtrl("192.168.0.15", dummy, True)
         self.flow_ctrl = HC_FlowController(
@@ -104,7 +100,7 @@ class STS50Demo(QMainWindow):
         self.grid.addWidget(self.trig2_ctr, 2, 3)
         self.grid.addWidget(self.scantool, 0, 4)
         self.grid.addWidget(self.statustool, 2, 4)
-        self.grid.addWidget(self.awg_ctrl, 3, 0, 1, 1)
+        # self.grid.addWidget(self.awg_ctrl, 3, 0, 1, 1)
         self.main_widget.setLayout(self.grid)
 
         self.setCentralWidget(self.main_widget)
