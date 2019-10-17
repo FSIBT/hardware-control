@@ -41,6 +41,7 @@ class HC_Instrument(QGroupBox):
         self.manufacturer = None
         self.company = None
         self.status = False
+        self.online = False
         self.ignore = (
             False
         )  # Dictates if instrument should be ignored by ConnectionTool and ScanTool widgets
