@@ -61,7 +61,7 @@ class Key4000XCtrl:
     def try_connect(self):
 
         if self.online:
-            return
+            return True;
 
         if not self.dummy:
 
@@ -83,6 +83,8 @@ class Key4000XCtrl:
         else:
             print(f"KEY4000X: creating dummy connection to {self.visa_addr}")
             self.online = True
+
+        return self.online;
 
     #
     # Close connection

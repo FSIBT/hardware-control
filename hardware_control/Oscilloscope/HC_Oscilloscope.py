@@ -67,7 +67,7 @@ class HC_Oscilloscope(HC_Instrument):
         self.settings = {}
         self.save_on_close = save_on_close
 
-        self.comm = OscilloscopeComm(scpi_instr)
+        self.comm = OscilloscopeComm(scpi_instr, self)
         self.filename = ""
 
         # Connect signals and sigs
@@ -804,7 +804,7 @@ class OscilloscopeComm(QObject):
     state_miso_sig = pyqtSignal(dict)
     values_miso_sig = pyqtSignal(dict)
 
-    def __init__(self, scpi_instr):
+    def __init__(self, scpi_instr, gui):
 
         super().__init__()
 
@@ -823,9 +823,14 @@ class OscilloscopeComm(QObject):
 
         # Connect timer
         self.connect_timer = QTimer(self)
-        self.connect_timer.timeout.connect(self.instr.try_connect)
+        self.connect_timer.timeout.connect(self.try_connect)
         self.connect_timer.start(1000)
         # 1s period
+
+        self.gui = gui
+
+    def try_connect(self):
+        self.gui.online = self.instr.try_connect()
 
     #
     # Close connection
