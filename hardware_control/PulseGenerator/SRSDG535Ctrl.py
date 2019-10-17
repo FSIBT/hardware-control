@@ -50,7 +50,7 @@ class SRSDG535Ctrl:
     def try_connect(self):
 
         if self.online:
-            return
+            return True
 
         if not self.dummy:
 
@@ -67,6 +67,8 @@ class SRSDG535Ctrl:
         else:
             print(f"{self.ID}: creating dummy connection to {self.visa_addr}")
             self.online = True
+
+        return self.online
 
     #
     # Close connection

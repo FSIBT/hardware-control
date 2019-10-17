@@ -68,7 +68,7 @@ class HC_PulseGen(HC_Instrument):
         self.save_on_close = save_on_close
         self.name = name
 
-        self.comm = PulseGenComm(scpi_instr)
+        self.comm = PulseGenComm(scpi_instr, self)
         self.filename = ""
 
         # Connect signals and sigs
@@ -222,7 +222,7 @@ class PulseGenComm(QObject):
 
     state_miso_sig = pyqtSignal(dict)
 
-    def __init__(self, scpi_instr):
+    def __init__(self, scpi_instr, gui):
 
         super().__init__()
 
@@ -241,9 +241,14 @@ class PulseGenComm(QObject):
 
         # Connect timer
         self.connect_timer = QTimer(self)
-        self.connect_timer.timeout.connect(self.instr.try_connect)
+        self.connect_timer.timeout.connect(self.try_connect)
         self.connect_timer.start(1000)
         # 1s period
+
+        self.gui = gui
+
+    def try_connect(self):
+        self.gui.online = self.instr.try_connect()
 
     #
     # Close connection
