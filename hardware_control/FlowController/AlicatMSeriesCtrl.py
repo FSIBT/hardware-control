@@ -44,7 +44,7 @@ class AlicatMSeriesCtrl:
     def try_connect(self):
 
         if self.online:
-            return
+            return True
 
         if not self.dummy:
             try:
@@ -57,6 +57,8 @@ class AlicatMSeriesCtrl:
         else:
             print(f"{self.ID}: creating dummy connection to {self.ip_addr}")
             self.online = True
+
+        return self.online
 
     #
     # Close connection

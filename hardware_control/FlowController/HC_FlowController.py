@@ -49,7 +49,7 @@ class HC_FlowController(HC_Instrument):
         self.save_on_close = save_on_close
         self.name = name
 
-        self.comm = FlowControllerComm(scpi_instr)
+        self.comm = FlowControllerComm(scpi_instr, self)
         self.filename = ""
 
         # Connect signals and sigs
@@ -272,7 +272,7 @@ class FlowControllerComm(QObject):
     state_miso_sig = pyqtSignal(dict)
     values_miso_sig = pyqtSignal(dict)
 
-    def __init__(self, scpi_instr):
+    def __init__(self, scpi_instr, gui):
 
         super().__init__()
 
@@ -291,7 +291,7 @@ class FlowControllerComm(QObject):
 
         # Connect timer
         self.connect_timer = QTimer(self)
-        self.connect_timer.timeout.connect(self.instr.try_connect)
+        self.connect_timer.timeout.connect(self.try_connect)
         self.connect_timer.start(1000)
         # 1s period
 
@@ -300,6 +300,8 @@ class FlowControllerComm(QObject):
         self.display_timer.start(1000)
         # 1s period
 
+        self.gui = gui
+
         # This program needs to impliment a second timer to automatically update the pressure readout
 
     #
@@ -307,7 +309,7 @@ class FlowControllerComm(QObject):
     # If already connected, returns immediately.
     #
     def try_connect(self):
-        self.instr.try_connect()
+        self.gui.online = self.instr.try_connect()
 
     #
     # Close connection
