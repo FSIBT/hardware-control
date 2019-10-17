@@ -134,7 +134,7 @@ class HC_StatusTool(QGroupBox):
                     if (
                         instr.name == self.instrument_grid.itemAt(i).widget().text()
                     ):  # Found instrument....
-                        if instr.status:
+                        if instr.online:
                             self.instrument_grid.itemAt(i + 1).widget().setPixmap(
                                 self.green_indicator
                             )
