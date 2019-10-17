@@ -184,7 +184,7 @@ class HC_FunctionGenerator(HC_Instrument):
         self.disp.update_display(values)
         pass
 
-    def set_settings_and_send(parameter: str, value):
+    def set_settings_and_send(self, parameter: str, value):
         if type(value) != type(self.settings[parameter]):
             current_val = self.settings[parameter]
             print(
@@ -228,6 +228,8 @@ class HC_FunctionGenerator(HC_Instrument):
         dflt["CH1_burst_on"] = False
         dflt["CH1_impedance"] = 1e6
         dflt["CH1_output_on"] = False
+        dflt["CH1_num_pulse"] = 300
+        dflt["CH1_burst_freq"] = 1
 
         dflt["CH2_amplitude"] = 1
         dflt["CH2_frequency"] = 1e3
@@ -237,6 +239,8 @@ class HC_FunctionGenerator(HC_Instrument):
         dflt["CH2_burst_on"] = False
         dflt["CH2_impedance"] = 1e6
         dflt["CH2_output_on"] = False
+        dflt["CH2_num_pulse"] = 300
+        dflt["CH2_burst_freq"] = 1
 
         return dflt
 
@@ -308,6 +312,30 @@ class FunctionGeneratorChannelWidget(QWidget):
 
         self.lower_grid = QGridLayout()
 
+        # ****** DEFINE 2nd COL TEXT BOXES
+        #
+        self.num_pulse_edit = QLineEdit()
+        self.num_pulse_edit.setValidator(QDoubleValidator())
+        self.num_pulse_edit.editingFinished.connect(
+            lambda: control.set_settings_and_send(
+                f"CH{channel}_num_pulse", float(self.num_pulse_edit.text())
+            )
+        )
+        self.num_pulse_edit.setText(str(control.settings[f"CH{channel}_num_pulse"]))
+        #
+        self.burst_freq_edit = QLineEdit()
+        self.burst_freq_edit.setValidator(QDoubleValidator())
+        self.burst_freq_edit.editingFinished.connect(
+            lambda: control.set_settings_and_send(
+                f"CH{channel}_burst_freq", float(self.burst_freq_edit.text())
+            )
+        )
+        self.burst_freq_edit.setText(str(control.settings[f"CH{channel}_burst_freq"]))
+        #
+        self.form2 = QFormLayout()
+        self.form2.addRow("Num Burst Pulses:", self.num_pulse_edit)
+        self.form2.addRow("Burst Freq (Hz):", self.burst_freq_edit)
+
         # ******* DEFINE BUTTONS + DROPDOWNS
         #
         self.active_but = QPushButton()
@@ -372,8 +400,8 @@ class FunctionGeneratorChannelWidget(QWidget):
             ["Sine", "Square", "Triangle", "Noise", "DC", "File"]
         )
         self.waveform_drop.currentIndexChanged.connect(
-            lambda: control.set_channel_coupling(
-                self.channel, self.coupling_drop.currentText()
+            lambda: control.set_settings_and_send(
+                f"CH{self.channel}_waveform", self.waveform_drop.currentText()
             )
         )
         self.waveform_drop.setCurrentText(control.settings[f"CH{channel}_waveform"])
@@ -407,6 +435,7 @@ class FunctionGeneratorChannelWidget(QWidget):
         self.master_layout.addWidget(self.channel_label, 0, 0)
         self.master_layout.addLayout(self.form, 1, 0)
         self.master_layout.addLayout(self.lower_grid, 2, 0)
+        self.master_layout.addLayout(self.form2, 2, 1)
         self.setLayout(self.master_layout)
 
 
