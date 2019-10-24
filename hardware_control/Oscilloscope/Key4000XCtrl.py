@@ -86,6 +86,15 @@ class Key4000XCtrl:
 
         return self.online;
 
+    def update_setting(self, setting:str, value):
+        if self.dummy:
+            return value
+        else:
+            if setting == "CH1_volts_div":
+                self.write(":CHAN1:SCAL " + to_NR3(value))
+                return self.query(":CHAN1:SCAL?")
+
+
     #
     # Close connection
     #
