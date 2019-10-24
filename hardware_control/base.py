@@ -8,19 +8,9 @@ import time
 import pathlib
 
 from PyQt5 import QtCore
-from PyQt5.QtCore import QThread, QSize
+from PyQt5.QtCore import QThread, QSize, QObject
 from PyQt5.QtGui import QIcon, QFont, QFontMetrics
-from PyQt5.QtWidgets import (
-    QApplication,
-    QSizePolicy,
-    QPushButton,
-    QLabel,
-    QMessageBox,
-    QHBoxLayout,
-    QVBoxLayout,
-    QWidget,
-    QGroupBox,
-)
+from PyQt5.QtWidgets import QApplication, QSizePolicy, QPushButton, QLabel, QMessageBox, QHBoxLayout, QVBoxLayout, QWidget, QGroupBox
 from PyQt5.QtSvg import QSvgWidget
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -30,6 +20,38 @@ from matplotlib.dates import epoch2num
 import numpy as np
 from abc import ABC, abstractmethod
 
+class HC_Comm(QObject):
+
+    # sigUpdateSettings = pyqtSignal(str, str)
+
+    def __init__(self, backend, instrument):
+        super().__init__()
+        self.backend = backend
+        self.instrument = instrument
+
+        # bc = HC_BackComm(backend)
+        # connection_thread = QThread()
+        # bc.moveToThread(connection_thread)
+        # thread.start()
+
+
+    def update_setting(self, setting:str, value):
+
+        #Slots and signals needed here!
+        self.backend.update_setting(setting, value)
+        # self.sigUpdateSettings.emit(setting, value)
+
+#     @pyqtSlot()
+#     def get_ret_val
+#
+# class HC_BackComm(QObject):
+#
+#     __iinit__
+#
+#     @pyqtSlot()
+#     def update_settings(setting:str, value:str):
+#         ret_val = backend.update_setting(setting, value)
+#         sigReturnValues.emit(ret_val)
 
 class HC_Instrument(QGroupBox):
     def __init__(self, window, name: str):
@@ -40,15 +62,11 @@ class HC_Instrument(QGroupBox):
         self.name = name
         self.manufacturer = None
         self.company = None
-        self.status = False
         self.online = False
-        self.ignore = (
-            False
-        )  # Dictates if instrument should be ignored by ConnectionTool and ScanTool widgets
+        self.comm = None
+        self.ignore = False  # Dictates if instrument should be ignored by ConnectionTool and ScanTool widgets
 
-        self.window = (
-            window
-        )  # parent needs to have a field called 'app' which is an instance of 'HC_App'
+        self.window = window  # parent needs to have a field called 'app' which is an instance of 'HC_App'
 
         window.app.add_instrument(self)
 
@@ -58,17 +76,25 @@ class HC_Instrument(QGroupBox):
     def get_header(self):
         """Supply a header for a log file"""
         header = f"{self.manufacturer}-{self.model}-"
-        header += "-".join(
-            [
-                f"{vname}[{vunit}]"
-                for vname, vunit in zip(self.values.keys(), self.values_unit)
-            ]
-        )
+        header += "-".join([f"{vname}[{vunit}]" for vname, vunit in zip(self.values.keys(), self.values_unit)])
         return header
 
     def get_values(self):
         """Return current list of values for logging"""
         return self.values.values()
+
+    def update_setting(self, setting:str, value):
+        """Update a setting in settings and values dictionary for the instrument"""
+        try:
+            self.settings[setting] = value
+        except KeyError:
+            print("ERROR: Key '{parameter}' does not exist for instrument '{self.name}' in settings dictionary.")
+
+        if self.comm is not None:
+            try:
+                self.values[setting] = self.comm.backend.update_setting(setting, value)
+            except KeyError:
+                print("ERROR: Key '{parameter}' does not exist for instrument '{self.name}' in values dictionary.")
 
     def set_setting(self, parameter: str, value: str):
         """Adjusts a parameter in 'self.settings' and updates any GUI elements to reflect the change."""
@@ -77,9 +103,7 @@ class HC_Instrument(QGroupBox):
         try:
             current_val = self.settings[parameter]
         except KeyError:
-            print(
-                "ERROR: Key '{parameter}' does not exist for instrument '{self.name}'."
-            )
+            print("ERROR: Key '{parameter}' does not exist for instrument '{self.name}'.")
 
         if type(current_val) == str:
             try:
@@ -98,9 +122,7 @@ class HC_Instrument(QGroupBox):
 
         else:
             print("ERROR: Settings must have string, float, or int datatype.")
-            print(
-                f"\tInstrument '{self.name}' setting {parameter} has type: {type(current_val)}"
-            )
+            print(f"\tInstrument '{self.name}' setting {parameter} has type: {type(current_val)}")
             return False
 
         return True
@@ -174,21 +196,9 @@ class QOnOff(QPushButton):
         self.offText = "Off"
         self.unkownText = "status unkown"
 
-        self.onIcon = QIcon(
-            pkg_resources.resource_filename(
-                "hardware_control", "icons/button-power-on.svg"
-            )
-        )
-        self.offIcon = QIcon(
-            pkg_resources.resource_filename(
-                "hardware_control", "icons/button-power-off.svg"
-            )
-        )
-        self.unkownIcon = QIcon(
-            pkg_resources.resource_filename(
-                "hardware_control", "icons/button-power-unkown.svg"
-            )
-        )
+        self.onIcon = QIcon(pkg_resources.resource_filename("hardware_control", "icons/button-power-on.svg"))
+        self.offIcon = QIcon(pkg_resources.resource_filename("hardware_control", "icons/button-power-off.svg"))
+        self.unkownIcon = QIcon(pkg_resources.resource_filename("hardware_control", "icons/button-power-unkown.svg"))
 
         self.f_on = f_on
         self.f_off = f_off
@@ -315,15 +325,9 @@ class QOnOffIndicator(QSvgWidget):
 
     def __init__(self, name):
         self.name = name
-        self.onIcon = pkg_resources.resource_filename(
-            "hardware_control", "icons/on-off-indicator-on.svg"
-        )
-        self.offIcon = pkg_resources.resource_filename(
-            "hardware_control", "icons/on-off-indicator-off.svg"
-        )
-        self.unkownIcon = pkg_resources.resource_filename(
-            "hardware_control", "icons/on-off-indicator-unkown.svg"
-        )
+        self.onIcon = pkg_resources.resource_filename("hardware_control", "icons/on-off-indicator-on.svg")
+        self.offIcon = pkg_resources.resource_filename("hardware_control", "icons/on-off-indicator-off.svg")
+        self.unkownIcon = pkg_resources.resource_filename("hardware_control", "icons/on-off-indicator-unkown.svg")
 
         super().__init__(self.unkownIcon)
 
@@ -365,9 +369,7 @@ class QFixedLabel(QLabel):
         self.setAlignment(QtCore.Qt.AlignCenter)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         if color is not None:
-            self.setStyleSheet(
-                f"color: white;background-color:{color}; padding: 5px;border: 1px solid black;"
-            )
+            self.setStyleSheet(f"color: white;background-color:{color}; padding: 5px;border: 1px solid black;")
 
 
 class FigureTab(QWidget):
@@ -448,9 +450,7 @@ class FigureTab(QWidget):
             myY = np.array([x[1] for x in v])
             if self.normalize and len(myY) and myY.max() > 0:
                 myY = myY / myY.max()
-            self.axes.plot_date(
-                epoch2num(myX), myY, "o-", label=k, tz="America/Los_Angeles"
-            )
+            self.axes.plot_date(epoch2num(myX), myY, "o-", label=k, tz="America/Los_Angeles")
         self.axes.legend(loc="best")
         if not self.autoscale:
             self.axes.set_xlim([xleft, xright])
@@ -550,9 +550,7 @@ class LoggerThread(QThread):
         myhash.update(datastructure.encode("utf-8"))
         version = myhash.hexdigest()
         self.logfile.write(f"# Version: {version}\n")
-        self.logfile.write(
-            f"{datastructure}\n"
-        )  # no '#' so that it is easier for pandas to read
+        self.logfile.write(f"{datastructure}\n")  # no '#' so that it is easier for pandas to read
 
     def run(self):
         # wait a few seconds before starting the log, so that the
