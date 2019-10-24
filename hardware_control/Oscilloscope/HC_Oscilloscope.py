@@ -307,6 +307,10 @@ class HC_Oscilloscope(HC_Instrument):
         dflt["timebase"] = 1e-3
         dflt["time_offset"] = 0
         dflt["volts_div"] = {"CH1": 1, "CH2": 1, "CH3": 1, "CH4": 1}
+        dflt[f"CH1_volts_div"] = 1
+        dflt[f"CH2_volts_div"] = 1
+        dflt[f"CH3_volts_div"] = 1
+        dflt[f"CH4_volts_div"] = 1
         dflt["offset"] = {"CH1": 0, "CH2": 0, "CH3": 0, "CH4": 0}
         dflt["BW_lim"] = {"CH1": False, "CH2": False, "CH3": False, "CH4": False}
         dflt["channel_active"] = {"CH1": True, "CH2": False, "CH3": False, "CH4": False}
@@ -386,7 +390,9 @@ class OscillscopeChannelWidget(QWidget):
         self.v_div_edit = QLineEdit()
         self.v_div_edit.setValidator(QDoubleValidator())
         self.v_div_edit.editingFinished.connect(
-            lambda: control.set_volts_div(channel, float(self.v_div_edit.text()))
+            lambda: control.update_setting(
+                f"CH{channel}_volts_div", float(self.v_div_edit.text())
+            )
         )
         self.v_div_edit.setText(str(control.settings["volts_div"][f"CH{channel}"]))
         #
@@ -814,6 +820,9 @@ class OscilloscopeComm(QObject):
         # Contains settings of instrument so it knows which gs to update
 
         self.instr = scpi_instr
+        self.backend = (
+            self.instr
+        )  # Remove this - because you need to have self.backends
 
         self.instr.try_connect()
         if not self.instr.online:
