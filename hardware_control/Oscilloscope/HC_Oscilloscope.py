@@ -60,7 +60,7 @@ class HC_Oscilloscope(HC_Instrument):
         self.settings = {}
         self.save_on_close = save_on_close
 
-        self.comm = OscilloscopeComm(scpi_instr, self)
+        self.comm = HC_Comm(scpi_instr, self)
         self.filename = ""
 
         # Initialize settings to correct values
@@ -124,129 +124,7 @@ class HC_Oscilloscope(HC_Instrument):
             self.save_state(self.filename)
 
         # Tell scope to close
-        self.comm.close()
-
-    #
-    # Sends the settings to the communication object
-    #
-    def send_state(self):
-        """ Use signals/slots to send the settings dictionary to the communication
-        thread. """
-        self.state_mosi_sig.emit(self.settings)
-        pass
-
-    #
-    # Queries the settings from the communication object
-    #
-    def get_state(self, new_state: dict):
-        """ Gets the settings from the oscilloscope. """
-        self.settings = new_state
-
-    #
-    # Called when a waveform is read - updates the display
-    #
-    def values_received(self, values: dict):
-        # Do plotting here
-        self.disp.update_display(values)
-        pass
-
-    def set_time_offset(self, value: float):
-        self.settings["time_offset"] = value
-        self.send_state()
-
-    def set_timebase(self, value: float):
-        self.settings["timebase"] = value
-        self.send_state()
-
-    def set_volts_div(self, channel: int, value: float):
-        self.settings["volts_div"][f"CH{channel}"] = value
-        self.send_state()
-
-    def set_offset(self, channel: int, value: float):
-        self.settings["offset"][f"CH{channel}"] = value
-        self.send_state()
-
-    def set_channel_label(self, channel: int, value: str):
-        self.settings["channel_label"][f"CH{channel}"] = value
-        self.send_state()
-
-    def set_channel_coupling(self, channel: int, value: str):
-        if value != "AC" and value != "DC":
-            value = "DC"
-        self.settings["channel_coupling"][f"CH{channel}"] = value
-        self.send_state()
-
-    def set_channel_active(self, channel: int, value: bool):
-        try:
-            print(f"chan{channel} <- {value}")
-            self.settings["channel_active"][f"CH{channel}"] = value
-            self.send_state()
-        except:
-            for key in self.settings:
-                print(f'\t\t["{key}"]')
-
-    def set_BW_lim(self, channel: int, value: bool):
-        self.settings["BW_lim"][f"CH{channel}"] = value
-        self.send_state()
-
-    def set_channel_invert(self, channel: int, value: bool):
-        self.settings["channel_invert"][f"CH{channel}"] = value
-        self.send_state()
-
-    def set_channel_impedance(self, channel: int, value: float):
-        self.settings["channel_impedance"][f"CH{channel}"] = value
-        self.send_state()
-
-    def set_probe_atten(self, channel: int, value: float):
-        self.settings["probe_atten"][f"CH{channel}"] = value
-        self.send_state()
-
-    def single_trigger(self):
-        self.action_sig.emit("SINGLE")
-        if self.disp.single_trig_mode:
-            self.query_waveforms()
-
-    def normal_trigger(self):
-        self.action_sig.emit("RUN")
-
-    def halt(self):
-        self.action_sig.emit("HALT")
-
-    def set_trigger_level(self, value: float):
-        self.settings["trigger_level"] = value
-        self.send_state()
-
-    def set_trigger_channel(self, value: int):
-        self.settings["trigger_channel"] = value
-        self.send_state()
-
-    def set_trigger_edge(self, value: str):
-        self.settings["trigger_edge"] = value
-        self.send_state()
-
-    def set_trigger_coupling(self, value: str):
-        self.settings["trigger_coupling"] = value
-        self.send_state()
-
-    def query_waveforms(self):
-        start_time = time.time()
-        self.action_sig.emit("WAVEFORMS")
-
-    #        print(f"'Control' spent {time.time()-start_time} seconds querying waveforms.");
-
-    #
-    # Manually send a SCPI command through the communication object to the INSTR
-    #
-    def write(self, command: str):
-        """ Manually send SCPI commands to the oscilloscope. """
-        write_sig.emit(command)
-
-    #
-    # Manually query a SCPI command through the communication obeect to the INSTR
-    #
-    def query(self, command: str):
-        """ Manually send/receive commands to/from the oscilloscope. """
-        return query_sig.emit(command)
+        # self.comm.close()
 
     #
     # Create a default settings object if can't get settings from a file
@@ -256,34 +134,72 @@ class HC_Oscilloscope(HC_Instrument):
         dflt = {}
 
         dflt["timebase"] = 1e-3
+        #
         dflt["time_offset"] = 0
-        dflt["volts_div"] = {"CH1": 1, "CH2": 1, "CH3": 1, "CH4": 1}
-        dflt[f"CH1_volts_div"] = 1
-        dflt[f"CH2_volts_div"] = 1
-        dflt[f"CH3_volts_div"] = 1
-        dflt[f"CH4_volts_div"] = 1
-        dflt["offset"] = {"CH1": 0, "CH2": 0, "CH3": 0, "CH4": 0}
-        dflt["BW_lim"] = {"CH1": False, "CH2": False, "CH3": False, "CH4": False}
-        dflt["channel_active"] = {"CH1": True, "CH2": False, "CH3": False, "CH4": False}
-        dflt["channel_impedance"] = {"CH1": 1e6, "CH2": 1e6, "CH3": 1e6, "CH4": 1e6}
-        dflt["channel_label"] = {
-            "CH1": "Channel 1",
-            "CH2": "Channel 2",
-            "CH3": "Channel 3",
-            "CH4": "Channel 4",
-        }
+        #
+        dflt["CH1_volts_div"] = 1
+        dflt["CH2_volts_div"] = 1
+        dflt["CH3_volts_div"] = 1
+        dflt["CH4_volts_div"] = 1
+        #
+        dflt["CH1_volts_div"] = 1
+        dflt["CH2_volts_div"] = 1
+        dflt["CH3_volts_div"] = 1
+        dflt["CH4_volts_div"] = 1
+        #
+        dflt["CH1_volts_div"] = 1
+        dflt["CH2_volts_div"] = 1
+        dflt["CH3_volts_div"] = 1
+        dflt["CH4_volts_div"] = 1
+        #
+        dflt["CH1_offset"] = 0
+        dflt["CH2_offset"] = 0
+        dflt["CH3_offset"] = 0
+        dflt["CH4_offset"] = 0
+        #
+        dflt["CH1_BW_lim"] = False
+        dflt["CH2_BW_lim"] = False
+        dflt["CH3_BW_lim"] = False
+        dflt["CH4_BW_lim"] = False
+        #
+        dflt["CH1_active"] = True
+        dflt["CH2_active"] = False
+        dflt["CH3_active"] = False
+        dflt["CH4_active"] = False
+        #
+        dflt["CH1_impedance"] = 1e6
+        dflt["CH2_impedance"] = 1e6
+        dflt["CH3_impedance"] = 1e6
+        dflt["CH4_impedance"] = 1e6
+        #
+        dflt["CH1_label"] = "Channel 1"
+        dflt["CH2_label"] = "Channel 2"
+        dflt["CH3_label"] = "Channel 3"
+        dflt["CH4_label"] = "Channel 4"
+        #
         dflt["labels_enabled"] = False
-        dflt["channel_invert"] = {
-            "CH1": False,
-            "CH2": False,
-            "CH3": False,
-            "CH4": False,
-        }
-        dflt["probe_atten"] = {"CH1": 10, "CH2": 10, "CH3": 10, "CH4": 10}
-        dflt["channel_coupling"] = {"CH1": "DC", "CH2": "DC", "CH3": "DC", "CH4": "DC"}
+        #
+        dflt["CH1_invert"] = False
+        dflt["CH2_invert"] = False
+        dflt["CH3_invert"] = False
+        dflt["CH4_invert"] = False
+        #
+        dflt["CH1_probe_atten"] = 10
+        dflt["CH2_probe_atten"] = 10
+        dflt["CH3_probe_atten"] = 10
+        dflt["CH4_probe_atten"] = 10
+        #
+        dflt["CH1_coupling"] = "DC"
+        dflt["CH2_coupling"] = "DC"
+        dflt["CH3_coupling"] = "DC"
+        dflt["CH4_coupling"] = "DC"
+        #
         dflt["trigger_level"] = 1
+        #
         dflt["trigger_coupling"] = "DC"
+        #
         dflt["trigger_edge"] = "POS"
+        #
         dflt["trigger_channel"] = 1
 
         return dflt
@@ -341,7 +257,7 @@ class OscillscopeChannelWidget(QWidget):
         self.v_div_edit = QLineEdit()
         self.v_div_edit.setValidator(QDoubleValidator())
         self.v_div_edit.editingFinished.connect(
-            lambda: control.update_setting(
+            lambda: control.comm.update_setting(
                 f"CH{channel}_volts_div", float(self.v_div_edit.text())
             )
         )
@@ -749,190 +665,3 @@ class OscilloscopeDisplayWidget(QWidget):
 
 
 #        print(f"'Widget' spent {time.time()-start_time} seconds updating waveforms.");
-
-
-#
-# This is a 4-channel oscilloscope communication progam. It fascilitates
-# communication with the scope. For more information on how this works, read the
-# comment for the OscilloscopeControl class.
-#
-class OscilloscopeComm(QObject):
-
-    state_miso_sig = pyqtSignal(dict)
-    values_miso_sig = pyqtSignal(dict)
-
-    def __init__(self, scpi_instr, gui):
-
-        super().__init__()
-
-        self.settings = {}
-        # Read this guy in from a function?
-        self.instr_state = {}
-        # Contains settings of instrument so it knows which gs to update
-
-        self.instr = scpi_instr
-        self.backend = (
-            self.instr
-        )  # Remove this - because you need to have self.backends
-
-        self.instr.try_connect()
-        if not self.instr.online:
-            print(f"{self.instr.ID}: Failed to connect")
-        else:
-            print(f"{self.instr.ID}: Connected")
-
-        # Connect timer
-        self.connect_timer = QTimer(self)
-        self.connect_timer.timeout.connect(self.try_connect)
-        self.connect_timer.start(1000)
-        # 1s period
-
-        self.gui = gui
-
-    def try_connect(self):
-        self.gui.online = self.instr.try_connect()
-
-    #
-    # Close connection
-    #
-    def close(self):
-        self.instr.close()
-
-    @pyqtSlot(str)
-    def get_command(self, command: str):
-
-        if command == "SINGLE":
-            self.instr.single_trigger()
-        elif command == "RUN":
-            self.instr.norm_trigger()
-        elif command == "HALT":
-            self.instr.halt()
-        elif command == "WAVEFORMS":
-            self.send_waveform()
-
-    #
-    # Receives a settings object from the control object.
-    #
-    @pyqtSlot(dict)
-    def get_state(self, new_state: dict):
-
-        self.settings = new_state
-        for key in self.settings:
-            if (not (key in self.instr_state)) or (
-                self.settings[key] != self.instr_state[key]
-            ):
-                self.update_parameter(key, self.settings[key])
-
-        self.instr_state = copy.deepcopy(self.settings)
-
-    def update_parameter(self, key: str, value):
-
-        if key == "timebase":
-            self.instr.set_timebase(value)
-        elif key == "time_offset":
-            self.instr.set_time_offset(value)
-        elif key == "volts_div":
-            self.instr.set_volts_div(1, value["CH1"])
-            self.instr.set_volts_div(2, value["CH2"])
-            self.instr.set_volts_div(3, value["CH3"])
-            self.instr.set_volts_div(4, value["CH4"])
-        elif key == "offset":
-            self.instr.set_offset(1, value["CH1"])
-            self.instr.set_offset(2, value["CH2"])
-            self.instr.set_offset(3, value["CH3"])
-            self.instr.set_offset(4, value["CH4"])
-        elif key == "channel_label":
-            self.instr.set_channel_label(1, value["CH1"])
-            self.instr.set_channel_label(2, value["CH2"])
-            self.instr.set_channel_label(3, value["CH3"])
-            self.instr.set_channel_label(4, value["CH4"])
-        elif key == "channel_active":
-            self.instr.set_channel_active(1, value["CH1"])
-            self.instr.set_channel_active(2, value["CH2"])
-            self.instr.set_channel_active(3, value["CH3"])
-            self.instr.set_channel_active(4, value["CH4"])
-        elif key == "BW_lim":
-            self.instr.set_BW_lim(1, value["CH1"])
-            self.instr.set_BW_lim(2, value["CH2"])
-            self.instr.set_BW_lim(3, value["CH3"])
-            self.instr.set_BW_lim(4, value["CH4"])
-        elif key == "channel_invert":
-            self.instr.set_channel_invert(1, value["CH1"])
-            self.instr.set_channel_invert(2, value["CH2"])
-            self.instr.set_channel_invert(3, value["CH3"])
-            self.instr.set_channel_invert(4, value["CH4"])
-        elif key == "channel_impedance":
-            self.instr.set_channel_impedance(1, value["CH1"])
-            self.instr.set_channel_impedance(2, value["CH2"])
-            self.instr.set_channel_impedance(3, value["CH3"])
-            self.instr.set_channel_impedance(4, value["CH4"])
-        elif key == "channel_coupling":
-            self.instr.set_channel_coupling(1, value["CH1"])
-            self.instr.set_channel_coupling(2, value["CH2"])
-            self.instr.set_channel_coupling(3, value["CH3"])
-            self.instr.set_channel_coupling(4, value["CH4"])
-        elif key == "probe_atten":
-            self.instr.set_probe_atten(1, value["CH1"])
-            self.instr.set_probe_atten(2, value["CH2"])
-            self.instr.set_probe_atten(3, value["CH3"])
-            self.instr.set_probe_atten(4, value["CH4"])
-        elif key == "trigger_level":
-            self.instr.set_trigger_level(value)
-        elif key == "trigger_coupling":
-            self.instr.set_trigger_coupling(value)
-        elif key == "trigger_edge":
-            self.instr.set_trigger_edge(value)
-        elif key == "trigger_channel":
-            self.instr.set_trigger_channel(value)
-        elif key == "labels_enabled":
-            self.instr.set_labels_enabled(value)
-        else:
-            print(f"{self.instr.ID}: ERROR: Unrecognized parameter '{key}'")
-        # elif (key == "BW_lim"):
-        #     instr.set_BW_lim(value);
-        # elif (key == "channel_active"):
-        #     pass;
-
-    #
-    # Sends the settings object back to the control object.
-    #
-    def send_state(self):
-        pass
-
-    #
-    # Reads the waveform from the oscilloscope and sends it back to the UI/control object
-    #
-    def send_waveform(self):
-        start_time = time.time()
-        wfms = self.instr.read_all_waveforms(
-            self.settings["channel_active"]["CH1"],
-            self.settings["channel_active"]["CH2"],
-            self.settings["channel_active"]["CH3"],
-            self.settings["channel_active"]["CH4"],
-        )
-        self.values_miso_sig.emit(wfms)
-
-    #        print(f"'Comm' spent {time.time()-start_time} seconds querying + sending waveforms.");
-
-    @pyqtSlot()
-    def write(self, command):
-        self.instr.write(command)
-
-    @pyqtSlot()
-    def query(self, command):
-        return self.instr.query(command)
-
-
-def setButtonState(button: QPushButton, value: bool):
-    if value:
-        if not button.isChecked():
-            button.toggle()
-    else:
-        if button.isChecked():
-            button.toggle()
-    # if (control.settings["channel_active"][f"CH{channel}"]):
-    #     if (not self.active_but.isChecked()):
-    #         self.active_but.toggle();
-    # else:
-    #     if (self.active_but.isChecked()):
-    #         self.active_but.toggle();
