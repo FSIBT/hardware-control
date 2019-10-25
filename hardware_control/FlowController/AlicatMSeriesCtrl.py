@@ -8,6 +8,7 @@ import pyvisa
 from typing import List
 import numpy as np
 import random
+from PyQt5.QtCore import QObject
 
 from pymodbus.client.sync import ModbusTcpClient as ModbusClient
 
@@ -24,8 +25,10 @@ def converter_IEEE754_to_ulong(x):
     return b.contents.value
 
 
-class AlicatMSeriesCtrl:
+class AlicatMSeriesCtrl(QObject):
     def __init__(self, ip_addr, dummy: bool = False, print_commands: bool = False):
+
+        super().__init__()
 
         self.ID = "AlicatMSeries"
 
@@ -104,13 +107,19 @@ class AlicatMSeriesCtrl:
 
     def get_values(self):
         rtn = {}
+
+        if (not self.online):
+            rtn["pressure"] = -1;
+            rtn["flow"] = -1;
+            return rtn
+
         if not self.dummy:
-            r = self.client.read_input_registers(count=2, address=1202, unit=0)
+            r = self.meter.read_input_registers(count=2, address=1202, unit=0)
             a, b = r.registers
             pressure = (a << 16) + b
             pressure = converter_ulong_to_IEEE754(pressure)
 
-            r = self.client.read_input_registers(count=2, address=1208, unit=0)
+            r = self.meter.read_input_registers(count=2, address=1208, unit=0)
             a, b = r.registers
             flow = (a << 16) + b
             flow = converter_ulong_to_IEEE754(value)
