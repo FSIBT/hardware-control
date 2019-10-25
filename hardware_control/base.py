@@ -211,6 +211,36 @@ class HC_Instrument(QGroupBox):
 
         return True
 
+    def load_state(self, filename: str):
+        """Reads the settings dictionary from file"""
+
+        # Get default state - this identifies all required fields
+        dflt = self.default_state()
+
+        # Read a settings from file
+        try:
+            with open(filename) as file:
+                self.settings = json.load(file)
+                print(f"settings for {self.name} read from file '{filename}'")
+        except:
+            print(f"ERROR: Failed to read file '{filename}'. Using defualt case.")
+            self.settings = self.default_state()
+
+        # Ensure all fields in default_state are present in the loaded state
+        for key in dflt:
+            if not (key in self.settings):
+                self.settings[key] = dflt[key]
+
+    def save_state(self, filename: str):
+        """Saves the instrument state to a JSON file"""
+        try:
+            with open(filename, "w") as file:
+                json.dump(self.settings, file)
+                print(f"settings for {self.name} saved to file '{filename}'")
+        except Exception as e:
+            print(f"ERROR: Failed to write file '{filename}'. settings not saved.")
+            print(f"\t{e}")
+
 
 class HC_App(QApplication):
     """Subclass of QApplication that is aware of what hardware is connected to it and can log data"""
