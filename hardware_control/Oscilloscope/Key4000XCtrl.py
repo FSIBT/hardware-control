@@ -13,6 +13,7 @@ import pyvisa
 from typing import List
 import numpy as np
 import socket
+import re
 
 
 def to_NR3(x: float):
@@ -28,6 +29,11 @@ def bool_NR1(x: bool):
         return "1"
     else:
         return "0"
+
+
+def regex_compare(pattern: str, comp: str):
+    regex = re.compile(pattern)
+    return bool(re.match(regex, comp))
 
 
 class Key4000XCtrl:
@@ -61,7 +67,7 @@ class Key4000XCtrl:
     def try_connect(self):
 
         if self.online:
-            return True;
+            return True
 
         if not self.dummy:
 
@@ -84,16 +90,7 @@ class Key4000XCtrl:
             print(f"KEY4000X: creating dummy connection to {self.visa_addr}")
             self.online = True
 
-        return self.online;
-
-    def update_setting(self, setting:str, value):
-        if self.dummy:
-            return value
-        else:
-            if setting == "CH1_volts_div":
-                self.write(":CHAN1:SCAL " + to_NR3(value))
-                return self.query(":CHAN1:SCAL?")
-
+        return self.online
 
     #
     # Close connection
@@ -119,126 +116,111 @@ class Key4000XCtrl:
             update_parameter(param[0], param[1])
             pass
 
-    def set_timebase(self, value: float):
-        """Sets the time per division"""
-        if not self.dummy:
-            self.write(":TIM:SCAL " + to_NR3(value))
+    def update_setting(self, setting: str, value):
+        if self.dummy:
+            return value
+        else:
+            if regex_compare("CH._volts_div", setting):
+                chan = setting[2]
+                self.write(f":CHAN{chan}:SCAL {to_NR3(value)}")
+                return self.query(f":CHAN{chan}:SCAL?")
 
-    def set_time_offset(self, value: float):
-        """Sets the time offset"""
-        if not self.dummy:
-            self.write(f":TIM:POS {to_NR3(value)}")
+            elif setting == "timebase":
+                self.write(f":TIM:SCAL {to_NR3(value)}")
+                return self.query(":TIM:SCAL?")
 
-    def set_volts_div(self, channel: int, value: float):
-        """Sets the volts for division for specified channel"""
-        if not self.dummy:
-            self.write(":CHAN" + to_NR1(channel) + ":SCAL " + to_NR3(value))
+            elif setting == "time_offset":
+                self.write(f":TIM:POS {to_NR3(value)}")
+                return self.query(":TIM:POS?")
 
-    def set_offset(self, channel: int, value: float):
-        """Sets the voltage offset for specified channel"""
-        if not self.dummy:
-            self.write(":CHAN" + to_NR1(channel) + ":OFFS " + to_NR3(-1.0 * value))
+            elif regex_compare("CH._offset"):
+                chan = setting[2]
+                self.write(f"CHAN{chan}:OFFS {to_NR3(-1.0 * value)}")
+                return self.query(f"CHAN{chan}:OFFS ?")
 
-    def set_BW_lim(self, channel: int, value: bool):
-        """Sets the bandwidth limit for specified channel"""
-        if not self.dummy:
-            self.write(":CHAN" + to_NR1(channel) + ":BWL " + bool_NR1(value))
+            elif regex_compare("CH._BW_lim"):
+                chan = setting[2]
+                self.write(f"CHAN{chan}:BWL {bool_NR1(value)}")
+                return self.query(f"CHAN{chan}:BWL ?")
 
-    def set_channel_active(self, channel: int, value: bool):
-        """Sets if specified channel is on"""
-        if not self.dummy:
-            self.write(":CHAN" + to_NR1(channel) + ":DISP " + bool_NR1(value))
+            elif regex_compare("CH._active"):
+                chan = setting[2]
+                self.write(f"CHAN{chan}:DISP {to_NR3(value)}")
+                return self.query(f"CHAN{chan}:DISP ?")
 
-    #
-    # Value options: 50, 1e6 (Defaults to 1e6 if other value given)
-    #
-    # @pyqtSlot()
-    def set_channel_impedance(self, channel: int, value: float = 1e6):
-        """Sets the impedance for specified channel"""
-        if not self.dummy:
-            if value == 50:
-                self.write(":CHAN" + to_NR1(channel) + ":IMP FIFT")
-            else:
-                self.write(":CHAN" + to_NR1(channel) + ":IMP ONEM")
+            elif regex_compare("CH._impedance"):
+                chan = setting[2]
+                if value == "50":
+                    self.write(f"CHAN{chan}:IMP FIFT")
+                else:
+                    self.write(f"CHAN{chan}:IMP ONEM")
+                return self.query(f"CHAN{chan}:IMP ?")
 
-    def set_channel_label(self, channel: int, value: str):
-        """Sets the label for specified channel"""
-        if not self.dummy:
+            elif regex_compare("CH._label"):
 
-            # Length is capped at 32 characters
-            if len(value) > 32:
-                value = value[0:32]
+                # Length is capped at 32 characters
+                if len(value) > 32:
+                    value = value[0:32]
 
-            self.write(":CHAN" + to_NR1(channel) + ':LAB "' + value + '"')
+                chan = setting[2]
+                self.write(f'CHAN{chan}:LAB "value"')
+                return self.query(f"CHAN{chan}:LAB ?")
 
-    def set_labels_enabled(self, value: bool):
-        """Enables/disables all channel labels"""
-        self.write(":DISP:LAB " + bool_NR1(value))
+            elif settings == "labels_enabled":
+                self.write(f"DISP:LAB {bool_NR1(value)}")
+                return self.query(f"DISP:LAB ?")
 
-    def set_channel_invert(self, channel: int, value: bool):
-        """Sets the inversion for specified channel"""
-        if not self.dummy:
-            self.write(":CHAN" + to_NR1(channel) + ":INV " + bool_NR1(value))
+            elif regex_compare("CH._invert"):
+                chan = setting[2]
+                self.write(f"CHAN{chan}:INV {bool_NR1(value)}")
+                return self.query(f"CHAN{chan}:INV ?")
 
-    #
-    # ie. 10 gives x10 or 10:1 probe
-    #
-    def set_probe_atten(self, channel: int, value: float):
-        """Sets the attenutation of the probe for specified channel"""
-        if not self.dummy:
-            self.write(":CHAN" + to_NR1(channel) + ":PROB " + to_NR3(value))
+            elif regex_compare("CH._probe_atten"):
+                chan = setting[2]
+                self.write(f"CHAN{chan}:PROB {to_NR3(value)}")
+                return self.query(f"CHAN{chan}: ?")  # ie. 10 gives x10 or 10:1 probe
 
-    #
-    # Value options: AC or DC (Defaults to DC if neither option given)
-    #
-    def set_channel_coupling(self, channel: int, value: str = "DC"):
-        """Sets the channel coupling"""
-        if not self.dummy:
-            if value == "AC":
-                self.write(":CHAN" + to_NR1(channel) + ":COUP AC")
-            else:
-                self.write(":CHAN" + to_NR1(channel) + ":COUP DC")
+            elif regex_compare("CH._coupling"):
+                chan = setting[2]
 
-    #
-    # For edge trigger only
-    #
-    def set_trigger_level(self, value: float):
-        """Set channel, level, slope, mode, etc"""
-        if not self.dummy:
-            self.write(":TRIG:EDGE:LEV " + to_NR3(value))
+                # Make sure valid value provided
+                if value != "AC" and value != "DC":
+                    value = "DC"
 
-    #
-    # Value options: AC, DC, LFReject (Defualt DC)
-    #
-    def set_trigger_coupling(self, value: str):
-        """Set trigger coupling mode """
-        if not self.dummy:
-            if value == "AC":
-                self.write(":TRIG:COUP AC")
-            elif value == "LFReject":
-                self.write(":TRIG:COUP LFReject")
-            else:
-                self.write(":TRIG:COUP DC")
+                self.write(f"CHAN{chan}:COUP {value}")
+                return self.query(f"CHAN{chan}:COUP ?")
 
-    #
-    # Value options: POS, NEG, EITH, ALT (defualt positive)
-    #
-    def set_trigger_edge(self, value: str):
-        """Set trigger edge """
-        if not self.dummy:
-            if value == "BOTH":
-                self.write(":TRIG:EDGE BOTH")
-            elif value == "NEG":
-                self.write(":TRIG:EDGE NEG")
-            elif value == "ALT":
-                self.write(":TRIG:EDGE ALT")
-            else:
-                self.write(":TRIG:EDGE POS")
+            elif setting == "trigger_level":
+                self.write(f"TRIG:EDGE:LEV {to_NR3(value)}")
+                return self.query(f"TRIG:EDGE:LEV ?")
 
-    def set_trigger_channel(self, chan: int):
-        """SEt trigger source"""
-        if not self.dummy:
-            self.write(f":TRIG:SOUR CHAN{to_NR1(chan)}")
+            elif setting == "trigger_coupling":
+
+                # Make sure valid option given
+                if value != "AC" and value != "DC" and value != "LFReject":
+                    value = "DC"
+
+                self.write(f"TRIG:COUP {value}")
+                return self.query(f"CHAN{chan}: ?")
+
+            elif setting == "trigger_edge":
+
+                # Make sure valid option given
+                if (
+                    value != "BOTH"
+                    and value != "NEG"
+                    and value != "POS"
+                    and value != "ALT"
+                ):
+                    value = "POS"
+
+                self.write(f"TRIG:EDGE {value}")
+                return self.query(f"TRIG:EDGE ?")
+
+            elif setting == "trigger_channel":
+
+                self.write(f"TRIG:SOUR CHAN{to_NR1(value)}")
+                return self.query(f"CHAN{chan}: ?")
 
     def set_trigger_ext(self):
         """SEt trigger source"""
