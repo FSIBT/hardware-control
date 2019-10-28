@@ -8,7 +8,7 @@ import time
 import pathlib
 
 from PyQt5 import QtCore
-from PyQt5.QtCore import QThread, QSize, QObject
+from PyQt5.QtCore import QThread, QSize, QObject, pyqtSignal, pyqtSlot, QObject
 from PyQt5.QtGui import QIcon, QFont, QFontMetrics
 from PyQt5.QtWidgets import (
     QApplication,
