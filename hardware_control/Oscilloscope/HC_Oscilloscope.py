@@ -11,7 +11,7 @@ import pkg_resources
 
 import time  # Get rid of this guy!
 
-from hardware_control.base import HC_Instrument, HC_Comm
+from hardware_control.base import HC_Instrument, HC_Comm, setButtonState
 import pyqtgraph as pg
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer, QThread, pyqtSignal, pyqtSlot, QObject
@@ -261,7 +261,7 @@ class OscillscopeChannelWidget(QWidget):
                 f"CH{channel}_volts_div", self.v_div_edit.text()
             )
         )
-        self.v_div_edit.setText(str(control.settings["volts_div"][f"CH{channel}"]))
+        self.v_div_edit.setText(str(control.settings[f"CH{channel}_volts_div"]))
         #
         self.offset_edit = QLineEdit()
         self.offset_edit.setValidator(QDoubleValidator())
@@ -365,7 +365,7 @@ class OscillscopeChannelWidget(QWidget):
             )
         )
         self.impedance_drop.setCurrentText(
-            str(control.settings["CH{channel}_impedance"][f"CH{self.channel}"])
+            str(control.settings[f"CH{channel}_impedance"])
         )
         #
         self.probe_label = QLabel("Probe attenutation: ")
@@ -379,7 +379,7 @@ class OscillscopeChannelWidget(QWidget):
             )
         )
         self.probe_drop.setCurrentText(
-            str(control.settings[f"CH{channel}_probe_atten"][f"CH{self.channel}"])
+            str(control.settings[f"CH{channel}_probe_atten"])
         )
         #
         # Add widgets to grid layout
@@ -598,7 +598,7 @@ class OscilloscopeDisplayWidget(QWidget):
             #
             self.refresh_but = QPushButton()
             self.refresh_but.setText("Refresh")
-            self.refresh_but.clicked.connect(control.query_waveforms)
+            # self.refresh_but.clicked.connect(control.query_waveforms)
             #
             self.refresh_mode_label = QLabel("Refresh Mode: ")
             #
@@ -619,7 +619,7 @@ class OscilloscopeDisplayWidget(QWidget):
         self.setLayout(self.master_layout)
 
         self.update_timer = QTimer(self)
-        self.update_timer.timeout.connect(control.query_waveforms)
+        # self.update_timer.timeout.connect(control.query_waveforms)
         self.update_timer.start(1000 / refresh)
 
     # Set refresh rate (in Hz)
