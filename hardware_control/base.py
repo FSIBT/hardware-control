@@ -713,3 +713,12 @@ class LoggerThread(QThread):
             self.sleep(1)
 
         self.logfile.close()
+
+
+def setButtonState(button: QPushButton, value: bool):
+    if value:
+        if not button.isChecked():
+            button.toggle()
+    else:
+        if button.isChecked():
+            button.toggle()
