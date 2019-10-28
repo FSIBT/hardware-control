@@ -97,26 +97,26 @@ class HC_CommWorker(QObject):
     @pyqtSlot(str, str)
     def update_setting(self, setting: str, value: str):
         """Transfers a setting and value to the backend"""
-        ret_val = backend.update_setting(setting, value)
-        sigReturnValues.emit(ret_val)
+        ret_val = self.backend.update_setting(setting, value)
+        self.sigReturnValues.emit(ret_val)
 
     @pyqtSlot(str)
     def command(self, command: str):
         """Transfers a command to the backend"""
         ret_val = self.backend.command(command)
-        sigReturnValues.emit(ret_val)
+        self.sigReturnValues.emit(ret_val)
 
     @pyqtSlot(str)
     def write(self, msg: str):
         """Transfers a command to be sent directly to the instrument to the backend"""
         ret_val = self.backend.write(msg)
-        sigReturnValues.emit(ret_val)
+        self.sigReturnValues.emit(ret_val)
 
     @pyqtSlot(str)
     def query(self, msg: str):
         """Transfers a query statement to be sent directly to the instrument to the backend"""
         ret_val = self.backend.query(msg)
-        sigReturnValues.emit(ret_val)
+        self.sigReturnValues.emit(ret_val)
 
 
 class HC_Instrument(QGroupBox):
