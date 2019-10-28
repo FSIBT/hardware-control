@@ -52,10 +52,10 @@ class HC_Comm(QObject):
         self.worker_thread.start()
 
         # Connect Comm's signals for CommWorker's slots
-        sigUpdateSettings.connect(self.worker.update_setting)
-        sigCommand.connect(self.worker.command)
-        sigCommand.write(self.worker.write)
-        sigCommand.query(self.worker.query)
+        self.sigUpdateSettings.connect(self.worker.update_setting)
+        self.sigCommand.connect(self.worker.command)
+        self.sigWrite.connect(self.worker.write)
+        self.sigQuery.connect(self.worker.query)
 
         # Connect CommWorker's signals to Comm's slots
         self.worker.sigReturnValues.connect(self.backend_return)
@@ -95,7 +95,7 @@ class HC_CommWorker(QObject):
         self.backend = backend
 
     @pyqtSlot(str, str)
-    def update_settings(self, setting: str, value: str):
+    def update_setting(self, setting: str, value: str):
         """Transfers a setting and value to the backend"""
         ret_val = backend.update_setting(setting, value)
         sigReturnValues.emit(ret_val)
