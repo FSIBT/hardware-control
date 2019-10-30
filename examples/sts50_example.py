@@ -3,14 +3,15 @@
 """oscilloscope_example to control the hardware_control test stand
 
 Usage:
-  oscilloscope_example [--dummy]
-  oscilloscope_example [--socket]
+  sts50_example [--dummy] [--socket] [--debug]
 
 Options:
   --dummy    use dummy connection for instruments that return semi-random data
              so that one run the program away from the test stand
   --socket   use sockets instead of pyvisa
+  --debug    allow debug print statements
 """
+
 from matplotlib import pyplot as plt
 import seaborn as sns
 import sys
@@ -40,6 +41,7 @@ from docopt import docopt
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
 use_sockets = commands["--socket"]
+debug = commands["--debug"]
 
 from hardware_control.base import HC_App
 from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
@@ -71,7 +73,9 @@ class STS50Demo(QMainWindow):
             "192.168.0.14",
             5025,
         )
-        self.scope_ctrl = HC_Oscilloscope(scpi_scope, self, "Keysight", "DEFAULT", True)
+        self.scope_ctrl = HC_Oscilloscope(
+            scpi_scope, self, "Keysight", "DEFAULT", True, debug
+        )
 
         # awg = Key_Ctrl("Some-address-goes-here", dummy, True, use_sockets, "192.168.0.18", 5025)
         # self.awg_ctrl = HC_FunctionGenerator(awg, self, "RF Generator", "DEFAULT", True, 1)

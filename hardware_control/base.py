@@ -41,8 +41,9 @@ class HC_Comm(QObject):
     sigWrite = pyqtSignal(str)
     sigQuery = pyqtSignal(str)
 
-    def __init__(self, backend, instrument):
+    def __init__(self, backend, instrument, debug=False):
         super().__init__()
+        self.debug = debug
         self.backend = backend
         self.instrument = instrument  # Calling instrument UI (eg. HC_scope)
 
@@ -62,23 +63,33 @@ class HC_Comm(QObject):
 
     def update_setting(self, setting: str, value: str):
         """Transfers the setting and value information to the worker thread"""
+        if self.debug:
+            print(f"HC_Comm[{self.instrument.name}] -us-> '{setting}', '{value}' ")
         self.sigUpdateSettings.emit(setting, value)
 
     def command(self, command: str):
         """Sends a command to the worker in the worker thread"""
+        if self.debug:
+            print(f"HC_Comm[{self.instrument.name}] -c-> '{command}'")
         self.sigCommand.emit(command)
 
     def write(self, msg: str):
         """Sends a command to be sent to the instrument by the worker in the worker thead"""
+        if self.debug:
+            print(f"HC_Comm[{self.instrument.name}] -w-> '{msg}'")
         self.sigWrite.emit(msg)
 
     def query(self, msg: str):
         """Sends a query statement to be sent to the instrument by the worker in the worker thead"""
+        if self.debug:
+            print(f"HC_Comm[{self.instrument.name}] -q-> '{msg}'")
         self.sigQuery.emit(msg)
 
     @pyqtSlot(str)
     def backend_return(self, retval: str):
         """Receives a return value from the CommWorker and adds the return value to the back of the inbox"""
+        if self.debug:
+            print(f"HC_Comm[{self.instrument.name}] <-br- '{retval}'")
         self.instrument.inbox.append(retval)
 
 
