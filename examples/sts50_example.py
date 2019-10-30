@@ -67,7 +67,7 @@ class STS50Demo(QMainWindow):
 
         scpi_scope = Key4000XCtrl(
             "TCPIP0::192.168.0.14::INSTR",
-            dummy,
+            False,
             True,
             use_sockets,
             "192.168.0.14",

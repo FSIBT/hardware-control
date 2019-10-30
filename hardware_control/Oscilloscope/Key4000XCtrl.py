@@ -20,12 +20,29 @@ def to_NR3(x: float):
     return f" {x:.6E}"
 
 
+def str_NR3(x: str):
+    x_float = float(x)
+    return f" {x_float:.6E}"
+
+
 def to_NR1(x: int):
     return f"{x:d}"
 
 
+def str_NR1(x: str):
+    x_int = int(x)
+    return f"{x_int:d}"
+
+
 def bool_NR1(x: bool):
     if x:
+        return "1"
+    else:
+        return "0"
+
+
+def boolstr_NR1(x: str):
+    if x == "True":
         return "1"
     else:
         return "0"
@@ -58,7 +75,7 @@ class Key4000XCtrl:
         self.use_sockets = use_sockets
         self.port_no = port_no
         self.ip_addr = ip_addr
-        self.try_connect()
+        # self.try_connect()
 
     #
     # Tries to connect to the oscilloscope. Is called by the timer every second.
@@ -122,65 +139,66 @@ class Key4000XCtrl:
         else:
             if regex_compare("CH._volts_div", setting):
                 chan = setting[2]
-                self.write(f":CHAN{chan}:SCAL {to_NR3(value)}")
+                self.write(f":CHAN{chan}:SCAL {str_NR3(value)}")
                 return self.query(f":CHAN{chan}:SCAL?")
 
             elif setting == "timebase":
-                self.write(f":TIM:SCAL {to_NR3(value)}")
+                self.write(f":TIM:SCAL {str_NR3(value)}")
                 return self.query(":TIM:SCAL?")
 
             elif setting == "time_offset":
-                self.write(f":TIM:POS {to_NR3(value)}")
+                self.write(f":TIM:POS {str_NR3(value)}")
                 return self.query(":TIM:POS?")
 
-            elif regex_compare("CH._offset"):
+            elif regex_compare("CH._offset", setting):
                 chan = setting[2]
-                self.write(f"CHAN{chan}:OFFS {to_NR3(-1.0 * value)}")
-                return self.query(f"CHAN{chan}:OFFS ?")
+                self.write(f"CHAN{chan}:OFFS {to_NR3(-1.0 * float(value))}")
+                return self.query(f"CHAN{chan}:OFFS?")
 
-            elif regex_compare("CH._BW_lim"):
+            elif regex_compare("CH._BW_lim", setting):
                 chan = setting[2]
-                self.write(f"CHAN{chan}:BWL {bool_NR1(value)}")
-                return self.query(f"CHAN{chan}:BWL ?")
+                self.write(f"CHAN{chan}:BWL {boolstr_NR1(value)}")
+                return self.query(f"CHAN{chan}:BWL?")
 
-            elif regex_compare("CH._active"):
+            elif regex_compare("CH._active", setting):
                 chan = setting[2]
-                self.write(f"CHAN{chan}:DISP {to_NR3(value)}")
-                return self.query(f"CHAN{chan}:DISP ?")
+                self.write(f"CHAN{chan}:DISP {boolstr_NR1(value)}")
+                return self.query(f"CHAN{chan}:DISP?")
 
-            elif regex_compare("CH._impedance"):
+            elif regex_compare("CH._impedance", setting):
                 chan = setting[2]
                 if value == "50":
                     self.write(f"CHAN{chan}:IMP FIFT")
                 else:
                     self.write(f"CHAN{chan}:IMP ONEM")
-                return self.query(f"CHAN{chan}:IMP ?")
+                return self.query(f"CHAN{chan}:IMP?")
 
-            elif regex_compare("CH._label"):
+            elif regex_compare("CH._label", setting):
 
                 # Length is capped at 32 characters
                 if len(value) > 32:
                     value = value[0:32]
 
                 chan = setting[2]
-                self.write(f'CHAN{chan}:LAB "value"')
-                return self.query(f"CHAN{chan}:LAB ?")
+                self.write(f"CHAN{chan}:LAB {value}")
+                return self.query(f"CHAN{chan}:LAB?")
 
-            elif settings == "labels_enabled":
-                self.write(f"DISP:LAB {bool_NR1(value)}")
-                return self.query(f"DISP:LAB ?")
+            elif setting == "labels_enabled":
+                self.write(f"DISP:LAB {boolstr_NR1(value)}")
+                print(f"DISP:LAB {boolstr_NR1(value)}")
+                return self.query(f"DISP:LAB?")
 
-            elif regex_compare("CH._invert"):
+            elif regex_compare("CH._invert", setting):
                 chan = setting[2]
-                self.write(f"CHAN{chan}:INV {bool_NR1(value)}")
-                return self.query(f"CHAN{chan}:INV ?")
+                self.write(f"CHAN{chan}:INV {boolstr_NR1(value)}")
+                return self.query(f"CHAN{chan}:INV?")
 
-            elif regex_compare("CH._probe_atten"):
+            elif regex_compare("CH._probe_atten", setting):
                 chan = setting[2]
-                self.write(f"CHAN{chan}:PROB {to_NR3(value)}")
-                return self.query(f"CHAN{chan}: ?")  # ie. 10 gives x10 or 10:1 probe
+                self.write(f"CHAN{chan}:PROB {str_NR3(value)}")
+                return self.query(f"CHAN{chan}:PROB?")  # ie. 10 gives x10 or 10:1 probe
 
-            elif regex_compare("CH._coupling"):
+            elif regex_compare("CH._coupling", setting):
                 chan = setting[2]
 
                 # Make sure valid value provided
@@ -188,11 +206,11 @@ class Key4000XCtrl:
                     value = "DC"
 
                 self.write(f"CHAN{chan}:COUP {value}")
-                return self.query(f"CHAN{chan}:COUP ?")
+                return self.query(f"CHAN{chan}:COUP?")
 
             elif setting == "trigger_level":
-                self.write(f"TRIG:EDGE:LEV {to_NR3(value)}")
-                return self.query(f"TRIG:EDGE:LEV ?")
+                self.write(f"TRIG:EDGE:LEV {str_NR3(value)}")
+                return self.query(f"TRIG:EDGE:LEV?")
 
             elif setting == "trigger_coupling":
 
@@ -201,7 +219,7 @@ class Key4000XCtrl:
                     value = "DC"
 
                 self.write(f"TRIG:COUP {value}")
-                return self.query(f"CHAN{chan}: ?")
+                return self.query(f"TRIG:COUP?")
 
             elif setting == "trigger_edge":
 
@@ -215,12 +233,15 @@ class Key4000XCtrl:
                     value = "POS"
 
                 self.write(f"TRIG:EDGE {value}")
-                return self.query(f"TRIG:EDGE ?")
+                return self.query(f"TRIG:EDGE?")
 
             elif setting == "trigger_channel":
 
-                self.write(f"TRIG:SOUR CHAN{to_NR1(value)}")
-                return self.query(f"CHAN{chan}: ?")
+                self.write(f"TRIG:SOUR CHAN{str_NR1(value)}")
+                return self.query(f"TRIG:SOUR?")
+
+    def command(self, cmd: str):
+        pass
 
     def set_trigger_ext(self):
         """SEt trigger source"""

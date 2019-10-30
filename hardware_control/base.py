@@ -8,7 +8,7 @@ import time
 import pathlib
 
 from PyQt5 import QtCore
-from PyQt5.QtCore import QThread, QSize, QObject, pyqtSignal, pyqtSlot, QObject
+from PyQt5.QtCore import QThread, QSize, QObject, pyqtSignal, pyqtSlot, QObject, QTimer
 from PyQt5.QtGui import QIcon, QFont, QFontMetrics
 from PyQt5.QtWidgets import (
     QApplication,
@@ -40,6 +40,7 @@ class HC_Comm(QObject):
     sigCommand = pyqtSignal(str)
     sigWrite = pyqtSignal(str)
     sigQuery = pyqtSignal(str)
+    sigTryConnect = pyqtSignal()
 
     def __init__(self, backend, instrument, debug=False):
         super().__init__()
@@ -57,9 +58,16 @@ class HC_Comm(QObject):
         self.sigCommand.connect(self.worker.command)
         self.sigWrite.connect(self.worker.write)
         self.sigQuery.connect(self.worker.query)
+        self.sigTryConnect.connect(self.worker.try_connect)
 
         # Connect CommWorker's signals to Comm's slots
         self.worker.sigReturnValues.connect(self.backend_return)
+        self.worker.sigReturnOnline.connect(self.backend_return_online)
+
+        # Connect timer
+        self.try_connect_timer = QTimer(self)
+        self.try_connect_timer.timeout.connect(self.try_connect)
+        self.try_connect_timer.start(1000)
 
     def update_setting(self, setting: str, value: str):
         """Transfers the setting and value information to the worker thread"""
@@ -85,12 +93,22 @@ class HC_Comm(QObject):
             print(f"HC_Comm[{self.instrument.name}] -q-> '{msg}'")
         self.sigQuery.emit(msg)
 
+    def try_connect(self):
+        """Tells the worker to tell the backend to try to connect to the instrument"""
+        self.sigTryConnect.emit()
+
     @pyqtSlot(str)
     def backend_return(self, retval: str):
         """Receives a return value from the CommWorker and adds the return value to the back of the inbox"""
         if self.debug:
             print(f"HC_Comm[{self.instrument.name}] <-br- '{retval}'")
         self.instrument.inbox.append(retval)
+
+    @pyqtSlot(bool)
+    def backend_return_online(self, connected: bool):
+        """ Gets called by the worker after the worker hears from the instrument if it successfully connected.
+        Updates the state of the instrument - ie. if it is or is not online"""
+        self.instrument.online = connected
 
 
 class HC_CommWorker(QObject):
@@ -99,6 +117,7 @@ class HC_CommWorker(QObject):
     slots, when HC_Comm then pushes onto the back of the isntrument's inbox"""
 
     sigReturnValues = pyqtSignal(str)
+    sigReturnOnline = pyqtSignal(bool)
 
     def __init__(self, backend):
         super().__init__()
@@ -128,6 +147,11 @@ class HC_CommWorker(QObject):
         """Transfers a query statement to be sent directly to the instrument to the backend"""
         ret_val = self.backend.query(msg)
         self.sigReturnValues.emit(ret_val)
+
+    @pyqtSlot()
+    def try_connect(self):
+        online = self.backend.try_connect()
+        self.sigReturnOnline.emit(online)
 
 
 class HC_Instrument(QGroupBox):
