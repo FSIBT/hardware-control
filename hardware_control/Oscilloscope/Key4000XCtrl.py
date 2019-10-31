@@ -14,6 +14,7 @@ from typing import List
 import numpy as np
 import socket
 import re
+from hardware_control.HC_Backend import HC_Backend
 
 
 def to_NR3(x: float):
@@ -53,7 +54,7 @@ def regex_compare(pattern: str, comp: str):
     return bool(re.match(regex, comp))
 
 
-class Key4000XCtrl:
+class Key4000XCtrl(HC_Backend):
     def __init__(
         self,
         visa_addr,
@@ -63,7 +64,7 @@ class Key4000XCtrl:
         ip_addr: str = "",
         port_no=5025,
     ):
-
+        super().__init__()
         self.ID = "KEY4000X"
 
         self.visa_addr = visa_addr
@@ -78,43 +79,11 @@ class Key4000XCtrl:
         # self.try_connect()
 
     #
-    # Tries to connect to the oscilloscope. Is called by the timer every second.
-    # If already connected, returns immediately.
-    #
-    def try_connect(self):
-
-        if self.online:
-            return True
-
-        if not self.dummy:
-
-            try:
-                if not self.use_sockets:
-                    rm = pyvisa.ResourceManager()
-                    self.scope = rm.open_resource(self.visa_addr)  # Open connection
-                    # self.configure_read_waveform();
-                else:
-                    self.scope = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    self.scope.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 0)
-                    self.scope.connect((self.ip_addr, self.port_no))
-            except Exception as e:  # Failed to conncet);
-                print(e)
-                self.online = False
-            else:
-                self.online = True
-
-        else:
-            print(f"KEY4000X: creating dummy connection to {self.visa_addr}")
-            self.online = True
-
-        return self.online
-
-    #
     # Close connection
     #
     def close(self):
         if not self.dummy and self.online:
-            self.scope.close()
+            self.device.close()
         else:
             print("KEY4000X: closed dummy connection")
 
@@ -404,19 +373,19 @@ class Key4000XCtrl:
     def write(self, command: str):
         if self.online and not self.dummy:
             if not self.use_sockets:
-                self.scope.write(command)
+                self.device.write(command)
             else:
-                self.scope.sendall(bytes(command + "\n", "utf-8"))
+                self.device.sendall(bytes(command + "\n", "utf-8"))
             if self.print_commands:
                 print(f'\tKEY4000X< "{command}"')
 
     def query(self, command: str):
         if self.online and not self.dummy:
             if not self.use_sockets:
-                reply = self.scope.query(command)
+                reply = self.device.query(command)
             else:
-                self.scope.sendall(bytes(command + "\n", "utf-8"))
-                reply_bytes = recvall(self.scope)
+                self.device.sendall(bytes(command + "\n", "utf-8"))
+                reply_bytes = recvall(self.device)
                 print(f"reply size: {len(reply_bytes)}")
                 reply = str(reply_bytes)
                 if len(reply) < 100:
