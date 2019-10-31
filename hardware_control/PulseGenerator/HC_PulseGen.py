@@ -100,7 +100,7 @@ class HC_PulseGen(HC_Instrument):
             )
         )
         self.trig_but.setCheckable(False)
-        self.trig_but.clicked.connect(self.comm.command("TRIGGER"))
+        self.trig_but.clicked.connect(lambda: self.comm.command("TRIGGER"))
         #
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.command_label, 0, 0, 1, 1)
