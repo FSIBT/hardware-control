@@ -138,9 +138,9 @@ class HC_CommWorker(QObject):
         self.sigReturnValues.emit(ret_val)
 
     @pyqtSlot(str)
-    def command(self, command: str):
+    def command(self, cmd: str):
         """Transfers a command to the backend"""
-        ret_val = self.backend.command(command)
+        ret_val = self.backend.command(cmd)
         self.sigReturnValues.emit(ret_val)
 
     @pyqtSlot(str)
