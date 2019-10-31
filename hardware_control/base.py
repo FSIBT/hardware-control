@@ -41,6 +41,7 @@ class HC_Comm(QObject):
     sigWrite = pyqtSignal(str)
     sigQuery = pyqtSignal(str)
     sigTryConnect = pyqtSignal()
+    sigClose = pyqtSignal()
 
     def __init__(self, backend, instrument, debug=False):
         super().__init__()
@@ -59,6 +60,7 @@ class HC_Comm(QObject):
         self.sigWrite.connect(self.worker.write)
         self.sigQuery.connect(self.worker.query)
         self.sigTryConnect.connect(self.worker.try_connect)
+        self.sigClose.connect(self.worker.close)
 
         # Connect CommWorker's signals to Comm's slots
         self.worker.sigReturnValues.connect(self.backend_return)
@@ -68,6 +70,9 @@ class HC_Comm(QObject):
         self.try_connect_timer = QTimer(self)
         self.try_connect_timer.timeout.connect(self.try_connect)
         self.try_connect_timer.start(1000)
+
+    def close(self):
+        self.sigClose.emit()
 
     def update_setting(self, setting: str, value: str):
         """Transfers the setting and value information to the worker thread"""
@@ -153,6 +158,9 @@ class HC_CommWorker(QObject):
         online = self.backend.try_connect()
         self.sigReturnOnline.emit(online)
 
+    @pyqtSlot()
+    def close(self):
+        self.backend.close()
 
 class HC_Instrument(QGroupBox):
     def __init__(self, window, name: str):
