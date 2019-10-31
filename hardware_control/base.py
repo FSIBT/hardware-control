@@ -276,6 +276,10 @@ class HC_Instrument(QGroupBox):
             print(f"ERROR: Failed to write file '{filename}'. settings not saved.")
             print(f"\t{e}")
 
+    def send_state(self):
+        """Writes the entire state/settings dicitonary to the oscilloscope"""
+        for key in self.settings:
+            self.comm.update_setting(key, str(self.settings[key]))
 
 class HC_App(QApplication):
     """Subclass of QApplication that is aware of what hardware is connected to it and can log data"""

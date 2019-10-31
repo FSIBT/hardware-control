@@ -112,11 +112,6 @@ class HC_Oscilloscope(HC_Instrument):
         # Write state to scope - synch scope with GUI
         self.send_state()
 
-    def send_state(self):
-        """Writes the entire state/settings dicitonary to the oscilloscope"""
-        for key in self.settings:
-            self.comm.update_setting(key, str(self.settings[key]))
-
     def initialize_gui_instrument():
         print("\n\nOh no! I haven't implimented this yet!!\n\n")
         pass
@@ -673,6 +668,3 @@ class OscilloscopeDisplayWidget(QWidget):
             self.CH4.setData(wvfms["CH4"][1], wvfms["CH4"][0])
         else:
             pass
-
-
-#        print(f"'Widget' spent {time.time()-start_time} seconds updating waveforms.");
