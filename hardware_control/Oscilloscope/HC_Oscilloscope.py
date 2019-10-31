@@ -66,11 +66,7 @@ class HC_Oscilloscope(HC_Instrument):
         self.filename = ""
 
         # Initialize settings to correct values
-        if initialize_with == "INSTRUMENT":
-            self.save_on_close = False
-            # Can't save without filename
-            self.settings = self.initialize_gui_instrument()
-        elif initialize_with == "DEFAULT":
+        if initialize_with == "DEFAULT":
             self.save_on_close = False
             # Can't save without filename
             self.settings = self.default_state()
@@ -111,10 +107,6 @@ class HC_Oscilloscope(HC_Instrument):
 
         # Write state to scope - synch scope with GUI
         self.send_state()
-
-    def initialize_gui_instrument():
-        print("\n\nOh no! I haven't implimented this yet!!\n\n")
-        pass
 
     #
     # Create a default settings object if can't get settings from a file
