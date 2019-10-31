@@ -31,8 +31,11 @@ class HC_Backend:
         """Close connection to instrument"""
         if not self.dummy and self.online:
             self.device.close()
+            return False #This can be changed to try to talk to instrument to verify close successful - prob not required
         else:
             print("Dummy connection closed");
+            return False
+
 
     #
     # Tries to connect to the oscilloscope. Is called by the timer every second.
