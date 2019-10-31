@@ -72,7 +72,9 @@ class HC_Comm(QObject):
         self.try_connect_timer.start(1000)
 
     def close(self):
+        self.try_connect_timer.stop() #Stop
         self.sigClose.emit()
+
 
     def update_setting(self, setting: str, value: str):
         """Transfers the setting and value information to the worker thread"""
@@ -155,12 +157,18 @@ class HC_CommWorker(QObject):
 
     @pyqtSlot()
     def try_connect(self):
+        """Is called by HC_Comm on a timer. Tells backend to check if is
+        connected, else connect."""
         online = self.backend.try_connect()
         self.sigReturnOnline.emit(online)
 
     @pyqtSlot()
     def close(self):
-        self.backend.close()
+        """"Tells backend to close the connection. Then reports if instrument is
+        offline."""
+        online = self.backend.close()
+        self.sigReturnOnline.emit(online)
+
 
 class HC_Instrument(QGroupBox):
     def __init__(self, window, name: str):
@@ -338,6 +346,15 @@ class HC_App(QApplication):
                 print(f"Error: Instrument  {i} needs a .manufacturer")
             if i.model is None:
                 print(f"Error: Instrument  {i} needs a .model")
+
+    def close(self):
+        """Closes all instruments"""
+        for instr in self.instruments:
+            try: #User may not have initialized comm correctly as HC_Comm - error check here
+                instr.comm.close() #Send close signal to backend - stop connect timer
+            except Exception as e:
+                print(f"Failed to close instrument '{instr.name}'.")
+                print(str(e))
 
 
 class QOnOff(QPushButton):
