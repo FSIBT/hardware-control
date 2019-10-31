@@ -41,94 +41,28 @@ class SRSDG535Ctrl:
         self.print_commands = print_commands
         self.num_vert_divisions = 8
 
-        self.try_connect()
+        self.command = ""
 
-    #
-    # Tries to connect to the oscilloscope. Is called by the timer every second.
-    # If already connected, returns immediately.
-    #
-    def try_connect(self):
+        self.use_sockets = False #This tells the default try_connect() function to use Pyvisa
 
-        if self.online:
-            return True
-
-        if not self.dummy:
-
-            try:
-                rm = pyvisa.ResourceManager()
-                self.instr = rm.open_resource(self.visa_addr)  # Open connection
-                # self.configure_read_waveform();
-            except Exception as e:  # Failed to conncet);
-                print(e)
-                self.online = False
+    def update_setting(self, setting: str, value):
+        try:
+            if self.dummy:
+                return value
             else:
-                self.online = True
+                if setting == "command":
+                    self.command = value
+                    return value
 
-        else:
-            print(f"{self.ID}: creating dummy connection to {self.visa_addr}")
-            self.online = True
-
-        return self.online
-
-    #
-    # Close connection
-    #
-    def close(self):
-        if not self.dummy and self.online:
-            self.instr.close()
-        else:
-            print("KEY4000X: closed dummy connection")
-
-    #
-    # Receives a state object from the control object.
-    #
-    def get_state(new_state: dict):
-        self.state = new_state
-
-        new = set(self.state.items())
-        old = set(self.instr_state.items())
-
-        diff = new - old
-
-        for param in diff:
-            update_parameter(param[0], param[1])
-            pass
-
-    def set_command(self, value: str):
-        """Sets the command to send when triggering."""
-        self.command = value
-
-    def trigger(self):
-        """Tells DG535 to trigger"""
-        self.write(self.command)
-        pass
+    def command(self, cmd:str):
+        if cmd == "TRIGGER":
+            """Tells DG535 to trigger"""
+            self.write(self.command)
+            return True
 
     def write(self, command: str):
         if self.online and not self.dummy:
             if not self.use_sockets:
                 self.instr.write(command)
-            else:
-                self.instr.sendall(bytes(command + "\n", "utf-8"))
             if self.print_commands:
-                print(f'\tKEY4000X< "{command}"')
-
-    def query(self, command: str):
-        if self.online and not self.dummy:
-            if not self.use_sockets:
-                reply = self.instr.query(command)
-            else:
-                self.instr.sendall(bytes(command + "\n", "utf-8"))
-                reply_bytes = recvall(self.instr)
-                print(f"reply size: {len(reply_bytes)}")
-                reply = str(reply_bytes)
-                if len(reply) < 100:
-                    print("\t\t" + reply)
-                reply = reply[2 : len(reply) - 3]
-            if self.print_commands:
-                print(f'\t{self.ID}< "{command}"')
-            return reply
-        else:
-            return ""
-
-
-# 71-209
+                print(f'\tSRSDG535< "{command}"')
