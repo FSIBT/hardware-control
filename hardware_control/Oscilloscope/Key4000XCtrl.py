@@ -87,21 +87,6 @@ class Key4000XCtrl(HC_Backend):
         else:
             print("KEY4000X: closed dummy connection")
 
-    #
-    # Receives a state object from the control object.
-    #
-    def get_state(new_state: dict):
-        self.state = new_state
-
-        new = set(self.state.items())
-        old = set(self.instr_state.items())
-
-        diff = new - old
-
-        for param in diff:
-            update_parameter(param[0], param[1])
-            pass
-
     def update_setting(self, setting: str, value):
 
         try:
