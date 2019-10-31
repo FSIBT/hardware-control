@@ -27,6 +27,13 @@ class HC_Backend:
         if self.device is not None:
             return self.device.query(msg)
 
+    def close(self):
+        """Close connection to instrument"""
+        if not self.dummy and self.online:
+            self.device.close()
+        else:
+            print("Dummy connection closed");
+
     #
     # Tries to connect to the oscilloscope. Is called by the timer every second.
     # If already connected, returns immediately.

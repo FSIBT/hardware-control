@@ -117,18 +117,6 @@ class HC_Oscilloscope(HC_Instrument):
         pass
 
     #
-    # Close connection
-    #
-    def close(self, filename: str = ""):
-
-        # Save settings if asked
-        if self.save_on_close:
-            self.save_state(self.filename)
-
-        # Tell scope to close
-        # self.comm.close()
-
-    #
     # Create a default settings object if can't get settings from a file
     #
     def default_state(self):
