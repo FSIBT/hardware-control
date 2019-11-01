@@ -7,7 +7,9 @@ class HC_Backend:
     def __init__(self):
         super().__init__()
 
-        self.device = None  # This is the actual, physical, instrument to write to
+        self.ID = "Instrument"
+
+        self.device = None  # This is the physical instrument to write to
 
     def update_setting(self, setting: str, value: str):
         """User must overload this function. Must return a string"""
@@ -35,7 +37,7 @@ class HC_Backend:
                 False
             )  # This can be changed to try to talk to instrument to verify close successful - prob not required
         else:
-            print("{self.name}: Dummy connection closed")
+            print("{self.ID}: Dummy connection closed")
             return False
 
     #
