@@ -53,7 +53,7 @@ from hardware_control.PulseGenerator.SRSDG535Ctrl import SRSDG535Ctrl
 from hardware_control.ScanTool.HC_ScanTool import HC_ScanTool
 from hardware_control.ConnectionStatusTool.HC_StatusTool import HC_StatusTool
 from hardware_control.FunctionGenerator.HC_FunctionGenerator import HC_FunctionGenerator
-from hardware_control.FunctionGenerator.Key_Ctrl import Key_Ctrl
+from hardware_control.FunctionGenerator.Key33500BCtrl import Key33500BCtrl
 
 
 class STS50Demo(QMainWindow):
@@ -67,7 +67,7 @@ class STS50Demo(QMainWindow):
 
         scpi_scope = Key4000XCtrl(
             "TCPIP0::192.168.0.14::INSTR",
-            False,
+            dummy,
             True,
             use_sockets,
             "192.168.0.14",
@@ -77,8 +77,8 @@ class STS50Demo(QMainWindow):
             scpi_scope, self, "Keysight", "DEFAULT", True, debug
         )
 
-        # awg = Key_Ctrl("Some-address-goes-here", dummy, True, use_sockets, "192.168.0.18", 5025)
-        # self.awg_ctrl = HC_FunctionGenerator(awg, self, "RF Generator", "DEFAULT", True, 1)
+        awg = Key33500BCtrl("Some-address-goes-here", dummy, True, use_sockets, "192.168.0.18", 5025)
+        self.awg_ctrl = HC_FunctionGenerator(awg, self, "RF Generator", "DEFAULT", True, 1)
 
         self.flow = AlicatMSeriesCtrl("192.168.0.15", dummy, True)
         self.flow_ctrl = HC_FlowController(
