@@ -78,15 +78,6 @@ class Key4000XCtrl(HC_Backend):
         self.ip_addr = ip_addr
         # self.try_connect()
 
-    #
-    # Close connection
-    #
-    def close(self):
-        if not self.dummy and self.online:
-            self.device.close()
-        else:
-            print("KEY4000X: closed dummy connection")
-
     def update_setting(self, setting: str, value):
 
         try:
