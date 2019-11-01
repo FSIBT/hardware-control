@@ -48,15 +48,12 @@ class HC_Backend:
         """Checks if the backend is in communication with the object, if it is
         not, it tries to re-establish communication."""
 
-        print("try connect called")
-
         # Handle dummy case
         if self.dummy:
-            print("dummy - leaving")
             if self.online:
                 return True
             else:
-                print(f"KEY4000X: creating dummy connection to {self.visa_addr}")
+                print(f"{self.ID}: creating dummy connection to {self.visa_addr}")
                 self.online = True
                 return True
 
