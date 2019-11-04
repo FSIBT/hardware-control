@@ -13,14 +13,26 @@ import pyvisa
 from typing import List
 import numpy as np
 import socket
+import re
+from hardware_control.HC_Backend import HC_Backend
 
 
 def to_NR3(x: float):
     return f" {x:.6E}"
 
 
+def str_NR3(x: str):
+    x_float = float(x)
+    return f" {x_float:.6E}"
+
+
 def to_NR1(x: int):
     return f"{x:d}"
+
+
+def str_NR1(x: str):
+    x_int = int(x)
+    return f"{x_int:d}"
 
 
 def bool_NR1(x: bool):
@@ -30,7 +42,26 @@ def bool_NR1(x: bool):
         return "0"
 
 
-class Key_Ctrl:
+def boolstr_NR1(x: str):
+    if x == "True":
+        return "1"
+    else:
+        return "0"
+
+
+def str_to_bool(x: str):
+    if x == "True":
+        return True
+    else:
+        return False
+
+
+def regex_compare(pattern: str, comp: str):
+    regex = re.compile(pattern)
+    return bool(re.match(regex, comp))
+
+
+class Key33500BCtrl(HC_Backend):
     def __init__(
         self,
         visa_addr,
@@ -40,8 +71,8 @@ class Key_Ctrl:
         ip_addr: str = "",
         port_no=5025,
     ):
-
-        self.ID = "KEY4000X"
+        super().__init__()
+        self.ID = "KEY33500B"
 
         self.visa_addr = visa_addr
         self.online = False
@@ -52,348 +83,188 @@ class Key_Ctrl:
         self.use_sockets = use_sockets
         self.port_no = port_no
         self.ip_addr = ip_addr
-        self.try_connect()
 
-    #
-    # Tries to connect to the oscilloscope. Is called by the timer every second.
-    # If already connected, returns immediately.
-    #
-    def try_connect(self):
-
-        if self.online:
-            return
-
-        if not self.dummy:
-
-            try:
-                if not self.use_sockets:
-                    rm = pyvisa.ResourceManager()
-                    self.scope = rm.open_resource(self.visa_addr)  # Open connection
-                    # self.configure_read_waveform();
-                else:
-                    self.scope = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    self.scope.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 0)
-                    self.scope.connect((self.ip_addr, self.port_no))
-            except Exception as e:  # Failed to conncet);
-                print(e)
-                self.online = False
-            else:
-                self.online = True
-
-        else:
-            print(f"KEY4000X: creating dummy connection to {self.visa_addr}")
-            self.online = True
-
-    #
-    # Close connection
-    #
-    def close(self):
-        if not self.dummy and self.online:
-            self.scope.close()
-        else:
-            print("KEY4000X: closed dummy connection")
-
-    #
-    # Receives a state object from the control object.
-    #
-    def get_state(new_state: dict):
-        self.state = new_state
-
-        new = set(self.state.items())
-        old = set(self.instr_state.items())
-
-        diff = new - old
-
-        for param in diff:
-            update_parameter(param[0], param[1])
-            pass
-
-    def set_timebase(self, value: float):
-        """Sets the time per division"""
-        if not self.dummy:
-            self.write(":TIM:SCAL " + to_NR3(value))
-
-    def set_time_offset(self, value: float):
-        """Sets the time offset"""
-        if not self.dummy:
-            self.write(f":TIM:POS {to_NR3(value)}")
-
-    def set_volts_div(self, channel: int, value: float):
-        """Sets the volts for division for specified channel"""
-        if not self.dummy:
-            self.write(":CHAN" + to_NR1(channel) + ":SCAL " + to_NR3(value))
-
-    def set_offset(self, channel: int, value: float):
-        """Sets the voltage offset for specified channel"""
-        if not self.dummy:
-            self.write(":CHAN" + to_NR1(channel) + ":OFFS " + to_NR3(-1.0 * value))
-
-    def set_BW_lim(self, channel: int, value: bool):
-        """Sets the bandwidth limit for specified channel"""
-        if not self.dummy:
-            self.write(":CHAN" + to_NR1(channel) + ":BWL " + bool_NR1(value))
-
-    def set_channel_active(self, channel: int, value: bool):
-        """Sets if specified channel is on"""
-        if not self.dummy:
-            self.write(":CHAN" + to_NR1(channel) + ":DISP " + bool_NR1(value))
-
-    #
-    # Value options: 50, 1e6 (Defaults to 1e6 if other value given)
-    #
-    # @pyqtSlot()
-    def set_channel_impedance(self, channel: int, value: float = 1e6):
-        """Sets the impedance for specified channel"""
-        if not self.dummy:
-            if value == 50:
-                self.write(":CHAN" + to_NR1(channel) + ":IMP FIFT")
-            else:
-                self.write(":CHAN" + to_NR1(channel) + ":IMP ONEM")
-
-    def set_channel_label(self, channel: int, value: str):
-        """Sets the label for specified channel"""
-        if not self.dummy:
-
-            # Length is capped at 32 characters
-            if len(value) > 32:
-                value = value[0:32]
-
-            self.write(":CHAN" + to_NR1(channel) + ':LAB "' + value + '"')
-
-    def set_labels_enabled(self, value: bool):
-        """Enables/disables all channel labels"""
-        self.write(":DISP:LAB " + bool_NR1(value))
-
-    def set_channel_invert(self, channel: int, value: bool):
-        """Sets the inversion for specified channel"""
-        if not self.dummy:
-            self.write(":CHAN" + to_NR1(channel) + ":INV " + bool_NR1(value))
-
-    #
-    # ie. 10 gives x10 or 10:1 probe
-    #
-    def set_probe_atten(self, channel: int, value: float):
-        """Sets the attenutation of the probe for specified channel"""
-        if not self.dummy:
-            self.write(":CHAN" + to_NR1(channel) + ":PROB " + to_NR3(value))
-
-    #
-    # Value options: AC or DC (Defaults to DC if neither option given)
-    #
-    def set_channel_coupling(self, channel: int, value: str = "DC"):
-        """Sets the channel coupling"""
-        if not self.dummy:
-            if value == "AC":
-                self.write(":CHAN" + to_NR1(channel) + ":COUP AC")
-            else:
-                self.write(":CHAN" + to_NR1(channel) + ":COUP DC")
-
-    #
-    # For edge trigger only
-    #
-    def set_trigger_level(self, value: float):
-        """Set channel, level, slope, mode, etc"""
-        if not self.dummy:
-            self.write(":TRIG:EDGE:LEV " + to_NR3(value))
-
-    #
-    # Value options: AC, DC, LFReject (Defualt DC)
-    #
-    def set_trigger_coupling(self, value: str):
-        """Set trigger coupling mode """
-        if not self.dummy:
-            if value == "AC":
-                self.write(":TRIG:COUP AC")
-            elif value == "LFReject":
-                self.write(":TRIG:COUP LFReject")
-            else:
-                self.write(":TRIG:COUP DC")
-
-    #
-    # Value options: POS, NEG, EITH, ALT (defualt positive)
-    #
-    def set_trigger_edge(self, value: str):
-        """Set trigger edge """
-        if not self.dummy:
-            if value == "BOTH":
-                self.write(":TRIG:EDGE BOTH")
-            elif value == "NEG":
-                self.write(":TRIG:EDGE NEG")
-            elif value == "ALT":
-                self.write(":TRIG:EDGE ALT")
-            else:
-                self.write(":TRIG:EDGE POS")
-
-    def set_trigger_channel(self, chan: int):
-        """SEt trigger source"""
-        if not self.dummy:
-            self.write(f":TRIG:SOUR CHAN{to_NR1(chan)}")
-
-    def set_trigger_ext(self):
-        """SEt trigger source"""
-        if not self.dummy:
-            self.write(":TRIG:SOUR EXT")
-
-    def halt(self):
-        """Stops aquisition"""
-        if not self.dummy:
-            self.write(":STOP")
-        pass
-
-    def digitize(self):
-        """Similar to single trigger. Aquires waveform according to :ACQ command
-        subsystem. Stops instrument when aquisition is complete. Acquires
-        channels currently displayed (can change this with arguments to do more
-        or less). """
-        if not self.dummy:
-            self.write(":DIG")
-
-    def read_all_waveforms(self, ch1, ch2, ch3, ch4):
-
-        wave = {}
-
-        #        print(ch1, ch2, ch3, ch4);
-
-        if not self.dummy:
-            if ch1:
-                wave["CH1"] = self.read_waveform(1)
-            if ch2:
-                wave["CH2"] = self.read_waveform(2)
-            if ch3:
-                wave["CH3"] = self.read_waveform(3)
-            if ch4:
-                wave["CH4"] = self.read_waveform(4)
-
-        return wave
-
-    def single_trigger(self):
-        """Tells oscilloscope to run with trigger mode set to single trigger"""
-        if not self.dummy:
-            self.write(":SING")
-
-    def norm_trigger(self):
-        """Tell oscilloscope to run with trigger mode set to normal"""
-        if not self.dummy:
-            self.write(":RUN")
-
-    def auto_trigger(self):
-        """Tells oscilloscope to run with trigger mode set to auto"""
-        pass
-
-    def set_measurement(self, parameter: str, avg: str):
-        """Tells oscilloscope to enable a given measurement (eg. freq, Vpp_avg)"""
-        pass
-
-    def read_measurement(self, parameter: str, avg: str):
-        """Reads measurement value from oscilloscope (if measurement first set
-        by 'set_measurement()')"""
-        pass
-
-    #
-    #
-    # Returns (V, t) as float[]
-    def read_waveform(self, channel: int):
-        """Reads a waveform from the oscilloscope."""
-
-        if self.dummy or not self.online:
-            return ([], [])
-
-        # Read data from oscilloscope
-        try:
-            self.write(f":WAV:SOUR CHAN{channel}")
-            # Set the source channel
-            raw_data = self.query(":WAV:DATA?")
-            # Read waveform data
-        except:
-            self.digitize()
-            self.configure_read_waveform()
-            raw_data = self.query(":WAV:DATA?")
-            # Read waveform data
-
-        x_orig = self.query(":WAV:XOR?")
-        # Read X Origin
-        x_ref = self.query(":WAV:XREF?")
-        # Read X Reference
-        x_incr = self.query(":WAV:XINC?")
-        # Read X Increment
+    def update_setting(self, setting: str, value):
 
         try:
-            # x_orig = float(x_orig[0:len(x_orig)-1]); #Convert X Origin
-            x_orig = float(x_orig[0 : len(x_orig)])
-            # Convert X Origin
-            print(x_orig)
+            if self.dummy:
+                return value
+            else:
+
+                # Note: We ignore channel number because there is only
+                # one channel on this model of AWG
+                if regex_compare("CH._enable", setting):
+                    if str_to_bool(value):
+                        self.write(":OUTP ON")
+                    else:
+                        self.write(":OUTP OFF")
+                    rval = self.query(":OUTP?")
+                    return str(rval == "1\n")
+                elif regex_compare("CH._waveform", setting):
+                    wvfm = "SIN"
+                    if value == "Sine":
+                        wvfm = "SIN"
+                    elif value == "Square":
+                        wvfm = "SQU"
+                    elif value == "Triangle":
+                        wvfm = "TRI"
+                    elif value == "Ramp":
+                        wvfm = "RAMP"
+                    elif value == "Pulse":
+                        wvfm = "PULS"
+                    elif value == "PRBS":  # Pseudo-random binary sequence
+                        wvfm = "PRBS"
+                    elif value == "Noise":
+                        wvfm = "NOIS"
+                    elif value == "Arbitrary":
+                        wvfm = "ARB"
+                    elif value == "DC":
+                        wvfm = "DC"
+                    self.write(f":SOUR:FUNC {wvfm}")
+                    rval = self.query(":SOUR:FUNC?")
+                    return rval[:-1]  # Trim newline character
+                elif regex_compare("CH._frequency", setting):
+                    self.write(f":FREQ {str_NR3(value)}")
+                    rval = self.query(":FREQ?")
+                    return rval[:-1]
+                elif regex_compare("CH._amplitude", setting):
+                    self.write(f":VOLT {str_NR3(value)}")
+                    rval = self.query(":VOLT?")
+                    return rval[:-1]
+                elif regex_compare("CH._offset", setting):
+                    self.write(f":VOLT:OFFS {str_NR3(value)}")
+                    rval = self.query(":VOLT:OFFS?")
+                    return rval[:-1]
+
+                if regex_compare("CH._volts_div", setting):
+                    chan = setting[2]
+                    self.write(f":CHAN{chan}:SCAL {str_NR3(value)}")
+                    return self.query(f":CHAN{chan}:SCAL?")
+
+                elif setting == "timebase":
+                    self.write(f":TIM:SCAL {str_NR3(value)}")
+                    return self.query(":TIM:SCAL?")
+
+                elif setting == "time_offset":
+                    self.write(f":TIM:POS {str_NR3(value)}")
+                    return self.query(":TIM:POS?")
+
+                elif regex_compare("CH._offset", setting):
+                    chan = setting[2]
+                    self.write(f"CHAN{chan}:OFFS {to_NR3(-1.0 * float(value))}")
+                    return self.query(f"CHAN{chan}:OFFS?")
+
+                elif regex_compare("CH._BW_lim", setting):
+                    chan = setting[2]
+                    self.write(f"CHAN{chan}:BWL {boolstr_NR1(value)}")
+                    return self.query(f"CHAN{chan}:BWL?")
+
+                elif regex_compare("CH._active", setting):
+                    chan = setting[2]
+                    self.write(f"CHAN{chan}:DISP {boolstr_NR1(value)}")
+                    return self.query(f"CHAN{chan}:DISP?")
+
+                elif regex_compare("CH._impedance", setting):
+                    chan = setting[2]
+                    if value == "50":
+                        self.write(f"CHAN{chan}:IMP FIFT")
+                    else:
+                        self.write(f"CHAN{chan}:IMP ONEM")
+                    return self.query(f"CHAN{chan}:IMP?")
+
+                elif regex_compare("CH._label", setting):
+
+                    # Length is capped at 32 characters
+                    if len(value) > 32:
+                        value = value[0:32]
+
+                    chan = setting[2]
+                    self.write(f"CHAN{chan}:LAB {value}")
+                    return self.query(f"CHAN{chan}:LAB?")
+
+                elif setting == "labels_enabled":
+                    self.write(f"DISP:LAB {boolstr_NR1(value)}")
+                    print(f"DISP:LAB {boolstr_NR1(value)}")
+                    return self.query(f"DISP:LAB?")
+
+                elif regex_compare("CH._invert", setting):
+                    chan = setting[2]
+                    self.write(f"CHAN{chan}:INV {boolstr_NR1(value)}")
+                    return self.query(f"CHAN{chan}:INV?")
+
+                elif regex_compare("CH._probe_atten", setting):
+                    chan = setting[2]
+                    self.write(f"CHAN{chan}:PROB {str_NR3(value)}")
+                    return self.query(
+                        f"CHAN{chan}:PROB?"
+                    )  # ie. 10 gives x10 or 10:1 probe
+
+                elif regex_compare("CH._coupling", setting):
+                    chan = setting[2]
+
+                    # Make sure valid value provided
+                    if value != "AC" and value != "DC":
+                        value = "DC"
+
+                    self.write(f"CHAN{chan}:COUP {value}")
+                    return self.query(f"CHAN{chan}:COUP?")
+
+                elif setting == "trigger_level":
+                    self.write(f"TRIG:EDGE:LEV {str_NR3(value)}")
+                    return self.query(f"TRIG:EDGE:LEV?")
+
+                elif setting == "trigger_coupling":
+
+                    # Make sure valid option given
+                    if value != "AC" and value != "DC" and value != "LFReject":
+                        value = "DC"
+
+                    self.write(f"TRIG:COUP {value}")
+                    return self.query(f"TRIG:COUP?")
+
+                elif setting == "trigger_edge":
+
+                    # Make sure valid option given
+                    if (
+                        value != "BOTH"
+                        and value != "NEG"
+                        and value != "POS"
+                        and value != "ALT"
+                    ):
+                        value = "POS"
+
+                    self.write(f"TRIG:EDGE:SLOP {value}")
+                    return self.query(f"TRIG:EDGE:SLOP?")
+
+                elif setting == "trigger_channel":
+
+                    self.write(f"TRIG:SOUR CHAN{str_NR1(value)}")
+                    return self.query(f"TRIG:SOUR?")
         except Exception as e:
-            print("ERROR: Received bad origin from scope.")
-            print(e)
-            print(f"\t{x_orig}")
-            return ([], [])
-        try:
-            # x_ref = float(x_ref[0:len(x_ref)-1]); #Convert X Reference
-            x_ref = float(x_ref[0 : len(x_ref)])
-            # Convert X Reference
-        except Exception as e:
-            print("ERROR: Received bad reference from scope.")
-            print(e)
-            print(f"\t{x_ref}")
-            return ([], [])
-        try:
-            # x_incr = float(x_incr[0:len(x_incr)-1]); #Convert X Increment
-            x_incr = float(x_incr[0 : len(x_incr)])
-            # Convert X Increment
-        except Exception as e:
-            print("ERROR: Received bad increment from scope.")
-            print(e)
-            print(f"\t{x_incr}")
-            return ([], [])
+            print(
+                "An error occured in Key4000XCtrl.py when sending SCPI commands to the instrument."
+            )
+            print(str(e))
 
-        try:
-            # Format and convert data into float[]
-            block_header = raw_data[0:10]
-            raw_data = raw_data[
-                11 : len(raw_data) - 1
-            ]  # Trim block header from packet & remove newline character from end
-            fmt = [float(x.strip()) for x in raw_data.split(",")]
-            # Break at commas, strip whitespace, convert to float, add to array
-
-            t = (
-                (np.linspace(0, len(fmt), len(fmt), False) - x_ref) * x_incr + x_orig
-            ).tolist()
-            # Calculate time values
-        except Exception as e:
-            print("ERROR: Failed to calculate V & t.")
-            return ([], [])
-
-        return (fmt, t)
-
-    def configure_read_waveform(self):
-        """Sets the data transfer mode of the oscilloscope. Call this function
-        once before reading waveform data with 'read_waveform()'. """
-
-        self.write(":WAV:FORM ASC")
-        # Sets data format to ASCII text
-        self.write(":WAV:POIN 1000")
-        # Set the number of points to read to 1000 (OPtions: 1000, 500, 250, 100, MAX (~4M))
-        self.write(":WAV:POIN:MODE NORM")
-        # Set data record to transfer to 'measurement record'
-        self.write(":ACQ:TYPE NORM")
-        # Set aquisition mode to normal
+    def command(self, cmd: str):
+        pass
 
     def write(self, command: str):
         if self.online and not self.dummy:
             if not self.use_sockets:
-                self.scope.write(command)
+                self.device.write(command)
             else:
-                self.scope.sendall(bytes(command + "\n", "utf-8"))
+                self.device.sendall(bytes(command + "\n", "utf-8"))
             if self.print_commands:
                 print(f'\tKEY4000X< "{command}"')
 
     def query(self, command: str):
         if self.online and not self.dummy:
             if not self.use_sockets:
-                reply = self.scope.query(command)
+                reply = self.device.query(command)
             else:
-                self.scope.sendall(bytes(command + "\n", "utf-8"))
-                reply_bytes = recvall(self.scope)
+                self.device.sendall(bytes(command + "\n", "utf-8"))
+                reply_bytes = recvall(self.device)
                 print(f"reply size: {len(reply_bytes)}")
                 reply = str(reply_bytes)
                 if len(reply) < 100:
@@ -416,6 +287,3 @@ def recvall(sock):
         if t_str[len(t_str) - 3 : len(t_str) - 1] == "\\n":
             break
     return data
-
-
-# 71-209
