@@ -104,102 +104,7 @@ class HC_FunctionGenerator(HC_Instrument):
         # Write state to scope - synch scope with GUI
         self.send_state()
 
-    def initialize_gui_instrument():
-        print("\n\nOh no! I haven't implimented this yet!!\n\n")
-        pass
-
-    def load_state(self, filename: str):
-
-        # Get default state - this identifies all required fields
-        dflt = self.default_state()
-
-        # Read a settings from file
-        try:
-            with open(filename) as file:
-                self.settings = json.load(file)
-                print(f"settings for {self.comm.instr.ID} read from file '{filename}'")
-        except:
-            print(f"ERROR: Failed to read file '{filename}'. Using defualt case.")
-            self.settings = self.default_state()
-
-        # Ensure all fields in default_state are present in the loaded state
-        for key in dflt:
-            if not (key in self.settings):
-                self.settings[key] = dflt[key]
-
-    def save_state(self, filename: str):
-        try:
-            with open(filename, "w") as file:
-                json.dump(self.settings, file)
-                print(f"settings for {self.comm.instr.ID} saved to file '{filename}'")
-        except Exception as e:
-            print(f"ERROR: Failed to write file '{filename}'. settings not saved.")
-            print(f"\t{e}")
-
-    #
-    # Close connection
-    #
-    def close(self, filename: str = ""):
-
-        # Save settings if asked
-        if self.save_on_close:
-            self.save_state(self.filename)
-
-        # Tell scope to close
-        self.comm.close()
-
-    #
-    # Sends the settings to the communication object
-    #
-    def send_state(self):
-        """ Use signals/slots to send the settings dictionary to the communication
-        thread. """
-        self.state_mosi_sig.emit(self.settings)
-        pass
-
-    #
-    # Queries the settings from the communication object
-    #
-    def get_state(self, new_state: dict):
-        """ Gets the settings from the oscilloscope. """
-        self.settings = new_state
-
-    #
-    # Called when a waveform is read - updates the display
-    #
-    def values_received(self, values: dict):
-        # Do plotting here
-        self.disp.update_display(values)
-        pass
-
-    def set_settings_and_send(self, parameter: str, value):
-        if type(value) != type(self.settings[parameter]):
-            current_val = self.settings[parameter]
-            print(
-                f"ERROR: Tried to assign value of type '{type(value)}' to field '{parameter}', which has type '{type(current_val)}'"
-            )
-            return
-        self.settings[parameter] = value
-
-    def query_waveforms(self):
-        start_time = time.time()
-        self.action_sig.emit("WAVEFORMS")
-
-    #        print(f"'Control' spent {time.time()-start_time} seconds querying waveforms.");
-
-    #
-    # Manually send a SCPI command through the communication object to the INSTR
-    #
-    def write(self, command: str):
-        """ Manually send SCPI commands to the oscilloscope. """
-        write_sig.emit(command)
-
-    #
-    # Manually query a SCPI command through the communication obeect to the INSTR
-    #
-    def query(self, command: str):
-        """ Manually send/receive commands to/from the oscilloscope. """
-        return query_sig.emit(command)
+        self.log_note("Initalized")
 
     #
     # Create a default settings object if can't get settings from a file
@@ -269,7 +174,7 @@ class FunctionGeneratorChannelWidget(QWidget):
         self.amplitude_edit = QLineEdit()
         self.amplitude_edit.setValidator(QDoubleValidator())
         self.amplitude_edit.editingFinished.connect(
-            lambda: control.set_settings_and_send(
+            lambda: control.update_setting(
                 f"CH{channel}_amplitude", (self.amplitude_edit.text())
             )
         )
@@ -278,7 +183,7 @@ class FunctionGeneratorChannelWidget(QWidget):
         self.offset_edit = QLineEdit()
         self.offset_edit.setValidator(QDoubleValidator())
         self.offset_edit.editingFinished.connect(
-            lambda: control.set_settings_and_send(
+            lambda: control.update_setting(
                 f"CH{channel}_offset", (self.offset_edit.text())
             )
         )
@@ -287,7 +192,7 @@ class FunctionGeneratorChannelWidget(QWidget):
         self.frequency_edit = QLineEdit()
         self.frequency_edit.setValidator(QDoubleValidator())
         self.frequency_edit.editingFinished.connect(
-            lambda: control.set_settings_and_send(
+            lambda: control.update_setting(
                 f"CH{channel}_frequency", (self.frequency_edit.text())
             )
         )
@@ -305,7 +210,7 @@ class FunctionGeneratorChannelWidget(QWidget):
         self.num_pulse_edit = QLineEdit()
         self.num_pulse_edit.setValidator(QDoubleValidator())
         self.num_pulse_edit.editingFinished.connect(
-            lambda: control.set_settings_and_send(
+            lambda: control.update_setting(
                 f"CH{channel}_num_pulse", (self.num_pulse_edit.text())
             )
         )
@@ -314,7 +219,7 @@ class FunctionGeneratorChannelWidget(QWidget):
         self.burst_freq_edit = QLineEdit()
         self.burst_freq_edit.setValidator(QDoubleValidator())
         self.burst_freq_edit.editingFinished.connect(
-            lambda: control.set_settings_and_send(
+            lambda: control.update_setting(
                 f"CH{channel}_burst_freq", (self.burst_freq_edit.text())
             )
         )
@@ -330,7 +235,7 @@ class FunctionGeneratorChannelWidget(QWidget):
         self.active_but.setText("Output On/Off")
         self.active_but.setCheckable(True)
         self.active_but.clicked.connect(
-            lambda: control.set_settings_and_send(
+            lambda: control.update_setting(
                 f"CH{channel}_enabled", str(self.active_but.isChecked())
             )
         )
@@ -352,7 +257,7 @@ class FunctionGeneratorChannelWidget(QWidget):
         )
         self.mod_but.setCheckable(True)
         self.mod_but.clicked.connect(
-            lambda: control.set_settings_and_send(
+            lambda: control.update_setting(
                 f"CH{channel}_modulate", str(self.mod_but.isChecked())
             )
         )
@@ -373,7 +278,7 @@ class FunctionGeneratorChannelWidget(QWidget):
             )
         )
         self.burst_but.clicked.connect(
-            lambda: control.set_settings_and_send(
+            lambda: control.update_setting(
                 f"CH{channel}_burst_en", str(self.burst_but.isChecked())
             )
         )
@@ -388,7 +293,7 @@ class FunctionGeneratorChannelWidget(QWidget):
             ["Sine", "Square", "Triangle", "Ramp", "Pulse", "Noise", "DC", "File"]
         )
         self.waveform_drop.currentIndexChanged.connect(
-            lambda: control.set_settings_and_send(
+            lambda: control.update_setting(
                 f"CH{self.channel}_waveform", self.waveform_drop.currentText()
             )
         )
@@ -400,7 +305,7 @@ class FunctionGeneratorChannelWidget(QWidget):
         self.impedance_drop = QComboBox()
         self.impedance_drop.addItems(["1e6", "50"])
         self.impedance_drop.currentIndexChanged.connect(
-            lambda: control.set_settings_and_send(
+            lambda: control.update_setting(
                 f"CH{channel}_impedance", float(self.impedance_drop.currentText())
             )
         )
