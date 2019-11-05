@@ -122,7 +122,7 @@ class STS50Demo(QMainWindow):
         self.awg_ctrl.close()
 
         if log:
-            with open("log.txt", "w") as f:
+            with open("example_sts50.log", "w") as f:
                 for item in self.app.log:
                     f.write("%s\n" % item)
 
