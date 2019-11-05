@@ -85,13 +85,13 @@ class HC_Comm(QObject):
             self.instrument.name, self.backend_model, "SET", setting, value
         )
 
-    def command(self, command: str):
+    def command(self, cmd: str):
         """Sends a command to the worker in the worker thread"""
         if self.debug:
             print(f"HC_Comm[{self.instrument.name}] -c-> '{command}'")
-        self.sigCommand.emit(command)
+        self.sigCommand.emit(cmd)
         self.instrument.window.app.add_log(
-            self.instrument.name, self.backend_model, "CMD", setting
+            self.instrument.name, self.backend_model, "CMD", cmd
         )
 
     def write(self, msg: str):
