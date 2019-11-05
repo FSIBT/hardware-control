@@ -3,13 +3,14 @@
 """oscilloscope_example to control the hardware_control test stand
 
 Usage:
-  sts50_example [--dummy] [--socket] [--debug]
+  sts50_example [--dummy] [--socket] [--debug] [--log]
 
 Options:
   --dummy    use dummy connection for instruments that return semi-random data
              so that one run the program away from the test stand
   --socket   use sockets instead of pyvisa
   --debug    allow debug print statements
+  --log      save log file
 """
 
 from matplotlib import pyplot as plt
@@ -42,6 +43,7 @@ commands = docopt(__doc__)
 dummy = commands["--dummy"]
 use_sockets = commands["--socket"]
 debug = commands["--debug"]
+log = commands["--log"]
 
 from hardware_control.base import HC_App
 from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
@@ -66,29 +68,34 @@ class STS50Demo(QMainWindow):
         self.main_widget = QWidget(self)
 
         scpi_scope = Key4000XCtrl(
-            "TCPIP0::192.168.0.14::INSTR",
-            dummy,
-            True,
-            use_sockets,
-            "192.168.0.14",
-            5025,
+            "TCPIP0::192.168.0.14::INSTR", True, True, use_sockets, "192.168.0.14", 5025
         )
         self.scope_ctrl = HC_Oscilloscope(
             scpi_scope, self, "Keysight", "DEFAULT", True, debug
         )
 
-        awg = Key33500BCtrl("Some-address-goes-here", dummy, True, use_sockets, "192.168.0.18", 5025)
-        self.awg_ctrl = HC_FunctionGenerator(awg, self, "RF Generator", "DEFAULT", True, 1)
+        # awg = Key33500BCtrl("Some-address-goes-here", dummy, True, use_sockets, "192.168.0.18", 5025)
+        awg = Key33500BCtrl(
+            "USB0::0x0957::0x2907::MY52500624::INSTR",
+            dummy,
+            True,
+            use_sockets,
+            "192.168.0.18",
+            5025,
+        )
+        self.awg_ctrl = HC_FunctionGenerator(
+            awg, self, "RF Generator", "DEFAULT", True, 1, debug
+        )
 
-        self.flow = AlicatMSeriesCtrl("192.168.0.15", dummy, True)
+        self.flow = AlicatMSeriesCtrl("192.168.0.15", True, True)
         self.flow_ctrl = HC_FlowController(
             self.flow, self, "Flow Controller", "flowcontroller_state.json", True
         )
 
-        self.trig1 = SRSDG535Ctrl("GPIB0::10::INSTR", dummy, True)
+        self.trig1 = SRSDG535Ctrl("GPIB0::10::INSTR", True, True)
         self.trig1_ctrl = HC_PulseGen(self.trig1, self, "Trigger 1", "DEFAULT", True)
 
-        self.trig2 = SRSDG535Ctrl("GPIB0::15::INSTR", dummy, True)
+        self.trig2 = SRSDG535Ctrl("GPIB0::15::INSTR", True, True)
         self.trig2_ctr = HC_PulseGen(self.trig2, self, "Trigger 2", "DEFAULT", True)
 
         self.scantool = HC_ScanTool(self, "Scan Control", "DEFAULT", True)
@@ -104,7 +111,7 @@ class STS50Demo(QMainWindow):
         self.grid.addWidget(self.trig2_ctr, 2, 3)
         self.grid.addWidget(self.scantool, 0, 4)
         self.grid.addWidget(self.statustool, 2, 4)
-        # self.grid.addWidget(self.awg_ctrl, 3, 0, 1, 1)
+        self.grid.addWidget(self.awg_ctrl, 3, 0, 1, 1)
         self.main_widget.setLayout(self.grid)
 
         self.setCentralWidget(self.main_widget)
@@ -112,6 +119,12 @@ class STS50Demo(QMainWindow):
 
     def close(self):
         self.scope_ctrl.close()
+        self.awg_ctrl.close()
+
+        if log:
+            with open("log.txt", "w") as f:
+                for item in self.app.log:
+                    f.write("%s\n" % item)
 
 
 def main(argv):
