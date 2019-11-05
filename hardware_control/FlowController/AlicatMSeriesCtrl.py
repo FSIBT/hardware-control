@@ -108,9 +108,9 @@ class AlicatMSeriesCtrl(QObject):
     def get_values(self):
         rtn = {}
 
-        if (not self.online):
-            rtn["pressure"] = -1;
-            rtn["flow"] = -1;
+        if not self.online:
+            rtn["pressure"] = -1
+            rtn["flow"] = -1
             return rtn
 
         if not self.dummy:

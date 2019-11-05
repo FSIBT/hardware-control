@@ -15,6 +15,7 @@ import numpy as np
 import socket
 from hardware_control.HC_Backend import HC_Backend
 
+
 def to_NR3(x: float):
     return f" {x:.6E}"
 

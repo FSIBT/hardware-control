@@ -52,7 +52,9 @@ class FlowControllerDemo(QMainWindow):
         self.main_widget = QWidget(self)
 
         self.instr = AlicatMSeriesCtrl("192.168.0.15", dummy, True)
-        self.instr_ctrl = HC_FlowController(self.instr, "flowcontroller_state.json", True)
+        self.instr_ctrl = HC_FlowController(
+            self.instr, "flowcontroller_state.json", True
+        )
 
         self.grid = QGridLayout()
         self.grid.addWidget(self.instr_ctrl, 0, 0)
