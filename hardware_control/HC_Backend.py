@@ -31,13 +31,14 @@ class HC_Backend:
 
     def close(self):
         """Close connection to instrument"""
-        if not self.dummy and self.online:
+        if (not self.dummy) and self.online:
             self.device.close()
+            print(f"{self.ID}: Backend Closed")
             return (
                 False
             )  # This can be changed to try to talk to instrument to verify close successful - prob not required
         else:
-            print("{self.ID}: Dummy connection closed")
+            print(f"{self.ID}: Dummy connection closed")
             return False
 
     #
