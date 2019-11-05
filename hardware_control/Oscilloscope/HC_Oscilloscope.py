@@ -108,6 +108,8 @@ class HC_Oscilloscope(HC_Instrument):
         # Write state to scope - synch scope with GUI
         self.send_state()
 
+        self.log_note("Initalized")
+
     #
     # Create a default settings object if can't get settings from a file
     #

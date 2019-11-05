@@ -48,6 +48,7 @@ class HC_Comm(QObject):
         self.debug = debug
         self.backend = backend
         self.instrument = instrument  # Calling instrument UI (eg. HC_scope)
+        self.backend_model = backend.ID
 
         self.worker = HC_CommWorker(self.backend)
         self.worker_thread = QThread()
@@ -72,33 +73,44 @@ class HC_Comm(QObject):
         self.try_connect_timer.start(1000)
 
     def close(self):
-        self.try_connect_timer.stop() #Stop
+        self.try_connect_timer.stop()  # Stop
         self.sigClose.emit()
-
 
     def update_setting(self, setting: str, value: str):
         """Transfers the setting and value information to the worker thread"""
         if self.debug:
             print(f"HC_Comm[{self.instrument.name}] -us-> '{setting}', '{value}' ")
         self.sigUpdateSettings.emit(setting, value)
+        self.instrument.window.app.add_log(
+            self.instrument.name, self.backend_model, "SET", setting, value
+        )
 
     def command(self, command: str):
         """Sends a command to the worker in the worker thread"""
         if self.debug:
             print(f"HC_Comm[{self.instrument.name}] -c-> '{command}'")
         self.sigCommand.emit(command)
+        self.instrument.window.app.add_log(
+            self.instrument.name, self.backend_model, "CMD", setting
+        )
 
     def write(self, msg: str):
         """Sends a command to be sent to the instrument by the worker in the worker thead"""
         if self.debug:
             print(f"HC_Comm[{self.instrument.name}] -w-> '{msg}'")
         self.sigWrite.emit(msg)
+        self.instrument.window.app.add_log(
+            self.instrument.name, self.backend_model, "WRT", setting
+        )
 
     def query(self, msg: str):
         """Sends a query statement to be sent to the instrument by the worker in the worker thead"""
         if self.debug:
             print(f"HC_Comm[{self.instrument.name}] -q-> '{msg}'")
         self.sigQuery.emit(msg)
+        self.instrument.window.app.add_log(
+            self.instrument.name, self.backend_model, "QRY", setting
+        )
 
     def try_connect(self):
         """Tells the worker to tell the backend to try to connect to the instrument"""
@@ -295,7 +307,16 @@ class HC_Instrument(QGroupBox):
     def send_state(self):
         """Writes the entire state/settings dicitonary to the oscilloscope"""
         for key in self.settings:
-            self.comm.update_setting(key, str(self.settings[key]))
+            if self.comm is not None:
+                self.comm.update_setting(key, str(self.settings[key]))
+
+    def close(self):
+        if self.comm is not None:
+            self.comm.close()
+
+    def log_note(self, note: str):
+        self.window.app.add_log(self.name, self.comm.backend_model, "NOTE", note)
+
 
 class HC_App(QApplication):
     """Subclass of QApplication that is aware of what hardware is connected to it and can log data"""
@@ -303,6 +324,7 @@ class HC_App(QApplication):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.instruments = []
+        self.log = []  # List of strings for debugging/logging purposes
 
     def add_instrument(self, widget):
         # check if name is already present
@@ -350,11 +372,36 @@ class HC_App(QApplication):
     def close(self):
         """Closes all instruments"""
         for instr in self.instruments:
-            try: #User may not have initialized comm correctly as HC_Comm - error check here
-                instr.comm.close() #Send close signal to backend - stop connect timer
+            try:  # User may not have initialized comm correctly as HC_Comm - error check here
+                instr.comm.close()  # Send close signal to backend - stop connect timer
             except Exception as e:
                 print(f"Failed to close instrument '{instr.name}'.")
                 print(str(e))
+
+    def add_log(
+        self,
+        instr_name: str,
+        backend_model: str,
+        log_type: str,
+        arg1: str,
+        arg2: str = "",
+    ):
+        datestr = datetime.datetime.now().strftime("[%d-%b-%Y %H:%M:%S]")
+        if log_type == "SET":
+            self.log.append(
+                f'{instr_name}: \tSET "{arg1}" "{arg2}" \t[{datestr}] \t[{backend_model}]'
+            )
+        elif (
+            log_type == "CMD"
+            or log_type == "WRT"
+            or log_type == "QRY"
+            or log_type == "NOTE"
+        ):
+            self.log.append(
+                f'{instr_name}: \t{log_type} "{arg1}" \t[{datestr}] \t[{backend_model}]'
+            )
+        else:
+            print(f"Invalid log type code '{log_type}' received")
 
 
 class QOnOff(QPushButton):
@@ -779,10 +826,18 @@ class LoggerThread(QThread):
         self.logfile.close()
 
 
-def setButtonState(button: QPushButton, value: bool):
-    if value:
-        if not button.isChecked():
-            button.toggle()
-    else:
-        if button.isChecked():
-            button.toggle()
+def setButtonState(button: QPushButton, value):
+    if type(value) == bool:
+        if value:
+            if not button.isChecked():
+                button.toggle()
+        else:
+            if button.isChecked():
+                button.toggle()
+    elif type(value) == str:
+        if value == "True" or value == "TRUE":
+            if not button.isChecked():
+                button.toggle()
+        else:
+            if button.isChecked():
+                button.toggle()
