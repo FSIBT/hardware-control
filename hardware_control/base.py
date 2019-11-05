@@ -233,7 +233,7 @@ class HC_Instrument(QGroupBox):
 
         if self.comm is not None:
             try:
-                self.values[setting] = self.comm.backend.update_setting(setting, value)
+                self.values[setting] = self.comm.update_setting(setting, value)
             except KeyError:
                 print(
                     "ERROR: Key '{parameter}' does not exist for instrument '{self.name}' in values dictionary."
@@ -386,7 +386,8 @@ class HC_App(QApplication):
         arg1: str,
         arg2: str = "",
     ):
-        datestr = datetime.datetime.now().strftime("[%d-%b-%Y %H:%M:%S]")
+
+        datestr = datetime.datetime.now().strftime("%d-%b-%Y %H:%M:%S")
         if log_type == "SET":
             self.log.append(
                 f'{instr_name}: \tSET "{arg1}" "{arg2}" \t[{datestr}] \t[{backend_model}]'
