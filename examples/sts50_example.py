@@ -35,6 +35,7 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QAction,
     QGridLayout,
+    QStyleFactory,
 )
 import sys
 from docopt import docopt
@@ -115,6 +116,10 @@ class STS50Demo(QMainWindow):
         self.main_widget.setLayout(self.grid)
 
         self.setCentralWidget(self.main_widget)
+
+        # ['macintosh', 'Windows', 'Fusion']
+        self.app.setStyle(QStyleFactory.create("Fusion"))
+
         self.show()
 
     def close(self):
