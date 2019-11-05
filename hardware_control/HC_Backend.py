@@ -71,11 +71,16 @@ class HC_Backend:
 
         print("trying to connect")
 
-        # Try to connect to scope
+        # Try to connect to instrument
         try:
             if not self.use_sockets:  # Use Pyvisa
                 rm = pyvisa.ResourceManager()
                 self.device = rm.open_resource(self.visa_addr)  # Open connection
+
+                # Verify actually connected (open_resource won't always throw error w/ disconnected USB)
+                self.device.query("*IDN?")
+                print("opened connection")
+
             else:  # Use sockets
                 self.device = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.device.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 0)
@@ -83,6 +88,7 @@ class HC_Backend:
         except Exception as e:  # Failed to conncet
             print(e)
             self.online = False
+            print("OFFLINE")
         else:
             self.online = True
 
