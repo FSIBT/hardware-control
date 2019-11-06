@@ -75,6 +75,8 @@ class HC_Comm(QObject):
     def close(self):
         self.try_connect_timer.stop()  # Stop
         self.sigClose.emit()
+        self.worker_thread.quit()  # Kill thread
+        self.worker_thread.wait()  # Wait for thread to join (otherwise, if main thread exists first, stdout will be closed while the worker_thread may still be running and try to write to stdout, causing an error to arise)
 
     def update_setting(self, setting: str, value: str):
         """Transfers the setting and value information to the worker thread"""
@@ -315,7 +317,25 @@ class HC_Instrument(QGroupBox):
             self.comm.close()
 
     def log_note(self, note: str):
+        """Adds a 'Note' type log entry to the HC_App's log list"""
         self.window.app.add_log(self.name, self.comm.backend_model, "NOTE", note)
+
+    def read_message(self, prefix: str):
+        """Looks for a string in self.inbox, starting from the back (ie. most
+        recent), which starts with the string specified by argument 'prefix'. If
+        such a string is found, it returns the contents after prefix and deletes
+        the string from self.inbox. Returns None if no such message found"""
+
+        rval = None
+        for idx, i in reversed(list(enumerate(self.inbox))):
+
+            if i[0 : len(prefix)] == prefix:  # If prefix matches begining...
+                rval = i[len(prefix) :]  # Save remainder to return value
+                self.inbox.pop(idx)  # Erase the read message
+                break
+                # Quit looping
+
+        return rval
 
 
 class HC_App(QApplication):
