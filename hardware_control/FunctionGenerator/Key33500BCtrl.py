@@ -242,7 +242,7 @@ class Key33500BCtrl(HC_Backend):
                     return self.query(f"TRIG:SOUR?")
         except Exception as e:
             print(
-                "An error occured in Key4000XCtrl.py when sending SCPI commands to the instrument."
+                "An error occured in Key33500BCtrl.py when sending SCPI commands to the instrument."
             )
             print(str(e))
 
@@ -256,7 +256,7 @@ class Key33500BCtrl(HC_Backend):
             else:
                 self.device.sendall(bytes(command + "\n", "utf-8"))
             if self.print_commands:
-                print(f'\tKEY4000X< "{command}"')
+                print(f'\t{self.ID}< "{command}"')
 
     def query(self, command: str):
         if self.online and not self.dummy:
