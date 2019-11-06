@@ -34,7 +34,7 @@ def bool_NR1(x: bool):
 class SRSDG535Ctrl(HC_Backend):
     def __init__(self, visa_addr, dummy: bool = False, print_commands: bool = False):
 
-        self.ID = "SRS_DG535"
+        self.ID = "SRS-DG535"
 
         self.visa_addr = visa_addr
         self.online = False

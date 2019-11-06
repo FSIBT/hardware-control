@@ -30,21 +30,7 @@ from PyQt5.QtWidgets import (
 from hardware_control.base import HC_Instrument, HC_Comm
 import copy
 
-#
-# This is a 4-channel oscilloscope control progam. It defines a UI for a 4-ch
-# scope and has the sockets and signals to interface with a OscilloscopeComm
-# instance, which facilitates communication with the instrument. The Osc.Comm
-# object requires an object (originally passed to the control object) which
-# fascilitates communication with the scope. An example of such a program is
-# the Key4000XSCPI class for Keysight 4000X series oscilloscopes. These classes
-# mostly just wrap SCPI commands so this UI+Communication code knows how to
-# interface with any specific scope model.
-#
-# All instrument parameters are saved in a 'state' dictionary. When a function
-# such as set_timebase() is called, it updates the state object and sends it to
-# the communicaiton object instance. The communication object finds the change
-# and sends the correct SCPI commands to the instrument to impliment the change.
-#
+
 class HC_PulseGen(HC_Instrument):
     def __init__(
         self,
