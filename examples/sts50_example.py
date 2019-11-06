@@ -57,6 +57,9 @@ from hardware_control.ScanTool.HC_ScanTool import HC_ScanTool
 from hardware_control.ConnectionStatusTool.HC_StatusTool import HC_StatusTool
 from hardware_control.FunctionGenerator.HC_FunctionGenerator import HC_FunctionGenerator
 from hardware_control.FunctionGenerator.Key33500BCtrl import Key33500BCtrl
+from hardware_control.PowerSupply.HC_MultiPowerSupply import HC_MultiPowerSupply
+from hardware_control.PowerSupply.CAEN14xxETCtrl import CAEN14xxETCtrl
+from hardware_control.PowerSupply.TDKLGenHCtrl import TDKLGenHCtrl
 
 
 class STS50Demo(QMainWindow):
@@ -69,7 +72,12 @@ class STS50Demo(QMainWindow):
         self.main_widget = QWidget(self)
 
         scpi_scope = Key4000XCtrl(
-            "TCPIP0::192.168.0.14::INSTR", True, True, use_sockets, "192.168.0.14", 5025
+            "TCPIP0::192.168.0.14::INSTR",
+            dummy,
+            True,
+            use_sockets,
+            "192.168.0.14",
+            5025,
         )
         self.scope_ctrl = HC_Oscilloscope(
             scpi_scope, self, "Keysight", "DEFAULT", True, debug
@@ -86,6 +94,11 @@ class STS50Demo(QMainWindow):
         )
         self.awg_ctrl = HC_FunctionGenerator(
             awg, self, "RF Generator", "DEFAULT", True, 1, debug
+        )
+
+        self.psu = TDKLGenHCtrl("TCPIP0::192.168.1.19::INSTR", dummy)
+        self.psu_ctrl = HC_MultiPowerSupply(
+            self.psu, self, [1], "TDK Lambda (RF Vin)", "DEFAULT"
         )
 
         self.flow = AlicatMSeriesCtrl("192.168.0.15", True, True)
@@ -113,6 +126,7 @@ class STS50Demo(QMainWindow):
         self.grid.addWidget(self.scantool, 0, 4)
         self.grid.addWidget(self.statustool, 2, 4)
         self.grid.addWidget(self.awg_ctrl, 3, 0, 1, 1)
+        self.grid.addWidget(self.psu_ctrl, 3, 1, 1, 1)
         self.main_widget.setLayout(self.grid)
 
         self.setCentralWidget(self.main_widget)

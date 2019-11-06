@@ -28,6 +28,7 @@ from PyQt5.QtWidgets import (
     QComboBox,
 )
 import copy
+from hardware_control.base import HC_Instrument, HC_Comm, setButtonState
 
 
 class HC_MultiPowerSupply(HC_Instrument):
@@ -43,10 +44,10 @@ class HC_MultiPowerSupply(HC_Instrument):
 
         super().__init__(window, name)
 
-        self.state = {}
+        self.settings = {}
         self.save_on_close = save_on_close
-
-        self.comm = HC_Comm(backend)
+        self.backend = backend
+        self.comm = HC_Comm(backend, self)
         self.filename = ""
 
         # Check that the user provided valid channel request...
@@ -63,19 +64,18 @@ class HC_MultiPowerSupply(HC_Instrument):
             if (c <= self.backend.num_channels) and (not c in self.channels):
                 self.channels.append(c)
 
-        # Initialize state to correct values
+        # Initialize settings to correct values
         if initialize_with == "INSTRUMENT":
             self.save_on_close = False
             # Can't save without filename
-            self.state = self.initialize_gui_instrument()
+            self.settings = self.initialize_gui_instrument()
         elif initialize_with == "DEFAULT":
             self.save_on_close = False
             # Can't save without filename
-            self.state = self.default_state()
+            self.settings = self.default_state()
         else:
             self.load_state(initialize_with)
             self.filename = initialize_with
-        self.state["channel"] = channel_num
 
         # Create GUI
         #
@@ -83,9 +83,9 @@ class HC_MultiPowerSupply(HC_Instrument):
         # Automatically create channel widgets and push them into a row
         self.channel_widgets = []
         self.channel_panel = QGridLayout()
-        for idx, c in enumerate(self.channel):
+        for idx, c in enumerate(self.channels):
             self.channel_widgets.append(MultiPowerSupplyChannel(c, self))
-            self.channel_panel.addWidget(ch1, 0, idx)
+            self.channel_panel.addWidget(self.channel_widgets[-1], 0, idx)
         #
         self.master_layout = QGridLayout()
         self.master_layout.addLayout(self.channel_panel, 0, 0)
@@ -94,6 +94,38 @@ class HC_MultiPowerSupply(HC_Instrument):
 
         # Write state to scope - synch scope with GUI
         self.send_state()
+
+        # Create timer to query voltages
+        self.readout_timer = QTimer(self)
+        self.readout_timer.timeout.connect(self.update_readout)
+        self.readout_timer.start(500)
+
+    def close(self):  # Note: this is a complete duplicate of the 'close()' function
+        # in HC_Instrument, except it adds readout_timer.stop()
+
+        if self.comm is not None:
+            self.comm.close()
+        self.readout_timer.stop()
+
+    def update_readout(self):
+        """Queries the instrument for current readout data, then reads the most
+        recent readout data from the inbox and pushes it to the GUI"""
+
+        # Request updated readout data
+        for idx, c in enumerate(self.channels):  # For each channel...
+            self.comm.command(f"CH{c}_V_out")
+            self.comm.command(f"CH{c}_I_out")
+            self.comm.command(f"CH{c}_V_set")
+            self.comm.command(f"CH{c}_I_set")
+
+            # Get latest inbox entries for readout data...
+            Vout = self.read_message(f"CH{c}_V_out=")
+            Iout = self.read_message(f"CH{c}_I_out=")
+            Vset = self.read_message(f"CH{c}_V_set=")
+            Iset = self.read_message(f"CH{c}_I_set=")
+
+            # Send newest data to GUI
+            self.channel_widgets[idx].update_readout(Vout, Iout, Vset, Iset)
 
     #
     # Create a default state object if can't get state from a file
@@ -111,178 +143,152 @@ class HC_MultiPowerSupply(HC_Instrument):
 
 
 class MultiPowerSupplyChannel(QWidget):
-    def __init__(self, channel: int, control, color):
+    def __init__(self, channel: int, control):
         super().__init__()
 
         self.channel = channel
 
         # ************** DEFINE UI *********************#
-
+        #
         self.channel_label = QLabel()
-        if color == "yellow":
+        if self.channel <= 20:
             self.channel_label.setPixmap(
                 QPixmap(
                     pkg_resources.resource_filename(
-                        "hardware_control", "Oscilloscope/graphics/channel1_yellow.png"
-                    )
-                )
-            )
-        elif color == "green":
-            self.channel_label.setPixmap(
-                QPixmap(
-                    pkg_resources.resource_filename(
-                        "hardware_control", "Oscilloscope/graphics/channel2_green.png"
-                    )
-                )
-            )
-        elif color == "blue":
-            self.channel_label.setPixmap(
-                QPixmap(
-                    pkg_resources.resource_filename(
-                        "hardware_control", "Oscilloscope/graphics/channel3_blue.png"
-                    )
-                )
-            )
-        elif color == "red":
-            self.channel_label.setPixmap(
-                QPixmap(
-                    pkg_resources.resource_filename(
-                        "hardware_control", "Oscilloscope/graphics/channel4_red.png"
+                        "hardware_control",
+                        f"PowerSupply/graphics/channel_{self.channel}.png",
                     )
                 )
             )
         else:
             self.channel_label.setText(f"Channel {channel}")
+            self.channel_label.setAlignment(
+                QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter
+            )
 
-        # ****** DEFINE TEXT BOXES
+        # ****** DEFINE READOUTS
         #
-        self.v_div_edit = QLineEdit()
-        self.v_div_edit.setValidator(QDoubleValidator())
-        self.v_div_edit.editingFinished.connect(
-            lambda: control.set_volts_div(channel, float(self.v_div_edit.text()))
-        )
-        self.v_div_edit.setText(str(control.state["volts_div"][f"CH{channel}"]))
+        self.V_set_label = QLabel("Vset:")
+        self.V_set_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         #
-        self.offset_edit = QLineEdit()
-        self.offset_edit.setValidator(QDoubleValidator())
-        self.offset_edit.editingFinished.connect(
-            lambda: control.set_offset(self.channel, float(self.offset_edit.text()))
-        )
-        self.offset_edit.setText(str(control.state["offset"][f"CH{channel}"]))
+        self.V_set_label_val = QLabel("-------")
+        self.V_set_label_val.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
         #
-        self.label_edit = QLineEdit()
-        self.label_edit.editingFinished.connect(
-            lambda: control.set_channel_label(self.channel, self.label_edit.text())
-        )
-        self.label_edit.setText(control.state["channel_label"][f"CH{channel}"])
+        self.I_set_label = QLabel("Iset:")
+        self.I_set_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         #
-        self.form = QFormLayout()
-        self.form.addRow("Volts/Div (V):", self.v_div_edit)
-        self.form.addRow("Vert. Offset (V):", self.offset_edit)
-        self.form.addRow("Label:", self.label_edit)
+        self.I_set_label_val = QLabel("-------")
+        self.I_set_label_val.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        #
+        #
+        #
+        self.V_out_label = QLabel("Vout:")
+        self.V_out_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        #
+        self.V_out_label_val = QLabel("-------")
+        self.V_out_label_val.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        #
+        self.I_out_label = QLabel("Iout:")
+        self.I_out_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        #
+        self.I_out_label_val = QLabel("-------")
+        self.I_out_label_val.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        #
+        #
+        #
+        self.P_out_label = QLabel("Pout:")
+        self.P_out_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        #
+        self.P_out_label_val = QLabel("-------")
+        self.P_out_label_val.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
 
-        self.lower_grid = QGridLayout()
+        # Layout readout
+        self.readout_grid = QGridLayout()
+        self.readout_grid.addWidget(self.V_set_label, 0, 0)
+        self.readout_grid.addWidget(self.V_set_label_val, 0, 1)
+        self.readout_grid.addWidget(self.I_set_label, 1, 0)
+        self.readout_grid.addWidget(self.I_set_label_val, 1, 1)
+        #
+        self.readout_grid.addWidget(self.V_out_label, 0, 2)
+        self.readout_grid.addWidget(self.V_out_label_val, 0, 3)
+        self.readout_grid.addWidget(self.I_out_label, 1, 2)
+        self.readout_grid.addWidget(self.I_out_label_val, 1, 3)
+        #
+        self.readout_grid.addWidget(self.P_out_label, 2, 2)
+        self.readout_grid.addWidget(self.P_out_label_val, 2, 3)
 
-        # ******* DEFINE BUTTONS + DROPDOWNS
+        # ****** DEFINE CONTROLS
         #
-        self.active_but = QPushButton()
-        self.active_but.setText("Channel On/Off")
-        self.active_but.setCheckable(True)
-        self.active_but.clicked.connect(
-            lambda: control.set_channel_active(
-                self.channel, self.active_but.isChecked()
+        self.V_ctrl_label = QLabel("Voltage (V):")
+        self.V_ctrl_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        #
+        self.I_ctrl_label = QLabel("Current (A): ")
+        self.I_ctrl_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        #
+        self.V_edit = QLineEdit()
+        self.V_edit.setValidator(QDoubleValidator())
+        self.V_edit.editingFinished.connect(
+            lambda: control.update_setting(
+                f"CH{self.channel}_V_set", (self.V_edit.text())
             )
         )
-        setButtonState(
-            self.active_but, control.state["channel_active"][f"CH{self.channel}"]
-        )
+        self.V_edit.setText(str(control.settings[f"CH{channel}_V_set"]))
         #
-        self.BW_but = QPushButton()
-        self.BW_but.setText("BW Limit")
-        self.BW_but.setCheckable(True)
-        self.BW_but.clicked.connect(
-            lambda: control.set_BW_lim(self.channel, self.BW_but.isChecked())
-        )
-        setButtonState(self.BW_but, control.state["BW_lim"][f"CH{self.channel}"])
-        #
-        self.Inv_but = QPushButton()
-        self.Inv_but.setText("Invert")
-        self.Inv_but.setCheckable(True)
-        self.Inv_but.clicked.connect(
-            lambda: control.set_channel_invert(self.channel, self.Inv_but.isChecked())
-        )
-        setButtonState(
-            self.Inv_but, control.state["channel_invert"][f"CH{self.channel}"]
-        )
-        #
-        #
-        self.coupling_label = QLabel("Coupling:")
-        self.coupling_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        #
-        self.coupling_drop = QComboBox()
-        self.coupling_drop.addItems(["DC", "AC"])
-        self.coupling_drop.currentIndexChanged.connect(
-            lambda: control.set_channel_coupling(
-                self.channel, self.coupling_drop.currentText()
+        self.I_edit = QLineEdit()
+        self.I_edit.setValidator(QDoubleValidator())
+        self.I_edit.editingFinished.connect(
+            lambda: control.update_setting(
+                f"CH{self.channel}_I_set", (self.I_edit.text())
             )
         )
-        self.coupling_drop.setCurrentText(
-            control.state["channel_coupling"][f"CH{self.channel}"]
-        )
+        self.I_edit.setText(str(control.settings[f"CH{channel}_I_set"]))
         #
-        self.impedance_label = QLabel("Impedance:")
-        self.impedance_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        #
-        self.impedance_drop = QComboBox()
-        self.impedance_drop.addItems(["1e6", "50"])
-        self.impedance_drop.currentIndexChanged.connect(
-            lambda: control.set_channel_impedance(
-                self.channel, float(self.impedance_drop.currentText())
+        self.enabled_but = QPushButton()
+        self.enabled_but.setText("On/Off")
+        self.enabled_but.setCheckable(True)
+        self.enabled_but.clicked.connect(
+            lambda: control.update_setting(
+                f"CH{channel}_enabled", str(self.enabled_but.isChecked())
             )
         )
-        self.impedance_drop.setCurrentText(
-            str(control.state["channel_impedance"][f"CH{self.channel}"])
-        )
+        setButtonState(self.enabled_but, control.settings[f"CH{channel}_enabled"])
         #
-        self.probe_label = QLabel("Probe attenutation: ")
-        self.probe_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        #
-        self.probe_drop = QComboBox()
-        self.probe_drop.addItems([".001", ".01", ".1", "1", "10", "100", "1000"])
-        self.probe_drop.currentIndexChanged.connect(
-            lambda: control.set_probe_atten(
-                self.channel, float(self.probe_drop.currentText())
-            )
-        )
-        self.probe_drop.setCurrentText(
-            str(control.state["probe_atten"][f"CH{self.channel}"])
-        )
-        #
-        # Add widgets to grid layout
-        self.lower_grid.addWidget(self.active_but, 0, 0)
-        self.lower_grid.addWidget(self.BW_but, 1, 0)
-        self.lower_grid.addWidget(self.Inv_but, 1, 1)
-        self.lower_grid.addWidget(self.coupling_label, 2, 0)
-        self.lower_grid.addWidget(self.coupling_drop, 2, 1)
-        self.lower_grid.addWidget(self.impedance_label, 3, 0)
-        self.lower_grid.addWidget(self.impedance_drop, 3, 1)
-        self.lower_grid.addWidget(self.probe_label, 4, 0)
-        self.lower_grid.addWidget(self.probe_drop, 4, 1)
-        #
-        # self.lower_grid.addWidget(self.active_but, 0, 0);
-        # self.lower_grid.addWidget(self.BW_but, 1, 0);
-        # self.lower_grid.addWidget(self.Inv_but, 2, 0);
-        # self.lower_grid.addWidget(self.coupling_label, 0, 1);
-        # self.lower_grid.addWidget(self.coupling_drop, 1, 1);
-        # self.lower_grid.addWidget(self.impedance_label, 2, 1);
-        # self.lower_grid.addWidget(self.impedance_drop, 3, 1);
-        # self.lower_grid.addWidget(self.probe_label, 4, 1);
-        # self.lower_grid.addWidget(self.probe_drop, 5, 1);
+        self.controls_grid = QGridLayout()
+        self.controls_grid.addWidget(self.V_ctrl_label, 0, 0)
+        self.controls_grid.addWidget(self.V_edit, 0, 1)
+        self.controls_grid.addWidget(self.I_ctrl_label, 1, 0)
+        self.controls_grid.addWidget(self.I_edit, 1, 1)
+        self.controls_grid.addWidget(self.enabled_but, 2, 1)
 
         # ******* DEFINE OVERALL LAYOUT
         #
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.channel_label, 0, 0)
-        self.master_layout.addLayout(self.form, 1, 0)
-        self.master_layout.addLayout(self.lower_grid, 2, 0)
+        self.master_layout.addLayout(self.readout_grid, 1, 0)
+        self.master_layout.addLayout(self.controls_grid, 2, 0)
         self.setLayout(self.master_layout)
+
+    def update_readout(self, Vout, Iout, Vset, Iset):
+
+        if Vout == None:
+            Vout = "-----"
+        if Iout == None:
+            Iout = "-----"
+        if Vset == None:
+            Vset = "-----"
+        if Iset == None:
+            Iset = "-----"
+
+        self.V_set_label_val.setText(f"{Vset} V")
+        self.V_out_label_val.setText(f"{Vout} V")
+        self.I_set_label_val.setText(f"{Iset} A")
+        self.I_out_label_val.setText(f"{Iout} A")
+        if Vout is not None and Iout is not None:
+            try:
+                pwr = str(float(Vout) * float(Iout))
+                self.P_out_label_val.setText(f"{pwr} W")
+            except Exception as e:
+                self.P_out_label_val.setText("-----")
+                print(e)
+        else:
+            self.P_out_label_val.setText("-----")
