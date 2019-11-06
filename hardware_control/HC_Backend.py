@@ -5,19 +5,20 @@ class HC_Backend:
     """Base"""
 
     def __init__(self):
-        super().__init__()
 
         self.ID = "Instrument"
+        self.online = False
 
         self.device = None  # This is the physical instrument to write to
+        self.debug = False
 
     def update_setting(self, setting: str, value: str):
         """User must overload this function. Must return a string"""
-        return command
+        return value
 
-    def command(self, command: str):
+    def command(self, cmd: str):
         """User must overload this function. Must return a string"""
-        return command
+        return cmd
 
     def write(self, msg: str):
         """Passes a command directly from the UI to the instrument"""
@@ -64,12 +65,14 @@ class HC_Backend:
                 self.device.query("*IDN?")
                 print("Connection verified")
             except pyvisa.errors.VisaIOError as e:  # Not connected - reconnect
-                print("Lost connection to device. Will try to reconnect")
-                print(str(e))
+                if self.debug:
+                    print("Lost connection to device. Will try to reconnect")
+                    print(f"\t{str(e)}")
             else:  # Connection stable - return True
                 return True
 
-        print("trying to connect")
+        if self.debug:
+            print("trying to connect")
 
         # Try to connect to instrument
         try:
@@ -79,16 +82,19 @@ class HC_Backend:
 
                 # Verify actually connected (open_resource won't always throw error w/ disconnected USB)
                 self.device.query("*IDN?")
-                print("opened connection")
+                if self.debug:
+                    print("opened connection")
 
             else:  # Use sockets
                 self.device = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.device.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 0)
                 self.device.connect((self.ip_addr, self.port_no))
         except Exception as e:  # Failed to conncet
-            print(e)
+
             self.online = False
-            print("OFFLINE")
+            if self.debug:
+                print(f"\t{str(e)}")
+                print("OFFLINE")
         else:
             self.online = True
 
