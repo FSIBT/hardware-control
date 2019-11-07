@@ -73,6 +73,9 @@ class TDKLGenHCtrl(HC_Backend):
 
     def update_setting(self, setting: str, value):
 
+        if not self.online:
+            return "Offline"
+
         try:
             if self.dummy:
                 return value
@@ -103,6 +106,9 @@ class TDKLGenHCtrl(HC_Backend):
             print(f"\t{setting}, {value}")
 
     def command(self, cmd: str):
+
+        if not self.online:
+            return "Offline"
 
         try:
             if self.dummy:
