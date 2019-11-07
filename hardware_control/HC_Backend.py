@@ -63,7 +63,6 @@ class HC_Backend:
 
             try:  # Check if connected by asking for instrument ID
                 self.device.query("*IDN?")
-                print("Connection verified")
             except pyvisa.errors.VisaIOError as e:  # Not connected - reconnect
                 if self.debug:
                     print("Lost connection to device. Will try to reconnect")
