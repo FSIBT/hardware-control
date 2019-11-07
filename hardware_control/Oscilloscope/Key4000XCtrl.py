@@ -80,6 +80,9 @@ class Key4000XCtrl(HC_Backend):
 
     def update_setting(self, setting: str, value):
 
+        if not self.online:
+            return "Offline"
+
         try:
             if self.dummy:
                 return value
@@ -195,18 +198,10 @@ class Key4000XCtrl(HC_Backend):
             print(str(e))
 
     def command(self, cmd: str):
-        pass
-
-    def set_trigger_ext(self):
-        """SEt trigger source"""
-        if not self.dummy:
-            self.write(":TRIG:SOUR EXT")
-
-    def halt(self):
-        """Stops aquisition"""
-        if not self.dummy:
-            self.write(":STOP")
-        pass
+        if not self.online:
+            return "Offline"
+        else:
+            return cmd
 
     def digitize(self):
         """Similar to single trigger. Aquires waveform according to :ACQ command
@@ -347,16 +342,26 @@ class Key4000XCtrl(HC_Backend):
         # Set aquisition mode to normal
 
     def write(self, command: str):
-        if self.online and not self.dummy:
+
+        if not self.online:
+            return f"{self.ID}-Offline"
+
+        if not self.dummy:
             if not self.use_sockets:
                 self.device.write(command)
             else:
                 self.device.sendall(bytes(command + "\n", "utf-8"))
             if self.print_commands:
                 print(f'\tKEY4000X< "{command}"')
+        else:
+            return command
 
     def query(self, command: str):
-        if self.online and not self.dummy:
+
+        if not self.online:
+            return f"{self.ID}-Offline"
+
+        if not self.dummy:
             if not self.use_sockets:
                 reply = self.device.query(command)
             else:
@@ -371,7 +376,7 @@ class Key4000XCtrl(HC_Backend):
                 print(f'\t{self.ID}< "{command}"')
             return reply
         else:
-            return ""
+            return command
 
 
 def recvall(sock):
