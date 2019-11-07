@@ -69,6 +69,7 @@ class CAEN14xxETCtrl(HC_Backend):
         self.ip_addr = ip_addr
 
         self.num_channels = 8
+
         # This specifies the max number of channels the user can request
 
     #
@@ -91,7 +92,7 @@ class CAEN14xxETCtrl(HC_Backend):
         if self.online:  # Has previously connected to the isntrument
 
             try:  # Check if connected by asking for instrument ID
-                self.device.query("*IDN?")
+                self.device.query("$BD:00,CMD:MON,PAR:BDNAME")
             except pyvisa.errors.VisaIOError as e:  # Not connected - reconnect
                 if self.debug:
                     print("Lost connection to device. Will try to reconnect")
@@ -107,9 +108,11 @@ class CAEN14xxETCtrl(HC_Backend):
             if not self.use_sockets:  # Use Pyvisa
                 rm = pyvisa.ResourceManager()
                 self.device = rm.open_resource(self.visa_addr)  # Open connection
+                self.device.read_termination = "\r\n"
+                self.device.write_termination = "\r\n"
 
                 # Verify actually connected (open_resource won't always throw error w/ disconnected USB)
-                self.device.query("*IDN?")
+                self.device.query("$BD:00,CMD:MON,PAR:BDNAME")
                 if self.debug:
                     print("opened connection")
 
@@ -130,6 +133,9 @@ class CAEN14xxETCtrl(HC_Backend):
 
     def update_setting(self, setting: str, value):
 
+        if not self.online:
+            return "Offline"
+
         try:
             if self.dummy:
                 return value
@@ -138,20 +144,38 @@ class CAEN14xxETCtrl(HC_Backend):
                 # Note: We ignore channel number because there is only
                 # one channel on this model of PSU
                 if regex_compare("CH._enable", setting):
+
+                    c = setting[2]
                     if str_to_bool(value):
-                        self.write(":OUTP:STAT ON")
+                        self.query(f"$BD:00,CMD:SET,CH:{c},PAR:ON")
                     else:
-                        self.write(":OUTP:STAT OFF")
-                    rval = self.query(":OUTP:STAT?")
-                    return str(rval == "1\n")
+                        self.query(f"$BD:00,CMD:SET,CH:{c},PAR:OFF")
+                    status = self.read_status(c)
+
+                    if status is None:
+                        return "None"
+                    return str(bool(status["on_off"]))
+
                 elif regex_compare("CH._I_set", setting):
-                    self.write(f":SOUR:CURR:LEV:IMM:AMPL {value}")
-                    rval = self.query(":SOUR:CURR:LEV:IMM:AMPL?")
-                    return rval
+
+                    c = setting[2]
+                    self.query(f"$BD:00,CMD:SET,CH:{c},PAR:ISET,VAL:{value}")
+                    result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:ISET")
+
+                    if result is None:
+                        return "None"
+                    return result[-7:]
+
                 elif regex_compare("CH._V_set", setting):
-                    self.write(f":SOUR:VOLT:LEV:IMM:AMPL {value}")
-                    rval = self.query(":SOUR:VOLT:LEV:IMM:AMPL?")
-                    return rval
+
+                    c = setting[2]
+                    self.query(f"$BD:00,CMD:SET,CH:{c},PAR:VSET,VAL:{value}")
+                    result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:VSET")
+
+                    if result is None:
+                        return "None"
+                    return result[-6:]
+
         except Exception as e:
             print(
                 "An error occured in CAEN14xxETCtrl.py when sending SCPI commands to the instrument."
@@ -161,6 +185,9 @@ class CAEN14xxETCtrl(HC_Backend):
 
     def command(self, cmd: str):
 
+        if not self.online:
+            return "Offline"
+
         try:
             if self.dummy:
                 return cmd
@@ -169,23 +196,80 @@ class CAEN14xxETCtrl(HC_Backend):
                 # Note: We ignore channel number because there is only
                 # one channel on this model of PSU
                 if regex_compare("CH._V_out", cmd):
-                    rval = self.query(":MEAS:VOLT?")
-                    chstr = cmd[0:3]
+
+                    c = cmd[2]
+                    result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:VMON")
+
+                    if result is None:
+                        return "None"
+                    rval = result[-6:]
+
                     return f"{cmd}={rval}"
+
                 elif regex_compare("CH._I_out", cmd):
-                    rval = self.query(":MEAS:CURR?")
-                    chstr = cmd[0:3]
+
+                    c = cmd[2]
+                    result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:IMON")
+
+                    if result is None:
+                        return "None"
+                    rval = result[-7:]
+
                     return f"{cmd}={rval}"
+
                 elif regex_compare("CH._I_set", cmd):
-                    chstr = cmd[0:3]
-                    rval = self.query(":SOUR:CURR:LEV:IMM:AMPL?")
+
+                    c = cmd[2]
+                    result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:ISET")
+
+                    if result is None:
+                        return "None"
+                    rval = result[-6:]
+
                     return f"{cmd}={rval}"
+
                 elif regex_compare("CH._V_set", cmd):
-                    chstr = cmd[0:3]
-                    rval = self.query(":SOUR:VOLT:LEV:IMM:AMPL?")
+
+                    c = cmd[2]
+                    result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:VSET")
+
+                    if result is None:
+                        return "None"
+                    rval = result[-6:]
+
                     return f"{cmd}={rval}"
+
         except Exception as e:
             print(
                 "An error occured in CAEN14xxETCtrl.py when sending SCPI commands to the instrument."
             )
             print(str(e))
+
+    def read_status(self, channel):
+        """See table on page 24 of manual"""
+        if self.dummy:
+            outputs = [1 + 128 + 1024, 128, 1, 1024]
+            value = random.choice(outputs)
+        else:
+            result = self.query(f"$BD:00,CMD:MON,CH:{channel},PAR:STAT")
+            if result is None:
+                return None
+            value = int(result[-5:])
+
+        status = {
+            "on_off": value & 1,
+            "ramping_up": value & 2,
+            "ramping_down": value & 4,
+            "over_current": value & 8,
+            "over_voltage": value & 16,
+            "under_voltage": value & 32,
+            "max_voltage": value & 64,
+            "tripped": value & 128,
+            "over_power": value & 256,
+            "over_temperature": value & 512,
+            "disabled": value & 1024,
+            "kill": value & 2048,
+            "interlocked": value & 4096,
+            "calibration_error": value & 8192,
+        }
+        return status
