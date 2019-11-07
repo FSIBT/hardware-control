@@ -67,7 +67,6 @@ class TDKLGenHCtrl(HC_Backend):
         self.use_sockets = use_sockets
         self.port_no = port_no
         self.ip_addr = ip_addr
-        self.try_connect()
 
         self.num_channels = 1
         # This specifies the max number of channels the user can request
