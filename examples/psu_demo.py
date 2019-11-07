@@ -45,6 +45,7 @@ debug = commands["--debug"]
 
 from hardware_control.base import HC_App
 from hardware_control.PowerSupply.TDKLGenHCtrl import TDKLGenHCtrl
+from hardware_control.PowerSupply.CAEN14xxETCtrl import CAEN14xxETCtrl
 from hardware_control.PowerSupply.HC_MultiPowerSupply import HC_MultiPowerSupply
 
 
@@ -57,9 +58,14 @@ class PSUDemo(QMainWindow):
 
         self.main_widget = QWidget(self)
 
-        psu = TDKLGenHCtrl("TCPIP0::192.168.1.19::INSTR", dummy)
+        # psu = TDKLGenHCtrl("TCPIP0::192.168.1.19::INSTR", dummy)
+        # self.psu_ctrl = HC_MultiPowerSupply(
+        #     psu, self, [1], "Power Supply Unit", "DEFAULT"
+        # )
+
+        psu = CAEN14xxETCtrl("TCPIP::192.168.1.20::1470::SOCKET", dummy)
         self.psu_ctrl = HC_MultiPowerSupply(
-            psu, self, [1], "Power Supply Unit", "DEFAULT"
+            psu, self, [1, 2, 3], "Power Supply Unit", "DEFAULT"
         )
 
         self.grid = QGridLayout()
