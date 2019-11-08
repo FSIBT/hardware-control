@@ -79,9 +79,7 @@ class STS50Demo(QMainWindow):
             "192.168.0.14",
             5025,
         )
-        self.scope_ctrl = HC_Oscilloscope(
-            scpi_scope, self, "Keysight", "DEFAULT", True, debug
-        )
+        self.scope_ctrl = HC_Oscilloscope(scpi_scope, self, "Keysight", "DEFAULT", True)
 
         # awg = Key33500BCtrl("Some-address-goes-here", dummy, True, use_sockets, "192.168.0.18", 5025)
         awg = Key33500BCtrl(
@@ -93,7 +91,7 @@ class STS50Demo(QMainWindow):
             5025,
         )
         self.awg_ctrl = HC_FunctionGenerator(
-            awg, self, "RF Generator", "DEFAULT", True, 1, debug
+            awg, self, "RF Generator", "DEFAULT", True, 1
         )
 
         self.psu = TDKLGenHCtrl("TCPIP0::192.168.1.19::INSTR", dummy)
@@ -137,8 +135,7 @@ class STS50Demo(QMainWindow):
         self.show()
 
     def close(self):
-        self.scope_ctrl.close()
-        self.awg_ctrl.close()
+        self.app.close()
 
         if log:
             with open("example_sts50.log", "w") as f:
@@ -148,6 +145,7 @@ class STS50Demo(QMainWindow):
 
 def main(argv):
     app = HC_App([])
+    app.print_debug = debug
     ex = STS50Demo(app, use_sockets)
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())
