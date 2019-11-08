@@ -53,16 +53,14 @@ class HC_Oscilloscope(HC_Instrument):
         name: str = "Oscilloscope Control",
         initialize_with: str = "INSTRUMENT",
         save_on_close: str = False,
-        debug: bool = False,
     ):
 
         super().__init__(window, name)
 
-        self.debug = debug
         self.settings = {}
         self.save_on_close = save_on_close
 
-        self.comm = HC_Comm(scpi_instr, self, self.debug)
+        self.comm = HC_Comm(scpi_instr, self)
         self.filename = ""
 
         # Initialize settings to correct values

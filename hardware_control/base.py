@@ -43,9 +43,8 @@ class HC_Comm(QObject):
     sigTryConnect = pyqtSignal()
     sigClose = pyqtSignal()
 
-    def __init__(self, backend, instrument, debug=False):
+    def __init__(self, backend, instrument):
         super().__init__()
-        self.debug = debug
         self.backend = backend
         self.instrument = instrument  # Calling instrument UI (eg. HC_scope)
         self.backend_model = backend.ID
@@ -73,15 +72,29 @@ class HC_Comm(QObject):
         self.try_connect_timer.start(1000)
 
     def close(self):
+        if self.instrument.window.app.print_debug:
+            print(
+                f"\tInstrument: '{self.instrument.name}' closing Comm with backend of type '{self.backend_model}'."
+            )
         self.try_connect_timer.stop()  # Stop
         self.sigClose.emit()
         self.worker_thread.quit()  # Kill thread
+        if self.instrument.window.app.print_debug:
+            print(
+                f"\t\tInstrument: '{self.instrument.name}' called quit() for worker thread."
+            )
         self.worker_thread.wait()  # Wait for thread to join (otherwise, if main thread exists first, stdout will be closed while the worker_thread may still be running and try to write to stdout, causing an error to arise)
+        if self.instrument.window.app.print_debug:
+            print(
+                f"\t\tInstrument: '{self.instrument.name}' joined with worker thread."
+            )
 
     def update_setting(self, setting: str, value: str):
         """Transfers the setting and value information to the worker thread"""
-        if self.debug:
-            print(f"HC_Comm[{self.instrument.name}] -us-> '{setting}', '{value}' ")
+        if self.instrument.window.app.print_debug:
+            print(
+                f"Instrument: {self.instrument.name} called 'update_setting()' for setting '{setting}' and sent message '{value}'."
+            )
         self.sigUpdateSettings.emit(setting, value)
         self.instrument.window.app.add_log(
             self.instrument.name, self.backend_model, "SET", setting, value
@@ -89,8 +102,10 @@ class HC_Comm(QObject):
 
     def command(self, cmd: str):
         """Sends a command to the worker in the worker thread"""
-        if self.debug:
-            print(f"HC_Comm[{self.instrument.name}] -c-> '{command}'")
+        if self.instrument.window.app.print_debug:
+            print(
+                f"Instrument: {self.instrument.name} called 'command()' and sent command: '{cmd}'."
+            )
         self.sigCommand.emit(cmd)
         self.instrument.window.app.add_log(
             self.instrument.name, self.backend_model, "CMD", cmd
@@ -98,8 +113,10 @@ class HC_Comm(QObject):
 
     def write(self, msg: str):
         """Sends a command to be sent to the instrument by the worker in the worker thead"""
-        if self.debug:
-            print(f"HC_Comm[{self.instrument.name}] -w-> '{msg}'")
+        if self.instrument.window.app.print_debug:
+            print(
+                f"Instrument: {self.instrument.name} called 'write()' and sent message: '{msg}'."
+            )
         self.sigWrite.emit(msg)
         self.instrument.window.app.add_log(
             self.instrument.name, self.backend_model, "WRT", setting
@@ -107,8 +124,10 @@ class HC_Comm(QObject):
 
     def query(self, msg: str):
         """Sends a query statement to be sent to the instrument by the worker in the worker thead"""
-        if self.debug:
-            print(f"HC_Comm[{self.instrument.name}] -q-> '{msg}'")
+        if self.instrument.window.app.print_debug:
+            print(
+                f"Instrument: {self.instrument.name} called 'query()' and sent message: '{msg}'."
+            )
         self.sigQuery.emit(msg)
         self.instrument.window.app.add_log(
             self.instrument.name, self.backend_model, "QRY", setting
@@ -121,8 +140,10 @@ class HC_Comm(QObject):
     @pyqtSlot(str)
     def backend_return(self, retval: str):
         """Receives a return value from the CommWorker and adds the return value to the back of the inbox"""
-        if self.debug:
-            print(f"HC_Comm[{self.instrument.name}] <-br- '{retval}'")
+        if self.instrument.window.app.print_debug:
+            print(
+                f"Instrument: {self.instrument.name} received return from backend '{self.backend_model}'. Return message: {retval}"
+            )
         self.instrument.inbox.append(retval)
 
     @pyqtSlot(bool)
@@ -346,6 +367,8 @@ class HC_App(QApplication):
         self.instruments = []
         self.log = []  # List of strings for debugging/logging purposes
 
+        self.print_debug = False
+
     def add_instrument(self, widget):
         # check if name is already present
         if widget.name in [x.name for x in self.instruments]:
@@ -423,6 +446,13 @@ class HC_App(QApplication):
             )
         else:
             print(f"Invalid log type code '{log_type}' received")
+
+    def close(self):
+
+        for instr in self.instruments:
+            if self.print_debug:
+                print(f"HC_App called 'close()' for instrument: '{instr.name}'.")
+            instr.close()
 
 
 class QOnOff(QPushButton):
