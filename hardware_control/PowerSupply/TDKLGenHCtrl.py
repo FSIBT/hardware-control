@@ -74,7 +74,7 @@ class TDKLGenHCtrl(HC_Backend):
     def update_setting(self, setting: str, value):
 
         if not self.online:
-            return "Offline"
+            return f"{self.ID}-Offline"
 
         try:
             if self.dummy:
@@ -100,7 +100,7 @@ class TDKLGenHCtrl(HC_Backend):
                     return rval
         except Exception as e:
             print(
-                "An error occured in CAEN14xxETCtrl.py when sending SCPI commands to the instrument."
+                f"An error occured in {self.ID} when sending SCPI commands to the instrument."
             )
             print(f"\t{str(e)}")
             print(f"\t{setting}, {value}")
@@ -108,7 +108,7 @@ class TDKLGenHCtrl(HC_Backend):
     def command(self, cmd: str):
 
         if not self.online:
-            return "Offline"
+            return f"{self.ID}-Offline"
 
         try:
             if self.dummy:
