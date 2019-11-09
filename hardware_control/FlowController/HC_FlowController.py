@@ -21,18 +21,12 @@ from PyQt5.QtWidgets import (
     QGridLayout,
     QComboBox,
 )
-from hardware_control.base import HC_Instrument
+from hardware_control.base import HC_Instrument, HC_Comm, setButtonState
 import copy
 
 #
 #
 class HC_FlowController(HC_Instrument):
-
-    # Define sigs (to call functions in communication object)
-    state_mosi_sig = pyqtSignal(dict)
-    write_sig = pyqtSignal(str)
-    query_sig = pyqtSignal(str)
-
     def __init__(
         self,
         scpi_instr,
@@ -49,28 +43,11 @@ class HC_FlowController(HC_Instrument):
         self.save_on_close = save_on_close
         self.name = name
 
-        self.comm = FlowControllerComm(scpi_instr, self)
+        self.comm = HC_Comm(scpi_instr, self)
         self.filename = ""
 
-        # Connect signals and sigs
-        self.state_mosi_sig.connect(self.comm.get_state)
-        self.comm.state_miso_sig.connect(self.get_state)
-        self.comm.values_miso_sig.connect(self.values_received)
-        #
-        self.write_sig.connect(self.comm.write)
-        self.query_sig.connect(self.comm.query)
-
-        # Move comm object to comm thread
-        self.comm_thread = QThread()
-        self.comm.moveToThread(self.comm_thread)
-        self.comm_thread.start()
-
         # Initialize state to correct values
-        if initialize_with == "INSTRUMENT":
-            self.save_on_close = False
-            # Can't save without filename
-            self.settings = self.initialize_gui_instrument()
-        elif initialize_with == "DEFAULT":
+        if initialize_with == "DEFAULT":
             self.save_on_close = False
             # Can't save without filename
             self.settings = self.default_state()
@@ -85,7 +62,7 @@ class HC_FlowController(HC_Instrument):
         self.rate_edit = QLineEdit()
         self.rate_edit.setValidator(QDoubleValidator())
         self.rate_edit.editingFinished.connect(
-            lambda: self.set_rate(float(self.rate_edit.text()))
+            lambda: self.comm.update_setting("rate", self.rate_edit.text())
         )
         self.rate_edit.setText(str(self.settings["rate"]))
         #
@@ -102,7 +79,7 @@ class HC_FlowController(HC_Instrument):
         self.gas_drop = QComboBox()
         self.gas_drop.addItems(["Argon", "Helium", "Hydrogen", "Air"])
         self.gas_drop.currentIndexChanged.connect(
-            lambda: self.set_gas(self.gas_drop.currentText())
+            lambda: self.comm.update_setting("gas", self.gas_drop.currentText())
         )
         self.gas_drop.setCurrentText(self.settings["gas"])
         #
@@ -153,86 +130,35 @@ class HC_FlowController(HC_Instrument):
         # Write state to scope - synch scope with GUI
         self.send_state()
 
-    def initialize_gui_instrument():
-        print("\n\nOh no! I haven't implimented this yet!!\n\n")
-        pass
+        # Create timer to query voltages
+        self.readout_timer = QTimer(self)
+        self.readout_timer.timeout.connect(self.update_readout)
+        self.readout_timer.start(500)
 
-    def load_state(self, filename: str):
-        try:
-            with open(filename) as file:
-                self.settings = json.load(file)
-                print(f"State for {self.comm.instr.ID} read from file '{filename}'")
-        except:
-            print(f"ERROR: Failed to read file '{filename}'. Using defualt case.")
-            self.settings = self.default_state()
+        self.log_note("Initalized")
 
-    def save_state(self, filename: str):
-        try:
-            with open(filename, "w") as file:
-                json.dump(self.settings, file)
-                print(f"State for {self.comm.instr.ID} saved to file '{filename}'")
-        except Exception as e:
-            print(f"ERROR: Failed to write file '{filename}'. State not saved.")
-            print(f"\t{e}")
+    def close(self):  # Note: this is a complete duplicate of the 'close()' function
+        # in HC_Instrument, except it adds readout_timer.stop()
 
-    #
-    # Close connection
-    #
-    def close(self, filename: str = ""):
+        if self.comm is not None:
+            self.comm.close()
+        self.readout_timer.stop
 
-        # Save state if asked
-        if self.save_on_close:
-            self.save_state(self.filename)
+    def update_readout(self):
+        """Queries the instrument for current readout data, then reads the most
+        recent readout data from the inbox and pushes it to the GUI"""
 
-        # Tell scope to close
-        self.comm.close()
+        # Request updated readout data
+        self.comm.command(f"rate?")
+        self.comm.command(f"pressure?")
 
-    #
-    # Sends the state to the communication object
-    #
-    def send_state(self):
-        """ Use signals/slots to send the state dictionary to the communication
-        thread. """
-        self.state_mosi_sig.emit(self.settings)
-        pass
+        # Get latest inbox entries for readout data...
+        flow_meas = self.read_message(f"rate=")
+        press_meas = self.read_message(f"pressure=")
 
-    #
-    # Queries the state from the communication object
-    #
-    def get_state(self, new_state: dict):
-        """ Gets the state from the oscilloscope. """
-        self.settings = new_state
-
-    def set_gas(self, gas: str):
-        """Sets the gas the flow controller is to regulate"""
-        self.settings["gas"] = gas
-        self.send_state()
-
-    def set_rate(self, rate: float):
-        """Sets the flow rate"""
-        self.settings["rate"] = rate
-        self.send_state()
-
-    #
-    # Receives values for pressure and flow rate in dict from comm object (whcih queries meter)
-    #
-    def values_received(self, values: dict):
-        self.pressure_label_readout.setText(str(values["pressure"]))
-        self.flow_label_readout.setText(str(values["flow"]))
-
-    #
-    # Manually send a SCPI command through the communication object to the INSTR
-    #
-    def write(self, command: str):
-        """ Manually send SCPI commands to the instruments. """
-        write_sig.emit(command)
-
-    #
-    # Manually query a SCPI command through the communication obeect to the INSTR
-    #
-    def query(self, command: str):
-        """ Manually send/receive commands to/from the instrument. """
-        return query_sig.emit(command)
+        # Update labels
+        self.pressure_label_readout.setText(press_meas)
+        self.flow_label_readout.setText(flow_meas)
 
     #
     # Create a default state object if can't get state from a file
@@ -245,125 +171,3 @@ class HC_FlowController(HC_Instrument):
         dflt["rate"] = 0.0
 
         return dflt
-
-    def set_setting(self, parameter: str, value: str):
-
-        if parameter == "gas":
-            items = [self.gas_drop.itemText(i) for i in range(self.gas_drop.count())]
-            if value in items:
-                self.settings["gas"] = value
-                self.gas_drop.setCurrentText(value)
-            else:
-                print(
-                    f"ERROR: '{value}' is not an option for setting '{parameter}' in instrument '{self.name}'."
-                )
-                return False
-
-        return True
-
-
-#
-# This is a 4-channel oscilloscope communication progam. It fascilitates
-# communication with the scope. For more information on how this works, read the
-# comment for the OscilloscopeControl class.
-#
-class FlowControllerComm(QObject):
-
-    state_miso_sig = pyqtSignal(dict)
-    values_miso_sig = pyqtSignal(dict)
-
-    def __init__(self, scpi_instr, gui):
-
-        super().__init__()
-
-        self.settings = {}
-        # Read this guy in from a function?
-        self.instr_state = {}
-        # Contains state of instrument so it knows which keys to update
-
-        self.instr = scpi_instr
-
-        self.instr.try_connect()
-        if not self.instr.online:
-            print(f"{self.instr.ID}: Failed to connect")
-        else:
-            print(f"{self.instr.ID}: Connected")
-
-        # Connect timer
-        self.connect_timer = QTimer(self)
-        self.connect_timer.timeout.connect(self.try_connect)
-        self.connect_timer.start(1000)
-        # 1s period
-
-        self.display_timer = QTimer(self)
-        self.display_timer.timeout.connect(self.get_values)
-        self.display_timer.start(1000)
-        # 1s period
-
-        self.gui = gui
-
-        # This program needs to impliment a second timer to automatically update the pressure readout
-
-    #
-    # Tries to connect to the oscilloscope. Is called by the timer every second.
-    # If already connected, returns immediately.
-    #
-    def try_connect(self):
-        self.gui.online = self.instr.try_connect()
-
-    #
-    # Close connection
-    #
-    def close(self):
-        self.instr.close()
-
-    #
-    # Receives a state object from the control object.
-    #
-    def get_state(self, new_state: dict):
-
-        self.settings = new_state
-        for key in self.settings:
-            if (not (key in self.instr_state)) or (
-                self.settings[key] != self.instr_state[key]
-            ):
-                self.update_parameter(key, self.settings[key])
-
-        self.instr_state = copy.deepcopy(self.settings)
-
-    def update_parameter(self, key: str, value):
-
-        if key == "rate":
-            self.instr.set_rate(value)
-        elif key == "gas":
-            self.instr.set_gas(value)
-        else:
-            print(f"{self.instr.ID}: ERROR: Unrecognized parameter '{key}'")
-
-    # Gets flow and pressure from meter, returns it to 'control' object
-    def get_values(self):
-        vals = self.instr.get_values()
-        self.values_miso_sig.emit(vals)
-
-    #
-    # Sends the state object back to the control object.
-    #
-    def send_state():
-        pass
-
-    @pyqtSlot()
-    def write(self, command):
-        self.instr.write(command)
-
-    @pyqtSlot()
-    def query(self, command):
-        return self.instr.query(command)
-
-
-def setButtonState(button: QPushButton, value: bool):
-    if value:
-        if not button.isChecked():
-            button.toggle()
-    else:
-        if button.isChecked():
-            button.toggle()

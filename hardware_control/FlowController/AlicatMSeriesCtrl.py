@@ -63,47 +63,67 @@ class AlicatMSeriesCtrl(QObject):
 
         return self.online
 
-    #
-    # Close connection
-    #
-    def close(self):
-        if not self.dummy and self.online:
-            self.meter.close()
-        else:
-            print(f"{self.ID}: closed dummy connection")
+    def update_setting(self, setting: str, value):
 
-    #
-    # Receives a state object from the control object.
-    #
-    def get_state(self, new_state: dict):
-        self.state = new_state
+        if not self.online:
+            return f"{self.ID}-Offline"
 
-        new = set(self.state.items())
-        old = set(self.instr_state.items())
+        try:
+            if self.dummy:
+                return value
+            else:
 
-        diff = new - old
+                # Note: We ignore channel number because there is only
+                # one channel on this model of PSU
+                if setting == "rate":
+                    value = float(self.rate_edit.text())
+                    i = converter_IEEE754_to_ulong(value)
+                    a = i >> 16
+                    b = i & ((1 << 16) - 1)
+                    r = self.meter.write_registers(address=1009, values=[a, b], unit=0)
+                    sys.stdout.flush()
 
-        for param in diff:
-            self.update_parameter(param[0], param[1])
-            pass
+                    return value
+                elif settting == "flow":
+                    value = float(self.rate_edit.text())
+                    i = converter_IEEE754_to_ulong(value)
+                    a = i >> 16
+                    b = i & ((1 << 16) - 1)
+                    r = self.meter.write_registers(address=1009, values=[a, b], unit=0)
+                    sys.stdout.flush()
 
-    def set_rate(self, value: float):
-        # """Sets the flowrate"""
-        if (not self.dummy) and self.online:
-            value = float(self.rate_edit.text())
-            i = converter_IEEE754_to_ulong(value)
-            a = i >> 16
-            b = i & ((1 << 16) - 1)
-            r = self.meter.write_registers(address=1009, values=[a, b], unit=0)
-            sys.stdout.flush()
-
-    def set_gas(self, value: str):
-        # """Sets the gas to flow"""
-        if (not self.dummy) and self.online:
-            gases = {"Air": 0, "Hydrogen": 6, "Argon": 1, "Helium": 7}
-            self.meter.write_registers(
-                address=999, values=[1, gases[self.gas_menu.currentText()]], unit=0
+                    return value
+        except Exception as e:
+            print(
+                "An error occured in CAEN14xxETCtrl.py when sending SCPI commands to the instrument."
             )
+            print(f"\t{str(e)}")
+            print(f"\t{setting}, {value}")
+
+    def command(self, cmd: str):
+
+        if not self.online:
+            return f"{self.ID}-Offline"
+
+        try:
+            # Note: usually a self.dummy check would be here, but it is taken
+            # care of in get_values() for the AlicanMSeriesFlowMeter
+
+            # Note: We ignore channel number because there is only
+            # one channel on this model of PSU
+            if cmd == "rate?":
+                vals = self.get_values()
+                rval = str(vals["flow"])
+                return f"rate={rval}"
+            elif cmd == "pressure?":
+                vals = self.get_values()
+                rval = str(vals["pressure"])
+                return f"pressure={rval}"
+        except Exception as e:
+            print(
+                f"An error occured in {self.ID} when sending SCPI commands to the instrument."
+            )
+            print(str(e))
 
     def get_values(self):
         rtn = {}
