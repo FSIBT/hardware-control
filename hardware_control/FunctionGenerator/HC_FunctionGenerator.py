@@ -283,7 +283,7 @@ class FunctionGeneratorChannelWidget(QWidget):
         self.impedance_drop.addItems(["1e6", "50"])
         self.impedance_drop.currentIndexChanged.connect(
             lambda: control.update_setting(
-                f"CH{channel}_impedance", float(self.impedance_drop.currentText())
+                f"CH{channel}_impedance", self.impedance_drop.currentText()
             )
         )
         self.impedance_drop.setCurrentText(
