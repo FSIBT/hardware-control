@@ -289,6 +289,6 @@ class MultiPowerSupplyChannel(QWidget):
                 self.P_out_label_val.setText(f"{pwr} W")
             except Exception as e:
                 self.P_out_label_val.setText("-----")
-                print(e)
+                # print(e)
         else:
             self.P_out_label_val.setText("-----")
