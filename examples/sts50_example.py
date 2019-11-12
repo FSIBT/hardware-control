@@ -60,6 +60,7 @@ from hardware_control.FunctionGenerator.Key33500BCtrl import Key33500BCtrl
 from hardware_control.PowerSupply.HC_MultiPowerSupply import HC_MultiPowerSupply
 from hardware_control.PowerSupply.CAEN14xxETCtrl import CAEN14xxETCtrl
 from hardware_control.PowerSupply.TDKLGenHCtrl import TDKLGenHCtrl
+from hardware_control.ZMQInputTool.HC_ZMQInputTool import HC_ZMQInputTool
 
 
 class STS50Demo(QMainWindow):
@@ -110,6 +111,8 @@ class STS50Demo(QMainWindow):
         self.trig2 = SRSDG535Ctrl("GPIB0::15::INSTR", True, True)
         self.trig2_ctr = HC_PulseGen(self.trig2, self, "Trigger 2", "DEFAULT", True)
 
+        self.zmqtool = HC_ZMQInputTool(self, "ZMQ Input Tool", "tcp://*:5555")
+
         self.scantool = HC_ScanTool(self, "Scan Control", "DEFAULT", True)
         self.scantool.update_instruments()
 
@@ -125,12 +128,14 @@ class STS50Demo(QMainWindow):
         self.grid.addWidget(self.statustool, 2, 4)
         self.grid.addWidget(self.awg_ctrl, 3, 0, 1, 1)
         self.grid.addWidget(self.psu_ctrl, 3, 1, 1, 1)
+        self.grid.addWidget(self.zmqtool, 3, 3, 1, 1)
         self.main_widget.setLayout(self.grid)
 
         self.setCentralWidget(self.main_widget)
 
         # ['macintosh', 'Windows', 'Fusion']
         self.app.setStyle(QStyleFactory.create("Fusion"))
+        # self.app.setStyle(QStyleFactory.create("Windows"))
 
         self.show()
 
