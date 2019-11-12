@@ -339,7 +339,10 @@ class HC_Instrument(QGroupBox):
 
     def log_note(self, note: str):
         """Adds a 'Note' type log entry to the HC_App's log list"""
-        self.window.app.add_log(self.name, self.comm.backend_model, "NOTE", note)
+        if self.comm is not None:
+            self.window.app.add_log(self.name, self.comm.backend_model, "NOTE", note)
+        else:
+            self.window.app.add_log(self.name, "NO-HARDWARE-BACKEND", "NOTE", note)
 
     def read_message(self, prefix: str):
         """Looks for a string in self.inbox, starting from the back (ie. most
