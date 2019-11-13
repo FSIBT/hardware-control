@@ -100,10 +100,6 @@ class HC_ZMQConnectionTool(HC_Instrument):
         return {}
 
 
-def add_macro(app, name: str, commands: list):
-    app.macros["name"] = commands
-
-
 def process_hc_command(app, command: str):
     """Accepts a text command, and executes it on the app"""
 

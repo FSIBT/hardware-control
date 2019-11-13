@@ -60,7 +60,7 @@ from hardware_control.FunctionGenerator.Key33500BCtrl import Key33500BCtrl
 from hardware_control.PowerSupply.HC_MultiPowerSupply import HC_MultiPowerSupply
 from hardware_control.PowerSupply.CAEN14xxETCtrl import CAEN14xxETCtrl
 from hardware_control.PowerSupply.TDKLGenHCtrl import TDKLGenHCtrl
-from hardware_control.ZMQInputTool.HC_ZMQInputTool import HC_ZMQInputTool
+from hardware_control.ZMQInputTool.HC_ZMQConnectionTool import HC_ZMQConnectionTool
 
 
 class STS50Demo(QMainWindow):
@@ -111,13 +111,23 @@ class STS50Demo(QMainWindow):
         self.trig2 = SRSDG535Ctrl("GPIB0::15::INSTR", True, True)
         self.trig2_ctr = HC_PulseGen(self.trig2, self, "Trigger 2", "DEFAULT", True)
 
-        self.zmqtool = HC_ZMQInputTool(self, "ZMQ Input Tool", "tcp://*:5555")
+        self.zmqtool = HC_ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
 
         self.scantool = HC_ScanTool(self, "Scan Control", "DEFAULT", True)
         self.scantool.update_instruments()
 
         self.statustool = HC_StatusTool(self, "Connection Status", "DEFAULT", True)
         self.statustool.update_instruments()
+
+        app.add_variable("FIL_AMPL", "5.0")  # Add a filament amplitude variable
+        app.add_macro(
+            "Trigger",
+            [
+                "SET:Filament DAC:VOLT:FIL_AMPL",
+                "CMD:Keysight Scope:SINGLE",
+                "SET:Filament DAC:VOLT:0",
+            ],
+        )  # Add a trigger macro
 
         self.grid = QGridLayout()
         self.grid.addWidget(self.scope_ctrl, 0, 0, 3, 3)
@@ -134,8 +144,8 @@ class STS50Demo(QMainWindow):
         self.setCentralWidget(self.main_widget)
 
         # ['macintosh', 'Windows', 'Fusion']
-        self.app.setStyle(QStyleFactory.create("Fusion"))
-        # self.app.setStyle(QStyleFactory.create("Windows"))
+        # self.app.setStyle(QStyleFactory.create("Fusion"))
+        self.app.setStyle(QStyleFactory.create("Windows"))
 
         self.show()
 
