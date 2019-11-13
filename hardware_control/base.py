@@ -228,7 +228,8 @@ class HC_Instrument(QGroupBox):
         window.app.add_instrument(self)
 
     def __str__(self):
-        return f"{self.manufacturer} {self.model}"
+        # return f"{self.manufacturer} {self.model}"
+        return f"{self.name}"
 
     def get_header(self):
         """Supply a header for a log file"""
@@ -261,6 +262,12 @@ class HC_Instrument(QGroupBox):
                 print(
                     "ERROR: Key '{parameter}' does not exist for instrument '{self.name}' in values dictionary."
                 )
+
+    def command(self, cmd_str: str):
+        """Update a setting in settings and values dictionary for the instrument"""
+
+        if self.comm is not None:
+            self.comm.command(setting, value)
 
     def set_setting(self, parameter: str, value: str):
         """Adjusts a parameter in 'self.settings' and updates any GUI elements to reflect the change."""
@@ -443,6 +450,7 @@ class HC_App(QApplication):
             or log_type == "WRT"
             or log_type == "QRY"
             or log_type == "NOTE"
+            or log_type == "WARNING"
         ):
             self.log.append(
                 f'{instr_name}: \t{log_type} "{arg1}" \t[{datestr}] \t[{backend_model}]'
