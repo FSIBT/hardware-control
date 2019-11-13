@@ -376,6 +376,8 @@ class HC_App(QApplication):
         super().__init__(*args, **kwargs)
         self.instruments = []
         self.log = []  # List of strings for debugging/logging purposes
+        self.macros = {}  # Dict of hc-commands (used for scans + trigger buttons)
+        self.variables = {}  # Dict of app variables
 
         self.print_debug = False
 
@@ -464,6 +466,14 @@ class HC_App(QApplication):
             if self.print_debug:
                 print(f"HC_App called 'close()' for instrument: '{instr.name}'.")
             instr.close()
+
+    def add_macro(name: str, commands: list):
+        """Adds a macro to the app's macro list. Overwrites if macro already exists"""
+        self.macros["name"] = commands
+
+    def add_variable(name: str, value: str):
+        """Adds an application variable. Overwrites if variable already exists"""
+        self.variables[name] = value
 
 
 class QOnOff(QPushButton):
