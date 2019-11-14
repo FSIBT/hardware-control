@@ -42,7 +42,7 @@ class HC_MacroRunnerTool(HC_Instrument):
     def __init__(
         self,
         window,
-        name: str = "Scan Control",
+        name: str = "Macro Runner",
         buttons={"Dynamic": "Run Macro"},
         indicators={},
     ):
@@ -154,7 +154,7 @@ class HC_MacroRunnerTool(HC_Instrument):
 
         dflt = {}
 
-        dflt["macros"] = "----------"
+        dflt["macro"] = "----------"
         dflt["progress"] = 0
 
         return dflt
