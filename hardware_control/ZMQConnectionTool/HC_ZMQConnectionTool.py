@@ -44,6 +44,7 @@ class HC_ZMQConnectionTool(HC_Instrument):
         super().__init__(window, name)
 
         self.port = port
+        self.ignore = True
 
         # Create ZMQ context, socket, poller
         self.context = zmq.Context()
@@ -92,7 +93,7 @@ class HC_ZMQConnectionTool(HC_Instrument):
 
             self.received_label.setText(f"Last Message: {mess_str}")  # Update label
 
-            rval = process_hc_command(self.window.app, mess_str)
+            rval = self.window.app.process_hc_command(mess_str)
 
             self.socket.send(message)  # Send reply
 
