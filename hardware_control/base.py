@@ -349,7 +349,7 @@ class HC_Instrument(QGroupBox):
         if self.comm is not None:
             self.window.app.add_log(self.name, self.comm.backend_model, "NOTE", note)
         else:
-            self.window.app.add_log(self.name, "NO-HARDWARE-BACKEND", "NOTE", note)
+            self.window.app.add_log(self.name, "N/A", "NOTE", note)
 
     def read_message(self, prefix: str):
         """Looks for a string in self.inbox, starting from the back (ie. most
@@ -474,6 +474,236 @@ class HC_App(QApplication):
     def add_variable(self, name: str, value: str):
         """Adds an application variable. Overwrites if variable already exists"""
         self.variables[name] = value
+
+    def process_hc_command(self, command: str):
+        """Accepts a text command, and executes it on the app"""
+
+        tokens = command.split(":")  # Split the command up into tokens
+
+        # Check if too few commands are given
+        if len(tokens) < 1:
+            self.add_log(
+                "HC-Command Processor",
+                "N/A",
+                "WARNING",
+                f"Invalid HC-Command received. No tokens. Command: '{command}'",
+            )
+            return False
+
+        # Find out the 'mode' of the command
+        if (
+            tokens[0] == "SET"
+        ):  # THis indicates that the command provides arguments for an instrument's update_settings() function
+
+            # Make sure the correct number of arguments are given
+            if len(tokens) != 4:  # Requires: MODE:INSTRUMENT:PARAMETER:VALUE
+                self.add_log(
+                    "HC-Command Processor",
+                    "N/A",
+                    "WARNING",
+                    f"Invalid HC-Command received. Wrong number of tokens. Command: '{command}'",
+                )
+                return False
+
+            instr_str = tokens[1]
+            setting_str = tokens[2]
+            value_str = tokens[3]
+
+            # If instrument exists...
+            if instr_str in [x.name for x in self.instruments]:
+
+                # Find instrument....
+                for inst in self.instruments:
+                    if instr_str == inst.name:
+                        inst.update_setting(setting_str, value_str)
+            else:
+                self.add_log(
+                    "HC-Command Processor",
+                    "N/A",
+                    "WARNING",
+                    f"Instrument '{instr_str}' not found.",
+                )
+                return False
+
+            if self.print_debug:
+                print(
+                    f"Executed Setting Update:\n\tInstrument: {instr_str}\n\tSetting: {setting_str}\n\tValue: {value_str}"
+                )
+
+        elif (
+            tokens[0] == "CMD"
+        ):  # This indicates the command provides arguments for an instrument's command() function
+
+            # Recalculate tokens, with max of 2 splits. This allows colons to appear in the command
+            tokens = command.split(":", 2)
+
+            # Make sure the correct number of arguments are given
+            if len(tokens) != 3:  # Requires: MODE:INSTRUMENT:PARAMETER:VALUE
+                self.add_log(
+                    "HC-Command Processor",
+                    "N/A",
+                    "WARNING",
+                    f"Invalid HC-Command received. Wrong number of tokens. Command'{command}'",
+                )
+                return False
+
+            instr_str = tokens[1]
+            command_str = tokens[2]
+
+            # Find instrument....
+            if instr_str in [x.name for x in self.instruments]:
+                self.instruments[instr_str].command(command_str)
+            else:
+                self.add_log(
+                    "HC-Command Processor",
+                    "N/A",
+                    "WARNING",
+                    f"Invalid HC-Command received. Wrong number of tokens. Command: '{command}'",
+                )
+                return False
+
+            if self.print_debug:
+                print(
+                    f"Executed Command:\n\tInstrument: {instr_str}\n\tCommand: {command_str}"
+                )
+
+        elif (
+            tokens[0] == "FUNC"
+        ):  # This indicates that the command is calling an internal function
+
+            # Ensure more tokens exist
+            if len(tokens) < 2:
+                self.add_log(
+                    "HC-Command Processor",
+                    "N/A",
+                    "WARNING",
+                    f"Invalid HC-Command received. FUNC requires arguments.",
+                )
+                return False
+
+            if tokens[1] == "debug":  # Turn debug mode on or off
+
+                # Ensure more tokens exist
+                if len(tokens) < 3:
+                    self.add_log(
+                        "HC-Command Processor",
+                        "N/A",
+                        "WARNING",
+                        f"Invalid HC-Command received. FUNC:debug requires arguments.",
+                    )
+                    return False
+
+                # Change value
+                if tokens[2].upper() == "ON" or tokens[2].upper() == "TRUE":
+                    self.print_debug = True
+                else:
+                    self.print_debug = False
+
+            elif tokens[1] == "run":  # Run a macro
+
+                # Ensure more tokens exist
+                if len(tokens) < 3:
+                    self.add_log(
+                        "HC-Command Processor",
+                        "N/A",
+                        "WARNING",
+                        f"Invalid HC-Command received. FUNC:run requires arguments.",
+                    )
+                    return False
+
+                # Make sure macro exists
+                if tokens[2] in self.macros:
+
+                    # Run macro - note: this can become recursive and get stuck in
+                    # an infinite loop if the user runs a macro that calls itself
+                    return self.run_macro(self.macros[tokens[2]])
+
+                else:
+                    self.add_log(
+                        "HC-Command Processor",
+                        "N/A",
+                        "WARNING",
+                        f"Requested macro to run does not exist.",
+                    )
+                    return False
+
+            elif tokens[1] == "var":  # Change or create variable
+
+                # Ensure more tokens exist
+                if len(tokens) < 4:
+                    self.add_log(
+                        "HC-Command Processor",
+                        "N/A",
+                        "WARNING",
+                        f"Invalid HC-Command received. FUNC:var requires arguments.",
+                    )
+                    return False
+
+                # Update/create variable
+                self.variables[tokens[2]] = tokens[3]
+
+            elif tokens[1] == "disp":  # Display data
+
+                # Ensure more tokens exist
+                if len(tokens) < 3:
+                    self.add_log(
+                        "HC-Command Processor",
+                        "N/A",
+                        "WARNING",
+                        f"Invalid HC-Command received. FUNC:disp requires arguments.",
+                    )
+                    return False
+
+                if tokens[2] == "var":  # Show all variables
+
+                    print("Application Variables:")
+                    for v in self.variables:
+                        val = self.variables[v]
+                        print(f"\t{v} = {val}")
+
+                elif tokens[2] == "macro":  # Show all macros
+
+                    print("Application Macros:")
+                    for m in self.macros:
+                        cmds = self.macros[m]
+                        print(f"\t{m}: {cmds}")
+
+                elif tokens[2] == "str":  # Show a string...
+
+                    # Recalculate tokens w/ all after string counting as 1 token
+                    tokens = command.split(":", 3)
+
+                    if len(tokens) < 4:  # Blank line
+                        print("")
+                    else:  # Display remaining text
+                        print(tokens[3])
+
+                else:
+                    self.add_log(
+                        "HC-Command Processor",
+                        "N/A",
+                        "WARNING",
+                        f"Invalid HC-Command received.",
+                    )
+                    return False
+
+        else:
+            self.add_log(
+                "HC-Command Processor",
+                "N/A",
+                "WARNING",
+                f"Invalid HC-Command received. Unrecognized mode token. Command: '{command}'",
+            )
+            return "WARNING: Couldn't process command"
+
+        return True
+
+    def run_macro(self, m_commands):
+
+        for c in m_commands:
+            if not self.process_hc_command(c):
+                return False
+        return True
 
 
 class QOnOff(QPushButton):
@@ -913,97 +1143,3 @@ def setButtonState(button: QPushButton, value):
         else:
             if button.isChecked():
                 button.toggle()
-
-
-def process_hc_command(app, command: str):
-    """Accepts a text command, and executes it on the app"""
-
-    tokens = command.split(":")  # Split the command up into tokens
-
-    # Check if too few commands are given
-    if len(tokens) < 1:
-        app.add_log(
-            "HC-Command Processor",
-            "NO-HARDWARE-BACKEND",
-            "WARNING",
-            f"Invalid HC-Command received. No tokens. Command: '{command}'",
-        )
-        return "WARNING: Couldn't process command"
-
-    # Find out the 'mode' of the command
-    if (
-        tokens[0] == "SET"
-    ):  # THis indicates that the command provides arguments for an instrument's update_settings() function
-
-        # Make sure the correct number of arguments are given
-        if len(tokens) != 4:  # Requires: MODE:INSTRUMENT:PARAMETER:VALUE
-            app.add_log(
-                "HC-Command Processor",
-                "NO-HARDWARE-BACKEND",
-                "WARNING",
-                f"Invalid HC-Command received. Wrong number of tokens. Command: '{command}'",
-            )
-            return "WARNING: Couldn't process command"
-
-        instr_str = tokens[1]
-        setting_str = tokens[2]
-        value_str = tokens[3]
-
-        # If instrument exists...
-        if instr_str in [x.name for x in app.instruments]:
-
-            # Find instrument....
-            for inst in app.instruments:
-                if instr_str == inst.name:
-                    inst.update_setting(setting_str, value_str)
-        else:
-            print(f"Instrument: {instr_str} not present")
-            for inst_key in app.instruments:
-                print(f"\t{inst_key}")
-
-        print(
-            f"Executing Setting Update:\n\tInstrument: {instr_str}\n\tSetting: {setting_str}\n\tValue: {value_str}"
-        )
-
-    elif (
-        tokens[0] == "CMD"
-    ):  # This indicates the command provides arguments for an instrument's command() function
-
-        # Recalculate tokens, with max of 2 splits. This allows colons to appear in the command
-        tokens = command.split(":", 2)
-
-        # Make sure the correct number of arguments are given
-        if len(tokens) != 3:  # Requires: MODE:INSTRUMENT:PARAMETER:VALUE
-            app.add_log(
-                "HC-Command Processor",
-                "NO-HARDWARE-BACKEND",
-                "WARNING",
-                f"Invalid HC-Command received. Wrong number of tokens. Command: '{command}'",
-            )
-            return "WARNING: Couldn't process command"
-
-        instr_str = tokens[1]
-        command_str = tokens[2]
-
-        # Find instrument....
-        if instr_str in [x.name for x in self.instruments]:
-            app.instruments[instr_str].command(command_str)
-        else:
-            print(f"Instrument: {instr_str} not present")
-            for inst_key in app.instruments:
-                print(f"\t{inst_key}")
-
-        print(
-            f"Executing Command:\n\tInstrument: {instr_str}\n\tCommand: {command_str}"
-        )
-
-    else:
-        app.add_log(
-            "HC-Command Processor",
-            "NO-HARDWARE-BACKEND",
-            "WARNING",
-            f"Invalid HC-Command received. Unrecognized mode token. Command: '{command}'",
-        )
-        return "WARNING: Couldn't process command"
-
-    return "Complete"
