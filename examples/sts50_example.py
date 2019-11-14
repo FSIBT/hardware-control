@@ -36,6 +36,7 @@ from PyQt5.QtWidgets import (
     QAction,
     QGridLayout,
     QStyleFactory,
+    QTabWidget,
 )
 import sys
 from docopt import docopt
@@ -72,7 +73,19 @@ class STS50Demo(QMainWindow):
 
         self.setWindowTitle("Oscilloscope Demo")
 
+        self.tabs = QTabWidget()
+        self.tab1 = QWidget()
+        self.tab2 = QWidget()
+        self.tab3 = QWidget()
+
+        self.tabs.addTab(self.tab1, "Scope Tab")
+        self.tabs.addTab(self.tab2, "Power Tab")
+        self.tabs.addTab(self.tab3, "Other Tab")
+
         self.main_widget = QWidget(self)
+
+        #####################################################################
+        ######## Tab 1
 
         scpi_scope = Key4000XCtrl(
             "TCPIP0::192.168.0.14::INSTR",
@@ -83,6 +96,14 @@ class STS50Demo(QMainWindow):
             5025,
         )
         self.scope_ctrl = HC_Oscilloscope(scpi_scope, self, "Keysight", "DEFAULT", True)
+
+        # Put instrument(s) in tab
+        self.tab1_layout = QGridLayout()
+        self.tab1_layout.addWidget(self.scope_ctrl, 0, 0)
+        self.tab1.setLayout(self.tab1_layout)
+
+        #####################################################################
+        ######## Tab 2
 
         # awg = Key33500BCtrl("Some-address-goes-here", dummy, True, use_sockets, "192.168.0.18", 5025)
         awg = Key33500BCtrl(
@@ -102,6 +123,15 @@ class STS50Demo(QMainWindow):
             self.psu, self, [1], "TDK Lambda (RF Vin)", "DEFAULT"
         )
 
+        # Put instrument(s) in tab
+        self.tab2_layout = QGridLayout()
+        self.tab2_layout.addWidget(self.awg_ctrl, 0, 0)
+        self.tab2_layout.addWidget(self.psu_ctrl, 0, 1)
+        self.tab2.setLayout(self.tab2_layout)
+
+        #####################################################################
+        ######## Tab 3
+
         self.flow = AlicatMSeriesCtrl("192.168.0.15", True, True)
         self.flow_ctrl = HC_FlowController(
             self.flow, self, "Flow Controller", "flowcontroller_state.json", True
@@ -111,7 +141,7 @@ class STS50Demo(QMainWindow):
         self.trig1_ctrl = HC_PulseGen(self.trig1, self, "Trigger 1", "DEFAULT", True)
 
         self.trig2 = SRSDG535Ctrl("GPIB0::15::INSTR", True, True)
-        self.trig2_ctr = HC_PulseGen(self.trig2, self, "Trigger 2", "DEFAULT", True)
+        self.trig2_ctrl = HC_PulseGen(self.trig2, self, "Trigger 2", "DEFAULT", True)
 
         self.zmqtool = HC_ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
 
@@ -153,21 +183,37 @@ class STS50Demo(QMainWindow):
         )
         self.var_tool.update_variables()
 
-        self.grid = QGridLayout()
-        self.grid.addWidget(self.scope_ctrl, 0, 0, 3, 3)
-        self.grid.addWidget(self.flow_ctrl, 0, 3)
-        self.grid.addWidget(self.trig1_ctrl, 1, 3)
-        self.grid.addWidget(self.trig2_ctr, 2, 3)
-        self.grid.addWidget(self.scantool, 0, 4)
-        self.grid.addWidget(self.statustool, 2, 4)
-        self.grid.addWidget(self.awg_ctrl, 3, 0, 1, 1)
-        self.grid.addWidget(self.psu_ctrl, 3, 1, 1, 1)
-        self.grid.addWidget(self.zmqtool, 3, 3, 1, 1)
-        self.grid.addWidget(self.run_tool, 1, 4)
-        self.grid.addWidget(self.var_tool, 3, 4)
-        self.main_widget.setLayout(self.grid)
+        # Put instrument(s) in tab
+        self.tab3_layout = QGridLayout()
+        self.tab3_layout.addWidget(self.flow_ctrl, 0, 0)
+        self.tab3_layout.addWidget(self.trig1_ctrl, 1, 0)
+        self.tab3_layout.addWidget(self.trig2_ctrl, 2, 0)
+        self.tab3_layout.addWidget(self.zmqtool, 3, 0)
+        self.tab3_layout.addWidget(self.scantool, 0, 1)
+        self.tab3_layout.addWidget(self.run_tool, 1, 1)
+        self.tab3_layout.addWidget(self.var_tool, 2, 1)
+        self.tab3_layout.addWidget(self.statustool, 3, 1)
+        self.tab3.setLayout(self.tab3_layout)
 
-        self.setCentralWidget(self.main_widget)
+        #####################################################################
+        ######## Set master window layout
+
+        # self.grid = QGridLayout()
+        # # self.grid.addWidget(self.scope_ctrl, 0, 0, 3, 3)
+        # # self.grid.addWidget(self.flow_ctrl, 0, 3)
+        # # self.grid.addWidget(self.trig1_ctrl, 1, 3)
+        # # self.grid.addWidget(self.trig2_ctr, 2, 3)
+        # # self.grid.addWidget(self.scantool, 0, 4)
+        # # self.grid.addWidget(self.statustool, 2, 4)
+        # # self.grid.addWidget(self.awg_ctrl, 3, 0, 1, 1)
+        # # self.grid.addWidget(self.psu_ctrl, 3, 1, 1, 1)
+        # # self.grid.addWidget(self.zmqtool, 3, 3, 1, 1)
+        # # self.grid.addWidget(self.run_tool, 1, 4)
+        # # self.grid.addWidget(self.var_tool, 3, 4)
+        # self.grid.addWidget(self.tabs, 0, 0)
+        # self.main_widget.setLayout(self.grid)
+
+        self.setCentralWidget(self.tabs)
 
         # ['macintosh', 'Windows', 'Fusion']
         # self.app.setStyle(QStyleFactory.create("Fusion"))
