@@ -467,11 +467,11 @@ class HC_App(QApplication):
                 print(f"HC_App called 'close()' for instrument: '{instr.name}'.")
             instr.close()
 
-    def add_macro(name: str, commands: list):
+    def add_macro(self, name: str, commands: list):
         """Adds a macro to the app's macro list. Overwrites if macro already exists"""
-        self.macros["name"] = commands
+        self.macros[name] = commands
 
-    def add_variable(name: str, value: str):
+    def add_variable(self, name: str, value: str):
         """Adds an application variable. Overwrites if variable already exists"""
         self.variables[name] = value
 
