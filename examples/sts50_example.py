@@ -60,7 +60,9 @@ from hardware_control.FunctionGenerator.Key33500BCtrl import Key33500BCtrl
 from hardware_control.PowerSupply.HC_MultiPowerSupply import HC_MultiPowerSupply
 from hardware_control.PowerSupply.CAEN14xxETCtrl import CAEN14xxETCtrl
 from hardware_control.PowerSupply.TDKLGenHCtrl import TDKLGenHCtrl
-from hardware_control.ZMQInputTool.HC_ZMQConnectionTool import HC_ZMQConnectionTool
+from hardware_control.ZMQConnectionTool.HC_ZMQConnectionTool import HC_ZMQConnectionTool
+from hardware_control.MacroRunnerTool.HC_MacroRunnerTool import HC_MacroRunnerTool
+from hardware_control.VariableEditTool.HC_VariableEditTool import HC_VariableEditTool
 
 
 class STS50Demo(QMainWindow):
@@ -119,7 +121,9 @@ class STS50Demo(QMainWindow):
         self.statustool = HC_StatusTool(self, "Connection Status", "DEFAULT", True)
         self.statustool.update_instruments()
 
-        app.add_variable("FIL_AMPL", "5.0")  # Add a filament amplitude variable
+        app.add_variable("FIL_AMPL_V", "5.0")  # Add a filament amplitude variable
+        app.add_variable("DELAY_TIME_S", "7.5")  # Add a delay time variable
+        app.add_variable("PULSE_TIME_S", "500e-6")  # Add a spark time variable
         app.add_macro(
             "Trigger",
             [
@@ -128,6 +132,26 @@ class STS50Demo(QMainWindow):
                 "SET:Filament DAC:VOLT:0",
             ],
         )  # Add a trigger macro
+        app.add_macro("Safe", ["CMD:PSU:ALL_OFF", "CMD:AWG:ALL_OFF"])
+
+        self.run_tool = HC_MacroRunnerTool(
+            self,
+            "Macro Runner",
+            {"Dynamic": "Run Macro", "Trigger": "Trigger Beam"},
+            {},
+        )
+        self.run_tool.update_macros()
+
+        self.var_tool = HC_VariableEditTool(
+            self,
+            "Application Variable Editor",
+            {
+                "Dynamic": "Value:",
+                "FIL_AMPL_V": "Filament Amplitude:",
+                "DELAY_TIME_S": "Filament Heating Time:",
+            },
+        )
+        self.var_tool.update_variables()
 
         self.grid = QGridLayout()
         self.grid.addWidget(self.scope_ctrl, 0, 0, 3, 3)
@@ -139,6 +163,8 @@ class STS50Demo(QMainWindow):
         self.grid.addWidget(self.awg_ctrl, 3, 0, 1, 1)
         self.grid.addWidget(self.psu_ctrl, 3, 1, 1, 1)
         self.grid.addWidget(self.zmqtool, 3, 3, 1, 1)
+        self.grid.addWidget(self.run_tool, 1, 4)
+        self.grid.addWidget(self.var_tool, 3, 4)
         self.main_widget.setLayout(self.grid)
 
         self.setCentralWidget(self.main_widget)
