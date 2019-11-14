@@ -913,3 +913,97 @@ def setButtonState(button: QPushButton, value):
         else:
             if button.isChecked():
                 button.toggle()
+
+
+def process_hc_command(app, command: str):
+    """Accepts a text command, and executes it on the app"""
+
+    tokens = command.split(":")  # Split the command up into tokens
+
+    # Check if too few commands are given
+    if len(tokens) < 1:
+        app.add_log(
+            "HC-Command Processor",
+            "NO-HARDWARE-BACKEND",
+            "WARNING",
+            f"Invalid HC-Command received. No tokens. Command: '{command}'",
+        )
+        return "WARNING: Couldn't process command"
+
+    # Find out the 'mode' of the command
+    if (
+        tokens[0] == "SET"
+    ):  # THis indicates that the command provides arguments for an instrument's update_settings() function
+
+        # Make sure the correct number of arguments are given
+        if len(tokens) != 4:  # Requires: MODE:INSTRUMENT:PARAMETER:VALUE
+            app.add_log(
+                "HC-Command Processor",
+                "NO-HARDWARE-BACKEND",
+                "WARNING",
+                f"Invalid HC-Command received. Wrong number of tokens. Command: '{command}'",
+            )
+            return "WARNING: Couldn't process command"
+
+        instr_str = tokens[1]
+        setting_str = tokens[2]
+        value_str = tokens[3]
+
+        # If instrument exists...
+        if instr_str in [x.name for x in app.instruments]:
+
+            # Find instrument....
+            for inst in app.instruments:
+                if instr_str == inst.name:
+                    inst.update_setting(setting_str, value_str)
+        else:
+            print(f"Instrument: {instr_str} not present")
+            for inst_key in app.instruments:
+                print(f"\t{inst_key}")
+
+        print(
+            f"Executing Setting Update:\n\tInstrument: {instr_str}\n\tSetting: {setting_str}\n\tValue: {value_str}"
+        )
+
+    elif (
+        tokens[0] == "CMD"
+    ):  # This indicates the command provides arguments for an instrument's command() function
+
+        # Recalculate tokens, with max of 2 splits. This allows colons to appear in the command
+        tokens = command.split(":", 2)
+
+        # Make sure the correct number of arguments are given
+        if len(tokens) != 3:  # Requires: MODE:INSTRUMENT:PARAMETER:VALUE
+            app.add_log(
+                "HC-Command Processor",
+                "NO-HARDWARE-BACKEND",
+                "WARNING",
+                f"Invalid HC-Command received. Wrong number of tokens. Command: '{command}'",
+            )
+            return "WARNING: Couldn't process command"
+
+        instr_str = tokens[1]
+        command_str = tokens[2]
+
+        # Find instrument....
+        if instr_str in [x.name for x in self.instruments]:
+            app.instruments[instr_str].command(command_str)
+        else:
+            print(f"Instrument: {instr_str} not present")
+            for inst_key in app.instruments:
+                print(f"\t{inst_key}")
+
+        print(
+            f"Executing Command:\n\tInstrument: {instr_str}\n\tCommand: {command_str}"
+        )
+
+    else:
+        app.add_log(
+            "HC-Command Processor",
+            "NO-HARDWARE-BACKEND",
+            "WARNING",
+            f"Invalid HC-Command received. Unrecognized mode token. Command: '{command}'",
+        )
+        return "WARNING: Couldn't process command"
+
+    return "Complete"
