@@ -687,6 +687,23 @@ class HC_App(QApplication):
                     )
                     return False
 
+            elif tokens[1] == "time":
+
+                if len(tokens) < 4:
+                    self.add_log(
+                        "HC-Command Processor",
+                        "N/A",
+                        "WARNING",
+                        f"Invalid HC-Command received. FUNC:time requires arguments.",
+                    )
+
+                if tokens[2] == "sleep":
+                    try:
+                        time.sleep(float(tokens[3]))
+                    except Exception:
+                        if self.print_debug:
+                            print(f"Failed to convert hc-command argument to float")
+
         else:
             self.add_log(
                 "HC-Command Processor",
@@ -699,7 +716,6 @@ class HC_App(QApplication):
         return True
 
     def run_macro(self, m_commands):
-
         for c in m_commands:
             if not self.process_hc_command(c):
                 return False
