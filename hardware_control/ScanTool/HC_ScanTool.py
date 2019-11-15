@@ -8,7 +8,7 @@ import time
 import pyqtgraph as pg
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer, QThread, pyqtSignal, pyqtSlot, QObject
-from PyQt5.QtGui import QDoubleValidator, QPixmap, QProgressBar, QIcon
+from PyQt5.QtGui import QDoubleValidator, QPixmap, QProgressBar, QIcon, QApplication
 from PyQt5.QtWidgets import (
     QGroupBox,
     QVBoxLayout,
@@ -32,6 +32,7 @@ class HC_ScanTool(QGroupBox):
         name: str = "Scan Control",
         initialize_with: str = "DEFAULT",
         save_on_close: str = False,
+        include_variables: bool = True,
     ):
 
         super().__init__(name)
@@ -41,6 +42,7 @@ class HC_ScanTool(QGroupBox):
         self.name = name
         self.app = window.app
         self.ignore = True
+        self.include_variables = include_variables
 
         # Initialize state to correct values
         if initialize_with == "INSTRUMENT":
@@ -69,9 +71,7 @@ class HC_ScanTool(QGroupBox):
         # ****** DEFINE TEXT BOXES
         #
         self.instrument_label = QLabel("Instrument:")
-        self.instrument_label.setAlignment(
-            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
-        )
+        self.instrument_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
         #
         self.instrument_drop = QComboBox()
         self.instrument_drop.addItems(["----------"])
@@ -81,13 +81,23 @@ class HC_ScanTool(QGroupBox):
         )
         #
         self.parameter_label = QLabel("Parameter:")
-        self.parameter_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.parameter_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
         #
         self.parameter_drop = QComboBox()
         self.parameter_drop.addItems(["----------"])
         self.parameter_drop.setCurrentText(self.settings["parameter"])
         self.parameter_drop.currentIndexChanged.connect(
             lambda: self.set_parameter(self.parameter_drop.currentText())
+        )
+        #
+        self.macro_label = QLabel("Scan Macro:")
+        self.macro_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        #
+        self.macro_drop = QComboBox()
+        self.macro_drop.addItems(["None"])
+        self.macro_drop.setCurrentText(self.settings["macro"])
+        self.macro_drop.currentIndexChanged.connect(
+            lambda: self.set_macro(self.macro_drop.currentText())
         )
         #
         self.values_label = QLabel("Values:")
@@ -108,6 +118,8 @@ class HC_ScanTool(QGroupBox):
         self.upper_grid.addWidget(self.arrow_symbol, 1, 1)
         self.upper_grid.addWidget(self.parameter_label, 0, 2)
         self.upper_grid.addWidget(self.parameter_drop, 1, 2)
+        self.upper_grid.addWidget(self.macro_label, 2, 0, 1, 2)
+        self.upper_grid.addWidget(self.macro_drop, 2, 2)
         self.middle_grid.addWidget(self.values_label, 2, 0)
         self.middle_grid.addWidget(self.values_edit, 2, 1, 1, 2)
 
@@ -138,7 +150,7 @@ class HC_ScanTool(QGroupBox):
         self.progress_grid.addWidget(self.progress_bar, 0, 1)
         #        self.progress_bar.setGeometry(200, 80, 250, 20);
         #
-        self.progress_bar.setValue(self.settings["progress"])
+        self.progress_bar.setValue(float(self.settings["progress"]))
 
         # ******* DEFINE OVERALL LAYOUT
         #
@@ -150,29 +162,55 @@ class HC_ScanTool(QGroupBox):
         self.setLayout(self.master_layout)
 
     def set_instrument(self, inst: str):
-        print(f"Instrument set to '{inst}'")
+
+        if self.app.print_debug:
+            print(f"Instrument set to '{inst}'")
+
         self.settings["instrument"] = inst
 
         self.parameter_drop.clear()
         params = []
 
         # update parameters menu options
-        found = False
-        for instrument in self.app.instruments:
-            if instrument.name == inst:
-                instr = instrument
-                found = True
 
-        if found:
-            for param in instr.settings:
-                params.append(param)
+        # If set to 'app variables' populate with app variables, not instrument settings
+        if inst == "App Variables":
+
+            # Add app variables
+            for v in self.app.variables:
+                params.append(v)
             self.parameter_drop.addItems(params)
-            print(f"\tAdded {len(params)} items to parameter dropdown.")
-        else:
-            print(f"ERROR: Couldn't find instrument '{inst}'")
+
+        else:  # Is a real instrument name...
+
+            # Search for instrument....
+            found = False
+            for instrument in self.app.instruments:
+                if instrument.name == inst:
+                    instr = instrument
+                    found = True
+
+            if found:
+                for param in instr.settings:
+                    params.append(param)
+                self.parameter_drop.addItems(params)
+                if self.app.print_debug:
+                    print(f"\tAdded {len(params)} items to parameter dropdown.")
+            else:
+                print(f"ERROR: Couldn't find instrument '{inst}'")
 
         self.settings["progress"] = 0
         self.progress_bar.setValue(self.settings["progress"])
+
+    def set_macro(self, mac: str):
+        self.settings["macro"] = mac
+
+    def update_macros(self):
+        self.macro_drop.clear()
+        names = ["None"]
+        for m in self.app.macros:
+            names.append(m)
+        self.macro_drop.addItems(names)
 
     def set_parameter(self, param: str):
         print(f"Setting parameter to {param}")
@@ -190,36 +228,82 @@ class HC_ScanTool(QGroupBox):
 
     def scan(self):
 
+        # Get parameters, instrument, etc...
         i = self.settings["instrument"]
         p = self.settings["parameter"]
-
+        m = self.settings["macro"]
         vals = self.settings["values"].split(",")
+
+        # if self.app.print_debug:
         print(f"Starting scan\n\tInstrument: {i}\n\tParameter: {p}\n\tValues:{vals}")
 
-        # Find instrument, get current setting for parameter
-        found = False
-        for instr in self.app.instruments:
-            if instr.name == self.settings["instrument"]:
-                scan_instrument = instr
-                found = True
-                break
-        if not found:
-            print(f"ERROR: Failed to find instrument {i}")
-            return
+        if i != "App variables":  # Is real instrument, not App Variable
 
-        # Scan through values
-        count = 0
-        for v in vals:
-            self.settings["progress"] = count / len(vals) * 100
-            print(f"\tRunning value = '{v}'\t\t{count/len(vals)*100}%")
-            self.progress_bar.setValue(self.settings["progress"])
-
-            if not scan_instrument.set_setting(self.settings["parameter"], v.strip()):
-                print(f"Failed to set parameter '{p}' to value '{v}'. Exiting scan.")
+            # Find instrument, get current setting for parameter
+            found = False
+            for instr in self.app.instruments:
+                if instr.name == self.settings["instrument"]:
+                    scan_instrument = instr
+                    found = True
+                    break
+            if not found:
+                print(f"ERROR: Failed to find instrument {i}")
                 return
-            count += 1
 
-            time.sleep(0.5)
+            # Scan through values
+            count = 0
+            for v in vals:
+
+                # Update progress bar
+                self.settings["progress"] = str(count / len(vals) * 100)
+                # if self.app.print_debug:
+                print(f"\tRunning value = '{v}'\t\t{count/len(vals)*100}%")
+                self.progress_bar.setValue(float(self.settings["progress"]))
+                QApplication.processEvents()
+
+                # Update setting
+                if not scan_instrument.set_setting(
+                    self.settings["parameter"], v.strip()
+                ):
+                    if self.app.print_debug:
+                        print(
+                            f"Failed to set parameter '{p}' to value '{v}'. Exiting scan."
+                        )
+                    return
+                count += 1
+
+                if m != "None":
+                    if self.app.print_debug:
+                        print(f"\t\tRunning macro {m}")
+                    self.app.run_macro(self.app.macros[m])
+
+        else:
+
+            # Make sure variable exists
+            if not (i in self.app.variables):
+                if self.app.print_debug:
+                    print("Failed to find app variable.")
+                    return
+
+            # Scan thorugh values
+            count = 0
+            for v in vals:
+
+                # Update progress bar
+                self.settings["progress"] = count / len(vals) * 100
+                # if self.app.print_debug:
+                print(f"\tRunning value = '{v}'\t\t{count/len(vals)*100}%")
+                self.progress_bar.setValue(float(self.settings["progress"]))
+                QApplication.processEvents()
+
+                # Change value of variable
+                self.app.variables[i] = v.strip()  # Set value
+                count += 1
+
+                if m != "None":
+                    if self.app.print_debug:
+                        print(f"\t\tRunning macro {m}")
+                    self.app.run_macro(self.app.macros[m])
 
         self.settings["progress"] = 100
         self.progress_bar.setValue(self.settings["progress"])
@@ -232,6 +316,8 @@ class HC_ScanTool(QGroupBox):
             if inst.ignore:
                 continue
             names.append(inst.name)
+        if self.include_variables and not ("App Variables" in names):
+            names.append("App Variables")
         self.instrument_drop.addItems(names)
 
     def load_state(self, filename: str):
@@ -286,6 +372,7 @@ class HC_ScanTool(QGroupBox):
         dflt["parameter"] = "----------"
         dflt["action_instrument"] = "----------"
         dflt["action_parameter"] = "----------"
-        dflt["progress"] = 0
+        dflt["progress"] = "0"
+        dflt["macro"] = "None"
 
         return dflt

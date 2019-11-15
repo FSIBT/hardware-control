@@ -163,6 +163,7 @@ class STS50Demo(QMainWindow):
             ],
         )  # Add a trigger macro
         app.add_macro("Safe", ["CMD:PSU:ALL_OFF", "CMD:AWG:ALL_OFF"])
+        app.add_macro("Wait_1s", ["FUNC:time:sleep:1"])
 
         self.run_tool = HC_MacroRunnerTool(
             self,
@@ -182,6 +183,8 @@ class STS50Demo(QMainWindow):
             },
         )
         self.var_tool.update_variables()
+
+        self.scantool.update_macros()
 
         # Put instrument(s) in tab
         self.tab3_layout = QGridLayout()
