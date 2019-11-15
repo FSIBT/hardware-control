@@ -1,4 +1,4 @@
-import pyvisa
+import visa
 
 
 class HC_Backend:
@@ -63,7 +63,7 @@ class HC_Backend:
 
             try:  # Check if connected by asking for instrument ID
                 self.device.query("*IDN?")
-            except pyvisa.errors.VisaIOError as e:  # Not connected - reconnect
+            except visa.errors.VisaIOError as e:  # Not connected - reconnect
                 if self.debug:
                     print("Lost connection to device. Will try to reconnect")
                     print(f"\t{str(e)}")
@@ -75,8 +75,8 @@ class HC_Backend:
 
         # Try to connect to instrument
         try:
-            if not self.use_sockets:  # Use Pyvisa
-                rm = pyvisa.ResourceManager()
+            if not self.use_sockets:  # Use visa
+                rm = visa.ResourceManager("@py")
                 self.device = rm.open_resource(self.visa_addr)  # Open connection
 
                 # Verify actually connected (open_resource won't always throw error w/ disconnected USB)

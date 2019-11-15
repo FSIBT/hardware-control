@@ -9,7 +9,7 @@
 # 20/08/2019
 #
 
-import pyvisa
+import visa
 from typing import List
 import numpy as np
 import socket
@@ -46,7 +46,7 @@ class SRSDG535Ctrl(HC_Backend):
 
         self.use_sockets = (
             False
-        )  # This tells the default try_connect() function to use Pyvisa
+        )  # This tells the default try_connect() function to use visa
 
     def update_setting(self, setting: str, value):
         try:

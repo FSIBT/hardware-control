@@ -56,10 +56,27 @@ class HC_ZMQConnectionTool(HC_Instrument):
 
         # Create GUI
         #
+        self.scan_button = QPushButton()
+        self.scan_button.setText("Accept Commands")
+        self.scan_button.setIcon(
+            QIcon(
+                (
+                    QPixmap(
+                        pkg_resources.resource_filename(
+                            "hardware_control", "ScanTool/graphics/commands_in.png"
+                        )
+                    )
+                )
+            )
+        )
+        self.scan_button.setCheckable(False)
+        self.scan_button.clicked.connect(self.connectionOnOff)
+        #
         self.port_label = QLabel(f"Port: {self.port}")
         self.received_label = QLabel("Last Message: --")
         #
         self.panel = QGridLayout()
+        self.panel.addWidget(self.scan_button, 2, 0)
         self.panel.addWidget(self.port_label, 0, 0)
         self.panel.addWidget(self.received_label, 1, 0)
         #
@@ -76,6 +93,9 @@ class HC_ZMQConnectionTool(HC_Instrument):
         self.service_timer = QTimer(self)
         self.service_timer.timeout.connect(self.service_commands)
         self.service_timer.start(update_period)
+
+    def connectionOnOff(self):
+        pass
 
     def service_commands(self):
         """This is the command that gets called every 'x' seconds to check

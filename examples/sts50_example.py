@@ -8,7 +8,7 @@ Usage:
 Options:
   --dummy    use dummy connection for instruments that return semi-random data
              so that one run the program away from the test stand
-  --socket   use sockets instead of pyvisa
+  --socket   use sockets instead of visa
   --debug    allow debug print statements
   --log      save log file
 """
@@ -219,8 +219,8 @@ class STS50Demo(QMainWindow):
         self.setCentralWidget(self.tabs)
 
         # ['macintosh', 'Windows', 'Fusion']
-        # self.app.setStyle(QStyleFactory.create("Fusion"))
-        self.app.setStyle(QStyleFactory.create("Windows"))
+        self.app.setStyle(QStyleFactory.create("Fusion"))
+        # self.app.setStyle(QStyleFactory.create("Windows"))
 
         self.show()
 

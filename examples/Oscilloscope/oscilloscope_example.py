@@ -9,7 +9,7 @@ Usage:
 Options:
   --dummy    use dummy connection for instruments that return semi-random data
              so that one run the program away from the test stand
-  --socket   use sockets instead of pyvisa
+  --socket   use sockets instead of visa
 """
 from matplotlib import pyplot as plt
 import seaborn as sns

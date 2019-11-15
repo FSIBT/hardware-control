@@ -9,7 +9,7 @@
 # 20/08/2019
 #
 
-import pyvisa
+import visa
 from typing import List
 import numpy as np
 import socket
@@ -93,7 +93,7 @@ class CAEN14xxETCtrl(HC_Backend):
 
             try:  # Check if connected by asking for instrument ID
                 self.device.query("$BD:00,CMD:MON,PAR:BDNAME")
-            except pyvisa.errors.VisaIOError as e:  # Not connected - reconnect
+            except visa.errors.VisaIOError as e:  # Not connected - reconnect
                 if self.debug:
                     print("Lost connection to device. Will try to reconnect")
                     print(f"\t{str(e)}")
@@ -105,8 +105,8 @@ class CAEN14xxETCtrl(HC_Backend):
 
         # Try to connect to instrument
         try:
-            if not self.use_sockets:  # Use Pyvisa
-                rm = pyvisa.ResourceManager()
+            if not self.use_sockets:  # Use visa
+                rm = visa.ResourceManager()
                 self.device = rm.open_resource(self.visa_addr)  # Open connection
                 self.device.read_termination = "\r\n"
                 self.device.write_termination = "\r\n"

@@ -33,7 +33,7 @@ setup(
         "pymodbus",
         "pyqode.core",
         "pyqode.python",
-        "pyvisa",
+        "visa",
         "pyvisa-py",
         "scipy",
         "setuptools",

@@ -23,7 +23,7 @@ class E36313A:
     """Control the low voltage power supply"""
 
     def __init__(self, ResourceManager, dummy=False):
-        """The resource manager needs to be created by pyvisa"""
+        """The resource manager needs to be created by visa"""
 
         self.rm = ResourceManager
         self.dummy = dummy
