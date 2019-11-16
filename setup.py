@@ -40,6 +40,10 @@ setup(
         "seaborn",
         "docopt",
         "setuptools-scm",
+        "pyqt5",
+        "pyqtgraph",
+        "zmq"
+        "pytest-runner"
     ],
     setup_requires=["pytest-runner"],
     tests_require=["pytest"],
