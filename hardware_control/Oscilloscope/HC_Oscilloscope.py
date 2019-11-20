@@ -410,7 +410,7 @@ class OscilloscopeTriggerWidget(QWidget):
         self.level_edit.setValidator(QDoubleValidator())
         self.level_edit.editingFinished.connect(
             lambda: control.comm.update_setting(
-                "trigger_level", str(self.level_edit.currentText())
+                "trigger_level", str(self.level_edit.text())
             )
         )
         self.level_edit.setText(str(control.settings["trigger_level"]))
