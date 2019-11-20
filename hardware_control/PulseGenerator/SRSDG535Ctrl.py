@@ -9,7 +9,7 @@
 # 20/08/2019
 #
 
-import visa
+import pyvisa
 from typing import List
 import numpy as np
 import socket
@@ -33,6 +33,8 @@ def bool_NR1(x: bool):
 
 class SRSDG535Ctrl(HC_Backend):
     def __init__(self, visa_addr, dummy: bool = False, print_commands: bool = False):
+
+        super().__init__()
 
         self.ID = "SRS-DG535"
 

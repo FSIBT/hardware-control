@@ -7,7 +7,7 @@ Created on Mon Jun 24 11:19:14 2019
 """
 import time
 import random
-import visa
+import pyvisa
 import numpy as np
 import sys
 from PyQt5 import QtCore
@@ -24,7 +24,7 @@ from PyQt5.QtWidgets import (
 
 from .IonGauge_control_test import IonGauge
 
-rm = visa.ResourceManager()
+rm = pyvisa.ResourceManager()
 
 
 class IonGaugeCommunication(QObject):

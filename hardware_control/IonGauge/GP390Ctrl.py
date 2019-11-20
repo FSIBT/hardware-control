@@ -1,4 +1,4 @@
-import visa
+import pyvisa
 import socket
 import numpy as np
 import sys
@@ -7,7 +7,7 @@ import sys
 # from hardware_control.base import HC_Control
 
 
-rm = visa.ResourceManager()
+rm = pyvisa.ResourceManager()
 
 
 class GP390Ctrl:

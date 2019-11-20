@@ -9,7 +9,7 @@
 # 20/08/2019
 #
 
-import visa
+import pyvisa
 from typing import List
 import numpy as np
 import socket
@@ -67,7 +67,7 @@ class NI_DAQ:
 
             try:
                 if not self.use_sockets:
-                    rm = visa.ResourceManager()
+                    rm = pyvisa.ResourceManager()
                     self.scope = rm.open_resource(self.visa_addr)  # Open connection
                     # self.configure_read_waveform();
                 else:

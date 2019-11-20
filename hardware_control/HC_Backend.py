@@ -1,4 +1,4 @@
-import visa
+import pyvisa
 
 
 class HC_Backend:

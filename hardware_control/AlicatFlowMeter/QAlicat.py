@@ -5,7 +5,7 @@ Created on Thu Jun 27 15:00:15 2019
 @author: Schuyler
 """
 
-import visa
+import pyvisa
 import sys
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer, QThread, pyqtSignal, pyqtSlot, QObject
@@ -21,7 +21,7 @@ from PyQt5.QtWidgets import (
 
 from .Alicat_control_test import Alicat
 
-rm = visa.ResourceManager()
+rm = pyvisa.ResourceManager()
 
 
 class AlicatCommunication(QObject):

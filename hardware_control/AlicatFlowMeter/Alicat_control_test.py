@@ -6,12 +6,12 @@ Created on Thu Jun 27 12:11:28 2019
 @author: sky
 """
 
-import visa
+import pyvisa
 import socket
 import numpy as np
 import sys
 
-rm = visa.ResourceManager()
+rm = pyvisa.ResourceManager()
 
 
 class Alicat:

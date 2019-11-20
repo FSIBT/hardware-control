@@ -4,7 +4,7 @@
 # 20/08/2019
 #
 
-import visa
+import pyvisa
 from typing import List
 import numpy as np
 import random

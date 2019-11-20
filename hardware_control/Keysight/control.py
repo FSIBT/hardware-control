@@ -1,4 +1,4 @@
-import visa
+import pyvisa
 import numpy as np
 
 
@@ -144,5 +144,5 @@ class E36313A:
 
 
 if __name__ == "__main__":
-    rm = visa.ResourceManager()
+    rm = pyvisa.ResourceManager()
     A = E36313A(rm)

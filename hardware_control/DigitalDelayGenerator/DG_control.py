@@ -4,7 +4,7 @@ Created on Thu Jul 11 15:24:40 2019
 
 @author: Schuyler
 """
-import visa
+import pyvisa
 import socket
 import numpy as np
 from struct import unpack
@@ -12,7 +12,7 @@ import sys
 from matplotlib import *
 import datetime
 
-rm = visa.ResourceManager()
+rm = pyvisa.ResourceManager()
 
 
 class DelayGenerator:

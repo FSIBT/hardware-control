@@ -1,6 +1,6 @@
 import random
 import sys
-import visa
+import pyvisa
 
 from ..base import HC_Control
 

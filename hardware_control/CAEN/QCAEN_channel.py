@@ -1,4 +1,4 @@
-import visa
+import pyvisa
 
 from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtWidgets import QGroupBox, QFormLayout, QLabel, QLineEdit, QHBoxLayout

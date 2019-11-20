@@ -6,7 +6,7 @@ Created on Wed Jul  3 14:57:53 2019
 @author: Schuyler
 """
 
-import visa
+import pyvisa
 import pandas as pd
 import numpy as np
 from numpy import *
@@ -48,7 +48,7 @@ from .Scope_control_test import Scope
 # from .base import QOnOff, QFixedLabel, FigureTab
 from PyQt5.Qt import QMutex, QMutexLocker
 
-rm = visa.ResourceManager()
+rm = pyvisa.ResourceManager()
 
 
 class QOnOff(QPushButton):

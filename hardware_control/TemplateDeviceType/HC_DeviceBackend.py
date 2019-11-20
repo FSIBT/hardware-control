@@ -1,7 +1,7 @@
 
 
 
-import visa
+import pyvisa
 from typing import List
 import numpy as np
 import socket

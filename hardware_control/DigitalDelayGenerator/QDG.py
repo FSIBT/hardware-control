@@ -5,7 +5,7 @@ Created on Thu Jul 11 15:41:12 2019
 @author: Schuyler
 """
 import time
-import visa
+import pyvisa
 import sys
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer, QThread, pyqtSignal, pyqtSlot, QObject
@@ -23,7 +23,7 @@ from PyQt5.QtWidgets import (
 
 from .DG_control import DelayGenerator
 
-rm = visa.ResourceManager()
+rm = pyvisa.ResourceManager()
 
 
 class DelayGeneratorCommunication(QObject):
