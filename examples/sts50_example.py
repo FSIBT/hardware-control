@@ -83,7 +83,7 @@ class STS50Demo(QMainWindow):
         ######## Tab 2
 
         # awg = Key33500BCtrl("Some-address-goes-here", dummy, True, use_sockets, "192.168.0.18", 5025)
-        awg = Key33500BCtrl("USB0::0x0957::0x2907::MY52500624::INSTR", dummy, True, use_sockets, "192.168.1.18", 5025)
+        awg = Key33500BCtrl("TCPIP0::192.168.1.18::INSTR", dummy, True, use_sockets, "192.168.1.18", 5025) #"USB0::0x0957::0x2907::MY52500624::INSTR"
         awg.debug = debug
         self.awg_ctrl = HC_FunctionGenerator(awg, self, "RF Generator", "DEFAULT", True, 1)
 
@@ -103,6 +103,9 @@ class STS50Demo(QMainWindow):
         self.flow = AlicatMSeriesCtrl("192.168.1.15", dummy, True)
         self.flow_ctrl = HC_FlowController(self.flow, self, "Flow Controller", "flowcontroller_state.json", True)
 
+        #Todo: crashes if ZMQ address already in use. Add try-except
+
+        #Todo: linux-gpib is a dependency on some systems
         self.trig1 = SRSDG535Ctrl("GPIB0::10::INSTR", dummy, True)
         self.trig1.debug = debug
         self.trig1_ctrl = HC_PulseGen(self.trig1, self, "Trigger 1", "DEFAULT", True)
