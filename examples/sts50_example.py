@@ -21,23 +21,7 @@ from PyQt5 import QtCore
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtGui import QIcon, QIntValidator, QIcon
-from PyQt5.QtWidgets import (
-    QApplication,
-    QMainWindow,
-    QSizePolicy,
-    QHBoxLayout,
-    QVBoxLayout,
-    QLabel,
-    QCheckBox,
-    QMessageBox,
-    QWidget,
-    QLineEdit,
-    QPushButton,
-    QAction,
-    QGridLayout,
-    QStyleFactory,
-    QTabWidget,
-)
+from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, QHBoxLayout, QVBoxLayout, QLabel, QCheckBox, QMessageBox, QWidget, QLineEdit, QPushButton, QAction, QGridLayout, QStyleFactory, QTabWidget
 import sys
 from docopt import docopt
 
@@ -87,14 +71,7 @@ class STS50Demo(QMainWindow):
         #####################################################################
         ######## Tab 1
 
-        scpi_scope = Key4000XCtrl(
-            "TCPIP0::192.168.0.14::INSTR",
-            dummy,
-            True,
-            use_sockets,
-            "192.168.0.14",
-            5025,
-        )
+        scpi_scope = Key4000XCtrl("TCPIP0::192.168.1.14::INSTR", dummy, True, use_sockets, "192.168.1.14", 5025)
         self.scope_ctrl = HC_Oscilloscope(scpi_scope, self, "Keysight", "DEFAULT", True)
 
         # Put instrument(s) in tab
@@ -106,22 +83,11 @@ class STS50Demo(QMainWindow):
         ######## Tab 2
 
         # awg = Key33500BCtrl("Some-address-goes-here", dummy, True, use_sockets, "192.168.0.18", 5025)
-        awg = Key33500BCtrl(
-            "USB0::0x0957::0x2907::MY52500624::INSTR",
-            dummy,
-            True,
-            use_sockets,
-            "192.168.0.18",
-            5025,
-        )
-        self.awg_ctrl = HC_FunctionGenerator(
-            awg, self, "RF Generator", "DEFAULT", True, 1
-        )
+        awg = Key33500BCtrl("USB0::0x0957::0x2907::MY52500624::INSTR", dummy, True, use_sockets, "192.168.1.18", 5025)
+        self.awg_ctrl = HC_FunctionGenerator(awg, self, "RF Generator", "DEFAULT", True, 1)
 
         self.psu = TDKLGenHCtrl("TCPIP0::192.168.1.19::INSTR", dummy)
-        self.psu_ctrl = HC_MultiPowerSupply(
-            self.psu, self, [1], "TDK Lambda (RF Vin)", "DEFAULT"
-        )
+        self.psu_ctrl = HC_MultiPowerSupply(self.psu, self, [1], "TDK Lambda (RF Vin)", "DEFAULT")
 
         # Put instrument(s) in tab
         self.tab2_layout = QGridLayout()
@@ -132,15 +98,13 @@ class STS50Demo(QMainWindow):
         #####################################################################
         ######## Tab 3
 
-        self.flow = AlicatMSeriesCtrl("192.168.0.15", True, True)
-        self.flow_ctrl = HC_FlowController(
-            self.flow, self, "Flow Controller", "flowcontroller_state.json", True
-        )
+        self.flow = AlicatMSeriesCtrl("192.168.1.15", dummy, True)
+        self.flow_ctrl = HC_FlowController(self.flow, self, "Flow Controller", "flowcontroller_state.json", True)
 
-        self.trig1 = SRSDG535Ctrl("GPIB0::10::INSTR", True, True)
+        self.trig1 = SRSDG535Ctrl("GPIB0::10::INSTR", dummy, True)
         self.trig1_ctrl = HC_PulseGen(self.trig1, self, "Trigger 1", "DEFAULT", True)
 
-        self.trig2 = SRSDG535Ctrl("GPIB0::15::INSTR", True, True)
+        self.trig2 = SRSDG535Ctrl("GPIB0::15::INSTR", dummy, True)
         self.trig2_ctrl = HC_PulseGen(self.trig2, self, "Trigger 2", "DEFAULT", True)
 
         self.zmqtool = HC_ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
@@ -154,34 +118,14 @@ class STS50Demo(QMainWindow):
         app.add_variable("FIL_AMPL_V", "5.0")  # Add a filament amplitude variable
         app.add_variable("DELAY_TIME_S", "7.5")  # Add a delay time variable
         app.add_variable("PULSE_TIME_S", "500e-6")  # Add a spark time variable
-        app.add_macro(
-            "Trigger",
-            [
-                "SET:Filament DAC:VOLT:FIL_AMPL",
-                "CMD:Keysight Scope:SINGLE",
-                "SET:Filament DAC:VOLT:0",
-            ],
-        )  # Add a trigger macro
+        app.add_macro("Trigger", ["SET:Filament DAC:VOLT:FIL_AMPL", "CMD:Keysight Scope:SINGLE", "SET:Filament DAC:VOLT:0"])  # Add a trigger macro
         app.add_macro("Safe", ["CMD:PSU:ALL_OFF", "CMD:AWG:ALL_OFF"])
         app.add_macro("Wait_1s", ["FUNC:time:sleep:1"])
 
-        self.run_tool = HC_MacroRunnerTool(
-            self,
-            "Macro Runner",
-            {"Dynamic": "Run Macro", "Trigger": "Trigger Beam"},
-            {},
-        )
+        self.run_tool = HC_MacroRunnerTool(self, "Macro Runner", {"Dynamic": "Run Macro", "Trigger": "Trigger Beam"}, {})
         self.run_tool.update_macros()
 
-        self.var_tool = HC_VariableEditTool(
-            self,
-            "Application Variable Editor",
-            {
-                "Dynamic": "Value:",
-                "FIL_AMPL_V": "Filament Amplitude:",
-                "DELAY_TIME_S": "Filament Heating Time:",
-            },
-        )
+        self.var_tool = HC_VariableEditTool(self, "Application Variable Editor", {"Dynamic": "Value:", "FIL_AMPL_V": "Filament Amplitude:", "DELAY_TIME_S": "Filament Heating Time:"})
         self.var_tool.update_variables()
 
         self.scantool.update_macros()
