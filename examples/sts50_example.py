@@ -84,9 +84,11 @@ class STS50Demo(QMainWindow):
 
         # awg = Key33500BCtrl("Some-address-goes-here", dummy, True, use_sockets, "192.168.0.18", 5025)
         awg = Key33500BCtrl("USB0::0x0957::0x2907::MY52500624::INSTR", dummy, True, use_sockets, "192.168.1.18", 5025)
+        awg.debug = debug
         self.awg_ctrl = HC_FunctionGenerator(awg, self, "RF Generator", "DEFAULT", True, 1)
 
         self.psu = TDKLGenHCtrl("TCPIP0::192.168.1.19::INSTR", dummy)
+        awg.psu = debug
         self.psu_ctrl = HC_MultiPowerSupply(self.psu, self, [1], "TDK Lambda (RF Vin)", "DEFAULT")
 
         # Put instrument(s) in tab
@@ -102,9 +104,11 @@ class STS50Demo(QMainWindow):
         self.flow_ctrl = HC_FlowController(self.flow, self, "Flow Controller", "flowcontroller_state.json", True)
 
         self.trig1 = SRSDG535Ctrl("GPIB0::10::INSTR", dummy, True)
+        self.trig1.debug = debug
         self.trig1_ctrl = HC_PulseGen(self.trig1, self, "Trigger 1", "DEFAULT", True)
 
         self.trig2 = SRSDG535Ctrl("GPIB0::15::INSTR", dummy, True)
+        self.trig2.debug = debug
         self.trig2_ctrl = HC_PulseGen(self.trig2, self, "Trigger 2", "DEFAULT", True)
 
         self.zmqtool = HC_ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
