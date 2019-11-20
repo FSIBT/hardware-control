@@ -106,7 +106,7 @@ class CAEN14xxETCtrl(HC_Backend):
         # Try to connect to instrument
         try:
             if not self.use_sockets:  # Use visa
-                rm = visa.ResourceManager()
+                rm = visa.ResousrceManager("@py")
                 self.device = rm.open_resource(self.visa_addr)  # Open connection
                 self.device.read_termination = "\r\n"
                 self.device.write_termination = "\r\n"
