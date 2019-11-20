@@ -19,6 +19,12 @@ setup(
         "hardware_control.PulseGenerator",
         "hardware_control.Sairem",
         "hardware_control.StepperMotor",
+        "hardware_control.ScanTool",
+        "hardware_control.ConnectionStatusTool",
+        "hardware_control.FunctionGenerator",
+        "hardware_control.ZMQConnectionTool",
+        "hardware_control.MacroRunnerTool",
+        "hardware_control.VariableEditTool",
     ],
     package_data={
         "hardware-control": [os.path.join("hardware_control", "icons", "*svg")]
