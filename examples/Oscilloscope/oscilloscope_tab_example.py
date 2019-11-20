@@ -26,7 +26,7 @@ import faulthandler
 # third party
 from docopt import docopt
 import appdirs
-import visa
+import pyvisa
 
 from pyqode.core import modes, panels
 from pyqode.core.api import CodeEdit
@@ -137,7 +137,7 @@ class App(QMainWindow):
 
         self.main_window.addWidget(self.tabs)
 
-        self.rm = visa.ResourceManager()
+        self.rm = pyvisa.ResourceManager()
 
         self.plot = FigureTab()
 
