@@ -35,7 +35,7 @@ class DeviceBackend(HC_Backend):
 
         self.num_channels = 8
 
-      
+
     #needs to be implemented!
     def update_setting(self, setting: str, value):
         pass
