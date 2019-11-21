@@ -41,6 +41,10 @@ dummy = commands["--dummy"]
 use_sockets = commands["--socket"]
 debug = commands["--debug"]
 
+#Todo Delete this
+dummy = True
+debug= True
+
 from hardware_control.base import HC_App
 from hardware_control.TemplateDeviceType.DeviceBackend import DeviceBackend
 from hardware_control.TemplateDeviceType.HC_DeviceType import HC_DeviceType
@@ -57,10 +61,10 @@ class Demo(QMainWindow):
 
         ##### Add Device(s)
         #add a Backend
-        demo = DeviceBackend("TCPIP::192.168.1.20::1470::SOCKET", dummy)
+        demo = DeviceBackend("TCPIP::000.000.000.000::1234::SOCKET", dummy)
         #add a HC. The corresponding backend, MainWidget and more information are handed over
         self.demo_ctrl = HC_DeviceType(
-            demo, self, [1, 2, 3], "Power Supply Unit", "DEFAULT"
+            demo, self, [1, 2, 3, 4], "Demo Device Unit", "DEFAULT"
         )
 
         ##### Add above HC to the main Widget
@@ -72,7 +76,7 @@ class Demo(QMainWindow):
         self.show()
 
     def close(self):
-        self.psu_ctrl.close()
+        self.demo_ctrl.close()
 
 
 def main(argv):
