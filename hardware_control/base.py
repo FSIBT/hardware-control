@@ -208,6 +208,7 @@ class HC_CommWorker(QObject):
 class HC_Instrument(QGroupBox):
     def __init__(self, window, name: str):
         super().__init__(name)
+        #ToDo Why ordered dict??
         self.settings = OrderedDict()
         self.values = OrderedDict()
         self.values_unit = []
@@ -352,6 +353,7 @@ class HC_Instrument(QGroupBox):
         else:
             self.window.app.add_log(self.name, "N/A", "NOTE", note)
 
+    #ToDo order of stuff wrong if command is called more often than this method - should be fixable with user override - not normal case
     def read_message(self, prefix: str):
         """Looks for a string in self.inbox, starting from the back (ie. most
         recent), which starts with the string specified by argument 'prefix'. If
