@@ -246,7 +246,7 @@ class HC_Instrument(QGroupBox):
     def get_values(self):
         """Return current list of values for logging"""
         return self.values.values()
-
+    #ToDo value has to be str
     def update_setting(self, setting: str, value):
         """Update a setting in settings and values dictionary for the instrument"""
         try:
@@ -335,7 +335,6 @@ class HC_Instrument(QGroupBox):
             print(f"ERROR: Failed to write file '{filename}'. settings not saved.")
             print(f"\t{e}")
 
-    #ToDo only Scope specific?
     def send_state(self):
         """Writes the entire state/settings dicitonary to the oscilloscope"""
         for key in self.settings:
