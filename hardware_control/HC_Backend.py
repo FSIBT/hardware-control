@@ -1,7 +1,7 @@
 import pyvisa
+from abc import ABC, abstractmethod
 
-
-class HC_Backend:
+class HC_Backend(ABC):
     """Base"""
 
     def __init__(self):
@@ -12,13 +12,13 @@ class HC_Backend:
         self.device = None  # This is the physical instrument to write to
         self.debug = False
 
+    @abstractmethod
     def update_setting(self, setting: str, value: str):
         """User must overload this function. Must return a string"""
-        return value
 
+    @abstractmethod
     def command(self, cmd: str):
         """User must overload this function. Must return a string"""
-        return cmd
 
     def write(self, msg: str):
         """Passes a command directly from the UI to the instrument"""
