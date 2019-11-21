@@ -518,22 +518,27 @@ class OscilloscopeHorizontalWidget(QWidget):
         self.horizontal_label_box.addWidget(self.horizontal_label)
 
         # ****** DEFINE TEXT BOXES
+        #ToDo: change Units to a more useful dimension than s - eg ms or mu
         #
-        self.timebase_edit = QLineEdit()
-        self.timebase_edit.setValidator(QDoubleValidator())
+        self.timebase_edit = QDoubleSpinBox()
         self.timebase_edit.editingFinished.connect(
             lambda: control.comm.update_setting("timebase", self.timebase_edit.text())
         )
-        self.timebase_edit.setText(str(control.settings["timebase"]))
+        self.timebase_edit.setValue(control.settings["timebase"])
+        # self.timebase_edit.setRange()
+        self.timebase_edit.setSingleStep(0.001)
+        self.timebase_edit.setDecimals(6)
         #
-        self.time_offset_edit = QLineEdit()
-        self.time_offset_edit.setValidator(QDoubleValidator())
+        self.time_offset_edit = QDoubleSpinBox()
         self.time_offset_edit.editingFinished.connect(
             lambda: control.comm.update_setting(
                 "time_offset", self.time_offset_edit.text()
             )
         )
-        self.time_offset_edit.setText(str(control.settings["time_offset"]))
+        self.time_offset_edit.setValue(control.settings["time_offset"])
+        # self.time_offset_edit.setRange()
+        self.time_offset_edit.setSingleStep(0.001)
+        self.time_offset_edit.setDecimals(6)
         #
         self.form = QFormLayout()
         self.form.addRow("Time/Div (s):", self.timebase_edit)
