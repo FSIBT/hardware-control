@@ -113,16 +113,16 @@ class HC_MultiPowerSupply(HC_Instrument):
 
         # Request updated readout data
         for idx, c in enumerate(self.channels):  # For each channel...
-            self.comm.command(f"CH{c}_V_out")
-            self.comm.command(f"CH{c}_I_out")
-            self.comm.command(f"CH{c}_V_set")
-            self.comm.command(f"CH{c}_I_set")
+            self.comm.command(f"CH{c}_V_out?")
+            self.comm.command(f"CH{c}_I_out?")
+            self.comm.command(f"CH{c}_V_set?")
+            self.comm.command(f"CH{c}_I_set?")
 
             # Get latest inbox entries for readout data...
-            Vout = self.read_message(f"CH{c}_V_out=")
-            Iout = self.read_message(f"CH{c}_I_out=")
-            Vset = self.read_message(f"CH{c}_V_set=")
-            Iset = self.read_message(f"CH{c}_I_set=")
+            Vout = self.read_message(f"CH{c}_V_out")
+            Iout = self.read_message(f"CH{c}_I_out")
+            Vset = self.read_message(f"CH{c}_V_set")
+            Iset = self.read_message(f"CH{c}_I_set")
 
             # Send newest data to GUI
             self.channel_widgets[idx].update_readout(Vout, Iout, Vset, Iset)
