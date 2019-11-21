@@ -267,7 +267,7 @@ class HC_Instrument(QGroupBox):
         """Update a setting in settings and values dictionary for the instrument"""
 
         if self.comm is not None:
-            self.comm.command(setting, value)
+            self.comm.command(cmd_str)
 
     def set_setting(self, parameter: str, value: str):
         """Adjusts a parameter in 'self.settings' and updates any GUI elements to reflect the change."""
@@ -334,6 +334,7 @@ class HC_Instrument(QGroupBox):
             print(f"ERROR: Failed to write file '{filename}'. settings not saved.")
             print(f"\t{e}")
 
+    #ToDo only Scope specific?
     def send_state(self):
         """Writes the entire state/settings dicitonary to the oscilloscope"""
         for key in self.settings:
