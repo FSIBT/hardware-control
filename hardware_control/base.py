@@ -139,18 +139,21 @@ class HC_Comm(QObject):
 
     @pyqtSlot(str)
     def backend_return(self, retval: str):
-        """Receives a return value from the CommWorker and adds the return value to the back of the inbox"""
+        """Receives a return value from the CommWorker and sends it to the instrument's
+        backend_return function, which adds it to the instrument's inbox dictionary or
+        , if overwritten, may process the return string immediately for example by
+        updating the UI."""
         if self.instrument.window.app.print_debug:
             print(
                 f"Instrument: {self.instrument.name} received return from backend '{self.backend_model}'. Return message: {retval}"
             )
-        self.instrument.inbox.append(retval)
+        self.instrument.backend_return(retval)
 
     @pyqtSlot(bool)
     def backend_return_online(self, connected: bool):
         """ Gets called by the worker after the worker hears from the instrument if it successfully connected.
         Updates the state of the instrument - ie. if it is or is not online"""
-        self.instrument.online = connected
+        self.instrument.backend_return_online(connected)
 
 
 class HC_CommWorker(QObject):
@@ -208,7 +211,7 @@ class HC_CommWorker(QObject):
 class HC_Instrument(QGroupBox):
     def __init__(self, window, name: str):
         super().__init__(name)
-        #ToDo Why ordered dict??
+        # ToDo Why ordered dict??
         self.settings = OrderedDict()
         self.values = OrderedDict()
         self.values_unit = []
@@ -335,7 +338,7 @@ class HC_Instrument(QGroupBox):
             print(f"ERROR: Failed to write file '{filename}'. settings not saved.")
             print(f"\t{e}")
 
-    #ToDo only Scope specific?
+    # ToDo only Scope specific?
     def send_state(self):
         """Writes the entire state/settings dicitonary to the oscilloscope"""
         for key in self.settings:
@@ -352,24 +355,6 @@ class HC_Instrument(QGroupBox):
             self.window.app.add_log(self.name, self.comm.backend_model, "NOTE", note)
         else:
             self.window.app.add_log(self.name, "N/A", "NOTE", note)
-
-    #ToDo order of stuff wrong if command is called more often than this method - should be fixable with user override - not normal case
-    def read_message(self, prefix: str):
-        """Looks for a string in self.inbox, starting from the back (ie. most
-        recent), which starts with the string specified by argument 'prefix'. If
-        such a string is found, it returns the contents after prefix and deletes
-        the string from self.inbox. Returns None if no such message found"""
-
-        rval = None
-        for idx, i in reversed(list(enumerate(self.inbox))):
-
-            if i[0 : len(prefix)] == prefix:  # If prefix matches begining...
-                rval = i[len(prefix) :]  # Save remainder to return value
-                self.inbox.pop(idx)  # Erase the read message
-                break
-                # Quit looping
-
-        return rval
 
 
 class HC_App(QApplication):
@@ -724,7 +709,8 @@ class HC_App(QApplication):
                 return False
         return True
 
-#ToDo: A lot of unused Classes - Implement or delete
+
+# ToDo: A lot of unused Classes - Implement or delete
 # class QOnOff(QPushButton):
 #     """An On/Off button with a nice icon for on/off
 #
