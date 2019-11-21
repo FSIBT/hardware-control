@@ -15,6 +15,7 @@ import numpy as np
 import socket
 from hardware_control.HC_Backend import HC_Backend
 import re
+import random
 
 
 def to_NR3(x: float):
@@ -112,7 +113,8 @@ class TDKLGenHCtrl(HC_Backend):
 
         try:
             if self.dummy:
-                return cmd
+                num = random.randint(0, 10)
+                return f"{cmd.strip('?')}={num}"
             else:
 
                 # Note: We ignore channel number because there is only
