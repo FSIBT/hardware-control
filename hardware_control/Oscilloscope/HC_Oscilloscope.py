@@ -27,6 +27,7 @@ from PyQt5.QtWidgets import (
     QFormLayout,
     QGridLayout,
     QComboBox,
+    QDoubleSpinBox,
 )
 import copy
 
@@ -236,23 +237,27 @@ class OscillscopeChannelWidget(QWidget):
 
         # ****** DEFINE TEXT BOXES
         #
-        self.v_div_edit = QLineEdit()
-        self.v_div_edit.setValidator(QDoubleValidator())
+        self.v_div_edit = QDoubleSpinBox()
         self.v_div_edit.editingFinished.connect(
             lambda: control.comm.update_setting(
                 f"CH{channel}_volts_div", self.v_div_edit.text()
             )
         )
-        self.v_div_edit.setText(str(control.settings[f"CH{channel}_volts_div"]))
+        self.v_div_edit.setValue(control.settings[f"CH{channel}_volts_div"])
+        self.v_div_edit.setDecimals(2)
+        # self.v_div_edit.setRange()
+        self.v_div_edit.setSingleStep(0.05)
         #
-        self.offset_edit = QLineEdit()
-        self.offset_edit.setValidator(QDoubleValidator())
+        self.offset_edit = QDoubleSpinBox()
         self.offset_edit.editingFinished.connect(
             lambda: control.comm.update_setting(
                 f"CH{channel}_offset", self.offset_edit.text()
             )
         )
-        self.offset_edit.setText(str(control.settings[f"CH{channel}_offset"]))
+        self.offset_edit.setValue(control.settings[f"CH{channel}_offset"])
+        self.offset_edit.setDecimals(2)
+        # self.offset_edit.setRange()
+        self.offset_edit.setSingleStep(0.05)
         #
         self.label_edit = QLineEdit()
         self.label_edit.editingFinished.connect(
@@ -406,15 +411,15 @@ class OscilloscopeTriggerWidget(QWidget):
 
         # ****** DEFINE TEXT BOXES
         #
-        self.level_edit = QLineEdit()
-        self.level_edit.setValidator(QDoubleValidator())
+        self.level_edit = QDoubleSpinBox()
         self.level_edit.editingFinished.connect(
             lambda: control.comm.update_setting(
-                "trigger_level", str(self.level_edit.text())
+                "trigger_level", str(self.level_edit.value())
             )
         )
-        self.level_edit.setText(str(control.settings["trigger_level"]))
-        #
+        self.level_edit.setValue(control.settings["trigger_level"])
+        self.level_edit.setSingleStep(0.01)
+        self.level_edit.setDecimals(2)
         self.form = QFormLayout()
         self.form.addRow("Trigger Level (V):", self.level_edit)
 
