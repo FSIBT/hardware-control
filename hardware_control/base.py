@@ -372,7 +372,7 @@ class HC_Instrument(QGroupBox):
         is converted here into a dictionary's key/value pair and added to self.inbox.
         An equals sign ('=') is used to separate the key and value, with key coming """
 
-        sep_idx = retval.find("=") != -1
+        sep_idx = retval.find("=")
         if sep_idx != -1:  # Separator was found...
 
             key = retval[0:sep_idx]
