@@ -223,7 +223,7 @@ class HC_Instrument(QGroupBox):
         self.ignore = (
             False
         )  # Dictates if instrument should be ignored by ConnectionTool and ScanTool widgets
-        self.inbox = []  # Receives strings from the HC_comm object
+        self.inbox = {}  # Receives strings from the HC_comm object
 
         self.window = (
             window
