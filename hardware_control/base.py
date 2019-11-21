@@ -356,6 +356,39 @@ class HC_Instrument(QGroupBox):
         else:
             self.window.app.add_log(self.name, "N/A", "NOTE", note)
 
+    def read_message(self, prefix: str):
+        """Looks for an entry in self.inbox with the key 'prefix'. If found, the
+        key's value is returned, else it returns None."""
+
+        if prefix in self.inbox:  # If prefix exists as key, return vale
+            rval = self.inbox[prefix]
+        else:  # Else return None
+            rval = None
+
+        return rval
+
+    def backend_return(self, retval: str):
+        """Is called by self.comm when the backend returns a value. The return string
+        is converted here into a dictionary's key/value pair and added to self.inbox.
+        An equals sign ('=') is used to separate the key and value, with key coming """
+
+        sep_idx = retval.find("=") != -1
+        if sep_idx != -1:  # Separator was found...
+
+            key = retval[0:sep_idx]
+            val = retval[sep_idx + 1 :]
+
+            self.inbox[key] = val
+
+        else:  # If no separator, put under 'Misc'
+
+            self.inbox["Misc"] = retval
+
+    def backend_return_online(self, connected: bool):
+        """Is called by self.comm when the backend returns an online status."""
+
+        self.online = connected
+
 
 class HC_App(QApplication):
     """Subclass of QApplication that is aware of what hardware is connected to it and can log data"""
