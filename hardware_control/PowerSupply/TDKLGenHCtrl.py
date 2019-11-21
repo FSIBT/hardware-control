@@ -15,6 +15,7 @@ import numpy as np
 import socket
 from hardware_control.HC_Backend import HC_Backend
 import re
+import random
 
 
 def to_NR3(x: float):
@@ -112,24 +113,25 @@ class TDKLGenHCtrl(HC_Backend):
 
         try:
             if self.dummy:
-                return cmd
+                num = random.randint(0, 10)
+                return f"{cmd.strip('?')}={num}"
             else:
 
                 # Note: We ignore channel number because there is only
                 # one channel on this model of PSU
-                if regex_compare("CH._V_out", cmd):
+                if regex_compare("CH._V_out?", cmd):
                     rval = self.query(":MEAS:VOLT?")
                     chstr = cmd[0:3]
                     return f"{cmd}={rval}"
-                elif regex_compare("CH._I_out", cmd):
+                elif regex_compare("CH._I_out?", cmd):
                     rval = self.query(":MEAS:CURR?")
                     chstr = cmd[0:3]
                     return f"{cmd}={rval}"
-                elif regex_compare("CH._I_set", cmd):
+                elif regex_compare("CH._I_set?", cmd):
                     chstr = cmd[0:3]
                     rval = self.query(":SOUR:CURR:LEV:IMM:AMPL?")
                     return f"{cmd}={rval}"
-                elif regex_compare("CH._V_set", cmd):
+                elif regex_compare("CH._V_set?", cmd):
                     chstr = cmd[0:3]
                     rval = self.query(":SOUR:VOLT:LEV:IMM:AMPL?")
                     return f"{cmd}={rval}"

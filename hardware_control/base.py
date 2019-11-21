@@ -139,18 +139,21 @@ class HC_Comm(QObject):
 
     @pyqtSlot(str)
     def backend_return(self, retval: str):
-        """Receives a return value from the CommWorker and adds the return value to the back of the inbox"""
+        """Receives a return value from the CommWorker and sends it to the instrument's
+        backend_return function, which adds it to the instrument's inbox dictionary or
+        , if overwritten, may process the return string immediately for example by
+        updating the UI."""
         if self.instrument.window.app.print_debug:
             print(
                 f"Instrument: {self.instrument.name} received return from backend '{self.backend_model}'. Return message: {retval}"
             )
-        self.instrument.inbox.append(retval)
+        self.instrument.backend_return(retval)
 
     @pyqtSlot(bool)
     def backend_return_online(self, connected: bool):
         """ Gets called by the worker after the worker hears from the instrument if it successfully connected.
         Updates the state of the instrument - ie. if it is or is not online"""
-        self.instrument.online = connected
+        self.instrument.backend_return_online(connected)
 
 
 class HC_CommWorker(QObject):
@@ -208,7 +211,7 @@ class HC_CommWorker(QObject):
 class HC_Instrument(QGroupBox):
     def __init__(self, window, name: str):
         super().__init__(name)
-        #ToDo Why ordered dict??
+        # ToDo Why ordered dict??
         self.settings = OrderedDict()
         self.values = OrderedDict()
         self.values_unit = []
@@ -220,7 +223,7 @@ class HC_Instrument(QGroupBox):
         self.ignore = (
             False
         )  # Dictates if instrument should be ignored by ConnectionTool and ScanTool widgets
-        self.inbox = []  # Receives strings from the HC_comm object
+        self.inbox = {}  # Receives strings from the HC_comm object
 
         self.window = (
             window
@@ -352,23 +355,38 @@ class HC_Instrument(QGroupBox):
         else:
             self.window.app.add_log(self.name, "N/A", "NOTE", note)
 
-    #ToDo order of stuff wrong if command is called more often than this method - should be fixable with user override - not normal case
     def read_message(self, prefix: str):
-        """Looks for a string in self.inbox, starting from the back (ie. most
-        recent), which starts with the string specified by argument 'prefix'. If
-        such a string is found, it returns the contents after prefix and deletes
-        the string from self.inbox. Returns None if no such message found"""
+        """Looks for an entry in self.inbox with the key 'prefix'. If found, the
+        key's value is returned, else it returns None."""
 
-        rval = None
-        for idx, i in reversed(list(enumerate(self.inbox))):
-
-            if i[0 : len(prefix)] == prefix:  # If prefix matches begining...
-                rval = i[len(prefix) :]  # Save remainder to return value
-                self.inbox.pop(idx)  # Erase the read message
-                break
-                # Quit looping
+        if prefix in self.inbox:  # If prefix exists as key, return vale
+            rval = self.inbox[prefix]
+        else:  # Else return None
+            rval = None
 
         return rval
+
+    def backend_return(self, retval: str):
+        """Is called by self.comm when the backend returns a value. The return string
+        is converted here into a dictionary's key/value pair and added to self.inbox.
+        An equals sign ('=') is used to separate the key and value, with key coming """
+
+        sep_idx = retval.find("=")
+        if sep_idx != -1:  # Separator was found...
+
+            key = retval[0:sep_idx]
+            val = retval[sep_idx + 1 :]
+
+            self.inbox[key] = val
+
+        else:  # If no separator, put under 'Misc'
+
+            self.inbox["Misc"] = retval
+
+    def backend_return_online(self, connected: bool):
+        """Is called by self.comm when the backend returns an online status."""
+
+        self.online = connected
 
 
 class HC_App(QApplication):
@@ -723,7 +741,8 @@ class HC_App(QApplication):
                 return False
         return True
 
-#ToDo: A lot of unused Classes - Implement or delete
+
+# ToDo: A lot of unused Classes - Implement or delete
 # class QOnOff(QPushButton):
 #     """An On/Off button with a nice icon for on/off
 #
