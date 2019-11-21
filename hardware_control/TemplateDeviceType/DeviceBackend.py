@@ -22,13 +22,14 @@ class DeviceBackend(HC_Backend):
 
         super().__init__()
 
-        self.ID = "this is a Backend ID"
+        self.ID = "ID of Template Device"
 
         self.visa_addr = visa_addr
         self.online = False
         self.dummy = dummy
         self.print_commands = print_commands
 
+        #example
         self.use_sockets = use_sockets
         self.port_no = port_no
         self.ip_addr = ip_addr
@@ -38,8 +39,8 @@ class DeviceBackend(HC_Backend):
 
     #needs to be implemented!
     def update_setting(self, setting: str, value):
-        pass
+        return setting + value + "updatecalled"
 
     #needs to be implemented
     def command(self, cmd: str):
-        pass
+        return "VOLT:"+str(float(cmd)*2)
