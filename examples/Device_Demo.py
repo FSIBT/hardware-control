@@ -75,6 +75,7 @@ class Demo(QMainWindow):
         self.setCentralWidget(self.main_widget)
         self.show()
 
+    #
     def close(self):
         self.demo_ctrl.close()
 

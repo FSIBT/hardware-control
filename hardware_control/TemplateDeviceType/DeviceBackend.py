@@ -7,6 +7,7 @@ import numpy as np
 import socket
 from hardware_control.HC_Backend import HC_Backend
 import re
+import random
 
 
 class DeviceBackend(HC_Backend):
@@ -39,8 +40,11 @@ class DeviceBackend(HC_Backend):
 
     #needs to be implemented!
     def update_setting(self, setting: str, value):
-        return setting + value + "updatecalled"
+       return setting +"="+ value
 
     #needs to be implemented
     def command(self, cmd: str):
-        return "VOLT:"+str(float(cmd)*2)
+        if self.dummy and cmd=="RND":
+            return "RND="+str(random.random())
+        else:
+            return "VOLT=20"
