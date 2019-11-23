@@ -224,12 +224,37 @@ class STS50Demo(QMainWindow):
         self.file_menu.triggered[QAction].connect(self.process_file_menu)
         #
         self.save_state_act = QAction("Save State", self)
-        self.save_state_act.setShortcut("Ctrl+S")
+        self.save_state_act.setShortcut("Ctrl+Shift+S")
         self.file_menu.addAction(self.save_state_act)
         #
-        self.close_act = QAction("Close", self)
+        self.save_data_act = QAction("Save data", self)
+        self.save_data_act.setShortcut("Ctrl+S")
+        self.file_menu.addAction(self.save_data_act)
+        #
+        self.file_menu.addSeparator()
+        #
+        self.close_act = QAction("Close Window", self)
         self.close_act.setShortcut("Ctrl+W")
         self.file_menu.addAction(self.close_act)
+
+        ####### Instrument Menu
+        #
+        self.instr_menu = self.bar.addMenu("Instrument")
+        self.instr_menu.triggered[QAction].connect(self.process_instr_menu)
+        #
+        self.sync_from_ui_act = QAction("Sync from UI", self)
+        self.instr_menu.addAction(self.sync_from_ui_act)
+        #
+        self.sync_from_instr_act = QAction("Sync from Instrument", self)
+        self.instr_menu.addAction(self.sync_from_instr_act)
+        #
+        self.sync_from_file_act = QAction("Sync from File", self)
+        self.instr_menu.addAction(self.sync_from_file_act)
+        #
+        self.instr_menu.addSeparator()
+        #
+        self.print_addresses_act = QAction("Print Addresses", self)
+        self.instr_menu.addAction(self.print_addresses_act)
 
         #####################################################################
         ######## Set master window layout
@@ -266,6 +291,20 @@ class STS50Demo(QMainWindow):
         elif q.text() == "Close":
             self.close()
             sys.exit(0)
+        else:
+            print("Error: function not supported")
+
+    def process_instr_menu(self, q):
+
+        if q.text() == "Sync from Instrument":
+            print("Not implimented")
+            # Todo: impliment sync from instr
+        elif q.text() == "Sync from UI":
+            print("Not implimented")
+            # Todo: impliment sync from ui
+        elif q.text() == "Sync from File":
+            print("Not implimented")
+            # Todo: impliment sync from file
         else:
             print("Error: function not supported")
 
