@@ -1,6 +1,7 @@
 import pyvisa
 from abc import ABC, abstractmethod
 
+
 class HC_Backend(ABC):
     """Base"""
 
@@ -87,6 +88,7 @@ class HC_Backend(ABC):
                     print("opened connection")
 
             else:  # Use sockets
+                # Todo: @TimoBauer update this try_connect to use your better(?) system frmo the *new* Adam
                 self.device = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.device.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 0)
                 self.device.connect((self.ip_addr, self.port_no))
@@ -100,3 +102,10 @@ class HC_Backend(ABC):
             self.online = True
 
         return self.online
+
+
+def regex_compare(pattern: str, comp: str):
+    """Compares 'comp' to the pattern 'pattern'. periods ('.') act as a wildcard in the regular expression.
+    Returns true if 'comp' matches the regex."""
+    regex = re.compile(pattern)
+    return bool(re.match(regex, comp))
