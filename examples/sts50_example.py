@@ -214,6 +214,24 @@ class STS50Demo(QMainWindow):
         self.tab3.setLayout(self.tab3_layout)
 
         #####################################################################
+        ######## Add Menu Bar
+
+        self.bar = self.menuBar()  # self.menuBar() is a function in QMainWindow
+
+        ###### File menu
+        #
+        self.file_menu = self.bar.addMenu("File")
+        self.file_menu.triggered[QAction].connect(self.process_file_menu)
+        #
+        self.save_state_act = QAction("Save State", self)
+        self.save_state_act.setShortcut("Ctrl+S")
+        self.file_menu.addAction(self.save_state_act)
+        #
+        self.close_act = QAction("Close", self)
+        self.close_act.setShortcut("Ctrl+W")
+        self.file_menu.addAction(self.close_act)
+
+        #####################################################################
         ######## Set master window layout
 
         self.master_layout = QGridLayout()
@@ -249,7 +267,7 @@ class STS50Demo(QMainWindow):
             self.close()
             sys.exit(0)
         else:
-            print(":0")
+            print("Error: function not supported")
 
 
 def main(argv):
