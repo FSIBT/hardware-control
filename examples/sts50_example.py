@@ -21,7 +21,24 @@ from PyQt5 import QtCore
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QThread, pyqtSignal
 from PyQt5.QtGui import QIcon, QIntValidator, QIcon
-from PyQt5.QtWidgets import QApplication, QMainWindow, QSizePolicy, QHBoxLayout, QVBoxLayout, QLabel, QCheckBox, QMessageBox, QWidget, QLineEdit, QPushButton, QAction, QGridLayout, QStyleFactory, QTabWidget
+from PyQt5.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QSizePolicy,
+    QHBoxLayout,
+    QVBoxLayout,
+    QLabel,
+    QCheckBox,
+    QMessageBox,
+    QWidget,
+    QLineEdit,
+    QPushButton,
+    QAction,
+    QGridLayout,
+    QStyleFactory,
+    QTabWidget,
+    QAction,
+)
 import sys
 from docopt import docopt
 
@@ -61,17 +78,26 @@ class STS50Demo(QMainWindow):
         self.tab1 = QWidget()
         self.tab2 = QWidget()
         self.tab3 = QWidget()
+        self.tab4 = QWidget()
 
         self.tabs.addTab(self.tab1, "Scope Tab")
         self.tabs.addTab(self.tab2, "Power Tab")
         self.tabs.addTab(self.tab3, "Other Tab")
+        self.tabs.addTab(self.tab4, "Plasma Source")
 
         self.main_widget = QWidget(self)
 
         #####################################################################
         ######## Tab 1
 
-        scpi_scope = Key4000XCtrl("TCPIP0::192.168.1.14::INSTR", dummy, True, use_sockets, "192.168.1.14", 5025)
+        scpi_scope = Key4000XCtrl(
+            "TCPIP0::192.168.1.14::INSTR",
+            dummy,
+            True,
+            use_sockets,
+            "192.168.1.14",
+            5025,
+        )
         self.scope_ctrl = HC_Oscilloscope(scpi_scope, self, "Keysight", "DEFAULT", True)
 
         # Put instrument(s) in tab
@@ -83,13 +109,24 @@ class STS50Demo(QMainWindow):
         ######## Tab 2
 
         # awg = Key33500BCtrl("Some-address-goes-here", dummy, True, use_sockets, "192.168.0.18", 5025)
-        awg = Key33500BCtrl("TCPIP0::192.168.1.18::INSTR", dummy, True, use_sockets, "192.168.1.18", 5025) #"USB0::0x0957::0x2907::MY52500624::INSTR"
+        awg = Key33500BCtrl(
+            "TCPIP0::192.168.1.18::INSTR",
+            dummy,
+            True,
+            use_sockets,
+            "192.168.1.18",
+            5025,
+        )  # "USB0::0x0957::0x2907::MY52500624::INSTR"
         awg.debug = debug
-        self.awg_ctrl = HC_FunctionGenerator(awg, self, "RF Generator", "DEFAULT", True, 1)
+        self.awg_ctrl = HC_FunctionGenerator(
+            awg, self, "RF Generator", "DEFAULT", True, 1
+        )
 
         self.psu = TDKLGenHCtrl("TCPIP0::192.168.1.19::INSTR", dummy)
         awg.psu = debug
-        self.psu_ctrl = HC_MultiPowerSupply(self.psu, self, [1], "TDK Lambda (RF Vin)", "DEFAULT")
+        self.psu_ctrl = HC_MultiPowerSupply(
+            self.psu, self, [1], "TDK Lambda (RF Vin)", "DEFAULT"
+        )
 
         # Put instrument(s) in tab
         self.tab2_layout = QGridLayout()
@@ -101,11 +138,13 @@ class STS50Demo(QMainWindow):
         ######## Tab 3
 
         self.flow = AlicatMSeriesCtrl("192.168.1.15", dummy, True)
-        self.flow_ctrl = HC_FlowController(self.flow, self, "Flow Controller", "flowcontroller_state.json", True)
+        self.flow_ctrl = HC_FlowController(
+            self.flow, self, "Flow Controller", "flowcontroller_state.json", True
+        )
 
-        #Todo: crashes if ZMQ address already in use. Add try-except
+        # Todo: crashes if ZMQ address already in use. Add try-except
 
-        #Todo: linux-gpib is a dependency on some systems
+        # Todo: linux-gpib is a dependency on some systems
         self.trig1 = SRSDG535Ctrl("GPIB0::10::INSTR", dummy, True)
         self.trig1.debug = debug
         self.trig1_ctrl = HC_PulseGen(self.trig1, self, "Trigger 1", "DEFAULT", True)
@@ -125,17 +164,42 @@ class STS50Demo(QMainWindow):
         app.add_variable("FIL_AMPL_V", "5.0")  # Add a filament amplitude variable
         app.add_variable("DELAY_TIME_S", "7.5")  # Add a delay time variable
         app.add_variable("PULSE_TIME_S", "500e-6")  # Add a spark time variable
-        app.add_macro("Trigger", ["SET:Filament DAC:VOLT:FIL_AMPL", "CMD:Keysight Scope:SINGLE", "SET:Filament DAC:VOLT:0"])  # Add a trigger macro
+        app.add_macro(
+            "Trigger",
+            [
+                "SET:Filament DAC:VOLT:FIL_AMPL",
+                "CMD:Keysight Scope:SINGLE",
+                "SET:Filament DAC:VOLT:0",
+            ],
+        )  # Add a trigger macro
         app.add_macro("Safe", ["CMD:PSU:ALL_OFF", "CMD:AWG:ALL_OFF"])
         app.add_macro("Wait_1s", ["FUNC:time:sleep:1"])
 
-        self.run_tool = HC_MacroRunnerTool(self, "Macro Runner", {"Dynamic": "Run Macro", "Trigger": "Trigger Beam"}, {})
+        self.run_tool = HC_MacroRunnerTool(
+            self,
+            "Macro Runner",
+            {"Dynamic": "Run Macro", "Trigger": "Trigger Beam"},
+            {},
+        )
         self.run_tool.update_macros()
 
-        self.var_tool = HC_VariableEditTool(self, "Application Variable Editor", {"Dynamic": "Value:", "FIL_AMPL_V": "Filament Amplitude:", "DELAY_TIME_S": "Filament Heating Time:"})
+        self.var_tool = HC_VariableEditTool(
+            self,
+            "Application Variable Editor",
+            {
+                "Dynamic": "Value:",
+                "FIL_AMPL_V": "Filament Amplitude:",
+                "DELAY_TIME_S": "Filament Heating Time:",
+            },
+        )
         self.var_tool.update_variables()
 
         self.scantool.update_macros()
+
+        #####################################################################
+        ######## Tab 4
+
+        # self.source_frame = QFrame(self.)
 
         # Put instrument(s) in tab
         self.tab3_layout = QGridLayout()
@@ -143,45 +207,49 @@ class STS50Demo(QMainWindow):
         self.tab3_layout.addWidget(self.trig1_ctrl, 1, 0)
         self.tab3_layout.addWidget(self.trig2_ctrl, 2, 0)
         self.tab3_layout.addWidget(self.zmqtool, 3, 0)
-        self.tab3_layout.addWidget(self.scantool, 0, 1)
+        # self.tab3_layout.addWidget(self.scantool, 0, 1)
         self.tab3_layout.addWidget(self.run_tool, 1, 1)
         self.tab3_layout.addWidget(self.var_tool, 2, 1)
-        self.tab3_layout.addWidget(self.statustool, 3, 1)
+        # self.tab3_layout.addWidget(self.statustool, 3, 1)
         self.tab3.setLayout(self.tab3_layout)
 
         #####################################################################
         ######## Set master window layout
 
-        # self.grid = QGridLayout()
-        # # self.grid.addWidget(self.scope_ctrl, 0, 0, 3, 3)
-        # # self.grid.addWidget(self.flow_ctrl, 0, 3)
-        # # self.grid.addWidget(self.trig1_ctrl, 1, 3)
-        # # self.grid.addWidget(self.trig2_ctr, 2, 3)
-        # # self.grid.addWidget(self.scantool, 0, 4)
-        # # self.grid.addWidget(self.statustool, 2, 4)
-        # # self.grid.addWidget(self.awg_ctrl, 3, 0, 1, 1)
-        # # self.grid.addWidget(self.psu_ctrl, 3, 1, 1, 1)
-        # # self.grid.addWidget(self.zmqtool, 3, 3, 1, 1)
-        # # self.grid.addWidget(self.run_tool, 1, 4)
-        # # self.grid.addWidget(self.var_tool, 3, 4)
-        # self.grid.addWidget(self.tabs, 0, 0)
-        # self.main_widget.setLayout(self.grid)
+        self.master_layout = QGridLayout()
+        self.master_layout.addWidget(self.tabs, 0, 0, 3, 1)
+        self.master_layout.addWidget(self.scantool, 0, 1)
+        self.master_layout.addWidget(self.statustool, 1, 1)
 
-        self.setCentralWidget(self.tabs)
+        self.main_widget = QWidget(self)
+        self.main_widget.setLayout(self.master_layout)
+        self.setCentralWidget(self.main_widget)
 
         # ['macintosh', 'Windows', 'Fusion']
-        self.app.setStyle(QStyleFactory.create("Fusion"))
-        # self.app.setStyle(QStyleFactory.create("Windows"))
+        # self.app.setStyle(QStyleFactory.create("Fusion"))
+        self.app.setStyle(QStyleFactory.create("Windows"))
 
         self.show()
 
     def close(self):
+        print("Closing")
         self.app.close()
 
         if log:
             with open("example_sts50.log", "w") as f:
                 for item in self.app.log:
                     f.write("%s\n" % item)
+
+    def process_file_menu(self, q):
+
+        if q.text() == "Save State":
+            print("This is where I save a state")
+            # Todo: impliment save state
+        elif q.text() == "Close":
+            self.close()
+            sys.exit(0)
+        else:
+            print(":0")
 
 
 def main(argv):
