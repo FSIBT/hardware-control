@@ -43,7 +43,7 @@ class HC_DeviceType(HC_Instrument):
         self.save_on_close = save_on_close
         self.backend = backend
         self.comm = HC_Comm(backend, self)
-        self.filename = ""
+        #self.filename = ""  # currently not in use
 
         ### Create UI - example
         self.lineEdit = QLineEdit()
