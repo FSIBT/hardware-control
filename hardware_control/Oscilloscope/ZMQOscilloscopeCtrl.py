@@ -1,12 +1,8 @@
-# This class wraps SCPI commands with python functions. It is fed to the
-# communication object used by the control object. Originally this SCPI class
-# was part of the control class, but they were separated so that command line
-# program or scipts can be made that don't depend on Qt - this function will
-# have no Qt dependencies.
-#
-#
-# G M Giesbrecht
-# 20/08/2019
+# This backend communicates with a remote computer via ZMQ. This backend acts as a client to the
+# remote computer's ZMQ server. The server is connected to a PicoScope oscilloscope via USB and
+# relays commands from this client to the PicoScope. The reason for adding the extra step of the
+# ZMQ client is to connect to an instrument that 1.) does not have network access 2.) can not be
+# physically accessed by the computer on which this backend runs.
 #
 
 import pyvisa
@@ -16,6 +12,8 @@ import socket
 import re
 from hardware_control.HC_Backend import HC_Backend
 import json
+
+import zmq
 
 
 def to_NR3(x: float):
@@ -68,7 +66,7 @@ class ZMQOscilloscopeCtrl(HC_Backend):
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REQ)
 
-        self.zmq_address = zmq_address
+        self.zmq_address = zmq_addr
         self.online = False
         self.dummy = dummy
         self.print_commands = print_commands
@@ -78,7 +76,7 @@ class ZMQOscilloscopeCtrl(HC_Backend):
         self.port_no = port_no
         self.ip_addr = ip_addr
 
-        self.settings = default_settings()
+        self.settings = self.default_settings()
 
     def update_setting(self, setting: str, value):
         def get_chan_str():
@@ -173,7 +171,7 @@ class ZMQOscilloscopeCtrl(HC_Backend):
                 elif setting == "trigger_edge":
                     chan_str = get_chan_str()
                     if value == "POS":
-                        value = "Rising"  # ToDo: cheeck that this is valud @Giesbrecht
+                        value = "Rising"  # ToDo: cheeck that this is valid @Giesbrecht
                     elif value == "NEG":
                         value = "Falling"
                     else:
@@ -216,7 +214,7 @@ class ZMQOscilloscopeCtrl(HC_Backend):
             if self.online:
                 return True
             else:
-                print(f"{self.ID}: creating dummy connection to {self.visa_addr}")
+                print(f"{self.ID}: creating dummy connection to {self.zmq_address}")
                 self.online = True
                 return True
 
@@ -274,6 +272,3 @@ class ZMQOscilloscopeCtrl(HC_Backend):
             "set scope settings"
         )  # This tells the Pi to get ready for the settings dict
         self.socket.send_string(json.dumps(self.settings))
-
-
-# 71-209
