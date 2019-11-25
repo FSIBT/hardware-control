@@ -51,6 +51,7 @@ log = commands["--log"]
 from hardware_control.base import HC_App
 from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
 from hardware_control.Oscilloscope.Key4000XCtrl import Key4000XCtrl
+from hardware_control.Oscilloscope.ZMQOscilloscopeCtrl import ZMQOscilloscopeCtrl
 from hardware_control.FlowController.HC_FlowController import HC_FlowController
 from hardware_control.FlowController.AlicatMSeriesCtrl import AlicatMSeriesCtrl
 from hardware_control.PulseGenerator.HC_PulseGen import HC_PulseGen
@@ -76,11 +77,13 @@ class STS50Demo(QMainWindow):
 
         self.tabs = QTabWidget()
         self.tab1 = QWidget()
+        self.tab1_5 = QWidget()
         self.tab2 = QWidget()
         self.tab3 = QWidget()
         self.tab4 = QWidget()
 
         self.tabs.addTab(self.tab1, "Scope Tab")
+        self.tabs.addTab(self.tab1_5, "Pico Tab")
         self.tabs.addTab(self.tab2, "Power Tab")
         self.tabs.addTab(self.tab3, "Other Tab")
         self.tabs.addTab(self.tab4, "Plasma Source")
@@ -104,6 +107,16 @@ class STS50Demo(QMainWindow):
         self.tab1_layout = QGridLayout()
         self.tab1_layout.addWidget(self.scope_ctrl, 0, 0)
         self.tab1.setLayout(self.tab1_layout)
+
+        #####################################################################
+        ######## PicoTab
+
+        self.pico = ZMQOscilloscopeCtrl("tcp://192.168.0.30:6000", dummy)
+        self.pico_ctrl = HC_Oscilloscope(self.pico, self, "PicoScope", "DEFAULT", True)
+
+        self.tab1_5_layout = QGridLayout()
+        self.tab1_5_layout.addWidget(self.pico_ctrl, 0, 0)
+        self.tab1_5.setLayout(self.tab1_5_layout)
 
         #####################################################################
         ######## Tab 2
