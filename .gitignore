@@ -9,3 +9,6 @@ python/.eggs/
 *.DS_*
 .eggs/*
 *.egg-info/*
+*.json
+*.log
+*.mcro
