@@ -13,13 +13,11 @@ class Adam(HC_Backend):
     def __init__(self, IP="192.168.1.25", dummy=False):
         self.dummy = dummy
         self.online = False
-
+        self.ID="123"
         self.buf = 200
         self.IP = IP
         self.port = 1025
         self.addr = (self.IP, self.port)
-
-        self.voltage = 0  # used for dummy operation at the moment
 
         self.try_connect()
 
@@ -46,8 +44,10 @@ class Adam(HC_Backend):
                 self.online = False
                 return self.online
         else:
-            print(f"Adam: creating dummy connection to {self.addr}")
+            if not self.online:
+                print(f"Adam: creating dummy connection to {self.addr}")
             self.online = True
+            return self.online
 
     def close(self):
         """this is a override - sockets are used"""
@@ -77,6 +77,8 @@ class Adam(HC_Backend):
         return data
 
     def command(self, cmd: str):
+        if self.dummy:
+            return cmd[:-1]+"=123"  # Jsut return the same string with temp 123
         """Use Convention "CH#_TEMP?"  the answer is like >+0025.9237+0150.0000+0150.0000+0150.0000+0150.0000+0150.0000+0150.0000-0050.0000 """
         if regex_compare("CH._TEMP?",cmd) and int(cmd[2]) in range(1,9):
             #cmd[2] equals the channel#
@@ -84,7 +86,7 @@ class Adam(HC_Backend):
             self.s.send(out.encode("ascii"))
             indata = self.s.recv(self.buf)
             data = indata.decode("ascii")[1:]   #cut off ">"
-            print(data)
+            #print(data)
             n = int(cmd[2])-1
             data = data[n*10:n*10+10]
             return "CH"+cmd[2]+"_TEMP="+data

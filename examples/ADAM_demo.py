@@ -42,12 +42,12 @@ use_sockets = commands["--socket"]
 debug = commands["--debug"]
 
 #Todo Delete this
-dummy = True
+#dummy = True
 debug= True
 
 from hardware_control.base import HC_App
 from hardware_control.Adam.HC_ADAM import HC_ADAM
-from hardware_control.Adam.ADAM_6015 import ADAM_6015
+from hardware_control.Adam.ADAM_6015 import Adam
 
 
 class Demo(QMainWindow):
@@ -61,10 +61,10 @@ class Demo(QMainWindow):
 
         ##### Add Device(s)
         #add a Backend  with its Visa Adress
-        demo = DeviceBackend("TCPIP::000.000.000.000::1234::SOCKET", dummy)
+        demo = Adam("192.168.1.25", dummy)
         #add a HC. The corresponding backend, MainWidget and more information are handed over
-        self.demo_ctrl = HC_DeviceType(
-            demo, self, [1, 2, 3, 4], "Demo Device Unit", "DEFAULT"
+        self.demo_ctrl = HC_ADAM(
+            demo, self, [1, 5, 9, 4],["HeatPower","Channel5","LOX","AnOtherChannel"], "Demo Device Unit", "DEFAULT"
         )
 
         ##### Add above HC to the main Widget
