@@ -357,11 +357,11 @@ class STS50Demo(QMainWindow):
         self.file_menu = self.bar.addMenu("File")
         self.file_menu.triggered[QAction].connect(self.process_file_menu)
         #
-        self.save_state_act = QAction("Save State", self)
+        self.save_state_act = QAction("Save Instrument States", self)
         self.save_state_act.setShortcut("Ctrl+Shift+S")
         self.file_menu.addAction(self.save_state_act)
         #
-        self.save_data_act = QAction("Save data", self)
+        self.save_data_act = QAction("Save App Variables", self)
         self.save_data_act.setShortcut("Ctrl+S")
         self.file_menu.addAction(self.save_data_act)
         #
@@ -389,6 +389,31 @@ class STS50Demo(QMainWindow):
         #
         self.print_addresses_act = QAction("Print Addresses", self)
         self.instr_menu.addAction(self.print_addresses_act)
+
+        ####### Scripting Menu
+        #
+        self.scripting_menu = self.bar.addMenu("Scripting")
+        self.scripting_menu.triggered[QAction].connect(self.process_scripting_menu)
+        #
+        self.run_command_act = QAction("Run Command", self)
+        self.run_command_act.setShortcut("Ctrl+R")
+        self.scripting_menu.addAction(self.run_command_act)
+        #
+        self.run_script_act = QAction("Run Macro")
+        self.scripting_menu.addAction(self.run_script_act)
+        #
+        self.scripting_menu.addSeparator()
+        #
+        self.add_macro_act = QAction("Add Macro")
+        self.scripting_menu.addAction(self.add_macro_act)
+        #
+        self.add_variable_act = QAction("Add Variable")
+        self.scripting_menu.addAction(self.add_variable_act)
+        #
+        self.scripting_menu.addSeparator()
+        #
+        self.show_variables_act = QAction("Show Variables")
+        self.scripting_menu.addAction(self.show_variables_act)
 
         #####################################################################
         ######## Set master window layout
@@ -419,9 +444,10 @@ class STS50Demo(QMainWindow):
 
     def process_file_menu(self, q):
 
-        if q.text() == "Save State":  # TODO: impliment
+        if q.text() == "Save Instrument States":  # TODO: impliment
             print("This is where I save a state")
-            # Todo: impliment save state
+        elif q.text() == "Save App Variables":  # TODO: impliment
+            print("This is where I save a state")
         elif q.text() == "Close Window":
             self.close()
             sys.exit(0)
@@ -439,6 +465,22 @@ class STS50Demo(QMainWindow):
         elif q.text() == "Sync from File":  # TODO: impliment
             print("Not implimented")
             # Todo: impliment sync from file
+        else:
+            print("Error: function not supported")
+
+    def process_scripting_menu(self, q):
+        if q.text() == "Run Command":  # TODO: impliment
+            print("Not implimented")
+        elif q.text() == "Run Macro":  # TODO: impliment
+            print("Not implimented")
+        elif q.text() == "Add Variable":  # TODO: impliment
+            print("Not implimented")
+        elif q.text() == "Add Macro":  # TODO: impliment
+            print("Not implimented")
+        elif q.text() == "Show Variables":  # TODO: impliment
+            print("Not implimented")
+        elif q.text() == "Show Macros":  # TODO: impliment
+            print("Not implimented")
         else:
             print("Error: function not supported")
 
