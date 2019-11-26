@@ -27,6 +27,7 @@ from PyQt5.QtWidgets import (
     QSizePolicy,
     QHBoxLayout,
     QVBoxLayout,
+    QDoubleSpinBox,
     QLabel,
     QCheckBox,
     QMessageBox,
@@ -38,6 +39,7 @@ from PyQt5.QtWidgets import (
     QStyleFactory,
     QTabWidget,
     QAction,
+    QGroupBox,
 )
 import sys
 from docopt import docopt
@@ -73,7 +75,7 @@ class STS50Demo(QMainWindow):
         super().__init__()
         self.app = app
 
-        self.setWindowTitle("Oscilloscope Demo")
+        self.setWindowTitle("STS-50 Control Panel")
 
         self.tabs = QTabWidget()
         self.tab1 = QWidget()
@@ -82,11 +84,11 @@ class STS50Demo(QMainWindow):
         self.tab3 = QWidget()
         self.tab4 = QWidget()
 
+        self.tabs.addTab(self.tab4, "Plasma Source")
         self.tabs.addTab(self.tab1, "Scope Tab")
         self.tabs.addTab(self.tab1_5, "Pico Tab")
         self.tabs.addTab(self.tab2, "Power Tab")
         self.tabs.addTab(self.tab3, "Other Tab")
-        self.tabs.addTab(self.tab4, "Plasma Source")
 
         self.main_widget = QWidget(self)
 
@@ -210,13 +212,13 @@ class STS50Demo(QMainWindow):
         self.scantool.update_macros()
 
         #####################################################################
-        ######## Tab 4
+        ######## Tab 3
 
         # self.source_frame = QFrame(self.)
 
         # Put instrument(s) in tab
         self.tab3_layout = QGridLayout()
-        self.tab3_layout.addWidget(self.flow_ctrl, 0, 0)
+        # self.tab3_layout.addWidget(self.flow_ctrl, 0, 0)
         self.tab3_layout.addWidget(self.trig1_ctrl, 1, 0)
         self.tab3_layout.addWidget(self.trig2_ctrl, 2, 0)
         self.tab3_layout.addWidget(self.zmqtool, 3, 0)
@@ -225,6 +227,125 @@ class STS50Demo(QMainWindow):
         self.tab3_layout.addWidget(self.var_tool, 2, 1)
         # self.tab3_layout.addWidget(self.statustool, 3, 1)
         self.tab3.setLayout(self.tab3_layout)
+
+        #####################################################################
+        ######## Custom Tab
+
+        self.tab_sts_layout = QGridLayout()
+
+        ########### High Voltage Panel
+        #
+        self.hv_panel = QGroupBox("High Voltage Control")
+        self.hv_panel_layout = QGridLayout()
+        #
+        self.v_extrac_label = QLabel("Extraction Voltage - Set Point (V):")
+        self.v_extrac_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        #
+        self.v_extrac_edit = QDoubleSpinBox()
+        # self.v_extrac_edit.editingFinished.connect(lambda: self..comm.update_setting(f"CH{channel}_volts_div", self.v_div_edit.text()))
+        self.v_extrac_edit.setValue(0)
+        self.v_extrac_edit.setDecimals(1)
+        self.v_extrac_edit.setSingleStep(100)
+        #
+        self.v_extrac_meas_label = QLabel("Measured Value:")
+        self.v_extrac_meas_label.setAlignment(
+            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
+        )
+        #
+        self.v_extrac_meas_readout = QLabel("---- V")
+        self.v_extrac_meas_readout.setAlignment(
+            QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
+        )
+        #
+        #
+        self.v_float_label = QLabel("Floating Rack Voltage  - Set Point (V):")
+        self.v_float_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        #
+        self.v_float_edit = QDoubleSpinBox()
+        # self.v_float_edit.editingFinished.connect(lambda: self..comm.update_setting(f"CH{channel}_volts_div", self.v_div_edit.text()))
+        self.v_float_edit.setValue(0)
+        self.v_float_edit.setDecimals(1)
+        self.v_float_edit.setSingleStep(1000)
+        #
+        self.v_float_meas_label = QLabel("Measured Value:")
+        self.v_float_meas_label.setAlignment(
+            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
+        )
+        #
+        self.v_float_meas_readout = QLabel("---- V")
+        self.v_float_meas_readout.setAlignment(
+            QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
+        )
+        #
+        self.fil_ampl_label = QLabel("Filament 'On' Voltage (V):")
+        self.fil_ampl_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        #
+        self.fil_ampl_edit = QDoubleSpinBox()
+        # self.fil_ampl_edit.editingFinished.connect(lambda: self..comm.update_setting(f"CH{channel}_volts_div", self.v_div_edit.text()))
+        self.fil_ampl_edit.setValue(0)
+        self.fil_ampl_edit.setDecimals(2)
+        self.fil_ampl_edit.setSingleStep(0.5)
+        #
+        #
+        self.hv_panel_layout.addWidget(self.v_extrac_label, 0, 0)
+        self.hv_panel_layout.addWidget(self.v_extrac_edit, 0, 1)
+        self.hv_panel_layout.addWidget(self.v_extrac_meas_label, 0, 2)
+        self.hv_panel_layout.addWidget(self.v_extrac_meas_readout, 0, 3)
+        self.hv_panel_layout.addWidget(self.v_float_label, 1, 0)
+        self.hv_panel_layout.addWidget(self.v_float_edit, 1, 1)
+        self.hv_panel_layout.addWidget(self.v_float_meas_label, 1, 2)
+        self.hv_panel_layout.addWidget(self.v_float_meas_readout, 1, 3)
+        self.hv_panel.setLayout(self.hv_panel_layout)
+
+        ########## Timing Panel
+        #
+        self.timing_panel = QGroupBox("Timing Panel")
+        self.timing_panel_layout = QGridLayout()
+        #
+        self.t_heat_label = QLabel("Filament 'On' time (s):")
+        self.t_heat_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        #
+        self.t_heat_edit = QDoubleSpinBox()
+        # self.t_heat_edit.editingFinished.connect(lambda: self..comm.update_setting(f"CH{channel}_volts_div", self.v_div_edit.text()))
+        self.t_heat_edit.setValue(7.5)
+        self.t_heat_edit.setDecimals(2)
+        self.t_heat_edit.setSingleStep(0.5)
+        self.t_heat_edit.setMaximum(10e3)
+        #
+        self.t_delay_label = QLabel("Filament spark delay (s):")
+        self.t_delay_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        #
+        self.t_delay_edit = QDoubleSpinBox()
+        # self.t_delay_edit.editingFinished.connect(lambda: self..comm.update_setting(f"CH{channel}_volts_div", self.v_div_edit.text()))
+        self.t_delay_edit.setValue(6.5)
+        self.t_delay_edit.setDecimals(2)
+        self.t_delay_edit.setSingleStep(0.5)
+        self.t_delay_edit.setMaximum(10e3)
+        #
+        self.t_arc_label = QLabel("Filament arc duration (ms):")
+        self.t_arc_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        #
+        self.t_arc_edit = QDoubleSpinBox()
+        # self.t_arc_edit.editingFinished.connect(lambda: self..comm.update_setting(f"CH{channel}_volts_div", self.v_div_edit.text()))
+        self.t_arc_edit.setValue(0.5)
+        self.t_arc_edit.setDecimals(3)
+        self.t_arc_edit.setMaximum(10e3)
+        self.t_arc_edit.setSingleStep(0.5)
+        #
+        self.timing_panel_layout.addWidget(self.t_heat_label, 0, 0)
+        self.timing_panel_layout.addWidget(self.t_heat_edit, 0, 1)
+        self.timing_panel_layout.addWidget(self.t_delay_label, 1, 0)
+        self.timing_panel_layout.addWidget(self.t_delay_edit, 1, 1)
+        self.timing_panel_layout.addWidget(self.t_arc_label, 2, 0)
+        self.timing_panel_layout.addWidget(self.t_arc_edit, 2, 1)
+        self.timing_panel.setLayout(self.timing_panel_layout)
+
+        ######## Set Tab Layout
+        #
+        self.tab_sts_layout.addWidget(self.hv_panel, 0, 0, 2, 4)
+        self.tab_sts_layout.addWidget(self.timing_panel, 2, 0, 2, 2)
+        self.tab_sts_layout.addWidget(self.flow_ctrl, 2, 2, 2, 2)
+        self.tab4.setLayout(self.tab_sts_layout)
 
         #####################################################################
         ######## Add Menu Bar
@@ -283,7 +404,7 @@ class STS50Demo(QMainWindow):
 
         # ['macintosh', 'Windows', 'Fusion']
         # self.app.setStyle(QStyleFactory.create("Fusion"))
-        self.app.setStyle(QStyleFactory.create("Windows"))
+        # self.app.setStyle(QStyleFactory.create("Windows"))
 
         self.show()
 
@@ -298,10 +419,10 @@ class STS50Demo(QMainWindow):
 
     def process_file_menu(self, q):
 
-        if q.text() == "Save State":
+        if q.text() == "Save State":  # TODO: impliment
             print("This is where I save a state")
             # Todo: impliment save state
-        elif q.text() == "Close":
+        elif q.text() == "Close Window":
             self.close()
             sys.exit(0)
         else:
@@ -309,13 +430,13 @@ class STS50Demo(QMainWindow):
 
     def process_instr_menu(self, q):
 
-        if q.text() == "Sync from Instrument":
+        if q.text() == "Sync from Instrument":  # TODO: impliment
             print("Not implimented")
             # Todo: impliment sync from instr
-        elif q.text() == "Sync from UI":
+        elif q.text() == "Sync from UI":  # TODO: impliment
             print("Not implimented")
             # Todo: impliment sync from ui
-        elif q.text() == "Sync from File":
+        elif q.text() == "Sync from File":  # TODO: impliment
             print("Not implimented")
             # Todo: impliment sync from file
         else:
