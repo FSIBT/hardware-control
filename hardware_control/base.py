@@ -249,7 +249,8 @@ class HC_Instrument(QGroupBox):
     def get_values(self):
         """Return current list of values for logging"""
         return self.values.values()
-    #ToDo value has to be str
+
+    # ToDo value has to be str
     def update_setting(self, setting: str, value):
         """Update a setting in settings and values dictionary for the instrument"""
         try:
@@ -891,6 +892,7 @@ class HC_Control(ABC):
 
         raise NotImplementedError
 
+
 # class QOnOffIndicator(QSvgWidget):
 #     """An On/Off indicator
 #
@@ -1165,6 +1167,9 @@ class HC_Control(ABC):
 
 
 def setButtonState(button: QPushButton, value):
+    """Sets the state of a QPushButton to checked
+    or unchecked, accoridng to 'value'. Only applicable
+    to QPushButtons with field 'checkable' set to true."""
     if type(value) == bool:
         if value:
             if not button.isChecked():
