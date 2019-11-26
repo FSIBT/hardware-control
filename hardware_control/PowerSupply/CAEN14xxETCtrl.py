@@ -17,33 +17,6 @@ from hardware_control.HC_Backend import HC_Backend
 import re
 
 
-def to_NR3(x: float):
-    return f" {x:.6E}"
-
-
-def to_NR1(x: int):
-    return f"{x:d}"
-
-
-def bool_NR1(x: bool):
-    if x:
-        return "1"
-    else:
-        return "0"
-
-
-def str_to_bool(x: str):
-    if x == "True":
-        return True
-    else:
-        return False
-
-
-def regex_compare(pattern: str, comp: str):
-    regex = re.compile(pattern)
-    return bool(re.match(regex, comp))
-
-
 class CAEN14xxETCtrl(HC_Backend):
     def __init__(
         self,
