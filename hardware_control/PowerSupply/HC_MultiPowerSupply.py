@@ -84,7 +84,7 @@ class HC_MultiPowerSupply(HC_Instrument):
         self.channel_widgets = []
         self.channel_panel = QGridLayout()
         for idx, c in enumerate(self.channels):
-            self.channel_widgets.append(MultiPowerSupplyChannel(c, self))
+            self.channel_widgets.append(PowerSupplyChannel(c, self))
             self.channel_panel.addWidget(self.channel_widgets[-1], 0, idx)
         #
         self.master_layout = QGridLayout()
@@ -142,11 +142,12 @@ class HC_MultiPowerSupply(HC_Instrument):
         return dflt
 
 
-class MultiPowerSupplyChannel(QWidget):
-    def __init__(self, channel: int, control):
+class PowerSupplyChannel(QWidget):
+    def __init__(self, channel: int, main_widget):
         super().__init__()
 
         self.channel = channel
+        self.main_widget = main_widget
 
         # ************** DEFINE UI *********************#
         #
@@ -228,30 +229,30 @@ class MultiPowerSupplyChannel(QWidget):
         self.V_edit = QLineEdit()
         self.V_edit.setValidator(QDoubleValidator())
         self.V_edit.editingFinished.connect(
-            lambda: control.update_setting(
+            lambda: main_widget.update_setting(
                 f"CH{self.channel}_V_set", (self.V_edit.text())
             )
         )
-        self.V_edit.setText(str(control.settings[f"CH{channel}_V_set"]))
+        self.V_edit.setText(str(main_widget.settings[f"CH{channel}_V_set"]))
         #
         self.I_edit = QLineEdit()
         self.I_edit.setValidator(QDoubleValidator())
         self.I_edit.editingFinished.connect(
-            lambda: control.update_setting(
+            lambda: main_widget.update_setting(
                 f"CH{self.channel}_I_set", (self.I_edit.text())
             )
         )
-        self.I_edit.setText(str(control.settings[f"CH{channel}_I_set"]))
+        self.I_edit.setText(str(main_widget.settings[f"CH{channel}_I_set"]))
         #
         self.enabled_but = QPushButton()
         self.enabled_but.setText("On/Off")
         self.enabled_but.setCheckable(True)
         self.enabled_but.clicked.connect(
-            lambda: control.update_setting(
+            lambda: main_widget.update_setting(
                 f"CH{channel}_enabled", str(self.enabled_but.isChecked())
             )
         )
-        setButtonState(self.enabled_but, control.settings[f"CH{channel}_enabled"])
+        setButtonState(self.enabled_but, main_widget.settings[f"CH{channel}_enabled"])
         #
         self.controls_grid = QGridLayout()
         self.controls_grid.addWidget(self.V_ctrl_label, 0, 0)
@@ -292,3 +293,19 @@ class MultiPowerSupplyChannel(QWidget):
                 # print(e)
         else:
             self.P_out_label_val.setText("-----")
+
+
+# class HC_ModularInstrument(QWidget):
+#
+#     def __init__(self, main_widget, name: str):
+#
+#         super().__init__() #TODO: Does anything neeed to go here
+#
+#     def update_setting():
+#
+#
+#     command()
+#
+#     write()
+#
+#     query()

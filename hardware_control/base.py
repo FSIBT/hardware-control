@@ -12,14 +12,24 @@ from PyQt5.QtCore import QThread, QSize, QObject, pyqtSignal, pyqtSlot, QObject,
 from PyQt5.QtGui import QIcon, QFont, QFontMetrics
 from PyQt5.QtWidgets import (
     QApplication,
+    QMainWindow,
     QSizePolicy,
-    QPushButton,
-    QLabel,
-    QMessageBox,
     QHBoxLayout,
     QVBoxLayout,
+    QDoubleSpinBox,
+    QLabel,
+    QCheckBox,
+    QMessageBox,
     QWidget,
+    QLineEdit,
+    QPushButton,
+    QAction,
+    QGridLayout,
+    QStyleFactory,
+    QTabWidget,
+    QAction,
     QGroupBox,
+    QInputDialog,
 )
 from PyQt5.QtSvg import QSvgWidget
 
@@ -140,7 +150,7 @@ class HC_Comm(QObject):
     @pyqtSlot(str)
     def backend_return(self, retval: str):
         """Receives a return value from the CommWorker and sends it to the instrument's
-        backend_return function, which adds it to the instrument's inbox dictionary or
+        backend_return function, which adds it to the instrument's values dictionary or
         , if overwritten, may process the return string immediately for example by
         updating the UI."""
         if self.instrument.window.app.print_debug:
@@ -159,7 +169,7 @@ class HC_Comm(QObject):
 class HC_CommWorker(QObject):
     """Uses signals + slots to receive data from HC_Comm and relays the information
     to the backend object. Then sends the return value back to HC_Comm via signals +
-    slots, when HC_Comm then pushes onto the back of the isntrument's inbox"""
+    slots, when HC_Comm then pushes onto the back of the isntrument's values dict"""
 
     sigReturnValues = pyqtSignal(str)
     sigReturnOnline = pyqtSignal(bool)
@@ -223,7 +233,7 @@ class HC_Instrument(QGroupBox):
         self.ignore = (
             False
         )  # Dictates if instrument should be ignored by ConnectionTool and ScanTool widgets
-        self.inbox = {}  # Receives strings from the HC_comm object
+        # self.inbox = {}  # Receives strings from the HC_comm object
 
         self.window = (
             window
@@ -249,7 +259,8 @@ class HC_Instrument(QGroupBox):
     def get_values(self):
         """Return current list of values for logging"""
         return self.values.values()
-    #ToDo value has to be str
+
+    # ToDo value has to be str
     def update_setting(self, setting: str, value):
         """Update a setting in settings and values dictionary for the instrument"""
         try:
@@ -356,11 +367,11 @@ class HC_Instrument(QGroupBox):
             self.window.app.add_log(self.name, "N/A", "NOTE", note)
 
     def read_message(self, prefix: str):
-        """Looks for an entry in self.inbox with the key 'prefix'. If found, the
+        """Looks for an entry in self.values with the key 'prefix'. If found, the
         key's value is returned, else it returns None."""
 
-        if prefix in self.inbox:  # If prefix exists as key, return vale
-            rval = self.inbox[prefix]
+        if prefix in self.values:  # If prefix exists as key, return vale
+            rval = self.values[prefix]
         else:  # Else return None
             rval = None
 
@@ -368,8 +379,9 @@ class HC_Instrument(QGroupBox):
 
     def backend_return(self, retval: str):
         """Is called by self.comm when the backend returns a value. The return string
-        is converted here into a dictionary's key/value pair and added to self.inbox.
-        An equals sign ('=') is used to separate the key and value, with key coming """
+        is converted here into a dictionary's key/value pair and added to self.values.
+        An equals sign ('=') is used to separate the key and value, with key coming
+        first."""
 
         sep_idx = retval.find("=")
         if sep_idx != -1:  # Separator was found...
@@ -377,11 +389,11 @@ class HC_Instrument(QGroupBox):
             key = retval[0:sep_idx]
             val = retval[sep_idx + 1 :]
 
-            self.inbox[key] = val
+            self.values[key] = val
 
         else:  # If no separator, put under 'Misc'
 
-            self.inbox["Misc"] = retval
+            self.values["Misc"] = retval
 
     def backend_return_online(self, connected: bool):
         """Is called by self.comm when the backend returns an online status."""
@@ -394,12 +406,19 @@ class HC_App(QApplication):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.instruments = []
+        self.instruments = (
+            []
+        )  # TODO: Verify this is actually a dict and change declaration here
         self.log = []  # List of strings for debugging/logging purposes
         self.macros = {}  # Dict of hc-commands (used for scans + trigger buttons)
         self.variables = {}  # Dict of app variables
+        self.dummy = False
 
         self.print_debug = False
+
+        # Dictates if hc_commands are allowed to execute raw python code via calls to the
+        # via teh 'exec' function
+        self.exec_enabled = True
 
     def add_instrument(self, widget):
         # check if name is already present
@@ -587,6 +606,20 @@ class HC_App(QApplication):
                     f"Executed Command:\n\tInstrument: {instr_str}\n\tCommand: {command_str}"
                 )
 
+        elif tokens[0] == "EXEC":
+
+            # Recalculate tokens, with max of 2 splits. This allows colons to appear in the command
+            tokens = command.split(":", 1)
+
+            if self.exec_enabled:
+                try:
+                    exec(tokens[1])
+                except Exception as e:
+                    ec = tokens[1]
+                    print(f"ERROR: Failed to execute command '{ec}'.\n\t{e}")
+            else:
+                print("Executing python code has been disabled")
+
         elif (
             tokens[0] == "FUNC"
         ):  # This indicates that the command is calling an internal function
@@ -742,6 +775,134 @@ class HC_App(QApplication):
         return True
 
 
+class HC_MainWindow(QMainWindow):
+    def __init__(self):
+
+        super().__init__()
+
+        self.add_menu()
+
+    def add_menu(self):
+
+        self.bar = self.menuBar()  # self.menuBar() is a function in QMainWindow
+
+        ###### File menu
+        #
+        self.file_menu = self.bar.addMenu("File")
+        self.file_menu.triggered[QAction].connect(self.process_file_menu)
+        #
+        self.save_state_act = QAction("Save Instrument States", self)
+        self.save_state_act.setShortcut("Ctrl+Shift+S")
+        self.file_menu.addAction(self.save_state_act)
+        #
+        self.save_data_act = QAction("Save App Variables", self)
+        self.save_data_act.setShortcut("Ctrl+S")
+        self.file_menu.addAction(self.save_data_act)
+        #
+        self.file_menu.addSeparator()
+        #
+        self.close_act = QAction("Close Window", self)
+        self.close_act.setShortcut("Ctrl+W")
+        self.file_menu.addAction(self.close_act)
+
+        ####### Instrument Menu
+        #
+        self.instr_menu = self.bar.addMenu("Instrument")
+        self.instr_menu.triggered[QAction].connect(self.process_instr_menu)
+        #
+        self.sync_from_ui_act = QAction("Sync from UI", self)
+        self.instr_menu.addAction(self.sync_from_ui_act)
+        #
+        self.sync_from_instr_act = QAction("Sync from Instrument", self)
+        self.instr_menu.addAction(self.sync_from_instr_act)
+        #
+        self.sync_from_file_act = QAction("Sync from File", self)
+        self.instr_menu.addAction(self.sync_from_file_act)
+        #
+        self.instr_menu.addSeparator()
+        #
+        self.print_addresses_act = QAction("Print Addresses", self)
+        self.instr_menu.addAction(self.print_addresses_act)
+
+        ####### Scripting Menu
+        #
+        self.scripting_menu = self.bar.addMenu("Scripting")
+        self.scripting_menu.triggered[QAction].connect(self.process_scripting_menu)
+        #
+        self.run_command_act = QAction("Run Command", self)
+        self.run_command_act.setShortcut("Ctrl+R")
+        self.scripting_menu.addAction(self.run_command_act)
+        #
+        self.run_script_act = QAction("Run Macro")
+        self.scripting_menu.addAction(self.run_script_act)
+        #
+        self.scripting_menu.addSeparator()
+        #
+        self.add_macro_act = QAction("Add Macro")
+        self.scripting_menu.addAction(self.add_macro_act)
+        #
+        self.add_variable_act = QAction("Add Variable")
+        self.scripting_menu.addAction(self.add_variable_act)
+        #
+        self.scripting_menu.addSeparator()
+        #
+        self.show_variables_act = QAction("Show Variables")
+        self.scripting_menu.addAction(self.show_variables_act)
+
+    def process_file_menu(self, q):
+
+        if q.text() == "Save Instrument States":  # TODO: impliment
+            print("This is where I save a state")
+        elif q.text() == "Save App Variables":  # TODO: impliment
+            print("This is where I save a state")
+        elif q.text() == "Close Window":
+            self.close()
+            sys.exit(0)
+        else:
+            print("Error: function not supported")
+
+    def process_instr_menu(self, q):
+
+        if q.text() == "Sync from Instrument":  # TODO: impliment
+            print("Not implimented")
+            # Todo: impliment sync from instr
+        elif q.text() == "Sync from UI":  # TODO: impliment
+            print("Not implimented")
+            # Todo: impliment sync from ui
+        elif q.text() == "Sync from File":  # TODO: impliment
+            print("Not implimented")
+            # Todo: impliment sync from file
+        else:
+            print("Error: function not supported")
+
+    def process_scripting_menu(self, q):
+        if q.text() == "Run Command":  # TODO: impliment
+
+            dlg = QInputDialog(self)
+            dlg.setInputMode(QInputDialog.TextInput)
+            dlg.setLabelText("Command:")
+            dlg.resize(500, 100)
+            okPressed = dlg.exec_()
+            text = dlg.textValue()
+
+            # text, okPressed = QInputDialog.getText(self, "Where am I??", "Command", QLineEdit.Normal)
+            if okPressed and text != "":
+                self.app.process_hc_command(text)
+
+        elif q.text() == "Run Macro":  # TODO: impliment
+            print("Not implimented")
+        elif q.text() == "Add Variable":  # TODO: impliment
+            print("Not implimented")
+        elif q.text() == "Add Macro":  # TODO: impliment
+            print("Not implimented")
+        elif q.text() == "Show Variables":  # TODO: impliment
+            print("Not implimented")
+        elif q.text() == "Show Macros":  # TODO: impliment
+            print("Not implimented")
+        else:
+            print("Error: function not supported")
+
+
 # ToDo: A lot of unused Classes - Implement or delete
 # class QOnOff(QPushButton):
 #     """An On/Off button with a nice icon for on/off
@@ -890,6 +1051,7 @@ class HC_Control(ABC):
         """
 
         raise NotImplementedError
+
 
 # class QOnOffIndicator(QSvgWidget):
 #     """An On/Off indicator
@@ -1165,6 +1327,9 @@ class HC_Control(ABC):
 
 
 def setButtonState(button: QPushButton, value):
+    """Sets the state of a QPushButton to checked
+    or unchecked, accoridng to 'value'. Only applicable
+    to QPushButtons with field 'checkable' set to true."""
     if type(value) == bool:
         if value:
             if not button.isChecked():

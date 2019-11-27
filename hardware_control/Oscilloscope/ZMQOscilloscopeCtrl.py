@@ -53,7 +53,7 @@ class ZMQOscilloscopeCtrl(HC_Backend):
         self,
         zmq_addr,
         dummy: bool = False,
-        print_commands: bool = False,
+        debug: bool = False,
         use_sockets: bool = False,
         ip_addr: str = "",
         port_no=5025,
@@ -69,7 +69,7 @@ class ZMQOscilloscopeCtrl(HC_Backend):
         self.zmq_address = zmq_addr
         self.online = False
         self.dummy = dummy
-        self.print_commands = print_commands
+        self.debug = debug
         self.num_vert_divisions = 8  # Todo: remove this from all files
 
         self.use_sockets = use_sockets

@@ -1,6 +1,3 @@
-
-
-
 import pyvisa
 from typing import List
 import numpy as np
@@ -15,7 +12,7 @@ class DeviceBackend(HC_Backend):
         self,
         visa_addr,
         dummy: bool = False,
-        print_commands: bool = False,
+        debug: bool = False,
         use_sockets: bool = False,
         ip_addr: str = "",
         port_no=5025,
@@ -28,15 +25,16 @@ class DeviceBackend(HC_Backend):
         self.visa_addr = visa_addr
         self.online = False
         self.dummy = dummy
-        self.print_commands = print_commands
+        self.debug = debug
 
-        #example
+        # example
         self.use_sockets = use_sockets
         self.port_no = port_no
         self.ip_addr = ip_addr
 
         self.num_channels = 8
 
+<<<<<<< HEAD
     # Implementation might be needed - depends on device
     # def try_connect(self):
     #     if not dummy:
@@ -47,12 +45,15 @@ class DeviceBackend(HC_Backend):
 
 
     #needs to be implemented!
+=======
+    # needs to be implemented!
+>>>>>>> 80c086a30fecb9cb9fb75bcac2d62e504182239b
     def update_setting(self, setting: str, value):
-       return setting +"="+ value
+        return setting + "=" + value
 
-    #needs to be implemented
+    # needs to be implemented
     def command(self, cmd: str):
-        if self.dummy and cmd=="RND":
-            return "RND="+str(random.random())
+        if self.dummy and cmd == "RND":
+            return "RND=" + str(random.random())
         else:
             return "VOLT=20"

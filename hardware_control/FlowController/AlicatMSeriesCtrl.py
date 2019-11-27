@@ -11,6 +11,7 @@ import random
 from PyQt5.QtCore import QObject
 
 from pymodbus.client.sync import ModbusTcpClient as ModbusClient
+from hardware_control.HC_Backend import HC_Backend
 
 
 def converter_ulong_to_IEEE754(x):
@@ -25,20 +26,16 @@ def converter_IEEE754_to_ulong(x):
     return b.contents.value
 
 
-class AlicatMSeriesCtrl(QObject):
-    def __init__(self, ip_addr, dummy: bool = False, print_commands: bool = False):
+class AlicatMSeriesCtrl(HC_Backend):
+    def __init__(self, ip_addr, dummy: bool = False, debug: bool = False):
 
         super().__init__()
 
         self.ID = "AlicatMSeries"
 
         self.ip_addr = ip_addr
-        self.online = False
         self.dummy = dummy
-        self.print_commands = print_commands
-        self.num_vert_divisions = 8
-
-        self.try_connect()
+        self.debug = debug
 
     #
     # Tries to connect to the oscilloscope. Is called by the timer every second.
@@ -154,10 +151,10 @@ class AlicatMSeriesCtrl(QObject):
 
     def write(self, command: str):
         self.scope.write(command)
-        if self.print_commands:
+        if self.debug:
             print(f'\t{self.ID}< "{command}"')
 
     def query(self, command: str):
         reply = self.scope.query(command)
-        if self.print_commands:
+        if self.debug:
             print(f'\t{self.ID}< "{command}" > {reply}')

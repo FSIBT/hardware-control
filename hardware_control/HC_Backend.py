@@ -13,6 +13,8 @@ class HC_Backend(ABC):
         self.device = None  # This is the physical instrument to write to
         self.debug = False
 
+        self.dummy = False
+
     @abstractmethod
     def update_setting(self, setting: str, value: str):
         """User must overload this function. Must return a string"""
@@ -20,7 +22,7 @@ class HC_Backend(ABC):
     @abstractmethod
     def command(self, cmd: str):
         """User must overload this function. Must return a string"""
-        
+
     def write(self, msg: str):
         """Passes a command directly from the UI to the instrument"""
         if self.device is not None:
@@ -109,3 +111,29 @@ def regex_compare(pattern: str, comp: str):
     Returns true if 'comp' matches the regex."""
     regex = re.compile(pattern)
     return bool(re.match(regex, comp))
+
+
+# These functions are helpful for converting numbers to
+# specific number formats for strings
+
+
+def to_NR3(x: float):
+    return f" {x:.6E}"
+
+
+def to_NR1(x: int):
+    return f"{x:d}"
+
+
+def bool_NR1(x: bool):
+    if x:
+        return "1"
+    else:
+        return "0"
+
+
+def str_to_bool(x: str):
+    if x == "True":
+        return True
+    else:
+        return False

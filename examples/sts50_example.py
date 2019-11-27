@@ -40,6 +40,7 @@ from PyQt5.QtWidgets import (
     QTabWidget,
     QAction,
     QGroupBox,
+    QInputDialog,
 )
 import sys
 from docopt import docopt
@@ -50,7 +51,7 @@ use_sockets = commands["--socket"]
 debug = commands["--debug"]
 log = commands["--log"]
 
-from hardware_control.base import HC_App
+from hardware_control.base import HC_App, HC_MainWindow
 from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
 from hardware_control.Oscilloscope.Key4000XCtrl import Key4000XCtrl
 from hardware_control.Oscilloscope.ZMQOscilloscopeCtrl import ZMQOscilloscopeCtrl
@@ -62,7 +63,7 @@ from hardware_control.ScanTool.HC_ScanTool import HC_ScanTool
 from hardware_control.ConnectionStatusTool.HC_StatusTool import HC_StatusTool
 from hardware_control.FunctionGenerator.HC_FunctionGenerator import HC_FunctionGenerator
 from hardware_control.FunctionGenerator.Key33500BCtrl import Key33500BCtrl
-from hardware_control.PowerSupply.HC_MultiPowerSupply import HC_MultiPowerSupply
+from hardware_control.PowerSupply.HC_MultiPowerSupply import *
 from hardware_control.PowerSupply.CAEN14xxETCtrl import CAEN14xxETCtrl
 from hardware_control.PowerSupply.TDKLGenHCtrl import TDKLGenHCtrl
 from hardware_control.ZMQConnectionTool.HC_ZMQConnectionTool import HC_ZMQConnectionTool
@@ -70,7 +71,7 @@ from hardware_control.MacroRunnerTool.HC_MacroRunnerTool import HC_MacroRunnerTo
 from hardware_control.VariableEditTool.HC_VariableEditTool import HC_VariableEditTool
 
 
-class STS50Demo(QMainWindow):
+class STS50Demo(HC_MainWindow):
     def __init__(self, app, use_sockets: bool):
         super().__init__()
         self.app = app
@@ -142,11 +143,12 @@ class STS50Demo(QMainWindow):
         self.psu_ctrl = HC_MultiPowerSupply(
             self.psu, self, [1], "TDK Lambda (RF Vin)", "DEFAULT"
         )
+        self.psu_single_channel = PowerSupplyChannel(1, self.psu_ctrl)
 
         # Put instrument(s) in tab
         self.tab2_layout = QGridLayout()
         self.tab2_layout.addWidget(self.awg_ctrl, 0, 0)
-        self.tab2_layout.addWidget(self.psu_ctrl, 0, 1)
+        self.tab2_layout.addWidget(self.psu_single_channel, 0, 1)
         self.tab2.setLayout(self.tab2_layout)
 
         #####################################################################
@@ -246,6 +248,7 @@ class STS50Demo(QMainWindow):
         self.v_extrac_edit.setValue(0)
         self.v_extrac_edit.setDecimals(1)
         self.v_extrac_edit.setSingleStep(100)
+        self.v_extrac_edit.setMaximum(5e3)
         #
         self.v_extrac_meas_label = QLabel("Measured Value:")
         self.v_extrac_meas_label.setAlignment(
@@ -266,6 +269,7 @@ class STS50Demo(QMainWindow):
         self.v_float_edit.setValue(0)
         self.v_float_edit.setDecimals(1)
         self.v_float_edit.setSingleStep(1000)
+        self.v_float_edit.setMaximum(30e3)
         #
         self.v_float_meas_label = QLabel("Measured Value:")
         self.v_float_meas_label.setAlignment(
@@ -348,74 +352,6 @@ class STS50Demo(QMainWindow):
         self.tab4.setLayout(self.tab_sts_layout)
 
         #####################################################################
-        ######## Add Menu Bar
-
-        self.bar = self.menuBar()  # self.menuBar() is a function in QMainWindow
-
-        ###### File menu
-        #
-        self.file_menu = self.bar.addMenu("File")
-        self.file_menu.triggered[QAction].connect(self.process_file_menu)
-        #
-        self.save_state_act = QAction("Save Instrument States", self)
-        self.save_state_act.setShortcut("Ctrl+Shift+S")
-        self.file_menu.addAction(self.save_state_act)
-        #
-        self.save_data_act = QAction("Save App Variables", self)
-        self.save_data_act.setShortcut("Ctrl+S")
-        self.file_menu.addAction(self.save_data_act)
-        #
-        self.file_menu.addSeparator()
-        #
-        self.close_act = QAction("Close Window", self)
-        self.close_act.setShortcut("Ctrl+W")
-        self.file_menu.addAction(self.close_act)
-
-        ####### Instrument Menu
-        #
-        self.instr_menu = self.bar.addMenu("Instrument")
-        self.instr_menu.triggered[QAction].connect(self.process_instr_menu)
-        #
-        self.sync_from_ui_act = QAction("Sync from UI", self)
-        self.instr_menu.addAction(self.sync_from_ui_act)
-        #
-        self.sync_from_instr_act = QAction("Sync from Instrument", self)
-        self.instr_menu.addAction(self.sync_from_instr_act)
-        #
-        self.sync_from_file_act = QAction("Sync from File", self)
-        self.instr_menu.addAction(self.sync_from_file_act)
-        #
-        self.instr_menu.addSeparator()
-        #
-        self.print_addresses_act = QAction("Print Addresses", self)
-        self.instr_menu.addAction(self.print_addresses_act)
-
-        ####### Scripting Menu
-        #
-        self.scripting_menu = self.bar.addMenu("Scripting")
-        self.scripting_menu.triggered[QAction].connect(self.process_scripting_menu)
-        #
-        self.run_command_act = QAction("Run Command", self)
-        self.run_command_act.setShortcut("Ctrl+R")
-        self.scripting_menu.addAction(self.run_command_act)
-        #
-        self.run_script_act = QAction("Run Macro")
-        self.scripting_menu.addAction(self.run_script_act)
-        #
-        self.scripting_menu.addSeparator()
-        #
-        self.add_macro_act = QAction("Add Macro")
-        self.scripting_menu.addAction(self.add_macro_act)
-        #
-        self.add_variable_act = QAction("Add Variable")
-        self.scripting_menu.addAction(self.add_variable_act)
-        #
-        self.scripting_menu.addSeparator()
-        #
-        self.show_variables_act = QAction("Show Variables")
-        self.scripting_menu.addAction(self.show_variables_act)
-
-        #####################################################################
         ######## Set master window layout
 
         self.master_layout = QGridLayout()
@@ -441,48 +377,6 @@ class STS50Demo(QMainWindow):
             with open("example_sts50.log", "w") as f:
                 for item in self.app.log:
                     f.write("%s\n" % item)
-
-    def process_file_menu(self, q):
-
-        if q.text() == "Save Instrument States":  # TODO: impliment
-            print("This is where I save a state")
-        elif q.text() == "Save App Variables":  # TODO: impliment
-            print("This is where I save a state")
-        elif q.text() == "Close Window":
-            self.close()
-            sys.exit(0)
-        else:
-            print("Error: function not supported")
-
-    def process_instr_menu(self, q):
-
-        if q.text() == "Sync from Instrument":  # TODO: impliment
-            print("Not implimented")
-            # Todo: impliment sync from instr
-        elif q.text() == "Sync from UI":  # TODO: impliment
-            print("Not implimented")
-            # Todo: impliment sync from ui
-        elif q.text() == "Sync from File":  # TODO: impliment
-            print("Not implimented")
-            # Todo: impliment sync from file
-        else:
-            print("Error: function not supported")
-
-    def process_scripting_menu(self, q):
-        if q.text() == "Run Command":  # TODO: impliment
-            print("Not implimented")
-        elif q.text() == "Run Macro":  # TODO: impliment
-            print("Not implimented")
-        elif q.text() == "Add Variable":  # TODO: impliment
-            print("Not implimented")
-        elif q.text() == "Add Macro":  # TODO: impliment
-            print("Not implimented")
-        elif q.text() == "Show Variables":  # TODO: impliment
-            print("Not implimented")
-        elif q.text() == "Show Macros":  # TODO: impliment
-            print("Not implimented")
-        else:
-            print("Error: function not supported")
 
 
 def main(argv):
