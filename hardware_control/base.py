@@ -764,6 +764,131 @@ class HC_App(QApplication):
         return True
 
 
+class HC_MainWindow(QMainWindow):
+    def __init__():
+        self.add_menu()
+
+    def add_menu():
+
+        self.bar = self.menuBar()  # self.menuBar() is a function in QMainWindow
+
+        ###### File menu
+        #
+        self.file_menu = self.bar.addMenu("File")
+        self.file_menu.triggered[QAction].connect(self.process_file_menu)
+        #
+        self.save_state_act = QAction("Save Instrument States", self)
+        self.save_state_act.setShortcut("Ctrl+Shift+S")
+        self.file_menu.addAction(self.save_state_act)
+        #
+        self.save_data_act = QAction("Save App Variables", self)
+        self.save_data_act.setShortcut("Ctrl+S")
+        self.file_menu.addAction(self.save_data_act)
+        #
+        self.file_menu.addSeparator()
+        #
+        self.close_act = QAction("Close Window", self)
+        self.close_act.setShortcut("Ctrl+W")
+        self.file_menu.addAction(self.close_act)
+
+        ####### Instrument Menu
+        #
+        self.instr_menu = self.bar.addMenu("Instrument")
+        self.instr_menu.triggered[QAction].connect(self.process_instr_menu)
+        #
+        self.sync_from_ui_act = QAction("Sync from UI", self)
+        self.instr_menu.addAction(self.sync_from_ui_act)
+        #
+        self.sync_from_instr_act = QAction("Sync from Instrument", self)
+        self.instr_menu.addAction(self.sync_from_instr_act)
+        #
+        self.sync_from_file_act = QAction("Sync from File", self)
+        self.instr_menu.addAction(self.sync_from_file_act)
+        #
+        self.instr_menu.addSeparator()
+        #
+        self.print_addresses_act = QAction("Print Addresses", self)
+        self.instr_menu.addAction(self.print_addresses_act)
+
+        ####### Scripting Menu
+        #
+        self.scripting_menu = self.bar.addMenu("Scripting")
+        self.scripting_menu.triggered[QAction].connect(self.process_scripting_menu)
+        #
+        self.run_command_act = QAction("Run Command", self)
+        self.run_command_act.setShortcut("Ctrl+R")
+        self.scripting_menu.addAction(self.run_command_act)
+        #
+        self.run_script_act = QAction("Run Macro")
+        self.scripting_menu.addAction(self.run_script_act)
+        #
+        self.scripting_menu.addSeparator()
+        #
+        self.add_macro_act = QAction("Add Macro")
+        self.scripting_menu.addAction(self.add_macro_act)
+        #
+        self.add_variable_act = QAction("Add Variable")
+        self.scripting_menu.addAction(self.add_variable_act)
+        #
+        self.scripting_menu.addSeparator()
+        #
+        self.show_variables_act = QAction("Show Variables")
+        self.scripting_menu.addAction(self.show_variables_act)
+
+    def process_file_menu(self, q):
+
+        if q.text() == "Save Instrument States":  # TODO: impliment
+            print("This is where I save a state")
+        elif q.text() == "Save App Variables":  # TODO: impliment
+            print("This is where I save a state")
+        elif q.text() == "Close Window":
+            self.close()
+            sys.exit(0)
+        else:
+            print("Error: function not supported")
+
+    def process_instr_menu(self, q):
+
+        if q.text() == "Sync from Instrument":  # TODO: impliment
+            print("Not implimented")
+            # Todo: impliment sync from instr
+        elif q.text() == "Sync from UI":  # TODO: impliment
+            print("Not implimented")
+            # Todo: impliment sync from ui
+        elif q.text() == "Sync from File":  # TODO: impliment
+            print("Not implimented")
+            # Todo: impliment sync from file
+        else:
+            print("Error: function not supported")
+
+    def process_scripting_menu(self, q):
+        if q.text() == "Run Command":  # TODO: impliment
+
+            dlg = QInputDialog(self)
+            dlg.setInputMode(QInputDialog.TextInput)
+            dlg.setLabelText("Command:")
+            dlg.resize(500, 100)
+            okPressed = dlg.exec_()
+            text = dlg.textValue()
+
+            # text, okPressed = QInputDialog.getText(self, "Where am I??", "Command", QLineEdit.Normal)
+            if okPressed and text != "":
+                self.app.process_hc_command(text)
+
+        elif q.text() == "Run Macro":  # TODO: impliment
+            print("Not implimented")
+        elif q.text() == "Add Variable":  # TODO: impliment
+            print("Not implimented")
+        elif q.text() == "Add Macro":  # TODO: impliment
+            print("Not implimented")
+        elif q.text() == "Show Variables":  # TODO: impliment
+            print("Not implimented")
+        elif q.text() == "Show Macros":  # TODO: impliment
+            print("Not implimented")
+        else:
+            print("Error: function not supported")
+
+
 # ToDo: A lot of unused Classes - Implement or delete
 # class QOnOff(QPushButton):
 #     """An On/Off button with a nice icon for on/off
