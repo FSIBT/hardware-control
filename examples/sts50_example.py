@@ -62,7 +62,7 @@ from hardware_control.ScanTool.HC_ScanTool import HC_ScanTool
 from hardware_control.ConnectionStatusTool.HC_StatusTool import HC_StatusTool
 from hardware_control.FunctionGenerator.HC_FunctionGenerator import HC_FunctionGenerator
 from hardware_control.FunctionGenerator.Key33500BCtrl import Key33500BCtrl
-from hardware_control.PowerSupply.HC_MultiPowerSupply import HC_MultiPowerSupply
+from hardware_control.PowerSupply.HC_MultiPowerSupply import *
 from hardware_control.PowerSupply.CAEN14xxETCtrl import CAEN14xxETCtrl
 from hardware_control.PowerSupply.TDKLGenHCtrl import TDKLGenHCtrl
 from hardware_control.ZMQConnectionTool.HC_ZMQConnectionTool import HC_ZMQConnectionTool
@@ -142,11 +142,12 @@ class STS50Demo(QMainWindow):
         self.psu_ctrl = HC_MultiPowerSupply(
             self.psu, self, [1], "TDK Lambda (RF Vin)", "DEFAULT"
         )
+        self.psu_single_channel = PowerSupplyChannel(1, self.psu_ctrl)
 
         # Put instrument(s) in tab
         self.tab2_layout = QGridLayout()
         self.tab2_layout.addWidget(self.awg_ctrl, 0, 0)
-        self.tab2_layout.addWidget(self.psu_ctrl, 0, 1)
+        self.tab2_layout.addWidget(self.psu_single_channel, 0, 1)
         self.tab2.setLayout(self.tab2_layout)
 
         #####################################################################
@@ -246,6 +247,7 @@ class STS50Demo(QMainWindow):
         self.v_extrac_edit.setValue(0)
         self.v_extrac_edit.setDecimals(1)
         self.v_extrac_edit.setSingleStep(100)
+        self.v_extrac_edit.setMaximum(5e3)
         #
         self.v_extrac_meas_label = QLabel("Measured Value:")
         self.v_extrac_meas_label.setAlignment(
@@ -266,6 +268,7 @@ class STS50Demo(QMainWindow):
         self.v_float_edit.setValue(0)
         self.v_float_edit.setDecimals(1)
         self.v_float_edit.setSingleStep(1000)
+        self.v_float_edit.setMaximum(30e3)
         #
         self.v_float_meas_label = QLabel("Measured Value:")
         self.v_float_meas_label.setAlignment(
