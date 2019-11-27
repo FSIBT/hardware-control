@@ -40,6 +40,7 @@ from PyQt5.QtWidgets import (
     QTabWidget,
     QAction,
     QGroupBox,
+    QInputDialog,
 )
 import sys
 from docopt import docopt
@@ -473,7 +474,18 @@ class STS50Demo(QMainWindow):
 
     def process_scripting_menu(self, q):
         if q.text() == "Run Command":  # TODO: impliment
-            print("Not implimented")
+
+            dlg = QInputDialog(self)
+            dlg.setInputMode(QInputDialog.TextInput)
+            dlg.setLabelText("Command:")
+            dlg.resize(500, 100)
+            okPressed = dlg.exec_()
+            text = dlg.textValue()
+
+            # text, okPressed = QInputDialog.getText(self, "Where am I??", "Command", QLineEdit.Normal)
+            if okPressed and text != "":
+                self.app.process_hc_command(text)
+
         elif q.text() == "Run Macro":  # TODO: impliment
             print("Not implimented")
         elif q.text() == "Add Variable":  # TODO: impliment
