@@ -66,7 +66,7 @@ class Key33500BCtrl(HC_Backend):
         self,
         visa_addr,
         dummy: bool = False,
-        print_commands: bool = False,
+        debug: bool = False,
         use_sockets: bool = False,
         ip_addr: str = "",
         port_no=5025,
@@ -77,7 +77,7 @@ class Key33500BCtrl(HC_Backend):
         self.visa_addr = visa_addr
         self.online = False
         self.dummy = dummy
-        self.print_commands = print_commands
+        self.debug = debug
         self.num_vert_divisions = 8
 
         self.use_sockets = use_sockets
@@ -255,7 +255,7 @@ class Key33500BCtrl(HC_Backend):
                 self.device.write(command)
             else:
                 self.device.sendall(bytes(command + "\n", "utf-8"))
-            if self.print_commands:
+            if self.debug:
                 print(f'\t{self.ID}< "{command}"')
 
     def query(self, command: str):
@@ -270,7 +270,7 @@ class Key33500BCtrl(HC_Backend):
                 if len(reply) < 100:
                     print("\t\t" + reply)
                 reply = reply[2 : len(reply) - 3]
-            if self.print_commands:
+            if self.debug:
                 print(f'\t{self.ID}< "{command}"')
             return reply
         else:

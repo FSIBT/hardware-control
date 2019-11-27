@@ -50,7 +50,7 @@ class TDKLGenHCtrl(HC_Backend):
         self,
         visa_addr,
         dummy: bool = False,
-        print_commands: bool = False,
+        debug: bool = False,
         use_sockets: bool = False,
         ip_addr: str = "",
         port_no=5025,
@@ -63,7 +63,7 @@ class TDKLGenHCtrl(HC_Backend):
         self.visa_addr = visa_addr
         self.online = False
         self.dummy = dummy
-        self.print_commands = print_commands
+        self.debug = debug
 
         self.use_sockets = use_sockets
         self.port_no = port_no

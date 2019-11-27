@@ -13,6 +13,8 @@ class HC_Backend(ABC):
         self.device = None  # This is the physical instrument to write to
         self.debug = False
 
+        self.dummy = False
+
     @abstractmethod
     def update_setting(self, setting: str, value: str):
         """User must overload this function. Must return a string"""
