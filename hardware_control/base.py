@@ -150,7 +150,7 @@ class HC_Comm(QObject):
     @pyqtSlot(str)
     def backend_return(self, retval: str):
         """Receives a return value from the CommWorker and sends it to the instrument's
-        backend_return function, which adds it to the instrument's inbox dictionary or
+        backend_return function, which adds it to the instrument's values dictionary or
         , if overwritten, may process the return string immediately for example by
         updating the UI."""
         if self.instrument.window.app.print_debug:
@@ -169,7 +169,7 @@ class HC_Comm(QObject):
 class HC_CommWorker(QObject):
     """Uses signals + slots to receive data from HC_Comm and relays the information
     to the backend object. Then sends the return value back to HC_Comm via signals +
-    slots, when HC_Comm then pushes onto the back of the isntrument's inbox"""
+    slots, when HC_Comm then pushes onto the back of the isntrument's values dict"""
 
     sigReturnValues = pyqtSignal(str)
     sigReturnOnline = pyqtSignal(bool)
@@ -233,7 +233,7 @@ class HC_Instrument(QGroupBox):
         self.ignore = (
             False
         )  # Dictates if instrument should be ignored by ConnectionTool and ScanTool widgets
-        self.inbox = {}  # Receives strings from the HC_comm object
+        # self.inbox = {}  # Receives strings from the HC_comm object
 
         self.window = (
             window
@@ -367,11 +367,11 @@ class HC_Instrument(QGroupBox):
             self.window.app.add_log(self.name, "N/A", "NOTE", note)
 
     def read_message(self, prefix: str):
-        """Looks for an entry in self.inbox with the key 'prefix'. If found, the
+        """Looks for an entry in self.values with the key 'prefix'. If found, the
         key's value is returned, else it returns None."""
 
-        if prefix in self.inbox:  # If prefix exists as key, return vale
-            rval = self.inbox[prefix]
+        if prefix in self.values:  # If prefix exists as key, return vale
+            rval = self.values[prefix]
         else:  # Else return None
             rval = None
 
@@ -379,8 +379,9 @@ class HC_Instrument(QGroupBox):
 
     def backend_return(self, retval: str):
         """Is called by self.comm when the backend returns a value. The return string
-        is converted here into a dictionary's key/value pair and added to self.inbox.
-        An equals sign ('=') is used to separate the key and value, with key coming """
+        is converted here into a dictionary's key/value pair and added to self.values.
+        An equals sign ('=') is used to separate the key and value, with key coming
+        first."""
 
         sep_idx = retval.find("=")
         if sep_idx != -1:  # Separator was found...
@@ -388,11 +389,11 @@ class HC_Instrument(QGroupBox):
             key = retval[0:sep_idx]
             val = retval[sep_idx + 1 :]
 
-            self.inbox[key] = val
+            self.values[key] = val
 
         else:  # If no separator, put under 'Misc'
 
-            self.inbox["Misc"] = retval
+            self.values["Misc"] = retval
 
     def backend_return_online(self, connected: bool):
         """Is called by self.comm when the backend returns an online status."""
