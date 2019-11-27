@@ -12,14 +12,24 @@ from PyQt5.QtCore import QThread, QSize, QObject, pyqtSignal, pyqtSlot, QObject,
 from PyQt5.QtGui import QIcon, QFont, QFontMetrics
 from PyQt5.QtWidgets import (
     QApplication,
+    QMainWindow,
     QSizePolicy,
-    QPushButton,
-    QLabel,
-    QMessageBox,
     QHBoxLayout,
     QVBoxLayout,
+    QDoubleSpinBox,
+    QLabel,
+    QCheckBox,
+    QMessageBox,
     QWidget,
+    QLineEdit,
+    QPushButton,
+    QAction,
+    QGridLayout,
+    QStyleFactory,
+    QTabWidget,
+    QAction,
     QGroupBox,
+    QInputDialog,
 )
 from PyQt5.QtSvg import QSvgWidget
 
@@ -765,10 +775,13 @@ class HC_App(QApplication):
 
 
 class HC_MainWindow(QMainWindow):
-    def __init__():
+    def __init__(self):
+
+        super().__init__()
+
         self.add_menu()
 
-    def add_menu():
+    def add_menu(self):
 
         self.bar = self.menuBar()  # self.menuBar() is a function in QMainWindow
 
