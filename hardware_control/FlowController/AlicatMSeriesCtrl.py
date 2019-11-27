@@ -11,6 +11,7 @@ import random
 from PyQt5.QtCore import QObject
 
 from pymodbus.client.sync import ModbusTcpClient as ModbusClient
+from hardware_control.HC_Backend import HC_Backend
 
 
 def converter_ulong_to_IEEE754(x):
@@ -25,7 +26,7 @@ def converter_IEEE754_to_ulong(x):
     return b.contents.value
 
 
-class AlicatMSeriesCtrl(QObject):
+class AlicatMSeriesCtrl(HC_Backend):
     def __init__(self, ip_addr, dummy: bool = False, debug: bool = False):
 
         super().__init__()
