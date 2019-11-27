@@ -218,6 +218,31 @@ class HC_CommWorker(QObject):
         self.sigReturnOnline.emit(online)
 
 
+class LoggingGroup:
+    """Describes a list of values in an HC_Instrument that should be logged
+    when get_header() or get_values() is called."""
+
+    def __init__(self, group_name: str):
+
+        # These are the keys of <HC_Insturment>.values to log. This is a list
+        # of strings.
+        self.values_keys = []
+
+        # These are the names for each of the logged values. These titles/names
+        # are what will be passed when get_header() is called.
+        self.values_titles = []
+
+        # These are optional desciptions for each of the logged parameters.
+        self.values_descriptions = []
+
+        # This is the name of the logging group
+        self.group_name = group_name
+
+    def setDescriptions(self, descrs: list):
+        """Add descriptions for the logging values"""
+        self.values_descriptions = descrs
+
+
 class HC_Instrument(QGroupBox):
     def __init__(self, window, name: str):
         super().__init__(name)
@@ -225,25 +250,61 @@ class HC_Instrument(QGroupBox):
         self.settings = OrderedDict()
         self.values = OrderedDict()
         self.values_unit = []
+        self.logging_groups = []
         self.name = name
         self.manufacturer = None
         self.company = None
         self.online = False
         self.comm = None
-        self.ignore = (
-            False
-        )  # Dictates if instrument should be ignored by ConnectionTool and ScanTool widgets
+        self.ignore = False  # Dictates if instrument should be ignored by
+        # ConnectionTool and ScanTool widgets
+
         # self.inbox = {}  # Receives strings from the HC_comm object
 
-        self.window = (
-            window
-        )  # parent needs to have a field called 'app' which is an instance of 'HC_App'
+        self.window = window  # parent needs to have a field called 'app' which
+        # is an instance of 'HC_App'
 
         window.app.add_instrument(self)
 
     def __str__(self):
         # return f"{self.manufacturer} {self.model}"
         return f"{self.name}"
+
+    def add_logging_group(
+        self, group_name: str, value_keys: list, header_strs: list = []
+    ):
+        """Adds a group of values to log. When calling get_values() or
+        get_header()"""
+
+        # Make sure arrays match dimensions
+        if len(value_keys != header_strs):
+            return False
+
+        # Only keep keys actually present in self.values
+        vks = []
+        hss = []
+        for idx, vk in enumerate(value_keys):
+            if vk in self.values:
+                vks.append(vk)
+                hss.append(header_strs[idx])
+
+        # Create new group
+        new_group = LoggingGroup(group_name, vks, hss)
+
+        # Append new group to list
+        self.logging_groups.append(new_group)
+
+        return True
+
+    def get_logging_group(self, group_name: str):
+        """Finds the logging group with name 'group_name' and returns it. If
+        no such group is found, returns None."""
+
+        for g in self.logging_groups:
+            if g.name == group_name:
+                return g
+
+        return None
 
     def get_header(self):
         """Supply a header for a log file"""
