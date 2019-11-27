@@ -395,12 +395,19 @@ class HC_App(QApplication):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.instruments = []
+        self.instruments = (
+            []
+        )  # TODO: Verify this is actually a dict and change declaration here
         self.log = []  # List of strings for debugging/logging purposes
         self.macros = {}  # Dict of hc-commands (used for scans + trigger buttons)
         self.variables = {}  # Dict of app variables
+        self.dummy = False
 
         self.print_debug = False
+
+        # Dictates if hc_commands are allowed to execute raw python code via calls to the
+        # via teh 'exec' function
+        self.exec_enabled = True
 
     def add_instrument(self, widget):
         # check if name is already present
@@ -587,6 +594,20 @@ class HC_App(QApplication):
                 print(
                     f"Executed Command:\n\tInstrument: {instr_str}\n\tCommand: {command_str}"
                 )
+
+        elif tokens[0] == "EXEC":
+
+            # Recalculate tokens, with max of 2 splits. This allows colons to appear in the command
+            tokens = command.split(":", 1)
+
+            if self.exec_enabled:
+                try:
+                    exec(tokens[1])
+                except Exception as e:
+                    ec = tokens[1]
+                    print(f"ERROR: Failed to execute command '{ec}'.\n\t{e}")
+            else:
+                print("Executing python code has been disabled")
 
         elif (
             tokens[0] == "FUNC"
