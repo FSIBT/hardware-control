@@ -60,7 +60,7 @@ class HC_Backend(ABC):
                 self.online = True
                 return True
 
-        if self.online:  # Has previously connected to the isntrument
+        if self.online:  # Has previously connected to the instrument
 
             try:  # Check if connected by asking for instrument ID
                 self.device.query("*IDN?")

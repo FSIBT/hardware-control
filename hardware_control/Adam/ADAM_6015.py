@@ -9,16 +9,14 @@ from hardware_control.HC_Backend import HC_Backend # regex_compare #ToDo
 
 class Adam(HC_Backend):
     """Control of Adam input/output module"""
-    #ToDo remove IP
     def __init__(self, IP="192.168.1.25", dummy=False):
         self.dummy = dummy
         self.online = False
-        self.ID="123"
+        self.ID="Advantac_ADAM-6015"
         self.buf = 200
         self.IP = IP
         self.port = 1025
         self.addr = (self.IP, self.port)
-
         self.try_connect()
 
     def try_connect(self):
@@ -67,6 +65,7 @@ class Adam(HC_Backend):
 
     def read(self):
         """Read values from Adam"""
+        """this is a override - sockets are used"""
         if not self.dummy:
             self.s.send("#01\r".encode("ascii"))
             indata = self.s.recv(self.buf)

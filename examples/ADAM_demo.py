@@ -42,7 +42,7 @@ use_sockets = commands["--socket"]
 debug = commands["--debug"]
 
 #Todo Delete this
-#dummy = True
+dummy = True
 debug= True
 
 from hardware_control.base import HC_App
@@ -66,6 +66,8 @@ class Demo(QMainWindow):
         self.demo_ctrl = HC_ADAM(
             demo, self, [1, 5, 9, 4],["HeatPower","Channel5","LOX","AnOtherChannel"], "Demo Device Unit", "DEFAULT"
         )
+
+
 
         ##### Add above HC to the main Widget
         self.grid = QGridLayout()

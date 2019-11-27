@@ -37,7 +37,7 @@ class HC_ADAM(HC_Instrument):
         self.listOfWidgets = []
         # add all the needed channels
         for i, c in enumerate(self.channels):
-            self.listOfWidgets.append(singleChannelADAM(c, self.channelNames[i]))
+            self.listOfWidgets.append(HC_singleChannelADAM(c, self.channelNames[i]))
             self.grid.addWidget(self.listOfWidgets[i], 0, i)
         # Add all the widgets to layout
         self.setLayout(self.grid)
@@ -65,8 +65,8 @@ class HC_ADAM(HC_Instrument):
                 mess = float(mess[0] + mess[2:7])  # with that 00023.7632 is shown as 23.7 and signs are taken care of
                 self.listOfWidgets[i].lcd.display(mess) #write to actual widget/channel
 
-
-class singleChannelADAM(QWidget):
+#ToDo add connect and stuff here
+class HC_singleChannelADAM(QWidget):
     """A single Temperature LCD Widget, with a channelnumber and name"""
 
     def __init__(self, channelNumber: int, channelName: str):

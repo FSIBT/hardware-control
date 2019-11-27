@@ -72,7 +72,7 @@ class HC_DeviceType(HC_Instrument):
         # Create timer to query
         self.readout_timer = QTimer(self)
         self.readout_timer.timeout.connect(self.update_readout)
-        self.readout_timer.start(500)
+        self.readout_timer.start(500)   #ToDo globalize
 
         # Write state to Backend
         # this sends all settings, which are stored in the settings dictionary to the backend
