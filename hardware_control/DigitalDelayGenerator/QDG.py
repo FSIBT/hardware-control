@@ -233,76 +233,45 @@ class DelayGeneratorControl(QGroupBox):
     #    def StartStopTrigger(self):
     # Find command to start/stop continuous/periodic trigger
 
+    def set_setting(self, channel_number, channel_relative_to, channel_delay):
+        """Send the command to change when a channel should trigger"""
+        if channel_relative_to.currentText() == "T":
+            self.instrument.write(f"DT {channel_number},1,{channel_delay.text()}")
+        elif channel_relative_to.currentText() == "A":
+            self.instrument.write(f"DT {channel_number},2,{channel_delay.text()}")
+        elif channel_relative_to.currentText() == "B":
+            self.instrument.write(f"DT {channel_number},3,{channel_delay.text()}")
+        elif channel_relative_to.currentText() == "C":
+            self.instrument.write(f"DT {channel_number},5,{channel_delay.text()}")
+        elif channel_relative_to.currentText() == "D":
+            self.instrument.write(f"DT {channel_number},6,{channel_delay.text()}")
+        else:
+            print("[ERROR] trying to set timing for channel")
+
     def SetSettingsA(self):
         # find commmand to send settings to Delay Generator
-        if not self.dummy:
-            if self.ChannelA_trig.currentText() == "T":
-                self.instrument.write(f"DT 2,1,{self.ChannelA_delay.text()}")
-            if self.ChannelA_trig.currentText() == "B":
-                self.instrument.write(f"DT 2,3,{self.ChannelA_delay.text()}")
-            if self.ChannelA_trig.currentText() == "C":
-                self.instrument.write(f"DT 2,5,{self.ChannelA_delay.text()}")
-            if self.ChannelA_trig.currentText() == "D":
-                self.instrument.write(f"DT 2,6,{self.ChannelA_delay.text()}")
-            else:
-                print("ERROR?")
-                return
+        if not self.app.dummy:
+            self.set_setting(2, self.ChannelA_trig, self.ChannelA_delay)
         else:
             print("Setting Channel A settings")
-            return
 
     def SetSettingsB(self):
-        if not self.dummy:
-            if self.ChannelB_trig.currentText() == "T":
-                self.instrument.write(f"DT 3,1,{self.ChannelA_delay.text()}")
-            if self.ChannelB_trig.currentText() == "A":
-                self.instrument.write(f"DT 3,2,{self.ChannelA_delay.text()}")
-            if self.ChannelB_trig.currentText() == "C":
-                self.instrument.write(f"DT 3,5,{self.ChannelA_delay.text()}")
-            if self.ChannelB_trig.currentText() == "D":
-                self.instrument.write(f"DT 3,6,{self.ChannelA_delay.text()}")
-            else:
-                print("ERROR?")
-                return
+        if not self.app.dummy:
+            self.set_setting(3, self.ChannelB_trig, self.ChannelB_delay)
         else:
             print("Setting Channel B settings")
-            return
 
     def SetSettingsC(self):
-        if not self.dummy:
-            if self.ChannelC_trig.currentText() == "T":
-                self.instrument.write(f"DT 5,1,{self.ChannelA_delay.text()}")
-            if self.ChannelC_trig.currentText() == "A":
-                self.instrument.write(f"DT 5,2,{self.ChannelA_delay.text()}")
-            if self.ChannelC_trig.currentText() == "B":
-                self.instrument.write(f"DT 5,3,{self.ChannelA_delay.text()}")
-            if self.ChannelC_trig.currentText() == "D":
-                self.instrument.write(f"DT 5,6,{self.ChannelA_delay.text()}")
-            else:
-                print("ERROR?")
-                return
+        if not self.app.dummy:
+            self.set_setting(5, self.ChannelC_trig, self.ChannelC_delay)
         else:
             print("Setting Channel C settings")
-            return
 
     def SetSettingsD(self):
-        if not self.dummy:
-            if self.ChannelD_trig.currentText() == "T":
-                self.instrument.write(f"DT 2,1,{self.ChannelA_delay.text()}")
-            if self.ChannelD_trig.currentText() == "A":
-                self.instrument.write(f"DT 6,2,{self.ChannelA_delay.text()}")
-            if self.ChannelD_trig.currentText() == "B":
-                self.instrument.write(f"DT 6,3,{self.ChannelA_delay.text()}")
-            if self.ChannelD_trig.currentText() == "C":
-                self.instrument.write(f"DT 6,5,{self.ChannelA_delay.text()}")
-            else:
-                print("ERROR?")
-                return
+        if not self.app.dummy:
+            self.set_setting(5, self.ChannelD_trig, self.ChannelD_delay)
         else:
             print("Setting Channel D settings")
-            return
-
-    #        if self.dummy:
 
     def commandsend(self):
         cmd = self.commandLine.text()
