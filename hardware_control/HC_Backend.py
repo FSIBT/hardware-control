@@ -36,17 +36,12 @@ class HC_Backend(ABC):
         if (not self.dummy) and self.online:
             self.device.close()
             print(f"{self.ID}: Backend Closed")
-            return (
-                False
-            )  # This can be changed to try to talk to instrument to verify close successful - prob not required
+            # This can be changed to try to talk to instrument to verify close successful - prob not required
+            return False
         else:
             print(f"{self.ID}: Dummy connection closed")
             return False
 
-    #
-    # Tries to connect to the oscilloscope. Is called by the timer every second.
-    # If already connected, returns immediately.
-    #
     def try_connect(self):
         """Checks if the backend is in communication with the object, if it is
         not, it tries to re-establish communication."""

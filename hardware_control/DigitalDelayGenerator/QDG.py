@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
-import time
-import pyvisa
 import sys
-from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer, QThread, pyqtSignal, pyqtSlot, QObject
-from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtWidgets import (
     QGroupBox,
     QVBoxLayout,
@@ -17,8 +13,6 @@ from PyQt5.QtWidgets import (
 )
 
 from .DG_control import DelayGenerator
-
-rm = pyvisa.ResourceManager()
 
 
 class DelayGeneratorCommunication(QObject):
@@ -71,13 +65,12 @@ class DelayGeneratorCommunication(QObject):
 class DelayGeneratorControl(QGroupBox):
     write_value = pyqtSignal(int, float)
 
-    def __init__(self, port, parent=None, debug=False, dummy=False):
+    def __init__(self, port, parent=None, app=None):
         super().__init__("DelayGenerator")
         self.port = port
-        self.instrument = DelayGenerator(self.port, self.parent, dummy=dummy)
+        self.app = app
+        self.instrument = DelayGenerator(self.port, self.parent, dummy=self.app.dummy)
         self.parent = parent
-        self.dummy = dummy
-        self.debug = debug
 
         self.hbox = QHBoxLayout()
         self.vbox = QVBoxLayout()
@@ -143,7 +136,7 @@ class DelayGeneratorControl(QGroupBox):
         self.ChannelD_button.clicked.connect(self.SetSettingsD)
 
         # command line and button
-        if self.debug == True:
+        if self.app.print_debug:
             self.hbox2 = QHBoxLayout()
             self.commandLine = QLineEdit("Enter your Command here!")
             self.commandbutton = QPushButton("Send Command")
@@ -193,38 +186,39 @@ class DelayGeneratorControl(QGroupBox):
         self.setLayout(self.vbox2)
 
         self.comm_thread = QThread()
-        self.comm = DelayGeneratorCommunication(self.port, dummy=dummy, parent=self)
+        self.comm = DelayGeneratorCommunication(
+            self.port, dummy=self.app.dummy, parent=self
+        )
 
         print("Delay Generator Check")
         sys.stdout.flush()
 
-    #        self.comm.values_read(self.read)
+    # self.comm.values_read(self.read)
 
     # Place Necessary functions below
 
     def triggerChange(self):
         # Need to find commands for DG535 to change trigger channel
-        if not self.dummy:
+        if not self.app.dummy:
             if self.trigger_mode.currentText() == "Int":
                 self.instrument.write("TM 0")
-            if self.trigger_mode.currentText() == "Ext":
+            elif self.trigger_mode.currentText() == "Ext":
                 self.instrument.write("TM 1")
-            if self.trigger_mode.currentText() == "SS":
+            elif self.trigger_mode.currentText() == "SS":
                 self.instrument.write("TM 2")
-            if self.trigger_mode.currentText() == "Burst":
+            elif self.trigger_mode.currentText() == "Burst":
                 self.instrument.write("TM 3")
             else:
                 print("Not a valid command!!!!!!!!!!!?")
-                return
 
     def SingleShot(self):
         # Find command to send single trigger shot through selected channel
-        if not self.dummy:
+        if not self.app.dummy:
             self.instrument.write("TM 2; SS")
 
     def TriggerRate(self):
         # find command to set continuous trigger rate
-        if not self.dummy:
+        if not self.app.dummy:
             if self.trigger_mode.currentText() != "Burst":
                 self.instrument.write(f"TR 1,{self.trigger_rate.text()}")
             else:
@@ -281,9 +275,8 @@ class DelayGeneratorControl(QGroupBox):
 
     @pyqtSlot(float)
     def read(self):
-        if not self.dummy:
+        if not self.app.dummy:
             print("Channel A settings")
             data = self.instrument.query("DL 1,0,0")
             return data
-        else:
-            print("Channel A settings: DUMMY")
+        print("Channel A settings: DUMMY")

@@ -402,6 +402,9 @@ class HC_App(QApplication):
 
         self.print_debug = False
 
+        # are we connected to real instruments or should we simulate them?
+        self.dummy = False
+
     def add_instrument(self, widget):
         # check if name is already present
         if widget.name in [x.name for x in self.instruments]:
@@ -1084,7 +1087,7 @@ class HC_Control(ABC):
 # class LoggerThread(QThread):
 #     """Write out the data to a log file"""
 #
-#     def __init__(self, datadir: pathlib.PosixPath = None, dummy: bool = False):
+#     def __init__(self, datadir: pathlib.PosixPath = None, app):
 #         """Set up the logfile. Either create it or open for append"""
 #
 #         super().__init__()
@@ -1100,7 +1103,7 @@ class HC_Control(ABC):
 #         logdir = datadir / self.YYYYMMDD
 #         logdir.mkdir(exist_ok=True, parents=True)
 #         self.logdir = logdir
-#         if dummy:
+#         if app.dummy:
 #             self.logfilename = logdir / (self.YYYYMMDD + "-dummy.txt")
 #         else:
 #             self.logfilename = logdir / (self.YYYYMMDD + ".txt")

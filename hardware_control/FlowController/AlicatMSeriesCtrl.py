@@ -1,8 +1,4 @@
-import pyvisa
-from typing import List
-import numpy as np
 import random
-from PyQt5.QtCore import QObject
 
 from pymodbus.client.sync import ModbusTcpClient as ModbusClient
 
@@ -19,13 +15,9 @@ def converter_IEEE754_to_ulong(x):
     return b.contents.value
 
 
-class AlicatMSeriesCtrl(QObject):
+class AlicatMSeriesCtrl:
     def __init__(self, ip_addr, dummy: bool = False, print_commands: bool = False):
-
-        super().__init__()
-
         self.ID = "AlicatMSeries"
-
         self.ip_addr = ip_addr
         self.online = False
         self.dummy = dummy
@@ -34,10 +26,6 @@ class AlicatMSeriesCtrl(QObject):
 
         self.try_connect()
 
-    #
-    # Tries to connect to the oscilloscope. Is called by the timer every second.
-    # If already connected, returns immediately.
-    #
     def try_connect(self):
 
         if self.online:
@@ -147,11 +135,9 @@ class AlicatMSeriesCtrl(QObject):
         return rtn
 
     def write(self, command: str):
-        self.scope.write(command)
         if self.print_commands:
             print(f'\t{self.ID}< "{command}"')
 
     def query(self, command: str):
-        reply = self.scope.query(command)
         if self.print_commands:
-            print(f'\t{self.ID}< "{command}" > {reply}')
+            print(f'\t{self.ID}< "{command}" ')

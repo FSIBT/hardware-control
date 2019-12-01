@@ -3,10 +3,7 @@ import socket
 import numpy as np
 import sys
 
-
 # from hardware_control.base import HC_Control
-
-
 rm = pyvisa.ResourceManager()
 
 

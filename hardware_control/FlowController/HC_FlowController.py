@@ -1,28 +1,10 @@
-from typing import List
-import numpy as np
-import json
-
-import pyqtgraph as pg
 from PyQt5 import QtCore
-from PyQt5.QtCore import QTimer, QThread, pyqtSignal, pyqtSlot, QObject
-from PyQt5.QtGui import QDoubleValidator, QPixmap
-from PyQt5.QtWidgets import (
-    QGroupBox,
-    QVBoxLayout,
-    QLineEdit,
-    QPushButton,
-    QHBoxLayout,
-    QLabel,
-    QWidget,
-    QFormLayout,
-    QGridLayout,
-    QComboBox,
-)
-from hardware_control.base import HC_Instrument, HC_Comm, setButtonState
-import copy
+from PyQt5.QtCore import QTimer
+from PyQt5.QtGui import QDoubleValidator
+from PyQt5.QtWidgets import QLineEdit, QLabel, QFormLayout, QGridLayout, QComboBox
+from hardware_control.base import HC_Instrument, HC_Comm
 
-#
-#
+
 class HC_FlowController(HC_Instrument):
     def __init__(
         self,
@@ -30,14 +12,12 @@ class HC_FlowController(HC_Instrument):
         window,
         name: str = "Flow Controller",
         initialize_with: str = "INSTRUMENT",
-        save_on_close: str = False,
         dummy=False,
     ):
 
         super().__init__(window, name)
 
         self.settings = {}
-        self.save_on_close = save_on_close
         self.name = name
 
         self.comm = HC_Comm(scpi_instr, self)
@@ -45,7 +25,6 @@ class HC_FlowController(HC_Instrument):
 
         # Initialize state to correct values
         if initialize_with == "DEFAULT":
-            self.save_on_close = False
             # Can't save without filename
             self.settings = self.default_state()
         else:

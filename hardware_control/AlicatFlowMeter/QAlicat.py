@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
-import pyvisa
 import sys
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer, QThread, pyqtSignal, pyqtSlot, QObject
-from PyQt5.QtGui import QDoubleValidator, QFont
+from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
     QGroupBox,
     QVBoxLayout,
@@ -14,8 +13,6 @@ from PyQt5.QtWidgets import (
 )
 
 from .Alicat_control_test import Alicat
-
-rm = pyvisa.ResourceManager()
 
 
 class AlicatCommunication(QObject):
@@ -67,17 +64,15 @@ class AlicatCommunication(QObject):
 class AlicatControl(QGroupBox):
     write_value = pyqtSignal(int, float)
 
-    def __init__(
-        self, port, address, parent=None, dummy=False, debug=False, massflow_limit=True
-    ):
+    def __init__(self, port, address, parent=None, app=None, massflow_limit=True):
         super().__init__("Alicat")
         self.port = port
         self.addr = address
+        self.app = app
         self.massflow_setpoint = 0
         self.massflow = 0
         self.massflow_limit = massflow_limit
-        self.instrument = Alicat(self.port, self.addr, dummy=dummy)
-        self.debug = debug
+        self.instrument = Alicat(self.port, self.addr, dummy=self.app.dummy)
         self.parent = parent
         self.hbox = QHBoxLayout()
 
@@ -105,7 +100,7 @@ class AlicatControl(QGroupBox):
         # add controls to layout
         self.controls = QVBoxLayout()
         self.controls.addWidget(self.refreshbutton)
-        if self.debug:
+        if self.app.print_debug:
             self.controls.addWidget(self.AlicatCommand)
             self.controls.addWidget(self.Alicatsend_command)
             self.controls.addWidget(self.AlicatReturn)
@@ -116,21 +111,24 @@ class AlicatControl(QGroupBox):
         self.hbox.addLayout(self.controls)
         self.hbox.addStretch(1)
 
-        if dummy:
+        if self.app.dummy:
             self.label.setText("dummy")
         # Make Hbox visible
         self.setLayout(self.hbox)
 
         # start communication with Alicat
         self.comm_thread = QThread()
-        self.comm = AlicatCommunication(self.port, self.addr, dummy=dummy, parent=self)
+        self.comm = AlicatCommunication(
+            self.port, self.addr, dummy=self.app.dummy, parent=self
+        )
 
         #        print("mic check mic check 1,2 1,2 (QAlicat)")
         sys.stdout.flush()
 
         self.comm.values_read.connect(self.read)
 
-        # several lines have been commented out of QATM, at the moment I don't know if they are needed or not
+        # several lines have been commented out of QATM, at the moment
+        # I don't know if they are needed or not
 
     @pyqtSlot(bool)
     def toggle_enable(self, status):

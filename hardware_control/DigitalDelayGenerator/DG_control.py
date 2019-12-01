@@ -1,13 +1,5 @@
 # -*- coding: utf-8 -*-
 import pyvisa
-import socket
-import numpy as np
-from struct import unpack
-import sys
-from matplotlib import *
-import datetime
-
-rm = pyvisa.ResourceManager()
 
 
 class DelayGenerator:
@@ -17,6 +9,8 @@ class DelayGenerator:
         self.bud = 760
         self.port = port
         self.data = ""
+        self.rm = pyvisa.ResourceManager()
+
         self.connect()
 
     def connect(self):
@@ -24,7 +18,7 @@ class DelayGenerator:
             return
         # connect to visa resource for 4-Ch Delay Generator
         if not self.dummy:
-            self.s = rm.open_resource(self.port, send_end=True)
+            self.s = self.rm.open_resource(self.port, send_end=True)
             self.s.read_termination = "\r\n"
             self.s.write_termination = "\r\n"
             self.s.baud_rate = 19200
@@ -32,7 +26,6 @@ class DelayGenerator:
             self.s.timeout = 5000
             if self.s:
                 self.online = True
-
         else:
             print(f"Delay Generator: creating dummy connection to {self.port}")
 
@@ -59,6 +52,5 @@ class DelayGenerator:
         if not self.dummy:
             self.s.write(commandstr)
             print(f"DelayGenerator: sending command {commandstr}")
-
         else:
             print(f"DelayGenerator: sending command {commandstr}")

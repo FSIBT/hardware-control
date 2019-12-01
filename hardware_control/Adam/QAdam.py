@@ -22,10 +22,11 @@ class AdamCommunication(QObject):
     new_values_read = pyqtSignal(float, float, float)
     toggle_enable = pyqtSignal(bool)
 
-    def __init__(self, IP, dummy=False, parent=None):
+    def __init__(self, IP, app, parent):
         super().__init__()
+        self.app = app
         self.parent = parent
-        self.instrument = Adam(IP, dummy=dummy)
+        self.instrument = Adam(IP, dummy=self.app.dummy)
         self.online = False
 
         self.timer = QTimer(self)
@@ -77,7 +78,7 @@ class AdamControl(QGroupBox):
 
     write_value = pyqtSignal(int, float)
 
-    def __init__(self, IP, parent=None, dummy=False, hvlimit=True):
+    def __init__(self, IP, app=None, parent=None, hvlimit=True):
         super().__init__("Adam")
         self.IP = IP
         self.voltage_setpoint = 0
@@ -90,6 +91,7 @@ class AdamControl(QGroupBox):
         self.ramp_rate = 0.5  # kV/s
         self.last_ramp = time.time()
 
+        self.app = app
         self.parent = parent
         self.hbox = QHBoxLayout()
 
@@ -145,14 +147,14 @@ class AdamControl(QGroupBox):
         self.hbox.addLayout(self.indicators)
         self.hbox.addStretch(1)
 
-        if dummy:
+        if self.app.dummy:
             self.label.setText("dummy")
 
         self.setLayout(self.hbox)
 
         # start communication thread in the background
         self.comm_thread = QThread()
-        self.comm = AdamCommunication(IP, dummy=dummy, parent=self)
+        self.comm = AdamCommunication(IP, app=self.app, parent=self)
         self.comm.toggle_enable.connect(self.toggle_enable)
         self.comm.new_values_read.connect(self.read)
         self.parent.prepare_shutdown.connect(self.comm.stop_thread)
