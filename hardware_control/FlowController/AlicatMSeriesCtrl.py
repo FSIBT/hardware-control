@@ -1,9 +1,3 @@
-#
-#
-# G M Giesbrecht
-# 20/08/2019
-#
-
 import pyvisa
 from typing import List
 import numpy as np

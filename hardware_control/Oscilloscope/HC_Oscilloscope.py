@@ -1,9 +1,3 @@
-#
-# This defines the OscilloscopeControl and OscilloscopeComm classes. By passing
-# an instance of a SCPI command wrapper class to an OscilloscpeControl objcet,
-# you can easily create GUIs for oscilloscopes.
-#
-
 from typing import List
 import numpy as np
 import json
@@ -518,7 +512,7 @@ class OscilloscopeHorizontalWidget(QWidget):
         self.horizontal_label_box.addWidget(self.horizontal_label)
 
         # ****** DEFINE TEXT BOXES
-        #ToDo: change Units to a more useful dimension than s - eg ms or mu
+        # ToDo: change Units to a more useful dimension than s - eg ms or mu
         #
         self.timebase_edit = QDoubleSpinBox()
         self.timebase_edit.editingFinished.connect(

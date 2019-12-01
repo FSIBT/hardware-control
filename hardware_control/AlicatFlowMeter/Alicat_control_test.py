@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""
-Created on Thu Jun 27 12:11:28 2019
-
-@author: sky
-"""
-
 import pyvisa
 import socket
 import numpy as np

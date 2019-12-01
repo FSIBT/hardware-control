@@ -1,6 +1,3 @@
-
-
-
 import pyvisa
 from typing import List
 import numpy as np
@@ -30,21 +27,20 @@ class DeviceBackend(HC_Backend):
         self.dummy = dummy
         self.print_commands = print_commands
 
-        #example
+        # example
         self.use_sockets = use_sockets
         self.port_no = port_no
         self.ip_addr = ip_addr
 
         self.num_channels = 8
 
-
-    #needs to be implemented!
+    # needs to be implemented!
     def update_setting(self, setting: str, value):
-       return setting +"="+ value
+        return setting + "=" + value
 
-    #needs to be implemented
+    # needs to be implemented
     def command(self, cmd: str):
-        if self.dummy and cmd=="RND":
-            return "RND="+str(random.random())
+        if self.dummy and cmd == "RND":
+            return "RND=" + str(random.random())
         else:
             return "VOLT=20"

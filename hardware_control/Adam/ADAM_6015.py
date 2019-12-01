@@ -1,19 +1,16 @@
-#Nov/22/2019
-#Timo Bauer
-
-import socket
 import re
 
-from hardware_control.HC_Backend import HC_Backend # regex_compare #ToDo
+from hardware_control.HC_Backend import HC_Backend  # regex_compare #ToDo
 
 
 class Adam(HC_Backend):
     """Control of Adam input/output module"""
-    #ToDo remove IP
+
+    # ToDo remove IP
     def __init__(self, IP="192.168.1.25", dummy=False):
         self.dummy = dummy
         self.online = False
-        self.ID="123"
+        self.ID = "123"
         self.buf = 200
         self.IP = IP
         self.port = 1025
@@ -24,14 +21,14 @@ class Adam(HC_Backend):
     def try_connect(self):
         """this is a override - sockets are used"""
         if not self.dummy:
-            #First Check current state
-            if not self.online: # If not online, try to connect
+            # First Check current state
+            if not self.online:  # If not online, try to connect
                 try:
                     self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                     self.s.settimeout(2)
                     self.s.connect(self.addr)
                 except:
-                    self.online=False
+                    self.online = False
                     return self.online
 
             # Independent of the state, try to receive data, if nothing is returned, then the device is offline
@@ -56,10 +53,10 @@ class Adam(HC_Backend):
         else:
             print("Adam: close dummy connection")
 
-    def write(self,msg: str):
+    def write(self, msg: str):
         """this is a override - sockets are used"""
         if not self.dummy:
-            msg = msg+"\r"
+            msg = msg + "\r"
             self.s.send(msg.encode("ascii"))
             indata = self.s.recv(self.buf)
             data = indata.decode("ascii")[1:-1]
@@ -72,24 +69,24 @@ class Adam(HC_Backend):
             indata = self.s.recv(self.buf)
             data = indata.decode("ascii")
         else:
-            #Just a random answer it once received
-            data =">+0025.9237+0150.0000+0150.0000+0150.0000+0150.0000+0150.0000+0150.0000-0050.0000"
+            # Just a random answer it once received
+            data = ">+0025.9237+0150.0000+0150.0000+0150.0000+0150.0000+0150.0000+0150.0000-0050.0000"
         return data
 
     def command(self, cmd: str):
         if self.dummy:
-            return cmd[:-1]+"=123"  # Jsut return the same string with temp 123
+            return cmd[:-1] + "=123"  # Jsut return the same string with temp 123
         """Use Convention "CH#_TEMP?"  the answer is like >+0025.9237+0150.0000+0150.0000+0150.0000+0150.0000+0150.0000+0150.0000-0050.0000 """
-        if regex_compare("CH._TEMP?",cmd) and int(cmd[2]) in range(1,9):
-            #cmd[2] equals the channel#
-            out="#01\r" #simply asks for all channels
+        if regex_compare("CH._TEMP?", cmd) and int(cmd[2]) in range(1, 9):
+            # cmd[2] equals the channel#
+            out = "#01\r"  # simply asks for all channels
             self.s.send(out.encode("ascii"))
             indata = self.s.recv(self.buf)
-            data = indata.decode("ascii")[1:]   #cut off ">"
-            #print(data)
-            n = int(cmd[2])-1
-            data = data[n*10:n*10+10]
-            return "CH"+cmd[2]+"_TEMP="+data
+            data = indata.decode("ascii")[1:]  # cut off ">"
+            # print(data)
+            n = int(cmd[2]) - 1
+            data = data[n * 10 : n * 10 + 10]
+            return "CH" + cmd[2] + "_TEMP=" + data
         else:
             return "Unexpected Command"
 
@@ -97,7 +94,8 @@ class Adam(HC_Backend):
         """Device has no Settings"""
         pass
 
-#ToDo remove later
+
+# ToDo remove later
 def regex_compare(pattern: str, comp: str):
     """ . as a wildcard"""
     regex = re.compile(pattern)

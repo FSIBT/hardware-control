@@ -26,16 +26,17 @@ from PyQt5.QtWidgets import (
 import copy
 from hardware_control.base import HC_Instrument, HC_Comm, setButtonState
 
+
 class HC_DeviceType(HC_Instrument):
     # Convention: __init__(self, backend, window . . . )
     def __init__(
-            self,
-            backend,
-            window,
-            channels: list,
-            name: str = "TemplateDevice",
-            initialize_with: str = "INSTRUMENT",
-            save_on_close: str = False,
+        self,
+        backend,
+        window,
+        channels: list,
+        name: str = "TemplateDevice",
+        initialize_with: str = "INSTRUMENT",
+        save_on_close: str = False,
     ):
         # initalizing
         super().__init__(window, name)
@@ -48,7 +49,9 @@ class HC_DeviceType(HC_Instrument):
         ### Create UI - example
         self.lineEdit = QLineEdit()
         self.lineEdit.setText("10")
-        self.lineEdit.editingFinished.connect(lambda: self.command(self.lineEdit.text()))
+        self.lineEdit.editingFinished.connect(
+            lambda: self.command(self.lineEdit.text())
+        )
 
         self.text = QLabel()
         self.text.setText("123")
@@ -56,7 +59,9 @@ class HC_DeviceType(HC_Instrument):
         self.spinbox = QDoubleSpinBox()
         self.spinbox.setRange(0, 10)
         self.spinbox.setSingleStep(0.15)
-        self.spinbox.editingFinished.connect((lambda: self.update_setting("Volt_Channel1", str(self.spinbox.value()))))
+        self.spinbox.editingFinished.connect(
+            (lambda: self.update_setting("Volt_Channel1", str(self.spinbox.value())))
+        )
 
         self.layout = QGridLayout()
         self.layout.addWidget(self.lineEdit, 0, 0)

@@ -249,7 +249,8 @@ class HC_Instrument(QGroupBox):
     def get_values(self):
         """Return current list of values for logging"""
         return self.values.values()
-    #ToDo value has to be str
+
+    # ToDo value has to be str
     def update_setting(self, setting: str, value):
         """Update a setting in settings and values dictionary for the instrument"""
         try:
@@ -890,6 +891,7 @@ class HC_Control(ABC):
         """
 
         raise NotImplementedError
+
 
 # class QOnOffIndicator(QSvgWidget):
 #     """An On/Off indicator

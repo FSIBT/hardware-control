@@ -1,9 +1,3 @@
-#
-# This defines the OscilloscopeControl and OscilloscopeComm classes. By passing
-# an instance of a SCPI command wrapper class to an OscilloscpeControl objcet,
-# you can easily create GUIs for oscilloscopes.
-#
-
 from typing import List
 import numpy as np
 import json

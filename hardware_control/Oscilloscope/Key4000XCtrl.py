@@ -1,14 +1,3 @@
-# This class wraps SCPI commands with python functions. It is fed to the
-# communication object used by the control object. Originally this SCPI class
-# was part of the control class, but they were separated so that command line
-# program or scipts can be made that don't depend on Qt - this function will
-# have no Qt dependencies.
-#
-#
-# G M Giesbrecht
-# 20/08/2019
-#
-
 import pyvisa
 from typing import List
 import numpy as np

@@ -20,7 +20,7 @@ class HC_Backend(ABC):
     @abstractmethod
     def command(self, cmd: str):
         """User must overload this function. Must return a string"""
-        
+
     def write(self, msg: str):
         """Passes a command directly from the UI to the instrument"""
         if self.device is not None:

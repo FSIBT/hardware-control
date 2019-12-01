@@ -1,9 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Thu Jul 11 15:24:40 2019
-
-@author: Schuyler
-"""
 import pyvisa
 import socket
 import numpy as np

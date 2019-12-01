@@ -1,14 +1,3 @@
-# This class wraps SCPI commands with python functions. It is fed to the
-# communication object used by the control object. Originally this SCPI class
-# was part of the control class, but they were separated so that command line
-# program or scipts can be made that don't depend on Qt - this function will
-# have no Qt dependencies.
-#
-#
-# G M Giesbrecht
-# 20/08/2019
-#
-
 import pyvisa
 from typing import List
 import numpy as np
@@ -34,7 +23,13 @@ def bool_NR1(x: bool):
 
 
 class SRSDG535Ctrl(HC_Backend):
-    def __init__(self, visa_addr, dummy: bool = False, print_commands: bool = False, use_pyvisapy:bool=False):
+    def __init__(
+        self,
+        visa_addr,
+        dummy: bool = False,
+        print_commands: bool = False,
+        use_pyvisapy: bool = False,
+    ):
 
         super().__init__()
 
@@ -94,7 +89,7 @@ class SRSDG535Ctrl(HC_Backend):
 
         if self.online:  # Has previously connected to the isntrument
 
-            #Todo: impliment new way of verifying is online
+            # Todo: impliment new way of verifying is online
 
             # try:  # Check if connected by asking for instrument ID
             #     self.device.query("*IDN?")
@@ -105,7 +100,7 @@ class SRSDG535Ctrl(HC_Backend):
             #         print("Lost connection to device. Will try to reconnect")
             #         print(f"\t{str(e)}")
             # else:  # Connection stable - return True
-                return True
+            return True
 
         if self.debug:
             print(f"{self.ID}: trying to connect")
@@ -114,14 +109,16 @@ class SRSDG535Ctrl(HC_Backend):
         try:
             if not self.use_sockets:  # Use visa
                 if self.use_pyvisapy:
-                    rm = pyvisa.ResourceManager("@py") #linux-gpib is required for pyvisapy to support GPIB. Use VISA if on windows
+                    rm = pyvisa.ResourceManager(
+                        "@py"
+                    )  # linux-gpib is required for pyvisapy to support GPIB. Use VISA if on windows
                 else:
                     if self.debug:
                         print("Connecting with NI-VISA backend")
                     rm = pyvisa.ResourceManager()
                 self.device = rm.open_resource(self.visa_addr)  # Open connection
 
-                #TODO: Find a different way to verify connection. This instrument does not recognize *IDN?
+                # TODO: Find a different way to verify connection. This instrument does not recognize *IDN?
 
                 # # Verify actually connected (open_resource won't always throw error w/ disconnected USB)
                 # self.device.query("*IDN?")

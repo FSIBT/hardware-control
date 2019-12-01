@@ -1,9 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Thu Jul 11 15:41:12 2019
-
-@author: Schuyler
-"""
 import time
 import pyvisa
 import sys
