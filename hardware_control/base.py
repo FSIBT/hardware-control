@@ -1302,89 +1302,89 @@ class HC_Control(ABC):
 #             self.msleep(self.timeout)
 #
 #
-# class LoggerThread(QThread):
-#     """Write out the data to a log file"""
-#
-#     def __init__(self, datadir: pathlib.PosixPath = None, dummy: bool = False):
-#         """Set up the logfile. Either create it or open for append"""
-#
-#         super().__init__()
-#         self.elements = []
-#         self.keep_running = True
-#         self.pause = False
-#
-#         if not datadir or not datadir.is_dir():
-#             self.keep_running = False
-#             QMessageBox.about(None, "Error", f"Cannot find logfile directory {datadir}")
-#
-#         self.YYYYMMDD = datetime.datetime.today().strftime("%Y-%m-%d")
-#         logdir = datadir / self.YYYYMMDD
-#         logdir.mkdir(exist_ok=True, parents=True)
-#         self.logdir = logdir
-#         if dummy:
-#             self.logfilename = logdir / (self.YYYYMMDD + "-dummy.txt")
-#         else:
-#             self.logfilename = logdir / (self.YYYYMMDD + ".txt")
-#
-#         # check if we need to write header
-#         if self.logfilename.exists() and self.logfilename.is_file():
-#             with self.logfilename.open("r") as f:
-#                 self.oldlength = len(f.readlines())
-#         else:
-#             self.oldlength = 0
-#
-#     def __del__(self):
-#         self.wait()
-#
-#     def addelement(self, e):
-#         self.elements.append(e)
-#
-#     def removeelement(self, e):
-#         self.elements.remove(e)
-#
-#     def mystop(self):
-#         self.keep_running = False
-#
-#     def start_pause(self):
-#         self.pause = True
-#
-#     def stop_pause(self):
-#         self.pause = False
-#
-#     def write_header(self):
-#         self.logfile.write(f"# {self.YYYYMMDD}\n# Logfile from hardware_control run\n")
-#         datastructure = "Time[s] " + " ".join([e.get_header() for e in self.elements])
-#         myhash = hashlib.sha256()
-#         myhash.update(datastructure.encode("utf-8"))
-#         version = myhash.hexdigest()
-#         self.logfile.write(f"# Version: {version}\n")
-#         self.logfile.write(
-#             f"{datastructure}\n"
-#         )  # no '#' so that it is easier for pandas to read
-#
-#     def run(self):
-#         # wait a few seconds before starting the log, so that the
-#         # elements can start collecting data
-#         time.sleep(5)
-#
-#         # now open file
-#         self.logfile = self.logfilename.open("a", buffering=1)
-#
-#         # add header if file is empty
-#         if self.oldlength == 0:
-#             self.write_header()
-#
-#         while self.keep_running:
-#             if not self.pause:
-#                 line = f"{time.time()} "
-#                 data = []
-#                 for e in self.elements:
-#                     data.extend(e.get_values())
-#                 line += " ".join([str(d) for d in data])
-#                 self.logfile.write(line + "\n")
-#             self.sleep(1)
-#
-#         self.logfile.close()
+class LoggerThread(QThread):
+    """Write out the data to a log file"""
+
+    def __init__(self, datadir: pathlib.PosixPath = None, dummy: bool = False):
+        """Set up the logfile. Either create it or open for append"""
+
+        super().__init__()
+        self.elements = []
+        self.keep_running = True
+        self.pause = False
+
+        if not datadir or not datadir.is_dir():
+            self.keep_running = False
+            QMessageBox.about(None, "Error", f"Cannot find logfile directory {datadir}")
+
+        self.YYYYMMDD = datetime.datetime.today().strftime("%Y-%m-%d")
+        logdir = datadir / self.YYYYMMDD
+        logdir.mkdir(exist_ok=True, parents=True)
+        self.logdir = logdir
+        if dummy:
+            self.logfilename = logdir / (self.YYYYMMDD + "-dummy.txt")
+        else:
+            self.logfilename = logdir / (self.YYYYMMDD + ".txt")
+
+        # check if we need to write header
+        if self.logfilename.exists() and self.logfilename.is_file():
+            with self.logfilename.open("r") as f:
+                self.oldlength = len(f.readlines())
+        else:
+            self.oldlength = 0
+
+    def __del__(self):
+        self.wait()
+
+    def addelement(self, e):
+        self.elements.append(e)
+
+    def removeelement(self, e):
+        self.elements.remove(e)
+
+    def mystop(self):
+        self.keep_running = False
+
+    def start_pause(self):
+        self.pause = True
+
+    def stop_pause(self):
+        self.pause = False
+
+    def write_header(self):
+        self.logfile.write(f"# {self.YYYYMMDD}\n# Logfile from hardware_control run\n")
+        datastructure = "Time[s] " + " ".join([e.get_header() for e in self.elements])
+        myhash = hashlib.sha256()
+        myhash.update(datastructure.encode("utf-8"))
+        version = myhash.hexdigest()
+        self.logfile.write(f"# Version: {version}\n")
+        self.logfile.write(
+            f"{datastructure}\n"
+        )  # no '#' so that it is easier for pandas to read
+
+    def run(self):
+        # wait a few seconds before starting the log, so that the
+        # elements can start collecting data
+        time.sleep(5)
+
+        # now open file
+        self.logfile = self.logfilename.open("a", buffering=1)
+
+        # add header if file is empty
+        if self.oldlength == 0:
+            self.write_header()
+
+        while self.keep_running:
+            if not self.pause:
+                line = f"{time.time()} "
+                data = []
+                for e in self.elements:
+                    data.extend(e.get_values())
+                line += " ".join([str(d) for d in data])
+                self.logfile.write(line + "\n")
+            self.sleep(1)
+
+        self.logfile.close()
 
 
 def setButtonState(button: QPushButton, value):
