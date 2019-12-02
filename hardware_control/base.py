@@ -220,14 +220,11 @@ class HC_Instrument(QGroupBox):
         self.company = None
         self.online = False
         self.comm = None
-        self.ignore = (
-            False
-        )  # Dictates if instrument should be ignored by ConnectionTool and ScanTool widgets
+        # Dictates if instrument should be ignored by ConnectionTool and ScanTool widgets
+        self.ignore = False
         self.inbox = {}  # Receives strings from the HC_comm object
-
-        self.window = (
-            window
-        )  # parent needs to have a field called 'app' which is an instance of 'HC_App'
+        # parent needs to have a field called 'app' which is an instance of 'HC_App'
+        self.window = window
 
         window.app.add_instrument(self)
 

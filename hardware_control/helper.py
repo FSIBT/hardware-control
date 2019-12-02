@@ -204,3 +204,8 @@ def drive_update_listing():
         # always save data
         with mydir.open("w") as f:
             json.dump(data, f)
+
+
+def regex_compare(pattern: str, comp: str):
+    regex = re.compile(pattern)
+    return bool(re.match(regex, comp))

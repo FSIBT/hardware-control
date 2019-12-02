@@ -1,28 +1,17 @@
-from typing import List
-import numpy as np
-import json
 import pkg_resources
 
-import time  # Get rid of this guy!
-
 from hardware_control.base import HC_Instrument, HC_Comm, setButtonState
-import pyqtgraph as pg
 from PyQt5 import QtCore
-from PyQt5.QtCore import QTimer, QThread, pyqtSignal, pyqtSlot, QObject
 from PyQt5.QtGui import QDoubleValidator, QPixmap, QIcon
 from PyQt5.QtWidgets import (
-    QGroupBox,
-    QVBoxLayout,
     QLineEdit,
     QPushButton,
-    QHBoxLayout,
     QLabel,
     QWidget,
     QFormLayout,
     QGridLayout,
     QComboBox,
 )
-import copy
 
 
 class HC_FunctionGenerator(HC_Instrument):
@@ -32,25 +21,21 @@ class HC_FunctionGenerator(HC_Instrument):
         window,
         name: str = "Oscilloscope Control",
         initialize_with: str = "INSTRUMENT",
-        save_on_close: str = False,
         num_channels: int = 2,
     ):
 
         super().__init__(window, name)
 
         self.settings = {}
-        self.save_on_close = save_on_close
 
         self.comm = HC_Comm(scpi_instr, self)
         self.filename = ""
 
         # Initialize settings to correct values
         if initialize_with == "INSTRUMENT":
-            self.save_on_close = False
             # Can't save without filename
             self.settings = self.initialize_gui_instrument()
         elif initialize_with == "DEFAULT":
-            self.save_on_close = False
             # Can't save without filename
             self.settings = self.default_state()
         else:
@@ -69,7 +54,6 @@ class HC_FunctionGenerator(HC_Instrument):
         self.master_layout = QGridLayout()
         self.master_layout.addLayout(self.channel_panel, 1, 0, 1, 4)
 
-        #
         self.setLayout(self.master_layout)
 
         # Write state to scope - synch scope with GUI
@@ -77,35 +61,20 @@ class HC_FunctionGenerator(HC_Instrument):
 
         self.log_note("Initalized")
 
-    #
-    # Create a default settings object if can't get settings from a file
-    #
     def default_state(self):
-
+        """Creates a default settings object if can't get settings from a file"""
         dflt = {}
-
-        dflt["CH1_amplitude"] = "1"
-        dflt["CH1_frequency"] = "1e3"
-        dflt["CH1_offset"] = "0"
-        dflt["CH1_waveform"] = "Sine"
-        dflt["CH1_modulate"] = "False"
-        dflt["CH1_burst_en"] = "False"
-        dflt["CH1_impedance"] = "1e6"
-        dflt["CH1_enabled"] = "False"
-        dflt["CH1_num_pulse"] = "300"
-        dflt["CH1_burst_freq"] = "1"
-
-        dflt["CH2_amplitude"] = "1"
-        dflt["CH2_frequency"] = "1e3"
-        dflt["CH2_offset"] = "0"
-        dflt["CH2_waveform"] = "Sine"
-        dflt["CH2_modulate"] = "False"
-        dflt["CH2_burst_en"] = "False"
-        dflt["CH2_impedance"] = "1e6"
-        dflt["CH2_enabled"] = "False"
-        dflt["CH2_num_pulse"] = "300"
-        dflt["CH2_burst_freq"] = "1"
-
+        for ch in [1, 2]:
+            dflt[f"CH{ch}_amplitude"] = "1"
+            dflt[f"CH{ch}_frequency"] = "1e3"
+            dflt[f"CH{ch}_offset"] = "0"
+            dflt[f"CH{ch}_waveform"] = "Sine"
+            dflt[f"CH{ch}_modulate"] = "False"
+            dflt[f"CH{ch}_burst_en"] = "False"
+            dflt[f"CH{ch}_impedance"] = "1e6"
+            dflt[f"CH{ch}_enabled"] = "False"
+            dflt[f"CH{ch}_num_pulse"] = "300"
+            dflt[f"CH{ch}_burst_freq"] = "1"
         return dflt
 
 
