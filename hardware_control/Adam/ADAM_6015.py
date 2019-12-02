@@ -5,7 +5,7 @@ import socket
 import re
 
 from hardware_control.HC_Backend import HC_Backend # regex_compare #ToDo
-
+import random
 
 class Adam(HC_Backend):
     """Control of Adam input/output module"""
@@ -76,16 +76,16 @@ class Adam(HC_Backend):
         return data
 
     def command(self, cmd: str):
-        if self.dummy:
-            return cmd[:-1]+"=123"  # Jsut return the same string with temp 123
         """Use Convention "CH#_TEMP?"  the answer is like >+0025.9237+0150.0000+0150.0000+0150.0000+0150.0000+0150.0000+0150.0000-0050.0000 """
+        if self.dummy:
+            d=cmd[:-1]+"="+str(random.randint(0,10000)/1000)
+            return d
         if regex_compare("CH._TEMP?",cmd) and int(cmd[2]) in range(1,9):
             #cmd[2] equals the channel#
             out="#01\r" #simply asks for all channels
             self.s.send(out.encode("ascii"))
             indata = self.s.recv(self.buf)
-            data = indata.decode("ascii")[1:]   #cut off ">"
-            #print(data)
+            data = indata.decode("ascii")[1:]  # cut off ">"
             n = int(cmd[2])-1
             data = data[n*10:n*10+10]
             return "CH"+cmd[2]+"_TEMP="+data
