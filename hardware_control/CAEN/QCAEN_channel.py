@@ -4,7 +4,8 @@ from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtWidgets import QGroupBox, QFormLayout, QLabel, QLineEdit, QHBoxLayout
 from PyQt5.QtCore import QTimer, pyqtSignal, pyqtSlot, QObject
 
-from ..base import QOnOff, QOnOffIndicator, HC_Instrument
+from ..base import HC_Instrument
+from ..HC_helper import HC_OnOff, HC_OnOffIndicator
 
 
 class CAEN_communication(QObject):
@@ -116,7 +117,7 @@ class CAEN_channel(HC_Instrument):
         self.connector.new_values_read.connect(self.read_values)
 
         # ON/OFF SWITCH
-        self.onoff = QOnOff(self.on_click, self.off_click)
+        self.onoff = HC_OnOff(self.on_click, self.off_click)
 
         self.Vlabel = QLabel("")
         self.Ilabel = QLabel("")
@@ -125,9 +126,9 @@ class CAEN_channel(HC_Instrument):
 
         # status
         self.status_box = QHBoxLayout()
-        self.status_trip = QOnOffIndicator("Trip")
-        self.status_enabled = QOnOffIndicator("Enabled")
-        self.status_ramping = QOnOffIndicator("Ramping")
+        self.status_trip = HC_OnOffIndicator("Trip")
+        self.status_enabled = HC_OnOffIndicator("Enabled")
+        self.status_ramping = HC_OnOffIndicator("Ramping")
         self.status_box.addWidget(self.status_trip)
         self.status_box.addWidget(self.status_enabled)
         self.status_box.addWidget(self.status_ramping)
