@@ -347,9 +347,17 @@ class HC_Instrument(QGroupBox):
         """Return current list of values for logging"""
         return self.values.values()
 
+    def enableDisableWidgets(self, setting: str, value: str):
+        """User can overwrite this to enable/disable widgets when conditions/settings
+        are changed"""
+        pass
+
     # ToDo value has to be str
-    def update_setting(self, setting: str, value):
+    def update_setting(self, setting: str, value: str):
         """Update a setting in settings and values dictionary for the instrument"""
+
+        self.enableDisableWidgets(setting, value)
+
         try:
             self.settings[setting] = value
         except KeyError:
