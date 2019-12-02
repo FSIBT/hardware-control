@@ -13,42 +13,26 @@ Options:
   --log      save log file
 """
 
-from matplotlib import pyplot as plt
-import seaborn as sns
-import sys
-
-from PyQt5 import QtCore
-from PyQt5 import QtWidgets
-from PyQt5.QtCore import QThread, pyqtSignal
-from PyQt5.QtGui import QIcon, QIntValidator, QIcon
-from PyQt5.QtWidgets import (
-    QApplication,
-    QMainWindow,
-    QSizePolicy,
-    QHBoxLayout,
-    QVBoxLayout,
-    QDoubleSpinBox,
-    QLabel,
-    QCheckBox,
-    QMessageBox,
-    QWidget,
-    QLineEdit,
-    QPushButton,
-    QAction,
-    QGridLayout,
-    QStyleFactory,
-    QTabWidget,
-    QAction,
-    QGroupBox,
-)
 import sys
 from docopt import docopt
 
-commands = docopt(__doc__)
-dummy = commands["--dummy"]
-use_sockets = commands["--socket"]
-debug = commands["--debug"]
-log = commands["--log"]
+COMMANDS = docopt(__doc__)
+DUMMY = COMMANDS["--dummy"]
+USE_SOCKETS = COMMANDS["--socket"]
+debug = COMMANDS["--debug"]
+log = COMMANDS["--log"]
+
+from PyQt5 import QtCore
+from PyQt5.QtWidgets import (
+    QMainWindow,
+    QDoubleSpinBox,
+    QLabel,
+    QWidget,
+    QAction,
+    QGridLayout,
+    QTabWidget,
+    QGroupBox,
+)
 
 from hardware_control.base import HC_App
 from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
@@ -63,7 +47,6 @@ from hardware_control.ConnectionStatusTool.HC_StatusTool import HC_StatusTool
 from hardware_control.FunctionGenerator.HC_FunctionGenerator import HC_FunctionGenerator
 from hardware_control.FunctionGenerator.Key33500BCtrl import Key33500BCtrl
 from hardware_control.PowerSupply.HC_MultiPowerSupply import HC_MultiPowerSupply
-from hardware_control.PowerSupply.CAEN14xxETCtrl import CAEN14xxETCtrl
 from hardware_control.PowerSupply.TDKLGenHCtrl import TDKLGenHCtrl
 from hardware_control.ZMQConnectionTool.HC_ZMQConnectionTool import HC_ZMQConnectionTool
 from hardware_control.MacroRunnerTool.HC_MacroRunnerTool import HC_MacroRunnerTool
@@ -97,7 +80,7 @@ class STS50Demo(QMainWindow):
 
         scpi_scope = Key4000XCtrl(
             "TCPIP0::192.168.1.14::INSTR",
-            dummy,
+            self.app.dummy,
             True,
             use_sockets,
             "192.168.1.14",
@@ -113,7 +96,7 @@ class STS50Demo(QMainWindow):
         #####################################################################
         ######## PicoTab
 
-        self.pico = ZMQOscilloscopeCtrl("tcp://192.168.0.30:6000", dummy)
+        self.pico = ZMQOscilloscopeCtrl("tcp://192.168.0.30:6000", self.app.dummy)
         self.pico_ctrl = HC_Oscilloscope(self.pico, self, "PicoScope", "DEFAULT", True)
 
         self.tab1_5_layout = QGridLayout()
@@ -123,21 +106,20 @@ class STS50Demo(QMainWindow):
         #####################################################################
         ######## Tab 2
 
-        # awg = Key33500BCtrl("Some-address-goes-here", dummy, True, use_sockets, "192.168.0.18", 5025)
+        # awg = Key33500BCtrl("Some-address-goes-here",
+        # self.app.dummy, True, use_sockets, "192.168.0.18", 5025)
         awg = Key33500BCtrl(
             "TCPIP0::192.168.1.18::INSTR",
-            dummy,
+            self.app.dummy,
             True,
             use_sockets,
             "192.168.1.18",
             5025,
         )  # "USB0::0x0957::0x2907::MY52500624::INSTR"
         awg.debug = debug
-        self.awg_ctrl = HC_FunctionGenerator(
-            awg, self, "RF Generator", "DEFAULT", True, 1
-        )
+        self.awg_ctrl = HC_FunctionGenerator(awg, self, "RF Generator", "DEFAULT", 1)
 
-        self.psu = TDKLGenHCtrl("TCPIP0::192.168.1.19::INSTR", dummy)
+        self.psu = TDKLGenHCtrl("TCPIP0::192.168.1.19::INSTR", self.app.dummy)
         awg.psu = debug
         self.psu_ctrl = HC_MultiPowerSupply(
             self.psu, self, [1], "TDK Lambda (RF Vin)", "DEFAULT"
@@ -152,19 +134,23 @@ class STS50Demo(QMainWindow):
         #####################################################################
         ######## Tab 3
 
-        self.flow = AlicatMSeriesCtrl("192.168.1.15", dummy, True)
+        self.flow = AlicatMSeriesCtrl("192.168.1.15", self.app.dummy, True)
         self.flow_ctrl = HC_FlowController(
-            self.flow, self, "Flow Controller", "flowcontroller_state.json", True
+            self.flow,
+            self,
+            "Flow Controller",
+            "flowcontroller_state.json",
+            self.app.dummy,
         )
 
         # Todo: crashes if ZMQ address already in use. Add try-except
 
         # Todo: linux-gpib is a dependency on some systems
-        self.trig1 = SRSDG535Ctrl("GPIB0::10::INSTR", dummy, True)
+        self.trig1 = SRSDG535Ctrl("GPIB0::10::INSTR", self.app.dummy, True)
         self.trig1.debug = debug
         self.trig1_ctrl = HC_PulseGen(self.trig1, self, "Trigger 1", "DEFAULT", True)
 
-        self.trig2 = SRSDG535Ctrl("GPIB0::15::INSTR", dummy, True)
+        self.trig2 = SRSDG535Ctrl("GPIB0::15::INSTR", self.app.dummy, True)
         self.trig2.debug = debug
         self.trig2_ctrl = HC_PulseGen(self.trig2, self, "Trigger 2", "DEFAULT", True)
 
@@ -234,59 +220,56 @@ class STS50Demo(QMainWindow):
         self.tab_sts_layout = QGridLayout()
 
         ########### High Voltage Panel
-        #
         self.hv_panel = QGroupBox("High Voltage Control")
         self.hv_panel_layout = QGridLayout()
-        #
+
         self.v_extrac_label = QLabel("Extraction Voltage - Set Point (V):")
         self.v_extrac_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        #
+
         self.v_extrac_edit = QDoubleSpinBox()
         # self.v_extrac_edit.editingFinished.connect(lambda: self..comm.update_setting(f"CH{channel}_volts_div", self.v_div_edit.text()))
         self.v_extrac_edit.setValue(0)
         self.v_extrac_edit.setDecimals(1)
         self.v_extrac_edit.setSingleStep(100)
-        #
+
         self.v_extrac_meas_label = QLabel("Measured Value:")
         self.v_extrac_meas_label.setAlignment(
             QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
         )
-        #
+
         self.v_extrac_meas_readout = QLabel("---- V")
         self.v_extrac_meas_readout.setAlignment(
             QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
         )
-        #
-        #
+
         self.v_float_label = QLabel("Floating Rack Voltage  - Set Point (V):")
         self.v_float_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        #
+
         self.v_float_edit = QDoubleSpinBox()
         # self.v_float_edit.editingFinished.connect(lambda: self..comm.update_setting(f"CH{channel}_volts_div", self.v_div_edit.text()))
         self.v_float_edit.setValue(0)
         self.v_float_edit.setDecimals(1)
         self.v_float_edit.setSingleStep(1000)
-        #
+
         self.v_float_meas_label = QLabel("Measured Value:")
         self.v_float_meas_label.setAlignment(
             QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
         )
-        #
+
         self.v_float_meas_readout = QLabel("---- V")
         self.v_float_meas_readout.setAlignment(
             QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
         )
-        #
+
         self.fil_ampl_label = QLabel("Filament 'On' Voltage (V):")
         self.fil_ampl_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        #
+
         self.fil_ampl_edit = QDoubleSpinBox()
         # self.fil_ampl_edit.editingFinished.connect(lambda: self..comm.update_setting(f"CH{channel}_volts_div", self.v_div_edit.text()))
         self.fil_ampl_edit.setValue(0)
         self.fil_ampl_edit.setDecimals(2)
         self.fil_ampl_edit.setSingleStep(0.5)
-        #
-        #
+
         self.hv_panel_layout.addWidget(self.v_extrac_label, 0, 0)
         self.hv_panel_layout.addWidget(self.v_extrac_edit, 0, 1)
         self.hv_panel_layout.addWidget(self.v_extrac_meas_label, 0, 2)
@@ -298,40 +281,39 @@ class STS50Demo(QMainWindow):
         self.hv_panel.setLayout(self.hv_panel_layout)
 
         ########## Timing Panel
-        #
         self.timing_panel = QGroupBox("Timing Panel")
         self.timing_panel_layout = QGridLayout()
-        #
+
         self.t_heat_label = QLabel("Filament 'On' time (s):")
         self.t_heat_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        #
+
         self.t_heat_edit = QDoubleSpinBox()
         # self.t_heat_edit.editingFinished.connect(lambda: self..comm.update_setting(f"CH{channel}_volts_div", self.v_div_edit.text()))
         self.t_heat_edit.setValue(7.5)
         self.t_heat_edit.setDecimals(2)
         self.t_heat_edit.setSingleStep(0.5)
         self.t_heat_edit.setMaximum(10e3)
-        #
+
         self.t_delay_label = QLabel("Filament spark delay (s):")
         self.t_delay_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        #
+
         self.t_delay_edit = QDoubleSpinBox()
         # self.t_delay_edit.editingFinished.connect(lambda: self..comm.update_setting(f"CH{channel}_volts_div", self.v_div_edit.text()))
         self.t_delay_edit.setValue(6.5)
         self.t_delay_edit.setDecimals(2)
         self.t_delay_edit.setSingleStep(0.5)
         self.t_delay_edit.setMaximum(10e3)
-        #
+
         self.t_arc_label = QLabel("Filament arc duration (ms):")
         self.t_arc_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        #
+
         self.t_arc_edit = QDoubleSpinBox()
         # self.t_arc_edit.editingFinished.connect(lambda: self..comm.update_setting(f"CH{channel}_volts_div", self.v_div_edit.text()))
         self.t_arc_edit.setValue(0.5)
         self.t_arc_edit.setDecimals(3)
         self.t_arc_edit.setMaximum(10e3)
         self.t_arc_edit.setSingleStep(0.5)
-        #
+
         self.timing_panel_layout.addWidget(self.t_heat_label, 0, 0)
         self.timing_panel_layout.addWidget(self.t_heat_edit, 0, 1)
         self.timing_panel_layout.addWidget(self.t_delay_label, 1, 0)
@@ -356,62 +338,61 @@ class STS50Demo(QMainWindow):
         #
         self.file_menu = self.bar.addMenu("File")
         self.file_menu.triggered[QAction].connect(self.process_file_menu)
-        #
+
         self.save_state_act = QAction("Save Instrument States", self)
         self.save_state_act.setShortcut("Ctrl+Shift+S")
         self.file_menu.addAction(self.save_state_act)
-        #
+
         self.save_data_act = QAction("Save App Variables", self)
         self.save_data_act.setShortcut("Ctrl+S")
         self.file_menu.addAction(self.save_data_act)
-        #
+
         self.file_menu.addSeparator()
-        #
+
         self.close_act = QAction("Close Window", self)
         self.close_act.setShortcut("Ctrl+W")
         self.file_menu.addAction(self.close_act)
 
         ####### Instrument Menu
-        #
+
         self.instr_menu = self.bar.addMenu("Instrument")
         self.instr_menu.triggered[QAction].connect(self.process_instr_menu)
-        #
+
         self.sync_from_ui_act = QAction("Sync from UI", self)
         self.instr_menu.addAction(self.sync_from_ui_act)
-        #
+
         self.sync_from_instr_act = QAction("Sync from Instrument", self)
         self.instr_menu.addAction(self.sync_from_instr_act)
-        #
+
         self.sync_from_file_act = QAction("Sync from File", self)
         self.instr_menu.addAction(self.sync_from_file_act)
-        #
+
         self.instr_menu.addSeparator()
-        #
+
         self.print_addresses_act = QAction("Print Addresses", self)
         self.instr_menu.addAction(self.print_addresses_act)
 
         ####### Scripting Menu
-        #
         self.scripting_menu = self.bar.addMenu("Scripting")
         self.scripting_menu.triggered[QAction].connect(self.process_scripting_menu)
-        #
+
         self.run_command_act = QAction("Run Command", self)
         self.run_command_act.setShortcut("Ctrl+R")
         self.scripting_menu.addAction(self.run_command_act)
-        #
+
         self.run_script_act = QAction("Run Macro")
         self.scripting_menu.addAction(self.run_script_act)
-        #
+
         self.scripting_menu.addSeparator()
-        #
+
         self.add_macro_act = QAction("Add Macro")
         self.scripting_menu.addAction(self.add_macro_act)
-        #
+
         self.add_variable_act = QAction("Add Variable")
         self.scripting_menu.addAction(self.add_variable_act)
-        #
+
         self.scripting_menu.addSeparator()
-        #
+
         self.show_variables_act = QAction("Show Variables")
         self.scripting_menu.addAction(self.show_variables_act)
 
@@ -443,7 +424,6 @@ class STS50Demo(QMainWindow):
                     f.write("%s\n" % item)
 
     def process_file_menu(self, q):
-
         if q.text() == "Save Instrument States":  # TODO: impliment
             print("This is where I save a state")
         elif q.text() == "Save App Variables":  # TODO: impliment
@@ -455,7 +435,6 @@ class STS50Demo(QMainWindow):
             print("Error: function not supported")
 
     def process_instr_menu(self, q):
-
         if q.text() == "Sync from Instrument":  # TODO: impliment
             print("Not implimented")
             # Todo: impliment sync from instr
@@ -485,12 +464,12 @@ class STS50Demo(QMainWindow):
             print("Error: function not supported")
 
 
-def main(argv):
-    app = HC_App([])
+def main():
+    app = HC_App([], dummy=DUMMY)
     app.print_debug = debug
-    ex = STS50Demo(app, use_sockets)
+    ex = STS50Demo(app, USE_SOCKETS)
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())
 
 
-main(sys.argv[1:])
+main()
