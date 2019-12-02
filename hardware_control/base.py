@@ -393,7 +393,7 @@ class HC_Instrument(QGroupBox):
 class HC_App(QApplication):
     """Subclass of QApplication that is aware of what hardware is connected to it and can log data"""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, dummy=False, **kwargs):
         super().__init__(*args, **kwargs)
         self.instruments = []
         self.log = []  # List of strings for debugging/logging purposes
@@ -403,7 +403,7 @@ class HC_App(QApplication):
         self.print_debug = False
 
         # are we connected to real instruments or should we simulate them?
-        self.dummy = False
+        self.dummy = dummy
 
     def add_instrument(self, widget):
         # check if name is already present

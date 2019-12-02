@@ -10,30 +10,6 @@ Options:
   --debug    allow debug print statements
 """
 
-from matplotlib import pyplot as plt
-import seaborn as sns
-import sys
-
-from PyQt5 import QtCore
-from PyQt5 import QtWidgets
-from PyQt5.QtCore import QThread, pyqtSignal
-from PyQt5.QtGui import QIcon, QIntValidator, QIcon
-from PyQt5.QtWidgets import (
-    QApplication,
-    QMainWindow,
-    QSizePolicy,
-    QHBoxLayout,
-    QVBoxLayout,
-    QLabel,
-    QCheckBox,
-    QMessageBox,
-    QWidget,
-    QLineEdit,
-    QPushButton,
-    QAction,
-    QGridLayout,
-)
-import sys
 from docopt import docopt
 
 commands = docopt(__doc__)
@@ -41,13 +17,13 @@ dummy = commands["--dummy"]
 use_sockets = commands["--socket"]
 debug = commands["--debug"]
 
-# Todo Delete this
-# dummy = True
-debug = True
+import sys
+from PyQt5.QtWidgets import QMainWindow, QWidget, QGridLayout
+
 
 from hardware_control.base import HC_App
 from hardware_control.Adam.HC_ADAM import HC_ADAM
-from hardware_control.Adam.ADAM_6015 import Adam
+from hardware_control.Adam.ADAM_6015 import Adam_6015 as Adam
 
 
 class Demo(QMainWindow):
@@ -61,7 +37,7 @@ class Demo(QMainWindow):
 
         ##### Add Device(s)
         # add a Backend  with its Visa Adress
-        demo = Adam("192.168.1.25", dummy)
+        demo = Adam("192.168.1.25:1025", self.app.dummy)
         # add a HC. The corresponding backend, MainWidget and more information are handed over
         self.demo_ctrl = HC_ADAM(
             demo,
@@ -80,16 +56,15 @@ class Demo(QMainWindow):
         self.setCentralWidget(self.main_widget)
         self.show()
 
-    #
     def close(self):
         self.demo_ctrl.close()
 
 
-def main(argv):
-    app = HC_App([])
+def main():
+    app = HC_App([], dummy=dummy)
     ex = Demo(app, use_sockets)  # Change accordingly
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())
 
 
-main(sys.argv[1:])
+main()

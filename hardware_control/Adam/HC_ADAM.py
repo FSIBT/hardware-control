@@ -5,7 +5,6 @@ from hardware_control.base import HC_Instrument, HC_Comm
 
 
 class HC_ADAM(HC_Instrument):
-    # Convention: __init__(self, backend, window . . . )
     def __init__(
         self,
         backend,
@@ -14,14 +13,11 @@ class HC_ADAM(HC_Instrument):
         channelNames: list,  # and their names
         name: str = "ADAM-Temperature",
         initialize_with: str = "INSTRUMENT",
-        save_on_close: str = False,
     ):
         # initalizing
         super().__init__(window, name)
-        self.settings = (
-            {}
-        )  # A dict to store all possible settings - Not used here, bc there are no settings
-        self.save_on_close = save_on_close
+        # A dict to store all possible settings - Not used here, bc there are no settings
+        self.settings = {}
         self.backend = backend
         self.comm = HC_Comm(backend, self)
         # self.filename = ""
@@ -52,19 +48,16 @@ class HC_ADAM(HC_Instrument):
         # this sends all settings, which are stored in the settings dictionary to the backend
         self.send_state()
 
-    # Updates the readout
     def update_readout(self):
         # Send a command for all the used channels
         for i, c in enumerate(self.channels):
-            self.command("CH" + str(c) + "_TEMP?")  # send request to backend
-            mess = self.read_message("CH" + str(c) + "_TEMP")  # check for awnsers
+            self.command(f"CH{c}_TEMP?")  # send request to backend
+            mess = self.read_message(f"CH{c}_TEMP")  # check for awnsers
             if mess:  # only write to UI if massige not None
-                mess = float(
-                    mess[0] + mess[2:7]
-                )  # with that 00023.7632 is shown as 23.7 and signs are taken care of
-                self.listOfWidgets[i].lcd.display(
-                    mess
-                )  # write to actual widget/channel
+                # with that 00023.7632 is shown as 23.7 and signs are taken care of
+                mess = float(mess[0] + mess[2:7])
+                # write to actual widget/channel
+                self.listOfWidgets[i].lcd.display(mess)
 
 
 class singleChannelADAM(QWidget):

@@ -3,17 +3,31 @@ import re
 from hardware_control.HC_Backend import HC_Backend  # regex_compare #ToDo
 
 
-class Adam(HC_Backend):
+class Adam_6015(HC_Backend):
     """Control of Adam input/output module"""
 
-    # ToDo remove IP
-    def __init__(self, IP="192.168.1.25", dummy=False):
+    def __init__(self, address, dummy=False):
+        """Initialize connection to the instrument
+
+        Parameters
+        ----------
+        address : str
+            either ip_address:port or only ip_address. In the latter case the default port of 1025 will be used.
+
+        """
         self.dummy = dummy
         self.online = False
         self.ID = "123"
         self.buf = 200
-        self.IP = IP
-        self.port = 1025
+        tmp = address.split(":")
+        if len(tmp) == 1:
+            self.IP = tmp[0]
+            self.port = 1025
+        elif len(tmp) == 2:
+            self.IP = tmp[0]
+            self.port = tmp[1]
+        else:
+            print("[Error] Can't parse address")
         self.addr = (self.IP, self.port)
 
         self.try_connect()
@@ -24,17 +38,17 @@ class Adam(HC_Backend):
             # First Check current state
             if not self.online:  # If not online, try to connect
                 try:
-                    self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                    self.s.settimeout(2)
-                    self.s.connect(self.addr)
+                    self.device = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                    self.device.settimeout(2)
+                    self.device.connect(self.addr)
                 except:
                     self.online = False
                     return self.online
 
             # Independent of the state, try to receive data, if nothing is returned, then the device is offline
             try:
-                self.s.send("#01\r".encode("ascii"))
-                indata = self.s.recv(self.buf)
+                self.device.send("#01\r".encode("ascii"))
+                indata = self.device.recv(self.buf)
                 self.online = True
                 return self.online
             except:
@@ -46,27 +60,20 @@ class Adam(HC_Backend):
             self.online = True
             return self.online
 
-    def close(self):
-        """this is a override - sockets are used"""
-        if not self.dummy:
-            self.s.close()
-        else:
-            print("Adam: close dummy connection")
-
     def write(self, msg: str):
         """this is a override - sockets are used"""
         if not self.dummy:
             msg = msg + "\r"
-            self.s.send(msg.encode("ascii"))
-            indata = self.s.recv(self.buf)
+            self.device.send(msg.encode("ascii"))
+            indata = self.device.recv(self.buf)
             data = indata.decode("ascii")[1:-1]
             return data
 
     def read(self):
         """Read values from Adam"""
         if not self.dummy:
-            self.s.send("#01\r".encode("ascii"))
-            indata = self.s.recv(self.buf)
+            self.device.send("#01\r".encode("ascii"))
+            indata = self.device.recv(self.buf)
             data = indata.decode("ascii")
         else:
             # Just a random answer it once received
@@ -80,8 +87,8 @@ class Adam(HC_Backend):
         if regex_compare("CH._TEMP?", cmd) and int(cmd[2]) in range(1, 9):
             # cmd[2] equals the channel#
             out = "#01\r"  # simply asks for all channels
-            self.s.send(out.encode("ascii"))
-            indata = self.s.recv(self.buf)
+            self.device.send(out.encode("ascii"))
+            indata = self.device.recv(self.buf)
             data = indata.decode("ascii")[1:]  # cut off ">"
             # print(data)
             n = int(cmd[2]) - 1
