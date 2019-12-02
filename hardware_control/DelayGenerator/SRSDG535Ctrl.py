@@ -65,15 +65,45 @@ class SRSDG535Ctrl(HC_Backend):
             if self.dummy:
                 return value
             else:
-                if setting == "command":
-                    self.command_str = value
+                if setting == "trigger_mode":
+
+                    mode = 0
+                    if value == "Internal":
+                        mode = 0
+                    elif value == "External":
+                        mode = 1
+                    elif value == "Single":
+                        mode = 2
+                    elif value == "Burst":
+                        mode = 3
+                    self.write(f"TM{mode}")
                     return value
+                elif setting == "trigger_edge":
+                    mode = 0
+                    if value == "Positive":
+                        mode = 1
+                    elif value == "Negative":
+                        mode = 0
+                    self.write(f"TS{mode}")
+                elif setting == "ext_trig_Zin":
+                    mode = 0
+                    if value == "50 Ohms":
+                        mode = 0
+                    elif value == "Hi-Z":
+                        mode = 1
+                    self.write(f"TZ{mode}")
+                elif setting == "pulses_per_burst":
+                    self.write(f"BC{value}")
+                elif setting == "trigger_period":
+                    self.write(f"BP{value}")
+                elif setting == "trigger_level":
+                    self.write(f"TL{value}")
         except Exception as e:
             print("An exception occured in update_setting() of SRSDG535Ctrl.py.")
             print(str(e))
 
     def command(self, cmd: str):
-        if cmd == "TRIGGER":
+        if cmd == "single_trigger":
             """Tells DG535 to trigger"""
             self.write(self.command_str)
         return cmd
