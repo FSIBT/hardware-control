@@ -318,7 +318,19 @@ class HC_Instrument(QGroupBox):
                     return ".".join(lg.values_titles)  # TODO: Better way to join/label?
 
     def get_values(self, group_name=""):
-        pass
+        """Returns the values for the specified logging group. If the group
+        requested does not exist, returns None"""
+        if group_name == "":
+            return get_default_header()
+        else:
+
+            vals = []
+            for lg in self.logging_groups:
+                if lg.group_name == group_name:
+                    for k in lg.value_keys:
+                        vals.append(self.values[k])
+                return vals
+            return None
 
     def get_default_header(self):
         """Supply a header for a log file"""
