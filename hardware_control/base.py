@@ -306,7 +306,21 @@ class HC_Instrument(QGroupBox):
 
         return None
 
-    def get_header(self):
+    def get_header(self, group_name=""):
+        """Returns the header for the specified logging group. If the group
+        requested does not exist, returns None"""
+        if group_name == "":
+            return get_default_header()
+        else:
+
+            for lg in self.logging_groups:
+                if lg.group_name == group_name:
+                    return ".".join(lg.values_titles)  # TODO: Better way to join/label?
+
+    def get_values(self, group_name=""):
+        pass
+
+    def get_default_header(self):
         """Supply a header for a log file"""
         header = f"{self.manufacturer}-{self.model}-"
         header += "-".join(
@@ -317,7 +331,7 @@ class HC_Instrument(QGroupBox):
         )
         return header
 
-    def get_values(self):
+    def get_default_values(self):
         """Return current list of values for logging"""
         return self.values.values()
 
