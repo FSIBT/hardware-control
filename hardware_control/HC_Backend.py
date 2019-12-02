@@ -112,6 +112,14 @@ def regex_compare(pattern: str, comp: str):
     regex = re.compile(pattern)
     return bool(re.match(regex, comp))
 
+def returnChannelNumber(s:str):
+    """Return channel number for a string like 'CH###_TEMP' """
+    if s[:2]=="CH":
+        number = s[2:s.find("_")]
+        if number.isdigit():
+            return number
+    else:
+        return None
 
 # These functions are helpful for converting numbers to
 # specific number formats for strings
