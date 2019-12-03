@@ -29,6 +29,7 @@ class HC_Comm(QObject):
     sigWrite = pyqtSignal(str)
     sigQuery = pyqtSignal(str)
     sigTryConnect = pyqtSignal()
+    sigCommandList = pyqtSignal(str)
     sigClose = pyqtSignal()
 
     def __init__(self, backend, instrument):
@@ -48,11 +49,13 @@ class HC_Comm(QObject):
         self.sigWrite.connect(self.worker.write)
         self.sigQuery.connect(self.worker.query)
         self.sigTryConnect.connect(self.worker.try_connect)
+        self.sigCommandList.connect(self.worker.command_listdata)
         self.sigClose.connect(self.worker.close)
 
         # Connect CommWorker's signals to Comm's slots
         self.worker.sigReturnValues.connect(self.backend_return)
         self.worker.sigReturnOnline.connect(self.backend_return_online)
+        self.worker.sigReturnList.connect(self.backend_return_listdata)
 
         # Connect timer
         self.try_connect_timer = QTimer(self)
@@ -125,6 +128,18 @@ class HC_Comm(QObject):
         """Tells the worker to tell the backend to try to connect to the instrument"""
         self.sigTryConnect.emit()
 
+    def command_listdata(self, cmd: str):
+        """Sends a command to the worker in the worker thread just like command(),
+        but returns two lists instead of a string."""
+        if self.instrument.window.app.print_debug:
+            print(
+                f"Instrument: {self.instrument.name} called 'command()' and sent command: '{cmd}'."
+            )
+        self.sigCommandList.emit(cmd)
+        self.instrument.window.app.add_log(
+            self.instrument.name, self.backend_model, "CMDLD", cmd
+        )
+
     @pyqtSlot(str)
     def backend_return(self, retval: str):
         """Receives a return value from the CommWorker and sends it to the instrument's
@@ -143,6 +158,13 @@ class HC_Comm(QObject):
         Updates the state of the instrument - ie. if it is or is not online"""
         self.instrument.backend_return_online(connected)
 
+    @pyqtSlot(str, list, list)
+    def backend_return_listdata(self, desc: str, data1: list, data2: list):
+        """Receives a return value from the CommWorker and sends it to the instrument's
+        backend_return_listdata function, which can be overwritten by the UI's author
+        to process the data."""
+        self.instrument.backend_return_listdata(desc, data1, data2)
+
 
 class HC_CommWorker(QObject):
     """Uses signals + slots to receive data from HC_Comm and relays the information
@@ -151,6 +173,7 @@ class HC_CommWorker(QObject):
 
     sigReturnValues = pyqtSignal(str)
     sigReturnOnline = pyqtSignal(bool)
+    sigReturnList = pyqtSignal(str, list, list)
 
     def __init__(self, backend):
         super().__init__()
@@ -187,6 +210,12 @@ class HC_CommWorker(QObject):
         connected, else connect."""
         online = self.backend.try_connect()
         self.sigReturnOnline.emit(online)
+
+    @pyqtSlot(str)
+    def command_listdata(self, cmd: str):
+        """Transfers a command to the backend"""
+        ret_val = self.backend.command_listdata(cmd)
+        self.sigReturnList.emit(ret_val[0], ret_val[1], ret_val[2])
 
     @pyqtSlot()
     def close(self):
@@ -358,6 +387,12 @@ class HC_Instrument(QGroupBox):
         if self.comm is not None:
             self.comm.command(cmd_str)
 
+    def command_listdata(self, cmd_str: str):
+        """Send a command to the instrument and get a string and two lists back"""
+
+        if self.comm is not None:
+            self.comm.command_listdata(cmd_str)
+
     def set_setting(self, parameter: str, value: str):
         """Adjusts a parameter in 'self.settings' and updates any GUI elements to reflect the change."""
 
@@ -474,6 +509,12 @@ class HC_Instrument(QGroupBox):
 
         self.online = connected
 
+    def backend_return_listdata(self, descr: str, data1: list, data2: list):
+        """Is called by self.comm when the backend returns from command_listdata,
+        which returns a string and two lists. The author of the UI can overwrite
+        this function to procses the return data."""
+        pass
+
 
 class HC_App(QApplication):
     """Subclass of QApplication that is aware of what hardware is connected to it and can log data"""
@@ -566,6 +607,7 @@ class HC_App(QApplication):
             or log_type == "QRY"
             or log_type == "NOTE"
             or log_type == "WARNING"
+            or log_type == "CMDLD"
         ):
             self.log.append(
                 f'{instr_name}: \t{log_type} "{arg1}" \t[{datestr}] \t[{backend_model}]'
@@ -1418,3 +1460,13 @@ def setButtonState(button: QPushButton, value):
         else:
             if button.isChecked():
                 button.toggle()
+
+
+def returnChannelNumber(s: str):
+    """Return channel number for a string like 'CH###_TEMP' """
+    if s[:2] == "CH":
+        number = s[2 : s.find("_")]
+        if number.isdigit():
+            return number
+    else:
+        return None

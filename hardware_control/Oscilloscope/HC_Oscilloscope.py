@@ -11,7 +11,13 @@ import pkg_resources
 
 import time  # Get rid of this guy!
 
-from hardware_control.base import HC_Instrument, HC_Comm, setButtonState
+from hardware_control.HC_Backend import regex_compare
+from hardware_control.base import (
+    HC_Instrument,
+    HC_Comm,
+    setButtonState,
+    returnChannelNumber,
+)
 import pyqtgraph as pg
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer, QThread, pyqtSignal, pyqtSlot, QObject
@@ -61,6 +67,7 @@ class HC_Oscilloscope(HC_Instrument):
         self.settings = {}
         self.save_on_close = save_on_close
 
+        # scpi_instr.sigReturnWaves.connect(self.backend_return_waveform)
         self.comm = HC_Comm(scpi_instr, self)
         self.filename = ""
 
@@ -83,10 +90,10 @@ class HC_Oscilloscope(HC_Instrument):
         trig = OscilloscopeTriggerWidget(self)
         self.top_panel.addWidget(trig, 0, 0)
         #
-        ch1 = OscillscopeChannelWidget(1, self, "yellow")
-        ch2 = OscillscopeChannelWidget(2, self, "green")
-        ch3 = OscillscopeChannelWidget(3, self, "blue")
-        ch4 = OscillscopeChannelWidget(4, self, "red")
+        ch1 = OscillscopeChannelWidget(1, self)
+        ch2 = OscillscopeChannelWidget(2, self)
+        ch3 = OscillscopeChannelWidget(3, self)
+        ch4 = OscillscopeChannelWidget(4, self)
         self.channel_panel = QGridLayout()
         self.channel_panel.addWidget(ch1, 0, 0)
         self.channel_panel.addWidget(ch2, 0, 1)
@@ -109,6 +116,50 @@ class HC_Oscilloscope(HC_Instrument):
 
         self.log_note("Initalized")
 
+    # def backend_return(self, retval: str):
+    #     """Is called by self.comm when the backend returns a value. The return string
+    #     is converted here into a dictionary's key/value pair and added to self.values.
+    #     An equals sign ('=') is used to separate the key and value, with key coming
+    #     first."""
+    #
+    #     sep_idx = retval.find("=")
+    #     if sep_idx != -1:  # Separator was found...
+    #
+    #         key = retval[0:sep_idx]
+    #
+    #         #If the returned data is a waveform, send it directly to the update fn
+    #         if (regex_compare("CH.+_WVFM", key)):
+    #             c = returnChannelNumber(key)
+    #             if c is None:
+    #                 return
+    #             self.disp.update_display(c, retval[sep_idx + 1 :])
+    #
+    #         else:
+    #             val = retval[sep_idx + 1 :]
+    #
+    #             self.values[key] = val
+    #
+    #     else:  # If no separator, put under 'Misc'
+    #
+    #         self.values["Misc"] = retval
+
+    # @pyqtSlot(int, list, list)
+    # def backend_return_waveform(self, channel: int, wave, times):
+    #
+    #     if self.window.app.print_debug:
+    #         print(
+    #             f"Instrument: {self.name} received waveform return from backend '{self.comm.backend_model}'. Channel: {channel}"
+    #         )
+    #
+    #     self.display.update_display(channel, times, wave)
+
+    def backend_return_listdata(self, descr: str, data1: list, data2: list):
+
+        if regex_compare("CH.+_WVFM", descr):
+            c = returnChannelNumber(descr)
+            print(f"Channel: {descr}\n\tlen(t): {len(data1)}\n\tlen(V): {len(data2)}")
+            self.disp.update_display(int(c), data1, data2)
+
     #
     # Create a default settings object if can't get settings from a file
     #
@@ -116,74 +167,74 @@ class HC_Oscilloscope(HC_Instrument):
         # ToDo value has to be str
         dflt = {}
 
-        dflt["timebase"] = 1e-3
+        dflt["timebase"] = "1e-3"
         #
-        dflt["time_offset"] = 0
+        dflt["time_offset"] = "0"
         #
-        dflt["CH1_volts_div"] = 1
-        dflt["CH2_volts_div"] = 1
-        dflt["CH3_volts_div"] = 1
-        dflt["CH4_volts_div"] = 1
+        dflt["CH1_volts_div"] = "1"
+        dflt["CH2_volts_div"] = "1"
+        dflt["CH3_volts_div"] = "1"
+        dflt["CH4_volts_div"] = "1"
         #
-        dflt["CH1_volts_div"] = 1
-        dflt["CH2_volts_div"] = 1
-        dflt["CH3_volts_div"] = 1
-        dflt["CH4_volts_div"] = 1
+        dflt["CH1_volts_div"] = "1"
+        dflt["CH2_volts_div"] = "1"
+        dflt["CH3_volts_div"] = "1"
+        dflt["CH4_volts_div"] = "1"
         #
-        dflt["CH1_volts_div"] = 1
-        dflt["CH2_volts_div"] = 1
-        dflt["CH3_volts_div"] = 1
-        dflt["CH4_volts_div"] = 1
+        dflt["CH1_volts_div"] = "1"
+        dflt["CH2_volts_div"] = "1"
+        dflt["CH3_volts_div"] = "1"
+        dflt["CH4_volts_div"] = "1"
         #
-        dflt["CH1_offset"] = 0
-        dflt["CH2_offset"] = 0
-        dflt["CH3_offset"] = 0
-        dflt["CH4_offset"] = 0
+        dflt["CH1_offset"] = "0"
+        dflt["CH2_offset"] = "0"
+        dflt["CH3_offset"] = "0"
+        dflt["CH4_offset"] = "0"
         #
-        dflt["CH1_BW_lim"] = False
-        dflt["CH2_BW_lim"] = False
-        dflt["CH3_BW_lim"] = False
-        dflt["CH4_BW_lim"] = False
+        dflt["CH1_BW_lim"] = "False"
+        dflt["CH2_BW_lim"] = "False"
+        dflt["CH3_BW_lim"] = "False"
+        dflt["CH4_BW_lim"] = "False"
         #
-        dflt["CH1_active"] = True
-        dflt["CH2_active"] = False
-        dflt["CH3_active"] = False
-        dflt["CH4_active"] = False
+        dflt["CH1_active"] = "True"
+        dflt["CH2_active"] = "False"
+        dflt["CH3_active"] = "False"
+        dflt["CH4_active"] = "False"
         #
-        dflt["CH1_impedance"] = 1e6
-        dflt["CH2_impedance"] = 1e6
-        dflt["CH3_impedance"] = 1e6
-        dflt["CH4_impedance"] = 1e6
+        dflt["CH1_impedance"] = "1e6"
+        dflt["CH2_impedance"] = "1e6"
+        dflt["CH3_impedance"] = "1e6"
+        dflt["CH4_impedance"] = "1e6"
         #
         dflt["CH1_label"] = "Channel 1"
         dflt["CH2_label"] = "Channel 2"
         dflt["CH3_label"] = "Channel 3"
         dflt["CH4_label"] = "Channel 4"
         #
-        dflt["labels_enabled"] = False
+        dflt["labels_enabled"] = "False"
         #
-        dflt["CH1_invert"] = False
-        dflt["CH2_invert"] = False
-        dflt["CH3_invert"] = False
-        dflt["CH4_invert"] = False
+        dflt["CH1_invert"] = "False"
+        dflt["CH2_invert"] = "False"
+        dflt["CH3_invert"] = "False"
+        dflt["CH4_invert"] = "False"
         #
-        dflt["CH1_probe_atten"] = 10
-        dflt["CH2_probe_atten"] = 10
-        dflt["CH3_probe_atten"] = 10
-        dflt["CH4_probe_atten"] = 10
+        dflt["CH1_probe_atten"] = "10"
+        dflt["CH2_probe_atten"] = "10"
+        dflt["CH3_probe_atten"] = "10"
+        dflt["CH4_probe_atten"] = "10"
         #
         dflt["CH1_coupling"] = "DC"
         dflt["CH2_coupling"] = "DC"
         dflt["CH3_coupling"] = "DC"
         dflt["CH4_coupling"] = "DC"
         #
-        dflt["trigger_level"] = 1
+        dflt["trigger_level"] = "1"
         #
         dflt["trigger_coupling"] = "DC"
         #
         dflt["trigger_edge"] = "POS"
         #
-        dflt["trigger_channel"] = 1
+        dflt["trigger_channel"] = "1"
 
         return dflt
 
@@ -192,7 +243,7 @@ class HC_Oscilloscope(HC_Instrument):
 # Defines a UI for oscilloscope channels
 #
 class OscillscopeChannelWidget(QWidget):
-    def __init__(self, channel: int, control, color):
+    def __init__(self, channel: int, control):
         super().__init__()
 
         self.channel = channel
@@ -200,7 +251,7 @@ class OscillscopeChannelWidget(QWidget):
         # ************** DEFINE UI *********************#
 
         self.channel_label = QLabel()
-        if color == "yellow":
+        if channel == 1:
             self.channel_label.setPixmap(
                 QPixmap(
                     pkg_resources.resource_filename(
@@ -208,7 +259,7 @@ class OscillscopeChannelWidget(QWidget):
                     )
                 )
             )
-        elif color == "green":
+        elif channel == 2:
             self.channel_label.setPixmap(
                 QPixmap(
                     pkg_resources.resource_filename(
@@ -216,7 +267,7 @@ class OscillscopeChannelWidget(QWidget):
                     )
                 )
             )
-        elif color == "blue":
+        elif channel == 3:
             self.channel_label.setPixmap(
                 QPixmap(
                     pkg_resources.resource_filename(
@@ -224,7 +275,7 @@ class OscillscopeChannelWidget(QWidget):
                     )
                 )
             )
-        elif color == "red":
+        elif channel == 4:
             self.channel_label.setPixmap(
                 QPixmap(
                     pkg_resources.resource_filename(
@@ -239,31 +290,35 @@ class OscillscopeChannelWidget(QWidget):
         #
         self.v_div_edit = QDoubleSpinBox()
         self.v_div_edit.editingFinished.connect(
-            lambda: control.comm.update_setting(
+            lambda: control.update_setting(
                 f"CH{channel}_volts_div", self.v_div_edit.text()
             )
         )
-        self.v_div_edit.setValue(control.settings[f"CH{channel}_volts_div"])
+        try:
+            self.v_div_edit.setValue(float(control.settings[f"CH{channel}_volts_div"]))
+        except:
+            self.v_div_edit.setValue(0)
         self.v_div_edit.setDecimals(2)
         # self.v_div_edit.setRange()
         self.v_div_edit.setSingleStep(0.05)
         #
         self.offset_edit = QDoubleSpinBox()
         self.offset_edit.editingFinished.connect(
-            lambda: control.comm.update_setting(
+            lambda: control.update_setting(
                 f"CH{channel}_offset", self.offset_edit.text()
             )
         )
-        self.offset_edit.setValue(control.settings[f"CH{channel}_offset"])
+        try:
+            self.offset_edit.setValue(float(control.settings[f"CH{channel}_offset"]))
+        except:
+            self.offset_edit.setValue(0)
         self.offset_edit.setDecimals(2)
         # self.offset_edit.setRange()
         self.offset_edit.setSingleStep(0.05)
         #
         self.label_edit = QLineEdit()
         self.label_edit.editingFinished.connect(
-            lambda: control.comm.update_setting(
-                f"CH{channel}_label", self.label_edit.text()
-            )
+            lambda: control.update_setting(f"CH{channel}_label", self.label_edit.text())
         )
         self.label_edit.setText(control.settings[f"CH{channel}_label"])
         #
@@ -280,7 +335,7 @@ class OscillscopeChannelWidget(QWidget):
         self.active_but.setText("Channel On/Off")
         self.active_but.setCheckable(True)
         self.active_but.clicked.connect(
-            lambda: control.comm.update_setting(
+            lambda: control.update_setting(
                 f"CH{channel}_active", str(self.active_but.isChecked())
             )
         )
@@ -301,7 +356,7 @@ class OscillscopeChannelWidget(QWidget):
         )
         self.BW_but.setCheckable(True)
         self.BW_but.clicked.connect(
-            lambda: control.comm.update_setting(
+            lambda: control.update_setting(
                 f"CH{channel}_BW_lim", str(self.BW_but.isChecked())
             )
         )
@@ -322,7 +377,7 @@ class OscillscopeChannelWidget(QWidget):
             )
         )
         self.Inv_but.clicked.connect(
-            lambda: control.comm.update_setting(
+            lambda: control.update_setting(
                 f"CH{channel}_invert", str(self.Inv_but.isChecked())
             )
         )
@@ -335,7 +390,7 @@ class OscillscopeChannelWidget(QWidget):
         self.coupling_drop = QComboBox()
         self.coupling_drop.addItems(["DC", "AC"])
         self.coupling_drop.currentIndexChanged.connect(
-            lambda: control.comm.update_setting(
+            lambda: control.update_setting(
                 f"CH{channel}_coupling", self.coupling_drop.currentText()
             )
         )
@@ -347,7 +402,7 @@ class OscillscopeChannelWidget(QWidget):
         self.impedance_drop = QComboBox()
         self.impedance_drop.addItems(["1e6", "50"])
         self.impedance_drop.currentIndexChanged.connect(
-            lambda: control.comm.update_setting(
+            lambda: control.update_setting(
                 f"CH{channel}_impedance", self.impedance_drop.currentText()
             )
         )
@@ -361,7 +416,7 @@ class OscillscopeChannelWidget(QWidget):
         self.probe_drop = QComboBox()
         self.probe_drop.addItems([".001", ".01", ".1", "1", "10", "100", "1000"])
         self.probe_drop.currentIndexChanged.connect(
-            lambda: control.comm.update_setting(
+            lambda: control.update_setting(
                 f"CH{channel}_probe_atten", self.probe_drop.currentText()
             )
         )
@@ -413,11 +468,14 @@ class OscilloscopeTriggerWidget(QWidget):
         #
         self.level_edit = QDoubleSpinBox()
         self.level_edit.editingFinished.connect(
-            lambda: control.comm.update_setting(
+            lambda: control.update_setting(
                 "trigger_level", str(self.level_edit.value())
             )
         )
-        self.level_edit.setValue(control.settings["trigger_level"])
+        try:
+            self.level_edit.setValue(control.settings["trigger_level"])
+        except:
+            self.level_edit.setValue(0)
         self.level_edit.setSingleStep(0.01)
         self.level_edit.setDecimals(2)
         self.form = QFormLayout()
@@ -433,7 +491,7 @@ class OscilloscopeTriggerWidget(QWidget):
         self.trig_chan_drop = QComboBox()
         self.trig_chan_drop.addItems(["1", "2", "3", "4"])
         self.trig_chan_drop.currentIndexChanged.connect(
-            lambda: control.comm.update_setting(
+            lambda: control.update_setting(
                 "trigger_channel", self.trig_chan_drop.currentText()
             )
         )
@@ -445,7 +503,7 @@ class OscilloscopeTriggerWidget(QWidget):
         self.coupling_drop = QComboBox()
         self.coupling_drop.addItems(["DC", "AC"])
         self.coupling_drop.currentIndexChanged.connect(
-            lambda: control.comm.update_setting(
+            lambda: control.update_setting(
                 "trigger_coupling", self.coupling_drop.currentText()
             )
         )
@@ -457,9 +515,7 @@ class OscilloscopeTriggerWidget(QWidget):
         self.edge_drop = QComboBox()
         self.edge_drop.addItems(["POS", "NEG", "EITH", "ALT"])
         self.edge_drop.currentIndexChanged.connect(
-            lambda: control.comm.update_setting(
-                "trigger_edge", self.edge_drop.currentText()
-            )
+            lambda: control.update_setting("trigger_edge", self.edge_drop.currentText())
         )
         self.edge_drop.setCurrentText(str(control.settings["trigger_edge"]))
         #
@@ -518,24 +574,28 @@ class OscilloscopeHorizontalWidget(QWidget):
         self.horizontal_label_box.addWidget(self.horizontal_label)
 
         # ****** DEFINE TEXT BOXES
-        #ToDo: change Units to a more useful dimension than s - eg ms or mu
+        # ToDo: change Units to a more useful dimension than s - eg ms or mu
         #
         self.timebase_edit = QDoubleSpinBox()
         self.timebase_edit.editingFinished.connect(
-            lambda: control.comm.update_setting("timebase", self.timebase_edit.text())
+            lambda: control.update_setting("timebase", self.timebase_edit.text())
         )
-        self.timebase_edit.setValue(control.settings["timebase"])
+        try:
+            self.timebase_edit.setValue(float(control.settings["timebase"]))
+        except:
+            self.timebase_edit.setValue(1e-3)
         # self.timebase_edit.setRange()
         self.timebase_edit.setSingleStep(0.001)
         self.timebase_edit.setDecimals(6)
         #
         self.time_offset_edit = QDoubleSpinBox()
         self.time_offset_edit.editingFinished.connect(
-            lambda: control.comm.update_setting(
-                "time_offset", self.time_offset_edit.text()
-            )
+            lambda: control.update_setting("time_offset", self.time_offset_edit.text())
         )
-        self.time_offset_edit.setValue(control.settings["time_offset"])
+        try:
+            self.time_offset_edit.setValue(float(control.settings["time_offset"]))
+        except:
+            self.time_offset_edit.setValue(1e-3)
         # self.time_offset_edit.setRange()
         self.time_offset_edit.setSingleStep(0.001)
         self.time_offset_edit.setDecimals(6)
@@ -552,10 +612,10 @@ class OscilloscopeHorizontalWidget(QWidget):
         self.setLayout(self.master_layout)
 
 
-class OscilloscopeDisplayWidget(QWidget):
+class OscilloscopeDisplayWidget(QGroupBox):
     def __init__(self, control, show_controls: bool = False, refresh: float = 0.2):
 
-        super().__init__()
+        super().__init__("Oscilloscope Display")
 
         self.control = control
 
@@ -564,15 +624,18 @@ class OscilloscopeDisplayWidget(QWidget):
         # ************** DEFINE UI *********************#
         #
         self.display = pg.PlotWidget()
+        self.pi = self.display.getPlotItem()
+        self.pi.showGrid(x=True, y=True)
+        self.pi.setMenuEnabled(enableMenu=True)
         #
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.display, 0, 0, 1, 5)
         #
-        self.lineCH1 = pg.mkPen(color=(100, 100, 255), style=QtCore.Qt.DashLine)
-        self.lineCH2 = pg.mkPen(color=(255, 100, 100), style=QtCore.Qt.DashLine)
-        self.lineCH3 = pg.mkPen(color=(100, 255, 100), style=QtCore.Qt.DashLine)
-        self.lineCH4 = pg.mkPen(color=(200, 200, 200), style=QtCore.Qt.DashLine)
-        #
+        self.lineCH1 = pg.mkPen(color=(255, 255, 13), style=QtCore.Qt.SolidLine)
+        self.lineCH2 = pg.mkPen(color=(31, 255, 9), style=QtCore.Qt.SolidLine)
+        self.lineCH3 = pg.mkPen(color=(0, 0, 254), style=QtCore.Qt.SolidLine)
+        self.lineCH4 = pg.mkPen(color=(252, 0, 8), style=QtCore.Qt.SolidLine)
+
         self.CH1 = self.display.plot(pen=self.lineCH1, symbol=None)
         self.CH2 = self.display.plot(pen=self.lineCH2, symbol=None)
         self.CH3 = self.display.plot(pen=self.lineCH3, symbol=None)
@@ -590,7 +653,7 @@ class OscilloscopeDisplayWidget(QWidget):
             #
             self.refresh_but = QPushButton()
             self.refresh_but.setText("Refresh")
-            # self.refresh_but.clicked.connect(control.query_waveforms)
+            self.refresh_but.clicked.connect(self.query_waveforms)
             #
             self.refresh_mode_label = QLabel("Refresh Mode: ")
             #
@@ -637,24 +700,47 @@ class OscilloscopeDisplayWidget(QWidget):
                 print("Stop!")
             single_trig_mode = False
 
-    def update_display(self, wvfms: dict):
-        start_time = time.time()
-        if "CH1" in wvfms:
-            self.CH1.setData(wvfms["CH1"][1], wvfms["CH1"][0])
-        else:
-            pass
+    def update_display(self, channel: int, t: list, wave: list):
+        # def update_display(self, wvfms: dict):
 
-        if "CH2" in wvfms:
-            self.CH2.setData(wvfms["CH2"][1], wvfms["CH2"][0])
-        else:
-            pass
+        if channel == 1:
+            self.CH1.setData(t, wave)
+        elif channel == 2:
+            self.CH2.setData(t, wave)
+        elif channel == 3:
+            self.CH3.setData(t, wave)
+        elif channel == 4:
+            self.CH4.setData(t, wave)
 
-        if "CH3" in wvfms:
-            self.CH3.setData(wvfms["CH3"][1], wvfms["CH3"][0])
-        else:
-            pass
+    # def update_display(self, channel:int, wav:string):
+    # # def update_display(self, wvfms: dict):
+    #     start_time = time.time()
+    #     if "CH1" in wvfms:
+    #         self.CH1.setData(wvfms["CH1"][1], wvfms["CH1"][0])
+    #     else:
+    #         pass
+    #
+    #     if "CH2" in wvfms:
+    #         self.CH2.setData(wvfms["CH2"][1], wvfms["CH2"][0])
+    #     else:
+    #         pass
+    #
+    #     if "CH3" in wvfms:
+    #         self.CH3.setData(wvfms["CH3"][1], wvfms["CH3"][0])
+    #     else:
+    #         pass
+    #
+    #     if "CH4" in wvfms:
+    #         self.CH4.setData(wvfms["CH4"][1], wvfms["CH4"][0])
+    #     else:
+    #         pass
 
-        if "CH4" in wvfms:
-            self.CH4.setData(wvfms["CH4"][1], wvfms["CH4"][0])
-        else:
-            pass
+    def query_waveforms(self):
+
+        for c in range(1, 5):
+            if self.control.settings[f"CH{c}_active"] == "True":
+                self.control.command_listdata(f"CH{c}_WVFM?")  # Ask for waveform data
+            else:
+                self.control.command_listdata(
+                    f"CH{c}_CLEAR"
+                )  # Tell backend to send empty data
