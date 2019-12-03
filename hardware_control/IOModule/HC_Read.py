@@ -1,17 +1,23 @@
+"""
+This is the Base class for reading modules
+it provides a simple UI.
+"""
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import (QLabel, QWidget, QGridLayout, QLCDNumber)
 from hardware_control.base import HC_Instrument, HC_Comm
 
 
-class HC_ADAM(HC_Instrument):
+class HC_Read(HC_Instrument):
 	# Convention: __init__(self, backend, window . . . )
 	def __init__(
 			self,
 			backend,
 			window,
-			channels: list,  # just a list of numbers
-			channelNames: list,  # and their names
-			name: str = "ADAM-Temperature",
+			channels: list,  		# just a list of numbers
+			channelNames: list,  	# and their names
+			readCommand: str,		# command for reading e.g. TEMP / VOLT / CURR
+			unit: str = "Units",
+			name: str = "Read Module",
 			initialize_with: str = "INSTRUMENT",
 			save_on_close: str = False,
 	):
@@ -26,13 +32,18 @@ class HC_ADAM(HC_Instrument):
 
 		self.channels = channels
 		self.channelNames = channelNames
+		self.readCommand = readCommand
+		self.unit = unit
+
+		if self.channels.__len__()==0 or self.readCommand.__len__()!=4:
+			raise Exception("Wrong Arguments")
 
 		###creating UI
 		self.grid = QGridLayout()
 		self.listOfWidgets = []
 		# add all the needed channels
 		for i, c in enumerate(self.channels):
-			self.listOfWidgets.append(HC_singleChannelADAM(self, c, self.channelNames[i]))
+			self.listOfWidgets.append(HC_singleChannelADAM(self, c, self.channelNames[i],self.readCommand, self.unit))
 			self.grid.addWidget(self.listOfWidgets[i], 0, i)
 		# Add all the widgets to layout
 		self.setLayout(self.grid)
@@ -50,11 +61,13 @@ class HC_ADAM(HC_Instrument):
 class HC_singleChannelADAM(QWidget):
 	"""A single Temperature LCD Widget, with a channelnumber and name"""
 
-	def __init__(self, mainWindow, channelNumber: int, channelName: str):
+	def __init__(self, mainWindow, channelNumber: int, channelName: str, readCommand: str, unit: str):
 		super().__init__()
 
 		self.channelNumber = channelNumber
 		self.channelName = channelName
+		self.readCommand = readCommand
+		self.unit = unit
 
 		self.mainWindow = mainWindow
 
@@ -63,15 +76,13 @@ class HC_singleChannelADAM(QWidget):
 		self.readout_timer.timeout.connect(self.update_readout)
 		self.readout_timer.start(5000)
 		#
+
 		### Create UI
 		self.name = QLabel()
-		self.name.setText(channelName + " (°C):")
+		self.name.setText(channelName +" " +unit)
 
 		self.lcd = QLCDNumber()
 		self.lcd.setSmallDecimalPoint(True)
-
-		print(self)
-		print(self.lcd)
 
 		self.subLayout = QGridLayout()
 		self.subLayout.addWidget(self.name, 0, 0)

@@ -1,5 +1,8 @@
-#Nov/22/2019
-#Timo Bauer
+"""
+This is a device for reading Temperatures
+It receives a string "CH#_TEMP?"
+There are no settings to be set
+"""
 
 import socket
 import re
@@ -7,7 +10,7 @@ import re
 from hardware_control.HC_Backend import HC_Backend # regex_compare #ToDo
 import random
 
-class Adam(HC_Backend):
+class Adam_6015(HC_Backend):
     """Control of Adam input/output module"""
     def __init__(self, IP="192.168.1.25", dummy=False):
         self.dummy = dummy
@@ -19,6 +22,7 @@ class Adam(HC_Backend):
         self.addr = (self.IP, self.port)
         self.try_connect()
 
+    #ToDo check if it works with sockets instead
     def try_connect(self):
         """this is a override - sockets are used"""
         if not self.dummy:
