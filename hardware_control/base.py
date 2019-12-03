@@ -360,7 +360,6 @@ class HC_Instrument(QGroupBox):
         are changed"""
         pass
 
-    # ToDo value has to be str
     def update_setting(self, setting: str, value: str):
         """Update a setting in settings and values dictionary for the instrument"""
 

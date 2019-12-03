@@ -281,19 +281,3 @@ class PowerSupplyChannel(QWidget):
                 # print(e)
         else:
             self.P_out_label_val.setText("-----")
-
-
-# class HC_ModularInstrument(QWidget):
-#
-#     def __init__(self, main_widget, name: str):
-#
-#         super().__init__() #TODO: Does anything neeed to go here
-#
-#     def update_setting():
-#
-#
-#     command()
-#
-#     write()
-#
-#     query()

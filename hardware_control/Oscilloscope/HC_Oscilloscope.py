@@ -164,7 +164,6 @@ class HC_Oscilloscope(HC_Instrument):
     # Create a default settings object if can't get settings from a file
     #
     def default_state(self):
-        # ToDo value has to be str
         dflt = {}
 
         dflt["timebase"] = "1e-3"
