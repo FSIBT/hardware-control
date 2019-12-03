@@ -121,8 +121,6 @@ class STS50Demo(QMainWindow):
             self.flow, self, "Flow Controller", "flowcontroller_state.json", True
         )
 
-        # Todo: crashes if ZMQ address already in use. Add try-except
-
         # Todo: linux-gpib is a dependency on some systems
         self.trig1 = SRSDG535Ctrl("GPIB0::10::INSTR", dummy, True)
         self.trig1.debug = debug
@@ -131,8 +129,11 @@ class STS50Demo(QMainWindow):
         self.trig2 = SRSDG535Ctrl("GPIB0::15::INSTR", dummy, True)
         self.trig2.debug = debug
         self.trig2_ctrl = HC_PulseGen(self.trig2, self, "Trigger 2", "DEFAULT", True)
-
-        self.zmqtool = HC_ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
+        try:
+            self.zmqtool = HC_ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
+        except Exception as e:
+            print("ZMQConnection failed! ")
+            print(e)
 
         self.scantool = HC_ScanTool(self, "Scan Control", "DEFAULT", True)
         self.scantool.update_instruments()
