@@ -24,10 +24,6 @@ dummy = commands["--dummy"]
 use_sockets = commands["--socket"]
 debug = commands["--debug"]
 
-#Todo Delete this
-dummy = True
-debug = True
-
 from hardware_control.base import HC_App
 from hardware_control.IOModule.ADAM_6015 import Adam_6015
 from hardware_control.IOModule.HC_Read import HC_Read

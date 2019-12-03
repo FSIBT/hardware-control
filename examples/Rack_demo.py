@@ -24,10 +24,6 @@ dummy = commands["--dummy"]
 use_sockets = commands["--socket"]
 debug = commands["--debug"]
 
-#Todo Delete this
-dummy = True
-debug= True
-
 from hardware_control.base import HC_App
 from hardware_control.TemplateDeviceType.DeviceBackend import DeviceBackend
 from hardware_control.TemplateDeviceType.HC_DeviceType import HC_DeviceType

@@ -127,19 +127,22 @@ class SRSDG535Ctrl(HC_Backend):
                 return True
 
         if self.online:  # Has previously connected to the isntrument
-
             # Todo: impliment new way of verifying is online
+            # ToDo: Check if this works && cleanup
 
-            # try:  # Check if connected by asking for instrument ID
-            #     self.device.query("*IDN?")
-            #     if self.debug:
-            #         print(f"{self.ID}: Connection verified")
-            # except visa.errors.VisaIOError as e:  # Not connected - reconnect
-            #     if self.debug:
-            #         print("Lost connection to device. Will try to reconnect")
-            #         print(f"\t{str(e)}")
-            # else:  # Connection stable - return True
-            return True
+            try:
+                if 0 != self.device.query("IS"): #ask for Instrument status
+                    print(self.ID + " Instrument Status Bad")
+                self.online = True
+                if self.debug:
+                    print(self.ID + " Instr.Status: " + str(self.device.query("IS")))
+                    print(f"{self.ID}: Connection verified")
+            except visa.errors.VisaIOError as e:  # Not connected - reconnect
+                self.online = False
+                if self.debug:
+                    print("Lost connection to device. Will try to reconnect")
+                    print(f"\t{str(e)}")
+            return self.online
 
         if self.debug:
             print(f"{self.ID}: trying to connect")
@@ -156,13 +159,9 @@ class SRSDG535Ctrl(HC_Backend):
                         print("Connecting with NI-VISA backend")
                     rm = pyvisa.ResourceManager()
                 self.device = rm.open_resource(self.visa_addr)  # Open connection
-
-                # TODO: Find a different way to verify connection. This instrument does not recognize *IDN?
-
-                # # Verify actually connected (open_resource won't always throw error w/ disconnected USB)
-                # self.device.query("*IDN?")
-                # if self.debug:
-                #     print("opened connection")
+                # TODO: TEST
+                self.online #assume we are online
+                self.online = self.try_connect()    #and check if we actually are
 
             else:  # Use sockets
                 self.device = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
