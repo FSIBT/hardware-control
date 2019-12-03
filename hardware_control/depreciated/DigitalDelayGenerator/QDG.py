@@ -4,12 +4,10 @@ Created on Thu Jul 11 15:41:12 2019
 
 @author: Schuyler
 """
-import time
-import pyvisa
 import sys
-from PyQt5 import QtCore
+
+import pyvisa
 from PyQt5.QtCore import QTimer, QThread, pyqtSignal, pyqtSlot, QObject
-from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtWidgets import (
     QGroupBox,
     QVBoxLayout,

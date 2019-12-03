@@ -6,10 +6,10 @@ Created on Thu Jun 27 12:11:28 2019
 @author: sky
 """
 
-import pyvisa
-import socket
-import numpy as np
 import sys
+
+import numpy as np
+import pyvisa
 
 rm = pyvisa.ResourceManager()
 

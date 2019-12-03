@@ -4,21 +4,16 @@
 # you can easily create GUIs for oscilloscopes.
 #
 
-from typing import List
-import numpy as np
+import copy
 import json
-import pkg_resources
-
 import time  # Get rid of this guy!
 
-from hardware_control.base import HC_Instrument
+import pkg_resources
 import pyqtgraph as pg
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer, QThread, pyqtSignal, pyqtSlot, QObject
 from PyQt5.QtGui import QDoubleValidator, QPixmap, QIcon
 from PyQt5.QtWidgets import (
-    QGroupBox,
-    QVBoxLayout,
     QLineEdit,
     QPushButton,
     QHBoxLayout,
@@ -28,7 +23,9 @@ from PyQt5.QtWidgets import (
     QGridLayout,
     QComboBox,
 )
-import copy
+
+from hardware_control.base import HC_Instrument
+
 
 #
 # This is a 4-channel oscilloscope control progam. It defines a UI for a 4-ch

@@ -1,6 +1,7 @@
-import pyvisa
-from abc import ABC, abstractmethod
 import re
+from abc import ABC, abstractmethod
+
+import pyvisa
 
 
 class HC_Backend(ABC):

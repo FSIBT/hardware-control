@@ -1,38 +1,19 @@
 # -*- coding: utf-8 -*-
-import numpy as np
-from .control import E36313A
-from ..base import QOnOff, QFixedLabel
-
 from PyQt5 import QtCore
-from PyQt5 import QtWidgets
-from PyQt5.QtCore import QAbstractTableModel, QVariant
-from PyQt5.QtGui import QIcon, QKeySequence, QDoubleValidator, QFont
+from PyQt5.Qt import QMutex, QMutexLocker
+from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtWidgets import (
-    QApplication,
-    QMainWindow,
     QGroupBox,
     QVBoxLayout,
-    QSizePolicy,
-    QMessageBox,
-    QWidget,
-    QLayout,
-    QShortcut,
-    QTableView,
-    QHeaderView,
     QPushButton,
-    QAction,
     QGridLayout,
     QHBoxLayout,
-    QFileDialog,
     QLabel,
-    QCheckBox,
     QLineEdit,
 )
-from PyQt5.Qt import QMutex, QMutexLocker
 
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
-import matplotlib.pyplot as plt
+from .control import E36313A
+from ..base import QOnOff, QFixedLabel
 
 
 class ChannelDisplay(QVBoxLayout):

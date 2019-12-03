@@ -14,26 +14,16 @@ Options:
 """
 
 # standardlib
-from contextlib import redirect_stdout
-from contextlib import redirect_stderr
 import datetime
-from pathlib import Path
+import faulthandler
 import sys
 import time
-import traceback
-import faulthandler
+from pathlib import Path
 
-# third party
-from docopt import docopt
 import appdirs
+import matplotlib.pyplot as plt
+import numpy as np
 import pyvisa
-
-from pyqode.core import modes, panels
-from pyqode.core.api import CodeEdit
-from pyqode.python.widgets import PyCodeEdit
-from pyqode.python import modes as pymodes, panels as pypanels
-from pyqode.core.backend import server
-
 from PyQt5 import QtCore
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import QThread, pyqtSignal
@@ -53,23 +43,20 @@ from PyQt5.QtWidgets import (
     QAction,
     QGridLayout,
 )
-
+# third party
+from docopt import docopt
+from hardware_control.Adam.QAdam import AdamControl
+from hardware_control.CAEN.QCAEN_channel import CAENControl, CAENcommunication
+from hardware_control.Keysight.QKeysight import KeysightControl
+from hardware_control.Logfile.plot_logfile import LogPlot
+from hardware_control.STM_motor.QSTM_motor import QSTM_control
+from hardware_control.STM_motor.control import STM
+from hardware_control.Sairem.QSairem import SairemControl
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
-import matplotlib.pyplot as plt
-import numpy as np
 
 # our own module
 import hardware_control
-
-from hardware_control.Keysight.QKeysight import KeysightControl
-from hardware_control.CAEN.QCAEN_channel import CAENControl, CAENcommunication
-from hardware_control.Adam.QAdam import AdamControl
-from hardware_control.Sairem.QSairem import SairemControl
-from hardware_control.STM_motor.control import STM
-from hardware_control.STM_motor.QSTM_motor import QSTM_control
-from hardware_control.Logfile.plot_logfile import LogPlot
-
 from hardware_control.base import FigureTab, RunFunctionsThread, LoggerThread
 
 faulthandler.enable()

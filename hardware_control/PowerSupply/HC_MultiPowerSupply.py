@@ -4,30 +4,18 @@
 # you can easily create GUIs for oscilloscopes.
 #
 
-from typing import List
-import numpy as np
-import json
 import pkg_resources
-
-import time  # Get rid of this guy!
-
-import pyqtgraph as pg
 from PyQt5 import QtCore
-from PyQt5.QtCore import QTimer, QThread, pyqtSignal, pyqtSlot, QObject
+from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QDoubleValidator, QPixmap
 from PyQt5.QtWidgets import (
-    QGroupBox,
-    QVBoxLayout,
     QLineEdit,
     QPushButton,
-    QHBoxLayout,
     QLabel,
     QWidget,
-    QFormLayout,
     QGridLayout,
-    QComboBox,
 )
-import copy
+
 from hardware_control.base import HC_Instrument, HC_Comm, setButtonState
 
 

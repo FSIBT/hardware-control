@@ -1,28 +1,16 @@
-from typing import List
-import numpy as np
-import json
 import pkg_resources
-
-import time
-
-import pyqtgraph as pg
 from PyQt5 import QtCore
-from PyQt5.QtCore import QTimer, QThread, pyqtSignal, pyqtSlot, QObject
-from PyQt5.QtGui import QDoubleValidator, QIntValidator, QPixmap, QIcon
+from PyQt5.QtGui import QIntValidator, QPixmap, QIcon
 from PyQt5.QtWidgets import (
     QGroupBox,
-    QVBoxLayout,
     QLineEdit,
     QPushButton,
-    QHBoxLayout,
     QLabel,
-    QWidget,
-    QFormLayout,
     QGridLayout,
     QComboBox,
 )
+
 from hardware_control.base import HC_Instrument, HC_Comm
-import copy
 
 
 class HC_DelayGenerator(HC_Instrument):

@@ -4,11 +4,12 @@ It receives a string "CH#_TEMP?"
 There are no settings to be set
 """
 
-import socket
-import re
-
-from hardware_control.HC_Backend import HC_Backend # regex_compare #ToDo
 import random
+import re
+import socket
+
+from hardware_control.HC_Backend import HC_Backend  # regex_compare #ToDo
+
 
 class Adam_6015(HC_Backend):
     """Control of Adam input/output module"""

@@ -5,12 +5,6 @@ Created on Thu Jul 11 15:24:40 2019
 @author: Schuyler
 """
 import pyvisa
-import socket
-import numpy as np
-from struct import unpack
-import sys
-from matplotlib import *
-import datetime
 
 rm = pyvisa.ResourceManager()
 

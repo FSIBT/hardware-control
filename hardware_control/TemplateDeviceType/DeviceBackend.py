@@ -1,10 +1,6 @@
-import pyvisa
-from typing import List
-import numpy as np
-import socket
-from hardware_control.HC_Backend import HC_Backend
-import re
 import random
+
+from hardware_control.HC_Backend import HC_Backend
 
 
 class DeviceBackend(HC_Backend):

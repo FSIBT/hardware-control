@@ -9,12 +9,9 @@
 # 20/08/2019
 #
 
-import pyvisa
-from typing import List
-import numpy as np
 import socket
+
 from hardware_control.HC_Backend import HC_Backend
-import re
 
 
 class CAEN14xxETCtrl(HC_Backend):

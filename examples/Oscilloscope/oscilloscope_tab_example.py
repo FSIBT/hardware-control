@@ -13,60 +13,35 @@ Options:
   --set-voltage <kV>   initial setpoint for the HV [default: 0]
 """
 
-# standardlib
-from contextlib import redirect_stdout
-from contextlib import redirect_stderr
-import datetime
-from pathlib import Path
-import sys
-import time
-import traceback
 import faulthandler
+import sys
+# standardlib
+from pathlib import Path
 
-# third party
-from docopt import docopt
 import appdirs
 import pyvisa
-
-from pyqode.core import modes, panels
-from pyqode.core.api import CodeEdit
-from pyqode.python.widgets import PyCodeEdit
-from pyqode.python import modes as pymodes, panels as pypanels
-from pyqode.core.backend import server
-
 from PyQt5 import QtCore
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import QThread, pyqtSignal
-from PyQt5.QtGui import QIcon, QIntValidator
+from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (
     QApplication,
     QMainWindow,
-    QSizePolicy,
     QHBoxLayout,
     QVBoxLayout,
-    QLabel,
-    QCheckBox,
     QMessageBox,
     QWidget,
-    QLineEdit,
-    QPushButton,
     QAction,
-    QGridLayout,
 )
-
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
-import matplotlib.pyplot as plt
-import numpy as np
+# third party
+from docopt import docopt
+from hardware_control.Logfile.plot_logfile import LogPlot
+from hardware_control.Oscilloscopes.OscilloscopeControl import OscilloscopeControl
+from hardware_control.Oscilloscopes.comm_DSOX4054A import comm_DSOX4054A
 
 # our own module
 import hardware_control
-
-from hardware_control.Oscilloscopes.OscilloscopeControl import OscilloscopeControl
-from hardware_control.Oscilloscopes.comm_DSOX4054A import comm_DSOX4054A
-from hardware_control.Logfile.plot_logfile import LogPlot
-
-from hardware_control.base import FigureTab, RunFunctionsThread, LoggerThread
+from hardware_control.base import FigureTab
 
 faulthandler.enable()
 

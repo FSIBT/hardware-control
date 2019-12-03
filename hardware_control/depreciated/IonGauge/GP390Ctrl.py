@@ -1,8 +1,7 @@
-import pyvisa
-import socket
-import numpy as np
 import sys
 
+import numpy as np
+import pyvisa
 
 # from hardware_control.base import HC_Control
 

@@ -9,34 +9,18 @@ Options:
   --dummy    use dummy connection for instruments that return semi-random data
              so that one run the program away from the test stand
 """
-from matplotlib import pyplot as plt
-import seaborn as sns
 import sys
 
-from PyQt5 import QtCore
-from PyQt5 import QtWidgets
-from PyQt5.QtCore import QThread, pyqtSignal
-from PyQt5.QtGui import QIcon, QIntValidator
 from PyQt5.QtWidgets import (
     QApplication,
     QMainWindow,
-    QSizePolicy,
-    QHBoxLayout,
-    QVBoxLayout,
-    QLabel,
-    QCheckBox,
-    QMessageBox,
     QWidget,
-    QLineEdit,
-    QPushButton,
-    QAction,
     QGridLayout,
 )
-
-from hardware_control.FlowController.HC_FlowController import HC_FlowController
-from hardware_control.FlowController.AlicatMSeriesCtrl import AlicatMSeriesCtrl
-
 from docopt import docopt
+
+from hardware_control.FlowController.AlicatMSeriesCtrl import AlicatMSeriesCtrl
+from hardware_control.FlowController.HC_FlowController import HC_FlowController
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]

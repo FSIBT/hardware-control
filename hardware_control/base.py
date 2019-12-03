@@ -1,44 +1,22 @@
 # -*- coding: utf-8 -*-
-from collections import defaultdict, deque, OrderedDict
 import datetime
-import pkg_resources
 import hashlib
+import pathlib
 import sys
 import time
-import pathlib
+from abc import ABC, abstractmethod
+from collections import OrderedDict
 
-from PyQt5 import QtCore
-from PyQt5.QtCore import QThread, QSize, QObject, pyqtSignal, pyqtSlot, QObject, QTimer
-from PyQt5.QtGui import QIcon, QFont, QFontMetrics
+from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot, QObject, QTimer
 from PyQt5.QtWidgets import (
     QApplication,
     QMainWindow,
-    QSizePolicy,
-    QHBoxLayout,
-    QVBoxLayout,
-    QDoubleSpinBox,
-    QLabel,
-    QCheckBox,
     QMessageBox,
-    QWidget,
-    QLineEdit,
     QPushButton,
-    QAction,
-    QGridLayout,
-    QStyleFactory,
-    QTabWidget,
     QAction,
     QGroupBox,
     QInputDialog,
 )
-from PyQt5.QtSvg import QSvgWidget
-
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
-import matplotlib.pyplot as plt
-from matplotlib.dates import epoch2num
-import numpy as np
-from abc import ABC, abstractmethod
 
 
 class HC_Comm(QObject):

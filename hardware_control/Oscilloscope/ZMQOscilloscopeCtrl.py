@@ -5,15 +5,12 @@
 # physically accessed by the computer on which this backend runs.
 #
 
-import pyvisa
-from typing import List
-import numpy as np
-import socket
-import re
-from hardware_control.HC_Backend import HC_Backend
 import json
+import socket
 
 import zmq
+
+from hardware_control.HC_Backend import HC_Backend
 
 
 def to_NR3(x: float):

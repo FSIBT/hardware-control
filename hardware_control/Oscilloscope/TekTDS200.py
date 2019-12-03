@@ -6,24 +6,18 @@ Created on Wed Jul  3 14:57:53 2019
 @author: Schuyler
 """
 
-import pyvisa
-import pandas as pd
-import numpy as np
-from numpy import *
-import pkg_resources
-import hashlib
 import math
-import threading
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
-from collections import defaultdict, deque
 import sys
 import time
-from struct import unpack
+from collections import defaultdict, deque
+
+import matplotlib.pyplot as plt
+import pyvisa
 from PyQt5 import QtCore
+# from .base import QOnOff, QFixedLabel, FigureTab
+from PyQt5.Qt import QMutex
 from PyQt5.QtCore import QTimer, QThread, pyqtSignal, pyqtSlot, QObject
-from PyQt5.QtGui import QDoubleValidator, QFont, QIcon
+from PyQt5.QtGui import QFont, QIcon
 from PyQt5.QtWidgets import (
     QGroupBox,
     QVBoxLayout,
@@ -37,16 +31,10 @@ from PyQt5.QtWidgets import (
 )
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
-from matplotlib.figure import Figure
 from matplotlib.dates import epoch2num
-from PyQt5.QtSvg import QSvgWidget
-from pathlib import Path
-from setuptools import setup
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from .Scope_control_test import Scope
+from numpy import *
 
-# from .base import QOnOff, QFixedLabel, FigureTab
-from PyQt5.Qt import QMutex, QMutexLocker
+from .Scope_control_test import Scope
 
 rm = pyvisa.ResourceManager()
 

@@ -9,10 +9,10 @@
 # 20/08/2019
 #
 
-import pyvisa
-from typing import List
-import numpy as np
 import socket
+
+import numpy as np
+import pyvisa
 
 
 def to_NR3(x: float):

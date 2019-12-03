@@ -13,36 +13,14 @@ Options:
   --log      save log file
 """
 
-from matplotlib import pyplot as plt
-import seaborn as sns
 import sys
 
-from PyQt5 import QtCore
-from PyQt5 import QtWidgets
-from PyQt5.QtCore import QThread, pyqtSignal
-from PyQt5.QtGui import QIcon, QIntValidator, QIcon
 from PyQt5.QtWidgets import (
-    QApplication,
-    QMainWindow,
-    QSizePolicy,
-    QHBoxLayout,
-    QVBoxLayout,
     QDoubleSpinBox,
-    QLabel,
-    QCheckBox,
-    QMessageBox,
-    QWidget,
-    QLineEdit,
-    QPushButton,
-    QAction,
-    QGridLayout,
     QStyleFactory,
     QTabWidget,
-    QAction,
     QGroupBox,
-    QInputDialog,
 )
-import sys
 from docopt import docopt
 
 commands = docopt(__doc__)
@@ -64,7 +42,6 @@ from hardware_control.ConnectionStatusTool.HC_StatusTool import HC_StatusTool
 from hardware_control.FunctionGenerator.HC_FunctionGenerator import HC_FunctionGenerator
 from hardware_control.FunctionGenerator.Key33500BCtrl import Key33500BCtrl
 from hardware_control.PowerSupply.HC_MultiPowerSupply import *
-from hardware_control.PowerSupply.CAEN14xxETCtrl import CAEN14xxETCtrl
 from hardware_control.PowerSupply.TDKLGenHCtrl import TDKLGenHCtrl
 from hardware_control.ZMQConnectionTool.HC_ZMQConnectionTool import HC_ZMQConnectionTool
 from hardware_control.MacroRunnerTool.HC_MacroRunnerTool import HC_MacroRunnerTool

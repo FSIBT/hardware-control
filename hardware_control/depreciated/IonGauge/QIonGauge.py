@@ -5,14 +5,14 @@ Created on Mon Jun 24 11:19:14 2019
 
 @author: sky
 """
-import time
 import random
-import pyvisa
-import numpy as np
 import sys
+
+import numpy as np
+import pyvisa
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer, QThread, pyqtSignal, pyqtSlot, QObject
-from PyQt5.QtGui import QDoubleValidator, QFont
+from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
     QGroupBox,
     QVBoxLayout,

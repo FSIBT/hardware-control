@@ -4,13 +4,10 @@
 # 20/08/2019
 #
 
-import pyvisa
-from typing import List
-import numpy as np
 import random
-from PyQt5.QtCore import QObject
 
 from pymodbus.client.sync import ModbusTcpClient as ModbusClient
+
 from hardware_control.HC_Backend import HC_Backend
 
 

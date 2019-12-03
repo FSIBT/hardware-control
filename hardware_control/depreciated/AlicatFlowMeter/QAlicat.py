@@ -5,11 +5,12 @@ Created on Thu Jun 27 15:00:15 2019
 @author: Schuyler
 """
 
-import pyvisa
 import sys
+
+import pyvisa
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer, QThread, pyqtSignal, pyqtSlot, QObject
-from PyQt5.QtGui import QDoubleValidator, QFont
+from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
     QGroupBox,
     QVBoxLayout,

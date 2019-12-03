@@ -1,4 +1,3 @@
-from itertools import cycle
 import socket
 import sys
 import time

@@ -12,30 +12,13 @@ Options:
   --debug    allow debug print statements
 """
 
-from matplotlib import pyplot as plt
-import seaborn as sns
 import sys
 
-from PyQt5 import QtCore
-from PyQt5 import QtWidgets
-from PyQt5.QtCore import QThread, pyqtSignal
-from PyQt5.QtGui import QIcon, QIntValidator, QIcon
 from PyQt5.QtWidgets import (
-    QApplication,
     QMainWindow,
-    QSizePolicy,
-    QHBoxLayout,
-    QVBoxLayout,
-    QLabel,
-    QCheckBox,
-    QMessageBox,
     QWidget,
-    QLineEdit,
-    QPushButton,
-    QAction,
     QGridLayout,
 )
-import sys
 from docopt import docopt
 
 commands = docopt(__doc__)
@@ -44,7 +27,6 @@ use_sockets = commands["--socket"]
 debug = commands["--debug"]
 
 from hardware_control.base import HC_App
-from hardware_control.PowerSupply.TDKLGenHCtrl import TDKLGenHCtrl
 from hardware_control.PowerSupply.CAEN14xxETCtrl import CAEN14xxETCtrl
 from hardware_control.PowerSupply.HC_MultiPowerSupply import HC_MultiPowerSupply
 

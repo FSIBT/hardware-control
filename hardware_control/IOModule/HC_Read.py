@@ -4,6 +4,7 @@ it provides a simple UI.
 """
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QLabel, QWidget, QGridLayout, QLCDNumber
+
 from hardware_control.base import HC_Instrument, HC_Comm
 
 

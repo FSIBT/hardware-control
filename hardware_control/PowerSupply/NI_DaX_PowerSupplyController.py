@@ -9,9 +9,10 @@ This specific device is an analog input module with 32 channels
 """
 
 import time
-import nidaqmx  # python wrapper for the driver
-from hardware_control.HC_Backend import HC_Backend, regex_compare
 
+import nidaqmx  # python wrapper for the driver
+
+from hardware_control.HC_Backend import HC_Backend, regex_compare
 
 """This class behaves like it would read from a Powersupply"""
 class NI_DaX_PowerSupplyController(HC_Backend):

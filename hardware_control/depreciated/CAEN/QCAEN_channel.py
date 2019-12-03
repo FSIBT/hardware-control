@@ -1,8 +1,6 @@
-import pyvisa
-
-from PyQt5.QtGui import QDoubleValidator
-from PyQt5.QtWidgets import QGroupBox, QFormLayout, QLabel, QLineEdit, QHBoxLayout
 from PyQt5.QtCore import QTimer, pyqtSignal, pyqtSlot, QObject
+from PyQt5.QtGui import QDoubleValidator
+from PyQt5.QtWidgets import QFormLayout, QLabel, QLineEdit, QHBoxLayout
 
 from ..base import QOnOff, QOnOffIndicator, HC_Instrument
 

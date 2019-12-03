@@ -1,4 +1,5 @@
 import socket
+
 import numpy as np
 
 from ..base import HC_Control

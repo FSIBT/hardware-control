@@ -1,5 +1,6 @@
-import numpy as np
 import sys
+
+import numpy as np
 from pymodbus.client.sync import ModbusSerialClient as ModbusClient
 
 from ..base import HC_Control

@@ -1,9 +1,9 @@
 import configparser
-from appdirs import AppDirs
-from pathlib import Path
-from pprint import pprint
 import subprocess
 import sys
+from pathlib import Path
+
+from appdirs import AppDirs
 from tqdm import tqdm
 
 try:

@@ -9,11 +9,10 @@
 # 20/08/2019
 #
 
-import pyvisa
-from typing import List
-import numpy as np
-import socket
 import re
+
+import numpy as np
+
 from hardware_control.HC_Backend import HC_Backend
 
 

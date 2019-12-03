@@ -1,30 +1,13 @@
-from typing import List
-import numpy as np
-import json
-import pkg_resources
-
-import time  # Get rid of this guy!
-
-import pyqtgraph as pg
-from PyQt5 import QtCore
-from PyQt5.QtCore import QTimer, QThread, pyqtSignal, pyqtSlot, QObject
-from PyQt5.QtGui import QDoubleValidator, QPixmap
+from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import (
-    QGroupBox,
-    QVBoxLayout,
     QLineEdit,
-    QPushButton,
-    QHBoxLayout,
     QLabel,
-    QWidget,
-    QFormLayout,
     QGridLayout,
-    QComboBox,
-    QSpinBox,
     QDoubleSpinBox,
 )
-import copy
-from hardware_control.base import HC_Instrument, HC_Comm, setButtonState
+
+from hardware_control.base import HC_Instrument, HC_Comm
+
 
 class HC_DeviceType(HC_Instrument):
     # Convention: __init__(self, backend, window . . . )
