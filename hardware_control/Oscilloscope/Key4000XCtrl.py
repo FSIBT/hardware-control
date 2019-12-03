@@ -10,10 +10,8 @@
 #
 
 import re
-
-import numpy as np
-
-from hardware_control.HC_Backend import HC_Backend
+from hardware_control.HC_Backend import HC_Backend, returnChannelNumber, regex_compare
+from PyQt5.QtCore import QThread, QSize, QObject, pyqtSignal
 
 
 def to_NR3(x: float):
@@ -54,6 +52,9 @@ def regex_compare(pattern: str, comp: str):
 
 
 class Key4000XCtrl(HC_Backend):
+
+    # sigReturnWaves = pyqtSignal(int, list, list)
+
     def __init__(
         self,
         visa_addr,
@@ -202,6 +203,22 @@ class Key4000XCtrl(HC_Backend):
         else:
             return cmd
 
+    def command_listdata(self, cmd: str):
+
+        print(f"\t\tBackend got: {cmd}")
+
+        if not self.online:
+            return "", [], []
+
+        if regex_compare("CH.+_WVFM?", cmd):
+            c = returnChannelNumber(cmd)
+            return self.read_waveform(c)  # Returns a tuple (str, list, list)
+        if regex_compare("CH.+_CLEAR", cmd):
+            c = returnChannelNumber(cmd)
+            return f"CH{c}_WVFM", [], []
+        else:
+            return "", [], []
+
     def digitize(self):
         """Similar to single trigger. Aquires waveform according to :ACQ command
         subsystem. Stops instrument when aquisition is complete. Acquires
@@ -210,23 +227,23 @@ class Key4000XCtrl(HC_Backend):
         if not self.dummy:
             self.write(":DIG")
 
-    def read_all_waveforms(self, ch1, ch2, ch3, ch4):
-
-        wave = {}
-
-        #        print(ch1, ch2, ch3, ch4);
-
-        if not self.dummy:
-            if ch1:
-                wave["CH1"] = self.read_waveform(1)
-            if ch2:
-                wave["CH2"] = self.read_waveform(2)
-            if ch3:
-                wave["CH3"] = self.read_waveform(3)
-            if ch4:
-                wave["CH4"] = self.read_waveform(4)
-
-        return wave
+    # def read_all_waveforms(self, ch1, ch2, ch3, ch4):
+    #
+    #     wave = {}
+    #
+    #     #        print(ch1, ch2, ch3, ch4);
+    #
+    #     if not self.dummy:
+    #         if ch1:
+    #             wave["CH1"] = self.read_waveform(1)
+    #         if ch2:
+    #             wave["CH2"] = self.read_waveform(2)
+    #         if ch3:
+    #             wave["CH3"] = self.read_waveform(3)
+    #         if ch4:
+    #             wave["CH4"] = self.read_waveform(4)
+    #
+    #     return wave
 
     def single_trigger(self):
         """Tells oscilloscope to run with trigger mode set to single trigger"""
@@ -258,7 +275,9 @@ class Key4000XCtrl(HC_Backend):
         """Reads a waveform from the oscilloscope."""
 
         if self.dummy or not self.online:
-            return ([], [])
+            t = np.linspace(0, 1e-3, 100, False)
+            v = np.sin(t * 5e3 * float(channel))
+            return f"CH{channel}_WVFM", t.tolist(), v.tolist()
 
         # Read data from oscilloscope
         try:
@@ -288,7 +307,7 @@ class Key4000XCtrl(HC_Backend):
             print("ERROR: Received bad origin from scope.")
             print(e)
             print(f"\t{x_orig}")
-            return ([], [])
+            return "", [], []
         try:
             # x_ref = float(x_ref[0:len(x_ref)-1]); #Convert X Reference
             x_ref = float(x_ref[0 : len(x_ref)])
@@ -297,7 +316,7 @@ class Key4000XCtrl(HC_Backend):
             print("ERROR: Received bad reference from scope.")
             print(e)
             print(f"\t{x_ref}")
-            return ([], [])
+            return "", [], []
         try:
             # x_incr = float(x_incr[0:len(x_incr)-1]); #Convert X Increment
             x_incr = float(x_incr[0 : len(x_incr)])
@@ -306,7 +325,7 @@ class Key4000XCtrl(HC_Backend):
             print("ERROR: Received bad increment from scope.")
             print(e)
             print(f"\t{x_incr}")
-            return ([], [])
+            return "", [], []
 
         try:
             # Format and convert data into float[]
@@ -323,9 +342,9 @@ class Key4000XCtrl(HC_Backend):
             # Calculate time values
         except Exception as e:
             print("ERROR: Failed to calculate V & t.")
-            return ([], [])
+            return "", [], []
 
-        return (fmt, t)
+        return f"CH{channel}_WVFM", t, fmt
 
     def configure_read_waveform(self):
         """Sets the data transfer mode of the oscilloscope. Call this function
