@@ -8,16 +8,9 @@ This specific device is an analog input module with 32 channels
 
 """
 
-import pyvisa
-from typing import List
-import numpy as np
-import socket
-from hardware_control.HC_Backend import HC_Backend, returnChannelNumber, regex_compare
-import re
-import random
-import nidaqmx  #python wrapper for the driver
 import time
-
+import nidaqmx  # python wrapper for the driver
+from hardware_control.HC_Backend import HC_Backend, regex_compare
 
 
 """This class behaves like it would read from a Powersupply"""
@@ -33,19 +26,24 @@ class NI_DaX_PowerSupplyController(HC_Backend):
 
         super().__init__()
 
-        self.ID = "NI_DaX_PowerSupp"
+        self.ID = "NI_DaX_PowerSupplyController"
 
-        self.visa_addr = visa_addr
+        self.visa_addr = None
         self.online = False
         self.dummy = dummy
         self.debug = debug
-
+        #
         self.setVoltageChannel = setVoltageChannel
-        self.readVoltageChannel =readVoltageChannel
-        self.readCurrentChannel= readCurrentChannel
-        #TODO make shure channels are in the right format
+        self.readVoltageChannel = readVoltageChannel
+        self.readCurrentChannel = readCurrentChannel
+        #Check if channels are in expected format
+        if not (regex_compare(".+/ao.+",self.setVoltageChannel) and regex_compare(".+/ai.+",self.readCurrentChannel) and regex_compare(".+/ai.+",self.readVoltageChannel)):
+            raise Exception(self.ID + " : Unexpected Channel name")
 
-        #ToDo add conversion factors
+        #these are the conversion Factors for the Voltage settings / readouts
+        self.convSetVoltage = 1
+        self.convReadVoltage = 1
+        self.convReadCurrent = 1
 
         self.lastVset = 0
 
@@ -53,26 +51,23 @@ class NI_DaX_PowerSupplyController(HC_Backend):
     # there are two modules currently in use, NI 9264 and NI 9205
     # connection works over proprietary driver, with "tasks"
     # https://nidaqmx-python.readthedocs.io/en/latest/index.html for further info
-    # and check the Gdocs manual
+    # and check the Gdocs manual!
 
-    #ToDo test if this works as it should - done by guessing
+    #ToDo
     def try_connect(self):
          if not dummy:
-
+            self.online = True
          else:
              self.online=True
          return self.online
 
-    
-
-    #needs to be implemented!
     def update_setting(self, setting: str, value):
         if self.dummy:
             return value
         else:
             try:
 
-                if "CH1_V_set"==setting or:
+                if "CH1_V_set"==setting:
                     with nidaqmx.Task() as task:
                         task.ao_channels.add_ao_voltage_chan(self.setVoltageChannel)
                         task.write(float(value))
@@ -85,7 +80,6 @@ class NI_DaX_PowerSupplyController(HC_Backend):
             except Exception as e:
                 print(e)
 
-    # needs to be implemented
     def command(self, cmd: str):
         if self.dummy:
             return cmd
@@ -109,7 +103,10 @@ class NI_DaX_PowerSupplyController(HC_Backend):
                 print(e)
 
     def close(self):
-        try:  # make sure connection is closed
-            self.task.close()
-        except:
-            pass
+        try:  # make sure tasks are done (tasks have an internal timeout)
+            with nidaqmx.Task() as task:
+                while not task.is_task_done():
+                    print(self.ID + " : Not all Tasks are done!")
+                    time.sleep(.500)
+        except Exception as e:
+            raise e
