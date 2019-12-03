@@ -57,8 +57,8 @@ from hardware_control.Oscilloscope.Key4000XCtrl import Key4000XCtrl
 from hardware_control.Oscilloscope.ZMQOscilloscopeCtrl import ZMQOscilloscopeCtrl
 from hardware_control.FlowController.HC_FlowController import HC_FlowController
 from hardware_control.FlowController.AlicatMSeriesCtrl import AlicatMSeriesCtrl
-from hardware_control.PulseGenerator.HC_PulseGen import HC_PulseGen
-from hardware_control.PulseGenerator.SRSDG535Ctrl import SRSDG535Ctrl
+from hardware_control.DelayGenerator.HC_DelayGenerator import HC_DelayGenerator
+from hardware_control.DelayGenerator.SRSDG535Ctrl import SRSDG535Ctrl
 from hardware_control.ScanTool.HC_ScanTool import HC_ScanTool
 from hardware_control.ConnectionStatusTool.HC_StatusTool import HC_StatusTool
 from hardware_control.FunctionGenerator.HC_FunctionGenerator import HC_FunctionGenerator
@@ -164,11 +164,11 @@ class STS50Demo(HC_MainWindow):
         # Todo: linux-gpib is a dependency on some systems
         self.trig1 = SRSDG535Ctrl("GPIB0::10::INSTR", dummy, True)
         self.trig1.debug = debug
-        self.trig1_ctrl = HC_PulseGen(self.trig1, self, "Trigger 1", "DEFAULT", True)
+        self.trig1_ctrl = HC_DelayGenerator(self.trig1, self, "Trigger 1", "DEFAULT")
 
         self.trig2 = SRSDG535Ctrl("GPIB0::15::INSTR", dummy, True)
         self.trig2.debug = debug
-        self.trig2_ctrl = HC_PulseGen(self.trig2, self, "Trigger 2", "DEFAULT", True)
+        self.trig2_ctrl = HC_DelayGenerator(self.trig2, self, "Trigger 2", "DEFAULT")
 
         self.zmqtool = HC_ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
 
@@ -365,7 +365,7 @@ class STS50Demo(HC_MainWindow):
 
         # ['macintosh', 'Windows', 'Fusion']
         # self.app.setStyle(QStyleFactory.create("Fusion"))
-        # self.app.setStyle(QStyleFactory.create("Windows"))
+        self.app.setStyle(QStyleFactory.create("Windows"))
 
         self.show()
 
