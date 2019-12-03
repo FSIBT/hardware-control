@@ -119,5 +119,4 @@ class HC_singleChannelADAM(QWidget):
             mess = float(
                 mess[0] + mess[2:7]
             )  # with that 00023.7632 is shown as 23.7 and signs are taken care of
-            print(str(mess) + " " + self.channelName)
             self.lcd.display(mess)  # write to actual widget/channel
