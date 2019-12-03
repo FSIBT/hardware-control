@@ -12,6 +12,7 @@
 import re
 from hardware_control.HC_Backend import HC_Backend, returnChannelNumber, regex_compare
 from PyQt5.QtCore import QThread, QSize, QObject, pyqtSignal
+import numpy as np
 
 
 def to_NR3(x: float):
