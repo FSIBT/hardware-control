@@ -1418,3 +1418,13 @@ def setButtonState(button: QPushButton, value):
         else:
             if button.isChecked():
                 button.toggle()
+
+
+def returnChannelNumber(s: str):
+    """Return channel number for a string like 'CH###_TEMP' """
+    if s[:2] == "CH":
+        number = s[2 : s.find("_")]
+        if number.isdigit():
+            return number
+    else:
+        return None
