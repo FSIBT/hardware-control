@@ -20,6 +20,7 @@ from PyQt5.QtWidgets import (
     QGroupBox,
     QVBoxLayout,
     QLineEdit,
+    QRadioButton,
     QPushButton,
     QHBoxLayout,
     QLabel,
@@ -43,42 +44,86 @@ class HC_ZMQConnectionTool(HC_Instrument):
 
         super().__init__(window, name)
 
-        self.port = port
+        self.settings = self.default_state()
+
+        if port != "":
+            self.settings["port"] = port
         self.ignore = True
+        self.accept_commands = False
+
+        self.red_ind = QPixmap(
+            pkg_resources.resource_filename("hardware_control", "graphics/ind_red.png")
+        )
+        self.green_ind = QPixmap(
+            pkg_resources.resource_filename(
+                "hardware_control", "graphics/ind_green.png"
+            )
+        )
+        self.grey_ind = QPixmap(
+            pkg_resources.resource_filename("hardware_control", "graphics/ind_grey.png")
+        )
 
         # Create ZMQ context, socket, poller
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REP)
-        self.socket.bind("tcp://*:5555")
+        self.socket.bind(self.settings["port"])
         #
         self.poller = zmq.Poller()
         self.poller.register(self.socket, zmq.POLLIN)
 
         # Create GUI
         #
-        self.scan_button = QPushButton()
-        self.scan_button.setText("Accept Commands")
-        self.scan_button.setIcon(
-            QIcon(
-                (
-                    QPixmap(
-                        pkg_resources.resource_filename(
-                            "hardware_control", "ScanTool/graphics/commands_in.png"
-                        )
-                    )
-                )
-            )
+
+        self.port_edit_label = QLabel("Set Port:")
+        self.port_edit_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+
+        self.port_edit = QLineEdit()
+        self.port_edit.textChanged.connect(
+            lambda: self.update_setting("port", self.port_edit.text())
         )
-        self.scan_button.setCheckable(False)
-        self.scan_button.clicked.connect(self.connectionOnOff)
+        self.port_edit.setText(self.settings["port"])
+
+        self.restart_port_but = QPushButton()
+        self.restart_port_but.setText("Restart Port")
+        self.restart_port_but.clicked.connect(lambda: self.restart_port())
+
+        self.accept_cmd_button = QRadioButton()
+        self.accept_cmd_button.setChecked(False)
+        self.accept_cmd_button.setText("Accept Incoming Commands")
+        self.accept_cmd_button.clicked.connect(
+            lambda: self.connectionOnOff(self.accept_cmd_button)
+        )
         #
-        self.port_label = QLabel(f"Port: {self.port}")
+        self.disable_cmd_button = QRadioButton()
+        self.disable_cmd_button.setChecked(True)
+        self.disable_cmd_button.setText("Disable Incoming Commands")
+        self.disable_cmd_button.clicked.connect(
+            lambda: self.connectionOnOff(self.disable_cmd_button)
+        )
+        #
+        pstr = self.settings["port"]
+        self.port_label = QLabel(f"Port: {pstr}")
         self.received_label = QLabel("Last Message: --")
+
+        self.status_box = QGroupBox("Status")
+        self.status_grid = QGridLayout()
+        self.status_label = QLabel("--")
+        self.status_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.status_icon = QLabel()
+        self.status_icon.setPixmap(self.grey_ind)
+        self.status_grid.addWidget(self.status_label, 0, 0)
+        self.status_grid.addWidget(self.status_icon, 0, 1)
+        self.status_box.setLayout(self.status_grid)
         #
         self.panel = QGridLayout()
-        self.panel.addWidget(self.scan_button, 2, 0)
-        self.panel.addWidget(self.port_label, 0, 0)
-        self.panel.addWidget(self.received_label, 1, 0)
+        self.panel.addWidget(self.port_edit_label, 0, 0)
+        self.panel.addWidget(self.port_edit, 0, 1)
+        self.panel.addWidget(self.restart_port_but, 0, 2)
+        self.panel.addWidget(self.status_box, 0, 3)
+        self.panel.addWidget(self.port_label, 1, 0, 1, 4)
+        self.panel.addWidget(self.received_label, 2, 0, 1, 4)
+        self.panel.addWidget(self.accept_cmd_button, 3, 0, 1, 3)
+        self.panel.addWidget(self.disable_cmd_button, 4, 0, 1, 3)
         #
         self.master_layout = QGridLayout()
         self.master_layout.addLayout(self.panel, 0, 0)
@@ -87,19 +132,44 @@ class HC_ZMQConnectionTool(HC_Instrument):
 
         self.log_note("Initalized")
 
-        self.settings = self.default_state()
-
         # Create timer to query voltages
         self.service_timer = QTimer(self)
         self.service_timer.timeout.connect(self.service_commands)
         self.service_timer.start(update_period)
 
-    def connectionOnOff(self):
-        pass
+    def restart_port(self):
+
+        # Close out old socket
+        self.poller.unregister(self.socket)
+        self.socket.close()
+
+        # Open new socket
+        self.socket = self.context.socket(zmq.REP)
+        self.socket.bind(self.settings["port"])
+        self.poller.register(self.socket, zmq.POLLIN)
+
+        pstr = self.settings["port"]
+        self.port_label.setText(f"Port: {pstr}")
+
+    def connectionOnOff(self, button):
+
+        if button.text() == "Accept Incoming Commands":
+            self.accept_commands = True
+        else:
+            self.accept_commands = False
 
     def service_commands(self):
         """This is the command that gets called every 'x' seconds to check
         if a message is available and services the messages, if available."""
+
+        if not self.accept_commands:
+            self.received_label.setText("Last Message: --")
+            self.status_label.setText("Disabled")
+            self.status_icon.setPixmap(self.red_ind)
+            return
+
+        self.status_label.setText("Enabled")
+        self.status_icon.setPixmap(self.green_ind)
 
         # Check for events
         events = dict(self.poller.poll(10))
@@ -118,4 +188,6 @@ class HC_ZMQConnectionTool(HC_Instrument):
             self.socket.send(message)  # Send reply
 
     def default_state(self):
-        return {}
+        dflt = {}
+        dflt["port"] = "tcp://*:5555"
+        return dflt

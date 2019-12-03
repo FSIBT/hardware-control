@@ -218,6 +218,31 @@ class HC_CommWorker(QObject):
         self.sigReturnOnline.emit(online)
 
 
+class LoggingGroup:
+    """Describes a list of values in an HC_Instrument that should be logged
+    when get_header() or get_values() is called."""
+
+    def __init__(self, group_name: str):
+
+        # These are the keys of <HC_Insturment>.values to log. This is a list
+        # of strings.
+        self.values_keys = []
+
+        # These are the names for each of the logged values. These titles/names
+        # are what will be passed when get_header() is called.
+        self.values_titles = []
+
+        # These are optional desciptions for each of the logged parameters.
+        self.values_descriptions = []
+
+        # This is the name of the logging group
+        self.group_name = group_name
+
+    def setDescriptions(self, descrs: list):
+        """Add descriptions for the logging values"""
+        self.values_descriptions = descrs
+
+
 class HC_Instrument(QGroupBox):
     def __init__(self, window, name: str):
         super().__init__(name)
@@ -225,19 +250,19 @@ class HC_Instrument(QGroupBox):
         self.settings = OrderedDict()
         self.values = OrderedDict()
         self.values_unit = []
+        self.logging_groups = []
         self.name = name
         self.manufacturer = None
         self.company = None
         self.online = False
         self.comm = None
-        self.ignore = (
-            False
-        )  # Dictates if instrument should be ignored by ConnectionTool and ScanTool widgets
+        self.ignore = False  # Dictates if instrument should be ignored by
+        # ConnectionTool and ScanTool widgets
+
         # self.inbox = {}  # Receives strings from the HC_comm object
 
-        self.window = (
-            window
-        )  # parent needs to have a field called 'app' which is an instance of 'HC_App'
+        self.window = window  # parent needs to have a field called 'app' which
+        # is an instance of 'HC_App'
 
         window.app.add_instrument(self)
 
@@ -245,7 +270,69 @@ class HC_Instrument(QGroupBox):
         # return f"{self.manufacturer} {self.model}"
         return f"{self.name}"
 
-    def get_header(self):
+    def add_logging_group(
+        self, group_name: str, value_keys: list, header_strs: list = []
+    ):
+        """Adds a group of values to log. When calling get_values() or
+        get_header()"""
+
+        # Make sure arrays match dimensions
+        if len(value_keys != header_strs):
+            return False
+
+        # Only keep keys actually present in self.values
+        vks = []
+        hss = []
+        for idx, vk in enumerate(value_keys):
+            if vk in self.values:
+                vks.append(vk)
+                hss.append(header_strs[idx])
+
+        # Create new group
+        new_group = LoggingGroup(group_name, vks, hss)
+
+        # Append new group to list
+        self.logging_groups.append(new_group)
+
+        return True
+
+    def get_logging_group(self, group_name: str):
+        """Finds the logging group with name 'group_name' and returns it. If
+        no such group is found, returns None."""
+
+        for g in self.logging_groups:
+            if g.name == group_name:
+                return g
+
+        return None
+
+    def get_header(self, group_name=""):
+        """Returns the header for the specified logging group. If the group
+        requested does not exist, returns None"""
+        if group_name == "":
+            return get_default_header()
+        else:
+
+            for lg in self.logging_groups:
+                if lg.group_name == group_name:
+                    return ".".join(lg.values_titles)  # TODO: Better way to join/label?
+
+    def get_values(self, group_name=""):
+        """Returns the values for the specified logging group. If the group
+        requested does not exist, returns None"""
+        if group_name == "":
+            return get_default_header()
+        else:
+
+            vals = []
+            for lg in self.logging_groups:
+                if lg.group_name == group_name:
+                    for k in lg.value_keys:
+                        vals.append(self.values[k])
+                return vals
+            return None
+
+    def get_default_header(self):
         """Supply a header for a log file"""
         header = f"{self.manufacturer}-{self.model}-"
         header += "-".join(
@@ -256,13 +343,21 @@ class HC_Instrument(QGroupBox):
         )
         return header
 
-    def get_values(self):
+    def get_default_values(self):
         """Return current list of values for logging"""
         return self.values.values()
 
+    def enableDisableWidgets(self, setting: str, value: str):
+        """User can overwrite this to enable/disable widgets when conditions/settings
+        are changed"""
+        pass
+
     # ToDo value has to be str
-    def update_setting(self, setting: str, value):
+    def update_setting(self, setting: str, value: str):
         """Update a setting in settings and values dictionary for the instrument"""
+
+        self.enableDisableWidgets(setting, value)
+
         try:
             self.settings[setting] = value
         except KeyError:
@@ -1241,89 +1336,89 @@ class HC_Control(ABC):
 #             self.msleep(self.timeout)
 #
 #
-# class LoggerThread(QThread):
-#     """Write out the data to a log file"""
-#
-#     def __init__(self, datadir: pathlib.PosixPath = None, dummy: bool = False):
-#         """Set up the logfile. Either create it or open for append"""
-#
-#         super().__init__()
-#         self.elements = []
-#         self.keep_running = True
-#         self.pause = False
-#
-#         if not datadir or not datadir.is_dir():
-#             self.keep_running = False
-#             QMessageBox.about(None, "Error", f"Cannot find logfile directory {datadir}")
-#
-#         self.YYYYMMDD = datetime.datetime.today().strftime("%Y-%m-%d")
-#         logdir = datadir / self.YYYYMMDD
-#         logdir.mkdir(exist_ok=True, parents=True)
-#         self.logdir = logdir
-#         if dummy:
-#             self.logfilename = logdir / (self.YYYYMMDD + "-dummy.txt")
-#         else:
-#             self.logfilename = logdir / (self.YYYYMMDD + ".txt")
-#
-#         # check if we need to write header
-#         if self.logfilename.exists() and self.logfilename.is_file():
-#             with self.logfilename.open("r") as f:
-#                 self.oldlength = len(f.readlines())
-#         else:
-#             self.oldlength = 0
-#
-#     def __del__(self):
-#         self.wait()
-#
-#     def addelement(self, e):
-#         self.elements.append(e)
-#
-#     def removeelement(self, e):
-#         self.elements.remove(e)
-#
-#     def mystop(self):
-#         self.keep_running = False
-#
-#     def start_pause(self):
-#         self.pause = True
-#
-#     def stop_pause(self):
-#         self.pause = False
-#
-#     def write_header(self):
-#         self.logfile.write(f"# {self.YYYYMMDD}\n# Logfile from hardware_control run\n")
-#         datastructure = "Time[s] " + " ".join([e.get_header() for e in self.elements])
-#         myhash = hashlib.sha256()
-#         myhash.update(datastructure.encode("utf-8"))
-#         version = myhash.hexdigest()
-#         self.logfile.write(f"# Version: {version}\n")
-#         self.logfile.write(
-#             f"{datastructure}\n"
-#         )  # no '#' so that it is easier for pandas to read
-#
-#     def run(self):
-#         # wait a few seconds before starting the log, so that the
-#         # elements can start collecting data
-#         time.sleep(5)
-#
-#         # now open file
-#         self.logfile = self.logfilename.open("a", buffering=1)
-#
-#         # add header if file is empty
-#         if self.oldlength == 0:
-#             self.write_header()
-#
-#         while self.keep_running:
-#             if not self.pause:
-#                 line = f"{time.time()} "
-#                 data = []
-#                 for e in self.elements:
-#                     data.extend(e.get_values())
-#                 line += " ".join([str(d) for d in data])
-#                 self.logfile.write(line + "\n")
-#             self.sleep(1)
-#
-#         self.logfile.close()
+class LoggerThread(QThread):
+    """Write out the data to a log file"""
+
+    def __init__(self, datadir: pathlib.PosixPath = None, dummy: bool = False):
+        """Set up the logfile. Either create it or open for append"""
+
+        super().__init__()
+        self.elements = []
+        self.keep_running = True
+        self.pause = False
+
+        if not datadir or not datadir.is_dir():
+            self.keep_running = False
+            QMessageBox.about(None, "Error", f"Cannot find logfile directory {datadir}")
+
+        self.YYYYMMDD = datetime.datetime.today().strftime("%Y-%m-%d")
+        logdir = datadir / self.YYYYMMDD
+        logdir.mkdir(exist_ok=True, parents=True)
+        self.logdir = logdir
+        if dummy:
+            self.logfilename = logdir / (self.YYYYMMDD + "-dummy.txt")
+        else:
+            self.logfilename = logdir / (self.YYYYMMDD + ".txt")
+
+        # check if we need to write header
+        if self.logfilename.exists() and self.logfilename.is_file():
+            with self.logfilename.open("r") as f:
+                self.oldlength = len(f.readlines())
+        else:
+            self.oldlength = 0
+
+    def __del__(self):
+        self.wait()
+
+    def addelement(self, e):
+        self.elements.append(e)
+
+    def removeelement(self, e):
+        self.elements.remove(e)
+
+    def mystop(self):
+        self.keep_running = False
+
+    def start_pause(self):
+        self.pause = True
+
+    def stop_pause(self):
+        self.pause = False
+
+    def write_header(self):
+        self.logfile.write(f"# {self.YYYYMMDD}\n# Logfile from hardware_control run\n")
+        datastructure = "Time[s] " + " ".join([e.get_header() for e in self.elements])
+        myhash = hashlib.sha256()
+        myhash.update(datastructure.encode("utf-8"))
+        version = myhash.hexdigest()
+        self.logfile.write(f"# Version: {version}\n")
+        self.logfile.write(
+            f"{datastructure}\n"
+        )  # no '#' so that it is easier for pandas to read
+
+    def run(self):
+        # wait a few seconds before starting the log, so that the
+        # elements can start collecting data
+        time.sleep(5)
+
+        # now open file
+        self.logfile = self.logfilename.open("a", buffering=1)
+
+        # add header if file is empty
+        if self.oldlength == 0:
+            self.write_header()
+
+        while self.keep_running:
+            if not self.pause:
+                line = f"{time.time()} "
+                data = []
+                for e in self.elements:
+                    data.extend(e.get_values())
+                line += " ".join([str(d) for d in data])
+                self.logfile.write(line + "\n")
+            self.sleep(1)
+
+        self.logfile.close()
 
 
 def setButtonState(button: QPushButton, value):
