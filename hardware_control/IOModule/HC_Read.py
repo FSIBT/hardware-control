@@ -63,8 +63,6 @@ class HC_Read(HC_Instrument):
         # this sends all settings, which are stored in the settings dictionary to the backend
         self.send_state()
 
-
-# ToDo add connect and stuff here
 class HC_singleChannelADAM(QWidget):
     """A single Temperature LCD Widget, with a channelnumber and name"""
     def __init__(

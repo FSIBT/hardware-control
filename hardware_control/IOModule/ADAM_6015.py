@@ -8,8 +8,7 @@ import random
 import re
 import socket
 
-from hardware_control.HC_Backend import HC_Backend  # regex_compare #ToDo
-
+from hardware_control.HC_Backend import HC_Backend, regex_compare
 
 class Adam_6015(HC_Backend):
     """Control of Adam input/output module"""
@@ -23,7 +22,6 @@ class Adam_6015(HC_Backend):
         self.addr = (self.IP, self.port)
         self.try_connect()
 
-    #ToDo check if it works with sockets instead
     def try_connect(self):
         """this is a override - sockets are used"""
         if not self.dummy:
@@ -100,9 +98,3 @@ class Adam_6015(HC_Backend):
     def update_setting(self, setting: str, value: str):
         """Device has no Settings"""
         pass
-
-#ToDo remove later
-def regex_compare(pattern: str, comp: str):
-    """ . as a wildcard"""
-    regex = re.compile(pattern)
-    return bool(re.match(regex, comp))
