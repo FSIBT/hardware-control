@@ -169,7 +169,7 @@ class CAEN14xxETCtrl(HC_Backend):
                 # Note: We ignore channel number because there is only
                 # one channel on this model of PSU
                 if regex_compare("CH._V_out?", cmd):  # Get CHx V out
-
+                    cmd = cmd[:-1]  # ToDo check if this works with the questionmark
                     c = cmd[2]
                     result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:VMON")
 
@@ -180,7 +180,7 @@ class CAEN14xxETCtrl(HC_Backend):
                     return f"{cmd}={rval}"
 
                 elif regex_compare("CH._I_out?", cmd):  # Get CHx I out
-
+                    cmd = cmd[:-1]
                     c = cmd[2]
                     result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:IMON")
 
@@ -191,7 +191,7 @@ class CAEN14xxETCtrl(HC_Backend):
                     return f"{cmd}={rval}"
 
                 elif regex_compare("CH._I_set", cmd):  # Get CHx I setpoint
-
+                    cmd = cmd[:-1]
                     c = cmd[2]
                     result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:ISET")
 
@@ -202,7 +202,7 @@ class CAEN14xxETCtrl(HC_Backend):
                     return f"{cmd}={rval}"
 
                 elif regex_compare("CH._V_set", cmd):  # Get CHx V setpoint
-
+                    cmd = cmd[:-1]
                     c = cmd[2]
                     result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:VSET")
 
