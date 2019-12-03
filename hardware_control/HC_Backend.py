@@ -17,13 +17,15 @@ class HC_Backend(ABC):
 
         self.dummy = False
 
-    @abstractmethod
     def update_setting(self, setting: str, value: str):
-        """User must overload this function. Must return a string"""
+        """Overload this function to adjust settings on the device. Must return
+        a string (which HC_CommWorker will send back to the main thread)"""
+        return value
 
-    @abstractmethod
     def command(self, cmd: str):
-        """User must overload this function. Must return a string"""
+        """Overload this function to send commands to the device. Must return
+        a string (which HC_CommWorker will send back to the main thread)"""
+        return value
 
     def write(self, msg: str):
         """Passes a command directly from the UI to the instrument"""
@@ -34,6 +36,12 @@ class HC_Backend(ABC):
         """Passes a query statement directly from the UI to the instrument"""
         if self.device is not None:
             return self.device.query(msg)
+
+    def command_listdata(self, cmd: str):
+        """Overload this function to send commands to the device. Must return
+        a tuple with an str, list, and list (which HC_CommWorker will send back
+         to the main thread)"""
+        return "", [], []
 
     def close(self):
         """Close connection to instrument"""
@@ -114,14 +122,16 @@ def regex_compare(pattern: str, comp: str):
     regex = re.compile(pattern)
     return bool(re.match(regex, comp))
 
-def returnChannelNumber(s:str):
+
+def returnChannelNumber(s: str):
     """Return channel number for a string like 'CH###_TEMP' """
-    if s[:2]=="CH":
-        number = s[2:s.find("_")]
+    if s[:2] == "CH":
+        number = s[2 : s.find("_")]
         if number.isdigit():
             return number
     else:
         return None
+
 
 # These functions are helpful for converting numbers to
 # specific number formats for strings
