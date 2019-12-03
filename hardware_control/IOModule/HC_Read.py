@@ -66,7 +66,6 @@ class HC_Read(HC_Instrument):
 # ToDo add connect and stuff here
 class HC_singleChannelADAM(QWidget):
     """A single Temperature LCD Widget, with a channelnumber and name"""
-
     def __init__(
         self,
         mainWindow,
@@ -87,7 +86,7 @@ class HC_singleChannelADAM(QWidget):
         # Create timer to query
         self.readout_timer = QTimer(self)
         self.readout_timer.timeout.connect(self.update_readout)
-        self.readout_timer.start(500)
+        self.readout_timer.start(self.mainWindow.globalRefreshRate)
         #
 
         ### Create UI

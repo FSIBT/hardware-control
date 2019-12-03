@@ -257,6 +257,7 @@ class HC_Instrument(QGroupBox):
         self.online = False
         self.comm = None
         self.ignore = False  # Dictates if instrument should be ignored by
+        self.globalRefreshRate = 500 #ms refresh
         # ConnectionTool and ScanTool widgets
 
         # self.inbox = {}  # Receives strings from the HC_comm object

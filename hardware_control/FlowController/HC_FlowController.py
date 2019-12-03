@@ -133,7 +133,7 @@ class HC_FlowController(HC_Instrument):
         # Create timer to query voltages
         self.readout_timer = QTimer(self)
         self.readout_timer.timeout.connect(self.update_readout)
-        self.readout_timer.start(500)
+        self.readout_timer.start(self.globalRefreshRate)
 
         self.log_note("Initalized")
 

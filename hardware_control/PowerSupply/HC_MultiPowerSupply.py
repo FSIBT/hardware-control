@@ -98,7 +98,7 @@ class HC_MultiPowerSupply(HC_Instrument):
         # Create timer to query voltages
         self.readout_timer = QTimer(self)
         self.readout_timer.timeout.connect(self.update_readout)
-        self.readout_timer.start(500)
+        self.readout_timer.start(self.globalRefreshRate)
 
     def close(self):  # Note: this is a complete duplicate of the 'close()' function
         # in HC_Instrument, except it adds readout_timer.stop()
