@@ -34,7 +34,7 @@ class DeviceBackend(HC_Backend):
 
         self.num_channels = 8
 
-<<<<<<< HEAD
+
     # Implementation might be needed - depends on device
     # def try_connect(self):
     #     if not dummy:
@@ -45,9 +45,6 @@ class DeviceBackend(HC_Backend):
 
 
     #needs to be implemented!
-=======
-    # needs to be implemented!
->>>>>>> 80c086a30fecb9cb9fb75bcac2d62e504182239b
     def update_setting(self, setting: str, value):
         return setting + "=" + value
 
