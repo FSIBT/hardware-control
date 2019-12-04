@@ -58,7 +58,7 @@ class Key4000XCtrl(HC_Backend):
 
     def __init__(
         self,
-        visa_addr,
+        connection_addr,
         dummy: bool = False,
         debug: bool = False,
         use_sockets: bool = False,
@@ -68,7 +68,7 @@ class Key4000XCtrl(HC_Backend):
         super().__init__()
         self.ID = "KEYSIGHT-4000X"
 
-        self.visa_addr = visa_addr
+        self.connection_addr = connection_addr
         self.online = False
         self.dummy = dummy
         self.debug = debug
