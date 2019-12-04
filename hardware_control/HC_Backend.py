@@ -90,47 +90,48 @@ class HC_Backend(ABC):
         if self.debug:
             print(f"{self.ID}: trying to connect")
 
-            # Try to connect to instrument
+        # Try to connect to instrument
 
-            if not self.use_sockets:  # Use visa
+        if not self.use_sockets:  # Use visa
+            try:
+                rm = pyvisa.ResourceManager("@py")
+                self.device = rm.open_resource(self.visa_addr)  # Open connection
+
+                # Verify actually connected (open_resource won't always throw error w/ disconnected USB)
+                self.device.query("*IDN?")
+                if self.debug:
+                    print("opened connection")
+
+            except Exception as e:  # Failed to conncet
+                self.online = False
+                if self.debug:
+                    print(f"\t{str(e)}")
+                    print("OFFLINE")
+                return False
+        else:  # Use sockets
+            # This is very specific and probably does not work as it is with other devices
+            # First Check current state
+            if not self.online:  # If not online, try to connect
                 try:
-                    rm = pyvisa.ResourceManager("@py")
-                    self.device = rm.open_resource(self.visa_addr)  # Open connection
-
-                    # Verify actually connected (open_resource won't always throw error w/ disconnected USB)
-                    self.device.query("*IDN?")
-                    if self.debug:
-                        print("opened connection")
-
-                except Exception as e:  # Failed to conncet
+                    self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                    self.s.settimeout(2)
+                    self.s.connect(self.addr)
+                except:
                     self.online = False
-                    if self.debug:
-                        print(f"\t{str(e)}")
-                        print("OFFLINE")
-            else:  # Use sockets
-                # This is very specific and probably does not work as it is with other devices
-                # First Check current state
-                if not self.online:  # If not online, try to connect
-                    try:
-                        self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                        self.s.settimeout(2)
-                        self.s.connect(self.addr)
-                    except:
-                        self.online = False
-                        return self.online
+                    return self.online
 
-                    # Independent of the state, try to receive data, if nothing is returned, then the device is offline
-                    try:
-                        self.s.send("#01\r".encode("ascii"))
-                        indata = self.s.recv(self.buf)
-                        self.online = True
-                        return self.online
-                    except:
-                        self.online = False
-                        return self.online
+                # Independent of the state, try to receive data, if nothing is returned, then the device is offline
+                try:
+                    self.s.send("#01\r".encode("ascii"))
+                    indata = self.s.recv(self.buf)
+                    self.online = True
+                    return self.online
+                except:
+                    self.online = False
+                    return self.online
 
-        else:
-            self.online = True
+        # else:
+        #     self.online = True
 
         return self.online
 
