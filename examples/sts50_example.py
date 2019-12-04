@@ -15,12 +15,7 @@ Options:
 
 import sys
 
-from PyQt5.QtWidgets import (
-    QDoubleSpinBox,
-    QStyleFactory,
-    QTabWidget,
-    QGroupBox,
-)
+from PyQt5.QtWidgets import QDoubleSpinBox, QStyleFactory, QTabWidget, QGroupBox
 from docopt import docopt
 
 commands = docopt(__doc__)
@@ -78,7 +73,7 @@ class STS50Demo(HC_MainWindow):
         scpi_scope = Key4000XCtrl(
             "TCPIP0::192.168.1.14::INSTR",
             dummy,
-            True,
+            debug,
             use_sockets,
             "192.168.1.14",
             5025,
@@ -118,7 +113,6 @@ class STS50Demo(HC_MainWindow):
         )
 
         self.psu = TDKLGenHCtrl("TCPIP0::192.168.1.19::INSTR", dummy)
-        awg.psu = debug
         self.psu_ctrl = HC_MultiPowerSupply(
             self.psu, self, [1], "TDK Lambda (RF Vin)", "DEFAULT"
         )
@@ -138,25 +132,19 @@ class STS50Demo(HC_MainWindow):
             self.temp, self, [1, 3, 4], ["Chamber", "Source", "Tomato"], "TEMP","K","Temperature Instrument"
         )
 
-        self.flow = AlicatMSeriesCtrl("192.168.1.15", dummy, True)
+        self.flow = AlicatMSeriesCtrl("192.168.1.15", dummy, debug)
         self.flow_ctrl = HC_FlowController(
             self.flow, self, "Flow Controller", "flowcontroller_state.json", True
         )
 
         # Todo: linux-gpib is a dependency on some systems
-        self.trig1 = SRSDG535Ctrl("GPIB0::10::INSTR", dummy, True)
-        self.trig1.debug = debug
+        self.trig1 = SRSDG535Ctrl("GPIB0::10::INSTR", dummy, debug)
         self.trig1_ctrl = HC_DelayGenerator(self.trig1, self, "Trigger 1", "DEFAULT")
 
-        self.trig2 = SRSDG535Ctrl("GPIB0::15::INSTR", dummy, True)
-        self.trig2.debug = debug
+        self.trig2 = SRSDG535Ctrl("GPIB0::15::INSTR", dummy, debug)
         self.trig2_ctrl = HC_DelayGenerator(self.trig2, self, "Trigger 2", "DEFAULT")
 
-        try:
-            self.zmqtool = HC_ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
-        except Exception as e:
-            print("ZMQConnection failed! ")
-            print(e)
+        self.zmqtool = HC_ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
 
         self.scantool = HC_ScanTool(self, "Scan Control", "DEFAULT", True)
         self.scantool.update_instruments()
@@ -369,7 +357,7 @@ class STS50Demo(HC_MainWindow):
 
 def main(argv):
     app = HC_App([])
-    app.print_debug = debug
+    print(f"\n\n\n\nEBUG: {debug}\n\n\n")
     ex = STS50Demo(app, use_sockets)
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())

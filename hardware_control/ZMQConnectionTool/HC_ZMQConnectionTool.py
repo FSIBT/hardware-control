@@ -30,9 +30,20 @@ class HC_ZMQConnectionTool(HC_Instrument):
         update_period: int = 500,
     ):
 
-        super().__init__(window, name)
+        self.socket = None
+        self.poller = None
+
+        super(HC_ZMQConnectionTool, self).__init__(window, name)
 
         self.settings = self.default_state()
+
+        # Create ZMQ context, socket, poller
+        self.context = zmq.Context()
+        self.socket = self.context.socket(zmq.REP)
+        self.socket.bind(self.settings["port"])
+        #
+        self.poller = zmq.Poller()
+        self.poller.register(self.socket, zmq.POLLIN)
 
         if port != "":
             self.settings["port"] = port
@@ -50,14 +61,6 @@ class HC_ZMQConnectionTool(HC_Instrument):
         self.grey_ind = QPixmap(
             pkg_resources.resource_filename("hardware_control", "graphics/ind_grey.png")
         )
-
-        # Create ZMQ context, socket, poller
-        self.context = zmq.Context()
-        self.socket = self.context.socket(zmq.REP)
-        self.socket.bind(self.settings["port"])
-        #
-        self.poller = zmq.Poller()
-        self.poller.register(self.socket, zmq.POLLIN)
 
         # Create GUI
         #
@@ -125,19 +128,29 @@ class HC_ZMQConnectionTool(HC_Instrument):
         self.service_timer.timeout.connect(self.service_commands)
         self.service_timer.start(update_period)
 
-    def restart_port(self):
+    def try_connect(self):  # TODO: Make sure this fucntion is working correctly
 
-        # Close out old socket
-        self.poller.unregister(self.socket)
-        self.socket.close()
+        if self.dummy:
+            if self.online:
+                return True
+            else:
+                print(f"{self.ID}: creating dummy connection to {self.zmq_address}")
+                self.online = True
+                return True
 
-        # Open new socket
+        if self.online:
+            # Todo: check that this will reconnect automatically, if not fix
+            return True
+
+        # Try to connect - restart socket
+        if self.socket is not None:
+            self.socket.close()
         self.socket = self.context.socket(zmq.REP)
-        self.socket.bind(self.settings["port"])
-        self.poller.register(self.socket, zmq.POLLIN)
+        self.socket.connect(self.zmq_address)
 
-        pstr = self.settings["port"]
-        self.port_label.setText(f"Port: {pstr}")
+        self.online = True
+
+        return True
 
     def connectionOnOff(self, button):
 

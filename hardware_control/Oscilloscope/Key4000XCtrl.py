@@ -58,7 +58,7 @@ class Key4000XCtrl(HC_Backend):
 
     def __init__(
         self,
-        visa_addr,
+        connection_addr,
         dummy: bool = False,
         debug: bool = False,
         use_sockets: bool = False,
@@ -68,7 +68,7 @@ class Key4000XCtrl(HC_Backend):
         super().__init__()
         self.ID = "KEYSIGHT-4000X"
 
-        self.visa_addr = visa_addr
+        self.connection_addr = connection_addr
         self.online = False
         self.dummy = dummy
         self.debug = debug
@@ -364,51 +364,52 @@ class Key4000XCtrl(HC_Backend):
         self.write(":ACQ:TYPE NORM")
         # Set aquisition mode to normal
 
-    def write(self, command: str):
 
-        if not self.online:
-            return f"{self.ID}-Offline"
-
-        if not self.dummy:
-            if not self.use_sockets:
-                self.device.write(command)
-            else:
-                self.device.sendall(bytes(command + "\n", "utf-8"))
-            if self.debug:
-                print(f'\tKEY4000X< "{command}"')
-        else:
-            return command
-
-    def query(self, command: str):
-
-        if not self.online:
-            return f"{self.ID}-Offline"
-
-        if not self.dummy:
-            if not self.use_sockets:
-                reply = self.device.query(command)
-            else:
-                self.device.sendall(bytes(command + "\n", "utf-8"))
-                reply_bytes = recvall(self.device)
-                reply = str(reply_bytes)
-                reply = reply[2 : len(reply) - 3]
-            if self.debug:
-                print(f'\t{self.ID}< "{command}"')
-            return reply
-        else:
-            return command
-
-
-def recvall(sock):
-    BUFF_SIZE = 4096  # 4 KiB
-    data = b""
-    while True:
-        part = sock.recv(BUFF_SIZE)
-        data += part
-        t_str = str(part)
-        if t_str[len(t_str) - 3 : len(t_str) - 1] == "\\n":
-            break
-    return data
+#     def write(self, command: str):
+#
+#         if not self.online:
+#             return f"{self.ID}-Offline"
+#
+#         if not self.dummy:
+#             if not self.use_sockets:
+#                 self.device.write(command)
+#             else:
+#                 self.device.sendall(bytes(command + "\n", "utf-8"))
+#             if self.debug:
+#                 print(f'\tKEY4000X< "{command}"')
+#         else:
+#             return command
+#
+#     def query(self, command: str):
+#
+#         if not self.online:
+#             return f"{self.ID}-Offline"
+#
+#         if not self.dummy:
+#             if not self.use_sockets:
+#                 reply = self.device.query(command)
+#             else:
+#                 self.device.sendall(bytes(command + "\n", "utf-8"))
+#                 reply_bytes = recvall(self.device)
+#                 reply = str(reply_bytes)
+#                 reply = reply[2 : len(reply) - 3]
+#             if self.debug:
+#                 print(f'\t{self.ID}< "{command}"')
+#             return reply
+#         else:
+#             return command
+#
+#
+# def recvall(sock):
+#     BUFF_SIZE = 4096  # 4 KiB
+#     data = b""
+#     while True:
+#         part = sock.recv(BUFF_SIZE)
+#         data += part
+#         t_str = str(part)
+#         if t_str[len(t_str) - 3 : len(t_str) - 1] == "\\n":
+#             break
+#     return data
 
 
 # 71-209
