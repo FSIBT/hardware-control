@@ -28,7 +28,7 @@ dummy = commands["--dummy"]
 use_sockets = commands["--socket"]
 debug = commands["--debug"]
 log = commands["--log"]
-
+dummy = True
 from hardware_control.base import HC_App, HC_MainWindow
 from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
 from hardware_control.Oscilloscope.Key4000XCtrl import Key4000XCtrl
@@ -135,7 +135,7 @@ class STS50Demo(HC_MainWindow):
 
         self.temp = Adam_6015("192.168.1.25", dummy)
         self.temp_ctrl = HC_Read(
-            self.temp, self, [1, 3, 4], ["Chamber", "Source", "Tomato"], "TEMP"
+            self.temp, self, [1, 3, 4], ["Chamber", "Source", "Tomato"], "TEMP","K","Temperature Instrument"
         )
 
         self.flow = AlicatMSeriesCtrl("192.168.1.15", dummy, True)
@@ -209,11 +209,12 @@ class STS50Demo(HC_MainWindow):
         # self.tab3_layout.addWidget(self.flow_ctrl, 0, 0)
         self.tab3_layout.addWidget(self.trig1_ctrl, 1, 0)
         self.tab3_layout.addWidget(self.trig2_ctrl, 2, 0)
-        self.tab3_layout.addWidget(self.zmqtool, 3, 0)
+        self.tab3_layout.addWidget(self.zmqtool, 3, 0, 2, 1)
         # self.tab3_layout.addWidget(self.scantool, 0, 1)
         self.tab3_layout.addWidget(self.run_tool, 1, 1)
         self.tab3_layout.addWidget(self.var_tool, 2, 1)
         self.tab3_layout.addWidget(self.temp_ctrl, 3, 1)
+        
         # self.tab3_layout.addWidget(self.statustool, 3, 1)
         self.tab3.setLayout(self.tab3_layout)
 
