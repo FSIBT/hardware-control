@@ -113,8 +113,8 @@ class HC_Backend(ABC):
 
             self.online = False
             if self.debug:
-                print(f"\t{str(e)}")
-                print("OFFLINE")
+                print(f"\t({self.ID}) ERROR: {str(e)}")
+                print(f"{self.ID} is offline")
         else:
             self.online = True
 
