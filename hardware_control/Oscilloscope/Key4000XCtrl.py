@@ -273,7 +273,12 @@ class Key4000XCtrl(HC_Backend):
 
         if self.dummy or not self.online:
             t = np.linspace(0, 1e-3, 100, False)
-            v = np.sin(t * 5e3 * float(channel))
+            noise = 0.02 * np.random.rand(1, 100)
+
+            # in the line below we have to take index 0 of 'noise' because noise
+            # is 2D array w/ 1 row and we need a 1D array
+            v = np.sin(t * 5e3 * float(channel)) + noise[0]
+
             return f"CH{channel}_WVFM", t.tolist(), v.tolist()
 
         # Read data from oscilloscope
