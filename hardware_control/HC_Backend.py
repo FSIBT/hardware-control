@@ -12,8 +12,6 @@ class HC_Backend(ABC):
         self.ID = "Instrument"
         self.online = False
 
-        self.use_sockets = False
-
         self.device = None  # This is the physical instrument to write to
         self.debug = False
 
@@ -70,7 +68,7 @@ class HC_Backend(ABC):
             if self.online:
                 return True
             else:
-                print(f"{self.ID}: creating dummy connection to {self.visa_addr}")
+                print(f"{self.ID}: creating dummy connection to {self.connection_addr}")
                 self.online = True
                 return True
 
@@ -91,49 +89,81 @@ class HC_Backend(ABC):
             print(f"{self.ID}: trying to connect")
 
         # Try to connect to instrument
-
-        if not self.use_sockets:  # Use visa
-            try:
+        try:
+            if not self.use_sockets:  # Use visa
                 rm = pyvisa.ResourceManager("@py")
-                self.device = rm.open_resource(self.visa_addr)  # Open connection
+                self.device = rm.open_resource(self.connection_addr)  # Open connection
 
                 # Verify actually connected (open_resource won't always throw error w/ disconnected USB)
                 self.device.query("*IDN?")
                 if self.debug:
                     print("opened connection")
 
-            except Exception as e:  # Failed to conncet
-                self.online = False
+            else:  # Use sockets
+                self.device = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.device.settimeout(2)
+                self.device.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 0)
+                self.device.connect(self.connection_addr)
+
+                # Verify actually connected (open_resource won't always throw error w/ disconnected USB)
+                self.device.query("*IDN?")  # TODO: Test that this works
                 if self.debug:
-                    print(f"\t{str(e)}")
-                    print("OFFLINE")
-                return False
-        else:  # Use sockets
-            # This is very specific and probably does not work as it is with other devices
-            # First Check current state
-            if not self.online:  # If not online, try to connect
-                try:
-                    self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                    self.s.settimeout(2)
-                    self.s.connect(self.addr)
-                except:
-                    self.online = False
-                    return self.online
+                    print("opened connection")
+        except Exception as e:  # Failed to conncet
 
-                # Independent of the state, try to receive data, if nothing is returned, then the device is offline
-                try:
-                    self.s.send("#01\r".encode("ascii"))
-                    indata = self.s.recv(self.buf)
-                    self.online = True
-                    return self.online
-                except:
-                    self.online = False
-                    return self.online
-
-        # else:
-        #     self.online = True
+            self.online = False
+            if self.debug:
+                print(f"\t{str(e)}")
+                print("OFFLINE")
+        else:
+            self.online = True
 
         return self.online
+
+    def write(self, command: str):
+
+        if not self.online:
+            return f"{self.ID}-Offline"
+
+        if not self.dummy:
+            if not self.use_sockets:
+                self.device.write(command)
+            else:
+                self.device.sendall(bytes(command + "\n", "utf-8"))
+            if self.debug:
+                print(f'\tKEY4000X< "{command}"')
+        else:
+            return command
+
+    def query(self, command: str):
+
+        if not self.online:
+            return f"{self.ID}-Offline"
+
+        if not self.dummy:
+            if not self.use_sockets:
+                reply = self.device.query(command)
+            else:
+                self.device.sendall(bytes(command + "\n", "utf-8"))
+                reply_bytes = recvall(self.device)
+                reply = str(reply_bytes)
+                reply = reply[2 : len(reply) - 3]
+            if self.debug:
+                print(f'\t{self.ID}< "{command}"')
+            return reply
+        else:
+            return command
+
+    def recvall(sock):
+        BUFF_SIZE = 4096  # 4 KiB
+        data = b""
+        while True:
+            part = sock.recv(BUFF_SIZE)
+            data += part
+            t_str = str(part)
+            if t_str[len(t_str) - 3 : len(t_str) - 1] == "\\n":
+                break
+        return data
 
 
 def regex_compare(pattern: str, comp: str):
