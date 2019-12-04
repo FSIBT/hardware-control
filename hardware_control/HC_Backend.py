@@ -80,7 +80,7 @@ class HC_Backend(ABC):
                 self.device.query("*IDN?")
                 if self.debug:
                     print(f"{self.ID}: Connection verified")
-            except visa.errors.VisaIOError as e:  # Not connected - reconnect
+            except Exception as e:  # Not connected - reconnect
                 if self.debug:
                     print("Lost connection to device. Will try to reconnect")
                     print(f"\t{str(e)}")
