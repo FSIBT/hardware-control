@@ -17,7 +17,7 @@ from hardware_control.HC_Backend import HC_Backend
 class CAEN14xxETCtrl(HC_Backend):
     def __init__(
         self,
-        visa_addr,
+        connection_addr,
         dummy: bool = False,
         debug: bool = False,
         use_sockets: bool = False,
@@ -29,7 +29,7 @@ class CAEN14xxETCtrl(HC_Backend):
 
         self.ID = "TDKL-GenH"
 
-        self.visa_addr = visa_addr
+        self.connection_addr = connection_addr
         self.online = False
         self.dummy = dummy
         self.debug = debug
@@ -55,7 +55,7 @@ class CAEN14xxETCtrl(HC_Backend):
             if self.online:
                 return True
             else:
-                print(f"{self.ID}: creating dummy connection to {self.visa_addr}")
+                print(f"{self.ID}: creating dummy connection to {self.connection_addr}")
                 self.online = True
                 return True
 
@@ -77,7 +77,7 @@ class CAEN14xxETCtrl(HC_Backend):
         try:
             if not self.use_sockets:  # Use visa
                 rm = visa.ResousrceManager("@py")
-                self.device = rm.open_resource(self.visa_addr)  # Open connection
+                self.device = rm.open_resource(self.connection_addr)  # Open connection
                 self.device.read_termination = "\r\n"
                 self.device.write_termination = "\r\n"
 

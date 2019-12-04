@@ -207,6 +207,8 @@ class ZMQOscilloscopeCtrl(HC_Backend):
 
     def try_connect(self):
 
+        # TODO: Make a common ZMQ backend for ZMQCOnnectionTool and ZMQ scope
+
         if self.dummy:
             if self.online:
                 return True
@@ -219,11 +221,27 @@ class ZMQOscilloscopeCtrl(HC_Backend):
             # Todo: check that this will reconnect automatically, if not fix
             return True
 
-        socket.connect(self.zmq_address)
+        # Try to connect - restart socket
+        if self.socket is not None:
+            self.socket.close()
+        self.socket = self.context.socket(zmq.REP)
+        self.socket.connect(self.zmq_address)
 
         self.online = True
 
         return True
+
+    # def restart_port(self):
+    #
+    #     # Close out old socket
+    #     self.socket.close()
+    #
+    #     # Open new socket
+    #     self.socket = self.context.socket(zmq.REP)
+    #     self.socket.bind(self.settings["port"])
+    #
+    #     pstr = self.settings["port"]
+    #     self.port_label.setText(f"Port: {pstr}")
 
     def default_settings(self):
         dflt = {

@@ -45,7 +45,7 @@ def regex_compare(pattern: str, comp: str):
 class TDKLGenHCtrl(HC_Backend):
     def __init__(
         self,
-        visa_addr,
+        connection_addr,
         dummy: bool = False,
         debug: bool = False,
         use_sockets: bool = False,
@@ -57,7 +57,7 @@ class TDKLGenHCtrl(HC_Backend):
 
         self.ID = "TDKL-GenH"
 
-        self.visa_addr = visa_addr
+        self.connection_addr = connection_addr
         self.online = False
         self.dummy = dummy
         self.debug = debug

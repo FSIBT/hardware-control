@@ -6,7 +6,7 @@ from hardware_control.HC_Backend import HC_Backend
 class DeviceBackend(HC_Backend):
     def __init__(
         self,
-        visa_addr,
+        connection_addr,
         dummy: bool = False,
         debug: bool = False,
         use_sockets: bool = False,
@@ -18,7 +18,7 @@ class DeviceBackend(HC_Backend):
 
         self.ID = "ID of Template Device"
 
-        self.visa_addr = visa_addr
+        self.connection_addr = connection_addr
         self.online = False
         self.dummy = dummy
         self.debug = debug
@@ -30,7 +30,6 @@ class DeviceBackend(HC_Backend):
 
         self.num_channels = 8
 
-
     # Implementation might be needed - depends on device
     # def try_connect(self):
     #     if not dummy:
@@ -39,8 +38,7 @@ class DeviceBackend(HC_Backend):
     #     else
     #         return True
 
-
-    #needs to be implemented!
+    # needs to be implemented!
     def update_setting(self, setting: str, value):
         return setting + "=" + value
 

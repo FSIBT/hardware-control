@@ -33,7 +33,7 @@ def bool_NR1(x: bool):
 class NI_DAQ:
     def __init__(
         self,
-        visa_addr,
+        connection_addr,
         dummy: bool = False,
         debug: bool = False,
         use_sockets: bool = False,
@@ -43,7 +43,7 @@ class NI_DAQ:
 
         self.ID = "KEY4000X"
 
-        self.visa_addr = visa_addr
+        self.connection_addr = connection_addr
         self.online = False
         self.dummy = dummy
         self.debug = debug
@@ -68,7 +68,9 @@ class NI_DAQ:
             try:
                 if not self.use_sockets:
                     rm = pyvisa.ResourceManager()
-                    self.scope = rm.open_resource(self.visa_addr)  # Open connection
+                    self.scope = rm.open_resource(
+                        self.connection_addr
+                    )  # Open connection
                     # self.configure_read_waveform();
                 else:
                     self.scope = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -81,7 +83,7 @@ class NI_DAQ:
                 self.online = True
 
         else:
-            print(f"KEY4000X: creating dummy connection to {self.visa_addr}")
+            print(f"KEY4000X: creating dummy connection to {self.connection_addr}")
             self.online = True
 
     #

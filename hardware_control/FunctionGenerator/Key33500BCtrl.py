@@ -61,7 +61,7 @@ def regex_compare(pattern: str, comp: str):
 class Key33500BCtrl(HC_Backend):
     def __init__(
         self,
-        visa_addr,
+        connection_addr,
         dummy: bool = False,
         debug: bool = False,
         use_sockets: bool = False,
@@ -71,7 +71,7 @@ class Key33500BCtrl(HC_Backend):
         super().__init__()
         self.ID = "KEYSIGHT-33500B"
 
-        self.visa_addr = visa_addr
+        self.connection_addr = connection_addr
         self.online = False
         self.dummy = dummy
         self.debug = debug

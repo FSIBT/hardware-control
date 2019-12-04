@@ -34,7 +34,7 @@ def bool_NR1(x: bool):
 class SRSDG535Ctrl(HC_Backend):
     def __init__(
         self,
-        visa_addr,
+        connection_addr,
         dummy: bool = False,
         debug: bool = False,
         use_pyvisapy: bool = False,
@@ -46,7 +46,7 @@ class SRSDG535Ctrl(HC_Backend):
 
         self.ID = "SRS-DG535"
 
-        self.visa_addr = visa_addr
+        self.connection_addr = connection_addr
         self.online = False
         self.dummy = dummy
         self.debug = debug
@@ -122,7 +122,7 @@ class SRSDG535Ctrl(HC_Backend):
             if self.online:
                 return True
             else:
-                print(f"{self.ID}: creating dummy connection to {self.visa_addr}")
+                print(f"{self.ID}: creating dummy connection to {self.connection_addr}")
                 self.online = True
                 return True
 
@@ -131,7 +131,7 @@ class SRSDG535Ctrl(HC_Backend):
             # ToDo: Check if this works && cleanup
 
             try:
-                if 0 != self.device.query("IS"): #ask for Instrument status
+                if 0 != self.device.query("IS"):  # ask for Instrument status
                     print(self.ID + " Instrument Status Bad")
                 self.online = True
                 if self.debug:
@@ -158,10 +158,10 @@ class SRSDG535Ctrl(HC_Backend):
                     if self.debug:
                         print("Connecting with NI-VISA backend")
                     rm = pyvisa.ResourceManager()
-                self.device = rm.open_resource(self.visa_addr)  # Open connection
+                self.device = rm.open_resource(self.connection_addr)  # Open connection
                 # TODO: TEST
-                self.online #assume we are online
-                self.online = self.try_connect()    #and check if we actually are
+                self.online  # assume we are online
+                self.online = self.try_connect()  # and check if we actually are
 
             else:  # Use sockets
                 self.device = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
