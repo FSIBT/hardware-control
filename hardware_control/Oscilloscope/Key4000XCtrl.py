@@ -10,7 +10,8 @@
 #
 
 import re
-from hardware_control.HC_Backend import HC_Backend, returnChannelNumber, regex_compare
+from hardware_control.HC_Backend import HC_Backend
+from hardware_control.utility import returnChannelNumber, regex_compare
 from PyQt5.QtCore import QThread, QSize, QObject, pyqtSignal
 import numpy as np
 

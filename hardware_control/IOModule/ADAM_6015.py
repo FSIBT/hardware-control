@@ -8,7 +8,8 @@ import random
 import re
 import socket
 
-from hardware_control.HC_Backend import HC_Backend, regex_compare
+from hardware_control.HC_Backend import HC_Backend
+from hardware_control.utility import regex_compare
 
 class Adam_6015(HC_Backend):
     """Control of Adam input/output module"""
@@ -81,7 +82,7 @@ class Adam_6015(HC_Backend):
     def command(self, cmd: str):
         """Use Convention "CH#_TEMP?"  the answer is like >+0025.9237+0150.0000+0150.0000+0150.0000+0150.0000+0150.0000+0150.0000-0050.0000 """
         if self.dummy:
-            d=cmd[:-1]+"="+str(random.randint(0,10000)/1000)
+            d=cmd[:-1]+"="+str(random.randint(0,10000)/10)
             return d
         if self.online:
             try:

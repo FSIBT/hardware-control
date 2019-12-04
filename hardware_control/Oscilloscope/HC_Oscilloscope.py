@@ -11,7 +11,7 @@ import pkg_resources
 
 import time  # Get rid of this guy!
 
-from hardware_control.HC_Backend import regex_compare
+from hardware_control.utility import regex_compare
 from hardware_control.base import (
     HC_Instrument,
     HC_Comm,

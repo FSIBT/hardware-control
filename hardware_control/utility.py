@@ -1,0 +1,43 @@
+import re
+
+def regex_compare(pattern: str, comp: str):
+    """Compares 'comp' to the pattern 'pattern'. periods ('.') act as a wildcard in the regular expression.
+    Returns true if 'comp' matches the regex."""
+    regex = re.compile(pattern)
+    return bool(re.match(regex, comp))
+
+
+def returnChannelNumber(s: str):
+    """Return channel number for a string like 'CH###_TEMP' """
+    if s[:2] == "CH":
+        number = s[2 : s.find("_")]
+        if number.isdigit():
+            return number
+    else:
+        return None
+
+
+# These functions are helpful for converting numbers to
+# specific number formats for strings
+
+
+def to_NR3(x: float):
+    return f" {x:.6E}"
+
+
+def to_NR1(x: int):
+    return f"{x:d}"
+
+
+def bool_NR1(x: bool):
+    if x:
+        return "1"
+    else:
+        return "0"
+
+
+def str_to_bool(x: str):
+    if x == "True":
+        return True
+    else:
+        return False

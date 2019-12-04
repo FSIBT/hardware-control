@@ -3,7 +3,7 @@ This is the Base class for reading modules
 it provides a simple UI.
 """
 from PyQt5.QtCore import QTimer
-from PyQt5.QtWidgets import QLabel, QWidget, QGridLayout, QLCDNumber
+from PyQt5.QtWidgets import QLabel, QWidget, QGridLayout, QLCDNumber, QSpacerItem
 
 from hardware_control.base import HC_Instrument, HC_Comm
 
@@ -19,6 +19,7 @@ class HC_Read(HC_Instrument):
         readCommand: str,  # command for reading e.g. TEMP / VOLT / CURR
         unit: str = "Units",
         name: str = "Read Module",
+        showLCD = True,
         initialize_with: str = "INSTRUMENT",
         save_on_close: str = False,
     ):
@@ -36,6 +37,7 @@ class HC_Read(HC_Instrument):
         self.channels = channels
         self.channelNames = channelNames
         self.readCommand = readCommand
+        self.showLCD = showLCD
         self.unit = unit
 
         if self.channels.__len__() == 0 or self.readCommand.__len__() != 4:
@@ -47,11 +49,12 @@ class HC_Read(HC_Instrument):
         # add all the needed channels
         for i, c in enumerate(self.channels):
             self.listOfWidgets.append(
-                HC_singleChannelADAM(
+                HC_singleChannelRead(
                     self, c, self.channelNames[i], self.readCommand, self.unit
                 )
             )
             self.grid.addWidget(self.listOfWidgets[i], 0, i)
+        self.grid.addWidget(self.grid.spacerItem(),0,4)
         # Add all the widgets to layout
         self.setLayout(self.grid)
         ####
@@ -63,7 +66,7 @@ class HC_Read(HC_Instrument):
         # this sends all settings, which are stored in the settings dictionary to the backend
         self.send_state()
 
-class HC_singleChannelADAM(QWidget):
+class HC_singleChannelRead(QWidget):
     """A single Temperature LCD Widget, with a channelnumber and name"""
     def __init__(
         self,
@@ -89,17 +92,20 @@ class HC_singleChannelADAM(QWidget):
         #
 
         ### Create UI
-        self.name = QLabel()
-        self.name.setText(channelName + " " + unit)
-
-        self.lcd = QLCDNumber()
-        self.lcd.setSmallDecimalPoint(True)
-
         self.subLayout = QGridLayout()
-        self.subLayout.addWidget(self.name, 0, 0)
-        self.subLayout.addWidget(self.lcd, 0, 1)
+        self.name = QLabel()
 
-        self.setMaximumHeight(80)
+        if self.mainWindow.showLCD:
+            self.lcd = QLCDNumber()
+            self.lcd.setSmallDecimalPoint(True)
+            self.lcd.setMinimumHeight(self.mainWindow.globalLineHeight)
+            self.subLayout.addWidget(self.lcd, 1, 0)
+
+        self.name.setText(channelName + " " + unit)
+        self.subLayout.addWidget(self.name, 0, 0)
+
+
+        self.setMaximumSize(self.mainWindow.globalLineWidth,self.mainWindow.globalLineHeight*3)
 
         self.setLayout(self.subLayout)
 
@@ -117,5 +123,8 @@ class HC_singleChannelADAM(QWidget):
             mess = float(
                 mess[0] + mess[2:7]
             )  # with that 00023.7632 is shown as 23.7 and signs are taken care of
-            self.lcd.display(mess)  # write to actual widget/channel
-#ToDo Max/min Temp Overheat alert
+            if self.mainWindow.showLCD:
+                self.lcd.display(mess)  # write to actual widget/channel
+            else:
+                self.name.setText(f"{self.channelName} ({self.unit}) : {mess}")
+#ToDo Max/min Value alert?
