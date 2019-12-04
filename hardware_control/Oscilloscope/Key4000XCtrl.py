@@ -199,8 +199,13 @@ class Key4000XCtrl(HC_Backend):
     def command(self, cmd: str):
         if not self.online:
             return "Offline"
-        else:
-            return cmd
+
+        if cmd == "SINGLE_TRIGGER":
+            self.write(":SING")
+        elif cmd == "RUN":
+            self.write(":RUN")
+        elif cmd == "STOP":
+            self.write(":STOP")
 
     def command_listdata(self, cmd: str):
 
