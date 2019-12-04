@@ -12,6 +12,8 @@ class HC_Backend(ABC):
         self.ID = "Instrument"
         self.online = False
 
+        self.use_sockets = False
+
         self.device = None  # This is the physical instrument to write to
         self.debug = False
 
@@ -88,28 +90,45 @@ class HC_Backend(ABC):
         if self.debug:
             print(f"{self.ID}: trying to connect")
 
-        # Try to connect to instrument
-        try:
+            # Try to connect to instrument
+
             if not self.use_sockets:  # Use visa
-                rm = pyvisa.ResourceManager("@py")
-                self.device = rm.open_resource(self.visa_addr)  # Open connection
+                try:
+                    rm = pyvisa.ResourceManager("@py")
+                    self.device = rm.open_resource(self.visa_addr)  # Open connection
 
-                # Verify actually connected (open_resource won't always throw error w/ disconnected USB)
-                self.device.query("*IDN?")
-                if self.debug:
-                    print("opened connection")
+                    # Verify actually connected (open_resource won't always throw error w/ disconnected USB)
+                    self.device.query("*IDN?")
+                    if self.debug:
+                        print("opened connection")
 
+                except Exception as e:  # Failed to conncet
+                    self.online = False
+                    if self.debug:
+                        print(f"\t{str(e)}")
+                        print("OFFLINE")
             else:  # Use sockets
-                # Todo: @TimoBauer update this try_connect to use your better(?) system frmo the *new* Adam
-                self.device = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                self.device.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 0)
-                self.device.connect((self.ip_addr, self.port_no))
-        except Exception as e:  # Failed to conncet
+                # This is very specific and probably does not work as it is with other devices
+                # First Check current state
+                if not self.online:  # If not online, try to connect
+                    try:
+                        self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+                        self.s.settimeout(2)
+                        self.s.connect(self.addr)
+                    except:
+                        self.online = False
+                        return self.online
 
-            self.online = False
-            if self.debug:
-                print(f"\t{str(e)}")
-                print("OFFLINE")
+                    # Independent of the state, try to receive data, if nothing is returned, then the device is offline
+                    try:
+                        self.s.send("#01\r".encode("ascii"))
+                        indata = self.s.recv(self.buf)
+                        self.online = True
+                        return self.online
+                    except:
+                        self.online = False
+                        return self.online
+
         else:
             self.online = True
 
