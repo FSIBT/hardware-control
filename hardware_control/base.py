@@ -264,7 +264,10 @@ class HC_Instrument(QGroupBox):
         self.online = False
         self.comm = None
         self.ignore = False  # Dictates if instrument should be ignored by
+        #Global Constants
         self.globalRefreshRate = 500 #ms refresh
+        self.globalLineHeight = 50 #Lineheight of athe average  spinbox
+        self.globalLineWidth = 300 #Linewidth of athe average  spinbox
         # ConnectionTool and ScanTool widgets
 
         # self.inbox = {}  # Receives strings from the HC_comm object
