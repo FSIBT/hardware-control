@@ -116,43 +116,6 @@ class HC_Oscilloscope(HC_Instrument):
 
         self.log_note("Initalized")
 
-    # def backend_return(self, retval: str):
-    #     """Is called by self.comm when the backend returns a value. The return string
-    #     is converted here into a dictionary's key/value pair and added to self.values.
-    #     An equals sign ('=') is used to separate the key and value, with key coming
-    #     first."""
-    #
-    #     sep_idx = retval.find("=")
-    #     if sep_idx != -1:  # Separator was found...
-    #
-    #         key = retval[0:sep_idx]
-    #
-    #         #If the returned data is a waveform, send it directly to the update fn
-    #         if (regex_compare("CH.+_WVFM", key)):
-    #             c = returnChannelNumber(key)
-    #             if c is None:
-    #                 return
-    #             self.disp.update_display(c, retval[sep_idx + 1 :])
-    #
-    #         else:
-    #             val = retval[sep_idx + 1 :]
-    #
-    #             self.values[key] = val
-    #
-    #     else:  # If no separator, put under 'Misc'
-    #
-    #         self.values["Misc"] = retval
-
-    # @pyqtSlot(int, list, list)
-    # def backend_return_waveform(self, channel: int, wave, times):
-    #
-    #     if self.window.app.print_debug:
-    #         print(
-    #             f"Instrument: {self.name} received waveform return from backend '{self.comm.backend_model}'. Channel: {channel}"
-    #         )
-    #
-    #     self.display.update_display(channel, times, wave)
-
     def backend_return_listdata(self, descr: str, data1: list, data2: list):
 
         if regex_compare("CH.+_WVFM", descr):
