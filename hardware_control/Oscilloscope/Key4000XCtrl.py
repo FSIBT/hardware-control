@@ -136,7 +136,6 @@ class Key4000XCtrl(HC_Backend):
 
                 elif setting == "labels_enabled":
                     self.write(f"DISP:LAB {boolstr_NR1(value)}")
-                    print(f"DISP:LAB {boolstr_NR1(value)}")
                     return self.query(f"DISP:LAB?")
 
                 elif regex_compare("CH._invert", setting):
@@ -193,10 +192,9 @@ class Key4000XCtrl(HC_Backend):
                     self.write(f"TRIG:SOUR CHAN{str_NR1(value)}")
                     return self.query(f"TRIG:SOUR?")
         except Exception as e:
-            print(
-                "An error occured in Key4000XCtrl.py when sending SCPI commands to the instrument."
-            )
-            print(str(e))
+            if self.debug:
+                print("An error occured in Key4000XCtrl.py sending SCPI commands.")
+                print(str(e))
 
     def command(self, cmd: str):
         if not self.online:
@@ -205,8 +203,6 @@ class Key4000XCtrl(HC_Backend):
             return cmd
 
     def command_listdata(self, cmd: str):
-
-        print(f"\t\tBackend got: {cmd}")
 
         if not self.online:
             return "", [], []
@@ -303,29 +299,31 @@ class Key4000XCtrl(HC_Backend):
             # x_orig = float(x_orig[0:len(x_orig)-1]); #Convert X Origin
             x_orig = float(x_orig[0 : len(x_orig)])
             # Convert X Origin
-            print(x_orig)
         except Exception as e:
-            print("ERROR: Received bad origin from scope.")
-            print(e)
-            print(f"\t{x_orig}")
+            if self.debug:
+                print("ERROR: Received bad origin from scope.")
+                print(e)
+                print(f"\t{x_orig}")
             return "", [], []
         try:
             # x_ref = float(x_ref[0:len(x_ref)-1]); #Convert X Reference
             x_ref = float(x_ref[0 : len(x_ref)])
             # Convert X Reference
         except Exception as e:
-            print("ERROR: Received bad reference from scope.")
-            print(e)
-            print(f"\t{x_ref}")
+            if self.debug:
+                print("ERROR: Received bad reference from scope.")
+                print(e)
+                print(f"\t{x_ref}")
             return "", [], []
         try:
             # x_incr = float(x_incr[0:len(x_incr)-1]); #Convert X Increment
             x_incr = float(x_incr[0 : len(x_incr)])
             # Convert X Increment
         except Exception as e:
-            print("ERROR: Received bad increment from scope.")
-            print(e)
-            print(f"\t{x_incr}")
+            if self.debug:
+                print("ERROR: Received bad increment from scope.")
+                print(e)
+                print(f"\t{x_incr}")
             return "", [], []
 
         try:
@@ -342,7 +340,8 @@ class Key4000XCtrl(HC_Backend):
             ).tolist()
             # Calculate time values
         except Exception as e:
-            print("ERROR: Failed to calculate V & t.")
+            if self.debug:
+                print("ERROR: Failed to calculate V & t.")
             return "", [], []
 
         return f"CH{channel}_WVFM", t, fmt
@@ -386,10 +385,7 @@ class Key4000XCtrl(HC_Backend):
             else:
                 self.device.sendall(bytes(command + "\n", "utf-8"))
                 reply_bytes = recvall(self.device)
-                print(f"reply size: {len(reply_bytes)}")
                 reply = str(reply_bytes)
-                if len(reply) < 100:
-                    print("\t\t" + reply)
                 reply = reply[2 : len(reply) - 3]
             if self.debug:
                 print(f'\t{self.ID}< "{command}"')

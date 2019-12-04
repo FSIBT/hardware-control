@@ -157,7 +157,6 @@ class HC_Oscilloscope(HC_Instrument):
 
         if regex_compare("CH.+_WVFM", descr):
             c = returnChannelNumber(descr)
-            print(f"Channel: {descr}\n\tlen(t): {len(data1)}\n\tlen(V): {len(data2)}")
             self.disp.update_display(int(c), data1, data2)
 
     #
@@ -673,7 +672,7 @@ class OscilloscopeDisplayWidget(QGroupBox):
         self.setLayout(self.master_layout)
 
         self.update_timer = QTimer(self)
-        # self.update_timer.timeout.connect(control.query_waveforms)
+        self.update_timer.timeout.connect(self.query_waveforms)
         self.update_timer.start(1000 / refresh)
 
     # Set refresh rate (in Hz)
@@ -696,7 +695,6 @@ class OscilloscopeDisplayWidget(QGroupBox):
         else:
             if self.update_timer.isActive():
                 self.update_timer.stop()
-                print("Stop!")
             single_trig_mode = False
 
     def update_display(self, channel: int, t: list, wave: list):
@@ -710,29 +708,6 @@ class OscilloscopeDisplayWidget(QGroupBox):
             self.CH3.setData(t, wave)
         elif channel == 4:
             self.CH4.setData(t, wave)
-
-    # def update_display(self, channel:int, wav:string):
-    # # def update_display(self, wvfms: dict):
-    #     start_time = time.time()
-    #     if "CH1" in wvfms:
-    #         self.CH1.setData(wvfms["CH1"][1], wvfms["CH1"][0])
-    #     else:
-    #         pass
-    #
-    #     if "CH2" in wvfms:
-    #         self.CH2.setData(wvfms["CH2"][1], wvfms["CH2"][0])
-    #     else:
-    #         pass
-    #
-    #     if "CH3" in wvfms:
-    #         self.CH3.setData(wvfms["CH3"][1], wvfms["CH3"][0])
-    #     else:
-    #         pass
-    #
-    #     if "CH4" in wvfms:
-    #         self.CH4.setData(wvfms["CH4"][1], wvfms["CH4"][0])
-    #     else:
-    #         pass
 
     def query_waveforms(self):
 
