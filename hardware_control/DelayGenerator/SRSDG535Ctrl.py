@@ -151,9 +151,9 @@ class SRSDG535Ctrl(HC_Backend):
         try:
             if not self.use_sockets:  # Use visa
                 if self.use_pyvisapy:
-                    rm = pyvisa.ResourceManager(
-                        "@py"
-                    )  # linux-gpib is required for pyvisapy to support GPIB. Use VISA if on windows
+                    rm = pyvisa.ResourceManager()
+                    #     "@py"
+                    # )  # linux-gpib is required for pyvisapy to support GPIB. Use VISA if on windows
                 else:
                     if self.debug:
                         print("Connecting with NI-VISA backend")
@@ -171,8 +171,8 @@ class SRSDG535Ctrl(HC_Backend):
 
             self.online = False
             if self.debug:
-                print(f"\t{str(e)}")
-                print("OFFLINE")
+                print(f"\t({self.ID}) ERROR: {str(e)}")
+                print(f"{self.ID} is offline")
         else:
             self.online = True
 
