@@ -15,12 +15,7 @@ Options:
 
 import sys
 
-from PyQt5.QtWidgets import (
-    QDoubleSpinBox,
-    QStyleFactory,
-    QTabWidget,
-    QGroupBox,
-)
+from PyQt5.QtWidgets import QDoubleSpinBox, QStyleFactory, QTabWidget, QGroupBox
 from docopt import docopt
 
 commands = docopt(__doc__)
@@ -152,11 +147,7 @@ class STS50Demo(HC_MainWindow):
         self.trig2.debug = debug
         self.trig2_ctrl = HC_DelayGenerator(self.trig2, self, "Trigger 2", "DEFAULT")
 
-        try:
-            self.zmqtool = HC_ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
-        except Exception as e:
-            print("ZMQConnection failed! ")
-            print(e)
+        self.zmqtool = HC_ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
 
         self.scantool = HC_ScanTool(self, "Scan Control", "DEFAULT", True)
         self.scantool.update_instruments()
