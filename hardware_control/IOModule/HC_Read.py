@@ -118,3 +118,4 @@ class HC_singleChannelADAM(QWidget):
                 mess[0] + mess[2:7]
             )  # with that 00023.7632 is shown as 23.7 and signs are taken care of
             self.lcd.display(mess)  # write to actual widget/channel
+#ToDo Max/min Temp Overheat alert

@@ -45,8 +45,8 @@ class Read_Demo(QMainWindow):
         self.demo_ctrl = HC_Read(
             demo,
             self,
-            [1, 5, 9, 4],
-            ["HeatPower","Channel5","LOX","AnOtherChannel"],
+            [0, 4, 5, 6],
+            ["HeatPower :","Channel4 :","LOX5 :","AnOtherChannel6 :"],
             "TEMP",
             "(C)"
         )

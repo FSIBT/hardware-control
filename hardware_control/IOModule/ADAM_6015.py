@@ -83,17 +83,23 @@ class Adam_6015(HC_Backend):
         if self.dummy:
             d=cmd[:-1]+"="+str(random.randint(0,10000)/1000)
             return d
-        if regex_compare("CH._TEMP?",cmd) and int(cmd[2]) in range(1,9):
-            #cmd[2] equals the channel#
-            out="#01\r" #simply asks for all channels
-            self.s.send(out.encode("ascii"))
-            indata = self.s.recv(self.buf)
-            data = indata.decode("ascii")[1:]  # cut off ">"
-            n = int(cmd[2])-1
-            data = data[n*10:n*10+10]
-            return "CH"+cmd[2]+"_TEMP="+data
-        else:
-            return "Unexpected Command"
+        if self.online:
+            try:
+                if regex_compare("CH._TEMP?",cmd) and int(cmd[2]) in range(0,7):
+                    #cmd[2] equals the channel#
+                    out="#01\r" #simply asks for all channels
+                    self.s.send(out.encode("ascii"))
+                    indata = self.s.recv(self.buf)
+                    data = indata.decode("ascii")[1:]  # cut off ">"
+                    n = int(cmd[2])
+                    data = data[n*10:n*10+10]
+                    return "CH"+str(n)+"_TEMP="+data
+                else:
+                    return "Unexpected Command"
+            except Exception as e:
+                if self.debug:
+                    print(self.ID + " online status : " + str(self.try_connect()))
+                    print(e)
 
     def update_setting(self, setting: str, value: str):
         """Device has no Settings"""
