@@ -225,10 +225,10 @@ class HC_CommWorker(QObject):
         """Is called by HC_Comm on a timer. Tells backend to check if is
         connected, else connect."""
         if time.time() > expire_time:  # Skip command if too old
-            ret_val = f"EXPIRED=TRYCONN \t[Exec: {time.time()}, Exp: {expire_time}] [{self.backend.ID}]"
+            pass
         else:
             online = self.backend.try_connect()
-        self.sigReturnOnline.emit(online)
+            self.sigReturnOnline.emit(online)
 
     @pyqtSlot(str, float)
     def command_listdata(self, cmd: str, expire_time: float):
