@@ -21,14 +21,15 @@ from hardware_control.utility import regex_compare
 class NI_DaX_PowerSupplyController(HC_Backend):
     def __init__(
         self,
-        setVoltageChannel: str,
-        readVoltageChannel: str,
-        readCurrentChannel: str,
+        setVoltageChannel: str = "cDaQ1Mod1/ao10",
+        readVoltageChannel: str = "cDaQ1Mod2/ai20",
+        readCurrentChannel: str = "cDaQ1Mod2/ai20",
         dummy: bool = False,
         debug: bool = False,
     ):
 
         super().__init__()
+        self.num_channels = 1
 
         self.ID = "NI_DaX_PowerSupplyController"
 
@@ -63,7 +64,7 @@ class NI_DaX_PowerSupplyController(HC_Backend):
 
     # ToDo
     def try_connect(self):
-        if not dummy:
+        if not self.dummy:
             self.online = True
         else:
             self.online = True
@@ -96,25 +97,27 @@ class NI_DaX_PowerSupplyController(HC_Backend):
                 if "CH1_V_out?" == cmd:
                     with nidaqmx.Task() as task:
                         task.ai_channels.add_ai_voltage_chan(self.readVoltageChannel)
-                        val = task.read()
-                    return val[0]
+                        val = str(task.read())
+                    return cmd[:-1] +"=" + str(val[0])
                 if "CH1_I_out?" == cmd:
                     with nidaqmx.Task() as task:
                         task.ai_channels.add_ai_voltage_chan(self.readCurrentChannel)
-                        val = task.read()
-                    return val[0]
+                        val = str(task.read())
+                    return cmd[:-1] +"=" + str(val[0])
                 elif "CH1_V_set?" == cmd:
-                    return self.lastVset
+                    return cmd[:-1] +"=" + str(self.lastVset)
+                elif "CH1_I_set?" == cmd:
+                    return cmd[:-1] +"=" + "0"
                 else:
-                    raise Exception(self.ID + "unknown Command")
+                    raise Exception(self.ID + "unknown Command : ", cmd)
             except Exception as e:
-                print(e)
+                self.pDebug(e)
 
     def close(self):
         try:  # make sure tasks are done (tasks have an internal timeout)
             with nidaqmx.Task() as task:
                 while not task.is_task_done():
-                    print(self.ID + " : Not all Tasks are done!")
+                    self.pDebug(self.ID + " : Not all Tasks are done!")
                     time.sleep(0.500)
         except Exception as e:
             raise e
