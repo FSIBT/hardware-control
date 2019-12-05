@@ -50,6 +50,7 @@ setup(
         "pyqtgraph",
         "zmq",
         "pytest-runner",
+        "nidaqmx",
     ],
     setup_requires=["pytest-runner"],
     tests_require=["pytest"],
