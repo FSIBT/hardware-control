@@ -617,7 +617,10 @@ class OscilloscopeDisplayWidget(QGroupBox):
             self.refresh_mode_label = QLabel("Refresh Mode: ")
             #
             self.refresh_mode_drop = QComboBox()
-            self.refresh_mode_drop.addItems(["Timer", "Single Trig", "Manual"])
+            # self.refresh_mode_drop.addItems(["Timer", "Single Trig", "Manual"]) #TODO: Impliment single trigger
+            self.refresh_mode_drop.addItems(
+                ["Timer", "Manual"]
+            )  # TODO: Impliment single trigger
             self.refresh_mode_drop.currentIndexChanged.connect(
                 lambda: self.set_refresh_mode(self.refresh_mode_drop.currentText())
             )
