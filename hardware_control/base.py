@@ -24,12 +24,12 @@ class HC_Comm(QObject):
     By calling this object's functions, data can be safely transfered between the
     main thread and communication threads."""
 
-    sigUpdateSettings = pyqtSignal(str, str)
-    sigCommand = pyqtSignal(str)
-    sigWrite = pyqtSignal(str)
-    sigQuery = pyqtSignal(str)
-    sigTryConnect = pyqtSignal()
-    sigCommandList = pyqtSignal(str)
+    sigUpdateSettings = pyqtSignal(str, str, float)
+    sigCommand = pyqtSignal(str, float)
+    sigWrite = pyqtSignal(str, float)
+    sigQuery = pyqtSignal(str, float)
+    sigTryConnect = pyqtSignal(float)
+    sigCommandList = pyqtSignal(str, float)
     sigClose = pyqtSignal()
 
     def __init__(self, backend, instrument):
@@ -37,6 +37,9 @@ class HC_Comm(QObject):
         self.backend = backend
         self.instrument = instrument  # Calling instrument UI (eg. HC_scope)
         self.backend_model = backend.ID
+
+        self.expire_time = 40
+        self.list_expire_time = 5
 
         self.worker = HC_CommWorker(self.backend)
         self.worker_thread = QThread()
@@ -86,7 +89,7 @@ class HC_Comm(QObject):
             print(
                 f"Instrument: {self.instrument.name} called 'update_setting()' for setting '{setting}' and sent message '{value}'."
             )
-        self.sigUpdateSettings.emit(setting, value)
+        self.sigUpdateSettings.emit(setting, value, time.time() + self.expire_time)
         self.instrument.window.app.add_log(
             self.instrument.name, self.backend_model, "SET", setting, value
         )
@@ -97,7 +100,7 @@ class HC_Comm(QObject):
             print(
                 f"Instrument: {self.instrument.name} called 'command()' and sent command: '{cmd}'."
             )
-        self.sigCommand.emit(cmd)
+        self.sigCommand.emit(cmd, time.time() + self.expire_time)
         self.instrument.window.app.add_log(
             self.instrument.name, self.backend_model, "CMD", cmd
         )
@@ -108,7 +111,7 @@ class HC_Comm(QObject):
             print(
                 f"Instrument: {self.instrument.name} called 'write()' and sent message: '{msg}'."
             )
-        self.sigWrite.emit(msg)
+        self.sigWrite.emit(msg, time.time() + self.expire_time)
         self.instrument.window.app.add_log(
             self.instrument.name, self.backend_model, "WRT", setting
         )
@@ -119,14 +122,14 @@ class HC_Comm(QObject):
             print(
                 f"Instrument: {self.instrument.name} called 'query()' and sent message: '{msg}'."
             )
-        self.sigQuery.emit(msg)
+        self.sigQuery.emit(msg, time.time() + self.expire_time)
         self.instrument.window.app.add_log(
             self.instrument.name, self.backend_model, "QRY", setting
         )
 
     def try_connect(self):
         """Tells the worker to tell the backend to try to connect to the instrument"""
-        self.sigTryConnect.emit()
+        self.sigTryConnect.emit(time.time() + self.expire_time)
 
     def command_listdata(self, cmd: str):
         """Sends a command to the worker in the worker thread just like command(),
@@ -135,7 +138,7 @@ class HC_Comm(QObject):
             print(
                 f"Instrument: {self.instrument.name} called 'command()' and sent command: '{cmd}'."
             )
-        self.sigCommandList.emit(cmd)
+        self.sigCommandList.emit(cmd, time.time() + self.list_expire_time)
         self.instrument.window.app.add_log(
             self.instrument.name, self.backend_model, "CMDLD", cmd
         )
@@ -180,41 +183,64 @@ class HC_CommWorker(QObject):
 
         self.backend = backend
 
-    @pyqtSlot(str, str)
-    def update_setting(self, setting: str, value: str):
+    @pyqtSlot(str, str, float)
+    def update_setting(self, setting: str, value: str, expire_time: float):
         """Transfers a setting and value to the backend"""
-        ret_val = self.backend.update_setting(setting, value)
+
+        if time.time() > expire_time:  # Skip command if too old
+            ret_val = f'EXPIRED=SET: "{setting}" "{value}" \t[Exec: {time.time()}, Exp: {expire_time}] [{self.backend.ID}]'
+        else:
+            ret_val = self.backend.update_setting(setting, value)
         self.sigReturnValues.emit(ret_val)
 
-    @pyqtSlot(str)
-    def command(self, cmd: str):
+    @pyqtSlot(str, float)
+    def command(self, cmd: str, expire_time: float):
         """Transfers a command to the backend"""
-        ret_val = self.backend.command(cmd)
+        if time.time() > expire_time:  # Skip command if too old
+            ret_val = f'EXPIRED=CMD:"{cmd}" \t[Exec: {time.time()}, Exp: {expire_time}] [{self.backend.ID}]'
+        else:
+            ret_val = self.backend.command(cmd)
         self.sigReturnValues.emit(ret_val)
 
-    @pyqtSlot(str)
-    def write(self, msg: str):
+    @pyqtSlot(str, float)
+    def write(self, msg: str, expire_time: float):
         """Transfers a command to be sent directly to the instrument to the backend"""
-        ret_val = self.backend.write(msg)
+        if time.time() > expire_time:  # Skip command if too old
+            ret_val = f'EXPIRED=WRT:"{msg}" \t[Exec: {time.time()}, Exp: {expire_time}] [{self.backend.ID}]'
+        else:
+            ret_val = self.backend.write(msg)
         self.sigReturnValues.emit(ret_val)
 
-    @pyqtSlot(str)
-    def query(self, msg: str):
+    @pyqtSlot(str, float)
+    def query(self, msg: str, expire_time: float):
         """Transfers a query statement to be sent directly to the instrument to the backend"""
-        ret_val = self.backend.query(msg)
+        if time.time() > expire_time:  # Skip command if too old
+            ret_val = f'EXPIRED=QRY:"{msg}" \t[Exec: {time.time()}, Exp: {expire_time}] [{self.backend.ID}]'
+        else:
+            ret_val = self.backend.query(msg)
         self.sigReturnValues.emit(ret_val)
 
-    @pyqtSlot()
-    def try_connect(self):
+    @pyqtSlot(float)
+    def try_connect(self, expire_time: float):
         """Is called by HC_Comm on a timer. Tells backend to check if is
         connected, else connect."""
-        online = self.backend.try_connect()
+        if time.time() > expire_time:  # Skip command if too old
+            ret_val = f"EXPIRED=TRYCONN \t[Exec: {time.time()}, Exp: {expire_time}] [{self.backend.ID}]"
+        else:
+            online = self.backend.try_connect()
         self.sigReturnOnline.emit(online)
 
-    @pyqtSlot(str)
-    def command_listdata(self, cmd: str):
+    @pyqtSlot(str, float)
+    def command_listdata(self, cmd: str, expire_time: float):
         """Transfers a command to the backend"""
-        ret_val = self.backend.command_listdata(cmd)
+        if time.time() > expire_time:  # Skip command if too old
+            ret_val = (
+                f'EXPIRED=CMD:"{cmd}" \t[Exec: {time.time()}, Exp: {expire_time}] [{self.backend.ID}]',
+                [],
+                [],
+            )
+        else:
+            ret_val = self.backend.command_listdata(cmd)
         self.sigReturnList.emit(ret_val[0], ret_val[1], ret_val[2])
 
     @pyqtSlot()
