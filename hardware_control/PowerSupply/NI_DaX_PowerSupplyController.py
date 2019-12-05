@@ -12,7 +12,8 @@ import time
 
 import nidaqmx  # python wrapper for the driver
 
-from hardware_control.HC_Backend import HC_Backend, regex_compare
+from hardware_control.HC_Backend import HC_Backend
+from hardware_control.utility import regex_compare
 
 """This class behaves like it would read from a Powersupply"""
 
