@@ -362,7 +362,6 @@ class STS50Demo(HC_MainWindow):
 
 def main(argv):
     app = HC_App([])
-    print(f"\n\n\n\nEBUG: {debug}\n\n\n")
     ex = STS50Demo(app, use_sockets)
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())
