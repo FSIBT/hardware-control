@@ -53,17 +53,17 @@ class HC_MultiPowerSupply(HC_Instrument):
                 self.channels.append(c)
 
         # Initialize settings to correct values
-        if initialize_with == "INSTRUMENT":
-            self.save_on_close = False
-            # Can't save without filename
-            self.settings = self.initialize_gui_instrument()
-        elif initialize_with == "DEFAULT":
-            self.save_on_close = False
-            # Can't save without filename
-            self.settings = self.default_state()
-        else:
-            self.load_state(initialize_with)
-            self.filename = initialize_with
+        # if initialize_with == "INSTRUMENT":
+        #     self.save_on_close = False
+        #     # Can't save without filename
+        #     self.settings = self.initialize_gui_instrument()
+        # elif initialize_with == "DEFAULT":
+        #     self.save_on_close = False
+        #     # Can't save without filename
+        self.settings = self.default_state()
+        # else:
+        #     self.load_state(initialize_with)
+        #     self.filename = initialize_with
 
         # Create GUI
         #

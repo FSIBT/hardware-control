@@ -43,6 +43,7 @@ from hardware_control.MacroRunnerTool.HC_MacroRunnerTool import HC_MacroRunnerTo
 from hardware_control.VariableEditTool.HC_VariableEditTool import HC_VariableEditTool
 from hardware_control.IOModule.HC_Read import HC_Read, HC_singleChannelRead
 from hardware_control.IOModule.ADAM_6015 import Adam_6015
+from hardware_control.PowerSupply.NI_DaX_PowerSupplyController import NI_DaX_PowerSupplyController
 
 
 class STS50Demo(HC_MainWindow):
@@ -58,12 +59,14 @@ class STS50Demo(HC_MainWindow):
         self.tab2 = QWidget()
         self.tab3 = QWidget()
         self.tab4 = QWidget()
+        self.tab5 = QWidget()
 
         self.tabs.addTab(self.tab4, "Plasma Source")
         self.tabs.addTab(self.tab1, "Scope Tab")
         self.tabs.addTab(self.tab1_5, "Pico Tab")
         self.tabs.addTab(self.tab2, "Power Tab")
         self.tabs.addTab(self.tab3, "Other Tab")
+        self.tabs.addTab(self.tab5, "Experimantal")
 
         self.main_widget = QWidget(self)
 
@@ -157,6 +160,12 @@ class STS50Demo(HC_MainWindow):
 
         self.scantool = HC_ScanTool(self, "Scan Control", "DEFAULT", True)
         self.scantool.update_instruments()
+
+        self.PS_NIDaQCtrl = NI_DaX_PowerSupplyController()
+        self.PS_NIDaQ = HC_MultiPowerSupply(self.PS_NIDaQCtrl,self,[1],"NIDAXTEST")
+
+        self.PS_NIDaQ2Ctrl = NI_DaX_PowerSupplyController()
+        self.PS_NIDaQ2 = HC_MultiPowerSupply(self.PS_NIDaQ2Ctrl,self,[1],"NIDAXTEST2")
 
         self.statustool = HC_StatusTool(self, "Connection Status", "DEFAULT", True)
         self.statustool.update_instruments()
@@ -337,6 +346,17 @@ class STS50Demo(HC_MainWindow):
         self.tab_sts_layout.addWidget(self.timing_panel, 2, 0, 2, 2)
         self.tab_sts_layout.addWidget(self.flow_ctrl, 2, 2, 2, 2)
         self.tab4.setLayout(self.tab_sts_layout)
+
+        ########## Tab 5 - Experimental
+
+        self.tab5_layout = QGridLayout()
+
+        self.tab5_layout.addWidget(self.PS_NIDaQ,0,0)
+        self.tab5_layout.addWidget(self.PS_NIDaQ2,1,0)
+        self.tab5.setLayout(self.tab5_layout)
+
+        #####################################
+
 
         #####################################################################
         ######## Set master window layout
