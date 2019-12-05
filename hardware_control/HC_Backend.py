@@ -69,7 +69,9 @@ class HC_Backend(ABC):
             if self.online:
                 return True
             else:
-                self.pDebug(f"{self.ID}: creating dummy connection to {self.connection_addr}")
+                self.pDebug(
+                    f"{self.ID}: creating dummy connection to {self.connection_addr}"
+                )
                 self.online = True
                 return True
 
@@ -114,8 +116,8 @@ class HC_Backend(ABC):
 
             self.online = False
             if self.debug:
-                self.pDebug(f"\t{str(e)}")
-                self.pDebug("OFFLINE")
+                self.pDebug(f"\t({self.ID}) ERROR: {str(e)}")
+                self.pDebug(f"{self.ID} is offline")
         else:
             self.online = True
 
@@ -126,34 +128,40 @@ class HC_Backend(ABC):
         if not self.online:
             return f"{self.ID}-Offline"
 
-        if not self.dummy:
-            if not self.use_sockets:
-                self.device.write(command)
+        try:
+            if not self.dummy:
+                if not self.use_sockets:
+                    self.device.write(command)
+                else:
+                    self.device.sendall(bytes(command + "\n", "utf-8"))
+                if self.debug:
+                    self.pDebug(f'\tKEY4000X< "{command}"')
             else:
-                self.device.sendall(bytes(command + "\n", "utf-8"))
-            if self.debug:
-                self.pDebug(f'\tKEY4000X< "{command}"')
-        else:
-            return command
+                return command
+        except Exception as e:
+            self.pDebug(f"ERROR: Query failed.\n\t{e}")
 
     def query(self, command: str):
 
         if not self.online:
             return f"{self.ID}-Offline"
 
-        if not self.dummy:
-            if not self.use_sockets:
-                reply = self.device.query(command)
+        try:
+            if not self.dummy:
+                if not self.use_sockets:
+                    reply = self.device.query(command)
+                else:
+                    self.device.sendall(bytes(command + "\n", "utf-8"))
+                    reply_bytes = recvall(self.device)
+                    reply = str(reply_bytes)
+                    reply = reply[2 : len(reply) - 3]
+                if self.debug:
+                    self.pDebug(f'\t{self.ID}< "{command}"')
+                return reply
             else:
-                self.device.sendall(bytes(command + "\n", "utf-8"))
-                reply_bytes = recvall(self.device)
-                reply = str(reply_bytes)
-                reply = reply[2 : len(reply) - 3]
-            if self.debug:
-                self.pDebug(f'\t{self.ID}< "{command}"')
-            return reply
-        else:
-            return command
+                return command
+        except Exception as e:
+            self.pDebug(f"ERROR: Query failed.\n\t{e}")
 
     def recvall(sock):
         BUFF_SIZE = 4096  # 4 KiB
@@ -166,14 +174,21 @@ class HC_Backend(ABC):
                 break
         return data
 
-    def pDebug(self,msg,important=False):
+    def pDebug(self, msg, important=False):
         if self.debug:
-            if important:
-                print(Fore.RED,end="")
+            if (
+                important
+                or ("ERR:" in msg)
+                or ("ERROR:" in msg)
+                or ("EXCEPTION:" in msg)
+            ):
+                print(Fore.RED, end="")
                 print(msg)
-                print(Style.RESET_ALL,end="")
+                print(Style.RESET_ALL, end="")
             else:
                 print(msg)
+
+
 #
 # def regex_compare(pattern: str, comp: str):
 #     """Compares 'comp' to the pattern 'pattern'. periods ('.') act as a wildcard in the regular expression.

@@ -482,17 +482,15 @@ class OscilloscopeTriggerWidget(QWidget):
         #
         self.single_but = QPushButton()
         self.single_but.setText("Single")
-        self.single_but.clicked.connect(
-            lambda: control.comm.command("ACTION:SINGLE_TRIGGER")
-        )
+        self.single_but.clicked.connect(lambda: control.comm.command("SINGLE_TRIGGER"))
         #
         self.run_but = QPushButton()
         self.run_but.setText("Run")
-        self.run_but.clicked.connect(lambda: control.comm.command("ACTION:RUN"))
+        self.run_but.clicked.connect(lambda: control.comm.command("RUN"))
         #
         self.stop_but = QPushButton()
         self.stop_but.setText("Stop")
-        self.stop_but.clicked.connect(lambda: control.comm.command("ACTION:STOP"))
+        self.stop_but.clicked.connect(lambda: control.comm.command("STOP"))
 
         # Add widgets to grid layout
         self.lower_grid.addWidget(self.trig_chan_label, 0, 0)
@@ -619,7 +617,10 @@ class OscilloscopeDisplayWidget(QGroupBox):
             self.refresh_mode_label = QLabel("Refresh Mode: ")
             #
             self.refresh_mode_drop = QComboBox()
-            self.refresh_mode_drop.addItems(["Timer", "Single Trig", "Manual"])
+            # self.refresh_mode_drop.addItems(["Timer", "Single Trig", "Manual"]) #TODO: Impliment single trigger
+            self.refresh_mode_drop.addItems(
+                ["Timer", "Manual"]
+            )  # TODO: Impliment single trigger
             self.refresh_mode_drop.currentIndexChanged.connect(
                 lambda: self.set_refresh_mode(self.refresh_mode_drop.currentText())
             )

@@ -122,7 +122,9 @@ class SRSDG535Ctrl(HC_Backend):
             if self.online:
                 return True
             else:
-                self.pDebug(f"{self.ID}: creating dummy connection to {self.connection_addr}")
+                self.pDebug(
+                    f"{self.ID}: creating dummy connection to {self.connection_addr}"
+                )
                 self.online = True
                 return True
 
@@ -135,7 +137,9 @@ class SRSDG535Ctrl(HC_Backend):
                     self.pDebug(self.ID + " Instrument Status Bad")
                 self.online = True
                 if self.debug:
-                    self.pDebug(self.ID + " Instr.Status: " + str(self.device.query("IS")))
+                    self.pDebug(
+                        self.ID + " Instr.Status: " + str(self.device.query("IS"))
+                    )
                     self.pDebug(f"{self.ID}: Connection verified")
             except visa.errors.VisaIOError as e:  # Not connected - reconnect
                 self.online = False
@@ -151,9 +155,9 @@ class SRSDG535Ctrl(HC_Backend):
         try:
             if not self.use_sockets:  # Use visa
                 if self.use_pyvisapy:
-                    rm = pyvisa.ResourceManager(
-                        "@py"
-                    )  # linux-gpib is required for pyvisapy to support GPIB. Use VISA if on windows
+                    rm = pyvisa.ResourceManager()
+                    #     "@py"
+                    # )  # linux-gpib is required for pyvisapy to support GPIB. Use VISA if on windows
                 else:
                     if self.debug:
                         self.pDebug("Connecting with NI-VISA backend")
@@ -171,8 +175,8 @@ class SRSDG535Ctrl(HC_Backend):
 
             self.online = False
             if self.debug:
-                self.pDebug(f"\t{str(e)}")
-                self.pDebug("OFFLINE")
+                self.pDebug(f"\t({self.ID}) ERROR: {str(e)}")
+                self.pDebug(f"{self.ID} is offline")
         else:
             self.online = True
 
