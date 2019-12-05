@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import (
     QGridLayout,
     QComboBox,
 )
-
+from hardware_control.base import HC_Instrument
 
 class HC_ScanTool(QGroupBox):
     def __init__(

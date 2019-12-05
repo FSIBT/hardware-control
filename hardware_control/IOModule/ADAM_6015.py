@@ -8,19 +8,22 @@ import random
 import re
 import socket
 
-from hardware_control.HC_Backend import HC_Backend, regex_compare
+from hardware_control.HC_Backend import HC_Backend
+from hardware_control.utility import regex_compare
 
 class Adam_6015(HC_Backend):
     """Control of Adam input/output module"""
-    def __init__(self, IP="192.168.1.25", dummy=False):
+    def __init__(self, connection_addr="192.168.1.25", dummy=False, debug: bool = False):
         self.dummy = dummy
+        self.debug = True
         self.online = False
         self.ID="Advantac_ADAM-6015"
         self.buf = 200
-        self.IP = IP
+        self.connection_addr = connection_addr
         self.port = 1025
-        self.addr = (self.IP, self.port)
+        self.addr = (self.connection_addr, self.port)
         self.try_connect()
+
 
     def try_connect(self):
         """this is a override - sockets are used"""
@@ -46,7 +49,7 @@ class Adam_6015(HC_Backend):
                 return self.online
         else:
             if not self.online:
-                print(f"Adam: creating dummy connection to {self.addr}")
+                self.pDebug(f"Adam: creating dummy connection to {self.addr}")
             self.online = True
             return self.online
 
@@ -55,7 +58,7 @@ class Adam_6015(HC_Backend):
         if not self.dummy:
             self.s.close()
         else:
-            print("Adam: close dummy connection")
+            self.pDebug("Adam: close dummy connection")
 
     def write(self,msg: str):
         """this is a override - sockets are used"""
@@ -81,7 +84,7 @@ class Adam_6015(HC_Backend):
     def command(self, cmd: str):
         """Use Convention "CH#_TEMP?"  the answer is like >+0025.9237+0150.0000+0150.0000+0150.0000+0150.0000+0150.0000+0150.0000-0050.0000 """
         if self.dummy:
-            d=cmd[:-1]+"="+str(random.randint(0,10000)/1000)
+            d=cmd[:-1]+"="+str(random.randint(0,10000)/10)
             return d
         if self.online:
             try:
@@ -98,8 +101,8 @@ class Adam_6015(HC_Backend):
                     return "Unexpected Command"
             except Exception as e:
                 if self.debug:
-                    print(self.ID + " online status : " + str(self.try_connect()))
-                    print(e)
+                    self.pDebug(self.ID + " online status : " + str(self.try_connect()))
+                    self.pDebug(e)
 
     def update_setting(self, setting: str, value: str):
         """Device has no Settings"""

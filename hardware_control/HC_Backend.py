@@ -2,6 +2,7 @@ import re
 from abc import ABC, abstractmethod
 
 import pyvisa
+from colorama import Fore, Back, Style
 
 
 class HC_Backend(ABC):
@@ -47,12 +48,12 @@ class HC_Backend(ABC):
         """Close connection to instrument"""
         if (not self.dummy) and self.online:
             self.device.close()
-            print(f"{self.ID}: Backend Closed")
+            self.pDebug(f"{self.ID}: Backend Closed")
             return (
                 False
             )  # This can be changed to try to talk to instrument to verify close successful - prob not required
         else:
-            print(f"{self.ID}: Dummy connection closed")
+            self.pDebug(f"{self.ID}: Dummy connection closed")
             return False
 
     #
@@ -68,7 +69,9 @@ class HC_Backend(ABC):
             if self.online:
                 return True
             else:
-                print(f"{self.ID}: creating dummy connection to {self.connection_addr}")
+                self.pDebug(
+                    f"{self.ID}: creating dummy connection to {self.connection_addr}"
+                )
                 self.online = True
                 return True
 
@@ -77,16 +80,16 @@ class HC_Backend(ABC):
             try:  # Check if connected by asking for instrument ID
                 self.device.query("*IDN?")
                 if self.debug:
-                    print(f"{self.ID}: Connection verified")
+                    self.pDebug(f"{self.ID}: Connection verified")
             except Exception as e:  # Not connected - reconnect
                 if self.debug:
-                    print("Lost connection to device. Will try to reconnect")
-                    print(f"\t{str(e)}")
+                    self.pDebug("Lost connection to device. Will try to reconnect")
+                    self.pDebug(f"\t{str(e)}")
             else:  # Connection stable - return True
                 return True
 
         if self.debug:
-            print(f"{self.ID}: trying to connect")
+            self.pDebug(f"{self.ID}: trying to connect")
 
         # Try to connect to instrument
         try:
@@ -97,7 +100,7 @@ class HC_Backend(ABC):
                 # Verify actually connected (open_resource won't always throw error w/ disconnected USB)
                 self.device.query("*IDN?")
                 if self.debug:
-                    print("opened connection")
+                    self.pDebug("opened connection")
 
             else:  # Use sockets
                 self.device = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -108,13 +111,13 @@ class HC_Backend(ABC):
                 # Verify actually connected (open_resource won't always throw error w/ disconnected USB)
                 self.device.query("*IDN?")  # TODO: Test that this works
                 if self.debug:
-                    print("opened connection")
+                    self.pDebug("opened connection")
         except Exception as e:  # Failed to conncet
 
             self.online = False
             if self.debug:
-                print(f"\t({self.ID}) ERROR: {str(e)}")
-                print(f"{self.ID} is offline")
+                self.pDebug(f"\t({self.ID}) ERROR: {str(e)}")
+                self.pDebug(f"{self.ID} is offline")
         else:
             self.online = True
 
@@ -131,7 +134,7 @@ class HC_Backend(ABC):
             else:
                 self.device.sendall(bytes(command + "\n", "utf-8"))
             if self.debug:
-                print(f'\tKEY4000X< "{command}"')
+                self.pDebug(f'\tKEY4000X< "{command}"')
         else:
             return command
 
@@ -149,7 +152,7 @@ class HC_Backend(ABC):
                 reply = str(reply_bytes)
                 reply = reply[2 : len(reply) - 3]
             if self.debug:
-                print(f'\t{self.ID}< "{command}"')
+                self.pDebug(f'\t{self.ID}< "{command}"')
             return reply
         else:
             return command
@@ -165,45 +168,55 @@ class HC_Backend(ABC):
                 break
         return data
 
-
-def regex_compare(pattern: str, comp: str):
-    """Compares 'comp' to the pattern 'pattern'. periods ('.') act as a wildcard in the regular expression.
-    Returns true if 'comp' matches the regex."""
-    regex = re.compile(pattern)
-    return bool(re.match(regex, comp))
-
-
-def returnChannelNumber(s: str):
-    """Return channel number for a string like 'CH###_TEMP' """
-    if s[:2] == "CH":
-        number = s[2 : s.find("_")]
-        if number.isdigit():
-            return number
-    else:
-        return None
+    def pDebug(self, msg, important=False):
+        if self.debug:
+            if important:
+                print(Fore.RED, end="")
+                print(msg)
+                print(Style.RESET_ALL, end="")
+            else:
+                print(msg)
 
 
-# These functions are helpful for converting numbers to
-# specific number formats for strings
-
-
-def to_NR3(x: float):
-    return f" {x:.6E}"
-
-
-def to_NR1(x: int):
-    return f"{x:d}"
-
-
-def bool_NR1(x: bool):
-    if x:
-        return "1"
-    else:
-        return "0"
-
-
-def str_to_bool(x: str):
-    if x == "True":
-        return True
-    else:
-        return False
+#
+# def regex_compare(pattern: str, comp: str):
+#     """Compares 'comp' to the pattern 'pattern'. periods ('.') act as a wildcard in the regular expression.
+#     Returns true if 'comp' matches the regex."""
+#     regex = re.compile(pattern)
+#     return bool(re.match(regex, comp))
+#
+#
+# def returnChannelNumber(s: str):
+#     """Return channel number for a string like 'CH###_TEMP' """
+#     if s[:2] == "CH":
+#         number = s[2 : s.find("_")]
+#         if number.isdigit():
+#             return number
+#     else:
+#         return None
+#
+#
+# # These functions are helpful for converting numbers to
+# # specific number formats for strings
+#
+#
+# def to_NR3(x: float):
+#     return f" {x:.6E}"
+#
+#
+# def to_NR1(x: int):
+#     return f"{x:d}"
+#
+#
+# def bool_NR1(x: bool):
+#     if x:
+#         return "1"
+#     else:
+#         return "0"
+#
+#
+# def str_to_bool(x: str):
+#     if x == "True":
+#         return True
+#     else:
+#         return False

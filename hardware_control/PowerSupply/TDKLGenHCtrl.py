@@ -14,7 +14,7 @@ import re
 
 from hardware_control.HC_Backend import HC_Backend
 
-
+#ToDo: obviously
 def to_NR3(x: float):
     return f" {x:.6E}"
 
@@ -97,11 +97,11 @@ class TDKLGenHCtrl(HC_Backend):
                     rval = self.query(":SOUR:VOLT:LEV:IMM:AMPL?")
                     return rval
         except Exception as e:
-            print(
+            self.pDebug(
                 f"An error occured in {self.ID} when sending SCPI commands to the instrument."
             )
-            print(f"\t{str(e)}")
-            print(f"\t{setting}, {value}")
+            self.pDebug(f"\t{str(e)}")
+            self.pDebug(f"\t{setting}, {value}")
 
     def command(self, cmd: str):
 
@@ -133,7 +133,7 @@ class TDKLGenHCtrl(HC_Backend):
                     rval = self.query(":SOUR:VOLT:LEV:IMM:AMPL?")
                     return f"{cmd}={rval}"
         except Exception as e:
-            print(
+            self.pDebug(
                 "An error occured in CAEN14xxETCtrl.py when sending SCPI commands to the instrument."
             )
-            print(str(e))
+            self.pDebug(str(e))

@@ -10,7 +10,8 @@
 #
 
 import re
-from hardware_control.HC_Backend import HC_Backend, returnChannelNumber, regex_compare
+from hardware_control.HC_Backend import HC_Backend
+from hardware_control.utility import returnChannelNumber, regex_compare
 from PyQt5.QtCore import QThread, QSize, QObject, pyqtSignal
 import numpy as np
 
@@ -193,8 +194,10 @@ class Key4000XCtrl(HC_Backend):
                     return self.query(f"TRIG:SOUR?")
         except Exception as e:
             if self.debug:
-                print("An error occured in Key4000XCtrl.py sending SCPI commands.")
-                print(str(e))
+                self.pDebug(
+                    "An error occured in Key4000XCtrl.py sending SCPI commands."
+                )
+                self.pDebug(str(e))
 
     def command(self, cmd: str):
         if not self.online:
@@ -233,7 +236,7 @@ class Key4000XCtrl(HC_Backend):
     #
     #     wave = {}
     #
-    #     #        print(ch1, ch2, ch3, ch4);
+    #     #        self.pDebug(ch1, ch2, ch3, ch4);
     #
     #     if not self.dummy:
     #         if ch1:
@@ -311,9 +314,9 @@ class Key4000XCtrl(HC_Backend):
             # Convert X Origin
         except Exception as e:
             if self.debug:
-                print("ERROR: Received bad origin from scope.")
-                print(e)
-                print(f"\t{x_orig}")
+                self.pDebug("ERROR: Received bad origin from scope.")
+                self.pDebug(e)
+                self.pDebug(f"\t{x_orig}")
             return "", [], []
         try:
             # x_ref = float(x_ref[0:len(x_ref)-1]); #Convert X Reference
@@ -321,9 +324,9 @@ class Key4000XCtrl(HC_Backend):
             # Convert X Reference
         except Exception as e:
             if self.debug:
-                print("ERROR: Received bad reference from scope.")
-                print(e)
-                print(f"\t{x_ref}")
+                self.pDebug("ERROR: Received bad reference from scope.")
+                self.pDebug(e)
+                self.pDebug(f"\t{x_ref}")
             return "", [], []
         try:
             # x_incr = float(x_incr[0:len(x_incr)-1]); #Convert X Increment
@@ -331,9 +334,9 @@ class Key4000XCtrl(HC_Backend):
             # Convert X Increment
         except Exception as e:
             if self.debug:
-                print("ERROR: Received bad increment from scope.")
-                print(e)
-                print(f"\t{x_incr}")
+                self.pDebug("ERROR: Received bad increment from scope.")
+                self.pDebug(e)
+                self.pDebug(f"\t{x_incr}")
             return "", [], []
 
         try:
@@ -351,7 +354,7 @@ class Key4000XCtrl(HC_Backend):
             # Calculate time values
         except Exception as e:
             if self.debug:
-                print("ERROR: Failed to calculate V & t.")
+                self.pDebug("ERROR: Failed to calculate V & t.")
             return "", [], []
 
         return f"CH{channel}_WVFM", t, fmt
@@ -381,7 +384,7 @@ class Key4000XCtrl(HC_Backend):
 #             else:
 #                 self.device.sendall(bytes(command + "\n", "utf-8"))
 #             if self.debug:
-#                 print(f'\tKEY4000X< "{command}"')
+#                 self.pDebug(f'\tKEY4000X< "{command}"')
 #         else:
 #             return command
 #
@@ -399,7 +402,7 @@ class Key4000XCtrl(HC_Backend):
 #                 reply = str(reply_bytes)
 #                 reply = reply[2 : len(reply) - 3]
 #             if self.debug:
-#                 print(f'\t{self.ID}< "{command}"')
+#                 self.pDebug(f'\t{self.ID}< "{command}"')
 #             return reply
 #         else:
 #             return command

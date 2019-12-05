@@ -290,7 +290,13 @@ class HC_Instrument(QGroupBox):
         self.online = False
         self.comm = None
         self.ignore = False  # Dictates if instrument should be ignored by
+
+        # Global Constants
         self.globalRefreshRate = 500  # ms refresh
+        # this is a global reference for limiting the scaling the widgets
+        self.globalLineHeight = 50  # Lineheight of athe average  spinbox
+        self.globalLineWidth = 300  # Linewidth of athe average  spinbox
+
         # ConnectionTool and ScanTool widgets
 
         # self.inbox = {}  # Receives strings from the HC_comm object
@@ -539,6 +545,15 @@ class HC_Instrument(QGroupBox):
         which returns a string and two lists. The author of the UI can overwrite
         this function to procses the return data."""
         pass
+
+    def pDebug(self, msg, important=False):
+        if self.debug:
+            if important:
+                print(Fore.RED, end="")
+                print(msg)
+                print(Style.RESET_ALL, end="")
+            else:
+                print(msg)
 
 
 class HC_App(QApplication):

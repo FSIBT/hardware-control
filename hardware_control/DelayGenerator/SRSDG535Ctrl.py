@@ -97,8 +97,8 @@ class SRSDG535Ctrl(HC_Backend):
                 elif setting == "trigger_level":
                     self.write(f"TL{value}")
         except Exception as e:
-            print("An exception occured in update_setting() of SRSDG535Ctrl.py.")
-            print(str(e))
+            self.pDebug("An exception occured in update_setting() of SRSDG535Ctrl.py.")
+            self.pDebug(str(e))
 
     def command(self, cmd: str):
         if cmd == "single_trigger":
@@ -111,7 +111,7 @@ class SRSDG535Ctrl(HC_Backend):
             if not self.use_sockets:
                 self.instr.write(cmd)
             if self.debug:
-                print(f'\tSRSDG535< "{cmd}"')
+                self.pDebug(f'\tSRSDG535< "{cmd}"')
 
     def try_connect(self):
         """Checks if the backend is in communication with the object, if it is
@@ -122,7 +122,9 @@ class SRSDG535Ctrl(HC_Backend):
             if self.online:
                 return True
             else:
-                print(f"{self.ID}: creating dummy connection to {self.connection_addr}")
+                self.pDebug(
+                    f"{self.ID}: creating dummy connection to {self.connection_addr}"
+                )
                 self.online = True
                 return True
 
@@ -132,20 +134,22 @@ class SRSDG535Ctrl(HC_Backend):
 
             try:
                 if 0 != self.device.query("IS"):  # ask for Instrument status
-                    print(self.ID + " Instrument Status Bad")
+                    self.pDebug(self.ID + " Instrument Status Bad")
                 self.online = True
                 if self.debug:
-                    print(self.ID + " Instr.Status: " + str(self.device.query("IS")))
-                    print(f"{self.ID}: Connection verified")
+                    self.pDebug(
+                        self.ID + " Instr.Status: " + str(self.device.query("IS"))
+                    )
+                    self.pDebug(f"{self.ID}: Connection verified")
             except visa.errors.VisaIOError as e:  # Not connected - reconnect
                 self.online = False
                 if self.debug:
-                    print("Lost connection to device. Will try to reconnect")
-                    print(f"\t{str(e)}")
+                    self.pDebug("Lost connection to device. Will try to reconnect")
+                    self.pDebug(f"\t{str(e)}")
             return self.online
 
         if self.debug:
-            print(f"{self.ID}: trying to connect")
+            self.pDebug(f"{self.ID}: trying to connect")
 
         # Try to connect to instrument
         try:
@@ -156,7 +160,7 @@ class SRSDG535Ctrl(HC_Backend):
                     # )  # linux-gpib is required for pyvisapy to support GPIB. Use VISA if on windows
                 else:
                     if self.debug:
-                        print("Connecting with NI-VISA backend")
+                        self.pDebug("Connecting with NI-VISA backend")
                     rm = pyvisa.ResourceManager()
                 self.device = rm.open_resource(self.connection_addr)  # Open connection
                 # TODO: TEST
@@ -171,8 +175,8 @@ class SRSDG535Ctrl(HC_Backend):
 
             self.online = False
             if self.debug:
-                print(f"\t({self.ID}) ERROR: {str(e)}")
-                print(f"{self.ID} is offline")
+                self.pDebug(f"\t({self.ID}) ERROR: {str(e)}")
+                self.pDebug(f"{self.ID} is offline")
         else:
             self.online = True
 

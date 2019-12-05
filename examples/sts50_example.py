@@ -23,7 +23,7 @@ dummy = commands["--dummy"]
 use_sockets = commands["--socket"]
 debug = commands["--debug"]
 log = commands["--log"]
-
+dummy = True
 from hardware_control.base import HC_App, HC_MainWindow
 from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
 from hardware_control.Oscilloscope.Key4000XCtrl import Key4000XCtrl
@@ -41,7 +41,7 @@ from hardware_control.PowerSupply.TDKLGenHCtrl import TDKLGenHCtrl
 from hardware_control.ZMQConnectionTool.HC_ZMQConnectionTool import HC_ZMQConnectionTool
 from hardware_control.MacroRunnerTool.HC_MacroRunnerTool import HC_MacroRunnerTool
 from hardware_control.VariableEditTool.HC_VariableEditTool import HC_VariableEditTool
-from hardware_control.IOModule.HC_Read import HC_Read
+from hardware_control.IOModule.HC_Read import HC_Read, HC_singleChannelRead
 from hardware_control.IOModule.ADAM_6015 import Adam_6015
 
 
@@ -131,11 +131,14 @@ class STS50Demo(HC_MainWindow):
         self.temp_ctrl = HC_Read(
             self.temp,
             self,
-            [1, 3, 4],
+            [0, 3, 4],
             ["Chamber", "Source", "Tomato"],
             "TEMP",
-            "C?",
-            "ADAM Temp Module",
+            "K",
+            "Temperature Instrument",
+        )
+        self.randomReadout = HC_singleChannelRead(
+            self.temp_ctrl, 0, "Random Readout", "TEMP", "Unit"
         )
 
         self.flow = AlicatMSeriesCtrl("192.168.1.15", dummy, debug)
@@ -174,6 +177,7 @@ class STS50Demo(HC_MainWindow):
 
         self.run_tool = HC_MacroRunnerTool(
             self,
+            debug,
             "Macro Runner",
             {"Dynamic": "Run Macro", "Trigger": "Trigger Beam"},
             {},
@@ -203,11 +207,13 @@ class STS50Demo(HC_MainWindow):
         # self.tab3_layout.addWidget(self.flow_ctrl, 0, 0)
         self.tab3_layout.addWidget(self.trig1_ctrl, 1, 0)
         self.tab3_layout.addWidget(self.trig2_ctrl, 2, 0)
-        self.tab3_layout.addWidget(self.zmqtool, 3, 0)
+        self.tab3_layout.addWidget(self.zmqtool, 3, 0, 2, 1)
         # self.tab3_layout.addWidget(self.scantool, 0, 1)
         self.tab3_layout.addWidget(self.run_tool, 1, 1)
         self.tab3_layout.addWidget(self.var_tool, 2, 1)
         self.tab3_layout.addWidget(self.temp_ctrl, 3, 1)
+        # self.tab3_layout.addWidget(self.randomReadout,3,1)
+
         # self.tab3_layout.addWidget(self.statustool, 3, 1)
         self.tab3.setLayout(self.tab3_layout)
 
