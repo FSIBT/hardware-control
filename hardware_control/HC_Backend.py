@@ -176,7 +176,12 @@ class HC_Backend(ABC):
 
     def pDebug(self, msg, important=False):
         if self.debug:
-            if important or ("ERR:" in msg) or ("ERROR:" in msg):
+            if (
+                important
+                or ("ERR:" in msg)
+                or ("ERROR:" in msg)
+                or ("EXCEPTION:" in msg)
+            ):
                 print(Fore.RED, end="")
                 print(msg)
                 print(Style.RESET_ALL, end="")

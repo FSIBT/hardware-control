@@ -23,7 +23,7 @@ dummy = commands["--dummy"]
 use_sockets = commands["--socket"]
 debug = commands["--debug"]
 log = commands["--log"]
-dummy = True
+
 from hardware_control.base import HC_App, HC_MainWindow
 from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
 from hardware_control.Oscilloscope.Key4000XCtrl import Key4000XCtrl
@@ -131,7 +131,7 @@ class STS50Demo(HC_MainWindow):
         self.temp_ctrl = HC_Read(
             self.temp,
             self,
-            [0, 3, 4],
+            [0, 3, 5],
             ["Chamber", "Source", "Tomato"],
             "TEMP",
             "K",
