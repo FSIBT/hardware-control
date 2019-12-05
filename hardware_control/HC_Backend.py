@@ -128,34 +128,40 @@ class HC_Backend(ABC):
         if not self.online:
             return f"{self.ID}-Offline"
 
-        if not self.dummy:
-            if not self.use_sockets:
-                self.device.write(command)
+        try:
+            if not self.dummy:
+                if not self.use_sockets:
+                    self.device.write(command)
+                else:
+                    self.device.sendall(bytes(command + "\n", "utf-8"))
+                if self.debug:
+                    self.pDebug(f'\tKEY4000X< "{command}"')
             else:
-                self.device.sendall(bytes(command + "\n", "utf-8"))
-            if self.debug:
-                self.pDebug(f'\tKEY4000X< "{command}"')
-        else:
-            return command
+                return command
+        except Exception as e:
+            self.pDebug(f"ERROR: Query failed.\n\t{e}")
 
     def query(self, command: str):
 
         if not self.online:
             return f"{self.ID}-Offline"
 
-        if not self.dummy:
-            if not self.use_sockets:
-                reply = self.device.query(command)
+        try:
+            if not self.dummy:
+                if not self.use_sockets:
+                    reply = self.device.query(command)
+                else:
+                    self.device.sendall(bytes(command + "\n", "utf-8"))
+                    reply_bytes = recvall(self.device)
+                    reply = str(reply_bytes)
+                    reply = reply[2 : len(reply) - 3]
+                if self.debug:
+                    self.pDebug(f'\t{self.ID}< "{command}"')
+                return reply
             else:
-                self.device.sendall(bytes(command + "\n", "utf-8"))
-                reply_bytes = recvall(self.device)
-                reply = str(reply_bytes)
-                reply = reply[2 : len(reply) - 3]
-            if self.debug:
-                self.pDebug(f'\t{self.ID}< "{command}"')
-            return reply
-        else:
-            return command
+                return command
+        except Exception as e:
+            self.pDebug(f"ERROR: Query failed.\n\t{e}")
 
     def recvall(sock):
         BUFF_SIZE = 4096  # 4 KiB
@@ -170,7 +176,7 @@ class HC_Backend(ABC):
 
     def pDebug(self, msg, important=False):
         if self.debug:
-            if important:
+            if important or ("ERR:" in msg) or ("ERROR:" in msg):
                 print(Fore.RED, end="")
                 print(msg)
                 print(Style.RESET_ALL, end="")
