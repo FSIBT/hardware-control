@@ -16,7 +16,6 @@ def returnChannelNumber(s: str):
     else:
         return None
 
-
 # These functions are helpful for converting numbers to
 # specific number formats for strings
 

@@ -520,6 +520,15 @@ class HC_Instrument(QGroupBox):
         this function to procses the return data."""
         pass
 
+    def pDebug(self,msg,important=False):
+        if self.debug:
+            if important:
+                print(Fore.RED,end="")
+                print(msg)
+                print(Style.RESET_ALL,end="")
+            else:
+                print(msg)
+
 
 class HC_App(QApplication):
     """Subclass of QApplication that is aware of what hardware is connected to it and can log data"""

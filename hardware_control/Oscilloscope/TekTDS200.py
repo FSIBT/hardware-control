@@ -156,10 +156,10 @@ class ScopeCommunication(QObject):
             #            self.values_read.emit(channel_1, channel_2, channel_3, channel_4)
             self.values_read.emit(channel_3)
             sys.stdout.flush()
-            print("channels 3 are reading out")
+            self.pDebug("channels 3 are reading out")
 
         else:
-            print("read loop workiing")
+            self.pDebug("read loop workiing")
             return
 
 
@@ -366,7 +366,7 @@ class ScopeControls(QGroupBox):
 
         self.comm_thread = QThread()
         self.comm = ScopeCommunication(self.port, dummy=dummy, parent=self)
-        print("QScope check")
+        self.pDebug("QScope check")
         sys.stdout.flush()
         self.comm.values_read.connect(self.read)
         self.read(2)
@@ -376,11 +376,11 @@ class ScopeControls(QGroupBox):
         if not self.dummy:
             data = self.read(n)
             self.update(data, n)
-            print("Scope Reading channel, CH1")
+            self.pDebug("Scope Reading channel, CH1")
             return data
         else:
             self.read(0)
-            print("dummy read CH1")
+            self.pDebug("dummy read CH1")
             return
 
     def off1(self):
@@ -388,18 +388,18 @@ class ScopeControls(QGroupBox):
             n = 0
             stop_cmd = "DAT:STOP"
             self.scope.cmd(n, stop_cmd)
-            print("Scope stopped reading data, CH1")
+            self.pDebug("Scope stopped reading data, CH1")
 
     def on2(self):
         if not self.dummy:
             n = 1
             data = self.read(n)
             self.update(data, n)
-            print("Scope Reading channel, CH2")
+            self.pDebug("Scope Reading channel, CH2")
             return data
         else:
             self.read(1)
-            print("dummy read CH2")
+            self.pDebug("dummy read CH2")
             return
 
     def off2(self):
@@ -407,18 +407,18 @@ class ScopeControls(QGroupBox):
             n = 1
             stop_cmd = "DAT:STOP"
             self.scope.cmd(n, stop_cmd)
-            print("Scope stopped reading data, CH2")
+            self.pDebug("Scope stopped reading data, CH2")
 
     def on3(self):
         if not self.dummy:
             n = 2
             data = self.read(n)
             self.update(data, n)
-            print("Scope Reading channel, CH3")
+            self.pDebug("Scope Reading channel, CH3")
             return data
         else:
             self.read(2)
-            print("dummy read CH3")
+            self.pDebug("dummy read CH3")
             return
 
     def off3(self):
@@ -426,18 +426,18 @@ class ScopeControls(QGroupBox):
             n = 2
             stop_cmd = "DAT:STOP"
             self.scope.cmd(n, stop_cmd)
-            print("Scope stopped reading data, CH3")
+            self.pDebug("Scope stopped reading data, CH3")
 
     def on4(self):
         if not self.dummy:
             n = 3
             data = self.read(n)
             self.update(data, n)
-            print("Scope Reading channel, CH4")
+            self.pDebug("Scope Reading channel, CH4")
             return data
         else:
             self.read(3)
-            print("dummy read CH4")
+            self.pDebug("dummy read CH4")
             return
 
     def off4(self):
@@ -445,7 +445,7 @@ class ScopeControls(QGroupBox):
             n = 3
             stop_cmd = "DAT:STOP"
             self.scope.cmd(n, stop_cmd)
-            print("Scope stopped reading data, CH4")
+            self.pDebug("Scope stopped reading data, CH4")
 
     def get_values(self):
         out = []
@@ -464,8 +464,8 @@ class ScopeControls(QGroupBox):
             )  # colons may need to be changed to semicolons and vice versa
             self.set_trigger.setText("trigger_settings: Standard")
             #            self.scope.s.write(')
-            print(trigger_settings)
-            print("set_standards was called")
+            self.pDebug(trigger_settings)
+            self.pDebug("set_standards was called")
             n = 1
             while n <= 4:
                 # these commands were taken from the Labview Code need to test and see how they work, may need to break up into multiple lines
@@ -483,7 +483,7 @@ class ScopeControls(QGroupBox):
                     + " ON;"
                 )
                 volt_range = self.scope.s.write("CH" + str(n) + ":; SCA" + str(10))
-                print(volt_range)
+                self.pDebug(volt_range)
                 if n == 1:
                     self.voltage_range1.setText("10 V")
                 if n == 2:
@@ -493,7 +493,7 @@ class ScopeControls(QGroupBox):
                 if n == 4:
                     self.voltage_range4.setText("10 V")
                 n += 1
-            print("Channels 1-4 have been set")
+            self.pDebug("Channels 1-4 have been set")
             self.scope.s.write("INITIATE_CLEAR")
             self.scope.s.write("CHECK_CLEAR_STATUS")
 
@@ -526,7 +526,7 @@ class ScopeControls(QGroupBox):
             self.scope.cmd("CH4", "SCA " + str(value))
             return
         else:
-            print("Not a Valid Channel")
+            self.pDebug("Not a Valid Channel")
 
     @pyqtSlot(bool)
     def toggle_enable(self, status):
@@ -546,7 +546,7 @@ class ScopeControls(QGroupBox):
             data = self.scope.read(channels[n])
             #            self.update(data, n)
             self.update2(data, n)
-            print(f"Scope Reading channel, {channels[n]}")
+            self.pDebug(f"Scope Reading channel, {channels[n]}")
             return data
         else:
             x = 0
@@ -560,7 +560,7 @@ class ScopeControls(QGroupBox):
         if n == 0:
             self.parent.scope_plot.axes.plot(data[0], data[1], "b-", label="CH1 V")
             self.parent.scope_plot.plot.draw()
-            print(len(data), len(data[0]))
+            self.pDebug(len(data), len(data[0]))
         if n == 1:
             self.parent.scope_plotCH2.axes.plot(data[0], data[1], "r-", label="CH2 V")
             self.parent.scope_plotCH2.plot.draw()
@@ -571,7 +571,7 @@ class ScopeControls(QGroupBox):
             self.parent.scope_plotCH4.axes.plot(data[0], data[1], "y-", label="CH4 V")
             self.parent.scope_plotCH4.plot.draw()
         #        self.main.scope_plot.plot.plt.show()
-        print("updating channels")
+        self.pDebug("updating channels")
 
     def update2(self, data, n):
         data = data
@@ -580,20 +580,20 @@ class ScopeControls(QGroupBox):
             if n == 0:
                 self.scope_plot.axes.plot(data[0], data[1], "b-", label="CH1 V")
 
-                print(len(data), len(data[0]))
+                self.pDebug(len(data), len(data[0]))
             if n == 1:
                 self.scope_plot.axes.plot(data[0], data[1], "r-", label="CH2 V")
                 #                self.scope_plot.plot.draw()
-                print(len(data), len(data[0]))
+                self.pDebug(len(data), len(data[0]))
             if n == 2:
                 self.scope_plot.axes.plot(data[0], data[1], "g-", label="CH3 V")
                 #                self.scope_plot.plot.draw()
-                print(len(data), len(data[0]))
+                self.pDebug(len(data), len(data[0]))
             if n == 3:
                 self.scope_plot.axes.plot(data[0], data[1], "y-", label="CH4 V")
                 #                self.scope_plot.plot.draw()
-                print(len(data), len(data[0]))
-            print("Updating Channels")
+                self.pDebug(len(data), len(data[0]))
+            self.pDebug("Updating Channels")
             self.scope_plot.plot.draw()
 
         else:
@@ -604,14 +604,14 @@ class ScopeControls(QGroupBox):
             self.scope_plot.axes.plot(t, a, "r-", label="Random Plot")
             self.scope_plot.axes.plot(t, b, "g-")
             self.scope_plot.axes.plot(t, c, "b-")
-            print("generating random plot points :D")
+            self.pDebug("generating random plot points :D")
             self.scope_plot.plot.draw()
         self.scope_plot.plot.draw()
 
     def command(self):
         if not self.dummy:
             response = self.scope.s.read(self.send_command.text())
-            print(response)
+            self.pDebug(response)
             self.command_response.setText(response)
             return
         else:

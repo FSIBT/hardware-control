@@ -26,16 +26,18 @@ class HC_MacroRunnerTool(HC_Instrument):
     def __init__(
         self,
         window,
+        debug: bool = False,
         name: str = "Macro Runner",
         buttons={"Dynamic": "Run Macro"},
         indicators={},
     ):
 
         super().__init__(window, name)
-
+        self.debug=debug
+        self.pDebug("")
         self.buttons = buttons
         self.indicators = indicators
-
+        
         self.settings = {}
         self.name = name
         self.app = window.app
@@ -93,7 +95,7 @@ class HC_MacroRunnerTool(HC_Instrument):
 
             else:
 
-                print("Sry, not a thing!")
+                self.pDebug("Sry, not a thing!")
                 self.window.app.add_log(
                     self.name,
                     "NO-HARDWARE-BACKEND",
@@ -113,14 +115,14 @@ class HC_MacroRunnerTool(HC_Instrument):
     def run_macro(self, macro: str):
         try:
             cmds = self.app.macros[macro]
-            print(
+            self.pDebug(
                 f"Running macro: {macro}\n\tCommands: {cmds}\n\tnot actually implimented tho :)"
             )
         except Exception:
-            print(f"An exception occurred running macro {macro}")
+            self.pDebug(f"An exception occurred running macro {macro}")
 
     def set_macro(self, m: str):
-        print(f"Setting macro to {m}")
+        self.pDebug(f"Setting macro to {m}")
         self.settings["macro"] = m
 
     def update_macros(self):
@@ -128,7 +130,7 @@ class HC_MacroRunnerTool(HC_Instrument):
         names = []
         for m in self.app.macros:
             names.append(m)
-            print(f"Adding macro {m}")
+            self.pDebug(f"Adding macro {m}")
         self.macro_drop.addItems(names)
 
     #

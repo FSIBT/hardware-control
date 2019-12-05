@@ -13,7 +13,7 @@ import re
 
 from hardware_control.HC_Backend import HC_Backend
 
-
+#ToDo: 
 def to_NR3(x: float):
     return f" {x:.6E}"
 
@@ -181,7 +181,7 @@ class Key33500BCtrl(HC_Backend):
 
                 elif setting == "labels_enabled":
                     self.write(f"DISP:LAB {boolstr_NR1(value)}")
-                    print(f"DISP:LAB {boolstr_NR1(value)}")
+                    self.pDebug(f"DISP:LAB {boolstr_NR1(value)}")
                     return self.query(f"DISP:LAB?")
 
                 elif regex_compare("CH._invert", setting):
@@ -238,10 +238,10 @@ class Key33500BCtrl(HC_Backend):
                     self.write(f"TRIG:SOUR CHAN{str_NR1(value)}")
                     return self.query(f"TRIG:SOUR?")
         except Exception as e:
-            print(
+            self.pDebug(
                 "An error occured in Key33500BCtrl.py when sending SCPI commands to the instrument."
             )
-            print(str(e))
+            self.pDebug(str(e))
 
     def command(self, cmd: str):
         pass
@@ -253,7 +253,7 @@ class Key33500BCtrl(HC_Backend):
             else:
                 self.device.sendall(bytes(command + "\n", "utf-8"))
             if self.debug:
-                print(f'\t{self.ID}< "{command}"')
+                self.pDebug(f'\t{self.ID}< "{command}"')
 
     def query(self, command: str):
         if self.online and not self.dummy:
@@ -262,13 +262,13 @@ class Key33500BCtrl(HC_Backend):
             else:
                 self.device.sendall(bytes(command + "\n", "utf-8"))
                 reply_bytes = recvall(self.device)
-                print(f"reply size: {len(reply_bytes)}")
+                self.pDebug(f"reply size: {len(reply_bytes)}")
                 reply = str(reply_bytes)
                 if len(reply) < 100:
-                    print("\t\t" + reply)
+                    self.pDebug("\t\t" + reply)
                 reply = reply[2 : len(reply) - 3]
             if self.debug:
-                print(f'\t{self.ID}< "{command}"')
+                self.pDebug(f'\t{self.ID}< "{command}"')
             return reply
         else:
             return ""

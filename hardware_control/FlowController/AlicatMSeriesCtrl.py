@@ -52,7 +52,7 @@ class AlicatMSeriesCtrl(HC_Backend):
                 self.online = False
 
         else:
-            print(f"{self.ID}: creating dummy connection to {self.ip_addr}")
+            self.pDebug(f"{self.ID}: creating dummy connection to {self.ip_addr}")
             self.online = True
 
         return self.online
@@ -88,11 +88,11 @@ class AlicatMSeriesCtrl(HC_Backend):
 
                     return value
         except Exception as e:
-            print(
+            self.pDebug(
                 "An error occured in CAEN14xxETCtrl.py when sending SCPI commands to the instrument."
             )
-            print(f"\t{str(e)}")
-            print(f"\t{setting}, {value}")
+            self.pDebug(f"\t{str(e)}")
+            self.pDebug(f"\t{setting}, {value}")
 
     def command(self, cmd: str):
 
@@ -114,10 +114,10 @@ class AlicatMSeriesCtrl(HC_Backend):
                 rval = str(vals["pressure"])
                 return f"pressure={rval}"
         except Exception as e:
-            print(
+            self.pDebug(
                 f"An error occured in {self.ID} when sending SCPI commands to the instrument."
             )
-            print(str(e))
+            self.pDebug(str(e))
 
     def get_values(self):
         rtn = {}
@@ -149,9 +149,9 @@ class AlicatMSeriesCtrl(HC_Backend):
     def write(self, command: str):
         self.scope.write(command)
         if self.debug:
-            print(f'\t{self.ID}< "{command}"')
+            self.pDebug(f'\t{self.ID}< "{command}"')
 
     def query(self, command: str):
         reply = self.scope.query(command)
         if self.debug:
-            print(f'\t{self.ID}< "{command}" > {reply}')
+            self.pDebug(f'\t{self.ID}< "{command}" > {reply}')

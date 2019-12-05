@@ -105,7 +105,7 @@ class ZMQOscilloscopeCtrl(HC_Backend):
                     except:
                         val = 50
                         if self.debug:
-                            print(
+                            self.pDebug(
                                 f"{self.ID}ERROR: Failed to calculate valid time_offset value"
                             )
                     self.settings[f"Ref Position (%)"] = val
@@ -194,10 +194,10 @@ class ZMQOscilloscopeCtrl(HC_Backend):
         except Exception as e:
 
             if self.debug:
-                print(
+                self.pDebug(
                     f"An error occured with {self.ID} when sending commands to the instrument."
                 )
-                print(str(e))
+                self.pDebug(str(e))
 
     def command(self, cmd: str):
         if not self.online:
@@ -213,7 +213,7 @@ class ZMQOscilloscopeCtrl(HC_Backend):
             if self.online:
                 return True
             else:
-                print(f"{self.ID}: creating dummy connection to {self.zmq_address}")
+                self.pDebug(f"{self.ID}: creating dummy connection to {self.zmq_address}")
                 self.online = True
                 return True
 
