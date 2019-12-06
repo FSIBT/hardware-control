@@ -33,7 +33,8 @@ class HC_Comm(QObject):
     sigCommandList = pyqtSignal(str, float)
     sigClose = pyqtSignal()
 
-    def __init__(self, backend, instrument):
+    # TODO: @TImo Bauer Add 'try_connect' frequency
+    def __init__(self, backend, instrument, try_connect_period=1000):
         super().__init__()
         self.backend = backend
         self.instrument = instrument  # Calling instrument UI (eg. HC_scope)
@@ -63,7 +64,7 @@ class HC_Comm(QObject):
 
         # Connect timer
         self.try_connect_timer = QTimer(self)
-        self.try_connect_timer.timeout.connect(self.try_connect)
+        self.try_connect_timer.timeout.connect(self.try_connect_period)
         self.try_connect_timer.start(1000)
 
     def close(self):
