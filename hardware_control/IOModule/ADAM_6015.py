@@ -62,6 +62,7 @@ class Adam_6015(HC_Backend):
             self.s.close()
         else:
             self.pDebug("Adam: close dummy connection")
+        return False
 
     def write(self, msg: str):
         """this is a override - sockets are used"""

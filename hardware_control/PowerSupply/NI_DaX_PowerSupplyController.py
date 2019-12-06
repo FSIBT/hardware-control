@@ -137,15 +137,17 @@ class NI_DaX_PowerSupplyController(HC_Backend):
                 self.pDebug(f"{self.ID} : {e}")
 
     def close(self):
-        if self.online:
+        if self.online and not self.dummy:
             try:  # make sure tasks are done (tasks have an internal timeout)
                 with nidaqmx.Task() as task:
                     if not task.is_task_done():
                         time.sleep(0.500)
                         if not ask.is_task_done():
                             self.pDebug(self.ID + " : Not all Tasks are done!")
+                            return True
             except Exception as e:
                 self.pDebug(f"{self.ID} closing exception : {e}")
+        return False
 
 """
 This method checks that the import goes smooth and 
