@@ -8,12 +8,16 @@ This specific device is an analog input module with 32 channels
 There were some problems with the import of nidaqmx an try_connect,
 therefore it is written with reliability in mind. But it is only
 partially tested. Some statements might be unnecessary.
+NI-DaQ's will not work on Unix based OS.
 """
 
 import time
 from colorama import Fore, Style
 import os
 #import nidaqmx happens in a method below, which reports the status
+
+from colorama import Fore, Style
+
 
 # TODO: @Timo Bauer - check for OS in your backend, if not windows, don't try to use nidaqmax module bc it can't be imported
 

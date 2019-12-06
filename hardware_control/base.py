@@ -6,6 +6,7 @@ import sys
 import time
 from abc import ABC, abstractmethod
 from collections import OrderedDict
+from colorama import Fore, Style
 
 from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot, QObject, QTimer
 from PyQt5.QtWidgets import (
@@ -32,11 +33,13 @@ class HC_Comm(QObject):
     sigCommandList = pyqtSignal(str, float)
     sigClose = pyqtSignal()
 
-    def __init__(self, backend, instrument):
+    # TODO: @TImo Bauer Add 'try_connect' frequency
+    def __init__(self, backend, instrument, try_connect_period=1000):
         super().__init__()
         self.backend = backend
         self.instrument = instrument  # Calling instrument UI (eg. HC_scope)
         self.backend_model = backend.ID
+        self.try_connect_period = try_connect_period
 
         self.expire_time = 40
         self.list_expire_time = 5
@@ -63,7 +66,7 @@ class HC_Comm(QObject):
         # Connect timer
         self.try_connect_timer = QTimer(self)
         self.try_connect_timer.timeout.connect(self.try_connect)
-        self.try_connect_timer.start(1000)
+        self.try_connect_timer.start(self.try_connect_period)
 
     def close(self):
         if self.instrument.window.app.print_debug:
@@ -73,14 +76,21 @@ class HC_Comm(QObject):
         self.try_connect_timer.stop()  # Stop
         self.sigClose.emit()
         self.worker_thread.quit()  # Kill thread
-        if self.instrument.window.app.print_debug:
+        if self.instrument.window.app.print_close_info:
             print(
-                f"\t\tInstrument: '{self.instrument.name}' called quit() for worker thread."
+                Fore.BLUE
+                + f"\t'{self.instrument.name}': Closing...\t\t\t--:-- sec"
+                + Style.RESET_ALL,
+                end="",
+                flush=True,
             )
+            start_time = time.time()
         self.worker_thread.wait()  # Wait for thread to join (otherwise, if main thread exists first, stdout will be closed while the worker_thread may still be running and try to write to stdout, causing an error to arise)
-        if self.instrument.window.app.print_debug:
+        if self.instrument.window.app.print_close_info:
             print(
-                f"\t\tInstrument: '{self.instrument.name}' joined with worker thread."
+                f"\r\t'{self.instrument.name}': Closed    \t\t\t"
+                + "{:.2f}".format(time.time() - start_time)
+                + " sec    "
             )
 
     def update_setting(self, setting: str, value: str):
@@ -568,6 +578,7 @@ class HC_App(QApplication):
         self.macros = {}  # Dict of hc-commands (used for scans + trigger buttons)
         self.variables = {}  # Dict of app variables
         self.dummy = False
+        self.print_close_info = False
 
         self.print_debug = False  # Todo: get rid of this
 

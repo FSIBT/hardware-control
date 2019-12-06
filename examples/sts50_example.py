@@ -43,7 +43,9 @@ from hardware_control.MacroRunnerTool.HC_MacroRunnerTool import HC_MacroRunnerTo
 from hardware_control.VariableEditTool.HC_VariableEditTool import HC_VariableEditTool
 from hardware_control.IOModule.HC_Read import HC_Read, HC_singleChannelRead
 from hardware_control.IOModule.ADAM_6015 import Adam_6015
-from hardware_control.PowerSupply.NI_DaX_PowerSupplyController import NI_DaX_PowerSupplyController
+from hardware_control.PowerSupply.NI_DaX_PowerSupplyController import (
+    NI_DaX_PowerSupplyController,
+)
 
 
 class STS50Demo(HC_MainWindow):
@@ -162,10 +164,12 @@ class STS50Demo(HC_MainWindow):
         self.scantool.update_instruments()
 
         self.PS_NIDaQCtrl = NI_DaX_PowerSupplyController()
-        self.PS_NIDaQ = HC_MultiPowerSupply(self.PS_NIDaQCtrl,self,[1],"NIDAXTEST")
+        self.PS_NIDaQ = HC_MultiPowerSupply(self.PS_NIDaQCtrl, self, [1], "NIDAXTEST")
 
         self.PS_NIDaQ2Ctrl = NI_DaX_PowerSupplyController()
-        self.PS_NIDaQ2 = HC_MultiPowerSupply(self.PS_NIDaQ2Ctrl,self,[1],"NIDAXTEST2")
+        self.PS_NIDaQ2 = HC_MultiPowerSupply(
+            self.PS_NIDaQ2Ctrl, self, [1], "NIDAXTEST2"
+        )
 
         self.statustool = HC_StatusTool(self, "Connection Status", "DEFAULT", True)
         self.statustool.update_instruments()
@@ -226,124 +230,124 @@ class STS50Demo(HC_MainWindow):
         # self.tab3_layout.addWidget(self.statustool, 3, 1)
         self.tab3.setLayout(self.tab3_layout)
 
-        #####################################################################
-        ######## Custom Tab
-
+        # #####################################################################
+        # ######## Custom Tab
+        #
         self.tab_sts_layout = QGridLayout()
-
-        ########### High Voltage Panel
         #
-        self.hv_panel = QGroupBox("High Voltage Control")
-        self.hv_panel_layout = QGridLayout()
+        # ########### High Voltage Panel
+        # #
+        # self.hv_panel = QGroupBox("High Voltage Control")
+        # self.hv_panel_layout = QGridLayout()
+        # #
+        # self.v_extrac_label = QLabel("Extraction Voltage - Set Point (V):")
+        # self.v_extrac_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        # #
+        # self.v_extrac_edit = QDoubleSpinBox()
+        # # self.v_extrac_edit.editingFinished.connect(lambda: self..comm.update_setting(f"CH{channel}_volts_div", self.v_div_edit.text()))
+        # self.v_extrac_edit.setValue(0)
+        # self.v_extrac_edit.setDecimals(1)
+        # self.v_extrac_edit.setSingleStep(100)
+        # self.v_extrac_edit.setMaximum(5e3)
+        # #
+        # self.v_extrac_meas_label = QLabel("Measured Value:")
+        # self.v_extrac_meas_label.setAlignment(
+        #     QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
+        # )
+        # #
+        # self.v_extrac_meas_readout = QLabel("---- V")
+        # self.v_extrac_meas_readout.setAlignment(
+        #     QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
+        # )
+        # #
+        # #
+        # self.v_float_label = QLabel("Floating Rack Voltage  - Set Point (V):")
+        # self.v_float_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        # #
+        # self.v_float_edit = QDoubleSpinBox()
+        # # self.v_float_edit.editingFinished.connect(lambda: self..comm.update_setting(f"CH{channel}_volts_div", self.v_div_edit.text()))
+        # self.v_float_edit.setValue(0)
+        # self.v_float_edit.setDecimals(1)
+        # self.v_float_edit.setSingleStep(1000)
+        # self.v_float_edit.setMaximum(30e3)
+        # #
+        # self.v_float_meas_label = QLabel("Measured Value:")
+        # self.v_float_meas_label.setAlignment(
+        #     QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
+        # )
+        # #
+        # self.v_float_meas_readout = QLabel("---- V")
+        # self.v_float_meas_readout.setAlignment(
+        #     QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
+        # )
+        # #
+        # self.fil_ampl_label = QLabel("Filament 'On' Voltage (V):")
+        # self.fil_ampl_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        # #
+        # self.fil_ampl_edit = QDoubleSpinBox()
+        # # self.fil_ampl_edit.editingFinished.connect(lambda: self..comm.update_setting(f"CH{channel}_volts_div", self.v_div_edit.text()))
+        # self.fil_ampl_edit.setValue(0)
+        # self.fil_ampl_edit.setDecimals(2)
+        # self.fil_ampl_edit.setSingleStep(0.5)
+        # #
+        # #
+        # self.hv_panel_layout.addWidget(self.v_extrac_label, 0, 0)
+        # self.hv_panel_layout.addWidget(self.v_extrac_edit, 0, 1)
+        # self.hv_panel_layout.addWidget(self.v_extrac_meas_label, 0, 2)
+        # self.hv_panel_layout.addWidget(self.v_extrac_meas_readout, 0, 3)
+        # self.hv_panel_layout.addWidget(self.v_float_label, 1, 0)
+        # self.hv_panel_layout.addWidget(self.v_float_edit, 1, 1)
+        # self.hv_panel_layout.addWidget(self.v_float_meas_label, 1, 2)
+        # self.hv_panel_layout.addWidget(self.v_float_meas_readout, 1, 3)
+        # self.hv_panel.setLayout(self.hv_panel_layout)
         #
-        self.v_extrac_label = QLabel("Extraction Voltage - Set Point (V):")
-        self.v_extrac_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        #
-        self.v_extrac_edit = QDoubleSpinBox()
-        # self.v_extrac_edit.editingFinished.connect(lambda: self..comm.update_setting(f"CH{channel}_volts_div", self.v_div_edit.text()))
-        self.v_extrac_edit.setValue(0)
-        self.v_extrac_edit.setDecimals(1)
-        self.v_extrac_edit.setSingleStep(100)
-        self.v_extrac_edit.setMaximum(5e3)
-        #
-        self.v_extrac_meas_label = QLabel("Measured Value:")
-        self.v_extrac_meas_label.setAlignment(
-            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
-        )
-        #
-        self.v_extrac_meas_readout = QLabel("---- V")
-        self.v_extrac_meas_readout.setAlignment(
-            QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
-        )
-        #
-        #
-        self.v_float_label = QLabel("Floating Rack Voltage  - Set Point (V):")
-        self.v_float_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        #
-        self.v_float_edit = QDoubleSpinBox()
-        # self.v_float_edit.editingFinished.connect(lambda: self..comm.update_setting(f"CH{channel}_volts_div", self.v_div_edit.text()))
-        self.v_float_edit.setValue(0)
-        self.v_float_edit.setDecimals(1)
-        self.v_float_edit.setSingleStep(1000)
-        self.v_float_edit.setMaximum(30e3)
-        #
-        self.v_float_meas_label = QLabel("Measured Value:")
-        self.v_float_meas_label.setAlignment(
-            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
-        )
-        #
-        self.v_float_meas_readout = QLabel("---- V")
-        self.v_float_meas_readout.setAlignment(
-            QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
-        )
-        #
-        self.fil_ampl_label = QLabel("Filament 'On' Voltage (V):")
-        self.fil_ampl_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        #
-        self.fil_ampl_edit = QDoubleSpinBox()
-        # self.fil_ampl_edit.editingFinished.connect(lambda: self..comm.update_setting(f"CH{channel}_volts_div", self.v_div_edit.text()))
-        self.fil_ampl_edit.setValue(0)
-        self.fil_ampl_edit.setDecimals(2)
-        self.fil_ampl_edit.setSingleStep(0.5)
-        #
-        #
-        self.hv_panel_layout.addWidget(self.v_extrac_label, 0, 0)
-        self.hv_panel_layout.addWidget(self.v_extrac_edit, 0, 1)
-        self.hv_panel_layout.addWidget(self.v_extrac_meas_label, 0, 2)
-        self.hv_panel_layout.addWidget(self.v_extrac_meas_readout, 0, 3)
-        self.hv_panel_layout.addWidget(self.v_float_label, 1, 0)
-        self.hv_panel_layout.addWidget(self.v_float_edit, 1, 1)
-        self.hv_panel_layout.addWidget(self.v_float_meas_label, 1, 2)
-        self.hv_panel_layout.addWidget(self.v_float_meas_readout, 1, 3)
-        self.hv_panel.setLayout(self.hv_panel_layout)
-
-        ########## Timing Panel
-        #
-        self.timing_panel = QGroupBox("Timing Panel")
-        self.timing_panel_layout = QGridLayout()
-        #
-        self.t_heat_label = QLabel("Filament 'On' time (s):")
-        self.t_heat_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        #
-        self.t_heat_edit = QDoubleSpinBox()
-        # self.t_heat_edit.editingFinished.connect(lambda: self..comm.update_setting(f"CH{channel}_volts_div", self.v_div_edit.text()))
-        self.t_heat_edit.setValue(7.5)
-        self.t_heat_edit.setDecimals(2)
-        self.t_heat_edit.setSingleStep(0.5)
-        self.t_heat_edit.setMaximum(10e3)
-        #
-        self.t_delay_label = QLabel("Filament spark delay (s):")
-        self.t_delay_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        #
-        self.t_delay_edit = QDoubleSpinBox()
-        # self.t_delay_edit.editingFinished.connect(lambda: self..comm.update_setting(f"CH{channel}_volts_div", self.v_div_edit.text()))
-        self.t_delay_edit.setValue(6.5)
-        self.t_delay_edit.setDecimals(2)
-        self.t_delay_edit.setSingleStep(0.5)
-        self.t_delay_edit.setMaximum(10e3)
-        #
-        self.t_arc_label = QLabel("Filament arc duration (ms):")
-        self.t_arc_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        #
-        self.t_arc_edit = QDoubleSpinBox()
-        # self.t_arc_edit.editingFinished.connect(lambda: self..comm.update_setting(f"CH{channel}_volts_div", self.v_div_edit.text()))
-        self.t_arc_edit.setValue(0.5)
-        self.t_arc_edit.setDecimals(3)
-        self.t_arc_edit.setMaximum(10e3)
-        self.t_arc_edit.setSingleStep(0.5)
-        #
-        self.timing_panel_layout.addWidget(self.t_heat_label, 0, 0)
-        self.timing_panel_layout.addWidget(self.t_heat_edit, 0, 1)
-        self.timing_panel_layout.addWidget(self.t_delay_label, 1, 0)
-        self.timing_panel_layout.addWidget(self.t_delay_edit, 1, 1)
-        self.timing_panel_layout.addWidget(self.t_arc_label, 2, 0)
-        self.timing_panel_layout.addWidget(self.t_arc_edit, 2, 1)
-        self.timing_panel.setLayout(self.timing_panel_layout)
+        # ########## Timing Panel
+        # #
+        # self.timing_panel = QGroupBox("Timing Panel")
+        # self.timing_panel_layout = QGridLayout()
+        # #
+        # self.t_heat_label = QLabel("Filament 'On' time (s):")
+        # self.t_heat_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        # #
+        # self.t_heat_edit = QDoubleSpinBox()
+        # # self.t_heat_edit.editingFinished.connect(lambda: self..comm.update_setting(f"CH{channel}_volts_div", self.v_div_edit.text()))
+        # self.t_heat_edit.setValue(7.5)
+        # self.t_heat_edit.setDecimals(2)
+        # self.t_heat_edit.setSingleStep(0.5)
+        # self.t_heat_edit.setMaximum(10e3)
+        # #
+        # self.t_delay_label = QLabel("Filament spark delay (s):")
+        # self.t_delay_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        # #
+        # self.t_delay_edit = QDoubleSpinBox()
+        # # self.t_delay_edit.editingFinished.connect(lambda: self..comm.update_setting(f"CH{channel}_volts_div", self.v_div_edit.text()))
+        # self.t_delay_edit.setValue(6.5)
+        # self.t_delay_edit.setDecimals(2)
+        # self.t_delay_edit.setSingleStep(0.5)
+        # self.t_delay_edit.setMaximum(10e3)
+        # #
+        # self.t_arc_label = QLabel("Filament arc duration (ms):")
+        # self.t_arc_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        # #
+        # self.t_arc_edit = QDoubleSpinBox()
+        # # self.t_arc_edit.editingFinished.connect(lambda: self..comm.update_setting(f"CH{channel}_volts_div", self.v_div_edit.text()))
+        # self.t_arc_edit.setValue(0.5)
+        # self.t_arc_edit.setDecimals(3)
+        # self.t_arc_edit.setMaximum(10e3)
+        # self.t_arc_edit.setSingleStep(0.5)
+        # #
+        # self.timing_panel_layout.addWidget(self.t_heat_label, 0, 0)
+        # self.timing_panel_layout.addWidget(self.t_heat_edit, 0, 1)
+        # self.timing_panel_layout.addWidget(self.t_delay_label, 1, 0)
+        # self.timing_panel_layout.addWidget(self.t_delay_edit, 1, 1)
+        # self.timing_panel_layout.addWidget(self.t_arc_label, 2, 0)
+        # self.timing_panel_layout.addWidget(self.t_arc_edit, 2, 1)
+        # self.timing_panel.setLayout(self.timing_panel_layout)
 
         ######## Set Tab Layout
         #
-        self.tab_sts_layout.addWidget(self.hv_panel, 0, 0, 2, 4)
-        self.tab_sts_layout.addWidget(self.timing_panel, 2, 0, 2, 2)
+        # self.tab_sts_layout.addWidget(self.hv_panel, 0, 0, 2, 4)
+        # self.tab_sts_layout.addWidget(self.timing_panel, 2, 0, 2, 2)
         self.tab_sts_layout.addWidget(self.flow_ctrl, 2, 2, 2, 2)
         self.tab4.setLayout(self.tab_sts_layout)
 
@@ -351,12 +355,11 @@ class STS50Demo(HC_MainWindow):
 
         self.tab5_layout = QGridLayout()
 
-        self.tab5_layout.addWidget(self.PS_NIDaQ,0,0)
-        self.tab5_layout.addWidget(self.PS_NIDaQ2,1,0)
+        self.tab5_layout.addWidget(self.PS_NIDaQ, 0, 0)
+        self.tab5_layout.addWidget(self.PS_NIDaQ2, 1, 0)
         self.tab5.setLayout(self.tab5_layout)
 
         #####################################
-
 
         #####################################################################
         ######## Set master window layout
@@ -388,6 +391,7 @@ class STS50Demo(HC_MainWindow):
 
 def main(argv):
     app = HC_App([])
+    app.print_close_info = True
     ex = STS50Demo(app, use_sockets)
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())

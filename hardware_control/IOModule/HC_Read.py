@@ -19,7 +19,7 @@ class HC_Read(HC_Instrument):
         readCommand: str,  # command for reading e.g. TEMP / VOLT / CURR
         unit: str = "Units",
         name: str = "Read Module",
-        showLCD = True,
+        showLCD=True,
         initialize_with: str = "INSTRUMENT",
         save_on_close: str = False,
     ):
@@ -31,7 +31,7 @@ class HC_Read(HC_Instrument):
         )  # A dict to store all possible settings-Not used here,bc there are no settings
         self.save_on_close = save_on_close
         self.backend = backend
-        self.comm = HC_Comm(backend, self)
+        self.comm = HC_Comm(backend, self, 2000)
         # self.filename = ""
 
         self.channels = channels
@@ -54,7 +54,7 @@ class HC_Read(HC_Instrument):
                 )
             )
             self.grid.addWidget(self.listOfWidgets[i], 0, i)
-        self.grid.addWidget(self.grid.spacerItem(),0,4)
+        self.grid.addWidget(self.grid.spacerItem(), 0, 4)
         # Add all the widgets to layout
         self.setLayout(self.grid)
         ####
@@ -66,8 +66,10 @@ class HC_Read(HC_Instrument):
         # this sends all settings, which are stored in the settings dictionary to the backend
         self.send_state()
 
+
 class HC_singleChannelRead(QWidget):
     """A single Temperature LCD Widget, with a channelnumber and name"""
+
     def __init__(
         self,
         mainWindow,
@@ -104,8 +106,9 @@ class HC_singleChannelRead(QWidget):
         self.name.setText(channelName + " " + unit)
         self.subLayout.addWidget(self.name, 0, 0)
 
-
-        self.setMaximumSize(self.mainWindow.globalLineWidth,self.mainWindow.globalLineHeight*3)
+        self.setMaximumSize(
+            self.mainWindow.globalLineWidth, self.mainWindow.globalLineHeight * 3
+        )
 
         self.setLayout(self.subLayout)
 
@@ -127,4 +130,6 @@ class HC_singleChannelRead(QWidget):
                 self.lcd.display(mess)  # write to actual widget/channel
             else:
                 self.name.setText(f"{self.channelName} ({self.unit}) : {mess}")
-#ToDo Max/min Value alert?
+
+
+# ToDo Max/min Value alert?

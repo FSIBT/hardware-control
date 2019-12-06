@@ -46,7 +46,7 @@ class HC_Backend(ABC):
 
     def close(self):
         """Close connection to instrument"""
-        if (not self.dummy) and self.online:
+        if (not self.dummy) and self.online and self.device is not None:
             self.device.close()
             self.pDebug(f"{self.ID}: Backend Closed")
             return (

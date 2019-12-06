@@ -156,8 +156,10 @@ class HC_ZMQConnectionTool(HC_Instrument):
 
         if button.text() == "Accept Incoming Commands":
             self.accept_commands = True
+            self.log_note("Enabled incomming commands")
         else:
             self.accept_commands = False
+            self.log_note("Disabled incomming commands")
 
     def service_commands(self):
         """This is the command that gets called every 'x' seconds to check
@@ -184,6 +186,7 @@ class HC_ZMQConnectionTool(HC_Instrument):
 
             self.received_label.setText(f"Last Message: {mess_str}")  # Update label
 
+            self.log_note("Processing command '{mess_str}'")
             rval = self.window.app.process_hc_command(mess_str)
 
             self.socket.send(message)  # Send reply
