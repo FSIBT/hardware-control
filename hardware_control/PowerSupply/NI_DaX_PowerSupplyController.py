@@ -10,7 +10,21 @@ This specific device is an analog input module with 32 channels
 
 import time
 
-import nidaqmx  # python wrapper for the driver
+import os
+
+if os.name == "nt":
+    import nidaqmx
+
+    # We check which OS is calling because nidaqmx only works on Windows. Importing
+    # nidaqmx on macOS or linux will cause pyvisa and sockets to break.
+else:
+    print(
+        Fore.RED
+        + "WARNING: Can not import NIDAQMX on this system. NIDAQ will not function"
+        + Style.RESET_ALL
+    )
+
+# TODO: @Timo Bauer - check for OS in your backend, if not windows, don't try to use nidaqmax module bc it can't be imported
 
 from hardware_control.HC_Backend import HC_Backend
 from hardware_control.utility import regex_compare
@@ -98,16 +112,16 @@ class NI_DaX_PowerSupplyController(HC_Backend):
                     with nidaqmx.Task() as task:
                         task.ai_channels.add_ai_voltage_chan(self.readVoltageChannel)
                         val = str(task.read())
-                    return cmd[:-1] +"=" + str(val[0])
+                    return cmd[:-1] + "=" + str(val[0])
                 if "CH1_I_out?" == cmd:
                     with nidaqmx.Task() as task:
                         task.ai_channels.add_ai_voltage_chan(self.readCurrentChannel)
                         val = str(task.read())
-                    return cmd[:-1] +"=" + str(val[0])
+                    return cmd[:-1] + "=" + str(val[0])
                 elif "CH1_V_set?" == cmd:
-                    return cmd[:-1] +"=" + str(self.lastVset)
+                    return cmd[:-1] + "=" + str(self.lastVset)
                 elif "CH1_I_set?" == cmd:
-                    return cmd[:-1] +"=" + "0"
+                    return cmd[:-1] + "=" + "0"
                 else:
                     raise Exception(self.ID + "unknown Command : ", cmd)
             except Exception as e:
