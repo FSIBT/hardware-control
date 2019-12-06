@@ -51,6 +51,7 @@ setup(
         "zmq",
         "pytest-runner",
         "nidaqmx",
+        "colorama",
     ],
     setup_requires=["pytest-runner"],
     tests_require=["pytest"],

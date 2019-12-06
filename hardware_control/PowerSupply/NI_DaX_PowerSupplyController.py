@@ -5,24 +5,15 @@ Of this kind multiple Backends can be spawned for the same module
 
 This specific device is an analog input module with 32 channels
 
-
+There were some problems with the import of nidaqmx an try_connect,
+therefore it is written with reliability in mind. But it is only
+partially tested. Some statements might be unnecessary.
 """
 
 import time
-
+from colorama import Fore, Style
 import os
-
-if os.name == "nt":
-    import nidaqmx
-
-    # We check which OS is calling because nidaqmx only works on Windows. Importing
-    # nidaqmx on macOS or linux will cause pyvisa and sockets to break.
-else:
-    print(
-        Fore.RED
-        + "WARNING: Can not import NIDAQMX on this system. NIDAQ will not function"
-        + Style.RESET_ALL
-    )
+#import nidaqmx happens in a method below, which reports the status
 
 # TODO: @Timo Bauer - check for OS in your backend, if not windows, don't try to use nidaqmax module bc it can't be imported
 
@@ -70,6 +61,11 @@ class NI_DaX_PowerSupplyController(HC_Backend):
 
         self.lastVset = 0
 
+        #Check import
+        if not nidaxmxImport():
+            self.dummy=True
+            self.pDebug(f"{self.ID}: import of nidaqmx failed, changing to dummy mode")
+
     ###About this device:
     # there are two modules currently in use, NI 9264 and NI 9205
     # connection works over proprietary driver, with "tasks"
@@ -78,8 +74,13 @@ class NI_DaX_PowerSupplyController(HC_Backend):
 
     # ToDo
     def try_connect(self):
-        if not self.dummy:
-            self.online = True
+        if not self.dummy and os.name == "nt":
+            try:
+                with nidaqmx.Task() as task:
+                    if task.name:
+                        self.online = True
+            except:
+                return False
         else:
             self.online = True
         return self.online
@@ -87,7 +88,7 @@ class NI_DaX_PowerSupplyController(HC_Backend):
     def update_setting(self, setting: str, value):
         if self.dummy:
             return value
-        else:
+        elif self.online:
             try:
 
                 if "CH1_V_set" == setting:
@@ -98,13 +99,17 @@ class NI_DaX_PowerSupplyController(HC_Backend):
                         time.sleep(0.200)
                         done = task.is_task_done()
                     return str(done)
+                elif "CH1_I_set" == setting:
+                    return False
                 else:
                     raise Exception(self.ID + "updateSetting - Setting not found")
             except Exception as e:
-                print(e)
+                self.pDebug(e)
+        else:
+            return False
 
     def command(self, cmd: str):
-        if self.dummy:
+        if self.dummy or not self.online:
             return cmd
         else:
             try:
@@ -125,13 +130,45 @@ class NI_DaX_PowerSupplyController(HC_Backend):
                 else:
                     raise Exception(self.ID + "unknown Command : ", cmd)
             except Exception as e:
-                self.pDebug(e)
+                self.pDebug(f"{self.ID} : {e}")
 
     def close(self):
-        try:  # make sure tasks are done (tasks have an internal timeout)
+        if self.online:
+            try:  # make sure tasks are done (tasks have an internal timeout)
+                with nidaqmx.Task() as task:
+                    if not task.is_task_done():
+                        time.sleep(0.500)
+                        if not ask.is_task_done():
+                            self.pDebug(self.ID + " : Not all Tasks are done!")
+            except Exception as e:
+                self.pDebug(f"{self.ID} closing exception : {e}")
+
+"""
+This method checks that the import goes smooth and 
+reports that so that all functionality can ether be disabled or 
+further checks can happen. 
+"""
+def nidaxmxImport():
+    if os.name == "nt":
+        try:
+            import nidaqmx
             with nidaqmx.Task() as task:
-                while not task.is_task_done():
-                    self.pDebug(self.ID + " : Not all Tasks are done!")
-                    time.sleep(0.500)
+                if task.name:
+                    return True
+            return True
         except Exception as e:
-            raise e
+            print(
+                Fore.RED
+                + "WARNING: Can not import NIDAQMX on this system. NIDAQ will not function"
+                + Style.RESET_ALL
+            )
+            return False
+        # We check which OS is calling because nidaqmx only works on Windows. Importing
+        # nidaqmx on macOS or linux will cause pyvisa and sockets to break.
+    else:
+        print(
+            Fore.RED
+            + "WARNING: Can not import NIDAQMX on this system. NIDAQ will not function"
+            + Style.RESET_ALL
+        )
+    return False
