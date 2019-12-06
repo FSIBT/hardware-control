@@ -39,6 +39,7 @@ class HC_Comm(QObject):
         self.backend = backend
         self.instrument = instrument  # Calling instrument UI (eg. HC_scope)
         self.backend_model = backend.ID
+        self.try_connect_period = try_connect_period
 
         self.expire_time = 40
         self.list_expire_time = 5
@@ -64,8 +65,8 @@ class HC_Comm(QObject):
 
         # Connect timer
         self.try_connect_timer = QTimer(self)
-        self.try_connect_timer.timeout.connect(self.try_connect_period)
-        self.try_connect_timer.start(1000)
+        self.try_connect_timer.timeout.connect(self.try_connect)
+        self.try_connect_timer.start(self.try_connect_period)
 
     def close(self):
         if self.instrument.window.app.print_debug:
