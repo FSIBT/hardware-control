@@ -34,7 +34,6 @@ class Adam_6015(HC_Backend):
             # First Check current state
             if not self.online:  # If not online, try to connect
                 try:
-                    print("trying to connect")
                     self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                     self.s.settimeout(0.950)
                     self.s.connect(self.addr)
