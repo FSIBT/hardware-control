@@ -11,6 +11,7 @@ This specific device is an analog input module with 32 channels
 import time
 
 import os
+from colorama import Fore, Style
 
 if os.name == "nt":
     import nidaqmx
