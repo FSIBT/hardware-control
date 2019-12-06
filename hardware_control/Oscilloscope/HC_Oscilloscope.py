@@ -536,6 +536,11 @@ class OscilloscopeHorizontalWidget(QWidget):
         # ToDo: change Units to a more useful dimension than s - eg ms or mu
         #
         self.timebase_edit = QDoubleSpinBox()
+        self.timebase_edit_units = QComboBox()
+        self.timebase_edit_layout = QGridLayout()
+        self.timebase_edit_layout.addWidget(self.timebase_edit,0,0)
+        self.timebase_edit_layout.addWidget(self.timebase_edit_units,0,1)
+
         self.timebase_edit.editingFinished.connect(
             lambda: control.update_setting("timebase", self.timebase_edit.text())
         )
@@ -548,6 +553,10 @@ class OscilloscopeHorizontalWidget(QWidget):
         self.timebase_edit.setDecimals(6)
         #
         self.time_offset_edit = QDoubleSpinBox()
+        self.time_offset_edit_units = QComboBox()
+        self.time_offset_edit_layout = QGridLayout()
+        self.time_offset_edit_layout.addWidget(self.time_offset_edit,0,0)
+        self.time_offset_edit_layout.addWidget(self.time_offset_edit_units,0,1)
         self.time_offset_edit.editingFinished.connect(
             lambda: control.update_setting("time_offset", self.time_offset_edit.text())
         )
@@ -560,8 +569,8 @@ class OscilloscopeHorizontalWidget(QWidget):
         self.time_offset_edit.setDecimals(6)
         #
         self.form = QFormLayout()
-        self.form.addRow("Time/Div (s):", self.timebase_edit)
-        self.form.addRow("Offset (s): ", self.time_offset_edit)
+        self.form.addRow("Time/Div (s):", self.timebase_edit_layout)
+        self.form.addRow("Offset (s): ", self.time_offset_edit_layout)
 
         # ******* DEFINE OVERALL LAYOUT
         #
