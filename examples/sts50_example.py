@@ -43,7 +43,9 @@ from hardware_control.MacroRunnerTool.HC_MacroRunnerTool import HC_MacroRunnerTo
 from hardware_control.VariableEditTool.HC_VariableEditTool import HC_VariableEditTool
 from hardware_control.IOModule.HC_Read import HC_Read, HC_singleChannelRead
 from hardware_control.IOModule.ADAM_6015 import Adam_6015
-from hardware_control.PowerSupply.NI_DaX_PowerSupplyController import NI_DaX_PowerSupplyController
+from hardware_control.PowerSupply.NI_DaX_PowerSupplyController import (
+    NI_DaX_PowerSupplyController,
+)
 
 
 class STS50Demo(HC_MainWindow):
@@ -162,10 +164,12 @@ class STS50Demo(HC_MainWindow):
         self.scantool.update_instruments()
 
         self.PS_NIDaQCtrl = NI_DaX_PowerSupplyController()
-        self.PS_NIDaQ = HC_MultiPowerSupply(self.PS_NIDaQCtrl,self,[1],"NIDAXTEST")
+        self.PS_NIDaQ = HC_MultiPowerSupply(self.PS_NIDaQCtrl, self, [1], "NIDAXTEST")
 
         self.PS_NIDaQ2Ctrl = NI_DaX_PowerSupplyController()
-        self.PS_NIDaQ2 = HC_MultiPowerSupply(self.PS_NIDaQ2Ctrl,self,[1],"NIDAXTEST2")
+        self.PS_NIDaQ2 = HC_MultiPowerSupply(
+            self.PS_NIDaQ2Ctrl, self, [1], "NIDAXTEST2"
+        )
 
         self.statustool = HC_StatusTool(self, "Connection Status", "DEFAULT", True)
         self.statustool.update_instruments()
@@ -351,12 +355,11 @@ class STS50Demo(HC_MainWindow):
 
         self.tab5_layout = QGridLayout()
 
-        self.tab5_layout.addWidget(self.PS_NIDaQ,0,0)
-        self.tab5_layout.addWidget(self.PS_NIDaQ2,1,0)
+        self.tab5_layout.addWidget(self.PS_NIDaQ, 0, 0)
+        self.tab5_layout.addWidget(self.PS_NIDaQ2, 1, 0)
         self.tab5.setLayout(self.tab5_layout)
 
         #####################################
-
 
         #####################################################################
         ######## Set master window layout
@@ -388,6 +391,7 @@ class STS50Demo(HC_MainWindow):
 
 def main(argv):
     app = HC_App([])
+    app.print_close_info = True
     ex = STS50Demo(app, use_sockets)
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())
