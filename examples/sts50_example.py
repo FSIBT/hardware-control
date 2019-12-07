@@ -49,7 +49,7 @@ from hardware_control.PowerSupply.NI_DaX_PowerSupplyController import (
 
 
 class STS50Demo(HC_MainWindow):
-    def __init__(self, app, use_sockets: bool):
+    def __init__(self, app):
         super().__init__()
         self.app = app
 
@@ -390,9 +390,9 @@ class STS50Demo(HC_MainWindow):
 
 
 def main(argv):
-    app = HC_App([])
+    app = HC_App(debug, [])
     app.print_close_info = True
-    ex = STS50Demo(app, use_sockets)
+    ex = STS50Demo(app)
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())
 
