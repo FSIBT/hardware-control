@@ -166,11 +166,6 @@ class STS50Demo(HC_MainWindow):
         self.PS_NIDaQCtrl = NI_DaX_PowerSupplyController()
         self.PS_NIDaQ = HC_MultiPowerSupply(self.PS_NIDaQCtrl, self, [1], "NIDAXTEST")
 
-        self.PS_NIDaQ2Ctrl = NI_DaX_PowerSupplyController()
-        self.PS_NIDaQ2 = HC_MultiPowerSupply(
-            self.PS_NIDaQ2Ctrl, self, [1], "NIDAXTEST2"
-        )
-
         self.statustool = HC_StatusTool(self, "Connection Status", "DEFAULT", True)
         self.statustool.update_instruments()
 
@@ -356,7 +351,6 @@ class STS50Demo(HC_MainWindow):
         self.tab5_layout = QGridLayout()
 
         self.tab5_layout.addWidget(self.PS_NIDaQ, 0, 0)
-        self.tab5_layout.addWidget(self.PS_NIDaQ2, 1, 0)
         self.tab5.setLayout(self.tab5_layout)
 
         #####################################
