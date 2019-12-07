@@ -1,10 +1,5 @@
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import (
-    QPushButton,
-    QLabel,
-    QGridLayout,
-    QComboBox,
-)
+from PyQt5.QtWidgets import QPushButton, QLabel, QGridLayout, QComboBox
 
 from hardware_control.base import HC_Instrument
 
@@ -33,11 +28,11 @@ class HC_MacroRunnerTool(HC_Instrument):
     ):
 
         super().__init__(window, name)
-        self.debug=debug
+        self.debug = debug
         self.pDebug("")
         self.buttons = buttons
         self.indicators = indicators
-        
+
         self.settings = {}
         self.name = name
         self.app = window.app

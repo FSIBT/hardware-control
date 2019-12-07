@@ -1,10 +1,5 @@
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import (
-    QLineEdit,
-    QLabel,
-    QGridLayout,
-    QComboBox,
-)
+from PyQt5.QtWidgets import QLineEdit, QLabel, QGridLayout, QComboBox
 
 from hardware_control.base import HC_Instrument
 
@@ -102,7 +97,7 @@ class HC_VariableEditTool(HC_Instrument):
 
             else:
 
-                print("Sry, not a thing!")
+                self.pDebug("Sry, not a thing!")
                 self.window.app.add_log(
                     self.name,
                     "NO-HARDWARE-BACKEND",
@@ -123,12 +118,12 @@ class HC_VariableEditTool(HC_Instrument):
     def edit_variable(self, var: str, value: str):
         try:
             self.window.app.variables[var] = value
-            print(f"Setting {var} = '{value}'")
+            self.pDebug(f"Setting {var} = '{value}'")
         except Exception:
-            print(f"An exception occurred setting variable {var}")
+            self.pDebug(f"An exception occurred setting variable {var}")
 
     def select_variable(self, m: str):
-        print(f"Setting macro to {m}")
+        self.pDebug(f"Setting macro to {m}")
         self.settings["variable"] = m
 
     def update_variables(self):
@@ -136,7 +131,7 @@ class HC_VariableEditTool(HC_Instrument):
         names = []
         for m in self.app.variables:
             names.append(m)
-            print(f"Adding variable: {m}")
+            self.pDebug(f"Adding variable: {m}")
         self.variable_drop.addItems(names)
 
     #
