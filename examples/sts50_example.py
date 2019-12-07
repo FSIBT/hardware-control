@@ -49,7 +49,7 @@ from hardware_control.PowerSupply.NI_DaX_PowerSupplyController import (
 
 
 class STS50Demo(HC_MainWindow):
-    def __init__(self, app, use_sockets: bool):
+    def __init__(self, app):
         super().__init__()
         self.app = app
 
@@ -165,11 +165,6 @@ class STS50Demo(HC_MainWindow):
 
         self.PS_NIDaQCtrl = NI_DaX_PowerSupplyController()
         self.PS_NIDaQ = HC_MultiPowerSupply(self.PS_NIDaQCtrl, self, [1], "NIDAXTEST")
-
-        self.PS_NIDaQ2Ctrl = NI_DaX_PowerSupplyController()
-        self.PS_NIDaQ2 = HC_MultiPowerSupply(
-            self.PS_NIDaQ2Ctrl, self, [1], "NIDAXTEST2"
-        )
 
         self.statustool = HC_StatusTool(self, "Connection Status", "DEFAULT", True)
         self.statustool.update_instruments()
@@ -356,7 +351,6 @@ class STS50Demo(HC_MainWindow):
         self.tab5_layout = QGridLayout()
 
         self.tab5_layout.addWidget(self.PS_NIDaQ, 0, 0)
-        self.tab5_layout.addWidget(self.PS_NIDaQ2, 1, 0)
         self.tab5.setLayout(self.tab5_layout)
 
         #####################################
@@ -390,9 +384,9 @@ class STS50Demo(HC_MainWindow):
 
 
 def main(argv):
-    app = HC_App([])
+    app = HC_App(debug, [])
     app.print_close_info = True
-    ex = STS50Demo(app, use_sockets)
+    ex = STS50Demo(app)
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())
 

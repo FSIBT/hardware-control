@@ -4,13 +4,7 @@
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QDoubleValidator
-from PyQt5.QtWidgets import (
-    QLineEdit,
-    QLabel,
-    QFormLayout,
-    QGridLayout,
-    QComboBox,
-)
+from PyQt5.QtWidgets import QLineEdit, QLabel, QFormLayout, QGridLayout, QComboBox
 
 from hardware_control.base import HC_Instrument, HC_Comm
 
@@ -34,7 +28,7 @@ class HC_FlowController(HC_Instrument):
         self.save_on_close = save_on_close
         self.name = name
 
-        self.comm = HC_Comm(scpi_instr, self)
+        self.comm = HC_Comm(scpi_instr, self, 2000)
         self.filename = ""
 
         # Initialize state to correct values

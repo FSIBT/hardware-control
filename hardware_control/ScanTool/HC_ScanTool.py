@@ -14,7 +14,8 @@ from PyQt5.QtWidgets import (
 )
 from hardware_control.base import HC_Instrument
 
-class HC_ScanTool(QGroupBox):
+
+class HC_ScanTool(HC_Instrument):
     def __init__(
         self,
         window,
@@ -24,7 +25,7 @@ class HC_ScanTool(QGroupBox):
         include_variables: bool = True,
     ):
 
-        super().__init__(name)
+        super().__init__(window, name)
 
         self.settings = {}
         self.save_on_close = save_on_close
@@ -152,8 +153,7 @@ class HC_ScanTool(QGroupBox):
 
     def set_instrument(self, inst: str):
 
-        if self.app.print_debug:
-            print(f"Instrument set to '{inst}'")
+        self.pDebug(f"Instrument set to '{inst}'")
 
         self.settings["instrument"] = inst
 
@@ -183,10 +183,9 @@ class HC_ScanTool(QGroupBox):
                 for param in instr.settings:
                     params.append(param)
                 self.parameter_drop.addItems(params)
-                if self.app.print_debug:
-                    print(f"\tAdded {len(params)} items to parameter dropdown.")
+                self.pDebug(f"\tAdded {len(params)} items to parameter dropdown.")
             else:
-                print(f"ERROR: Couldn't find instrument '{inst}'")
+                self.pDebug(f"ERROR: Couldn't find instrument '{inst}'")
 
         self.settings["progress"] = 0
         self.progress_bar.setValue(self.settings["progress"])
@@ -202,14 +201,14 @@ class HC_ScanTool(QGroupBox):
         self.macro_drop.addItems(names)
 
     def set_parameter(self, param: str):
-        print(f"Setting parameter to {param}")
+        self.pDebug(f"Setting parameter to {param}")
         self.settings["parameter"] = param
 
         self.settings["progress"] = 0
         self.progress_bar.setValue(self.settings["progress"])
 
     def set_values(self, new_values: str):
-        print(f"Setting values to {new_values}")
+        self.pDebug(f"Setting values to {new_values}")
         self.settings["values"] = new_values
 
         self.settings["progress"] = 0
@@ -223,8 +222,9 @@ class HC_ScanTool(QGroupBox):
         m = self.settings["macro"]
         vals = self.settings["values"].split(",")
 
-        # if self.app.print_debug:
-        print(f"Starting scan\n\tInstrument: {i}\n\tParameter: {p}\n\tValues:{vals}")
+        self.pDebug(
+            f"Starting scan\n\tInstrument: {i}\n\tParameter: {p}\n\tValues:{vals}"
+        )
 
         if i != "App variables":  # Is real instrument, not App Variable
 
@@ -236,7 +236,7 @@ class HC_ScanTool(QGroupBox):
                     found = True
                     break
             if not found:
-                print(f"ERROR: Failed to find instrument {i}")
+                self.pDebug(f"ERROR: Failed to find instrument {i}")
                 return
 
             # Scan through values
@@ -246,7 +246,7 @@ class HC_ScanTool(QGroupBox):
                 # Update progress bar
                 self.settings["progress"] = str(count / len(vals) * 100)
                 # if self.app.print_debug:
-                print(f"\tRunning value = '{v}'\t\t{count/len(vals)*100}%")
+                self.pDebug(f"\tRunning value = '{v}'\t\t{count/len(vals)*100}%")
                 self.progress_bar.setValue(float(self.settings["progress"]))
                 QApplication.processEvents()
 
@@ -254,25 +254,22 @@ class HC_ScanTool(QGroupBox):
                 if not scan_instrument.set_setting(
                     self.settings["parameter"], v.strip()
                 ):
-                    if self.app.print_debug:
-                        print(
-                            f"Failed to set parameter '{p}' to value '{v}'. Exiting scan."
-                        )
+                    self.pDebug(
+                        f"Failed to set parameter '{p}' to value '{v}'. Exiting scan."
+                    )
                     return
                 count += 1
 
                 if m != "None":
-                    if self.app.print_debug:
-                        print(f"\t\tRunning macro {m}")
+                    self.pDebug(f"\t\tRunning macro {m}")
                     self.app.run_macro(self.app.macros[m])
 
         else:
 
             # Make sure variable exists
             if not (i in self.app.variables):
-                if self.app.print_debug:
-                    print("Failed to find app variable.")
-                    return
+                self.pDebug("Failed to find app variable.")
+                return
 
             # Scan thorugh values
             count = 0
@@ -281,7 +278,7 @@ class HC_ScanTool(QGroupBox):
                 # Update progress bar
                 self.settings["progress"] = count / len(vals) * 100
                 # if self.app.print_debug:
-                print(f"\tRunning value = '{v}'\t\t{count/len(vals)*100}%")
+                self.pDebug(f"\tRunning value = '{v}'\t\t{count/len(vals)*100}%")
                 self.progress_bar.setValue(float(self.settings["progress"]))
                 QApplication.processEvents()
 
@@ -290,13 +287,12 @@ class HC_ScanTool(QGroupBox):
                 count += 1
 
                 if m != "None":
-                    if self.app.print_debug:
-                        print(f"\t\tRunning macro {m}")
+                    self.pDebug(f"\t\tRunning macro {m}")
                     self.app.run_macro(self.app.macros[m])
 
         self.settings["progress"] = 100
         self.progress_bar.setValue(self.settings["progress"])
-        print("Finished scan")
+        self.pDebug("Finished scan")
 
     def update_instruments(self):
         self.instrument_drop.clear()
@@ -318,9 +314,13 @@ class HC_ScanTool(QGroupBox):
         try:
             with open(filename) as file:
                 self.settings = json.load(file)
-                print(f"State for {self.comm.instr.ID} read from file '{filename}'")
+                self.pDebug(
+                    f"State for {self.comm.instr.ID} read from file '{filename}'"
+                )
         except:
-            print(f"ERROR: Failed to read file '{filename}'. Using defualt case.")
+            self.pDebug(
+                f"ERROR: {self.name} failed to read file '{filename}'. Using defualt case."
+            )
             self.settings = self.default_state()
 
         # Ensure all fields in default_state are present in the loaded state
@@ -332,22 +332,12 @@ class HC_ScanTool(QGroupBox):
         try:
             with open(filename, "w") as file:
                 json.dump(self.settings, file)
-                print(f"State for {self.comm.instr.ID} saved to file '{filename}'")
+                self.pDebug(
+                    f"State for {self.comm.instr.ID} saved to file '{filename}'"
+                )
         except Exception as e:
-            print(f"ERROR: Failed to write file '{filename}'. State not saved.")
-            print(f"\t{e}")
-
-    #
-    # Close connection
-    #
-    def close(self, filename: str = ""):
-
-        # Save state if asked
-        if self.save_on_close:
-            self.save_state(self.filename)
-
-        # Tell scope to close
-        self.comm.close()
+            self.pDebug(f"ERROR: Failed to write file '{filename}'. State not saved.")
+            self.pDebug(f"\t{e}")
 
     #
     # Create a default state object if can't get state from a file

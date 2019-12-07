@@ -69,10 +69,9 @@ class HC_Comm(QObject):
         self.try_connect_timer.start(self.try_connect_period)
 
     def close(self):
-        if self.instrument.window.app.print_debug:
-            print(
-                f"\tInstrument: '{self.instrument.name}' closing Comm with backend of type '{self.backend_model}'."
-            )
+        self.instrument.pDebug(
+            f"\tInstrument: '{self.instrument.name}' closing Comm with backend of type '{self.backend_model}'."
+        )
         self.try_connect_timer.stop()  # Stop
         self.sigClose.emit()
         self.worker_thread.quit()  # Kill thread
@@ -95,10 +94,9 @@ class HC_Comm(QObject):
 
     def update_setting(self, setting: str, value: str):
         """Transfers the setting and value information to the worker thread"""
-        if self.instrument.window.app.print_debug:
-            print(
-                f"Instrument: {self.instrument.name} called 'update_setting()' for setting '{setting}' and sent message '{value}'."
-            )
+        self.instrument.pDebug(
+            f"Instrument: {self.instrument.name} called 'update_setting()' for setting '{setting}' and sent message '{value}'."
+        )
         self.sigUpdateSettings.emit(setting, value, time.time() + self.expire_time)
         self.instrument.window.app.add_log(
             self.instrument.name, self.backend_model, "SET", setting, value
@@ -106,10 +104,9 @@ class HC_Comm(QObject):
 
     def command(self, cmd: str):
         """Sends a command to the worker in the worker thread"""
-        if self.instrument.window.app.print_debug:
-            print(
-                f"Instrument: {self.instrument.name} called 'command()' and sent command: '{cmd}'."
-            )
+        self.instrument.pDebug(
+            f"Instrument: {self.instrument.name} called 'command()' and sent command: '{cmd}'."
+        )
         self.sigCommand.emit(cmd, time.time() + self.expire_time)
         self.instrument.window.app.add_log(
             self.instrument.name, self.backend_model, "CMD", cmd
@@ -117,10 +114,9 @@ class HC_Comm(QObject):
 
     def write(self, msg: str):
         """Sends a command to be sent to the instrument by the worker in the worker thead"""
-        if self.instrument.window.app.print_debug:
-            print(
-                f"Instrument: {self.instrument.name} called 'write()' and sent message: '{msg}'."
-            )
+        self.instrument.pDebug(
+            f"Instrument: {self.instrument.name} called 'write()' and sent message: '{msg}'."
+        )
         self.sigWrite.emit(msg, time.time() + self.expire_time)
         self.instrument.window.app.add_log(
             self.instrument.name, self.backend_model, "WRT", setting
@@ -128,10 +124,9 @@ class HC_Comm(QObject):
 
     def query(self, msg: str):
         """Sends a query statement to be sent to the instrument by the worker in the worker thead"""
-        if self.instrument.window.app.print_debug:
-            print(
-                f"Instrument: {self.instrument.name} called 'query()' and sent message: '{msg}'."
-            )
+        self.instrument.pDebug(
+            f"Instrument: {self.instrument.name} called 'query()' and sent message: '{msg}'."
+        )
         self.sigQuery.emit(msg, time.time() + self.expire_time)
         self.instrument.window.app.add_log(
             self.instrument.name, self.backend_model, "QRY", setting
@@ -144,10 +139,9 @@ class HC_Comm(QObject):
     def command_listdata(self, cmd: str):
         """Sends a command to the worker in the worker thread just like command(),
         but returns two lists instead of a string."""
-        if self.instrument.window.app.print_debug:
-            print(
-                f"Instrument: {self.instrument.name} called 'command()' and sent command: '{cmd}'."
-            )
+        self.instrument.pDebug(
+            f"Instrument: {self.instrument.name} called 'command()' and sent command: '{cmd}'."
+        )
         self.sigCommandList.emit(cmd, time.time() + self.list_expire_time)
         self.instrument.window.app.add_log(
             self.instrument.name, self.backend_model, "CMDLD", cmd
@@ -159,10 +153,9 @@ class HC_Comm(QObject):
         backend_return function, which adds it to the instrument's values dictionary or
         , if overwritten, may process the return string immediately for example by
         updating the UI."""
-        if self.instrument.window.app.print_debug:
-            print(
-                f"Instrument: {self.instrument.name} received return from backend '{self.backend_model}'. Return message: {retval}"
-            )
+        self.instrument.pDebug(
+            f"Instrument: {self.instrument.name} received return from backend '{self.backend_model}'. Return message: {retval}"
+        )
         self.instrument.backend_return(retval)
 
     @pyqtSlot(bool)
@@ -410,7 +403,7 @@ class HC_Instrument(QGroupBox):
         try:
             self.settings[setting] = value
         except KeyError:
-            print(
+            self.pDebug(
                 "ERROR: Key '{parameter}' does not exist for instrument '{self.name}' in settings dictionary."
             )
 
@@ -418,7 +411,7 @@ class HC_Instrument(QGroupBox):
             try:
                 self.values[setting] = self.comm.update_setting(setting, value)
             except KeyError:
-                print(
+                self.pDebug(
                     "ERROR: Key '{parameter}' does not exist for instrument '{self.name}' in values dictionary."
                 )
 
@@ -441,7 +434,7 @@ class HC_Instrument(QGroupBox):
         try:
             current_val = self.settings[parameter]
         except KeyError:
-            print(
+            self.pDebug(
                 "ERROR: Key '{parameter}' does not exist for instrument '{self.name}'."
             )
 
@@ -449,20 +442,24 @@ class HC_Instrument(QGroupBox):
             try:
                 self.settings[parameter] = value
             except:
-                print(f"ERROR: Failed to convert {type(value)} '{value}' to string.")
-                print("Exiting scan")
+                self.pDebug(
+                    f"ERROR: Failed to convert {type(value)} '{value}' to string."
+                )
+                self.pDebug("Exiting scan")
                 return False
         elif type(current_val) == int or type(current_val) == float:
             try:
                 self.settings[parameter] = float(value)
             except:
-                print(f"ERROR: Failed to convert {type(value)} '{value}' to float.")
-                print("Exiting scan")
+                self.pDebug(
+                    f"ERROR: Failed to convert {type(value)} '{value}' to float."
+                )
+                self.pDebug("Exiting scan")
                 return False
 
         else:
-            print("ERROR: Settings must have string, float, or int datatype.")
-            print(
+            self.pDebug("ERROR: Settings must have string, float, or int datatype.")
+            self.pDebug(
                 f"\tInstrument '{self.name}' setting {parameter} has type: {type(current_val)}"
             )
             return False
@@ -479,9 +476,9 @@ class HC_Instrument(QGroupBox):
         try:
             with open(filename) as file:
                 self.settings = json.load(file)
-                print(f"settings for {self.name} read from file '{filename}'")
+                self.pDebug(f"settings for {self.name} read from file '{filename}'")
         except:
-            print(f"ERROR: Failed to read file '{filename}'. Using defualt case.")
+            self.pDebug(f"ERROR: Failed to read file '{filename}'. Using defualt case.")
             self.settings = self.default_state()
 
         # Ensure all fields in default_state are present in the loaded state
@@ -494,10 +491,12 @@ class HC_Instrument(QGroupBox):
         try:
             with open(filename, "w") as file:
                 json.dump(self.settings, file)
-                print(f"settings for {self.name} saved to file '{filename}'")
+                self.pDebug(f"settings for {self.name} saved to file '{filename}'")
         except Exception as e:
-            print(f"ERROR: Failed to write file '{filename}'. settings not saved.")
-            print(f"\t{e}")
+            self.pDebug(
+                f"ERROR: Failed to write file '{filename}'. settings not saved."
+            )
+            self.pDebug(f"\t{e}")
 
     def send_state(self):
         """Writes the entire state/settings dicitonary to the oscilloscope"""
@@ -557,19 +556,13 @@ class HC_Instrument(QGroupBox):
         pass
 
     def pDebug(self, msg, important=False):
-        if self.debug:
-            if important:
-                print(Fore.RED, end="")
-                print(msg)
-                print(Style.RESET_ALL, end="")
-            else:
-                print(msg)
+        self.window.app.pDebug(msg, important)
 
 
 class HC_App(QApplication):
     """Subclass of QApplication that is aware of what hardware is connected to it and can log data"""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, debug: bool = False, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.instruments = (
             []
@@ -579,8 +572,7 @@ class HC_App(QApplication):
         self.variables = {}  # Dict of app variables
         self.dummy = False
         self.print_close_info = False
-
-        self.print_debug = False  # Todo: get rid of this
+        self.debug = debug
 
         # Dictates if hc_commands are allowed to execute raw python code via calls to the
         # via teh 'exec' function
@@ -604,18 +596,20 @@ class HC_App(QApplication):
         try:
             with open(filename, "w") as file:
                 json.dump(app_settings, file)
-                print(f"settings for {self.comm.instr.ID} saved to file '{filename}'")
+                self.pDebug(
+                    f"settings for {self.comm.instr.ID} saved to file '{filename}'"
+                )
         except Exception as e:
-            print(f"ERROR: Failed to write file '{filename}'. State not saved.")
-            print(f"\t{e}")
+            self.pDebug(f"ERROR: Failed to write file '{filename}'. State not saved.")
+            self.pDebug(f"\t{e}")
 
     def list_instruments(self):
         if self.instruments:
-            print("Known instruments:")
+            self.pDebug("Known instruments:")
         else:
-            print("No instruments known")
+            self.pDebug("No instruments known")
         for i in self.instruments:
-            print(f"  {i}")
+            self.pDebug(f"  {i}")
 
     def check_instruments(self):
         """Make sure all instruments conform to specifications"""
@@ -623,11 +617,11 @@ class HC_App(QApplication):
             try:
                 i.name
             except AttributeError:
-                print(f"Error: Instrument  {i} needs a .name")
+                self.pDebug(f"Error: Instrument  {i} needs a .name")
             if i.manufacturer is None:
-                print(f"Error: Instrument  {i} needs a .manufacturer")
+                self.pDebug(f"Error: Instrument  {i} needs a .manufacturer")
             if i.model is None:
-                print(f"Error: Instrument  {i} needs a .model")
+                self.pDebug(f"Error: Instrument  {i} needs a .model")
 
     def close(self):
         """Closes all instruments"""
@@ -635,8 +629,8 @@ class HC_App(QApplication):
             try:  # User may not have initialized comm correctly as HC_Comm - error check here
                 instr.comm.close()  # Send close signal to backend - stop connect timer
             except Exception as e:
-                print(f"Failed to close instrument '{instr.name}'.")
-                print(str(e))
+                self.pDebug(f"Failed to close instrument '{instr.name}'.")
+                self.pDebug(str(e))
 
     def add_log(
         self,
@@ -664,13 +658,12 @@ class HC_App(QApplication):
                 f'{instr_name}: \t{log_type} "{arg1}" \t[{datestr}] \t[{backend_model}]'
             )
         else:
-            print(f"Invalid log type code '{log_type}' received")
+            self.pDebug(f"Invalid log type code '{log_type}' received")
 
     def close(self):
 
         for instr in self.instruments:
-            if self.print_debug:
-                print(f"HC_App called 'close()' for instrument: '{instr.name}'.")
+            self.pDebug(f"HC_App called 'close()' for instrument: '{instr.name}'.")
             instr.close()
 
     def add_macro(self, name: str, commands: list):
@@ -731,10 +724,9 @@ class HC_App(QApplication):
                 )
                 return False
 
-            if self.print_debug:
-                print(
-                    f"Executed Setting Update:\n\tInstrument: {instr_str}\n\tSetting: {setting_str}\n\tValue: {value_str}"
-                )
+            self.pDebug(
+                f"Executed Setting Update:\n\tInstrument: {instr_str}\n\tSetting: {setting_str}\n\tValue: {value_str}"
+            )
 
         elif (
             tokens[0] == "CMD"
@@ -768,10 +760,9 @@ class HC_App(QApplication):
                 )
                 return False
 
-            if self.print_debug:
-                print(
-                    f"Executed Command:\n\tInstrument: {instr_str}\n\tCommand: {command_str}"
-                )
+            self.pDebug(
+                f"Executed Command:\n\tInstrument: {instr_str}\n\tCommand: {command_str}"
+            )
 
         elif tokens[0] == "EXEC":
 
@@ -815,9 +806,9 @@ class HC_App(QApplication):
 
                 # Change value
                 if tokens[2].upper() == "ON" or tokens[2].upper() == "TRUE":
-                    self.print_debug = True
+                    self.debug = True
                 else:
-                    self.print_debug = False
+                    self.debug = False
 
             elif tokens[1] == "run":  # Run a macro
 
@@ -921,8 +912,7 @@ class HC_App(QApplication):
                     try:
                         time.sleep(float(tokens[3]))
                     except Exception:
-                        if self.print_debug:
-                            print(f"Failed to convert hc-command argument to float")
+                        self.pDebug(f"Failed to convert hc-command argument to float")
 
         else:
             self.add_log(
@@ -940,6 +930,15 @@ class HC_App(QApplication):
             if not self.process_hc_command(c):
                 return False
         return True
+
+    def pDebug(self, msg, important=False):
+        if self.debug:
+            if important:
+                print(Fore.RED, end="")
+                print(msg)
+                print(Style.RESET_ALL, end="")
+            else:
+                print(msg)
 
 
 class HC_MainWindow(QMainWindow):
