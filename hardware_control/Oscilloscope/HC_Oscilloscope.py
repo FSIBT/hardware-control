@@ -540,37 +540,42 @@ class OscilloscopeHorizontalWidget(QWidget):
         self.timebase_edit_layout = QGridLayout()
         self.timebase_edit_layout.addWidget(self.timebase_edit,0,0)
         self.timebase_edit_layout.addWidget(self.timebase_edit_units,0,1)
-
-        self.timebase_edit.editingFinished.connect(
-            lambda: control.update_setting("timebase", self.timebase_edit.text())
-        )
         try:
             self.timebase_edit.setValue(float(control.settings["timebase"]))
         except:
             self.timebase_edit.setValue(1e-3)
         # self.timebase_edit.setRange()
-        self.timebase_edit.setSingleStep(0.001)
-        self.timebase_edit.setDecimals(6)
+        self.timebase_edit.setSingleStep(0.5)
+        self.timebase_edit.setDecimals(3)
         #
         self.time_offset_edit = QDoubleSpinBox()
         self.time_offset_edit_units = QComboBox()
         self.time_offset_edit_layout = QGridLayout()
         self.time_offset_edit_layout.addWidget(self.time_offset_edit,0,0)
         self.time_offset_edit_layout.addWidget(self.time_offset_edit_units,0,1)
-        self.time_offset_edit.editingFinished.connect(
-            lambda: control.update_setting("time_offset", self.time_offset_edit.text())
-        )
         try:
             self.time_offset_edit.setValue(float(control.settings["time_offset"]))
         except:
             self.time_offset_edit.setValue(1e-3)
         # self.time_offset_edit.setRange()
-        self.time_offset_edit.setSingleStep(0.001)
-        self.time_offset_edit.setDecimals(6)
+        self.time_offset_edit.setSingleStep(0.5)
+        self.time_offset_edit.setDecimals(3)
         #
         self.form = QFormLayout()
         self.form.addRow("Time/Div (s):", self.timebase_edit_layout)
         self.form.addRow("Offset (s): ", self.time_offset_edit_layout)
+        # **IMPLEMENTING CHANGE OF UNITS
+        self.units={"s":1, "ms":1e-3, "us":1e-6, "ns":1e-9}
+        self.time_offset_edit_units.addItems(self.units.keys())
+        self.timebase_edit_units.addItems(self.units.keys())
+        #connecting
+        #ToDo: this code does not look good
+        self.timebase_edit.editingFinished.connect(lambda: control.update_setting("timebase", str(float(self.timebase_edit.text())*self.units[self.timebase_edit_units.currentText()])))
+        self.timebase_edit_units.currentIndexChanged.connect(lambda: control.update_setting("time_offset", str(float(self.timebase_edit.text())*self.units[self.timebase_edit_units.currentText()])))
+        #
+        self.time_offset_edit.editingFinished.connect(lambda: control.update_setting("time_offset", str(
+            float(self.time_offset_edit.text()) * self.units[self.timebase_edit_units.currentText()])))
+        self.time_offset_edit_units.currentIndexChanged.connect(lambda: control.update_setting("time_offset", str(float(self.time_offset_edit.text()) * self.units[self.timebase_edit_units.currentText()])))
 
         # ******* DEFINE OVERALL LAYOUT
         #
