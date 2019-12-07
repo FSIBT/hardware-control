@@ -54,7 +54,6 @@ class HC_Read(HC_Instrument):
                 )
             )
             self.grid.addWidget(self.listOfWidgets[i], 0, i)
-        self.grid.addWidget(self.grid.spacerItem(), 0, 4)
         # Add all the widgets to layout
         self.setLayout(self.grid)
         ####
