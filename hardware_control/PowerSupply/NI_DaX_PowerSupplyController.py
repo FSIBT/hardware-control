@@ -94,7 +94,6 @@ class NI_DaX_PowerSupplyController(HC_Backend):
             return value
         elif self.online:
             try:
-
                 if "CH1_V_set" == setting:
                     with nidaqmx.Task() as task:
                         task.ao_channels.add_ao_voltage_chan(self.setVoltageChannel)
@@ -104,13 +103,13 @@ class NI_DaX_PowerSupplyController(HC_Backend):
                         done = task.is_task_done()
                     return str(done)
                 elif "CH1_I_set" == setting:
-                    return False
+                    return "False"
                 else:
                     raise Exception(self.ID + "updateSetting - Setting not found")
             except Exception as e:
                 self.pDebug(e)
         else:
-            return False
+            return "False"
 
     def command(self, cmd: str):
         if self.dummy or not self.online:
@@ -150,9 +149,9 @@ class NI_DaX_PowerSupplyController(HC_Backend):
         return False
 
 """
-This method checks that the import goes smooth and 
-reports that so that all functionality can ether be disabled or 
-further checks can happen. 
+This method checks that the import goes smooth and
+reports that so that all functionality can ether be disabled or
+further checks can happen.
 """
 def nidaxmxImport():
     if os.name == "nt":
