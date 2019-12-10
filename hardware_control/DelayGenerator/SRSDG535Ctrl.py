@@ -141,7 +141,7 @@ class SRSDG535Ctrl(HC_Backend):
                         self.ID + " Instr.Status: " + str(self.device.query("IS"))
                     )
                     self.pDebug(f"{self.ID}: Connection verified")
-            except visa.errors.VisaIOError as e:  # Not connected - reconnect
+            except pyvisa.errors.VisaIOError as e:  # Not connected - reconnect
                 self.online = False
                 if self.debug:
                     self.pDebug("Lost connection to device. Will try to reconnect")
@@ -179,5 +179,5 @@ class SRSDG535Ctrl(HC_Backend):
                 self.pDebug(f"{self.ID} is offline")
         else:
             self.online = True
-
+        print(f"ONLINE???? : {self.online}")
         return self.online
