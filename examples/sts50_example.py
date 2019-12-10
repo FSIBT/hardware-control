@@ -13,7 +13,7 @@ Options:
   --log      save log file
 """
 
-import sys
+import sys, warnings
 
 from PyQt5.QtWidgets import QDoubleSpinBox, QStyleFactory, QTabWidget, QGroupBox
 from docopt import docopt
@@ -43,9 +43,9 @@ from hardware_control.MacroRunnerTool.HC_MacroRunnerTool import HC_MacroRunnerTo
 from hardware_control.VariableEditTool.HC_VariableEditTool import HC_VariableEditTool
 from hardware_control.IOModule.HC_Read import HC_Read, HC_singleChannelRead
 from hardware_control.IOModule.ADAM_6015 import Adam_6015
-# from hardware_control.PowerSupply.NI_DaX_PowerSupplyController import (
-#     NI_DaX_PowerSupplyController,
-# )
+from hardware_control.PowerSupply.NI_DaX_PowerSupplyController import (
+    NI_DaX_PowerSupplyController,
+)
 
 
 class STS50Demo(HC_MainWindow):
@@ -117,7 +117,7 @@ class STS50Demo(HC_MainWindow):
             awg, self, "RF Generator", "DEFAULT", True, 1
         )
 
-        self.psu = TDKLGenHCtrl("TCPIP0::192.168.0.19::INSTR", dummy)
+        self.psu = TDKLGenHCtrl("TCPIP0::192.168.1.19::INSTR", dummy)
         self.psu_ctrl = HC_MultiPowerSupply(
             self.psu, self, [1], "TDK Lambda (RF Vin)", "DEFAULT"
         )
@@ -163,8 +163,8 @@ class STS50Demo(HC_MainWindow):
         self.scantool = HC_ScanTool(self, "Scan Control", "DEFAULT", True)
         self.scantool.update_instruments()
 
-        # self.PS_NIDaQCtrl = NI_DaX_PowerSupplyController()
-        # self.PS_NIDaQ = HC_MultiPowerSupply(self.PS_NIDaQCtrl, self, [1], "NIDAXTEST")
+        self.PS_NIDaQCtrl = NI_DaX_PowerSupplyController()
+        self.PS_NIDaQ = HC_MultiPowerSupply(self.PS_NIDaQCtrl, self, [1], "NIDAXTEST")
 
         self.statustool = HC_StatusTool(self, "Connection Status", "DEFAULT", True)
         self.statustool.update_instruments()
@@ -348,10 +348,13 @@ class STS50Demo(HC_MainWindow):
 
         self.tab5_layout = QGridLayout()
 
-        self.tab1_5_layout.addWidget(self.temp_ctrl, 3, 1)
+        self.tab5_layout.addWidget(self.temp_ctrl, 0, 1)
         # self.tab5_layout.addWidget(self.randomReadout,3,1)
+        try:
+            self.tab5_layout.addWidget(self.PS_NIDaQ, 0, 0)
+        except Exception as e:
+            pass
 
-        # self.tab5_layout.addWidget(self.PS_NIDaQ, 0, 0)
         self.tab5.setLayout(self.tab5_layout)
 
         #####################################
@@ -383,8 +386,8 @@ class STS50Demo(HC_MainWindow):
                 for item in self.app.log:
                     f.write("%s\n" % item)
 
-
 def main(argv):
+    warnings.filterwarnings(action="ignore", message="unclosed", category=ResourceWarning) #ToDo Not a solution
     app = HC_App(debug, [])
     app.print_close_info = True
     ex = STS50Demo(app)
