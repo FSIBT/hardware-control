@@ -18,7 +18,7 @@ import os
 
 from colorama import Fore, Style
 
-
+import nidaqmx
 # TODO: @Timo Bauer - check for OS in your backend, if not windows, don't try to use nidaqmax module bc it can't be imported
 
 from hardware_control.HC_Backend import HC_Backend
@@ -66,7 +66,7 @@ class NI_DaX_PowerSupplyController(HC_Backend):
         self.lastVset = 0
 
         #Check import
-        if not nidaxmxImport():
+        if not nidaxmxTest():
             self.dummy=True
             self.pDebug(f"{self.ID}: import of nidaqmx failed, changing to dummy mode")
 
@@ -76,14 +76,15 @@ class NI_DaX_PowerSupplyController(HC_Backend):
     # https://nidaqmx-python.readthedocs.io/en/latest/index.html for further info
     # and check the Gdocs manual!
 
-    # ToDo
+    # ToDo Rework this
     def try_connect(self):
         if not self.dummy and os.name == "nt":
             try:
                 with nidaqmx.Task() as task:
                     if task.name:
                         self.online = True
-            except:
+            except Exception as e:
+                print(e)
                 return False
         else:
             self.online = True
@@ -153,10 +154,9 @@ This method checks that the import goes smooth and
 reports that so that all functionality can ether be disabled or
 further checks can happen.
 """
-def nidaxmxImport():
+def nidaxmxTest():
     if os.name == "nt":
         try:
-            import nidaqmx
             with nidaqmx.Task() as task:
                 if task.name:
                     return True
@@ -164,7 +164,7 @@ def nidaxmxImport():
         except Exception as e:
             print(
                 Fore.RED
-                + "WARNING: Can not import NIDAQMX on this system. NIDAQ will not function"
+                + "WARNING: Can not acsess NIDAQMX on this system. NIDAQ will not function"
                 + Style.RESET_ALL
             )
             return False
@@ -173,7 +173,7 @@ def nidaxmxImport():
     else:
         print(
             Fore.RED
-            + "WARNING: Can not import NIDAQMX on this system. NIDAQ will not function"
+            + "WARNING: Can not acsess NIDAQMX on this system. NIDAQ will not function"
             + Style.RESET_ALL
         )
     return False
