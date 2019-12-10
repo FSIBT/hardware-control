@@ -43,9 +43,9 @@ from hardware_control.MacroRunnerTool.HC_MacroRunnerTool import HC_MacroRunnerTo
 from hardware_control.VariableEditTool.HC_VariableEditTool import HC_VariableEditTool
 from hardware_control.IOModule.HC_Read import HC_Read, HC_singleChannelRead
 from hardware_control.IOModule.ADAM_6015 import Adam_6015
-from hardware_control.PowerSupply.NI_DaX_PowerSupplyController import (
-    NI_DaX_PowerSupplyController,
-)
+# from hardware_control.PowerSupply.NI_DaX_PowerSupplyController import (
+#     NI_DaX_PowerSupplyController,
+# )
 
 
 class STS50Demo(HC_MainWindow):
@@ -76,11 +76,11 @@ class STS50Demo(HC_MainWindow):
         ######## Tab 1
 
         scpi_scope = Key4000XCtrl(
-            "TCPIP0::192.168.1.14::INSTR",
+            "TCPIP0::192.168.0.14::INSTR", #ToDo: old adress "TCPIP0::192.168.1.14::INSTR"
             dummy,
             debug,
             use_sockets,
-            "192.168.1.14",
+            "192.168.0.14", #ToDo: old adress "192.168.1.14"
             5025,
         )
         self.scope_ctrl = HC_Oscilloscope(scpi_scope, self, "Keysight", "DEFAULT", True)
@@ -105,11 +105,11 @@ class STS50Demo(HC_MainWindow):
 
         # awg = Key33500BCtrl("Some-address-goes-here", dummy, True, use_sockets, "192.168.0.18", 5025)
         awg = Key33500BCtrl(
-            "TCPIP0::192.168.1.18::INSTR",
+            "TCPIP0::192.168.0.18::INSTR", # toDo "TCPIP0::192.168.1.18::INSTR"
             dummy,
             True,
             use_sockets,
-            "192.168.1.18",
+            "192.168.0.18", #"192.168.1.18"
             5025,
         )  # "USB0::0x0957::0x2907::MY52500624::INSTR"
         awg.debug = debug
@@ -117,7 +117,7 @@ class STS50Demo(HC_MainWindow):
             awg, self, "RF Generator", "DEFAULT", True, 1
         )
 
-        self.psu = TDKLGenHCtrl("TCPIP0::192.168.1.19::INSTR", dummy)
+        self.psu = TDKLGenHCtrl("TCPIP0::192.168.0.19::INSTR", dummy)
         self.psu_ctrl = HC_MultiPowerSupply(
             self.psu, self, [1], "TDK Lambda (RF Vin)", "DEFAULT"
         )
@@ -146,7 +146,7 @@ class STS50Demo(HC_MainWindow):
             self.temp_ctrl, 0, "Random Readout", "TEMP", "Unit"
         )
 
-        self.flow = AlicatMSeriesCtrl("192.168.1.15", dummy, debug)
+        self.flow = AlicatMSeriesCtrl("192.168.0.15", dummy, debug) #todo "192.168.1.15"
         self.flow_ctrl = HC_FlowController(
             self.flow, self, "Flow Controller", "flowcontroller_state.json", True
         )
@@ -163,8 +163,8 @@ class STS50Demo(HC_MainWindow):
         self.scantool = HC_ScanTool(self, "Scan Control", "DEFAULT", True)
         self.scantool.update_instruments()
 
-        self.PS_NIDaQCtrl = NI_DaX_PowerSupplyController()
-        self.PS_NIDaQ = HC_MultiPowerSupply(self.PS_NIDaQCtrl, self, [1], "NIDAXTEST")
+        # self.PS_NIDaQCtrl = NI_DaX_PowerSupplyController()
+        # self.PS_NIDaQ = HC_MultiPowerSupply(self.PS_NIDaQCtrl, self, [1], "NIDAXTEST")
 
         self.statustool = HC_StatusTool(self, "Connection Status", "DEFAULT", True)
         self.statustool.update_instruments()
@@ -219,8 +219,6 @@ class STS50Demo(HC_MainWindow):
         # self.tab3_layout.addWidget(self.scantool, 0, 1)
         self.tab3_layout.addWidget(self.run_tool, 1, 1)
         self.tab3_layout.addWidget(self.var_tool, 2, 1)
-        self.tab3_layout.addWidget(self.temp_ctrl, 3, 1)
-        # self.tab3_layout.addWidget(self.randomReadout,3,1)
 
         # self.tab3_layout.addWidget(self.statustool, 3, 1)
         self.tab3.setLayout(self.tab3_layout)
@@ -350,7 +348,10 @@ class STS50Demo(HC_MainWindow):
 
         self.tab5_layout = QGridLayout()
 
-        self.tab5_layout.addWidget(self.PS_NIDaQ, 0, 0)
+        self.tab1_5_layout.addWidget(self.temp_ctrl, 3, 1)
+        # self.tab5_layout.addWidget(self.randomReadout,3,1)
+
+        # self.tab5_layout.addWidget(self.PS_NIDaQ, 0, 0)
         self.tab5.setLayout(self.tab5_layout)
 
         #####################################
