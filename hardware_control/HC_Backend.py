@@ -4,7 +4,6 @@ from abc import ABC, abstractmethod
 import pyvisa
 from colorama import Fore, Back, Style
 
-
 class HC_Backend(ABC):
     """Base"""
 
@@ -92,8 +91,9 @@ class HC_Backend(ABC):
             self.pDebug(f"{self.ID}: trying to connect")
 
         # Try to connect to instrument
-        try:
-            if not self.use_sockets:  # Use visa
+
+        if not self.use_sockets:  # Use visa
+            try:
                 rm = pyvisa.ResourceManager("@py")
                 self.device = rm.open_resource(self.connection_addr)  # Open connection
 
@@ -101,8 +101,15 @@ class HC_Backend(ABC):
                 self.device.query("*IDN?")
                 if self.debug:
                     self.pDebug("opened connection")
-
-            else:  # Use sockets
+            except Exception as e:
+                self.online = False
+                if self.debug:
+                    self.pDebug(f"\t({self.ID}) ERROR while using visa: /n {str(e)}")
+                    self.pDebug(f"{self.ID} is offline")
+            else:
+                self.online= True
+        else:  # Use sockets
+            try:
                 self.device = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.device.settimeout(2)
                 self.device.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 0)
@@ -112,15 +119,13 @@ class HC_Backend(ABC):
                 self.device.query("*IDN?")  # TODO: Test that this works
                 if self.debug:
                     self.pDebug("opened connection")
-        except Exception as e:  # Failed to conncet
-
-            self.online = False
-            if self.debug:
-                self.pDebug(f"\t({self.ID}) ERROR: {str(e)}")
-                self.pDebug(f"{self.ID} is offline")
-        else:
-            self.online = True
-
+            except Exception as e:
+                self.online = False
+                if self.debug:
+                    self.pDebug(f"\t({self.ID}) ERROR while using sockets: /n {str(e)}")
+                    self.pDebug(f"{self.ID} is offline")
+            else:
+                self.online= True
         return self.online
 
     def write(self, command: str):
