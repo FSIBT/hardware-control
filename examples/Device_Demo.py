@@ -64,7 +64,7 @@ class Demo(QMainWindow):
 
 
 def main(argv):
-    app = HC_App([])
+    app = HC_App(debug, [])
     ex = Demo(app, use_sockets)         #Change accordingly
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())
