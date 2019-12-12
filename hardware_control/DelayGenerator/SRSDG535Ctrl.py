@@ -17,7 +17,7 @@ import pyvisa
 
 from hardware_control.HC_Backend import HC_Backend
 
-
+# ToDo remove this, its not used
 def to_NR3(x: float):
     return f" {x:.6E}"
 
