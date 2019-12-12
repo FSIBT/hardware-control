@@ -17,13 +17,14 @@ import pyvisa
 
 from hardware_control.HC_Backend import HC_Backend
 
+
 class SRSDG535Ctrl(HC_Backend):
     def __init__(
-        self,
-        connection_addr,
-        dummy: bool = False,
-        debug: bool = False,
-        use_pyvisapy: bool = False,
+            self,
+            connection_addr,
+            dummy: bool = False,
+            debug: bool = False,
+            use_pyvisapy: bool = False,
     ):
 
         super().__init__()
@@ -38,7 +39,7 @@ class SRSDG535Ctrl(HC_Backend):
         self.debug = debug
         self.num_vert_divisions = 8
 
-        self.command_str = ""   #string used to trigger
+        self.command_str = ""  # string used to trigger
 
         self.use_sockets = (
             False
@@ -111,10 +112,6 @@ class SRSDG535Ctrl(HC_Backend):
             self.pDebug(str(e))
 
     def try_connect(self):
-        """Checks if the backend is in communication with the object, if it is
-        not, it tries to re-establish communication."""
-
-        # Handle dummy case
         if self.dummy:
             if self.online:
                 return True
@@ -123,38 +120,37 @@ class SRSDG535Ctrl(HC_Backend):
                     f"{self.ID}: creating dummy connection to {self.connection_addr}"
                 )
                 self.online = True
-                return True
+                return self.online
 
-        if self.online:  # Has previously connected to the isntrument
-            # Todo: impliment new way of verifying is online
-            # ToDo: Check if this works && cleanup
-            #ToDo it does not work properly, Cleanup after bad device status required
+        if self.online:
             try:
-                print(self.device.query("IS"))
-                if 0 != self.device.query("IS"):  # ask for Instrument status
-                    self.pDebug(self.ID + " Instrument Status Bad")
-                self.online = True
+                # check for device status - requesting it clears the memory of it
+                ds = self.device.query("IS")
+                es = self.device.query("ES")
                 if self.debug:
+                    self.pDebug(f"{self.ID}: trying to connect")
+                    self.write("DS connected to HC")
+                self.online = True
+                if 0 != (ds + es):  # further error handling
+                    self.pDebug(self.ID + " Instrument Status Bad : ")
                     self.pDebug(
-                        self.ID + " Instr.Status: " + str(self.device.query("IS"))
+                        f"{self.ID} Instr. status: {ds} \n{self.ID} : Error status : {es}"
                     )
-                    self.pDebug(f"{self.ID}: Connection verified")
-                self.write("DS connected to HC")
+                self.pDebug(f"{self.ID}: Connection verified")
             except pyvisa.errors.VisaIOError as e:  # Not connected - reconnect
                 self.online = False
                 if self.debug:
-                    self.pDebug("Lost connection to device. Will try to reconnect")
+                    self.pDebug(f"{self.ID} : Lost connection to device. Will try to reconnect")
                     self.pDebug(f"\t{str(e)}")
-            return self.online
-
-        if self.debug:
-            self.pDebug(f"{self.ID}: trying to connect")
+            finally:
+                return self.online
 
         # Try to connect to instrument
         try:
             if not self.use_sockets:  # Use visa
                 if self.use_pyvisapy:
                     rm = pyvisa.ResourceManager()
+                    # TODO remove this?
                     #     "@py"
                     # )  # linux-gpib is required for pyvisapy to support GPIB. Use VISA if on windows
                 else:
@@ -163,20 +159,18 @@ class SRSDG535Ctrl(HC_Backend):
                     rm = pyvisa.ResourceManager()
                 self.device = rm.open_resource(self.connection_addr)  # Open connection
                 # TODO: TEST
-                self.online  # assume we are online
+                self.online = True # assume we are online
                 self.online = self.try_connect()  # and check if we actually are
 
-            else:  # Use sockets
+            else:  # ToDO is this obsolete? # Use sockets
                 self.device = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.device.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 0)
                 self.device.connect((self.ip_addr, self.port_no))
-        except Exception as e:  # Failed to conncet
-
+                self.online = True
+        except Exception as e:  # Failed to connect
             self.online = False
             if self.debug:
                 self.pDebug(f"\t({self.ID}) ERROR: {str(e)}")
                 self.pDebug(f"{self.ID} is offline")
-        else:
-            self.online = True
-        self.pDebug(f"ONLINE???? : {self.online}")
+        self.pDebug(f"{self.ID} online: {self.online}")
         return self.online
