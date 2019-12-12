@@ -17,22 +17,6 @@ import pyvisa
 
 from hardware_control.HC_Backend import HC_Backend
 
-# ToDo remove this, its not used
-def to_NR3(x: float):
-    return f" {x:.6E}"
-
-
-def to_NR1(x: int):
-    return f"{x:d}"
-
-
-def bool_NR1(x: bool):
-    if x:
-        return "1"
-    else:
-        return "0"
-
-
 class SRSDG535Ctrl(HC_Backend):
     def __init__(
         self,
@@ -54,7 +38,7 @@ class SRSDG535Ctrl(HC_Backend):
         self.debug = debug
         self.num_vert_divisions = 8
 
-        self.command_str = ""
+        self.command_str = ""   #string used to trigger
 
         self.use_sockets = (
             False
@@ -99,21 +83,32 @@ class SRSDG535Ctrl(HC_Backend):
                 elif setting == "trigger_level":
                     self.write(f"TL{value}")
         except Exception as e:
-            self.pDebug("An exception occured in update_setting() of SRSDG535Ctrl.py.")
+            self.pDebug(f"{self.ID} : An exception occurred in update_setting()")
             self.pDebug(str(e))
 
     def command(self, cmd: str):
-        if cmd == "single_trigger":
-            """Tells DG535 to trigger"""
-            self.write(self.command_str)
-        return cmd
+        try:
+            if cmd == "single_trigger":
+                """Tells DG535 to trigger"""
+                self.write(self.command_str)
+            else:
+                self.pDebug(f"{self.ID} : unknown command")
+        except Exception as e:
+            self.pDebug(f"{self.ID} : An exception occurred in command()")
+            self.pDebug(str(e))
+        finally:
+            return cmd
 
     def write(self, cmd: str):
-        if self.online and not self.dummy:
-            if not self.use_sockets:
-                self.device.write(cmd)
-            if self.debug:
-                self.pDebug(f'\tSRSDG535< "{cmd}"')
+        try:
+            if self.online and not self.dummy:
+                if not self.use_sockets:
+                    self.device.write(cmd)
+                if self.debug:
+                    self.pDebug(f'\tSRSDG535< "{cmd}"')
+        except Exception as e:
+            self.pDebug(f"{self.ID : }An exception occured in write")
+            self.pDebug(str(e))
 
     def try_connect(self):
         """Checks if the backend is in communication with the object, if it is
