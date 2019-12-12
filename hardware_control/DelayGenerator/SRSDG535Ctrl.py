@@ -8,6 +8,8 @@
 # G M Giesbrecht
 # 20/08/2019
 #
+# Edit 11-Dec-19 Timo
+# https://www.thinksrs.com/downloads/pdfs/manuals/DG535m.pdf page 9ff
 
 import socket
 
@@ -109,7 +111,7 @@ class SRSDG535Ctrl(HC_Backend):
     def write(self, cmd: str):
         if self.online and not self.dummy:
             if not self.use_sockets:
-                self.instr.write(cmd)
+                self.device.write(cmd)
             if self.debug:
                 self.pDebug(f'\tSRSDG535< "{cmd}"')
 
@@ -131,8 +133,9 @@ class SRSDG535Ctrl(HC_Backend):
         if self.online:  # Has previously connected to the isntrument
             # Todo: impliment new way of verifying is online
             # ToDo: Check if this works && cleanup
-
+            #ToDo it does not work properly, Cleanup after bad device status required
             try:
+                print(self.device.query("IS"))
                 if 0 != self.device.query("IS"):  # ask for Instrument status
                     self.pDebug(self.ID + " Instrument Status Bad")
                 self.online = True
@@ -141,6 +144,7 @@ class SRSDG535Ctrl(HC_Backend):
                         self.ID + " Instr.Status: " + str(self.device.query("IS"))
                     )
                     self.pDebug(f"{self.ID}: Connection verified")
+                self.write("DS connected to HC")
             except pyvisa.errors.VisaIOError as e:  # Not connected - reconnect
                 self.online = False
                 if self.debug:
@@ -179,5 +183,5 @@ class SRSDG535Ctrl(HC_Backend):
                 self.pDebug(f"{self.ID} is offline")
         else:
             self.online = True
-        print(f"ONLINE???? : {self.online}")
+        self.pDebug(f"ONLINE???? : {self.online}")
         return self.online
