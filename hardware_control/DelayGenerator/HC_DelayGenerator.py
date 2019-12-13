@@ -8,6 +8,8 @@ from PyQt5.QtWidgets import (
     QLabel,
     QGridLayout,
     QComboBox,
+    QSpinBox,
+    QDoubleSpinBox,
 )
 
 from hardware_control.base import HC_Instrument, HC_Comm
@@ -71,12 +73,15 @@ class HC_DelayGenerator(HC_Instrument):
         self.trig_lev_label = QLabel("Ext Trig Level (V):")
         self.trig_lev_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         #
-        self.trig_lev_edit = QLineEdit()
+        self.trig_lev_edit = QDoubleSpinBox()
         self.trig_lev_edit.editingFinished.connect(
             lambda: self.update_setting("trigger_level", self.trig_lev_edit.text())
         )
-        self.trig_lev_edit.setValidator(QIntValidator(4, 32766))
-        self.trig_lev_edit.setText(self.settings["trigger_level"])
+        self.trig_lev_edit.setDecimals(3)
+        self.trig_lev_edit.setSingleStep(0.05)
+        if hasattr(scpi_instr,"ExternalTriggerThreshold"):
+            self.trig_lev_edit.setRange(-scpi_instr.ExternalTriggerThreshold,scpi_instr.ExternalTriggerThreshold)
+        self.trig_lev_edit.setValue(float(self.settings["trigger_level"]))
         #
         self.single_trig_but = QPushButton()
         self.single_trig_but.setText("Single Trigger")
@@ -94,27 +99,29 @@ class HC_DelayGenerator(HC_Instrument):
         self.single_trig_but.setCheckable(False)
         self.single_trig_but.clicked.connect(lambda: self.command("single_trigger"))
         self.single_trig_but.setEnabled(self.trig_mode_drop.currentText() == "Single")
-
+        #
         self.pulse_label = QLabel("Pulses per Burst:")
         self.pulse_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         #
-        self.pulse_edit = QLineEdit()
+        self.pulse_edit = QSpinBox()
         self.pulse_edit.editingFinished.connect(
             lambda: self.update_setting("pulses_per_burst", self.pulse_edit.text())
         )
-        self.pulse_edit.setValidator(QIntValidator(2, 32766))
-        self.pulse_edit.setText(self.settings["pulses_per_burst"])
-
+        if hasattr(scpi_instr,"PulsesPerBurst"):
+            self.pulse_edit.setRange(2,scpi_instr.PulsesPerBurst)
+        self.pulse_edit.setValue(int(self.settings["pulses_per_burst"]))
+        #
         self.period_label = QLabel("Triggers per Burst:")
         self.period_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         #
-        self.period_edit = QLineEdit()
+        self.period_edit = QSpinBox()
+        self.period_edit.setMinimum(1)
         self.period_edit.editingFinished.connect(
             lambda: self.update_setting("trigger_period", self.period_edit.text())
         )
-        self.period_edit.setValidator(QIntValidator(4, 32766))
-        self.period_edit.setText(self.settings["trigger_period"])
-
+        self.period_edit.setSingleStep(1)
+        self.period_edit.setValue(int(self.settings["trigger_period"]))
+        #
         self.write_box = QGroupBox("GPIB Command Prompt")
         self.write_grid = QGridLayout()
         self.write_label = QLabel("Command: ")
@@ -136,23 +143,6 @@ class HC_DelayGenerator(HC_Instrument):
         self.write_grid.addWidget(self.write_but, 0, 2)
         self.write_box.setLayout(self.write_grid)
         #
-        self.trig_lev = QLineEdit()
-        self.write_edit.editingFinished.connect(
-            lambda: self.update_setting("direct_command", self.write_edit.text())
-        )
-        self.write_edit.setText(self.settings["direct_command"])
-        self.write_grid.addWidget(self.write_edit, 0, 1)
-        #
-        self.write_but = QPushButton()
-        self.write_but.setText("Write")
-        self.write_but.setCheckable(False)
-        self.write_but.clicked.connect(
-            lambda: self.command(self.settings["direct_command"])
-        )
-        self.write_grid.addWidget(self.write_but, 0, 2)
-        self.write_box.setLayout(self.write_grid)
-        #
-
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.trig_mode_label, 0, 0)
         self.master_layout.addWidget(self.trig_mode_drop, 0, 1)
@@ -198,7 +188,7 @@ class HC_DelayGenerator(HC_Instrument):
         dflt["ext_trig_Zin"] = "HiZ"
         dflt["burst_count"] = "2"
         dflt["burst_period"] = "4"
-        dflt["direct_command"] = ":SS"
+        dflt["direct_command"] = ""
         dflt["pulses_per_burst"] = "2"
         dflt["trigger_period"] = "4"
         dflt["trigger_level"] = "0"

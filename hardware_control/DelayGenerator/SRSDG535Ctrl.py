@@ -38,6 +38,10 @@ class SRSDG535Ctrl(HC_Backend):
 
         self.command_str = ""  # string used to trigger
         self.try_connect()
+        #   Device Specific Values
+        self.delayRange = 999.999999999995
+        self.ExternalTriggerThreshold = 2.56
+        self.PulsesPerBurst = 32766
 
     def update_setting(self, setting: str, value):
         if self.dummy:
