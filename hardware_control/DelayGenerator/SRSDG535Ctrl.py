@@ -45,40 +45,45 @@ class SRSDG535Ctrl(HC_Backend):
         elif not self.online:
             return "offline"
         elif self.online:
+            if setting == "trigger_mode":
+                mode = 0
+                if value == "Internal":
+                    mode = 0
+                elif value == "External":
+                    mode = 1
+                elif value == "Single":
+                    mode = 2
+                elif value == "Burst":
+                    mode = 3
+                w = f"TM{mode}"
+            elif setting == "trigger_edge":
+                mode = 0
+                if value == "Positive":
+                    mode = 1
+                elif value == "Negative":
+                    mode = 0
+                w = f"TS{mode}"
+            elif setting == "ext_trig_Zin":
+                mode = 0
+                if value == "50 Ohms":
+                    mode = 0
+                elif value == "Hi-Z":
+                    mode = 1
+                w = f"TZ{mode}"
+            elif setting == "pulses_per_burst":
+                w = f"BC{value}"
+            elif setting == "trigger_period":
+                w = f"BP{value}"
+            elif setting == "trigger_level":
+                print(f"TRIGGER LEVEL SET {value}")
+                w = f"TL{value}"
+            else:
+                self.pDebug(f"{self.ID} : Unknown setting : {setting} | {value}")
+                return "False"
+            #
             try:
-                if setting == "trigger_mode":
-                    mode = 0
-                    if value == "Internal":
-                        mode = 0
-                    elif value == "External":
-                        mode = 1
-                    elif value == "Single":
-                        mode = 2
-                    elif value == "Burst":
-                        mode = 3
-                    self.write(f"TM{mode}")
-                    return value
-                elif setting == "trigger_edge":
-                    mode = 0
-                    if value == "Positive":
-                        mode = 1
-                    elif value == "Negative":
-                        mode = 0
-                    self.write(f"TS{mode}")
-                elif setting == "ext_trig_Zin":
-                    mode = 0
-                    if value == "50 Ohms":
-                        mode = 0
-                    elif value == "Hi-Z":
-                        mode = 1
-                    self.write(f"TZ{mode}")
-                elif setting == "pulses_per_burst":
-                    self.write(f"BC{value}")
-                elif setting == "trigger_period":
-                    self.write(f"BP{value}")
-                elif setting == "trigger_level":
-                    print(f"TRIGGER LEVEL SET {value}")
-                    self.write(f"TL{value}")
+                self.pDebug(f"{self.ID} writes: {w}")
+                self.write(w)
                 return "True"
             except Exception as e:
                 self.pDebug(f"{self.ID} : An exception occurred in update_setting()")
@@ -86,15 +91,16 @@ class SRSDG535Ctrl(HC_Backend):
                 return "False"
 
     def command(self, cmd: str):
-        try:
-            if cmd == "single_trigger":
-                """Tells DG535 to trigger"""
-                self.write(self.command_str)
-            else:
-                self.pDebug(f"{self.ID} : unknown command")
-        except Exception as e:
-            self.pDebug(f"{self.ID} : An exception occurred in command()")
-            self.pDebug(str(e))
+        if self.online:
+            try:
+                if cmd == "single_trigger":
+                    """Tells DG535 to trigger"""
+                    self.write(self.command_str)
+                else:
+                    self.pDebug(f"{self.ID} : unknown command")
+            except Exception as e:
+                self.pDebug(f"{self.ID} : An exception occurred in command()")
+                self.pDebug(str(e))
         return cmd
 
     def write(self, cmd: str):
@@ -102,12 +108,16 @@ class SRSDG535Ctrl(HC_Backend):
             if self.online and not self.dummy:
                 self.device.write(cmd)
                 if self.debug:
-                    self.pDebug(f'\tSRSDG535< "{cmd}"')
+                    self.pDebug(f'\tSRSDG535< " {cmd} "')
         except Exception as e:
-            self.pDebug(f"{self.ID : }An exception occured in write")
+            self.pDebug(f"{self.ID : }An exception occurred in write")
             self.pDebug(str(e))
 
     def try_connect(self):
+        if self.dummy:
+            self.online = True
+            return self.online
+        #
         if not self.online:
             try:
                 rm = pyvisa.ResourceManager()
