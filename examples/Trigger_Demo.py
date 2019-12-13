@@ -25,6 +25,7 @@ use_sockets = commands["--socket"]
 debug = commands["--debug"]
 
 from hardware_control.base import HC_App
+# from hardware_control.DelayGenerator.SRSDG535Ctrl import SRSDG535Ctrl
 from hardware_control.DelayGenerator.SRSDG535Ctrl import SRSDG535Ctrl
 from hardware_control.DelayGenerator.HC_DelayGenerator import HC_DelayGenerator
 
@@ -38,7 +39,7 @@ class Demo(QMainWindow):
         self.main_widget = QWidget(self)
 
         ##### Add Device(s)
-        self.trig1 = SRSDG535Ctrl("GPIB0::10::INSTR", dummy, debug)
+        self.trig1 = SRSDG535Ctrl("GPIB0::15::INSTR", dummy, debug)
         self.trig1_ctrl = HC_DelayGenerator(self.trig1, self, "Trigger 1", "DEFAULT")
 
 

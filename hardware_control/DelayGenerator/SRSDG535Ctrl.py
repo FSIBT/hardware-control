@@ -12,7 +12,7 @@
 # https://www.thinksrs.com/downloads/pdfs/manuals/DG535m.pdf page 9ff
 
 import socket
-
+import os
 import pyvisa
 
 from hardware_control.HC_Backend import HC_Backend
@@ -24,12 +24,9 @@ class SRSDG535Ctrl(HC_Backend):
             connection_addr,
             dummy: bool = False,
             debug: bool = False,
-            use_pyvisapy: bool = False,
     ):
 
         super().__init__()
-
-        self.use_pyvisapy = use_pyvisapy
 
         self.ID = "SRS-DG535"
 
@@ -40,18 +37,16 @@ class SRSDG535Ctrl(HC_Backend):
         self.num_vert_divisions = 8
 
         self.command_str = ""  # string used to trigger
-
-        self.use_sockets = (
-            False
-        )  # This tells the default try_connect() function to use visa
+        self.try_connect()
 
     def update_setting(self, setting: str, value):
-        try:
-            if self.dummy:
-                return value
-            else:
+        if self.dummy:
+            return value
+        elif not self.online:
+            return "offline"
+        elif self.online:
+            try:
                 if setting == "trigger_mode":
-
                     mode = 0
                     if value == "Internal":
                         mode = 0
@@ -82,10 +77,13 @@ class SRSDG535Ctrl(HC_Backend):
                 elif setting == "trigger_period":
                     self.write(f"BP{value}")
                 elif setting == "trigger_level":
+                    print(f"TRIGGER LEVEL SET {value}")
                     self.write(f"TL{value}")
-        except Exception as e:
-            self.pDebug(f"{self.ID} : An exception occurred in update_setting()")
-            self.pDebug(str(e))
+                return "True"
+            except Exception as e:
+                self.pDebug(f"{self.ID} : An exception occurred in update_setting()")
+                self.pDebug(str(e))
+                return "False"
 
     def command(self, cmd: str):
         try:
@@ -97,14 +95,12 @@ class SRSDG535Ctrl(HC_Backend):
         except Exception as e:
             self.pDebug(f"{self.ID} : An exception occurred in command()")
             self.pDebug(str(e))
-        finally:
-            return cmd
+        return cmd
 
     def write(self, cmd: str):
         try:
             if self.online and not self.dummy:
-                if not self.use_sockets:
-                    self.device.write(cmd)
+                self.device.write(cmd)
                 if self.debug:
                     self.pDebug(f'\tSRSDG535< "{cmd}"')
         except Exception as e:
@@ -112,65 +108,32 @@ class SRSDG535Ctrl(HC_Backend):
             self.pDebug(str(e))
 
     def try_connect(self):
-        if self.dummy:
-            if self.online:
-                return True
-            else:
-                self.pDebug(
-                    f"{self.ID}: creating dummy connection to {self.connection_addr}"
-                )
-                self.online = True
-                return self.online
+        if not self.online:
+            try:
+                rm = pyvisa.ResourceManager()
+                self.device = rm.open_resource(self.connection_addr)  # Open connection
+                self.pDebug(f"Recource list pyvisa : {rm.list_resources()}")
+                self.online= True
+            except Exception as e:
+                self.pDebug(f"{self.ID}: {e}")
+                self.online = False
 
         if self.online:
             try:
-                # check for device status - requesting it clears the memory of it
-                ds = self.device.query("IS")
+                instrstat = self.device.query("IS")
                 es = self.device.query("ES")
-                if self.debug:
-                    self.pDebug(f"{self.ID}: trying to connect")
-                    self.write("DS connected to HC")
-                self.online = True
-                if 0 != (ds + es):  # further error handling
-                    self.pDebug(self.ID + " Instrument Status Bad : ")
-                    self.pDebug(
-                        f"{self.ID} Instr. status: {ds} \n{self.ID} : Error status : {es}"
-                    )
-                self.pDebug(f"{self.ID}: Connection verified")
-            except pyvisa.errors.VisaIOError as e:  # Not connected - reconnect
+                self.pDebug(f"{self.ID}: Instrument status: {instrstat} \tError status: {es}")
+            except Exception as e:
+                self.pDebug(f"{self.ID}: {e}")
                 self.online = False
-                if self.debug:
-                    self.pDebug(f"{self.ID} : Lost connection to device. Will try to reconnect")
-                    self.pDebug(f"\t{str(e)}")
-            finally:
-                return self.online
 
-        # Try to connect to instrument
-        try:
-            if not self.use_sockets:  # Use visa
-                if self.use_pyvisapy:
-                    rm = pyvisa.ResourceManager()
-                    # TODO remove this?
-                    #     "@py"
-                    # )  # linux-gpib is required for pyvisapy to support GPIB. Use VISA if on windows
-                else:
-                    if self.debug:
-                        self.pDebug("Connecting with NI-VISA backend")
-                    rm = pyvisa.ResourceManager()
-                self.device = rm.open_resource(self.connection_addr)  # Open connection
-                # TODO: TEST
-                self.online = True # assume we are online
-                self.online = self.try_connect()  # and check if we actually are
-
-            else:  # ToDO is this obsolete? # Use sockets
-                self.device = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                self.device.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 0)
-                self.device.connect((self.ip_addr, self.port_no))
-                self.online = True
-        except Exception as e:  # Failed to connect
-            self.online = False
-            if self.debug:
-                self.pDebug(f"\t({self.ID}) ERROR: {str(e)}")
-                self.pDebug(f"{self.ID} is offline")
-        self.pDebug(f"{self.ID} online: {self.online}")
         return self.online
+
+#
+# >>> import pyvisa
+# >>> rm = pyvisa.ResourceManager()
+# >>> rm.list_resources()
+# ('GPIB0::10::INSTR', 'GPIB0::1::INSTR', 'TCPIP0::a-dx4054a-00879.local::hislip0::INSTR', 'TCPIP0::a-dx4054a-00879.local::inst0::INSTR', 'ASRL1::INSTR')
+# >>> inst = rm.open_resource('GPIB0::10::INSTR')
+# >>> inst.query("ES")
+# '0\r\n'
