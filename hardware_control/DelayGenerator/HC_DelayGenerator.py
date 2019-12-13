@@ -122,17 +122,14 @@ class HC_DelayGenerator(HC_Instrument):
         self.period_edit.setSingleStep(1)
         self.period_edit.setValue(int(self.settings["trigger_period"]))
         #
-        self.write_box = QGroupBox("GPIB Command Prompt")
-        self.write_grid = QGridLayout()
         self.write_label = QLabel("Command: ")
-        self.write_grid.addWidget(self.write_label, 0, 0)
+        self.write_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         #
         self.write_edit = QLineEdit()
         self.write_edit.editingFinished.connect(
             lambda: self.update_setting("direct_command", self.write_edit.text())
         )
         self.write_edit.setText(self.settings["direct_command"])
-        self.write_grid.addWidget(self.write_edit, 0, 1)
         #
         self.write_but = QPushButton()
         self.write_but.setText("Write")
@@ -140,8 +137,6 @@ class HC_DelayGenerator(HC_Instrument):
         self.write_but.clicked.connect(
             lambda: self.command(self.settings["direct_command"])
         )
-        self.write_grid.addWidget(self.write_but, 0, 2)
-        self.write_box.setLayout(self.write_grid)
         #
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.trig_mode_label, 0, 0)
@@ -162,8 +157,10 @@ class HC_DelayGenerator(HC_Instrument):
         self.master_layout.addWidget(self.period_label, 3, 2)
         self.master_layout.addWidget(self.period_edit, 3, 3)
 
-        self.master_layout.addWidget(self.write_box, 4, 0, 1, 4)
+        self.master_layout.addWidget(self.write_label,4,0)
+        self.master_layout.addWidget(self.write_edit,4,1)
 
+        self.master_layout.addWidget(self.write_but,4,3)
         #
         self.setLayout(self.master_layout)
 
