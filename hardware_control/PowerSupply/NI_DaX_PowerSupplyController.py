@@ -18,8 +18,8 @@ import os
 
 from colorama import Fore, Style
 
-import nidaqmx
-# TODO: @Timo Bauer - check for OS in your backend, if not windows, don't try to use nidaqmax module bc it can't be imported
+if os.name == 'nt':
+    import nidaqmx
 
 from hardware_control.HC_Backend import HC_Backend
 from hardware_control.utility import regex_compare
