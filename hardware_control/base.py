@@ -704,6 +704,24 @@ class HC_App(QApplication):
         """Adds a macro to the app's macro list. Overwrites if macro already exists"""
         self.macros[name] = commands
 
+    def add_macro_file(self, name: str, filename: str):
+        """Adds a macro to the app's macro list. Overwrites if macro already exists"""
+
+        commands = []
+
+        #Read file line by line
+        with open(filename, "r") as infile:
+            for line in infile:
+                commands.append(line.rstrip('\n'))
+
+        if len(commands) > 0:
+            self.add_macro(name, commands)
+            return True
+        else:
+            return False
+
+
+
     def add_variable(self, name: str, value: str):
         """Adds an application variable. Overwrites if variable already exists"""
         self.variables[name] = value
