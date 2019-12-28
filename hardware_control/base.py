@@ -140,7 +140,7 @@ class HC_Comm(QObject):
         """Sends a command to the worker in the worker thread just like command(),
         but returns two lists instead of a string."""
         self.instrument.pDebug(
-            f"Instrument: {self.instrument.name} called 'command()' and sent command: '{cmd}'."
+            f"Instrument: {self.instrument.name} called 'command_listdata()' and sent command: '{cmd}'."
         )
         self.sigCommandList.emit(cmd, time.time() + self.list_expire_time)
         self.instrument.window.app.add_log(
