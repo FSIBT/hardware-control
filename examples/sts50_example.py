@@ -50,7 +50,7 @@ from hardware_control.PowerSupply.NI_DaX_PowerSupplyController import (
 
 class STS50Demo(HC_MainWindow):
     def __init__(self, app):
-        super().__init__()
+        super().__init__(app)
         self.app = app
 
         self.setWindowTitle("STS-50 Control Panel")
@@ -373,7 +373,7 @@ class STS50Demo(HC_MainWindow):
 
         # ['macintosh', 'Windows', 'Fusion']
         # self.app.setStyle(QStyleFactory.create("Fusion"))
-        self.app.setStyle(QStyleFactory.create("Windows"))
+        # self.app.setStyle(QStyleFactory.create("Windows"))
 
         self.show()
 
