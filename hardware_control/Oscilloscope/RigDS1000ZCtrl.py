@@ -221,17 +221,58 @@ class RigDS1000ZCtrl(HC_Backend):
                 self.pDebug(str(e))
 
     def command(self, cmd: str):
+
+        ret_str = ""
+
+        add_asterisk = False;
+        if cmd[-1] == "*":
+            add_asterisk = True;
+            cmd = cmd[0:-1]
+
         if not self.online:
             return "Offline"
 
         if cmd == "SINGLE_TRIGGER":
             self.write(":SING")
+            ret_str = "SINGLE_TRIGGER"
         elif cmd == "RUN":
             self.write(":RUN")
+            ret_str = "RUN"
         elif cmd == "STOP":
             self.write(":STOP")
+            ret_str = "STOP"
         elif cmd == "CLEAR_MEAS":
             self.write("MEAS:CLEAR ALL")
+            ret_str = "CLEAR_MEAS"
+        elif regex_compare("MEAS_SLOT.", cmd):
+
+            #Get slot number
+            slot = int(cmd[9]);
+            if slot > 4 or slot < 0:
+                ret_str = "Bad command"
+                if add_asterisk: #Don't let Macro get locked indefinitely add asterisk
+                    ret_str = ret_str + "*="
+                return ret_str
+
+            #Get measurement command for specified slot
+            meas = self.measurements[slot]
+
+            #Read measurement
+            if meas != "":
+                try:
+                    ret_str = self.query(f":MEAS:STAT:ITEM? CURR,{meas}")
+                except:
+                    ret_str = ""
+            else:
+                ret_str = ""
+
+            #Add description to return
+            if add_asterisk:
+                ret_str = cmd + "*=" + ret_str;
+            else:
+                ret_str = cmd + "=" + ret_str;
+
+        return ret_str
 
 
 

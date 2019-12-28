@@ -194,6 +194,12 @@ class HC_Oscilloscope(HC_Instrument):
         dflt["trigger_edge"] = "POS"
         #
         dflt["trigger_channel"] = "1"
+        #
+        dflt["meas_slot1"] = ""
+        dflt["meas_slot2"] = ""
+        dflt["meas_slot3"] = ""
+        dflt["meas_slot4"] = ""
+        dflt["meas_slot5"] = ""
 
         return dflt
 
