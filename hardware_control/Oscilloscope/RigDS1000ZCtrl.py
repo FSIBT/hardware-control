@@ -83,8 +83,7 @@ class RigDS1000ZCtrl(HC_Backend):
         self.port_no = port_no
         self.ip_addr = ip_addr
 
-        self.measurements = []
-        # self.try_connect()
+        self.measurements = ["", "", "", "", ""];
 
     def update_setting(self, setting: str, value):
 
@@ -199,6 +198,21 @@ class RigDS1000ZCtrl(HC_Backend):
 
                     self.write(f"TRIG:EDG:SOUR CHAN{str_NR1(value)}")
                     return self.query(f"TRIG:EDG:SOUR?")
+                elif regex_compare("meas_slot.", setting): #Value must follow pattern 'meas_parameter','source_channel'
+
+                    #Get slot number
+                    slot = int(setting[9]);
+                    if slot > 4 or slot < 0:
+                        return "Bad setting"
+
+                    #Update slot value
+                    self.measurements[slot] = value;
+
+                    #Write all slots
+                    for slot, meas in enumerate(self.measurements):
+                        if meas != "":
+                            self.write(f":MEAS:STAT:ITEM {meas}")
+
         except Exception as e:
             if self.debug:
                 self.pDebug(
@@ -217,7 +231,7 @@ class RigDS1000ZCtrl(HC_Backend):
         elif cmd == "STOP":
             self.write(":STOP")
         elif cmd == "CLEAR_MEAS":
-            self.write("MEAS:CLEAR")
+            self.write("MEAS:CLEAR ALL")
 
 
 
