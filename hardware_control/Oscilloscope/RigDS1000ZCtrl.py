@@ -202,7 +202,7 @@ class RigDS1000ZCtrl(HC_Backend):
         except Exception as e:
             if self.debug:
                 self.pDebug(
-                    "An error occured in Key4000XCtrl.py sending SCPI commands."
+                    "An error occured in RigDS1000ZCtrl.py sending SCPI commands."
                 )
                 self.pDebug(str(e))
 
@@ -272,7 +272,7 @@ class RigDS1000ZCtrl(HC_Backend):
 
         try:
 
-            self.write(f"WAV:SOUR: CHAN{channel}") #Specify channel to read
+            self.write(f"WAV:SOUR CHAN{channel}") #Specify channel to read
             self.write("WAV:MODE NORM") #Specify to read data displayed on screen
             self.write("WAV:FORM ASCII") #Specify data format to ASCII
             data = self.query("WAV:DATA?") #Request data
@@ -285,7 +285,6 @@ class RigDS1000ZCtrl(HC_Backend):
                 volts[idx] = float(v)
 
 
-
             # #Pull header out of data, get number of point
             # TMC_data_desc_header = data[0:12].decode("utf-8")
             # npts = float(tmc[-4:])
@@ -296,8 +295,8 @@ class RigDS1000ZCtrl(HC_Backend):
             #     return "", [], []
 
             #Get timing data
-            xorigin = float(scope.query("WAV:XOR?"))
-            xincr = float(scope.query("WAV:XINC?"))
+            xorigin = float(self.query("WAV:XOR?"))
+            xincr = float(self.query("WAV:XINC?"))
 
             #Get time values
             t = list(np.linspace(xorigin, xorigin+xincr*(len(volts)-1), len(volts)))
