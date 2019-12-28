@@ -140,7 +140,7 @@ class HC_Backend(ABC):
                 else:
                     self.device.sendall(bytes(command + "\n", "utf-8"))
                 if self.debug:
-                    self.pDebug(f'\tKEY4000X< "{command}"')
+                    self.pDebug(f'\t{self.ID} < "{command}"')
             else:
                 return command
         except Exception as e:
