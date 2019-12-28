@@ -7,6 +7,7 @@ import time
 from abc import ABC, abstractmethod
 from collections import OrderedDict
 from colorama import Fore, Style
+import json
 
 from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot, QObject, QTimer
 from PyQt5.QtWidgets import (
@@ -535,8 +536,29 @@ class HC_Instrument(QGroupBox):
         sep_idx = retval.find("=")
         if sep_idx != -1:  # Separator was found...
 
-            key = retval[0:sep_idx]
-            val = retval[sep_idx + 1 :]
+            # Check for asterisk at end of key, ie. right before '='. This indicates
+            # that this command unlocks HC_App's Macro runner and that the parameter
+            # needs to be logged in HC_App.saved_data immediately by appending the
+            # received value to the back of the list in HC_App.saved_data with the
+            # key specified by the returned value.
+            if sep_idx > 0 and retval[sep_idx - 1] == "*":
+
+                self.window.app.macro_locked = False
+                # Unlock macro
+
+                sep_idx -= 1
+                # Remove asterisk from key
+                key = retval[0:sep_idx]  # Get key
+                val = retval[sep_idx + 2 :]  # Get value
+
+                try:  # Append data
+                    self.window.app.saved_data[key].append(val)
+                except:  # Does not exist, create list and key
+                    self.window.app.saved_data[key] = [val]
+
+            else:
+                key = retval[0:sep_idx]
+                val = retval[sep_idx + 1 :]
 
             self.values[key] = val
 
@@ -570,6 +592,8 @@ class HC_App(QApplication):
         self.log = []  # List of strings for debugging/logging purposes
         self.macros = {}  # Dict of hc-commands (used for scans + trigger buttons)
         self.variables = {}  # Dict of app variables
+        self.saved_data = {}
+        # Dict of data saved directly with query commmands
         self.dummy = False
         self.print_close_info = False
         self.debug = debug
@@ -577,6 +601,16 @@ class HC_App(QApplication):
         # Dictates if hc_commands are allowed to execute raw python code via calls to the
         # via teh 'exec' function
         self.exec_enabled = True
+
+        self.macro_locked = False
+        self.macro_lock_end_time = None
+        self.curr_macro = []
+        self.curr_cmd_idx = 0
+
+        # Start a timer to resume timer after any pauses
+        self.macro_timer = QTimer(self)
+        self.macro_timer.timeout.connect(self.resume_macro)
+        # Don't start timer yet...
 
     def add_instrument(self, widget):
         # check if name is already present
@@ -749,8 +783,55 @@ class HC_App(QApplication):
             command_str = tokens[2]
 
             # Find instrument....
-            if instr_str in [x.name for x in self.instruments]:
-                self.instruments[instr_str].command(command_str)
+            instr_idx = -1
+            for idx, inst in enumerate(self.instruments):
+                if instr_str == inst.name:
+                    instr_idx = idx
+
+            if instr_idx != -1:
+                self.instruments[instr_idx].command(command_str)
+            else:
+                self.add_log(
+                    "HC-Command Processor",
+                    "N/A",
+                    "WARNING",
+                    f"Invalid HC-Command received. Wrong number of tokens. Command: '{command}'",
+                )
+                return False
+
+            self.pDebug(
+                f"Executed Command:\n\tInstrument: {instr_str}\n\tCommand: {command_str}"
+            )
+
+        elif tokens[0] == "RCD":
+
+            # Lock macros - backend_retun will unlock when it sees a key with an asterisk
+            self.macro_locked = True
+
+            # Recalculate tokens, with max of 2 splits
+            tokens = command.split(":", 2)
+
+            # Make sure the correct number of arguments are given
+            if len(tokens) != 3:  # Requires: MODE:INSTRUMENT:QUERY_SETTING
+                self.add_log(
+                    "HC-Command Processor",
+                    "N/A",
+                    "WARNING",
+                    f"Invalid HC-Command received. Wrong number of tokens. Command'{command}'",
+                )
+                return False
+
+            instr_str = tokens[1]
+            command_str = tokens[2] + "*"
+
+            # Find instrument....
+            instr_idx = -1
+            for idx, inst in enumerate(self.instruments):
+                if instr_str == inst.name:
+                    instr_idx = idx
+
+            if instr_idx != -1:
+                self.instruments[instr_idx].command(command_str)
             else:
                 self.add_log(
                     "HC-Command Processor",
@@ -909,11 +990,47 @@ class HC_App(QApplication):
                     )
 
                 if tokens[2] == "sleep":
-                    try:
-                        time.sleep(float(tokens[3]))
-                    except Exception:
-                        self.pDebug(f"Failed to convert hc-command argument to float")
 
+                    if self.macro_locked:
+                        if time.time() >= self.macro_lock_end_time:
+                            self.macro_locked = False
+                    else:  # Lock for 'x' seconds
+                        try:
+                            self.macro_lock_end_time = time.time() + float(tokens[3])
+                            self.macro_locked = True
+                        except Exception:
+                            self.pDebug(
+                                f"Failed to convert hc-command argument to float"
+                            )
+        elif tokens[0] == "DEV":
+
+            # Ensure more tokens exist
+            if len(tokens) < 2:
+                self.add_log(
+                    "HC-Command Processor",
+                    "N/A",
+                    "WARNING",
+                    f"Invalid HC-Command received. DEV requires arguments.",
+                )
+                return False
+
+            if tokens[1] == "maclock":  # Turn macro lock on or off
+
+                # Ensure more tokens exist
+                if len(tokens) < 3:
+                    self.add_log(
+                        "HC-Command Processor",
+                        "N/A",
+                        "WARNING",
+                        f"Invalid HC-Command received. DEV:maclock requires arguments.",
+                    )
+                    return False
+
+                # Change value
+                if tokens[2].upper() == "ON" or tokens[2].upper() == "TRUE":
+                    self.macro_locked = True
+                else:
+                    self.macro_locked = False
         else:
             self.add_log(
                 "HC-Command Processor",
@@ -926,10 +1043,25 @@ class HC_App(QApplication):
         return True
 
     def run_macro(self, m_commands):
-        for c in m_commands:
-            if not self.process_hc_command(c):
-                return False
-        return True
+
+        # Start timer, check every 300 ms
+        self.macro_timer.start(300)
+
+        # Load macro and pointer into object memory
+        self.curr_macro = m_commands
+        self.curr_cmd_idx = 0
+
+    def resume_macro(self):
+
+        # If out of bounds, end timer, kill macro
+        if self.curr_cmd_idx > len(self.curr_macro):
+            self.macro_timer = False
+
+        self.process_hc_command(self.curr_macro[self.curr_cmd_idx])
+
+        # If macro isn't locked, advance to next command
+        if not self.macro_locked:
+            self.curr_cmd_idx += 1
 
     def pDebug(self, msg, important=False):
         if self.debug:
@@ -942,9 +1074,11 @@ class HC_App(QApplication):
 
 
 class HC_MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, app):
 
         super().__init__()
+
+        self.app = app
 
         self.add_menu()
 
@@ -961,7 +1095,7 @@ class HC_MainWindow(QMainWindow):
         self.save_state_act.setShortcut("Ctrl+Shift+S")
         self.file_menu.addAction(self.save_state_act)
         #
-        self.save_data_act = QAction("Save App Variables", self)
+        self.save_data_act = QAction("Save Data", self)
         self.save_data_act.setShortcut("Ctrl+S")
         self.file_menu.addAction(self.save_data_act)
         #
@@ -1019,8 +1153,10 @@ class HC_MainWindow(QMainWindow):
 
         if q.text() == "Save Instrument States":  # TODO: impliment
             print("This is where I save a state")
-        elif q.text() == "Save App Variables":  # TODO: impliment
-            print("This is where I save a state")
+        elif q.text() == "Save Data":  # TODO: Impliment actual save + options
+
+            print(json.dumps(self.app.saved_data))
+
         elif q.text() == "Close Window":
             self.close()
             sys.exit(0)
