@@ -25,7 +25,7 @@ class HC_FunctionGenerator(HC_Instrument):
         self,
         scpi_instr,
         window,
-        name: str = "Oscilloscope Control",
+        name: str = "AWG Control",
         initialize_with: str = "INSTRUMENT",
         save_on_close: str = False,
         num_channels: int = 2,
@@ -71,6 +71,9 @@ class HC_FunctionGenerator(HC_Instrument):
         self.send_state()
 
         self.log_note("Initalized")
+
+    def initialize_gui_instrument(self):
+        return self.default_state()
 
     #
     # Create a default settings object if can't get settings from a file
