@@ -623,9 +623,26 @@ class OscilloscopeMeasurementWidget(QWidget):
 
         self.setLayout(self.master_layout)
 
+        self.next_slot = 1;
+
     def add_measurement(self):
-        print("In add measurement")
-        pass
+
+        #Get parameter string from dropdown. Convert values to correct format for
+        #backend to understand.
+        meas_string = self.meas_drop.currentText().upper()
+        if (meas_string == "PERIOD"):
+            meas_string = "PER"
+        elif (meas_string == "Phase 1->2"):
+            meas_string = "RPH"
+
+        meas_string = meas_string + ",CHAN" + self.channel_drop.currentText()[3]
+
+        self.control.update_setting(f"meas_slot{self.next_slot}", meas_string);
+
+        #Update next slot
+        self.next_slot += 1;
+        if self.next_slot > 5:
+            self.next_slot = 1;
 
     def clear_measurements(self):
         self.control.command("CLEAR_MEAS")
