@@ -105,8 +105,8 @@ class RigDS1000ZCtrl(HC_Backend):
                     return self.query(":TIM:MAIN:SCAL?")
 
                 elif setting == "time_offset":
-                    self.write(f":TIM:MAIN:POS {str_NR3(value)}")
-                    return self.query(":TIM:MAIN:POS?")
+                    self.write(f":TIM:MAIN:OFFS {str_NR3(value)}")
+                    return self.query(":TIM:MAIN:OFFS?")
 
                 elif regex_compare("CH._offset", setting):
                     chan = setting[2]
