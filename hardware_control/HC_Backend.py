@@ -179,7 +179,7 @@ class HC_Backend(ABC):
                 break
         return data
 
-    def pDebug(self, msg, important=False):
+    def pDebug(self, msg, important=False, blue=False):
         if self.debug:
             if (
                 important
@@ -191,7 +191,11 @@ class HC_Backend(ABC):
                 print(msg)
                 print(Style.RESET_ALL, end="")
             else:
+                if blue:
+                    print(Fore.BLUE, end="")
                 print(msg)
+                if blue:
+                    print(Style.RESET_ALL, end="")
 
 
 #
