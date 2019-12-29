@@ -30,37 +30,31 @@ class HC_ZMQConnectionTool(HC_Instrument):
         update_period: int = 500,
     ):
 
+        self.dummy = False;
+
         self.socket = None
         self.poller = None
 
         super(HC_ZMQConnectionTool, self).__init__(window, name)
 
         self.settings = self.default_state()
+        self.settings["port"] = port;
 
         # Create ZMQ context, socket, poller
         self.context = zmq.Context()
-        self.socket = self.context.socket(zmq.REP)
-        self.socket.bind(self.settings["port"])
-        #
-        self.poller = zmq.Poller()
-        self.poller.register(self.socket, zmq.POLLIN)
+        self.try_connect()
+        # self.socket = self.context.socket(zmq.REP)
+        # self.socket.bind(self.settings["port"])
+        # #
+        # self.poller = zmq.Poller()
+        # self.poller.register(self.socket, zmq.POLLIN)
 
-        if port != "":
-            self.settings["port"] = port
         self.ignore = True
         self.accept_commands = False
 
-        self.red_ind = QPixmap(
-            pkg_resources.resource_filename("hardware_control", "graphics/ind_red.png")
-        )
-        self.green_ind = QPixmap(
-            pkg_resources.resource_filename(
-                "hardware_control", "graphics/ind_green.png"
-            )
-        )
-        self.grey_ind = QPixmap(
-            pkg_resources.resource_filename("hardware_control", "graphics/ind_grey.png")
-        )
+        self.red_ind = QPixmap(pkg_resources.resource_filename("hardware_control", "graphics/ind_red.png"))
+        self.green_ind = QPixmap(pkg_resources.resource_filename("hardware_control", "graphics/ind_green.png"))
+        self.grey_ind = QPixmap(pkg_resources.resource_filename("hardware_control", "graphics/ind_grey.png"))
 
         # Create GUI
         #
@@ -69,9 +63,7 @@ class HC_ZMQConnectionTool(HC_Instrument):
         self.port_edit_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
         self.port_edit = QLineEdit()
-        self.port_edit.textChanged.connect(
-            lambda: self.update_setting("port", self.port_edit.text())
-        )
+        self.port_edit.textChanged.connect(lambda: self.update_setting("port", self.port_edit.text()))
         self.port_edit.setText(self.settings["port"])
 
         self.restart_port_but = QPushButton()
@@ -81,16 +73,12 @@ class HC_ZMQConnectionTool(HC_Instrument):
         self.accept_cmd_button = QRadioButton()
         self.accept_cmd_button.setChecked(False)
         self.accept_cmd_button.setText("Accept Incoming Commands")
-        self.accept_cmd_button.clicked.connect(
-            lambda: self.connectionOnOff(self.accept_cmd_button)
-        )
+        self.accept_cmd_button.clicked.connect(lambda: self.connectionOnOff(self.accept_cmd_button))
         #
         self.disable_cmd_button = QRadioButton()
         self.disable_cmd_button.setChecked(True)
         self.disable_cmd_button.setText("Disable Incoming Commands")
-        self.disable_cmd_button.clicked.connect(
-            lambda: self.connectionOnOff(self.disable_cmd_button)
-        )
+        self.disable_cmd_button.clicked.connect(lambda: self.connectionOnOff(self.disable_cmd_button))
         #
         pstr = self.settings["port"]
         self.port_label = QLabel(f"Port: {pstr}")
@@ -128,13 +116,23 @@ class HC_ZMQConnectionTool(HC_Instrument):
         self.service_timer.timeout.connect(self.service_commands)
         self.service_timer.start(update_period)
 
+    def restart_port(self):
+
+        self.settings["port"] = self.port_edit.text()
+
+        self.online = False;
+
+        self.try_connect()
+
+
     def try_connect(self):  # TODO: Make sure this fucntion is working correctly
 
         if self.dummy:
             if self.online:
                 return True
             else:
-                print(f"{self.ID}: creating dummy connection to {self.zmq_address}")
+                p_str = self.settings["port"];
+                print(f"{self.ID}: creating dummy connection to {p_str}")
                 self.online = True
                 return True
 
@@ -146,7 +144,14 @@ class HC_ZMQConnectionTool(HC_Instrument):
         if self.socket is not None:
             self.socket.close()
         self.socket = self.context.socket(zmq.REP)
-        self.socket.connect(self.zmq_address)
+        try:
+            self.socket.bind(self.settings["port"])
+        except:
+            p_str = self.settings["port"];
+            print(f"ERROR: Failed to bind to {p_str}")
+
+        self.poller = zmq.Poller()
+        self.poller.register(self.socket, zmq.POLLIN)
 
         self.online = True
 
@@ -180,6 +185,8 @@ class HC_ZMQConnectionTool(HC_Instrument):
         # If event found...
         if len(events) > 0:
 
+            self.pDebug("ZMQConnectionTool received message")
+
             message = self.socket.recv()  # Receive message...
 
             mess_str = message.decode("utf-8")  # Convert from byte array to utf-8
@@ -190,6 +197,10 @@ class HC_ZMQConnectionTool(HC_Instrument):
             rval = self.window.app.process_hc_command(mess_str)
 
             self.socket.send(message)  # Send reply
+
+        else:
+
+            self.pDebug("ZMQConnectionTool found no message on port")
 
     def default_state(self):
         dflt = {}
