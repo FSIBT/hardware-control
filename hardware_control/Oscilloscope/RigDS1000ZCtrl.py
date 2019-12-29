@@ -202,11 +202,11 @@ class RigDS1000ZCtrl(HC_Backend):
 
                     #Get slot number
                     slot = int(setting[9]);
-                    if slot > 4 or slot < 0:
+                    if slot > 5 or slot < 0:
                         return "Bad setting"
 
                     #Update slot value
-                    self.measurements[slot] = value;
+                    self.measurements[slot-1] = value;
 
                     #Write all slots
                     for slot, meas in enumerate(self.measurements):
@@ -244,18 +244,27 @@ class RigDS1000ZCtrl(HC_Backend):
         elif cmd == "CLEAR_MEAS":
             self.write("MEAS:CLEAR ALL")
             ret_str = "CLEAR_MEAS"
-        elif regex_compare("MEAS_SLOT.", cmd):
+        elif regex_compare("meas_slot.", cmd):
+
+            self.pDebug(f"Reading slot w/ '{cmd}'", False, True)
 
             #Get slot number
             slot = int(cmd[9]);
-            if slot > 4 or slot < 0:
-                ret_str = "Bad command"
+            if slot > 5 or slot < 0:
+                ret_str = "Bad command. Slot index out of range"
                 if add_asterisk: #Don't let Macro get locked indefinitely add asterisk
                     ret_str = ret_str + "*="
                 return ret_str
 
             #Get measurement command for specified slot
-            meas = self.measurements[slot]
+
+            try:
+                meas = self.measurements[slot-1]
+            except:
+                ret_str = "Bad command. Slot index out of range"
+                if add_asterisk: #Don't let Macro get locked indefinitely add asterisk
+                    ret_str = ret_str + "*="
+                return ret_str
 
             #Read measurement
             if meas != "":
@@ -271,6 +280,8 @@ class RigDS1000ZCtrl(HC_Backend):
                 ret_str = cmd + "*=" + ret_str;
             else:
                 ret_str = cmd + "=" + ret_str;
+
+            self.pDebug(f"Returning slot read w/ '{ret_str}'", False, True)
 
         return ret_str
 

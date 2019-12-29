@@ -650,5 +650,6 @@ class OscilloscopeMeasurementWidget(QWidget):
         if self.next_slot > 5:
             self.next_slot = 1;
 
+    #TODO: Make this delete measurements in internal settings variables
     def clear_measurements(self):
         self.control.command("CLEAR_MEAS")
