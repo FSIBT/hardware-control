@@ -543,6 +543,8 @@ class HC_Instrument(QGroupBox):
             # key specified by the returned value.
             if sep_idx > 0 and retval[sep_idx - 1] == "*":
 
+                self.pDebug("Received RCD", False, True)
+
                 self.window.app.macro_locked = False
                 # Unlock macro
 
@@ -577,7 +579,7 @@ class HC_Instrument(QGroupBox):
         this function to procses the return data."""
         pass
 
-    def pDebug(self, msg, important=False):
+    def pDebug(self, msg, important=False, blue=False):
         self.window.app.pDebug(msg, important)
 
 
@@ -1081,14 +1083,18 @@ class HC_App(QApplication):
         if not self.macro_locked:
             self.curr_cmd_idx += 1
 
-    def pDebug(self, msg, important=False):
+    def pDebug(self, msg, important=False, blue=False):
         if self.debug:
             if important:
                 print(Fore.RED, end="")
                 print(msg)
                 print(Style.RESET_ALL, end="")
             else:
+                if blue:
+                    print(Fore.BLUE, end="")
                 print(msg)
+                if blue:
+                    print(Style.RESET_ALL, end="")
 
 
 class HC_MainWindow(QMainWindow):
