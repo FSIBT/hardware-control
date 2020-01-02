@@ -270,6 +270,8 @@ class RigDS1000ZCtrl(HC_Backend):
             if meas != "":
                 try:
                     ret_str = self.query(f":MEAS:STAT:ITEM? CURR,{meas}")
+                    if ret_str == None:
+                        ret_str = f"Measurement_failure_CURR,{meas}"
                 except:
                     ret_str = ""
             else:
@@ -280,7 +282,6 @@ class RigDS1000ZCtrl(HC_Backend):
                 ret_str = cmd + "*=" + ret_str;
             else:
                 ret_str = cmd + "=" + ret_str;
-
             self.pDebug(f"Returning slot read w/ '{ret_str}'", False, True)
 
         return ret_str

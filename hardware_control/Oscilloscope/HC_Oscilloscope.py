@@ -635,13 +635,17 @@ class OscilloscopeMeasurementWidget(QWidget):
 
         #Get parameter string from dropdown. Convert values to correct format for
         #backend to understand.
+
+        add_channel = True
         meas_string = self.meas_drop.currentText().upper()
         if (meas_string == "PERIOD"):
             meas_string = "PER"
         elif (meas_string == "Phase 1->2"):
             meas_string = "RPH"
+            add_channel = False
 
-        meas_string = meas_string + ",CHAN" + self.channel_drop.currentText()[3]
+        if add_channel:
+            meas_string = meas_string + ",CHAN" + self.channel_drop.currentText()[3]
 
         self.control.update_setting(f"meas_slot{self.next_slot}", meas_string);
 
