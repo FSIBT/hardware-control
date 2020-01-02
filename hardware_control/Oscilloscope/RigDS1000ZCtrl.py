@@ -83,6 +83,8 @@ class RigDS1000ZCtrl(HC_Backend):
         self.port_no = port_no
         self.ip_addr = ip_addr
 
+        self.use_avg = False;
+
         self.measurements = ["", "", "", "", ""];
 
     def update_setting(self, setting: str, value):
@@ -212,6 +214,15 @@ class RigDS1000ZCtrl(HC_Backend):
                     for slot, meas in enumerate(self.measurements):
                         if meas != "":
                             self.write(f":MEAS:STAT:ITEM {meas}")
+                elif regex_compare("use_meas_avg"):
+
+                    self.use_avg = boolstr_NR1(value);
+                    return f"Use avg.: {value}"
+
+                elif setting == "meas_stat_enabled":
+
+                    self.write(f":MEAS:STAT:DISP {boolstr_NR1(value)}")
+                    return self.query(":MEAS:STAT:DISP?")
 
         except Exception as e:
             if self.debug:
@@ -269,9 +280,14 @@ class RigDS1000ZCtrl(HC_Backend):
             #Read measurement
             if meas != "":
                 try:
-                    ret_str = self.query(f":MEAS:STAT:ITEM? CURR,{meas}")
+
+                    meas_mode = "CURR"
+                    if self.use_avg:
+                        meas_mode = "AVG"
+
+                    ret_str = self.query(f":MEAS:STAT:ITEM? {meas_mode},{meas}")
                     if ret_str == None:
-                        ret_str = f"Measurement_failure_CURR,{meas}"
+                        ret_str = f"Measurement_failure_{meas_mode},{meas}"
                 except:
                     ret_str = ""
             else:
@@ -283,6 +299,12 @@ class RigDS1000ZCtrl(HC_Backend):
             else:
                 ret_str = cmd + "=" + ret_str;
             self.pDebug(f"Returning slot read w/ '{ret_str}'", False, True)
+        elif cmd == "RESET_MEAS_STAT":
+
+            self.write(f":MEAS:STAT:DISP OFF")
+            self.write(f":MEAS:STAT:DISP ON")
+
+            ret_str = cmd;
 
         return ret_str
 
