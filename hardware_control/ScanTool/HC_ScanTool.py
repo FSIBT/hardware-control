@@ -339,6 +339,22 @@ class HC_ScanTool(HC_Instrument):
             self.pDebug(f"ERROR: Failed to write file '{filename}'. State not saved.")
             self.pDebug(f"\t{e}")
 
+    # Update setting is overwritten so hc-commands can set values such as the
+    # progress bar.
+    #
+    def update_setting(self, setting:str, value:str):
+
+        try:
+            self.settings[setting] = value;
+        except Exception as e:
+            return
+
+        if setting == "progress":
+            try:
+                self.progress_bar.setValue(float(self.settings["progress"]))
+            except:
+                self.pDebug(f"ERROR: Can't convert {value} to float.")
+
     #
     # Create a default state object if can't get state from a file
     #
