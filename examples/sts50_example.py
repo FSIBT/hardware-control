@@ -43,6 +43,7 @@ from hardware_control.MacroRunnerTool.HC_MacroRunnerTool import HC_MacroRunnerTo
 from hardware_control.VariableEditTool.HC_VariableEditTool import HC_VariableEditTool
 from hardware_control.IOModule.HC_Read import HC_Read, HC_singleChannelRead
 from hardware_control.IOModule.ADAM_6015 import Adam_6015
+from hardware_control.LoggerTool.HC_LoggerTool  import HC_LoggerTool
 from hardware_control.PowerSupply.NI_DaX_PowerSupplyController import (
     NI_DaX_PowerSupplyController,
 )
@@ -162,6 +163,9 @@ class STS50Demo(HC_MainWindow):
 
         self.scantool = HC_ScanTool(self, "Scan Control", "DEFAULT", True)
         self.scantool.update_instruments()
+
+        self.logtool = HC_LoggerTool(self, "Data Logger")
+        # self.logtool.update_instruments()
 
         self.PS_NIDaQCtrl = NI_DaX_PowerSupplyController()
         self.PS_NIDaQ = HC_MultiPowerSupply(self.PS_NIDaQCtrl, self, [1], "NIDAXTEST")
@@ -355,6 +359,8 @@ class STS50Demo(HC_MainWindow):
         except Exception as e:
             pass
 
+        self.tab5_layout.addWidget(self.logtool, 1, 0)
+
         self.tab5.setLayout(self.tab5_layout)
 
         #####################################
@@ -366,6 +372,7 @@ class STS50Demo(HC_MainWindow):
         self.master_layout.addWidget(self.tabs, 0, 0, 3, 1)
         self.master_layout.addWidget(self.scantool, 0, 1)
         self.master_layout.addWidget(self.statustool, 1, 1)
+        # self.master_layout.addWidget(self.logtool, 2, 1)
 
         self.main_widget = QWidget(self)
         self.main_widget.setLayout(self.master_layout)
