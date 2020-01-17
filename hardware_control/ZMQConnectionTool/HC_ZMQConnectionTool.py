@@ -40,8 +40,17 @@ class HC_ZMQConnectionTool(HC_Instrument):
         self.settings = self.default_state()
         self.settings["port"] = port;
 
+        #Note: unlike most HC_Instruments, this uses self.online to describe if
+        # it is *enabled*, not if it is connected to an instrument becausee it has
+        # no instruement to connect to. Instead, it uses self.socket_online to
+        # describe if the socket exists and self.online to describe (only for the
+        # ConnectionStatusTool's sake) if the instrument is enabled. This means
+        # self.online will repeat the value of self.accept_commands.
+        self.socket_online = False
+
         # Create ZMQ context, socket, poller
         self.context = zmq.Context()
+
         self.try_connect()
         # self.socket = self.context.socket(zmq.REP)
         # self.socket.bind(self.settings["port"])
@@ -49,11 +58,12 @@ class HC_ZMQConnectionTool(HC_Instrument):
         # self.poller = zmq.Poller()
         # self.poller.register(self.socket, zmq.POLLIN)
 
-        self.ignore = True
+        self.ignore = False
+        self.online_color = "Blue"
         self.accept_commands = False
 
-        self.red_ind = QPixmap(pkg_resources.resource_filename("hardware_control", "graphics/ind_red.png"))
-        self.green_ind = QPixmap(pkg_resources.resource_filename("hardware_control", "graphics/ind_green.png"))
+        self.darkgrey_ind = QPixmap(pkg_resources.resource_filename("hardware_control", "graphics/ind_darkgrey.png"))
+        self.blue_ind = QPixmap(pkg_resources.resource_filename("hardware_control", "graphics/ind_blue.png"))
         self.grey_ind = QPixmap(pkg_resources.resource_filename("hardware_control", "graphics/ind_grey.png"))
 
         # Create GUI
@@ -79,6 +89,7 @@ class HC_ZMQConnectionTool(HC_Instrument):
         self.disable_cmd_button.setChecked(True)
         self.disable_cmd_button.setText("Disable Incoming Commands")
         self.disable_cmd_button.clicked.connect(lambda: self.connectionOnOff(self.disable_cmd_button))
+        self.online = False
         #
         pstr = self.settings["port"]
         self.port_label = QLabel(f"Port: {pstr}")
@@ -120,7 +131,7 @@ class HC_ZMQConnectionTool(HC_Instrument):
 
         self.settings["port"] = self.port_edit.text()
 
-        self.online = False;
+        self.socket_online = False;
 
         self.try_connect()
 
@@ -128,15 +139,15 @@ class HC_ZMQConnectionTool(HC_Instrument):
     def try_connect(self):  # TODO: Make sure this fucntion is working correctly
 
         if self.dummy:
-            if self.online:
+            if self.socket_online:
                 return True
             else:
                 p_str = self.settings["port"];
                 print(f"{self.ID}: creating dummy connection to {p_str}")
-                self.online = True
+                self.socket_online = True
                 return True
 
-        if self.online:
+        if self.socket_online:
             # Todo: check that this will reconnect automatically, if not fix
             return True
 
@@ -153,7 +164,7 @@ class HC_ZMQConnectionTool(HC_Instrument):
         self.poller = zmq.Poller()
         self.poller.register(self.socket, zmq.POLLIN)
 
-        self.online = True
+        self.socket_online = True
 
         return True
 
@@ -173,11 +184,13 @@ class HC_ZMQConnectionTool(HC_Instrument):
         if not self.accept_commands:
             self.received_label.setText("Last Message: --")
             self.status_label.setText("Disabled")
-            self.status_icon.setPixmap(self.red_ind)
+            self.status_icon.setPixmap(self.darkgrey_ind)
+            self.online = False
             return
 
         self.status_label.setText("Enabled")
-        self.status_icon.setPixmap(self.green_ind)
+        self.status_icon.setPixmap(self.blue_ind)
+        self.online = True
 
         # Check for events
         events = dict(self.poller.poll(10))
