@@ -31,17 +31,27 @@ class HC_StatusTool(QGroupBox):
 
         self.green_indicator = QPixmap(
             pkg_resources.resource_filename(
-                "hardware_control", "ConnectionStatusTool/graphics/ind_green.png"
+                "hardware_control", "graphics/ind_green.png"
             )
         )
         self.grey_indicator = QPixmap(
             pkg_resources.resource_filename(
-                "hardware_control", "ConnectionStatusTool/graphics/ind_grey.png"
+                "hardware_control", "graphics/ind_grey.png"
+            )
+        )
+        self.darkgrey_indicator = QPixmap(
+            pkg_resources.resource_filename(
+                "hardware_control", "graphics/ind_darkgrey.png"
             )
         )
         self.red_indicator = QPixmap(
             pkg_resources.resource_filename(
-                "hardware_control", "ConnectionStatusTool/graphics/ind_red.png"
+                "hardware_control", "graphics/ind_red.png"
+            )
+        )
+        self.blue_indicator = QPixmap(
+            pkg_resources.resource_filename(
+                "hardware_control", "graphics/ind_blue.png"
             )
         )
 
@@ -122,13 +132,23 @@ class HC_StatusTool(QGroupBox):
                         instr.name == self.instrument_grid.itemAt(i).widget().text()
                     ):  # Found instrument....
                         if instr.online:
-                            self.instrument_grid.itemAt(i + 1).widget().setPixmap(
-                                self.green_indicator
-                            )
+                            if instr.online_color == "Blue":
+                                self.instrument_grid.itemAt(i + 1).widget().setPixmap(
+                                    self.blue_indicator
+                                )
+                            else:
+                                self.instrument_grid.itemAt(i + 1).widget().setPixmap(
+                                    self.green_indicator
+                                )
                         else:
-                            self.instrument_grid.itemAt(i + 1).widget().setPixmap(
-                                self.red_indicator
-                            )
+                            if instr.online_color == "Blue":
+                                self.instrument_grid.itemAt(i + 1).widget().setPixmap(
+                                    self.darkgrey_indicator
+                                )
+                            else:
+                                self.instrument_grid.itemAt(i + 1).widget().setPixmap(
+                                    self.red_indicator
+                                )
 
     def load_state(self, filename: str):
 
