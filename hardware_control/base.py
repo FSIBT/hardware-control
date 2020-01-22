@@ -32,6 +32,7 @@ class HC_Comm(QObject):
     sigQuery = pyqtSignal(str, float)
     sigTryConnect = pyqtSignal(float)
     sigCommandList = pyqtSignal(str, float)
+    sigCommandLog = pyqtSignal(str, float)
     sigClose = pyqtSignal()
 
     # TODO: @TImo Bauer Add 'try_connect' frequency
@@ -57,12 +58,14 @@ class HC_Comm(QObject):
         self.sigQuery.connect(self.worker.query)
         self.sigTryConnect.connect(self.worker.try_connect)
         self.sigCommandList.connect(self.worker.command_listdata)
+        self.sigCommandLog.connect(self.worker.command_log)
         self.sigClose.connect(self.worker.close)
 
         # Connect CommWorker's signals to Comm's slots
         self.worker.sigReturnValues.connect(self.backend_return)
         self.worker.sigReturnOnline.connect(self.backend_return_online)
         self.worker.sigReturnList.connect(self.backend_return_listdata)
+        self.worker.sigReturnLog.connect(self.backend_return_log)
 
         # Connect timer
         self.try_connect_timer = QTimer(self)
@@ -148,6 +151,15 @@ class HC_Comm(QObject):
             self.instrument.name, self.backend_model, "CMDLD", cmd
         )
 
+    def command_log(self, cmd:str, state:LoggedPointState):
+        """Functions the same way as command(), except it: 1.) immediately records
+        the returned data 2.) allows for automatically repeated queries to ensure
+        the measured value is in a steady-state and that the measurement is not
+        fluctuating beyond the specified tolerance."""
+        self.sigCommandLog.emit(cmd, time.time() + self.expire_time)
+        self.instrument.window.app.add_log(self.instrument.name, self.backend_model, "CMDLG", cmd)
+
+
     @pyqtSlot(str)
     def backend_return(self, retval: str):
         """Receives a return value from the CommWorker and sends it to the instrument's
@@ -172,6 +184,16 @@ class HC_Comm(QObject):
         to process the data."""
         self.instrument.backend_return_listdata(desc, data1, data2)
 
+    @pyqtSlot(str)
+    def backend_return_log(self, retval:str):
+        """Receives a return value from the CommWorker and sends it to the instrument's
+        backend_return function iff the data integrity conditions are met. This means
+        if the LoggedPointState object specifies that 2+ matching data points must be
+        measured, those points must be measured and found to match before this will call
+        backend_return. Otherwise, it will make another call to command_log()"""
+
+
+
 
 class HC_CommWorker(QObject):
     """Uses signals + slots to receive data from HC_Comm and relays the information
@@ -181,6 +203,7 @@ class HC_CommWorker(QObject):
     sigReturnValues = pyqtSignal(str)
     sigReturnOnline = pyqtSignal(bool)
     sigReturnList = pyqtSignal(str, list, list)
+    sigReturnLog = pyqtSignal(str)
 
     def __init__(self, backend):
         super().__init__()
@@ -247,6 +270,16 @@ class HC_CommWorker(QObject):
             ret_val = self.backend.command_listdata(cmd)
         self.sigReturnList.emit(ret_val[0], ret_val[1], ret_val[2])
 
+    @pyqtSlot(str, float)
+    def command_log(self, cmd:str, expire_time:float):
+        """Transfers the command to the backend"""
+        if time.time() > expire_time:  # Skip command if too old
+            ret_val = f'EXPIRED=CMDLG:"{cmd}" \t[Exec: {time.time()}, Exp: {expire_time}] [{self.backend.ID}]'
+        else:
+            ret_val = self.backend.command(cmd)
+
+        self.sigReturnLog.emit(ret_val)
+
     @pyqtSlot()
     def close(self):
         """"Tells backend to close the connection. Then reports if instrument is
@@ -254,6 +287,21 @@ class HC_CommWorker(QObject):
         online = self.backend.close()
         self.sigReturnOnline.emit(online)
 
+class LoggedPointState:
+
+    def __init__(self, datapt_idx:int, equil_points:int, equip_dt:float=.1, tol:float=.1, max_iterations:int=10, num_in_spec:int=3):
+
+        self.equil_points = equil_points
+        self.equil_dt = equil_dt
+        self.tol = tol
+
+        self.iterations = 0
+        self.max_iterations = max_iterations
+        self.num_in_spec = num_in_spec
+        self.num_found_in_spec = 0
+
+        self.prev_data = []
+        self.datapt_idx = datapt_idx;
 
 class LoggingGroup:
     """Describes a list of values in an HC_Instrument that should be logged
@@ -300,6 +348,7 @@ class HC_Instrument(QGroupBox):
         # this is a global reference for limiting the scaling the widgets
         self.globalLineHeight = 50  # Lineheight of athe average  spinbox
         self.globalLineWidth = 300  # Linewidth of athe average  spinbox
+        self.online_color = "Green" #Color of online light for status tool. Can be Green or Blue
 
         # ConnectionTool and ScanTool widgets
 
@@ -553,10 +602,16 @@ class HC_Instrument(QGroupBox):
                 key = retval[0:sep_idx]  # Get key
                 val = retval[sep_idx + 2 :]  # Get value
 
+                val_f = -1
+                try:
+                    val_f = float(val)
+                except:
+                    self.pDebug(f"Failed to convert {val} to a float")
+
                 try:  # Append data
-                    self.window.app.saved_data[key].append(val)
+                    self.window.app.saved_data[key].append(val_f)
                 except:  # Does not exist, create list and key
-                    self.window.app.saved_data[key] = [val]
+                    self.window.app.saved_data[key] = [val_f]
 
             else:
                 key = retval[0:sep_idx]
@@ -1123,6 +1178,10 @@ class HC_MainWindow(QMainWindow):
         self.save_data_act.setShortcut("Ctrl+S")
         self.file_menu.addAction(self.save_data_act)
         #
+        self.clear_data_act = QAction("Clear Data", self)
+        self.clear_data_act.setShortcut("Ctrl+Shift+K")
+        self.file_menu.addAction(self.clear_data_act)
+        #
         self.file_menu.addSeparator()
         #
         self.close_act = QAction("Close Window", self)
@@ -1180,6 +1239,7 @@ class HC_MainWindow(QMainWindow):
         elif q.text() == "Save Data":  # TODO: Impliment actual save + options
 
             print(json.dumps(self.app.saved_data))
+
 
         elif q.text() == "Close Window":
             self.close()
