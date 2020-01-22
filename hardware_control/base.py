@@ -8,6 +8,7 @@ from abc import ABC, abstractmethod
 from collections import OrderedDict
 from colorama import Fore, Style
 import json
+import numpy as np
 
 from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot, QObject, QTimer
 from PyQt5.QtWidgets import (
@@ -159,12 +160,23 @@ class HC_Comm(QObject):
         the measured value is in a steady-state and that the measurement is not
         fluctuating beyond the specified tolerance."""
 
-        for s in self.dataset_states:
+        state.repeat_command = cmd;
+        state.iterations += 1
+
+        #Cancel command if
+        if state.iterations > state.max_iterations:
+            self.instrument.pDebug(f"ERROR: command_log() function timed out after {state.iterations} iterations of command '{self.repeat_command}'.")
+            return
+
+        add_to_list = True
+        for s_idx, s in enumerate(self.dataset_states):
             if s.dataset_id == state.dataset_id: #Ensure there is not already a state with the assigned ID number
-                return
+                self.dataset_states[s_idx] = state; #Update state
+                add_to_list = False
 
         #Add state information to HC_Comm's list of states
-        self.dataset_states.append(state)
+        if add_to_list:
+            self.dataset_states.append(state)
 
         self.sigCommandLog.emit(cmd, time.time() + self.expire_time, state.dataset_id)
         self.instrument.window.app.add_log(self.instrument.name, self.backend_model, "CMDLG", cmd)
@@ -215,7 +227,21 @@ class HC_Comm(QObject):
             self.pDebug(error_message)
             self.intrument.backend_return(error_message)
 
-        if
+        #Check if req number of steady points is satisfied
+        if self.dataset_states[set_idx].steady_points > 0:
+
+            #Add the last measurement to the state object
+            self.dataset_states.add_point(retval)
+
+
+            if self.dataset_states[set_idx].conditions_met():
+                self.instrument.backend_return(retval) #If all conditions have been met, send the return value to the UI
+            else:
+                #All confitions have not been met, incriment the counter and request another measurement
+
+        else:
+            #If no steeady state condition is required, immediately return the response
+            self.instrument.backend_return(retval)
 
 
 
@@ -324,13 +350,55 @@ class LoggedPointState:
         self.iterations = 0 #Number of iterations, ie measurements, that have occcured
         self.max_iterations = max_iterations #Maximum number of iterations before returns failure condition
         self.num_in_spec = num_in_spec #Number of points that must be considered steady before a value is returned to the UI
-        self.num_found_in_spec = 0 #Number of points that have been measured and considered steady
+        #self.num_found_in_spec = 0 #Number of points that have been measured and considered steady
 
         self.prev_data = [] #Previous data values measured (for comparison for steady state determination)
         self.dataset_id = dataset_id; #ID number used to assosiate this object with return values from instruments, and to
                                       #assosiate measurements corresponding to one datapoint/time across multiple instruments
                                       #and queries. This allows all corresponding data points to be erased if one fails and
                                       #all points at that timestep need to be removed.
+
+        self.repeat_command = ""; #The command fed back to command_log() if additional data points are required
+
+    def add_point(self, retval:str):
+        """Checks if the last return value (passed as 'retva') qualifies as a steady
+        state condition and adds the point to self.prev_data for later analysis.
+
+        If the point can not be added (no separator found or can't convert to float),
+        the function returns prematurely."""
+
+        #Find separator and calculate val
+        val = ""
+        sep_idx = retval.find("=")
+        if sep_idx != -1:  # Separator was found...
+            key = retval[0:sep_idx]
+            val = retval[sep_idx + 1 :]
+        else:
+            return #Separator was not found, return early
+
+        #Try to convert returned value to a float, add to list
+        try:
+            self.prev_data.append(float(val))
+        except:
+            return
+
+    def conditions_met(self):
+        """Determines if the completion criteria have been met, or if more points are
+        required."""
+        #If less than the required number of points have been collected, then
+        #the conditions can not have been met
+        if len(self.pev_data) < self.num_in_spec:
+            return false
+
+        #Determine if all required points are in the steady state
+        pts = self.prev_data[self.num_in_spec*-1:] #Get the last however many datapoints must be within spec
+        center = np.mean(pts) #Calculate the mean - this will be used in determining an absolute value for the tolerance
+        for p in pts: #Check each point...
+            if (abs(p-center)/center) > self.tol: #If one point is out of spec
+                return false; #Report conditions are NOT met
+        return true; #Otherwise, all reqired points were within spec
+
+    def
 
 class LoggingGroup:
     """Describes a list of values in an HC_Instrument that should be logged
