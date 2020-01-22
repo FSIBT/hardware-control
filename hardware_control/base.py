@@ -154,7 +154,7 @@ class HC_Comm(QObject):
             self.instrument.name, self.backend_model, "CMDLD", cmd
         )
 
-    def command_log(self, cmd:str, state:LoggedPointState):
+    def command_log(self, cmd:str, state):
         """Functions the same way as command(), except it: 1.) immediately records
         the returned data 2.) allows for automatically repeated queries to ensure
         the measured value is in a steady-state and that the measurement is not
@@ -237,7 +237,8 @@ class HC_Comm(QObject):
             if self.dataset_states[set_idx].conditions_met():
                 self.instrument.backend_return(retval) #If all conditions have been met, send the return value to the UI
             else:
-                #All confitions have not been met, incriment the counter and request another measurement
+                #All confitions have not been met, request another measurement
+                self.command(self.dataset_states[set_idx].repeat_command, self.dataset_states[set_idx]);
 
         else:
             #If no steeady state condition is required, immediately return the response
@@ -397,8 +398,6 @@ class LoggedPointState:
             if (abs(p-center)/center) > self.tol: #If one point is out of spec
                 return false; #Report conditions are NOT met
         return true; #Otherwise, all reqired points were within spec
-
-    def
 
 class LoggingGroup:
     """Describes a list of values in an HC_Instrument that should be logged
