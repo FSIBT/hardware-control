@@ -170,7 +170,7 @@ class HC_Comm(QObject):
 
         add_to_list = True
         for s_idx, s in enumerate(self.dataset_states):
-            if s.dataset_id == state.dataset_id: #Ensure there is not already a state with the assigned ID number
+            if s.datapoint_id == state.datapoint_id: #Ensure there is not already a state with the assigned ID number
                 self.dataset_states[s_idx] = state; #Update state
                 add_to_list = False
 
@@ -178,7 +178,7 @@ class HC_Comm(QObject):
         if add_to_list:
             self.dataset_states.append(state)
 
-        self.sigCommandLog.emit(cmd, time.time() + self.expire_time, state.dataset_id)
+        self.sigCommandLog.emit(cmd, time.time() + self.expire_time, state.datapoint_id)
         self.instrument.window.app.add_log(self.instrument.name, self.backend_model, "CMDLG", cmd)
 
 
@@ -217,7 +217,7 @@ class HC_Comm(QObject):
         #Find the state objeect with a matching ID
         set_idx = -1;
         for s_idx, s in enumerate(self.dataset_states):
-            if s.dataset_id == id:
+            if s.datapoint_id == id:
                 set_idx = s_idx;
 
         #Ensure a state variable was found
@@ -331,7 +331,7 @@ class HC_CommWorker(QObject):
         else:
             ret_val = self.backend.command(cmd)
 
-        self.sigReturnLog.emit(ret_val, dataset_id)
+        self.sigReturnLog.emit(ret_val, datapoint_id)
 
     @pyqtSlot()
     def close(self):
@@ -342,7 +342,7 @@ class HC_CommWorker(QObject):
 
 class LoggedPointState:
 
-    def __init__(self, dataset_id:int, steady_points:int, equip_dt:float=.1, tol:float=.1, max_iterations:int=10, num_in_spec:int=3):
+    def __init__(self, dataset_name:str, datapoint_id:int,  steady_points:int, equip_dt:float=.1, tol:float=.1, max_iterations:int=10, num_in_spec:int=3):
 
         self.steady_points = steady_points #Number of points that must be measured and considered 'steady'
         self.steady_dt = dt #change in time between points checked for steady state condition
@@ -354,12 +354,14 @@ class LoggedPointState:
         #self.num_found_in_spec = 0 #Number of points that have been measured and considered steady
 
         self.prev_data = [] #Previous data values measured (for comparison for steady state determination)
-        self.dataset_id = dataset_id; #ID number used to assosiate this object with return values from instruments, and to
+        self.datapoint_id = datapoint_id; #ID number used to assosiate this object with return values from instruments, and to
                                       #assosiate measurements corresponding to one datapoint/time across multiple instruments
                                       #and queries. This allows all corresponding data points to be erased if one fails and
                                       #all points at that timestep need to be removed.
 
         self.repeat_command = ""; #The command fed back to command_log() if additional data points are required
+
+        self.dataset_name = dataset_name; #This is the name of the dataset it is a member of
 
     def add_point(self, retval:str):
         """Checks if the last return value (passed as 'retva') qualifies as a steady
@@ -399,29 +401,12 @@ class LoggedPointState:
                 return false; #Report conditions are NOT met
         return true; #Otherwise, all reqired points were within spec
 
-class LoggingGroup:
-    """Describes a list of values in an HC_Instrument that should be logged
-    when get_header() or get_values() is called."""
+class dataset:
 
-    def __init__(self, group_name: str):
+    def __init__(self, name:str):
 
-        # These are the keys of <HC_Insturment>.values to log. This is a list
-        # of strings.
-        self.values_keys = []
-
-        # These are the names for each of the logged values. These titles/names
-        # are what will be passed when get_header() is called.
-        self.values_titles = []
-
-        # These are optional desciptions for each of the logged parameters.
-        self.values_descriptions = []
-
-        # This is the name of the logging group
-        self.group_name = group_name
-
-    def setDescriptions(self, descrs: list):
-        """Add descriptions for the logging values"""
-        self.values_descriptions = descrs
+        self.name = name;
+        self.data = {}
 
 
 class HC_Instrument(QGroupBox):
@@ -729,6 +714,15 @@ class HC_Instrument(QGroupBox):
         which returns a string and two lists. The author of the UI can overwrite
         this function to procses the return data."""
         pass
+
+    def backend_return_log(self, retval:str):
+        """When HC_Comm's command_log() returns, backend_return_log() is called
+        prior to backend_return(). backend_return_log() performs the logging
+        action before backend_return() updates the UI, stores the value in
+        self.values, or whatever else it may be configured to do."""
+        pass #TODO: Impliment save to logging group
+
+
 
     def pDebug(self, msg, important=False, blue=False):
         self.window.app.pDebug(msg, important)
