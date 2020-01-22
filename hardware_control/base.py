@@ -32,7 +32,7 @@ class HC_Comm(QObject):
     sigQuery = pyqtSignal(str, float)
     sigTryConnect = pyqtSignal(float)
     sigCommandList = pyqtSignal(str, float)
-    sigCommandLog = pyqtSignal(str, float)
+    sigCommandLog = pyqtSignal(str, float, int)
     sigClose = pyqtSignal()
 
     # TODO: @TImo Bauer Add 'try_connect' frequency
@@ -71,6 +71,8 @@ class HC_Comm(QObject):
         self.try_connect_timer = QTimer(self)
         self.try_connect_timer.timeout.connect(self.try_connect)
         self.try_connect_timer.start(self.try_connect_period)
+
+        self.dataset_states = [];
 
     def close(self):
         self.instrument.pDebug(
@@ -156,7 +158,15 @@ class HC_Comm(QObject):
         the returned data 2.) allows for automatically repeated queries to ensure
         the measured value is in a steady-state and that the measurement is not
         fluctuating beyond the specified tolerance."""
-        self.sigCommandLog.emit(cmd, time.time() + self.expire_time)
+
+        for s in self.dataset_states:
+            if s.dataset_id == state.dataset_id: #Ensure there is not already a state with the assigned ID number
+                return
+
+        #Add state information to HC_Comm's list of states
+        self.dataset_states.append(state)
+
+        self.sigCommandLog.emit(cmd, time.time() + self.expire_time, state.dataset_id)
         self.instrument.window.app.add_log(self.instrument.name, self.backend_model, "CMDLG", cmd)
 
 
@@ -184,13 +194,29 @@ class HC_Comm(QObject):
         to process the data."""
         self.instrument.backend_return_listdata(desc, data1, data2)
 
-    @pyqtSlot(str)
-    def backend_return_log(self, retval:str):
+    @pyqtSlot(str, int)
+    def backend_return_log(self, retval:str, id:int):
         """Receives a return value from the CommWorker and sends it to the instrument's
         backend_return function iff the data integrity conditions are met. This means
         if the LoggedPointState object specifies that 2+ matching data points must be
         measured, those points must be measured and found to match before this will call
         backend_return. Otherwise, it will make another call to command_log()"""
+
+        #Find the state objeect with a matching ID
+        set_idx = -1;
+        for s_idx, s in enumerate(self.dataset_states):
+            if s.dataset_id == id:
+                set_idx = s_idx;
+
+        #Ensure a state variable was found
+        if set_idx == -1:
+            #An error has occured an a dataset_state with a matching ID can not be found
+            error_message = f"ERROR: backend_return_log() was called, but a state object with a matching ID ({id}) cannot be found"
+            self.pDebug(error_message)
+            self.intrument.backend_return(error_message)
+
+        if
+
 
 
 
@@ -203,7 +229,7 @@ class HC_CommWorker(QObject):
     sigReturnValues = pyqtSignal(str)
     sigReturnOnline = pyqtSignal(bool)
     sigReturnList = pyqtSignal(str, list, list)
-    sigReturnLog = pyqtSignal(str)
+    sigReturnLog = pyqtSignal(str, int)
 
     def __init__(self, backend):
         super().__init__()
@@ -270,15 +296,15 @@ class HC_CommWorker(QObject):
             ret_val = self.backend.command_listdata(cmd)
         self.sigReturnList.emit(ret_val[0], ret_val[1], ret_val[2])
 
-    @pyqtSlot(str, float)
-    def command_log(self, cmd:str, expire_time:float):
+    @pyqtSlot(str, float, int)
+    def command_log(self, cmd:str, expire_time:float, id:int):
         """Transfers the command to the backend"""
         if time.time() > expire_time:  # Skip command if too old
             ret_val = f'EXPIRED=CMDLG:"{cmd}" \t[Exec: {time.time()}, Exp: {expire_time}] [{self.backend.ID}]'
         else:
             ret_val = self.backend.command(cmd)
 
-        self.sigReturnLog.emit(ret_val)
+        self.sigReturnLog.emit(ret_val, dataset_id)
 
     @pyqtSlot()
     def close(self):
@@ -289,19 +315,22 @@ class HC_CommWorker(QObject):
 
 class LoggedPointState:
 
-    def __init__(self, datapt_idx:int, equil_points:int, equip_dt:float=.1, tol:float=.1, max_iterations:int=10, num_in_spec:int=3):
+    def __init__(self, dataset_id:int, steady_points:int, equip_dt:float=.1, tol:float=.1, max_iterations:int=10, num_in_spec:int=3):
 
-        self.equil_points = equil_points
-        self.equil_dt = equil_dt
-        self.tol = tol
+        self.steady_points = steady_points #Number of points that must be measured and considered 'steady'
+        self.steady_dt = dt #change in time between points checked for steady state condition
+        self.tol = tol #Tolerance  (in percent/100 ie from 0 to 1) by which points can differ and still be considered 'steady'
 
-        self.iterations = 0
-        self.max_iterations = max_iterations
-        self.num_in_spec = num_in_spec
-        self.num_found_in_spec = 0
+        self.iterations = 0 #Number of iterations, ie measurements, that have occcured
+        self.max_iterations = max_iterations #Maximum number of iterations before returns failure condition
+        self.num_in_spec = num_in_spec #Number of points that must be considered steady before a value is returned to the UI
+        self.num_found_in_spec = 0 #Number of points that have been measured and considered steady
 
-        self.prev_data = []
-        self.datapt_idx = datapt_idx;
+        self.prev_data = [] #Previous data values measured (for comparison for steady state determination)
+        self.dataset_id = dataset_id; #ID number used to assosiate this object with return values from instruments, and to
+                                      #assosiate measurements corresponding to one datapoint/time across multiple instruments
+                                      #and queries. This allows all corresponding data points to be erased if one fails and
+                                      #all points at that timestep need to be removed.
 
 class LoggingGroup:
     """Describes a list of values in an HC_Instrument that should be logged
@@ -744,6 +773,7 @@ class HC_App(QApplication):
             or log_type == "NOTE"
             or log_type == "WARNING"
             or log_type == "CMDLD"
+            or log_type == "CMDLG"
         ):
             self.log.append(
                 f'{instr_name}: \t{log_type} "{arg1}" \t[{datestr}] \t[{backend_model}]'
