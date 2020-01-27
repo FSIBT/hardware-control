@@ -33,7 +33,7 @@ class HC_Comm(QObject):
     sigQuery = pyqtSignal(str, float)
     sigTryConnect = pyqtSignal(float)
     sigCommandList = pyqtSignal(str, float)
-    sigCommandLog = pyqtSignal(str, float, int)
+    sigCommandLog = pyqtSignal(str, float, str)
     sigClose = pyqtSignal()
 
     # TODO: @TImo Bauer Add 'try_connect' frequency
@@ -154,31 +154,42 @@ class HC_Comm(QObject):
             self.instrument.name, self.backend_model, "CMDLD", cmd
         )
 
-    def command_log(self, cmd:str, state):
-        """Functions the same way as command(), except it: 1.) immediately records
-        the returned data 2.) allows for automatically repeated queries to ensure
-        the measured value is in a steady-state and that the measurement is not
-        fluctuating beyond the specified tolerance."""
+    # def command_log(self, cmd:str, state):
+    #     """Functions the same way as command(), except it: 1.) immediately records
+    #     the returned data 2.) allows for automatically repeated queries to ensure
+    #     the measured value is in a steady-state and that the measurement is not
+    #     fluctuating beyond the specified tolerance."""
+    #
+    #     state.repeat_command = cmd;
+    #     state.iterations += 1
+    #
+    #     #Cancel command if
+    #     if state.iterations > state.max_iterations:
+    #         self.instrument.pDebug(f"ERROR: command_log() function timed out after {state.iterations} iterations of command '{self.repeat_command}'.")
+    #         return
+    #
+    #     #Check if ID is blacklisted if dataset already exists
+    #     if ((state.dataset_name in self.window.app.data_sets) and (self.window.app.data_sets[state.dataset_name].is_blacklisted(state.measurement_id))):
+    #         self.instrument.pDebug(f"command_log() function called blacklisted measurement ID..")
+    #         return
+    #
+    #     add_to_list = True
+    #     for s_idx, s in enumerate(self.dataset_states):
+    #         if s.measurement_id == state.measurement_id: #Ensure there is not already a state with the assigned ID number
+    #             self.dataset_states[s_idx] = state; #Update state
+    #             add_to_list = False
+    #
+    #     #Add state information to HC_Comm's list of states
+    #     if add_to_list:
+    #         self.dataset_states.append(state)
+    #
+    #     self.sigCommandLog.emit(cmd, time.time() + self.expire_time, state.measurement_id)
+    #     self.instrument.window.app.add_log(self.instrument.name, self.backend_model, "CMDLG", cmd)
 
-        state.repeat_command = cmd;
-        state.iterations += 1
-
-        #Cancel command if
-        if state.iterations > state.max_iterations:
-            self.instrument.pDebug(f"ERROR: command_log() function timed out after {state.iterations} iterations of command '{self.repeat_command}'.")
-            return
-
-        add_to_list = True
-        for s_idx, s in enumerate(self.dataset_states):
-            if s.datapoint_id == state.datapoint_id: #Ensure there is not already a state with the assigned ID number
-                self.dataset_states[s_idx] = state; #Update state
-                add_to_list = False
-
-        #Add state information to HC_Comm's list of states
-        if add_to_list:
-            self.dataset_states.append(state)
-
-        self.sigCommandLog.emit(cmd, time.time() + self.expire_time, state.datapoint_id)
+    def command_log(self, cmd:str, param_str:str):
+        """Sends a command to the worker in the worker thread"""
+        self.instrument.pDebug(f"Instrument: {self.instrument.name} called 'command()' and sent command: '{cmd}'.")
+        self.sigCommandLog.emit(cmd, time.time() + self.expire_time, param_str)
         self.instrument.window.app.add_log(self.instrument.name, self.backend_model, "CMDLG", cmd)
 
 
@@ -188,6 +199,7 @@ class HC_Comm(QObject):
         backend_return function, which adds it to the instrument's values dictionary or
         , if overwritten, may process the return string immediately for example by
         updating the UI."""
+
         self.instrument.pDebug(
             f"Instrument: {self.instrument.name} received return from backend '{self.backend_model}'. Return message: {retval}"
         )
@@ -206,44 +218,50 @@ class HC_Comm(QObject):
         to process the data."""
         self.instrument.backend_return_listdata(desc, data1, data2)
 
-    @pyqtSlot(str, int)
-    def backend_return_log(self, retval:str, id:int):
+    @pyqtSlot(str, str)
+    def backend_return_log(self, retval:str, param_str:str):
         """Receives a return value from the CommWorker and sends it to the instrument's
-        backend_return function iff the data integrity conditions are met. This means
-        if the LoggedPointState object specifies that 2+ matching data points must be
-        measured, those points must be measured and found to match before this will call
-        backend_return. Otherwise, it will make another call to command_log()"""
+        backend_return function, which adds it to the instrument's values dictionary or
+        , if overwritten, may process the return string immediately for example by
+        updating the UI."""
 
-        #Find the state objeect with a matching ID
-        set_idx = -1;
-        for s_idx, s in enumerate(self.dataset_states):
-            if s.datapoint_id == id:
-                set_idx = s_idx;
+        self.window.app.director.backend_return_log(retval, param_str)
+        self.instrument.pDebug(f"Instrument: {self.instrument.name} received return from backend '{self.backend_model}'. Return message: {retval}")
+        self.instrument.backend_return(retval)
 
-        #Ensure a state variable was found
-        if set_idx == -1:
-            #An error has occured an a dataset_state with a matching ID can not be found
-            error_message = f"ERROR: backend_return_log() was called, but a state object with a matching ID ({id}) cannot be found"
-            self.pDebug(error_message)
-            self.intrument.backend_return(error_message)
-
-        #Check if req number of steady points is satisfied
-        if self.dataset_states[set_idx].steady_points > 0:
-
-            #Add the last measurement to the state object
-            self.dataset_states.add_point(retval)
-
-
-            if self.dataset_states[set_idx].conditions_met():
-                self.instrument.backend_return(retval) #If all conditions have been met, send the return value to the UI
-            else:
-                #All confitions have not been met, request another measurement
-                self.command(self.dataset_states[set_idx].repeat_command, self.dataset_states[set_idx]);
-
-        else:
-            #If no steeady state condition is required, immediately return the response
-            self.instrument.backend_return(retval)
-
+    # @pyqtSlot(str, int, str)
+    # def backend_return_log(self, retval:str, param_str:str):
+    #     """ """
+    #
+    #     #Find the state objeect with a matching ID
+    #     set_idx = -1;
+    #     for s_idx, s in enumerate(self.dataset_states):
+    #         if s.measurement_id == id:
+    #             set_idx = s_idx;
+    #
+    #     #Ensure a state variable was found
+    #     if set_idx == -1:
+    #         #An error has occured an a dataset_state with a matching ID can not be found
+    #         error_message = f"ERROR: backend_return_log() was called, but a state object with a matching ID ({id}) cannot be found"
+    #         self.pDebug(error_message)
+    #         self.intrument.backend_return(error_message)
+    #
+    #     #Check if req number of steady points is satisfied
+    #     if self.dataset_states[set_idx].steady_points > 0:
+    #
+    #         #Add the last measurement to the state object
+    #         self.dataset_states.add_point(retval)
+    #
+    #
+    #         if self.dataset_states[set_idx].conditions_met():
+    #             self.instrument.backend_return(retval) #If all conditions have been met, send the return value to the UI
+    #         else:
+    #             #All confitions have not been met, request another measurement
+    #             self.command(self.dataset_states[set_idx].repeat_command, self.dataset_states[set_idx]);
+    #
+    #     else:
+    #         #If no steeady state condition is required, immediately return the response
+    #         self.instrument.backend_return(retval)
 
 
 
@@ -256,7 +274,7 @@ class HC_CommWorker(QObject):
     sigReturnValues = pyqtSignal(str)
     sigReturnOnline = pyqtSignal(bool)
     sigReturnList = pyqtSignal(str, list, list)
-    sigReturnLog = pyqtSignal(str, int)
+    sigReturnLog = pyqtSignal(str, str)
 
     def __init__(self, backend):
         super().__init__()
@@ -323,15 +341,15 @@ class HC_CommWorker(QObject):
             ret_val = self.backend.command_listdata(cmd)
         self.sigReturnList.emit(ret_val[0], ret_val[1], ret_val[2])
 
-    @pyqtSlot(str, float, int)
-    def command_log(self, cmd:str, expire_time:float, id:int):
+    @pyqtSlot(str, float, str)
+    def command_log(self, cmd:str, expire_time:float, param_str:str):
         """Transfers the command to the backend"""
         if time.time() > expire_time:  # Skip command if too old
             ret_val = f'EXPIRED=CMDLG:"{cmd}" \t[Exec: {time.time()}, Exp: {expire_time}] [{self.backend.ID}]'
         else:
             ret_val = self.backend.command(cmd)
 
-        self.sigReturnLog.emit(ret_val, datapoint_id)
+        self.sigReturnLog.emit(ret_val, param_str)
 
     @pyqtSlot()
     def close(self):
@@ -340,28 +358,39 @@ class HC_CommWorker(QObject):
         online = self.backend.close()
         self.sigReturnOnline.emit(online)
 
-class LoggedPointState:
+class MeasurementRequest:
+    """Describes state information for a single measurement. This state object is
+    passed to HC_Comm's command_log() function to communicate options such as
+    if to repeat measurement and check for stability, how many stable points to find,
+    how to define 'stable', etc etc. HC_Comm keeps a list of these objects so it
+    doesn't need to be passed back and forth between the backend. Instead, a unique
+    interger called the measurement_id which is used to link a call to
+    backend_return_log() to the corresponding MeasurementState object."""
 
-    def __init__(self, dataset_name:str, datapoint_id:int,  steady_points:int, equip_dt:float=.1, tol:float=.1, max_iterations:int=10, num_in_spec:int=3):
+    def __init__(self, dataset_name:str, instrument_name:str, parameter_name:str, steady_points:int, equip_dt:float=.1, tol:float=.1, max_iterations:int=10, num_in_spec:int=3):
 
+        #******* These parameters tell the director how to query and save the data *******************************
+        #
+        self.dataset_name = dataset_name; #This is the name of the dataset it is a member of
+        self.inst_name = instrument_name; #This is the name of the instrument from which to measure
+        self.param_name = parameter_name; #This is the name of the parameter to measure
+        self.measurement_index = -1; #This is the index in the dataset arrays in which the measurement will be stored
+        #
+        self.inst_command = ""; #Command to send to the instrument
+
+        #********* These parameters tell the director how to verify the measurement's stability ******************
+        #
         self.steady_points = steady_points #Number of points that must be measured and considered 'steady'
         self.steady_dt = dt #change in time between points checked for steady state condition
         self.tol = tol #Tolerance  (in percent/100 ie from 0 to 1) by which points can differ and still be considered 'steady'
-
+        #
         self.iterations = 0 #Number of iterations, ie measurements, that have occcured
         self.max_iterations = max_iterations #Maximum number of iterations before returns failure condition
-        self.num_in_spec = num_in_spec #Number of points that must be considered steady before a value is returned to the UI
-        #self.num_found_in_spec = 0 #Number of points that have been measured and considered steady
 
         self.prev_data = [] #Previous data values measured (for comparison for steady state determination)
-        self.datapoint_id = datapoint_id; #ID number used to assosiate this object with return values from instruments, and to
-                                      #assosiate measurements corresponding to one datapoint/time across multiple instruments
-                                      #and queries. This allows all corresponding data points to be erased if one fails and
-                                      #all points at that timestep need to be removed.
+        self.keep_as_string = False; #Instructs MeasurementDirector to keep the returned data as a string instead of a double. Disables all stability checks
+        self.launched = False; #Tells the MeasurementDirector if this request has already been handled or if it needs to be sent to a backend
 
-        self.repeat_command = ""; #The command fed back to command_log() if additional data points are required
-
-        self.dataset_name = dataset_name; #This is the name of the dataset it is a member of
 
     def add_point(self, retval:str):
         """Checks if the last return value (passed as 'retva') qualifies as a steady
@@ -377,37 +406,230 @@ class LoggedPointState:
             key = retval[0:sep_idx]
             val = retval[sep_idx + 1 :]
         else:
-            return #Separator was not found, return early
+            return False #Separator was not found, return early
 
         #Try to convert returned value to a float, add to list
         try:
             self.prev_data.append(float(val))
         except:
-            return
+            return False
 
     def conditions_met(self):
         """Determines if the completion criteria have been met, or if more points are
         required."""
+
+        #If specified to keep data as string, return True if data already aquired b/c all stability checks are disabled
+        if (self.keep_as_string and len(self.prev_data) > 0):
+            return True;
+
         #If less than the required number of points have been collected, then
         #the conditions can not have been met
         if len(self.pev_data) < self.num_in_spec:
-            return false
+            return False
 
         #Determine if all required points are in the steady state
         pts = self.prev_data[self.num_in_spec*-1:] #Get the last however many datapoints must be within spec
         center = np.mean(pts) #Calculate the mean - this will be used in determining an absolute value for the tolerance
         for p in pts: #Check each point...
             if (abs(p-center)/center) > self.tol: #If one point is out of spec
-                return false; #Report conditions are NOT met
-        return true; #Otherwise, all reqired points were within spec
+                return False; #Report conditions are NOT met
+        return True; #Otherwise, all reqired points were within spec
 
-class dataset:
+    def meas_failed(self):
+        return (self.iterations >= self.max_iterations)
+
+class MeasurementDirector:
+
+    def __init__(self, app):
+
+        self.queue = []; #List of MeasurementRequest objects to measure in this datapoint
+
+        self.state = "Ready" #Describes state of director and if new scan is possible. Options: Ready - can add requests or start scan, Busy - scanning, can not take new measurements or start again, Error - an error occured. Details in err_str, Failed - Last measurement failed. Details in err_str
+        self.err_str = ""
+        self.occ_instruments = [] #List of all instruments currently processing a MeasurementRequest
+
+        self.cancel_batch = False;
+
+        self.app = app;
+
+    def measure(self, meas_req):
+        """Add a measurement to the list of MeasurementRequests"""
+
+        #MAke sure director is ready to take new commands
+        if self.state != "Ready" or self.state == "Fail":
+            return False;
+
+        #Get the next index (also checks that dataset is not corrupted)
+        next_idx = self.app.data_sets[meas_req.dataset_name].len();
+        if (next_idx == -1):
+            self.app.pDebug(f"ERROR: Dataset {meas_req.dataset_name} corrupted. Tracked parameters have unequal number of datapoints.");
+            return False;
+
+        #Record next index in measurement_index
+        meas_req.measurement_index = next_idx;
+
+        #Add measurement request to queue
+        self.queue.append(meas_req)
+
+        return True;
+
+    def start(self):
+
+        self.cancel_batch = False;
+
+        if self.state == "Ready" or self.state == "Fail":
+            launch_avail();
+
+    def stop(self):
+        pass;
+
+    def get_state(self):
+        return self.state;
+
+    def backend_return_log(self, retval:str, param_str:str):
+
+        #Interpret 'param_str' to get variables to match in MeasurementRequest
+        components = param_str.split(":")  # Split the command up into tokens
+        if len(components) != 4:
+            err_str = "Wrong number of components returned in param_str by HC_Comm.";
+            self.state = "Error"
+            return
+
+        m_idx = -1;
+        try:
+            m_idx = int(components[3])
+        except:
+            midx_str = components[3]
+            err_str = "Failed to read measurement index '{midx_str}'.";
+            self.state = "Error"
+            return
+
+        #Find set in queue
+        for midx, mr in enumerate(self.queue): #For evert meas. request...
+            if mr.dataset_name == components[0] and mr.instr_name == components[1] and mr.param_name == components[2] and measurement_idx == m_idx: #If identifiers match...
+                idx = midx; #The request was found, record its index
+
+        #****** Decide what to do...
+
+        #If one measurement failed and batch is canceled, delete this data
+        if self.cancel_batch:
+
+            #Delete this MR from queue
+            self.queue.pop(idx);
+
+            #Remove instrument from occupied_instruments list
+            for inst_idx, inst in self.occ_instruments: #For each name in occupied instrumnt list...
+                if inst == components[1]: #IF matches last instrument...
+                    self.occ_instruments.pop(inst_idx) #Remove from list
+
+        #Add last measurement to MeasurementRequest
+        if not self.queue[idx].add_point(retval):
+            err_str = "Failed to add point. Return value was invalid."
+            self.state = "Error"
+            return
+
+        #Check if conditions are satisfied
+        if self.queue[idx].conditions_met():
+
+            #record data
+            data_key = components[1]+":"+components[2]
+            if self.queue[idx].keep_as_string:
+                self.app.data_sets[components[0]].data[data_key].append( retval )
+            else:
+                try:
+                    self.app.data_sets[components[0]].data[data_key].append( float(retval) )
+                except:
+                    err_str = "Failed to add point. Return value could not be converted to a float."
+                    self.state = "Error"
+                    return
+
+            #Double check that correct number of points exist - ie. index == len()
+            if len(self.app.data_sets[components[0]].data[data_key]) != self.queue[idx].measurement_index:
+                err_str = "Wrong number of items in array after adding measurement."
+                self.state = "Error"
+                return
+
+            #erase from queue
+            self.queue.pop(idx);
+
+            #Remove instrument from occupied_instruments list
+            for inst_idx, inst in self.occ_instruments: #For each name in occupied instrumnt list...
+                if inst == components[1]: #IF matches last instrument...
+                    self.occ_instruments.pop(inst_idx) #Remove from list
+
+            #Launch available MeasurementRequests
+            self.launch_avail()
+
+        #Check if too many attempts have occured
+        if self.queue[idx].meas_failed():
+
+            #Mark as failed
+            err_str = "Measurement failed"
+            self.state = "Failed"
+            self.cancel_batch = True;
+
+            #Batch canceled - remove all requests that haven't been launched
+            for midx, mr in enumerate(self.queue): #For each request...
+                if not mr.launched:  #If request hasn't been launched...
+                    self.queue.pop(midx) #Remove request
+
+            #erase request from queue
+            self.queue.pop(idx);
+
+            #Remove instrument from occupied_instruments list
+            for inst_idx, inst in self.occ_instruments: #For each name in occupied instrumnt list...
+                if inst == components[1]: #IF matches last instrument...
+                    self.occ_instruments.pop(inst_idx) #Remove from list
+
+            #Launch available MeasurementRequests
+            self.launch_avail()
+
+    def launch_avail(self):
+
+        for mr in self.queue: #For every MeasurementRequest in queue...
+            if (mr.launched == False) and (mr.instr_name not in self.occ_instruments): #IF the request has NOT been launched and its instrument is NOT occupied...
+                self.launch(mr) #Launch request
+
+    def launch(self, meas_req):
+
+        # Find instrument....
+        instr_idx = -1
+        for idx, inst in enumerate(self.app.instruments):
+            if meas_req.instr_name == inst.name:
+                instr_idx = idx
+
+        if instr_idx != -1:
+            param_str = meas_req.dataset_name + ":" + meas_req.instr_name + ":" + meas_req.param_name + ":" + meas_req.measurement_index;
+            self.instruments[instr_idx].command_log(command_str, param_str)
+        else:
+            self.add_log("MeasurementDirector", "N/A", "WARNING", f"Invalid Instrument in MeasurementRequest. Instrument: '{meas_req.instr_name}'")
+            return False
+
+
+class Dataset:
+    """Represents a complete dataset (ie. a collection of datapoints, which are
+    collections of individual measurements)."""
 
     def __init__(self, name:str):
 
-        self.name = name;
-        self.data = {}
+        self.name = name; #Name of dataset
 
+        self.data = {}; #List of datapoints. Each key follows the <instrument>:<parameter> naming scheme. Every value is a dictionary and all dictionaries need to have the same length
+
+    def len(self):
+        """Returns the length of all of the values in self.data. If they aren't
+        all the same length (they should be), returns -1."""
+
+        datalen = -1;
+        for key in self.data: #For each instrument/parameter pair...
+
+            if datalen == -1: #For first time through loop, record length as benchmark
+                datalen = len(self.data[key])
+            else: #For everyother time, compare length against benchmark, see if all the same
+                if (datalen != len(self.data[key])): #If any don't match, return -1
+                    return -1;
+
+        return datalen #Otherwise return current length (which is the next index)
 
 class HC_Instrument(QGroupBox):
     def __init__(self, window, name: str):
@@ -444,82 +666,7 @@ class HC_Instrument(QGroupBox):
         # return f"{self.manufacturer} {self.model}"
         return f"{self.name}"
 
-    def add_logging_group(
-        self, group_name: str, value_keys: list, header_strs: list = []
-    ):
-        """Adds a group of values to log. When calling get_values() or
-        get_header()"""
 
-        # Make sure arrays match dimensions
-        if len(value_keys != header_strs):
-            return False
-
-        # Only keep keys actually present in self.values
-        vks = []
-        hss = []
-        for idx, vk in enumerate(value_keys):
-            if vk in self.values:
-                vks.append(vk)
-                hss.append(header_strs[idx])
-
-        # Create new group
-        new_group = LoggingGroup(group_name, vks, hss)
-
-        # Append new group to list
-        self.logging_groups.append(new_group)
-
-        return True
-
-    def get_logging_group(self, group_name: str):
-        """Finds the logging group with name 'group_name' and returns it. If
-        no such group is found, returns None."""
-
-        for g in self.logging_groups:
-            if g.name == group_name:
-                return g
-
-        return None
-
-    def get_header(self, group_name=""):
-        """Returns the header for the specified logging group. If the group
-        requested does not exist, returns None"""
-        if group_name == "":
-            return get_default_header()
-        else:
-
-            for lg in self.logging_groups:
-                if lg.group_name == group_name:
-                    return ".".join(lg.values_titles)  # TODO: Better way to join/label?
-
-    def get_values(self, group_name=""):
-        """Returns the values for the specified logging group. If the group
-        requested does not exist, returns None"""
-        if group_name == "":
-            return get_default_header()
-        else:
-
-            vals = []
-            for lg in self.logging_groups:
-                if lg.group_name == group_name:
-                    for k in lg.value_keys:
-                        vals.append(self.values[k])
-                return vals
-            return None
-
-    def get_default_header(self):
-        """Supply a header for a log file"""
-        header = f"{self.manufacturer}-{self.model}-"
-        header += "-".join(
-            [
-                f"{vname}[{vunit}]"
-                for vname, vunit in zip(self.values.keys(), self.values_unit)
-            ]
-        )
-        return header
-
-    def get_default_values(self):
-        """Return current list of values for logging"""
-        return self.values.values()
 
     def enableDisableWidgets(self, setting: str, value: str):
         """User can overwrite this to enable/disable widgets when conditions/settings
@@ -715,14 +862,35 @@ class HC_Instrument(QGroupBox):
         this function to procses the return data."""
         pass
 
-    def backend_return_log(self, retval:str):
+    def backend_return_log(self, retval:str, point_data):
         """When HC_Comm's command_log() returns, backend_return_log() is called
         prior to backend_return(). backend_return_log() performs the logging
         action before backend_return() updates the UI, stores the value in
         self.values, or whatever else it may be configured to do."""
-        pass #TODO: Impliment save to logging group
 
+        found = False;
+        for ds in self.window.app.data_sets:
+            if point_data.dataset_name == ds.name:
 
+                sep_idx = retval.find("=")
+                if sep_idx == -1:
+                    self.pDebug("ERROR: Failed to find '=' in return string after call to command_log()")
+                    return False
+
+                key_param = retval[0:sep_idx]
+                val = retval[sep_idx+1:]
+
+                key_name = point_data.instrument_name + ":" + key_param
+                ds.data[key_name].append(val)
+                found = True
+
+        if not found:
+            return False
+
+        return True
+
+        #TODO: Record 'id' for each measurement
+        #TODO: Erase measurements with corresponding ID if one fails
 
     def pDebug(self, msg, important=False, blue=False):
         self.window.app.pDebug(msg, important)
@@ -744,6 +912,12 @@ class HC_App(QApplication):
         self.dummy = False
         self.print_close_info = False
         self.debug = debug
+
+        self.data_sets = {} #List of datasets
+        untitled_set = Dataset("Untitled")
+        self.data_sets["Untitled"] = untitled_set
+
+        self.director = MeasurementDirector(self);
 
         # Dictates if hc_commands are allowed to execute raw python code via calls to the
         # via teh 'exec' function
@@ -957,12 +1131,7 @@ class HC_App(QApplication):
             if instr_idx != -1:
                 self.instruments[instr_idx].command(command_str)
             else:
-                self.add_log(
-                    "HC-Command Processor",
-                    "N/A",
-                    "WARNING",
-                    f"Invalid HC-Command received. Wrong number of tokens. Command: '{command}'",
-                )
+                self.add_log("HC-Command Processor", "N/A", "WARNING", f"Invalid HC-Command received. Wrong number of tokens. Command: '{command}'")
                 return False
 
             self.pDebug(
