@@ -188,6 +188,9 @@ class HC_Comm(QObject):
 
     def command_log(self, cmd:str, param_str:str):
         """Sends a command to the worker in the worker thread"""
+
+        print("\n\t\tCOMMAND_LOG::HC_COMM\n");
+
         self.instrument.pDebug(f"Instrument: {self.instrument.name} called 'command()' and sent command: '{cmd}'.")
         self.sigCommandLog.emit(cmd, time.time() + self.expire_time, param_str)
         self.instrument.window.app.add_log(self.instrument.name, self.backend_model, "CMDLG", cmd)
@@ -225,7 +228,9 @@ class HC_Comm(QObject):
         , if overwritten, may process the return string immediately for example by
         updating the UI."""
 
-        self.window.app.director.backend_return_log(retval, param_str)
+        print("\n\t\t\t\tBACKEND_RETURN_LOG::HC_COMM\n");
+
+        self.instrument.window.app.director.backend_return_log(retval, param_str)
         self.instrument.pDebug(f"Instrument: {self.instrument.name} received return from backend '{self.backend_model}'. Return message: {retval}")
         self.instrument.backend_return(retval)
 
@@ -344,6 +349,9 @@ class HC_CommWorker(QObject):
     @pyqtSlot(str, float, str)
     def command_log(self, cmd:str, expire_time:float, param_str:str):
         """Transfers the command to the backend"""
+
+        print("\n\t\t\tCOMMAND_LOG::HC_COMMWORKER\n");
+
         if time.time() > expire_time:  # Skip command if too old
             ret_val = f'EXPIRED=CMDLG:"{cmd}" \t[Exec: {time.time()}, Exp: {expire_time}] [{self.backend.ID}]'
         else:
@@ -367,7 +375,7 @@ class MeasurementRequest:
     interger called the measurement_id which is used to link a call to
     backend_return_log() to the corresponding MeasurementState object."""
 
-    def __init__(self, dataset_name:str, instrument_name:str, parameter_name:str, steady_points:int, equip_dt:float=.1, tol:float=.1, max_iterations:int=10, num_in_spec:int=3):
+    def __init__(self, dataset_name:str, instrument_name:str, parameter_name:str, cmd_str:str, steady_points:int=3, equip_dt:float=.1, tol:float=.1, max_iterations:int=10):
 
         #******* These parameters tell the director how to query and save the data *******************************
         #
@@ -376,12 +384,12 @@ class MeasurementRequest:
         self.param_name = parameter_name; #This is the name of the parameter to measure
         self.measurement_index = -1; #This is the index in the dataset arrays in which the measurement will be stored
         #
-        self.inst_command = ""; #Command to send to the instrument
+        self.inst_command = cmd_str; #Command to send to the instrument
 
         #********* These parameters tell the director how to verify the measurement's stability ******************
         #
         self.steady_points = steady_points #Number of points that must be measured and considered 'steady'
-        self.steady_dt = dt #change in time between points checked for steady state condition
+        self.steady_dt = equip_dt #change in time between points checked for steady state condition
         self.tol = tol #Tolerance  (in percent/100 ie from 0 to 1) by which points can differ and still be considered 'steady'
         #
         self.iterations = 0 #Number of iterations, ie measurements, that have occcured
@@ -478,7 +486,7 @@ class MeasurementDirector:
         self.cancel_batch = False;
 
         if self.state == "Ready" or self.state == "Fail":
-            launch_avail();
+            self.launch_avail();
 
     def stop(self):
         pass;
@@ -506,7 +514,7 @@ class MeasurementDirector:
 
         #Find set in queue
         for midx, mr in enumerate(self.queue): #For evert meas. request...
-            if mr.dataset_name == components[0] and mr.instr_name == components[1] and mr.param_name == components[2] and measurement_idx == m_idx: #If identifiers match...
+            if mr.dataset_name == components[0] and mr.inst_name == components[1] and mr.param_name == components[2] and mr.measurement_index == m_idx: #If identifiers match...
                 idx = midx; #The request was found, record its index
 
         #****** Decide what to do...
@@ -587,7 +595,7 @@ class MeasurementDirector:
     def launch_avail(self):
 
         for mr in self.queue: #For every MeasurementRequest in queue...
-            if (mr.launched == False) and (mr.instr_name not in self.occ_instruments): #IF the request has NOT been launched and its instrument is NOT occupied...
+            if (mr.launched == False) and (mr.inst_name not in self.occ_instruments): #IF the request has NOT been launched and its instrument is NOT occupied...
                 self.launch(mr) #Launch request
 
     def launch(self, meas_req):
@@ -595,14 +603,14 @@ class MeasurementDirector:
         # Find instrument....
         instr_idx = -1
         for idx, inst in enumerate(self.app.instruments):
-            if meas_req.instr_name == inst.name:
+            if meas_req.inst_name == inst.name:
                 instr_idx = idx
 
         if instr_idx != -1:
-            param_str = meas_req.dataset_name + ":" + meas_req.instr_name + ":" + meas_req.param_name + ":" + meas_req.measurement_index;
-            self.instruments[instr_idx].command_log(command_str, param_str)
+            param_str = meas_req.dataset_name + ":" + meas_req.inst_name + ":" + meas_req.param_name + ":" + str(meas_req.measurement_index);
+            self.app.instruments[instr_idx].comm.command_log(meas_req.inst_command, param_str)
         else:
-            self.add_log("MeasurementDirector", "N/A", "WARNING", f"Invalid Instrument in MeasurementRequest. Instrument: '{meas_req.instr_name}'")
+            self.add_log("MeasurementDirector", "N/A", "WARNING", f"Invalid Instrument in MeasurementRequest. Instrument: '{meas_req.inst_name}'")
             return False
 
 
@@ -620,14 +628,20 @@ class Dataset:
         """Returns the length of all of the values in self.data. If they aren't
         all the same length (they should be), returns -1."""
 
-        datalen = -1;
+        datalen = -2;
         for key in self.data: #For each instrument/parameter pair...
 
-            if datalen == -1: #For first time through loop, record length as benchmark
+            if datalen == -2: #For first time through loop, record length as benchmark
                 datalen = len(self.data[key])
+                print(datalen)
             else: #For everyother time, compare length against benchmark, see if all the same
+                print(len(self.data[key]))
                 if (datalen != len(self.data[key])): #If any don't match, return -1
                     return -1;
+
+
+        if len(self.data) == 0:
+            return 0;
 
         return datalen #Otherwise return current length (which is the next index)
 
@@ -1102,9 +1116,7 @@ class HC_App(QApplication):
                 f"Executed Setting Update:\n\tInstrument: {instr_str}\n\tSetting: {setting_str}\n\tValue: {value_str}"
             )
 
-        elif (
-            tokens[0] == "CMD"
-        ):  # This indicates the command provides arguments for an instrument's command() function
+        elif (tokens[0] == "CMD"):  # This indicates the command provides arguments for an instrument's command() function
 
             # Recalculate tokens, with max of 2 splits. This allows colons to appear in the command
             tokens = command.split(":", 2)
@@ -1134,51 +1146,49 @@ class HC_App(QApplication):
                 self.add_log("HC-Command Processor", "N/A", "WARNING", f"Invalid HC-Command received. Wrong number of tokens. Command: '{command}'")
                 return False
 
-            self.pDebug(
-                f"Executed Command:\n\tInstrument: {instr_str}\n\tCommand: {command_str}"
-            )
+            self.pDebug(f"Executed Command:\n\tInstrument: {instr_str}\n\tCommand: {command_str}")
 
-        elif tokens[0] == "RCD":
+        elif (tokens[0] == "CMDLG"):  # This indicates the command provides arguments for an instrument's command() function
 
-            # Lock macros - backend_retun will unlock when it sees a key with an asterisk
-            self.macro_locked = True
+            print("\n\tIN CMDLG\n")
 
-            # Recalculate tokens, with max of 2 splits
-            tokens = command.split(":", 2)
+            # Recalculate tokens, with max of 2 splits. This allows colons to appear in the command
+            tokens = command.split(":", 8)
+
+            #Format: CMDLG:group:instrument:parameter:cmd_str:steady_num:dt:tol:iterations
 
             # Make sure the correct number of arguments are given
-            if len(tokens) != 3:  # Requires: MODE:INSTRUMENT:QUERY_SETTING
-                self.add_log(
-                    "HC-Command Processor",
-                    "N/A",
-                    "WARNING",
-                    f"Invalid HC-Command received. Wrong number of tokens. Command'{command}'",
-                )
+            if len(tokens) != 9:  # Requires: MODE:INSTRUMENT:PARAMETER:VALUE
+                self.add_log("HC-Command Processor","N/A","WARNING",f"Invalid HC-Command received. Wrong number of tokens. Command'{command}'")
+                self.pDebug("ERROR: Wrong number of tokens for CMDLG")
                 return False
 
-            instr_str = tokens[1]
-            command_str = tokens[2] + "*"
+            try:
+                meas_req = MeasurementRequest(tokens[1], tokens[2], tokens[3], tokens[4], int(tokens[5]), float(tokens[6]), float(tokens[7]), int(tokens[8]))
+            except Exception as e:
+                self.add_log("HC-Command Processor","N/A","WARNING",f"Invalid HC-Command received. Failed to create MeasurementRequest from given arguments.")
+                self.pDebug(f"ERROR: Failed to create MeasurementRequest object \t'{str(e)}'")
+                return False
 
             # Find instrument....
             instr_idx = -1
+            instr_str = tokens[2]
+            command_str = tokens[4]
             for idx, inst in enumerate(self.instruments):
                 if instr_str == inst.name:
                     instr_idx = idx
 
-            if instr_idx != -1:
-                self.instruments[instr_idx].command(command_str)
-            else:
-                self.add_log(
-                    "HC-Command Processor",
-                    "N/A",
-                    "WARNING",
-                    f"Invalid HC-Command received. Wrong number of tokens. Command: '{command}'",
-                )
+            if not self.director.measure(meas_req):
+                self.add_log("HC-Command Processor","N/A","WARNING",f"Failed to add MeasurementRequest to director'")
+                self.pDebug("ERROR: Failed add MeasurementRequest to director")
                 return False
 
-            self.pDebug(
-                f"Executed Command:\n\tInstrument: {instr_str}\n\tCommand: {command_str}"
-            )
+
+            self.pDebug(f"Executed Command:\n\tInstrument: {instr_str}\n\tCommand: {command_str}")
+
+        elif tokens[0] == "START":
+
+            self.director.start();
 
         elif tokens[0] == "EXEC":
 
