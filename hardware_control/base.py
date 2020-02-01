@@ -373,6 +373,8 @@ class MeasurementRequest:
         self.launched = False
         # Tells the MeasurementDirector if this request has already been handled or if it needs to be sent to a backend
 
+        self.last_launch_time = time.time()
+
     def add_point(self, retval: str):
         """Checks if the last return value (passed as 'retva') qualifies as a steady
         state condition and adds the point to self.prev_data for later analysis.
@@ -436,9 +438,15 @@ class MeasurementDirector:
         self.err_str = ""
         self.occ_instruments = []  # List of all instruments currently processing a MeasurementRequest
 
+        self.relaunch_list = [] #List of parameter_strings of MeasurementRequests in the queue that need to be relaunched once enough time has elapsed
+
         self.cancel_batch = False
 
         self.app = app
+
+        self.relaunch_timer = QTimer();
+        self.relaunch_timer.timeout.connect(self.check_relaunch)
+        self.relaunch_timer.start(250)
 
     def measure(self, meas_req):
         """Add a measurement to the list of MeasurementRequests"""
@@ -610,9 +618,12 @@ class MeasurementDirector:
             self.launch_avail()
 
         else:
-            self.relaunch(self.queue[idx], param_str)
 
-    def relaunch(self, meas_req, param_str: str):
+            #Relaunch MR
+            if not param_str in self.relaunch_list:
+                self.relaunch_list.append(param_str)
+
+    def relaunch(self, meas_req):
 
         # Find instrument....
         instr_idx = -1
@@ -621,6 +632,7 @@ class MeasurementDirector:
                 instr_idx = idx
 
         if instr_idx != -1:
+            param_str = meas_req.dataset_name + ":" + meas_req.inst_name + ":" + meas_req.param_name + ":" + str(meas_req.measurement_index)
             self.app.instruments[instr_idx].comm.command_log(meas_req.inst_command, param_str)
         else:
             self.add_log("MeasurementDirector", "N/A", "WARNING", f"Invalid Instrument in MeasurementRequest. Instrument: '{meas_req.inst_name}'")
@@ -650,6 +662,56 @@ class MeasurementDirector:
         else:
             self.add_log("MeasurementDirector", "N/A", "WARNING", f"Invalid Instrument in MeasurementRequest. Instrument: '{meas_req.inst_name}'")
             return False
+
+    def check_relaunch(self):
+        """Called automaticlly periodically. When a measurement needs to be repeated to ensure
+        steady-state, it is added to the relaunch_list. This checks everything in the relaunch
+        list and relaunches it if enough time has ellapsed"""
+
+        #BTW, keep track of the relaunch MRs so you can remove from the relaunch list
+        remove_from_list = []
+
+        #Scan through every item...
+        for rmr_idx, rmr in enumerate(self.relaunch_list):
+
+            components = rmr.split(":")  # Split the command up into tokens
+            if len(components) != 4:
+                self.err_str = "Wrong number of components returned in param_str by HC_Comm."
+                self.state = "Error"
+                return
+
+            m_idx = -1
+            try:
+                m_idx = int(components[3])
+            except:
+                midx_str = components[3]
+                self.err_str = "Failed to read measurement index '{midx_str}'."
+                self.state = "Error"
+                return
+
+            # Find set in queue
+            idx = -1
+            for midx, mr in enumerate(self.queue):  # For every meas. request...
+                print(len(self.queue))
+                if mr.dataset_name == components[0] and mr.inst_name == components[1] and mr.param_name == components[2] and mr.measurement_index == m_idx:  # If identifiers match...
+                    idx = midx
+                    # The request was found, record its index
+            if idx == -1:
+                self.err_str = f"Failed to find MeasurementRequest specified by parameteter string '{rmr}'."
+                self.state = "Error"
+                return
+
+            #If enough time has ellapsed...
+            if time.time() - self.queue[idx].last_launch_time >= self.queue[idx].steady_dt:
+                self.queue[idx].last_launch_time = time.time()
+                self.relaunch(self.queue[idx]) #Relaunch measurement
+
+                remove_from_list.append(rmr_idx)
+
+
+        #Everything has been processed - remove the relaunched items
+        for rfl in reversed(remove_from_list):
+            self.relaunch_list.pop(rfl)
 
 
 class Dataset:
