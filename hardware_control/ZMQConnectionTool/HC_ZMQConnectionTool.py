@@ -209,7 +209,12 @@ class HC_ZMQConnectionTool(HC_Instrument):
             self.log_note("Processing command '{mess_str}'")
             rval = self.window.app.process_hc_command(mess_str)
 
-            self.socket.send(message)  # Send reply
+            if type(rval) == str:
+                message = rval
+            elif type(rval) == bool:
+                message = str(rval)
+
+            self.socket.send(bytes(message, 'utf-8'))  # Send reply
 
         else:
 
