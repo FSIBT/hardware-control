@@ -414,13 +414,17 @@ class MeasurementRequest:
             key = retval[0:sep_idx]
             val = retval[sep_idx + 1 :]
         else:
+            self.pDebug(f"ERROR: Failed to find '=' in {retval}")
             return False #Separator was not found, return early
 
         #Try to convert returned value to a float, add to list
         try:
             self.prev_data.append(float(val))
         except:
+            self.pDebug(f"ERROR: failed to convert {val} to float")
             return False
+
+        return True
 
     def conditions_met(self):
         """Determines if the completion criteria have been met, or if more points are
@@ -432,11 +436,11 @@ class MeasurementRequest:
 
         #If less than the required number of points have been collected, then
         #the conditions can not have been met
-        if len(self.pev_data) < self.num_in_spec:
+        if len(self.prev_data) < self.steady_points:
             return False
 
         #Determine if all required points are in the steady state
-        pts = self.prev_data[self.num_in_spec*-1:] #Get the last however many datapoints must be within spec
+        pts = self.prev_data[self.steady_points*-1:] #Get the last however many datapoints must be within spec
         center = np.mean(pts) #Calculate the mean - this will be used in determining an absolute value for the tolerance
         for p in pts: #Check each point...
             if (abs(p-center)/center) > self.tol: #If one point is out of spec
@@ -485,6 +489,8 @@ class MeasurementDirector:
 
         self.cancel_batch = False;
 
+        print(self.state)
+
         if self.state == "Ready" or self.state == "Fail":
             self.launch_avail();
 
@@ -496,10 +502,12 @@ class MeasurementDirector:
 
     def backend_return_log(self, retval:str, param_str:str):
 
+        print("BRL")
+
         #Interpret 'param_str' to get variables to match in MeasurementRequest
         components = param_str.split(":")  # Split the command up into tokens
         if len(components) != 4:
-            err_str = "Wrong number of components returned in param_str by HC_Comm.";
+            self.err_str = "Wrong number of components returned in param_str by HC_Comm.";
             self.state = "Error"
             return
 
@@ -508,7 +516,7 @@ class MeasurementDirector:
             m_idx = int(components[3])
         except:
             midx_str = components[3]
-            err_str = "Failed to read measurement index '{midx_str}'.";
+            self.err_str = "Failed to read measurement index '{midx_str}'.";
             self.state = "Error"
             return
 
@@ -532,28 +540,51 @@ class MeasurementDirector:
 
         #Add last measurement to MeasurementRequest
         if not self.queue[idx].add_point(retval):
-            err_str = "Failed to add point. Return value was invalid."
+            print(retval)
+            self.err_str = "Failed to add point. Return value was invalid."
             self.state = "Error"
             return
+
+        print("Point received...")
 
         #Check if conditions are satisfied
         if self.queue[idx].conditions_met():
 
+            print("Conditions met")
+
+            val = ""
+            sep_idx = retval.find("=")
+            if sep_idx != -1:  # Separator was found...
+                key = retval[0:sep_idx]
+                val = retval[sep_idx + 1 :]
+            else:
+                self.pDebug(f"ERROR: Failed to find '=' in {retval}")
+                return False #Separator was not found, return early
+
             #record data
             data_key = components[1]+":"+components[2]
             if self.queue[idx].keep_as_string:
-                self.app.data_sets[components[0]].data[data_key].append( retval )
+                print("saving string")
+                self.app.data_sets[components[0]].data[data_key].append( val )
             else:
                 try:
-                    self.app.data_sets[components[0]].data[data_key].append( float(retval) )
-                except:
-                    err_str = "Failed to add point. Return value could not be converted to a float."
+                    print("saving float")
+
+                    if not data_key in self.app.data_sets[components[0]].data:
+                        self.app.data_sets[components[0]].data[data_key] = [];
+
+                    self.app.data_sets[components[0]].data[data_key].append( float(val) )
+
+                except Exception as e:
+                    print(f"bad float {val}\n\t{str(e)}")
+                    self.err_str = "Failed to add point. Return value could not be converted to a float."
                     self.state = "Error"
                     return
 
             #Double check that correct number of points exist - ie. index == len()
-            if len(self.app.data_sets[components[0]].data[data_key]) != self.queue[idx].measurement_index:
-                err_str = "Wrong number of items in array after adding measurement."
+            if len(self.app.data_sets[components[0]].data[data_key]) != self.queue[idx].measurement_index+1:
+                print("Bad number of items")
+                self.err_str = "Wrong number of items in array after adding measurement."
                 self.state = "Error"
                 return
 
@@ -569,10 +600,12 @@ class MeasurementDirector:
             self.launch_avail()
 
         #Check if too many attempts have occured
-        if self.queue[idx].meas_failed():
+        elif self.queue[idx].meas_failed():
+
+            print("Measurement Failed")
 
             #Mark as failed
-            err_str = "Measurement failed"
+            self.err_str = "Measurement failed"
             self.state = "Failed"
             self.cancel_batch = True;
 
@@ -591,6 +624,23 @@ class MeasurementDirector:
 
             #Launch available MeasurementRequests
             self.launch_avail()
+
+        else:
+            self.relaunch(self.queue[idx], param_str)
+
+    def relaunch(self, meas_req, param_str:str):
+
+        # Find instrument....
+        instr_idx = -1
+        for idx, inst in enumerate(self.app.instruments):
+            if meas_req.inst_name == inst.name:
+                instr_idx = idx
+
+        if instr_idx != -1:
+            self.app.instruments[instr_idx].comm.command_log(meas_req.inst_command, param_str)
+        else:
+            self.add_log("MeasurementDirector", "N/A", "WARNING", f"Invalid Instrument in MeasurementRequest. Instrument: '{meas_req.inst_name}'")
+            return False
 
     def launch_avail(self):
 
@@ -1148,47 +1198,54 @@ class HC_App(QApplication):
 
             self.pDebug(f"Executed Command:\n\tInstrument: {instr_str}\n\tCommand: {command_str}")
 
-        elif (tokens[0] == "CMDLG"):  # This indicates the command provides arguments for an instrument's command() function
+        elif (tokens[0] == "MEAS"):
+            if (tokens[1] == "REQ"):  # This indicates the command provides arguments for an instrument's command() function
 
-            print("\n\tIN CMDLG\n")
+                print("\n\tIN CMDLG\n")
 
-            # Recalculate tokens, with max of 2 splits. This allows colons to appear in the command
-            tokens = command.split(":", 8)
+                # Recalculate tokens, with max of 2 splits. This allows colons to appear in the command
+                tokens = command.split(":", 9)
 
-            #Format: CMDLG:group:instrument:parameter:cmd_str:steady_num:dt:tol:iterations
+                #Format: CMDLG:group:instrument:parameter:cmd_str:steady_num:dt:tol:iterations
 
-            # Make sure the correct number of arguments are given
-            if len(tokens) != 9:  # Requires: MODE:INSTRUMENT:PARAMETER:VALUE
-                self.add_log("HC-Command Processor","N/A","WARNING",f"Invalid HC-Command received. Wrong number of tokens. Command'{command}'")
-                self.pDebug("ERROR: Wrong number of tokens for CMDLG")
-                return False
+                # Make sure the correct number of arguments are given
+                if len(tokens) != 10:  # Requires: MODE:INSTRUMENT:PARAMETER:VALUE
+                    self.add_log("HC-Command Processor","N/A","WARNING",f"Invalid HC-Command received. Wrong number of tokens. Command'{command}'")
+                    self.pDebug("ERROR: Wrong number of tokens for CMDLG")
+                    return False
 
-            try:
-                meas_req = MeasurementRequest(tokens[1], tokens[2], tokens[3], tokens[4], int(tokens[5]), float(tokens[6]), float(tokens[7]), int(tokens[8]))
-            except Exception as e:
-                self.add_log("HC-Command Processor","N/A","WARNING",f"Invalid HC-Command received. Failed to create MeasurementRequest from given arguments.")
-                self.pDebug(f"ERROR: Failed to create MeasurementRequest object \t'{str(e)}'")
-                return False
+                try:
+                    meas_req = MeasurementRequest(tokens[2], tokens[3], tokens[4], tokens[5], int(tokens[6]), float(tokens[7]), float(tokens[8]), int(tokens[9]))
+                except Exception as e:
+                    self.add_log("HC-Command Processor","N/A","WARNING",f"Invalid HC-Command received. Failed to create MeasurementRequest from given arguments.")
+                    self.pDebug(f"ERROR: Failed to create MeasurementRequest object \t'{str(e)}'")
+                    return False
 
-            # Find instrument....
-            instr_idx = -1
-            instr_str = tokens[2]
-            command_str = tokens[4]
-            for idx, inst in enumerate(self.instruments):
-                if instr_str == inst.name:
-                    instr_idx = idx
+                # Find instrument....
+                instr_idx = -1
+                instr_str = tokens[2]
+                command_str = tokens[5]
+                for idx, inst in enumerate(self.instruments):
+                    if instr_str == inst.name:
+                        instr_idx = idx
 
-            if not self.director.measure(meas_req):
-                self.add_log("HC-Command Processor","N/A","WARNING",f"Failed to add MeasurementRequest to director'")
-                self.pDebug("ERROR: Failed add MeasurementRequest to director")
-                return False
+                if not self.director.measure(meas_req):
+                    self.add_log("HC-Command Processor","N/A","WARNING",f"Failed to add MeasurementRequest to director'")
+                    self.pDebug("ERROR: Failed add MeasurementRequest to director")
+                    return False
 
 
-            self.pDebug(f"Executed Command:\n\tInstrument: {instr_str}\n\tCommand: {command_str}")
+                self.pDebug(f"Executed Command:\n\tInstrument: {instr_str}\n\tCommand: {command_str}")
 
-        elif tokens[0] == "START":
+            elif tokens[1] == "START":
 
-            self.director.start();
+                self.director.start();
+
+            elif tokens[1] == "PSTATE":
+
+                print(self.director.get_state())
+                if self.director.state == "Error":
+                    print(f"\tError message: {self.director.err_str}")
 
         elif tokens[0] == "EXEC":
 
@@ -1210,24 +1267,14 @@ class HC_App(QApplication):
 
             # Ensure more tokens exist
             if len(tokens) < 2:
-                self.add_log(
-                    "HC-Command Processor",
-                    "N/A",
-                    "WARNING",
-                    f"Invalid HC-Command received. FUNC requires arguments.",
-                )
+                self.add_log("HC-Command Processor", "N/A", "WARNING", f"Invalid HC-Command received. FUNC requires arguments.")
                 return False
 
             if tokens[1] == "debug":  # Turn debug mode on or off
 
                 # Ensure more tokens exist
                 if len(tokens) < 3:
-                    self.add_log(
-                        "HC-Command Processor",
-                        "N/A",
-                        "WARNING",
-                        f"Invalid HC-Command received. FUNC:debug requires arguments.",
-                    )
+                    self.add_log("HC-Command Processor", "N/A", "WARNING", f"Invalid HC-Command received. FUNC:debug requires arguments.")
                     return False
 
                 # Change value
@@ -1240,12 +1287,7 @@ class HC_App(QApplication):
 
                 # Ensure more tokens exist
                 if len(tokens) < 3:
-                    self.add_log(
-                        "HC-Command Processor",
-                        "N/A",
-                        "WARNING",
-                        f"Invalid HC-Command received. FUNC:run requires arguments.",
-                    )
+                    self.add_log("HC-Command Processor", "N/A", "WARNING", f"Invalid HC-Command received. FUNC:run requires arguments.")
                     return False
 
                 # Make sure macro exists
@@ -1268,12 +1310,7 @@ class HC_App(QApplication):
 
                 # Ensure more tokens exist
                 if len(tokens) < 4:
-                    self.add_log(
-                        "HC-Command Processor",
-                        "N/A",
-                        "WARNING",
-                        f"Invalid HC-Command received. FUNC:var requires arguments.",
-                    )
+                    self.add_log("HC-Command Processor", "N/A", "WARNING", f"Invalid HC-Command received. FUNC:var requires arguments.")
                     return False
 
                 # Update/create variable
@@ -1347,6 +1384,16 @@ class HC_App(QApplication):
                             self.pDebug(
                                 f"Failed to convert hc-command argument to float"
                             )
+
+            elif tokens[1] == "lsdata":
+
+                print("All Data:")
+                for set_key in self.data_sets:
+                    print(f"\tSet '{set_key}':")
+                    for param_key in self.data_sets[set_key].data:
+                        temp = self.data_sets[set_key].data[param_key]
+                        print(f"\t\t{temp}")
+
         elif tokens[0] == "DEV":
 
             # Ensure more tokens exist
