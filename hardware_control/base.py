@@ -346,17 +346,16 @@ class MeasurementRequest:
 
         # ******* These parameters tell the director how to query and save the data *******************************
         #
-        self.dataset_name = dataset_name
-        # This is the name of the dataset it is a member of
-        self.inst_name = instrument_name
-        # This is the name of the instrument from which to measure
-        self.param_name = parameter_name
-        # This is the name of the parameter to measure
-        self.measurement_index = -1
-        # This is the index in the dataset arrays in which the measurement will be stored
-        #
-        self.inst_command = cmd_str
-        # Command to send to the instrument
+        self.dataset_name = dataset_name # This is the name of the dataset it is a member of
+
+        self.inst_name = instrument_name # This is the name of the instrument from which to measure
+
+        self.param_name = parameter_name # This is the name of the parameter to measure
+
+        self.measurement_index = -1 # This is the index in the dataset arrays in which the measurement will be stored
+
+        self.inst_command = cmd_str # Command to send to the instrument
+
 
         # ********* These parameters tell the director how to verify the measurement's stability ******************
         #
@@ -368,10 +367,12 @@ class MeasurementRequest:
         self.max_iterations = max_iterations  # Maximum number of iterations before returns failure condition
 
         self.prev_data = []  # Previous data values measured (for comparison for steady state determination)
-        self.keep_as_string = False
-        # Instructs MeasurementDirector to keep the returned data as a string instead of a double. Disables all stability checks
-        self.launched = False
-        # Tells the MeasurementDirector if this request has already been handled or if it needs to be sent to a backend
+        self.keep_as_string = False # Instructs MeasurementDirector to keep the returned data as a string instead of a double. Disables all stability checks
+
+        self.launched = False # Tells the MeasurementDirector if this request has already been handled or if it needs to be sent to a backend
+
+
+        self.cap_at_1e35 = True #Tells the MeasurementDirector to count the point as corrupt if convertable to float and > 1e35
 
         self.last_launch_time = time.time()
 
@@ -421,6 +422,12 @@ class MeasurementRequest:
             if (abs(p - center) / center) > self.tol:  # If one point is out of spec
                 return False
                 # Report conditions are NOT met
+
+            #Or if one point is greater that 1e35 and flag is set, report conditions failed
+            if p > 1e35 and self.cap_at_1e35:
+                return False
+
+
         return True
         # Otherwise, all reqired points were within spec
 
@@ -452,13 +459,14 @@ class MeasurementDirector:
         """Add a measurement to the list of MeasurementRequests"""
 
         # MAke sure director is ready to take new commands
-        if self.state != "Ready" or self.state == "Fail":
+        if self.state != "Ready":
+            self.app.pDebug(f"ERROR: Director cannot add measurements because it is in state '{self.state}'. Error code: {self.err_str}")
             return False
 
         # Get the next index (also checks that dataset is not corrupted)
         next_idx = self.app.data_sets[meas_req.dataset_name].len()
         if next_idx == -1:
-            self.app.pDebug(f"ERROR: Dataset {meas_req.dataset_name} corrupted. Tracked parameters have unequal number of datapoints.")
+            self.app.pDebug(f"ERROR: Dataset {meas_req.dataset_name} corrupted. Tracked parameters have unequal number of datapoints.", True)
             return False
 
         # Record next index in measurement_index
@@ -473,10 +481,11 @@ class MeasurementDirector:
 
         self.cancel_batch = False
 
-        print(self.state)
-
-        if self.state == "Ready" or self.state == "Fail":
+        if self.state == "Ready":
             self.launch_avail()
+
+            self.state = "Busy"
+
 
     def stop(self):
         pass
@@ -486,7 +495,7 @@ class MeasurementDirector:
 
     def backend_return_log(self, retval: str, param_str: str):
 
-        print("BRL")
+        self.app.pDebug(f"\t\t\t{self.state}\t\t{len(self.queue)}", False, True)
 
         # Interpret 'param_str' to get variables to match in MeasurementRequest
         components = param_str.split(":")  # Split the command up into tokens
@@ -515,6 +524,9 @@ class MeasurementDirector:
             self.state = "Error"
             return
 
+        #Increment number of iterations
+        self.queue[idx].iterations += 1;
+
         # ****** Decide what to do...
 
         # If one measurement failed and batch is canceled, delete this data
@@ -523,14 +535,25 @@ class MeasurementDirector:
             # Delete this MR from queue
             self.queue.pop(idx)
 
+            self.app.add_log("MeasurementDirector", "N/A", "NOTE", f"MeasurementRequest with param_str {param_str} deleted itself due to batch cancelation")
+            self.app.pDebug(f"MeasurementRequest with param_str {param_str} deleted itself due to batch cancelation", False, True)
+
             # Remove instrument from occupied_instruments list
-            for inst_idx, inst in self.occ_instruments:  # For each name in occupied instrumnt list...
-                if inst == components[1]:  # IF matches last instrument...
+            inst_idx = 0;
+            while inst_idx < len(self.occ_instruments):  # For each name in occupied instrumnt list...
+                if self.occ_instruments[inst_idx] == components[1]:  # IF matches last instrument...
                     self.occ_instruments.pop(inst_idx)  # Remove from list
+                else:
+                    inst_idx += 1;
+
+            #If length is zero, set state to ready
+            if len(self.queue) == 0:
+                self.state = "Ready"
+
+            return
 
         # Add last measurement to MeasurementRequest
         if not self.queue[idx].add_point(retval):
-            print(retval)
             self.err_str = "Failed to add point. Return value was invalid."
             self.state = "Error"
             return
@@ -548,7 +571,7 @@ class MeasurementDirector:
                 key = retval[0:sep_idx]
                 val = retval[sep_idx + 1 :]
             else:
-                self.pDebug(f"ERROR: Failed to find '=' in {retval}")
+                self.app.pDebug(f"ERROR: Failed to find '=' in {retval}", True)
                 return False  # Separator was not found, return early
 
             # record data
@@ -584,9 +607,12 @@ class MeasurementDirector:
             self.queue.pop(idx)
 
             # Remove instrument from occupied_instruments list
-            for inst_idx, inst in enumerate(self.occ_instruments):  # For each name in occupied instrumnt list...
-                if inst == components[1]:  # IF matches last instrument...
+            inst_idx = 0;
+            while inst_idx < len(self.occ_instruments):  # For each name in occupied instrumnt list...
+                if self.occ_instruments[inst_idx] == components[1]:  # IF matches last instrument...
                     self.occ_instruments.pop(inst_idx)  # Remove from list
+                else:
+                    inst_idx += 1;
 
             # Launch available MeasurementRequests
             self.launch_avail()
@@ -595,27 +621,37 @@ class MeasurementDirector:
         elif self.queue[idx].meas_failed():
 
             print("Measurement Failed")
+            self.app.add_log("MeasurementDirector", "N/A", "NOTE", f"MeasurementRequest with param_str {param_str} failed and canceled batch.")
+            self.app.pDebug(f"MeasurementRequest with parameter string {param_str} failed. Canceling batch.", True)
 
             # Mark as failed
             self.err_str = "Measurement failed"
-            self.state = "Failed"
+            self.state = "Fail"
             self.cancel_batch = True
-
-            # Batch canceled - remove all requests that haven't been launched
-            for midx, mr in enumerate(self.queue):  # For each request...
-                if not mr.launched:  # If request hasn't been launched...
-                    self.queue.pop(midx)  # Remove request
 
             # erase request from queue
             self.queue.pop(idx)
 
-            # Remove instrument from occupied_instruments list
-            for inst_idx, inst in self.occ_instruments:  # For each name in occupied instrumnt list...
-                if inst == components[1]:  # IF matches last instrument...
-                    self.occ_instruments.pop(inst_idx)  # Remove from list
+            # Batch canceled - remove all requests that haven't been launched
+            midx = 0;
+            while midx < len(self.queue):  # For each request...
+                if not self.queue[midx].launched:  # If request hasn't been launched...
+                    self.queue.pop(midx)  # Remove request
+                else:
+                    midx += 1;
 
-            # Launch available MeasurementRequests
-            self.launch_avail()
+            # Remove instrument from occupied_instruments list
+            inst_idx = 0;
+            while inst_idx < len(self.occ_instruments):  # For each name in occupied instrumnt list...
+                if self.occ_instruments[inst_idx] == components[1]:  # IF matches last instrument...
+                    self.occ_instruments.pop(inst_idx)  # Remove from list
+                else:
+                    inst_idx += 1;
+
+            if len(self.queue) == 0:
+                self.state = "Ready"
+
+            self.app.pDebug(f"\t\t\t{self.state}\t\t{len(self.queue)}", False, True)
 
         else:
 
@@ -641,6 +677,11 @@ class MeasurementDirector:
     def launch_avail(self):
 
         #TODO: Consider allowing one instrument to measure two things simultaneously...
+
+        #Set state to ready if all requests in the queue have been processed
+        if len(self.queue) == 0:
+            self.state = "Ready"
+            return
 
         for mr_idx, mr in enumerate(self.queue):  # For every MeasurementRequest in queue...
             if (mr.launched == False) and (mr.inst_name not in self.occ_instruments):  # IF the request has NOT been launched and its instrument is NOT occupied...
@@ -1220,7 +1261,7 @@ class HC_App(QApplication):
 
                 if not self.director.measure(meas_req):
                     self.add_log("HC-Command Processor", "N/A", "WARNING", f"Failed to add MeasurementRequest to director'")
-                    self.pDebug("ERROR: Failed add MeasurementRequest to director")
+                    self.pDebug("ERROR: Failed add MeasurementRequest to director", True)
                     return "False"
 
                 self.pDebug(f"Executed Command:\n\tInstrument: {instr_str}\n\tCommand: {command_str}")
