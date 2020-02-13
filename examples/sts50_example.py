@@ -165,6 +165,7 @@ class STS50Demo(HC_MainWindow):
         self.scantool.update_instruments()
 
         self.logtool = HC_LoggerTool(self, "Data Logger")
+        self.logtool.update_groups()
         # self.logtool.update_instruments()
 
         self.PS_NIDaQCtrl = NI_DaX_PowerSupplyController()

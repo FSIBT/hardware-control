@@ -47,7 +47,7 @@ class HC_LoggerTool(HC_Instrument):
         self.dispgroup_drop = QComboBox()
         self.dispgroup_drop.addItems(["----------"])
         self.dispgroup_drop.setCurrentText(self.settings["display_group"])
-        self.dispgroup_drop.currentIndexChanged.connect(lambda: self.set_instrument(self.dispgroup_drop.currentText()))
+        self.dispgroup_drop.currentIndexChanged.connect(lambda: self.set_group(self.dispgroup_drop.currentText()))
         #
         self.sidebar_v_spacer = QSpacerItem(20, 200, QSizePolicy.Minimum, QSizePolicy.Expanding)
         #
@@ -93,64 +93,6 @@ class HC_LoggerTool(HC_Instrument):
         self.disp_frame_layout.addWidget(self.clear_button, 2, 3)
         self.data_disp_frame.setLayout(self.disp_frame_layout)
 
-
-        # #
-        # self.parameter_label = QLabel("Parameter:")
-        # self.parameter_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
-        # #
-        # self.parameter_drop = QComboBox()
-        # self.parameter_drop.addItems(["----------"])
-        # self.parameter_drop.setCurrentText(self.settings["parameter"])
-        # self.parameter_drop.currentIndexChanged.connect(lambda: self.set_parameter(self.parameter_drop.currentText()))
-        # #
-        # self.macro_label = QLabel("Scan Macro:")
-        # self.macro_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        # #
-        # self.macro_drop = QComboBox()
-        # self.macro_drop.addItems(["None"])
-        # self.macro_drop.setCurrentText(self.settings["macro"])
-        # self.macro_drop.currentIndexChanged.connect(lambda: self.set_macro(self.macro_drop.currentText()))
-        # #
-        # self.values_label = QLabel("Values:")
-        # self.values_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        # #
-        # self.values_edit = QLineEdit()
-        # self.values_edit.editingFinished.connect(lambda: self.set_values(self.values_edit.text()))
-        # self.values_edit.setText(str(self.settings["values"]))
-        # #
-        # self.upper_grid = QGridLayout()
-        # self.middle_grid = QGridLayout()
-        #
-        # # Add widgets to grid layout
-        # self.upper_grid.addWidget(self.instrument_label, 0, 0)
-        # self.upper_grid.addWidget(self.instrument_drop, 1, 0)
-        # self.upper_grid.addWidget(self.arrow_symbol, 1, 1)
-        # self.upper_grid.addWidget(self.parameter_label, 0, 2)
-        # self.upper_grid.addWidget(self.parameter_drop, 1, 2)
-        # self.upper_grid.addWidget(self.macro_label, 2, 0, 1, 2)
-        # self.upper_grid.addWidget(self.macro_drop, 2, 2)
-        # self.middle_grid.addWidget(self.values_label, 2, 0)
-        # self.middle_grid.addWidget(self.values_edit, 2, 1, 1, 2)
-        #
-        # self.scan_button = QPushButton()
-        # self.scan_button.setText("Scan")
-        # self.scan_button.setIcon(QIcon((QPixmap(pkg_resources.resource_filename("hardware_control", "ScanTool/graphics/scan.png")))))
-        # self.scan_button.setCheckable(False)
-        # self.scan_button.clicked.connect(self.scan)
-        #
-        # self.progress_grid = QGridLayout()
-        # #
-        # self.progress_label = QLabel("Scan Progress")
-        # self.progress_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        # #
-        # self.progress_bar = QProgressBar()
-        # #
-        # self.progress_grid.addWidget(self.progress_label, 0, 0)
-        # self.progress_grid.addWidget(self.progress_bar, 0, 1)
-        # #        self.progress_bar.setGeometry(200, 80, 250, 20);
-        # #
-        # self.progress_bar.setValue(float(self.settings["progress"]))
-
         # ******* DEFINE OVERALL LAYOUT
         #
         self.master_layout = QGridLayout()
@@ -171,6 +113,18 @@ class HC_LoggerTool(HC_Instrument):
 
     def erase_group_data(self):
         pass
+
+    def set_group(self, group):
+        pass
+
+    def update_groups(self):
+
+        self.dispgroup_drop.clear()
+
+        names = [];
+        for key in self.window.app.data_sets:
+            names.append(key)
+        self.dispgroup_drop.addItems(names)
 
     # def set_instrument(self, inst: str):
     #
