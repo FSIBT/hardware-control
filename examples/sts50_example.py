@@ -24,7 +24,7 @@ use_sockets = commands["--socket"]
 debug = commands["--debug"]
 log = commands["--log"]
 
-from hardware_control.base import HC_App, HC_MainWindow
+from hardware_control.base import HC_App, HC_MainWindow, Dataset
 from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
 from hardware_control.Oscilloscope.Key4000XCtrl import Key4000XCtrl
 from hardware_control.Oscilloscope.ZMQOscilloscopeCtrl import ZMQOscilloscopeCtrl
@@ -69,7 +69,7 @@ class STS50Demo(HC_MainWindow):
         self.tabs.addTab(self.tab1_5, "Pico Tab")
         self.tabs.addTab(self.tab2, "Power Tab")
         self.tabs.addTab(self.tab3, "Other Tab")
-        self.tabs.addTab(self.tab5, "Experimantal")
+        self.tabs.addTab(self.tab5, "Experimental")
 
         self.main_widget = QWidget(self)
 
@@ -398,6 +398,14 @@ def main(argv):
     warnings.filterwarnings(action="ignore", message="unclosed", category=ResourceWarning) #ToDo Not a solution
     app = HC_App(debug, [])
     app.print_close_info = True
+
+    if dummy:
+        dummy_set = Dataset("Dummy")
+        app.data_sets["Dummy"] = dummy_set
+        app.data_sets["Dummy"].data["t"] = [1, 2, 3, 4, 5]
+        app.data_sets["Dummy"].data["CH1 Vpp"] = [1,1.5, 2, 2.5, 3]
+        app.data_sets["Dummy"].data["CH2 Vpp"] = [-1, -2, -3, -3, -3]
+
     ex = STS50Demo(app)
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())
