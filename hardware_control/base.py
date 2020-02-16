@@ -1569,36 +1569,15 @@ class HC_MainWindow(QMainWindow):
         self.show_variables_act = QAction("Show Variables")
         self.scripting_menu.addAction(self.show_variables_act)
 
+
+
     def process_file_menu(self, q):
 
         if q.text() == "Save Instrument States":  # TODO: impliment
             print("This is where I save a state")
         elif q.text() == "Save Data":  # TODO: Impliment actual save + options
 
-            dlg = QFileDialog()
-            name_tuple = dlg.getSaveFileName()
-            name = name_tuple[0]
-
-            save_types = ("Pickle (*.P)", "NumPy (*.npy)", "JSON (*.json)")
-            file_type, okay = QInputDialog.getItem(self, "Select File Type", "File Type:", save_types, 0, False)
-
-            if okay and file_type:
-                print(f"Saving as {file_type} with name {name}")
-            else:
-                print("Canceled")
-
-            if file_type == "Pickle (*.p)":
-                print("Not yet implimented")
-            elif file_type == "NumPy (*.npy)":
-                print("Not yet implimented")
-            elif file_type == "JSON (*.json)":
-                with open(name, 'w') as f:
-
-                    save_data = {}
-                    for ds_key in self.app.data_sets:
-                        save_data[self.app.data_sets[ds_key].name] = self.app.data_sets[ds_key].data
-
-                    json.dump(save_data, f)
+            self.save_data([])
 
         elif q.text() == "Close Window":
             self.close()
@@ -1647,7 +1626,50 @@ class HC_MainWindow(QMainWindow):
         else:
             print("Error: function not supported")
 
+    def save_data(self, sets:list):
+        """Saves the data stored in the app's data_sets object. Saves the datasets who's
+        keys are listed in the list 'sets'. If 'sets' is empty, will save all datasets."""
 
+        #Use file dialog to get save location
+        dlg = QFileDialog()
+        name_tuple = dlg.getSaveFileName()
+        name = name_tuple[0]
+        if  not name: #If cancel bttonw as hit, name will be null
+            return
+
+        #Use input dialog to get save file type
+        save_types = ("Pickle (*.P)", "NumPy (*.npy)", "JSON (*.json)")
+        file_type, okay = QInputDialog.getItem(self, "Select File Type", "File Type:", save_types, 0, False)
+
+        if okay and file_type:
+         print(f"Saving as {file_type} with name {name}")
+        else:
+         print("Canceled")
+
+        if file_type == "Pickle (*.p)":
+            print("Not yet implimented")
+        elif file_type == "NumPy (*.npy)":
+            print("Not yet implimented")
+        elif file_type == "JSON (*.json)":
+
+            #Open file...
+            with open(name, 'w') as f:
+
+                #Create buffer object
+                save_data_obj = {}
+
+                if len(sets) > 0: #If groups are specified...
+                    for grp in sets: #Save each specified group if it exists
+                        try:
+                            save_data_obj[self.app.data_sets[grp].name] = self.app.data_sets[grp].data
+                        except:
+                            pass
+                else: #Else save all...
+
+                    for ds_key in self.app.data_sets:
+                        save_data_obj[self.app.data_sets[ds_key].name] = self.app.data_sets[ds_key].data
+
+                json.dump(save_data_obj, f)
 # ToDo: A lot of unused Classes - Implement or delete
 # class QOnOff(QPushButton):
 #     """An On/Off button with a nice icon for on/off
