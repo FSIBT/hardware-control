@@ -3,6 +3,7 @@ import json
 
 import pkg_resources
 from PyQt5 import QtCore
+from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QPixmap, QProgressBar, QIcon, QApplication, QSpacerItem, QSizePolicy
 from PyQt5.QtWidgets import (
     QGroupBox,
@@ -12,6 +13,7 @@ from PyQt5.QtWidgets import (
     QGridLayout,
     QComboBox,
     QTableWidget,
+    QTableWidgetItem,
     QWidget,
     QCheckBox,
 )
@@ -102,6 +104,10 @@ class HC_LoggerTool(HC_Instrument):
         self.master_layout.addWidget(self.data_disp_frame, 0, 1)
         self.setLayout(self.master_layout)
 
+        self.update_table_timer = QTimer(self)
+        self.update_table_timer.timeout.connect(self.update_table)
+        self.update_table_timer.start(1000)
+
     def autosave_on_off(self, state:bool):
         pass
 
@@ -115,16 +121,52 @@ class HC_LoggerTool(HC_Instrument):
         pass
 
     def set_group(self, group):
-        pass
+
+        self.settings["display_group"] = group
+        self.dispgroup_drop.setCurrentText(self.settings["display_group"])
+        self.update_table()
+
+    def update_table(self):
+
+        try:
+            group = self.window.app.data_sets[self.settings["display_group"]]
+
+            #Set correct number of columns
+            self.table.setColumnCount(len(group.data))
+
+            #Set correct number of rows
+            num_rows = group.len()
+            if num_rows != -1:
+                self.table.setRowCount(num_rows+1)
+            else:
+                return #TODO: Change this so it shows the fragmented data
+
+            col = 0
+            for field in group.data:
+                self.table.setItem(0, col, QTableWidgetItem(field))
+
+                for ridx, val in enumerate(group.data[field]):
+                    self.table.setItem(ridx+1, col, QTableWidgetItem(str(val)))
+
+                col += 1
+
+
+        except Exception as e:
+            print(f"Exception occured {str(e)}")
 
     def update_groups(self):
 
         self.dispgroup_drop.clear()
 
+        #Copy all goup names into dropdown
         names = [];
         for key in self.window.app.data_sets:
             names.append(key)
         self.dispgroup_drop.addItems(names)
+
+        #Select one group and display it
+        if len(names) > 0:
+            self.set_group(names[0])
 
     # def set_instrument(self, inst: str):
     #
