@@ -1529,6 +1529,10 @@ class HC_MainWindow(QMainWindow):
         self.clear_data_act.setShortcut("Ctrl+Shift+K")
         self.file_menu.addAction(self.clear_data_act)
         #
+        self.new_group_act = QAction("New Dataset", self)
+        self.new_group_act.setShortcut("Ctrl+Shift+N")
+        self.file_menu.addAction(self.new_group_act)
+        #
         self.file_menu.addSeparator()
         #
         self.close_act = QAction("Close Window", self)
@@ -1588,6 +1592,14 @@ class HC_MainWindow(QMainWindow):
         elif q.text() == "Save Data":  # TODO: Impliment actual save + options
 
             self.save_data([])
+
+        elif q.text() == "New Dataset":  # TODO: Impliment actual save + options
+
+            self.create_new_group()
+
+            for inst in self.app.instruments:
+                if inst.name == "Data Logger": #TODO: Find resilient way to automatically identify LoggerTool objects to update their group lists
+                    inst.update_groups()
 
         elif q.text() == "Close Window":
             self.close()
@@ -1680,6 +1692,25 @@ class HC_MainWindow(QMainWindow):
                         save_data_obj[self.app.data_sets[ds_key].name] = self.app.data_sets[ds_key].data
 
                 json.dump(save_data_obj, f)
+
+
+    def create_new_group(self):
+
+        dlg = QInputDialog(self)
+        dlg.setInputMode(QInputDialog.TextInput)
+        dlg.setLabelText("New dataset name:")
+        dlg.resize(500, 100)
+        okPressed = dlg.exec_()
+        text = dlg.textValue()
+
+        if okPressed and text != "":
+            temp_ds = Dataset(text)
+            self.app.data_sets[text] = temp_ds
+
+
+
+
+
 # ToDo: A lot of unused Classes - Implement or delete
 # class QOnOff(QPushButton):
 #     """An On/Off button with a nice icon for on/off
