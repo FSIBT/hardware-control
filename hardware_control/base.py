@@ -765,7 +765,7 @@ class Dataset:
         # Name of dataset
 
         self.data = {}
-        # List of datapoints. Each key follows the <instrument>:<parameter> naming scheme. Every value is a dictionary and all dictionaries need to have the same length
+        # Dictionary of datapoints. Each key follows the <instrument>:<parameter> naming scheme. Every value is a list and all lists need to have the same length
 
     def len(self):
         """Returns the length of all of the values in self.data. If they aren't
@@ -776,9 +776,7 @@ class Dataset:
 
             if datalen == -2:  # For first time through loop, record length as benchmark
                 datalen = len(self.data[key])
-                print(datalen)
             else:  # For everyother time, compare length against benchmark, see if all the same
-                print(len(self.data[key]))
                 if datalen != len(self.data[key]):  # If any don't match, return -1
                     return -1
 
