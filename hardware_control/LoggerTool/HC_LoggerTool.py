@@ -53,9 +53,14 @@ class HC_LoggerTool(HC_Instrument):
         #
         self.sidebar_v_spacer = QSpacerItem(20, 200, QSizePolicy.Minimum, QSizePolicy.Expanding)
         #
+        self.save_all_button = QPushButton()
+        self.save_all_button.setText("Save All Sets")
+        self.save_all_button.clicked.connect(self.save_all_data)
+        #
         self.data_select_layout.addWidget(self.dispgroup_label, 0, 0)
         self.data_select_layout.addWidget(self.dispgroup_drop, 1, 0)
         self.data_select_layout.addItem(self.sidebar_v_spacer, 2, 0)
+        self.data_select_layout.addWidget(self.save_all_button, 3, 0)
         self.data_select_frame.setLayout(self.data_select_layout)
 
         self.data_disp_frame = QGroupBox("Data")
@@ -115,7 +120,12 @@ class HC_LoggerTool(HC_Instrument):
         pass
 
     def save_data(self):
-        pass
+
+        self.window.save_data([self.settings["display_group"]])
+
+    def save_all_data(self):
+
+        self.window.save_data([])
 
     def erase_group_data(self):
         pass
