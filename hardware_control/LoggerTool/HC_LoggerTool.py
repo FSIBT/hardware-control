@@ -53,6 +53,10 @@ class HC_LoggerTool(HC_Instrument):
         self.dispgroup_drop.setCurrentText(self.settings["display_group"])
         self.dispgroup_drop.currentIndexChanged.connect(lambda: self.set_group(self.dispgroup_drop.currentText()))
         #
+        self.new_group_button = QPushButton()
+        self.new_group_button.setText("New Dataset")
+        self.new_group_button.clicked.connect(self.create_new_group)
+        #
         self.sidebar_v_spacer = QSpacerItem(20, 200, QSizePolicy.Minimum, QSizePolicy.Expanding)
         #
         self.save_all_button = QPushButton()
@@ -61,8 +65,9 @@ class HC_LoggerTool(HC_Instrument):
         #
         self.data_select_layout.addWidget(self.dispgroup_label, 0, 0)
         self.data_select_layout.addWidget(self.dispgroup_drop, 1, 0)
-        self.data_select_layout.addItem(self.sidebar_v_spacer, 2, 0)
-        self.data_select_layout.addWidget(self.save_all_button, 3, 0)
+        self.data_select_layout.addWidget(self.new_group_button, 2, 0)
+        self.data_select_layout.addItem(self.sidebar_v_spacer, 3, 0)
+        self.data_select_layout.addWidget(self.save_all_button, 4, 0)
         self.data_select_frame.setLayout(self.data_select_layout)
 
         self.data_disp_frame = QGroupBox("Data")
@@ -123,12 +128,18 @@ class HC_LoggerTool(HC_Instrument):
         # except:
         #     self.autosave_timer.start(120*1e3)
 
+    def create_new_group(self):
+
+        self.window.create_new_group()
+
+        self.update_groups()
+
     def autosave_on_off(self, state:bool):
 
         try:
             self.window.app.data_sets[self.settings["display_group"]].autosave = state
         except:
-            print("Error setting autosave state")
+            self.window.app.pDebug("ERROR: Failed to set autosave state", True)
 
     def set_interval(self, t:str):
         """Sets the autosave interval"""
@@ -137,7 +148,7 @@ class HC_LoggerTool(HC_Instrument):
             self.window.app.data_sets[self.settings["display_group"]].autosave_interval = float(t)
             self.window.app.data_sets[self.settings["display_group"]].autosave_timer.setInterval(float(t)*1000)
         except:
-            print("Error setting interval time")
+            self.window.app.pDebug("ERROR: Failed to set interval time", True)
 
 
     def save_data(self):
@@ -149,7 +160,15 @@ class HC_LoggerTool(HC_Instrument):
         self.window.save_data([])
 
     def erase_group_data(self):
-        pass
+
+        #TODO: Add verification dialog before deleting data
+
+        try:
+            self.window.app.data_sets[self.settings["display_group"]].data = []
+        except:
+            self.window.app.pDebug("ERROR: Failed to delete group data", True)
+
+        self.update_table()
 
     def data_changed_from_cell(self, row:int, col:int):
 
@@ -208,7 +227,7 @@ class HC_LoggerTool(HC_Instrument):
             self.save_interval_edit.setText(str(self.window.app.data_sets[self.settings["display_group"]].autosave_interval))
 
         except Exception as e:
-            print(f"Exception occured {str(e)}")
+            self.window.app.pDebug(f"ERROR: Exception occured while updating table ({str(e)})", True)
 
     def update_groups(self):
 
@@ -220,8 +239,8 @@ class HC_LoggerTool(HC_Instrument):
             names.append(key)
         self.dispgroup_drop.addItems(names)
 
-        #Select one group and display it
-        if len(names) > 0:
+        #Select one group and display it if none currently displayed
+        if len(names) > 0 and self.settings["display_group"] == "":
             self.set_group(names[0])
 
     #
