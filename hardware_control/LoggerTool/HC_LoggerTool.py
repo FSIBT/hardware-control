@@ -141,12 +141,26 @@ class HC_LoggerTool(HC_Instrument):
             else:
                 return #TODO: Change this so it shows the fragmented data
 
+            #Title columns
+            header_names = []
+            for field in group.data:
+                header_names.append(field)
+            self.table.setHorizontalHeaderLabels(header_names)
+
+            #Write indeces along vertical
+            indeces = list(range(num_rows))
+            indeces_str = []
+            for i in indeces:
+                indeces_str.append(str(i))
+
+            self.table.setVerticalHeaderLabels(indeces_str)
+
+
             col = 0
             for field in group.data:
-                self.table.setItem(0, col, QTableWidgetItem(field))
 
                 for ridx, val in enumerate(group.data[field]):
-                    self.table.setItem(ridx+1, col, QTableWidgetItem(str(val)))
+                    self.table.setItem(ridx, col, QTableWidgetItem(str(val)))
 
                 col += 1
 
