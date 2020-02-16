@@ -30,6 +30,8 @@ class HC_LoggerTool(HC_Instrument):
         self.app = window.app
         self.ignore = True
 
+        self.allow_edit_data = False
+
         self.settings = self.default_state()
 
         # *************************Create GUI************************
@@ -68,6 +70,7 @@ class HC_LoggerTool(HC_Instrument):
         self.table = QTableWidget()
         self.table.setRowCount(4)
         self.table.setColumnCount(4)
+        self.table.cellChanged.connect(self.data_changed_from_cell)
         #
         self.autosave_check = QCheckBox("Autosave")
         # self.autosave_check.setChecked()
@@ -80,7 +83,7 @@ class HC_LoggerTool(HC_Instrument):
         #
         self.save_interval_edit = QLineEdit()
         self.save_interval_edit.editingFinished.connect(lambda: self.set_interval(self.save_interval_edit.text()))
-        # self.save_interval_edit.setText(str(self.settings["values"]))
+        # self.save_interval_edit.setText()
         #
         self.save_button = QPushButton()
         self.save_button.setText("Save")
@@ -109,15 +112,33 @@ class HC_LoggerTool(HC_Instrument):
         self.master_layout.addWidget(self.data_disp_frame, 0, 1)
         self.setLayout(self.master_layout)
 
-        self.update_table_timer = QTimer(self)
-        self.update_table_timer.timeout.connect(self.update_table)
-        self.update_table_timer.start(1000)
+        # self.update_table_timer = QTimer(self)
+        # self.update_table_timer.timeout.connect(self.update_table)
+        # self.update_table_timer.start(1000)
+
+        # self.autosave_timer = QTimer(self)
+        # self.autosave_timer.timeout.connect(self.exec_autosave)
+        # try:
+        #     self.autosave_timer.start(1e3*float(self.settings["save_interval"]))
+        # except:
+        #     self.autosave_timer.start(120*1e3)
 
     def autosave_on_off(self, state:bool):
-        pass
+
+        try:
+            self.window.app.data_sets[self.settings["display_group"]].autosave = state
+        except:
+            print("Error setting autosave state")
 
     def set_interval(self, t:str):
-        pass
+        """Sets the autosave interval"""
+
+        try:
+            self.window.app.data_sets[self.settings["display_group"]].autosave_interval = float(t)
+            self.window.app.data_sets[self.settings["display_group"]].autosave_timer.setInterval(float(t)*1000)
+        except:
+            print("Error setting interval time")
+
 
     def save_data(self):
 
@@ -128,6 +149,11 @@ class HC_LoggerTool(HC_Instrument):
         self.window.save_data([])
 
     def erase_group_data(self):
+        pass
+
+    def data_changed_from_cell(self, row:int, col:int):
+
+        # print(f"cell changed @ ({row}, {col}). Value is now {self.table.itemAt(row, col).text()}") #TODO: Finish fixing 'data changed from cell' code
         pass
 
     def set_group(self, group):
@@ -170,10 +196,16 @@ class HC_LoggerTool(HC_Instrument):
             for field in group.data:
 
                 for ridx, val in enumerate(group.data[field]):
-                    self.table.setItem(ridx, col, QTableWidgetItem(str(val)))
+                    temp_item = QTableWidgetItem()
+                    temp_item.setText((str(val)))
+                    self.table.setItem(ridx, col, temp_item)
 
                 col += 1
 
+
+            self.autosave_check.setChecked(self.window.app.data_sets[self.settings["display_group"]].autosave)
+
+            self.save_interval_edit.setText(str(self.window.app.data_sets[self.settings["display_group"]].autosave_interval))
 
         except Exception as e:
             print(f"Exception occured {str(e)}")
@@ -191,198 +223,6 @@ class HC_LoggerTool(HC_Instrument):
         #Select one group and display it
         if len(names) > 0:
             self.set_group(names[0])
-
-    # def set_instrument(self, inst: str):
-    #
-    #     self.pDebug(f"Instrument set to '{inst}'")
-    #
-    #     self.settings["instrument"] = inst
-    #
-    #     self.parameter_drop.clear()
-    #     params = []
-    #
-    #     # update parameters menu options
-    #
-    #     # If set to 'app variables' populate with app variables, not instrument settings
-    #     if inst == "App Variables":
-    #
-    #         # Add app variables
-    #         for v in self.app.variables:
-    #             params.append(v)
-    #         self.parameter_drop.addItems(params)
-    #
-    #     else:  # Is a real instrument name...
-    #
-    #         # Search for instrument....
-    #         found = False
-    #         for instrument in self.app.instruments:
-    #             if instrument.name == inst:
-    #                 instr = instrument
-    #                 found = True
-    #
-    #         if found:
-    #             for param in instr.settings:
-    #                 params.append(param)
-    #             self.parameter_drop.addItems(params)
-    #             self.pDebug(f"\tAdded {len(params)} items to parameter dropdown.")
-    #         else:
-    #             self.pDebug(f"ERROR: Couldn't find instrument '{inst}'")
-    #
-    #     self.settings["progress"] = 0
-    #     self.progress_bar.setValue(self.settings["progress"])
-    #
-    # def set_macro(self, mac: str):
-    #     self.settings["macro"] = mac
-    #
-    # def update_macros(self):
-    #     self.macro_drop.clear()
-    #     names = ["None"]
-    #     for m in self.app.macros:
-    #         names.append(m)
-    #     self.macro_drop.addItems(names)
-    #
-    # def set_parameter(self, param: str):
-    #     self.pDebug(f"Setting parameter to {param}")
-    #     self.settings["parameter"] = param
-    #
-    #     self.settings["progress"] = 0
-    #     self.progress_bar.setValue(self.settings["progress"])
-    #
-    # def set_values(self, new_values: str):
-    #     self.pDebug(f"Setting values to {new_values}")
-    #     self.settings["values"] = new_values
-    #
-    #     self.settings["progress"] = 0
-    #     self.progress_bar.setValue(self.settings["progress"])
-    #
-    # def scan(self):
-    #
-    #     # Get parameters, instrument, etc...
-    #     i = self.settings["instrument"]
-    #     p = self.settings["parameter"]
-    #     m = self.settings["macro"]
-    #     vals = self.settings["values"].split(",")
-    #
-    #     self.pDebug(f"Starting scan\n\tInstrument: {i}\n\tParameter: {p}\n\tValues:{vals}")
-    #
-    #     if i != "App variables":  # Is real instrument, not App Variable
-    #
-    #         # Find instrument, get current setting for parameter
-    #         found = False
-    #         for instr in self.app.instruments:
-    #             if instr.name == self.settings["instrument"]:
-    #                 scan_instrument = instr
-    #                 found = True
-    #                 break
-    #         if not found:
-    #             self.pDebug(f"ERROR: Failed to find instrument {i}")
-    #             return
-    #
-    #         # Scan through values
-    #         count = 0
-    #         for v in vals:
-    #
-    #             # Update progress bar
-    #             self.settings["progress"] = str(count / len(vals) * 100)
-    #             # if self.app.print_debug:
-    #             self.pDebug(f"\tRunning value = '{v}'\t\t{count/len(vals)*100}%")
-    #             self.progress_bar.setValue(float(self.settings["progress"]))
-    #             QApplication.processEvents()
-    #
-    #             # Update setting
-    #             if not scan_instrument.set_setting(self.settings["parameter"], v.strip()):
-    #                 self.pDebug(f"Failed to set parameter '{p}' to value '{v}'. Exiting scan.")
-    #                 return
-    #             count += 1
-    #
-    #             if m != "None":
-    #                 self.pDebug(f"\t\tRunning macro {m}")
-    #                 self.app.run_macro(self.app.macros[m])
-    #
-    #     else:
-    #
-    #         # Make sure variable exists
-    #         if not (i in self.app.variables):
-    #             self.pDebug("Failed to find app variable.")
-    #             return
-    #
-    #         # Scan thorugh values
-    #         count = 0
-    #         for v in vals:
-    #
-    #             # Update progress bar
-    #             self.settings["progress"] = count / len(vals) * 100
-    #             # if self.app.print_debug:
-    #             self.pDebug(f"\tRunning value = '{v}'\t\t{count/len(vals)*100}%")
-    #             self.progress_bar.setValue(float(self.settings["progress"]))
-    #             QApplication.processEvents()
-    #
-    #             # Change value of variable
-    #             self.app.variables[i] = v.strip()  # Set value
-    #             count += 1
-    #
-    #             if m != "None":
-    #                 self.pDebug(f"\t\tRunning macro {m}")
-    #                 self.app.run_macro(self.app.macros[m])
-    #
-    #     self.settings["progress"] = 100
-    #     self.progress_bar.setValue(self.settings["progress"])
-    #     self.pDebug("Finished scan")
-    #
-    # def update_instruments(self):
-    #     self.instrument_drop.clear()
-    #     names = []
-    #     for inst in self.app.instruments:
-    #         if inst.ignore:
-    #             continue
-    #         names.append(inst.name)
-    #     if self.include_variables and not ("App Variables" in names):
-    #         names.append("App Variables")
-    #     self.instrument_drop.addItems(names)
-    #
-    # def load_state(self, filename: str):
-    #
-    #     # Get default state - this identifies all required fields
-    #     dflt = self.default_state()
-    #
-    #     # Read a state from file
-    #     try:
-    #         with open(filename) as file:
-    #             self.settings = json.load(file)
-    #             self.pDebug(f"State for {self.comm.instr.ID} read from file '{filename}'")
-    #     except:
-    #         self.pDebug(f"ERROR: {self.name} failed to read file '{filename}'. Using defualt case.")
-    #         self.settings = self.default_state()
-    #
-    #     # Ensure all fields in default_state are present in the loaded state
-    #     for key in dflt:
-    #         if not (key in self.settings):
-    #             self.settings[key] = dflt[key]
-    #
-    # def save_state(self, filename: str):
-    #     try:
-    #         with open(filename, "w") as file:
-    #             json.dump(self.settings, file)
-    #             self.pDebug(f"State for {self.comm.instr.ID} saved to file '{filename}'")
-    #     except Exception as e:
-    #         self.pDebug(f"ERROR: Failed to write file '{filename}'. State not saved.")
-    #         self.pDebug(f"\t{e}")
-    #
-    # # Update setting is overwritten so hc-commands can set values such as the
-    # # progress bar.
-    # #
-    # def update_setting(self, setting: str, value: str):
-    #
-    #     try:
-    #         self.settings[setting] = value
-    #     except Exception as e:
-    #         return
-    #
-    #     if setting == "progress":
-    #         try:
-    #             self.progress_bar.setValue(float(self.settings["progress"]))
-    #         except:
-    #             self.pDebug(f"ERROR: Can't convert {value} to float.")
 
     #
     # Create a default state object if can't get state from a file
