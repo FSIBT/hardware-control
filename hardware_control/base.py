@@ -755,17 +755,23 @@ class MeasurementDirector:
             self.relaunch_list.pop(rfl)
 
 
-class Dataset:
+class Dataset(QObject):
     """Represents a complete dataset (ie. a collection of datapoints, which are
     collections of individual measurements)."""
 
     def __init__(self, name: str):
 
-        self.name = name
-        # Name of dataset
+        super().__init__()
 
-        self.data = {}
-        # Dictionary of datapoints. Each key follows the <instrument>:<parameter> naming scheme. Every value is a list and all lists need to have the same length
+        self.name = name # Name of dataset
+        self.autosave = False #Whether or not to enable autosave (autosave done by HC_LoggerTool)
+        self.autosave_interval = 120; #Seconds
+
+        self.data = {} # Dictionary of datapoints. Each key follows the <instrument>:<parameter> naming scheme. Every value is a list and all lists need to have the same length
+
+        self.autosave_timer = QTimer(self)
+        self.autosave_timer.timeout.connect(self.exec_autosave)
+        self.autosave_timer.start(1e3*self.autosave_interval)
 
     def len(self):
         """Returns the length of all of the values in self.data. If they aren't
@@ -785,6 +791,10 @@ class Dataset:
 
         return datalen  # Otherwise return current length (which is the next index)
 
+    def exec_autosave(self):
+
+        if self.autosave: #Check if autosave enabled
+            print(f"{self.name} would be autosaving - not implimented")
 
 class HC_Instrument(QGroupBox):
     def __init__(self, window, name: str):
