@@ -16,6 +16,7 @@ from PyQt5.QtWidgets import (
     QTableWidgetItem,
     QWidget,
     QCheckBox,
+    QMessageBox,
 )
 from hardware_control.base import HC_Instrument
 
@@ -161,7 +162,20 @@ class HC_LoggerTool(HC_Instrument):
 
     def erase_group_data(self):
 
-        #TODO: Add verification dialog before deleting data
+        ds_name = self.settings["display_group"]
+
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Warning)
+        msg.setText("You are about to delete unsaved data. Continue?")
+        msg.setInformativeText(f"Continuing will permanently erase all data for Dataset '{ds_name}'")
+        msg.setWindowTitle("Data Erasure Warning")
+        # msg.setDetailedText("The details are as follows:")
+        msg.setStandardButtons(QMessageBox.Ignore | QMessageBox.Abort)
+        buttonReply = msg.exec()
+
+        # buttonReply = QMessageBox.warning(self, 'Data Erasure Warning', "You are about to delete unsaved data. Continue?", QMessageBox.Ignore | QMessageBox.Abort, QMessageBox.Abort)
+        if buttonReply == QMessageBox.Abort:
+            return
 
         try:
             self.window.app.data_sets[self.settings["display_group"]].data = []
