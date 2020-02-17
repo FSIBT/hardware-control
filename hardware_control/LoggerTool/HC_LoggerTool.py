@@ -166,8 +166,8 @@ class HC_LoggerTool(HC_Instrument):
 
         msg = QMessageBox()
         msg.setIcon(QMessageBox.Warning)
-        msg.setText("You are about to delete unsaved data. Continue?")
-        msg.setInformativeText(f"Continuing will permanently erase all data for Dataset '{ds_name}'")
+        msg.setText("You are about to delete data. Abort?")
+        msg.setInformativeText(f"Continuing will permanently erase all data in Dataset '{ds_name}'")
         msg.setWindowTitle("Data Erasure Warning")
         # msg.setDetailedText("The details are as follows:")
         msg.setStandardButtons(QMessageBox.Ignore | QMessageBox.Abort)
