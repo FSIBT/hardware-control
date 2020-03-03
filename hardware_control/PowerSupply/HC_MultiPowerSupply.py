@@ -8,13 +8,7 @@ import pkg_resources
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QDoubleValidator, QPixmap
-from PyQt5.QtWidgets import (
-    QLineEdit,
-    QPushButton,
-    QLabel,
-    QWidget,
-    QGridLayout,
-)
+from PyQt5.QtWidgets import QLineEdit, QPushButton, QLabel, QWidget, QGridLayout
 
 from hardware_control.base import HC_Instrument, HC_Comm, setButtonState
 

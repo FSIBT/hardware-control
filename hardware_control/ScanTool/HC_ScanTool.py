@@ -98,26 +98,32 @@ class HC_ScanTool(HC_Instrument):
 
         self.lin_rb = QRadioButton("Linear")
         self.lin_rb.setChecked(True)
-        self.lin_rb.toggled.connect(lambda:self.space_rule_set(self.lin_rb))
+        self.lin_rb.toggled.connect(lambda: self.space_rule_set(self.lin_rb))
         #
         self.log_rb = QRadioButton("Logarithmic")
-        self.log_rb.toggled.connect(lambda:self.space_rule_set(self.log_rb))
+        self.log_rb.toggled.connect(lambda: self.space_rule_set(self.log_rb))
         #
         self.values_label = QLabel("Values:")
         self.values_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         #
         self.values_edit = QLineEdit()
-        self.values_edit.editingFinished.connect(lambda: self.set_values(self.values_edit.text()))
+        self.values_edit.editingFinished.connect(
+            lambda: self.set_values(self.values_edit.text())
+        )
         self.values_edit.setText(str(self.settings["values"]))
         #
         self.spacing_start_label = QLabel("Start: ")
-        self.spacing_start_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.spacing_start_label.setAlignment(
+            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
+        )
         #
         self.spacing_start_edit = QLineEdit()
         self.spacing_start_edit.editingFinished.connect(lambda: self.set_start_value)
 
         self.spacing_end_label = QLabel("End: ")
-        self.spacing_end_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.spacing_end_label.setAlignment(
+            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
+        )
         #
         self.spacing_end_edit = QLineEdit()
         self.spacing_end_edit.editingFinished.connect(lambda: self.set_end_value)
@@ -125,7 +131,9 @@ class HC_ScanTool(HC_Instrument):
         self.spacing_log_check = QCheckBox("Log Spacing")
         #
         self.values_file_label = QLabel("Source file:")
-        self.values_file_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.values_file_label.setAlignment(
+            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
+        )
         #
         self.values_file_edit = QLineEdit()
         #
@@ -422,10 +430,10 @@ class HC_ScanTool(HC_Instrument):
     # Update setting is overwritten so hc-commands can set values such as the
     # progress bar.
     #
-    def update_setting(self, setting:str, value:str):
+    def update_setting(self, setting: str, value: str):
 
         try:
-            self.settings[setting] = value;
+            self.settings[setting] = value
         except Exception as e:
             return
 

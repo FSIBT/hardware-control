@@ -12,11 +12,7 @@ Options:
 
 import sys
 
-from PyQt5.QtWidgets import (
-    QMainWindow,
-    QWidget,
-    QGridLayout,
-)
+from PyQt5.QtWidgets import QMainWindow, QWidget, QGridLayout
 from docopt import docopt
 
 commands = docopt(__doc__)
@@ -33,25 +29,23 @@ class Read_Demo(QMainWindow):
     def __init__(self, app, use_sockets: bool):
         super().__init__()
         self.app = app
-        #set title of window
+        # set title of window
         self.setWindowTitle("Demo")
-        #this is the main widget, actual device widgets are added to it
+        # this is the main widget, actual device widgets are added to it
         self.main_widget = QWidget(self)
 
         ##### Add Device(s)
-        #add a Backend  with its Visa Adress
+        # add a Backend  with its Visa Adress
         demo = Adam_6015("192.168.1.25", dummy)
-        #add a HC. The corresponding backend, MainWidget and more information are handed over
+        # add a HC. The corresponding backend, MainWidget and more information are handed over
         self.demo_ctrl = HC_Read(
             demo,
             self,
             [0, 4, 5, 6],
-            ["HeatPower :","Channel4 :","LOX5 :","AnOtherChannel6 :"],
+            ["HeatPower :", "Channel4 :", "LOX5 :", "AnOtherChannel6 :"],
             "TEMP",
-            "(C)"
+            "(C)",
         )
-
-
 
         ##### Add above HC to the main Widget
         self.grid = QGridLayout()
@@ -68,7 +62,7 @@ class Read_Demo(QMainWindow):
 
 def main(argv):
     app = HC_App([])
-    ex = Read_Demo(app, use_sockets)         #Change accordingly
+    ex = Read_Demo(app, use_sockets)  # Change accordingly
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())
 

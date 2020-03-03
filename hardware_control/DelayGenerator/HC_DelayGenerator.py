@@ -79,8 +79,11 @@ class HC_DelayGenerator(HC_Instrument):
         )
         self.trig_lev_edit.setDecimals(3)
         self.trig_lev_edit.setSingleStep(0.05)
-        if hasattr(scpi_instr,"ExternalTriggerThreshold"):
-            self.trig_lev_edit.setRange(-scpi_instr.ExternalTriggerThreshold,scpi_instr.ExternalTriggerThreshold)
+        if hasattr(scpi_instr, "ExternalTriggerThreshold"):
+            self.trig_lev_edit.setRange(
+                -scpi_instr.ExternalTriggerThreshold,
+                scpi_instr.ExternalTriggerThreshold,
+            )
         self.trig_lev_edit.setValue(float(self.settings["trigger_level"]))
         #
         self.single_trig_but = QPushButton()
@@ -107,8 +110,8 @@ class HC_DelayGenerator(HC_Instrument):
         self.pulse_edit.editingFinished.connect(
             lambda: self.update_setting("pulses_per_burst", self.pulse_edit.text())
         )
-        if hasattr(scpi_instr,"PulsesPerBurst"):
-            self.pulse_edit.setRange(2,scpi_instr.PulsesPerBurst)
+        if hasattr(scpi_instr, "PulsesPerBurst"):
+            self.pulse_edit.setRange(2, scpi_instr.PulsesPerBurst)
         self.pulse_edit.setValue(int(self.settings["pulses_per_burst"]))
         #
         self.period_label = QLabel("Triggers per Burst:")
@@ -157,10 +160,10 @@ class HC_DelayGenerator(HC_Instrument):
         self.master_layout.addWidget(self.period_label, 3, 2)
         self.master_layout.addWidget(self.period_edit, 3, 3)
 
-        self.master_layout.addWidget(self.write_label,4,0)
-        self.master_layout.addWidget(self.write_edit,4,1)
+        self.master_layout.addWidget(self.write_label, 4, 0)
+        self.master_layout.addWidget(self.write_edit, 4, 1)
 
-        self.master_layout.addWidget(self.write_but,4,3)
+        self.master_layout.addWidget(self.write_but, 4, 3)
         #
         self.setLayout(self.master_layout)
 

@@ -19,12 +19,7 @@ from hardware_control.HC_Backend import HC_Backend
 
 
 class SRSDG535Ctrl(HC_Backend):
-    def __init__(
-            self,
-            connection_addr,
-            dummy: bool = False,
-            debug: bool = False,
-    ):
+    def __init__(self, connection_addr, dummy: bool = False, debug: bool = False):
 
         super().__init__()
 
@@ -127,7 +122,7 @@ class SRSDG535Ctrl(HC_Backend):
                 rm = pyvisa.ResourceManager()
                 self.device = rm.open_resource(self.connection_addr)  # Open connection
                 self.pDebug(f"Recource list pyvisa : {rm.list_resources()}")
-                self.online= True
+                self.online = True
             except Exception as e:
                 self.pDebug(f"{self.ID}: {e}")
                 self.online = False
@@ -136,12 +131,15 @@ class SRSDG535Ctrl(HC_Backend):
             try:
                 instrstat = self.device.query("IS")
                 es = self.device.query("ES")
-                self.pDebug(f"{self.ID}: Instrument status: {instrstat} \tError status: {es}")
+                self.pDebug(
+                    f"{self.ID}: Instrument status: {instrstat} \tError status: {es}"
+                )
             except Exception as e:
                 self.pDebug(f"{self.ID}: {e}")
                 self.online = False
 
         return self.online
+
 
 #
 # >>> import pyvisa

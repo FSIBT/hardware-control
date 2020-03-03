@@ -17,4 +17,3 @@ from docopt import docopt
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
 use_sockets = commands["--socket"]
-

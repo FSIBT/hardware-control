@@ -110,9 +110,7 @@ class HC_MacroRunnerTool(HC_Instrument):
     def run_macro(self, macro: str):
         try:
             cmds = self.app.macros[macro]
-            self.pDebug(
-                f"Running macro: {macro}\n\tCommands: {cmds}"
-            )
+            self.pDebug(f"Running macro: {macro}\n\tCommands: {cmds}")
             self.app.run_macro(cmds)
         except Exception:
             self.pDebug(f"An exception occurred running macro {macro}")

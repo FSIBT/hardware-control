@@ -15,6 +15,7 @@ Options:
 
 import faulthandler
 import sys
+
 # standardlib
 from pathlib import Path
 
@@ -33,6 +34,7 @@ from PyQt5.QtWidgets import (
     QWidget,
     QAction,
 )
+
 # third party
 from docopt import docopt
 from hardware_control.Logfile.plot_logfile import LogPlot

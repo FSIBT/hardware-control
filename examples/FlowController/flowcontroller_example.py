@@ -11,12 +11,7 @@ Options:
 """
 import sys
 
-from PyQt5.QtWidgets import (
-    QApplication,
-    QMainWindow,
-    QWidget,
-    QGridLayout,
-)
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QGridLayout
 from docopt import docopt
 
 from hardware_control.FlowController.AlicatMSeriesCtrl import AlicatMSeriesCtrl

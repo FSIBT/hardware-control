@@ -55,7 +55,9 @@ class CAEN14xxETCtrl(HC_Backend):
             if self.online:
                 return True
             else:
-                self.pDebug(f"{self.ID}: creating dummy connection to {self.connection_addr}")
+                self.pDebug(
+                    f"{self.ID}: creating dummy connection to {self.connection_addr}"
+                )
                 self.online = True
                 return True
 

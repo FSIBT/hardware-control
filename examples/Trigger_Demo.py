@@ -12,11 +12,7 @@ Options:
 
 import sys
 
-from PyQt5.QtWidgets import (
-    QMainWindow,
-    QWidget,
-    QGridLayout,
-)
+from PyQt5.QtWidgets import QMainWindow, QWidget, QGridLayout
 from docopt import docopt
 
 commands = docopt(__doc__)
@@ -25,23 +21,24 @@ use_sockets = commands["--socket"]
 debug = commands["--debug"]
 
 from hardware_control.base import HC_App
+
 # from hardware_control.DelayGenerator.SRSDG535Ctrl import SRSDG535Ctrl
 from hardware_control.DelayGenerator.SRSDG535Ctrl import SRSDG535Ctrl
 from hardware_control.DelayGenerator.HC_DelayGenerator import HC_DelayGenerator
+
 
 class Demo(QMainWindow):
     def __init__(self, app, use_sockets: bool):
         super().__init__()
         self.app = app
-        #set title of window
+        # set title of window
         self.setWindowTitle("Demo")
-        #this is the main widget, actual device widgets are added to it
+        # this is the main widget, actual device widgets are added to it
         self.main_widget = QWidget(self)
 
         ##### Add Device(s)
         self.trig1 = SRSDG535Ctrl("GPIB0::15::INSTR", dummy, debug)
         self.trig1_ctrl = HC_DelayGenerator(self.trig1, self, "Trigger 1", "DEFAULT")
-
 
         ##### Add above HC to the main Widget
         self.grid = QGridLayout()
@@ -59,7 +56,7 @@ class Demo(QMainWindow):
 def main(argv):
     app = HC_App(debug, [])
     app.print_close_info = True
-    ex = Demo(app, use_sockets)         #Change accordingly
+    ex = Demo(app, use_sockets)  # Change accordingly
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())
 

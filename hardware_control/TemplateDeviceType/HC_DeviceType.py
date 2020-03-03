@@ -1,10 +1,5 @@
 from PyQt5.QtCore import QTimer
-from PyQt5.QtWidgets import (
-    QLineEdit,
-    QLabel,
-    QGridLayout,
-    QDoubleSpinBox,
-)
+from PyQt5.QtWidgets import QLineEdit, QLabel, QGridLayout, QDoubleSpinBox
 
 from hardware_control.base import HC_Instrument, HC_Comm
 
@@ -12,13 +7,13 @@ from hardware_control.base import HC_Instrument, HC_Comm
 class HC_DeviceType(HC_Instrument):
     # Convention: __init__(self, backend, window . . . )
     def __init__(
-            self,
-            backend,
-            window,
-            channels: list,
-            name: str = "TemplateDevice",
-            initialize_with: str = "INSTRUMENT",
-            save_on_close: str = False,
+        self,
+        backend,
+        window,
+        channels: list,
+        name: str = "TemplateDevice",
+        initialize_with: str = "INSTRUMENT",
+        save_on_close: str = False,
     ):
         # initalizing
         super().__init__(window, name)
@@ -26,12 +21,14 @@ class HC_DeviceType(HC_Instrument):
         self.save_on_close = save_on_close
         self.backend = backend
         self.comm = HC_Comm(backend, self)
-        #self.filename = ""  # currently not in use
+        # self.filename = ""  # currently not in use
 
         ### Create UI - example
         self.lineEdit = QLineEdit()
         self.lineEdit.setText("10")
-        self.lineEdit.editingFinished.connect(lambda: self.command(self.lineEdit.text()))
+        self.lineEdit.editingFinished.connect(
+            lambda: self.command(self.lineEdit.text())
+        )
 
         self.text = QLabel()
         self.text.setText("123")
@@ -39,7 +36,9 @@ class HC_DeviceType(HC_Instrument):
         self.spinbox = QDoubleSpinBox()
         self.spinbox.setRange(0, 10)
         self.spinbox.setSingleStep(0.15)
-        self.spinbox.editingFinished.connect((lambda: self.update_setting("Volt_Channel1", str(self.spinbox.value()))))
+        self.spinbox.editingFinished.connect(
+            (lambda: self.update_setting("Volt_Channel1", str(self.spinbox.value())))
+        )
 
         self.layout = QGridLayout()
         self.layout.addWidget(self.lineEdit, 0, 0)
@@ -63,7 +62,9 @@ class HC_DeviceType(HC_Instrument):
 
     # Updates the readout
     def update_readout(self):
-        self.command("RND")             #Sends readout command (for example)
-        mess = self.read_message("RND") #recived messige will be stored, once available this will read it out, that way the UI wont freeze
+        self.command("RND")  # Sends readout command (for example)
+        mess = self.read_message(
+            "RND"
+        )  # recived messige will be stored, once available this will read it out, that way the UI wont freeze
         if mess:
             self.text.setText(mess)

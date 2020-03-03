@@ -14,6 +14,7 @@ from collections import defaultdict, deque
 import matplotlib.pyplot as plt
 import pyvisa
 from PyQt5 import QtCore
+
 # from .base import QOnOff, QFixedLabel, FigureTab
 from PyQt5.Qt import QMutex
 from PyQt5.QtCore import QTimer, QThread, pyqtSignal, pyqtSlot, QObject

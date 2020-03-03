@@ -43,7 +43,7 @@ from hardware_control.MacroRunnerTool.HC_MacroRunnerTool import HC_MacroRunnerTo
 from hardware_control.VariableEditTool.HC_VariableEditTool import HC_VariableEditTool
 from hardware_control.IOModule.HC_Read import HC_Read, HC_singleChannelRead
 from hardware_control.IOModule.ADAM_6015 import Adam_6015
-from hardware_control.LoggerTool.HC_LoggerTool  import HC_LoggerTool
+from hardware_control.LoggerTool.HC_LoggerTool import HC_LoggerTool
 from hardware_control.PowerSupply.NI_DaX_PowerSupplyController import (
     NI_DaX_PowerSupplyController,
 )
@@ -77,11 +77,11 @@ class STS50Demo(HC_MainWindow):
         ######## Tab 1
 
         scpi_scope = Key4000XCtrl(
-            "TCPIP0::192.168.0.14::INSTR", #ToDo: old adress "TCPIP0::192.168.1.14::INSTR"
+            "TCPIP0::192.168.0.14::INSTR",  # ToDo: old adress "TCPIP0::192.168.1.14::INSTR"
             dummy,
             debug,
             use_sockets,
-            "192.168.0.14", #ToDo: old adress "192.168.1.14"
+            "192.168.0.14",  # ToDo: old adress "192.168.1.14"
             5025,
         )
         self.scope_ctrl = HC_Oscilloscope(scpi_scope, self, "Keysight", "DEFAULT", True)
@@ -106,11 +106,11 @@ class STS50Demo(HC_MainWindow):
 
         # awg = Key33500BCtrl("Some-address-goes-here", dummy, True, use_sockets, "192.168.0.18", 5025)
         awg = Key33500BCtrl(
-            "TCPIP0::192.168.0.18::INSTR", # toDo "TCPIP0::192.168.1.18::INSTR"
+            "TCPIP0::192.168.0.18::INSTR",  # toDo "TCPIP0::192.168.1.18::INSTR"
             dummy,
             True,
             use_sockets,
-            "192.168.0.18", #"192.168.1.18"
+            "192.168.0.18",  # "192.168.1.18"
             5025,
         )  # "USB0::0x0957::0x2907::MY52500624::INSTR"
         awg.debug = debug
@@ -147,7 +147,9 @@ class STS50Demo(HC_MainWindow):
             self.temp_ctrl, 0, "Random Readout", "TEMP", "Unit"
         )
 
-        self.flow = AlicatMSeriesCtrl("192.168.0.15", dummy, debug) #todo "192.168.1.15"
+        self.flow = AlicatMSeriesCtrl(
+            "192.168.0.15", dummy, debug
+        )  # todo "192.168.1.15"
         self.flow_ctrl = HC_FlowController(
             self.flow, self, "Flow Controller", "flowcontroller_state.json", True
         )
@@ -394,8 +396,11 @@ class STS50Demo(HC_MainWindow):
                 for item in self.app.log:
                     f.write("%s\n" % item)
 
+
 def main(argv):
-    warnings.filterwarnings(action="ignore", message="unclosed", category=ResourceWarning) #ToDo Not a solution
+    warnings.filterwarnings(
+        action="ignore", message="unclosed", category=ResourceWarning
+    )  # ToDo Not a solution
     app = HC_App(debug, [])
     app.print_close_info = True
 
@@ -403,7 +408,7 @@ def main(argv):
         dummy_set = Dataset("Dummy")
         app.data_sets["Dummy"] = dummy_set
         app.data_sets["Dummy"].data["t"] = [1, 2, 3, 4, 5]
-        app.data_sets["Dummy"].data["CH1 Vpp"] = [1,1.5, 2, 2.5, 3]
+        app.data_sets["Dummy"].data["CH1 Vpp"] = [1, 1.5, 2, 2.5, 3]
         app.data_sets["Dummy"].data["CH2 Vpp"] = [-1, -2, -3, -3, -3]
 
     ex = STS50Demo(app)

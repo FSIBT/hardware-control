@@ -14,7 +14,7 @@ import re
 
 from hardware_control.HC_Backend import HC_Backend
 
-#ToDo: obviously
+# ToDo: obviously
 def to_NR3(x: float):
     return f" {x:.6E}"
 

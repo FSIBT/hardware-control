@@ -54,7 +54,12 @@ import copy
 #
 class HC_Oscilloscope(HC_Instrument):
     def __init__(
-        self, scpi_instr, window, name: str = "Oscilloscope Control", initialize_with: str = "INSTRUMENT", save_on_close: str = False,
+        self,
+        scpi_instr,
+        window,
+        name: str = "Oscilloscope Control",
+        initialize_with: str = "INSTRUMENT",
+        save_on_close: str = False,
     ):
 
         super().__init__(window, name)
@@ -217,20 +222,48 @@ class OscillscopeChannelWidget(QWidget):
 
         self.channel_label = QLabel()
         if channel == 1:
-            self.channel_label.setPixmap(QPixmap(pkg_resources.resource_filename("hardware_control", "Oscilloscope/graphics/channel1_yellow.png")))
+            self.channel_label.setPixmap(
+                QPixmap(
+                    pkg_resources.resource_filename(
+                        "hardware_control", "Oscilloscope/graphics/channel1_yellow.png"
+                    )
+                )
+            )
         elif channel == 2:
-            self.channel_label.setPixmap(QPixmap(pkg_resources.resource_filename("hardware_control", "Oscilloscope/graphics/channel2_green.png")))
+            self.channel_label.setPixmap(
+                QPixmap(
+                    pkg_resources.resource_filename(
+                        "hardware_control", "Oscilloscope/graphics/channel2_green.png"
+                    )
+                )
+            )
         elif channel == 3:
-            self.channel_label.setPixmap(QPixmap(pkg_resources.resource_filename("hardware_control", "Oscilloscope/graphics/channel3_blue.png")))
+            self.channel_label.setPixmap(
+                QPixmap(
+                    pkg_resources.resource_filename(
+                        "hardware_control", "Oscilloscope/graphics/channel3_blue.png"
+                    )
+                )
+            )
         elif channel == 4:
-            self.channel_label.setPixmap(QPixmap(pkg_resources.resource_filename("hardware_control", "Oscilloscope/graphics/channel4_red.png")))
+            self.channel_label.setPixmap(
+                QPixmap(
+                    pkg_resources.resource_filename(
+                        "hardware_control", "Oscilloscope/graphics/channel4_red.png"
+                    )
+                )
+            )
         else:
             self.channel_label.setText(f"Channel {channel}")
 
         # ****** DEFINE TEXT BOXES
         #
         self.v_div_edit = QDoubleSpinBox()
-        self.v_div_edit.editingFinished.connect(lambda: control.update_setting(f"CH{channel}_volts_div", self.v_div_edit.text()))
+        self.v_div_edit.editingFinished.connect(
+            lambda: control.update_setting(
+                f"CH{channel}_volts_div", self.v_div_edit.text()
+            )
+        )
         try:
             self.v_div_edit.setValue(float(control.settings[f"CH{channel}_volts_div"]))
         except:
@@ -240,7 +273,11 @@ class OscillscopeChannelWidget(QWidget):
         self.v_div_edit.setSingleStep(0.05)
         #
         self.offset_edit = QDoubleSpinBox()
-        self.offset_edit.editingFinished.connect(lambda: control.update_setting(f"CH{channel}_offset", self.offset_edit.text()))
+        self.offset_edit.editingFinished.connect(
+            lambda: control.update_setting(
+                f"CH{channel}_offset", self.offset_edit.text()
+            )
+        )
         try:
             self.offset_edit.setValue(float(control.settings[f"CH{channel}_offset"]))
         except:
@@ -250,7 +287,9 @@ class OscillscopeChannelWidget(QWidget):
         self.offset_edit.setSingleStep(0.05)
         #
         self.label_edit = QLineEdit()
-        self.label_edit.editingFinished.connect(lambda: control.update_setting(f"CH{channel}_label", self.label_edit.text()))
+        self.label_edit.editingFinished.connect(
+            lambda: control.update_setting(f"CH{channel}_label", self.label_edit.text())
+        )
         self.label_edit.setText(control.settings[f"CH{channel}_label"])
         #
         self.form = QFormLayout()
@@ -265,21 +304,53 @@ class OscillscopeChannelWidget(QWidget):
         self.active_but = QPushButton()
         self.active_but.setText("Channel On/Off")
         self.active_but.setCheckable(True)
-        self.active_but.clicked.connect(lambda: control.update_setting(f"CH{channel}_active", str(self.active_but.isChecked())))
+        self.active_but.clicked.connect(
+            lambda: control.update_setting(
+                f"CH{channel}_active", str(self.active_but.isChecked())
+            )
+        )
         setButtonState(self.active_but, control.settings[f"CH{channel}_active"])
         #
         self.BW_but = QPushButton()
         self.BW_but.setText("BW Limit")
-        self.BW_but.setIcon(QIcon((QPixmap(pkg_resources.resource_filename("hardware_control", "Oscilloscope/graphics/BWlim.png")))))
+        self.BW_but.setIcon(
+            QIcon(
+                (
+                    QPixmap(
+                        pkg_resources.resource_filename(
+                            "hardware_control", "Oscilloscope/graphics/BWlim.png"
+                        )
+                    )
+                )
+            )
+        )
         self.BW_but.setCheckable(True)
-        self.BW_but.clicked.connect(lambda: control.update_setting(f"CH{channel}_BW_lim", str(self.BW_but.isChecked())))
+        self.BW_but.clicked.connect(
+            lambda: control.update_setting(
+                f"CH{channel}_BW_lim", str(self.BW_but.isChecked())
+            )
+        )
         setButtonState(self.BW_but, control.settings[f"CH{channel}_BW_lim"])
         #
         self.Inv_but = QPushButton()
         self.Inv_but.setText("Invert")
         self.Inv_but.setCheckable(True)
-        self.Inv_but.setIcon(QIcon((QPixmap(pkg_resources.resource_filename("hardware_control", "Oscilloscope/graphics/invert.png")))))
-        self.Inv_but.clicked.connect(lambda: control.update_setting(f"CH{channel}_invert", str(self.Inv_but.isChecked())))
+        self.Inv_but.setIcon(
+            QIcon(
+                (
+                    QPixmap(
+                        pkg_resources.resource_filename(
+                            "hardware_control", "Oscilloscope/graphics/invert.png"
+                        )
+                    )
+                )
+            )
+        )
+        self.Inv_but.clicked.connect(
+            lambda: control.update_setting(
+                f"CH{channel}_invert", str(self.Inv_but.isChecked())
+            )
+        )
         setButtonState(self.Inv_but, control.settings[f"CH{channel}_invert"])
         #
         #
@@ -288,7 +359,11 @@ class OscillscopeChannelWidget(QWidget):
         #
         self.coupling_drop = QComboBox()
         self.coupling_drop.addItems(["DC", "AC"])
-        self.coupling_drop.currentIndexChanged.connect(lambda: control.update_setting(f"CH{channel}_coupling", self.coupling_drop.currentText()))
+        self.coupling_drop.currentIndexChanged.connect(
+            lambda: control.update_setting(
+                f"CH{channel}_coupling", self.coupling_drop.currentText()
+            )
+        )
         self.coupling_drop.setCurrentText(control.settings[f"CH{channel}_coupling"])
         #
         self.impedance_label = QLabel("Impedance:")
@@ -296,16 +371,28 @@ class OscillscopeChannelWidget(QWidget):
         #
         self.impedance_drop = QComboBox()
         self.impedance_drop.addItems(["1e6", "50"])
-        self.impedance_drop.currentIndexChanged.connect(lambda: control.update_setting(f"CH{channel}_impedance", self.impedance_drop.currentText()))
-        self.impedance_drop.setCurrentText(str(control.settings[f"CH{channel}_impedance"]))
+        self.impedance_drop.currentIndexChanged.connect(
+            lambda: control.update_setting(
+                f"CH{channel}_impedance", self.impedance_drop.currentText()
+            )
+        )
+        self.impedance_drop.setCurrentText(
+            str(control.settings[f"CH{channel}_impedance"])
+        )
         #
         self.probe_label = QLabel("Probe attenutation: ")
         self.probe_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         #
         self.probe_drop = QComboBox()
         self.probe_drop.addItems([".001", ".01", ".1", "1", "10", "100", "1000"])
-        self.probe_drop.currentIndexChanged.connect(lambda: control.update_setting(f"CH{channel}_probe_atten", self.probe_drop.currentText()))
-        self.probe_drop.setCurrentText(str(control.settings[f"CH{channel}_probe_atten"]))
+        self.probe_drop.currentIndexChanged.connect(
+            lambda: control.update_setting(
+                f"CH{channel}_probe_atten", self.probe_drop.currentText()
+            )
+        )
+        self.probe_drop.setCurrentText(
+            str(control.settings[f"CH{channel}_probe_atten"])
+        )
         #
         # Add widgets to grid layout
         self.lower_grid.addWidget(self.active_but, 0, 0)
@@ -338,13 +425,23 @@ class OscilloscopeTriggerWidget(QWidget):
 
         self.trigger_label_box = QHBoxLayout()
         self.trigger_label = QLabel()
-        self.trigger_label.setPixmap(QPixmap(pkg_resources.resource_filename("hardware_control", "Oscilloscope/graphics/trigger_label.png")))
+        self.trigger_label.setPixmap(
+            QPixmap(
+                pkg_resources.resource_filename(
+                    "hardware_control", "Oscilloscope/graphics/trigger_label.png"
+                )
+            )
+        )
         self.trigger_label_box.addWidget(self.trigger_label)
 
         # ****** DEFINE TEXT BOXES
         #
         self.level_edit = QDoubleSpinBox()
-        self.level_edit.editingFinished.connect(lambda: control.update_setting("trigger_level", str(self.level_edit.value())))
+        self.level_edit.editingFinished.connect(
+            lambda: control.update_setting(
+                "trigger_level", str(self.level_edit.value())
+            )
+        )
         self.level_edit.setValue(float(control.settings["trigger_level"]))
         self.level_edit.setSingleStep(0.01)
         self.level_edit.setDecimals(2)
@@ -360,7 +457,11 @@ class OscilloscopeTriggerWidget(QWidget):
         #
         self.trig_chan_drop = QComboBox()
         self.trig_chan_drop.addItems(["1", "2", "3", "4"])
-        self.trig_chan_drop.currentIndexChanged.connect(lambda: control.update_setting("trigger_channel", self.trig_chan_drop.currentText()))
+        self.trig_chan_drop.currentIndexChanged.connect(
+            lambda: control.update_setting(
+                "trigger_channel", self.trig_chan_drop.currentText()
+            )
+        )
         self.trig_chan_drop.setCurrentText(str(control.settings["trigger_channel"]))
         #
         self.coupling_label = QLabel("Coupling:")
@@ -368,7 +469,11 @@ class OscilloscopeTriggerWidget(QWidget):
         #
         self.coupling_drop = QComboBox()
         self.coupling_drop.addItems(["DC", "AC", "LFReject", "HFReject"])
-        self.coupling_drop.currentIndexChanged.connect(lambda: control.update_setting("trigger_coupling", self.coupling_drop.currentText()))
+        self.coupling_drop.currentIndexChanged.connect(
+            lambda: control.update_setting(
+                "trigger_coupling", self.coupling_drop.currentText()
+            )
+        )
         self.coupling_drop.setCurrentText(control.settings["trigger_coupling"])
         #
         self.edge_label = QLabel("Edge:")
@@ -376,7 +481,9 @@ class OscilloscopeTriggerWidget(QWidget):
         #
         self.edge_drop = QComboBox()
         self.edge_drop.addItems(["POS", "NEG", "EITH", "ALT"])
-        self.edge_drop.currentIndexChanged.connect(lambda: control.update_setting("trigger_edge", self.edge_drop.currentText()))
+        self.edge_drop.currentIndexChanged.connect(
+            lambda: control.update_setting("trigger_edge", self.edge_drop.currentText())
+        )
         self.edge_drop.setCurrentText(str(control.settings["trigger_edge"]))
         #
         self.single_but = QPushButton()
@@ -418,14 +525,20 @@ class OscilloscopeHorizontalWidget(QWidget):
     def __init__(self, control):
         super().__init__()
 
-        #Define timescale options
+        # Define timescale options
         self.units = {"s": 1, "ms": 1e-3, "us": 1e-6, "ns": 1e-9}
 
         # ************** DEFINE UI *********************#
 
         self.horizontal_label_box = QHBoxLayout()
         self.horizontal_label = QLabel()
-        self.horizontal_label.setPixmap(QPixmap(pkg_resources.resource_filename("hardware_control", "Oscilloscope/graphics/horizontal_label.png")))
+        self.horizontal_label.setPixmap(
+            QPixmap(
+                pkg_resources.resource_filename(
+                    "hardware_control", "Oscilloscope/graphics/horizontal_label.png"
+                )
+            )
+        )
         self.horizontal_label_box.addWidget(self.horizontal_label)
 
         # ****** DEFINE TEXT BOXES
@@ -439,8 +552,16 @@ class OscilloscopeHorizontalWidget(QWidget):
         self.timebase_edit.setSingleStep(1)
         self.timebase_edit.setDecimals(3)
         self.timebase_edit.setMaximum(1e6)
-        self.timebase_edit.editingFinished.connect(lambda: control.update_setting("timebase", str(float(self.timebase_edit.text()) * self.units[self.timebase_edit_units.currentText()])))
-        self.timebase_edit.setValue(float(control.settings["timebase"])*1e3 )
+        self.timebase_edit.editingFinished.connect(
+            lambda: control.update_setting(
+                "timebase",
+                str(
+                    float(self.timebase_edit.text())
+                    * self.units[self.timebase_edit_units.currentText()]
+                ),
+            )
+        )
+        self.timebase_edit.setValue(float(control.settings["timebase"]) * 1e3)
         #
         self.timebase_edit_units = QComboBox()
         self.timebase_edit_units.addItems(self.units.keys())
@@ -455,8 +576,16 @@ class OscilloscopeHorizontalWidget(QWidget):
         self.time_offset_edit.setSingleStep(1)
         self.time_offset_edit.setDecimals(3)
         self.time_offset_edit.setMaximum(1e6)
-        self.time_offset_edit.setValue(float(control.settings["time_offset"])*1e3)
-        self.time_offset_edit.editingFinished.connect(lambda: control.update_setting("time_offset", str(float(self.time_offset_edit.text()) * self.units[self.time_offset_edit_units.currentText()])))
+        self.time_offset_edit.setValue(float(control.settings["time_offset"]) * 1e3)
+        self.time_offset_edit.editingFinished.connect(
+            lambda: control.update_setting(
+                "time_offset",
+                str(
+                    float(self.time_offset_edit.text())
+                    * self.units[self.time_offset_edit_units.currentText()]
+                ),
+            )
+        )
         #
         self.time_offset_edit_units = QComboBox()
         # self.time_offset_edit_units.currentIndexChanged.connect(lambda: control.update_setting("time_offset", str(float(self.time_offset_edit.text()) * self.units[self.timebase_edit_units.currentText()])))
@@ -513,7 +642,9 @@ class OscilloscopeDisplayWidget(QGroupBox):
             #
             self.refresh_rate_edit = QLineEdit()
             self.refresh_rate_edit.setValidator(QDoubleValidator())
-            self.refresh_rate_edit.editingFinished.connect(lambda: self.refresh_rate(float(self.refresh_rate_edit.text())))
+            self.refresh_rate_edit.editingFinished.connect(
+                lambda: self.refresh_rate(float(self.refresh_rate_edit.text()))
+            )
             self.refresh_rate_edit.setText(str(refresh))
             #
             self.refresh_but = QPushButton()
@@ -524,8 +655,12 @@ class OscilloscopeDisplayWidget(QGroupBox):
             #
             self.refresh_mode_drop = QComboBox()
             # self.refresh_mode_drop.addItems(["Timer", "Single Trig", "Manual"]) #TODO: Impliment single trigger
-            self.refresh_mode_drop.addItems(["Timer", "Manual"])  # TODO: Impliment single trigger
-            self.refresh_mode_drop.currentIndexChanged.connect(lambda: self.set_refresh_mode(self.refresh_mode_drop.currentText()))
+            self.refresh_mode_drop.addItems(
+                ["Timer", "Manual"]
+            )  # TODO: Impliment single trigger
+            self.refresh_mode_drop.currentIndexChanged.connect(
+                lambda: self.set_refresh_mode(self.refresh_mode_drop.currentText())
+            )
             self.refresh_mode_drop.setCurrentText("Timer")
             #
             #
@@ -581,7 +716,9 @@ class OscilloscopeDisplayWidget(QGroupBox):
             if self.control.settings[f"CH{c}_active"] == "True":
                 self.control.command_listdata(f"CH{c}_WVFM?")  # Ask for waveform data
             else:
-                self.control.command_listdata(f"CH{c}_CLEAR")  # Tell backend to send empty data
+                self.control.command_listdata(
+                    f"CH{c}_CLEAR"
+                )  # Tell backend to send empty data
 
 
 class OscilloscopeMeasurementWidget(QWidget):
@@ -596,7 +733,13 @@ class OscilloscopeMeasurementWidget(QWidget):
         # ******************** DEFINE UI ***************************
 
         self.measurement_label = QLabel()
-        self.measurement_label.setPixmap(QPixmap(pkg_resources.resource_filename("hardware_control", "graphics/measurement_label.png")))
+        self.measurement_label.setPixmap(
+            QPixmap(
+                pkg_resources.resource_filename(
+                    "hardware_control", "graphics/measurement_label.png"
+                )
+            )
+        )
 
         self.channel_label = QLabel("Source: ")
 
@@ -608,7 +751,9 @@ class OscilloscopeMeasurementWidget(QWidget):
         self.meas_label = QLabel("Measurement: ")
 
         self.meas_drop = QComboBox()
-        self.meas_drop.addItems(["Vpp", "Vrms", "Vmax", "Vmin", "Vavg", "Freq", "Period", "Phase 1->2"])
+        self.meas_drop.addItems(
+            ["Vpp", "Vrms", "Vmax", "Vmin", "Vavg", "Freq", "Period", "Phase 1->2"]
+        )
         self.meas_drop.setCurrentText("Vpp")
 
         self.add_but = QPushButton()
@@ -629,31 +774,31 @@ class OscilloscopeMeasurementWidget(QWidget):
 
         self.setLayout(self.master_layout)
 
-        self.next_slot = 1;
+        self.next_slot = 1
 
     def add_measurement(self):
 
-        #Get parameter string from dropdown. Convert values to correct format for
-        #backend to understand.
+        # Get parameter string from dropdown. Convert values to correct format for
+        # backend to understand.
 
         add_channel = True
         meas_string = self.meas_drop.currentText().upper()
-        if (meas_string == "PERIOD"):
+        if meas_string == "PERIOD":
             meas_string = "PER"
-        elif (meas_string == "Phase 1->2"):
+        elif meas_string == "Phase 1->2":
             meas_string = "RPH"
             add_channel = False
 
         if add_channel:
             meas_string = meas_string + ",CHAN" + self.channel_drop.currentText()[3]
 
-        self.control.update_setting(f"meas_slot{self.next_slot}", meas_string);
+        self.control.update_setting(f"meas_slot{self.next_slot}", meas_string)
 
-        #Update next slot
-        self.next_slot += 1;
+        # Update next slot
+        self.next_slot += 1
         if self.next_slot > 5:
-            self.next_slot = 1;
+            self.next_slot = 1
 
-    #TODO: Make this delete measurements in internal settings variables
+    # TODO: Make this delete measurements in internal settings variables
     def clear_measurements(self):
         self.control.command("CLEAR_MEAS")

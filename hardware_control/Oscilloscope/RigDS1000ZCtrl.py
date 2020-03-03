@@ -83,9 +83,9 @@ class RigDS1000ZCtrl(HC_Backend):
         self.port_no = port_no
         self.ip_addr = ip_addr
 
-        self.use_avg = False;
+        self.use_avg = False
 
-        self.measurements = ["", "", "", "", ""];
+        self.measurements = ["", "", "", "", ""]
 
     def update_setting(self, setting: str, value):
 
@@ -129,10 +129,10 @@ class RigDS1000ZCtrl(HC_Backend):
 
                 elif regex_compare("CH._impedance", setting):
 
-                    #This feature is not available on this model
+                    # This feature is not available on this model
                     pass
 
-                elif regex_compare("CH._label", setting): #TODO
+                elif regex_compare("CH._label", setting):  # TODO
 
                     # Length is capped at 32 characters
                     if len(value) > 32:
@@ -142,7 +142,7 @@ class RigDS1000ZCtrl(HC_Backend):
                     self.write(f"CHAN{chan}:LAB {value}")
                     return self.query(f"CHAN{chan}:LAB?")
 
-                elif setting == "labels_enabled": #TODO
+                elif setting == "labels_enabled":  # TODO
                     self.write(f"DISP:LAB {boolstr_NR1(value)}")
                     return self.query(f"DISP:LAB?")
 
@@ -154,7 +154,9 @@ class RigDS1000ZCtrl(HC_Backend):
                 elif regex_compare("CH._probe_atten", setting):
                     chan = setting[2]
                     self.write(f"CHAN{chan}:PROB {str_NR3(value)}")
-                    return self.query(f"CHAN{chan}:PROB?")  # ie. 10 gives x10 or 10:1 probe
+                    return self.query(
+                        f"CHAN{chan}:PROB?"
+                    )  # ie. 10 gives x10 or 10:1 probe
 
                 elif regex_compare("CH._coupling", setting):
                     chan = setting[2]
@@ -173,7 +175,12 @@ class RigDS1000ZCtrl(HC_Backend):
                 elif setting == "trigger_coupling":
 
                     # Make sure valid option given
-                    if value != "AC" and value != "DC" and value != "LFReject" and value != "HFReject":
+                    if (
+                        value != "AC"
+                        and value != "DC"
+                        and value != "LFReject"
+                        and value != "HFReject"
+                    ):
                         value = "DC"
 
                     self.write(f"TRIG:COUP {value}")
@@ -182,14 +189,19 @@ class RigDS1000ZCtrl(HC_Backend):
                 elif setting == "trigger_edge":
 
                     # Make sure valid option given
-                    if (value != "BOTH" and value != "NEG" and value != "POS" and value != "ALT"):
+                    if (
+                        value != "BOTH"
+                        and value != "NEG"
+                        and value != "POS"
+                        and value != "ALT"
+                    ):
                         value = "POS"
 
-                    #This model does not support BOTH mode
+                    # This model does not support BOTH mode
                     if value == "BOTH":
                         value = "POS"
 
-                    #This model calls altermating mode 'RFALI'
+                    # This model calls altermating mode 'RFALI'
                     if value == "ALT":
                         value = "RFALI"
 
@@ -200,23 +212,25 @@ class RigDS1000ZCtrl(HC_Backend):
 
                     self.write(f"TRIG:EDG:SOUR CHAN{str_NR1(value)}")
                     return self.query(f"TRIG:EDG:SOUR?")
-                elif regex_compare("meas_slot.", setting): #Value must follow pattern 'meas_parameter','source_channel'
+                elif regex_compare(
+                    "meas_slot.", setting
+                ):  # Value must follow pattern 'meas_parameter','source_channel'
 
-                    #Get slot number
-                    slot = int(setting[9]);
+                    # Get slot number
+                    slot = int(setting[9])
                     if slot > 5 or slot < 0:
                         return "Bad setting"
 
-                    #Update slot value
-                    self.measurements[slot-1] = value;
+                    # Update slot value
+                    self.measurements[slot - 1] = value
 
-                    #Write all slots
+                    # Write all slots
                     for slot, meas in enumerate(self.measurements):
                         if meas != "":
                             self.write(f":MEAS:STAT:ITEM {meas}")
                 elif regex_compare("use_meas_avg"):
 
-                    self.use_avg = boolstr_NR1(value);
+                    self.use_avg = boolstr_NR1(value)
                     return f"Use avg.: {value}"
 
                 elif setting == "meas_stat_enabled":
@@ -235,9 +249,9 @@ class RigDS1000ZCtrl(HC_Backend):
 
         ret_str = ""
 
-        add_asterisk = False;
+        add_asterisk = False
         if cmd[-1] == "*":
-            add_asterisk = True;
+            add_asterisk = True
             cmd = cmd[0:-1]
 
         if not self.online:
@@ -259,25 +273,25 @@ class RigDS1000ZCtrl(HC_Backend):
 
             self.pDebug(f"Reading slot w/ '{cmd}'", False, True)
 
-            #Get slot number
-            slot = int(cmd[9]);
+            # Get slot number
+            slot = int(cmd[9])
             if slot > 5 or slot < 0:
                 ret_str = "Bad command. Slot index out of range"
-                if add_asterisk: #Don't let Macro get locked indefinitely add asterisk
+                if add_asterisk:  # Don't let Macro get locked indefinitely add asterisk
                     ret_str = ret_str + "*="
                 return ret_str
 
-            #Get measurement command for specified slot
+            # Get measurement command for specified slot
 
             try:
-                meas = self.measurements[slot-1]
+                meas = self.measurements[slot - 1]
             except:
                 ret_str = "Bad command. Slot index out of range"
-                if add_asterisk: #Don't let Macro get locked indefinitely add asterisk
+                if add_asterisk:  # Don't let Macro get locked indefinitely add asterisk
                     ret_str = ret_str + "*="
                 return ret_str
 
-            #Read measurement
+            # Read measurement
             if meas != "":
                 try:
 
@@ -293,22 +307,20 @@ class RigDS1000ZCtrl(HC_Backend):
             else:
                 ret_str = ""
 
-            #Add description to return
+            # Add description to return
             if add_asterisk:
-                ret_str = cmd + "*=" + ret_str;
+                ret_str = cmd + "*=" + ret_str
             else:
-                ret_str = cmd + "=" + ret_str;
+                ret_str = cmd + "=" + ret_str
             self.pDebug(f"Returning slot read w/ '{ret_str}'", False, True)
         elif cmd == "RESET_MEAS_STAT":
 
             self.write(f":MEAS:STAT:DISP OFF")
             self.write(f":MEAS:STAT:DISP ON")
 
-            ret_str = cmd;
+            ret_str = cmd
 
         return ret_str
-
-
 
     def command_listdata(self, cmd: str):
 
@@ -346,7 +358,7 @@ class RigDS1000ZCtrl(HC_Backend):
     #
     #
     # Returns (V, t) as float[]
-    def read_waveform(self, channel: int): #TODO
+    def read_waveform(self, channel: int):  # TODO
         """Reads a waveform from the oscilloscope."""
 
         if self.dummy or not self.online:
@@ -361,18 +373,17 @@ class RigDS1000ZCtrl(HC_Backend):
 
         try:
 
-            self.write(f"WAV:SOUR CHAN{channel}") #Specify channel to read
-            self.write("WAV:MODE NORM") #Specify to read data displayed on screen
-            self.write("WAV:FORM ASCII") #Specify data format to ASCII
-            data = self.query("WAV:DATA?") #Request data
+            self.write(f"WAV:SOUR CHAN{channel}")  # Specify channel to read
+            self.write("WAV:MODE NORM")  # Specify to read data displayed on screen
+            self.write("WAV:FORM ASCII")  # Specify data format to ASCII
+            data = self.query("WAV:DATA?")  # Request data
 
-            #Split string into ASCII voltage values
-            volts = data[11:].split(',')
+            # Split string into ASCII voltage values
+            volts = data[11:].split(",")
 
-            #Convert strings to floats for every point
+            # Convert strings to floats for every point
             for idx, v in enumerate(volts):
                 volts[idx] = float(v)
-
 
             # #Pull header out of data, get number of point
             # TMC_data_desc_header = data[0:12].decode("utf-8")
@@ -383,18 +394,21 @@ class RigDS1000ZCtrl(HC_Backend):
             #     self.pDebug("ERROR: Header specifies different number of points than was received.")
             #     return "", [], []
 
-            #Get timing data
+            # Get timing data
             xorigin = float(self.query("WAV:XOR?"))
             xincr = float(self.query("WAV:XINC?"))
 
-            #Get time values
-            t = list(np.linspace(xorigin, xorigin+xincr*(len(volts)-1), len(volts)))
+            # Get time values
+            t = list(
+                np.linspace(xorigin, xorigin + xincr * (len(volts) - 1), len(volts))
+            )
 
         except:
             self.pDebug("ERROR: Failed to read waveform data from scope")
             return "", [], []
 
         return f"CH{channel}_WVFM", t, volts
+
 
 #     def write(self, command: str):
 #

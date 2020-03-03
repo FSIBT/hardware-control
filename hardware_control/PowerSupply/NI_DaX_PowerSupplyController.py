@@ -14,11 +14,12 @@ NI-DaQ's will not work on Unix based OS.
 import time
 from colorama import Fore, Style
 import os
-#import nidaqmx happens in a method below, which reports the status
+
+# import nidaqmx happens in a method below, which reports the status
 
 from colorama import Fore, Style
 
-if os.name == 'nt':
+if os.name == "nt":
     import nidaqmx
 
 from hardware_control.HC_Backend import HC_Backend
@@ -65,9 +66,9 @@ class NI_DaX_PowerSupplyController(HC_Backend):
 
         self.lastVset = 0
 
-        #Check import
+        # Check import
         if not nidaxmxTest():
-            self.dummy=True
+            self.dummy = True
             self.pDebug(f"{self.ID}: import of nidaqmx failed, changing to dummy mode")
 
     ###About this device:
@@ -149,11 +150,14 @@ class NI_DaX_PowerSupplyController(HC_Backend):
                 self.pDebug(f"{self.ID} closing exception : {e}")
         return False
 
+
 """
 This method checks that the import goes smooth and
 reports that so that all functionality can ether be disabled or
 further checks can happen.
 """
+
+
 def nidaxmxTest():
     if os.name == "nt":
         try:

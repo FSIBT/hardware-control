@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 import pyvisa
 from colorama import Fore, Back, Style
 
+
 class HC_Backend(ABC):
     """Base"""
 
@@ -107,7 +108,7 @@ class HC_Backend(ABC):
                     self.pDebug(f"\t({self.ID}) ERROR while using visa: /n {str(e)}")
                     self.pDebug(f"{self.ID} is offline")
             else:
-                self.online= True
+                self.online = True
         else:  # Use sockets
             try:
                 self.device = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -125,7 +126,7 @@ class HC_Backend(ABC):
                     self.pDebug(f"\t({self.ID}) ERROR while using sockets: /n {str(e)}")
                     self.pDebug(f"{self.ID} is offline")
             else:
-                self.online= True
+                self.online = True
         return self.online
 
     def write(self, command: str):

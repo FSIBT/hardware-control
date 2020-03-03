@@ -1,5 +1,6 @@
 import re
 
+
 def regex_compare(pattern: str, comp: str):
     """Compares 'comp' to the pattern 'pattern'. periods ('.') act as a wildcard in the regular expression.
     Returns true if 'comp' matches the regex."""
@@ -15,6 +16,7 @@ def returnChannelNumber(s: str):
             return number
     else:
         return None
+
 
 # These functions are helpful for converting numbers to
 # specific number formats for strings

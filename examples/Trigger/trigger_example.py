@@ -11,12 +11,7 @@ Options:
 """
 import sys
 
-from PyQt5.QtWidgets import (
-    QApplication,
-    QMainWindow,
-    QWidget,
-    QGridLayout,
-)
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QGridLayout
 from docopt import docopt
 from hardware_control.PulseGenerator.SRSDG535Int import SRSDG535Int
 from hardware_control.PulseGenerator.hc_pulsegen import PulseGenControl

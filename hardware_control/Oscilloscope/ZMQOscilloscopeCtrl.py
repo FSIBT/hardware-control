@@ -213,7 +213,9 @@ class ZMQOscilloscopeCtrl(HC_Backend):
             if self.online:
                 return True
             else:
-                self.pDebug(f"{self.ID}: creating dummy connection to {self.zmq_address}")
+                self.pDebug(
+                    f"{self.ID}: creating dummy connection to {self.zmq_address}"
+                )
                 self.online = True
                 return True
 

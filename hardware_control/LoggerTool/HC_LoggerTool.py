@@ -4,7 +4,14 @@ import json
 import pkg_resources
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
-from PyQt5.QtGui import QPixmap, QProgressBar, QIcon, QApplication, QSpacerItem, QSizePolicy
+from PyQt5.QtGui import (
+    QPixmap,
+    QProgressBar,
+    QIcon,
+    QApplication,
+    QSpacerItem,
+    QSizePolicy,
+)
 from PyQt5.QtWidgets import (
     QGroupBox,
     QLineEdit,
@@ -52,13 +59,17 @@ class HC_LoggerTool(HC_Instrument):
         self.dispgroup_drop = QComboBox()
         self.dispgroup_drop.addItems(["----------"])
         self.dispgroup_drop.setCurrentText(self.settings["display_group"])
-        self.dispgroup_drop.currentIndexChanged.connect(lambda: self.set_group(self.dispgroup_drop.currentText()))
+        self.dispgroup_drop.currentIndexChanged.connect(
+            lambda: self.set_group(self.dispgroup_drop.currentText())
+        )
         #
         self.new_group_button = QPushButton()
         self.new_group_button.setText("New Dataset")
         self.new_group_button.clicked.connect(self.create_new_group)
         #
-        self.sidebar_v_spacer = QSpacerItem(20, 200, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        self.sidebar_v_spacer = QSpacerItem(
+            20, 200, QSizePolicy.Minimum, QSizePolicy.Expanding
+        )
         #
         self.save_all_button = QPushButton()
         self.save_all_button.setText("Save All Sets")
@@ -80,15 +91,23 @@ class HC_LoggerTool(HC_Instrument):
         #
         self.autosave_check = QCheckBox("Autosave")
         # self.autosave_check.setChecked()
-        self.autosave_check.stateChanged.connect(lambda: self.autosave_on_off(self.autosave_check.isChecked()))
+        self.autosave_check.stateChanged.connect(
+            lambda: self.autosave_on_off(self.autosave_check.isChecked())
+        )
         #
         self.save_interval_label = QLabel("Interval Time (s):")
-        self.save_interval_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.save_interval_label.setAlignment(
+            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
+        )
         #
-        self.save_interval_spacer = QSpacerItem(150, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        self.save_interval_spacer = QSpacerItem(
+            150, 40, QSizePolicy.Minimum, QSizePolicy.Expanding
+        )
         #
         self.save_interval_edit = QLineEdit()
-        self.save_interval_edit.editingFinished.connect(lambda: self.set_interval(self.save_interval_edit.text()))
+        self.save_interval_edit.editingFinished.connect(
+            lambda: self.set_interval(self.save_interval_edit.text())
+        )
         # self.save_interval_edit.setText()
         #
         self.save_button = QPushButton()
@@ -135,22 +154,25 @@ class HC_LoggerTool(HC_Instrument):
 
         self.update_groups()
 
-    def autosave_on_off(self, state:bool):
+    def autosave_on_off(self, state: bool):
 
         try:
             self.window.app.data_sets[self.settings["display_group"]].autosave = state
         except:
             self.window.app.pDebug("ERROR: Failed to set autosave state", True)
 
-    def set_interval(self, t:str):
+    def set_interval(self, t: str):
         """Sets the autosave interval"""
 
         try:
-            self.window.app.data_sets[self.settings["display_group"]].autosave_interval = float(t)
-            self.window.app.data_sets[self.settings["display_group"]].autosave_timer.setInterval(float(t)*1000)
+            self.window.app.data_sets[
+                self.settings["display_group"]
+            ].autosave_interval = float(t)
+            self.window.app.data_sets[
+                self.settings["display_group"]
+            ].autosave_timer.setInterval(float(t) * 1000)
         except:
             self.window.app.pDebug("ERROR: Failed to set interval time", True)
-
 
     def save_data(self):
 
@@ -167,7 +189,9 @@ class HC_LoggerTool(HC_Instrument):
         msg = QMessageBox()
         msg.setIcon(QMessageBox.Warning)
         msg.setText("You are about to delete data. Abort?")
-        msg.setInformativeText(f"Continuing will permanently erase all data in Dataset '{ds_name}'")
+        msg.setInformativeText(
+            f"Continuing will permanently erase all data in Dataset '{ds_name}'"
+        )
         msg.setWindowTitle("Data Erasure Warning")
         # msg.setDetailedText("The details are as follows:")
         msg.setStandardButtons(QMessageBox.Ignore | QMessageBox.Abort)
@@ -184,7 +208,7 @@ class HC_LoggerTool(HC_Instrument):
 
         self.update_table()
 
-    def data_changed_from_cell(self, row:int, col:int):
+    def data_changed_from_cell(self, row: int, col: int):
 
         # print(f"cell changed @ ({row}, {col}). Value is now {self.table.itemAt(row, col).text()}") #TODO: Finish fixing 'data changed from cell' code
         pass
@@ -200,30 +224,29 @@ class HC_LoggerTool(HC_Instrument):
         try:
             group = self.window.app.data_sets[self.settings["display_group"]]
 
-            #Set correct number of columns
+            # Set correct number of columns
             self.table.setColumnCount(len(group.data))
 
-            #Set correct number of rows
+            # Set correct number of rows
             num_rows = group.len()
             if num_rows != -1:
-                self.table.setRowCount(num_rows+1)
+                self.table.setRowCount(num_rows + 1)
             else:
-                return #TODO: Change this so it shows the fragmented data
+                return  # TODO: Change this so it shows the fragmented data
 
-            #Title columns
+            # Title columns
             header_names = []
             for field in group.data:
                 header_names.append(field)
             self.table.setHorizontalHeaderLabels(header_names)
 
-            #Write indeces along vertical
+            # Write indeces along vertical
             indeces = list(range(num_rows))
             indeces_str = []
             for i in indeces:
                 indeces_str.append(str(i))
 
             self.table.setVerticalHeaderLabels(indeces_str)
-
 
             col = 0
             for field in group.data:
@@ -235,25 +258,34 @@ class HC_LoggerTool(HC_Instrument):
 
                 col += 1
 
+            self.autosave_check.setChecked(
+                self.window.app.data_sets[self.settings["display_group"]].autosave
+            )
 
-            self.autosave_check.setChecked(self.window.app.data_sets[self.settings["display_group"]].autosave)
-
-            self.save_interval_edit.setText(str(self.window.app.data_sets[self.settings["display_group"]].autosave_interval))
+            self.save_interval_edit.setText(
+                str(
+                    self.window.app.data_sets[
+                        self.settings["display_group"]
+                    ].autosave_interval
+                )
+            )
 
         except Exception as e:
-            self.window.app.pDebug(f"ERROR: Exception occured while updating table ({str(e)})", True)
+            self.window.app.pDebug(
+                f"ERROR: Exception occured while updating table ({str(e)})", True
+            )
 
     def update_groups(self):
 
         self.dispgroup_drop.clear()
 
-        #Copy all goup names into dropdown
-        names = [];
+        # Copy all goup names into dropdown
+        names = []
         for key in self.window.app.data_sets:
             names.append(key)
         self.dispgroup_drop.addItems(names)
 
-        #Select one group and display it if none currently displayed
+        # Select one group and display it if none currently displayed
         if len(names) > 0 and self.settings["display_group"] == "":
             self.set_group(names[0])
 

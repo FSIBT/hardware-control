@@ -5,11 +5,7 @@ import pkg_resources
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QPixmap
-from PyQt5.QtWidgets import (
-    QGroupBox,
-    QLabel,
-    QGridLayout,
-)
+from PyQt5.QtWidgets import QGroupBox, QLabel, QGridLayout
 
 
 class HC_StatusTool(QGroupBox):
@@ -35,9 +31,7 @@ class HC_StatusTool(QGroupBox):
             )
         )
         self.grey_indicator = QPixmap(
-            pkg_resources.resource_filename(
-                "hardware_control", "graphics/ind_grey.png"
-            )
+            pkg_resources.resource_filename("hardware_control", "graphics/ind_grey.png")
         )
         self.darkgrey_indicator = QPixmap(
             pkg_resources.resource_filename(
@@ -45,14 +39,10 @@ class HC_StatusTool(QGroupBox):
             )
         )
         self.red_indicator = QPixmap(
-            pkg_resources.resource_filename(
-                "hardware_control", "graphics/ind_red.png"
-            )
+            pkg_resources.resource_filename("hardware_control", "graphics/ind_red.png")
         )
         self.blue_indicator = QPixmap(
-            pkg_resources.resource_filename(
-                "hardware_control", "graphics/ind_blue.png"
-            )
+            pkg_resources.resource_filename("hardware_control", "graphics/ind_blue.png")
         )
 
         # Initialize state to correct values

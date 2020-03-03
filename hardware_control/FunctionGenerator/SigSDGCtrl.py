@@ -13,7 +13,7 @@ import re
 
 from hardware_control.HC_Backend import HC_Backend
 
-#ToDo:
+# ToDo:
 def to_NR3(x: float):
     return f" {x:.6E}"
 
@@ -59,7 +59,6 @@ def regex_compare(pattern: str, comp: str):
 
 
 class SigSDGCtrl(HC_Backend):
-
     def __init__(self, connection_addr, dummy: bool = False, debug: bool = False):
 
         super().__init__()

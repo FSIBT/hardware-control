@@ -43,6 +43,7 @@ from PyQt5.QtWidgets import (
     QAction,
     QGridLayout,
 )
+
 # third party
 from docopt import docopt
 from hardware_control.Adam.QAdam import AdamControl

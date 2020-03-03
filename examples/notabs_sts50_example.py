@@ -15,12 +15,7 @@ Options:
 
 import sys
 
-from PyQt5.QtWidgets import (
-    QMainWindow,
-    QWidget,
-    QGridLayout,
-    QStyleFactory,
-)
+from PyQt5.QtWidgets import QMainWindow, QWidget, QGridLayout, QStyleFactory
 from docopt import docopt
 
 commands = docopt(__doc__)
