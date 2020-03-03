@@ -6,8 +6,6 @@ import setuptools
 setup(
     name="hardware_control",
     packages=[
-        "hardware_control.Adam",
-        "hardware_control.CAEN",
         "hardware_control.ConnectionStatusTool",
         "hardware_control.DelayGenerator",
         "hardware_control.depreciated",
@@ -20,7 +18,6 @@ setup(
         "hardware_control.MacroRunnerTool",
         "hardware_control.Oscilloscope",
         "hardware_control.PowerSupply",
-        "hardware_control.PulseGenerator",
         "hardware_control.ScanTool",
         "hardware_control.TemplateDeviceType",
         "hardware_control.VariableEditTool",
