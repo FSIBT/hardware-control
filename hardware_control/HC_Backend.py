@@ -23,8 +23,16 @@ class HC_Backend(ABC):
         self.connection_type = None
 
     def check(self):
+        """Some error checking
+
+        to be called at the end of __init__ in the instrument
+
+        """
         if self.connection_type not in [VISA, SOCKET, MODBUS]:
-            print(f"Error: the connection type {self.connection_type} is not supported")
+            print(
+                f"Error: the connection type {self.connection_type}"
+                + " is not supported"
+            )
         if self.Id is None:
             print(f"Error: Need to set the instrument ID")
 
@@ -36,7 +44,7 @@ class HC_Backend(ABC):
     def command(self, cmd: str):
         """Overload this function to send commands to the device. Must return
         a string (which HC_CommWorker will send back to the main thread)"""
-        return value
+        return cmd
 
     def command_listdata(self, cmd: str):
         """Overload this function to send commands to the device. Must return
@@ -72,7 +80,8 @@ class HC_Backend(ABC):
                 return True
             else:
                 self.pDebug(
-                    f"{self.ID}: creating dummy connection to {self.connection_addr}"
+                    f"{self.ID}: creating dummy connection"
+                    + f" to {self.connection_addr}"
                 )
                 self.online = True
                 return True
