@@ -1,9 +1,13 @@
-# This backend communicates with a remote computer via ZMQ. This backend acts as a client to the
-# remote computer's ZMQ server. The server is connected to a PicoScope oscilloscope via USB and
-# relays commands from this client to the PicoScope. The reason for adding the extra step of the
-# ZMQ client is to connect to an instrument that 1.) does not have network access 2.) can not be
-# physically accessed by the computer on which this backend runs.
-#
+"""This backend communicates with a remote computer via ZMQ.
+
+ This backend acts as a client to the remote computer's ZMQ
+server. The server is connected to a PicoScope oscilloscope via USB
+and relays commands from this client to the PicoScope. The reason for
+adding the extra step of the ZMQ client is to connect to an instrument
+that 1.)  does not have network access 2.) can not be physically
+accessed by the computer on which this backend runs.
+
+"""
 
 import json
 import socket

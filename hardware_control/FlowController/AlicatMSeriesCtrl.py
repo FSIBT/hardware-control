@@ -1,9 +1,3 @@
-#
-#
-# G M Giesbrecht
-# 20/08/2019
-#
-
 import random
 
 from pymodbus.client.sync import ModbusTcpClient as ModbusClient

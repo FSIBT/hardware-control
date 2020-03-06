@@ -1,10 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-self.func.
-Created on Wed Jul  3 14:57:53 2019
-
-@author: Schuyler
-"""
 
 import math
 import sys

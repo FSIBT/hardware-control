@@ -1,10 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Thu Jun 27 15:00:15 2019
-
-@author: Schuyler
-"""
-
 import sys
 
 import pyvisa
