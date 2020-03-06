@@ -2,7 +2,7 @@
 # >>> scope.query("MEAS:ITEM? VRMS,CHAN2")
 
 import re
-from hardware_control.HC_Backend import HC_Backend
+from hardware_control.HC_Backend import HC_Backend, VISA
 from hardware_control.utility import returnChannelNumber, regex_compare
 from PyQt5.QtCore import QThread, QSize, QObject, pyqtSignal
 import numpy as np
@@ -54,7 +54,7 @@ class RigDS1000ZCtrl(HC_Backend):
         connection_addr,
         dummy: bool = False,
         debug: bool = False,
-        use_sockets: bool = False,
+        connection_type: str = VISA,
         ip_addr: str = "",
         port_no=5025,
     ):
@@ -67,13 +67,14 @@ class RigDS1000ZCtrl(HC_Backend):
         self.debug = debug
         self.num_vert_divisions = 8
 
-        self.use_sockets = use_sockets
+        self.connection_type = connection_type
         self.port_no = port_no
         self.ip_addr = ip_addr
 
         self.use_avg = False
 
         self.measurements = ["", "", "", "", ""]
+        self.check()
 
     def update_setting(self, setting: str, value):
 

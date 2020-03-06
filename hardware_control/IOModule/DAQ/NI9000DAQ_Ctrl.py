@@ -1,6 +1,8 @@
 import socket
 
 import numpy as np
+from hardware_control.HC_Backend import HC_Backend, VISA, SOCKET
+
 import pyvisa
 
 
@@ -25,7 +27,7 @@ class NI_DAQ:
         connection_addr,
         dummy: bool = False,
         debug: bool = False,
-        use_sockets: bool = False,
+        connection_type: str = VISA,
         ip_addr: str = "",
         port_no=5025,
     ):
@@ -38,7 +40,7 @@ class NI_DAQ:
         self.debug = debug
         self.num_vert_divisions = 8
 
-        self.use_sockets = use_sockets
+        self.connection_type = connection_type
         self.port_no = port_no
         self.ip_addr = ip_addr
         self.try_connect()
@@ -55,13 +57,13 @@ class NI_DAQ:
         if not self.dummy:
 
             try:
-                if not self.use_sockets:
+                if self.connection_type == VISA:
                     rm = pyvisa.ResourceManager()
                     self.scope = rm.open_resource(
                         self.connection_addr
                     )  # Open connection
                     # self.configure_read_waveform();
-                else:
+                elif self.connection_type == SOCKET:
                     self.scope = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     self.scope.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 0)
                     self.scope.connect((self.ip_addr, self.port_no))
@@ -371,18 +373,18 @@ class NI_DAQ:
 
     def write(self, command: str):
         if self.online and not self.dummy:
-            if not self.use_sockets:
+            if self.connection_type == VISA:
                 self.scope.write(command)
-            else:
+            elif self.connection_type == SOCKET:
                 self.scope.sendall(bytes(command + "\n", "utf-8"))
             if self.debug:
                 print(f'\tKEY4000X< "{command}"')
 
     def query(self, command: str):
         if self.online and not self.dummy:
-            if not self.use_sockets:
+            if self.connection_type == VISA:
                 reply = self.scope.query(command)
-            else:
+            elif self.connection_type == SOCKET:
                 self.scope.sendall(bytes(command + "\n", "utf-8"))
                 reply_bytes = recvall(self.scope)
                 print(f"reply size: {len(reply_bytes)}")

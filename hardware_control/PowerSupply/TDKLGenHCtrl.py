@@ -1,7 +1,7 @@
 import random
 import re
 
-from hardware_control.HC_Backend import HC_Backend
+from hardware_control.HC_Backend import HC_Backend, VISA
 
 # ToDo: obviously
 def to_NR3(x: float):
@@ -37,7 +37,7 @@ class TDKLGenHCtrl(HC_Backend):
         connection_addr,
         dummy: bool = False,
         debug: bool = False,
-        use_sockets: bool = False,
+        connection_type: str = VISA,
         ip_addr: str = "",
         port_no=5025,
     ):
@@ -51,7 +51,7 @@ class TDKLGenHCtrl(HC_Backend):
         self.dummy = dummy
         self.debug = debug
 
-        self.use_sockets = use_sockets
+        self.connection_type = connection_type
         self.port_no = port_no
         self.ip_addr = ip_addr
 

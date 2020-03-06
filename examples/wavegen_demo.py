@@ -19,7 +19,10 @@ from docopt import docopt
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
-use_sockets = commands["--socket"]
+if commands["--socket"]:
+    connection_type = "socket"
+else:
+    connection_type = "visa"
 debug = commands["--debug"]
 
 from hardware_control.base import HC_App
@@ -28,7 +31,7 @@ from hardware_control.FunctionGenerator.Key33500BCtrl import Key33500BCtrl
 
 
 class WavegenDemo(QMainWindow):
-    def __init__(self, app, use_sockets: bool):
+    def __init__(self, app, connection_type: str):
         super().__init__()
         self.app = app
 
@@ -40,7 +43,7 @@ class WavegenDemo(QMainWindow):
             "USB0::0x0957::0x2907::MY52500624::INSTR",
             dummy,
             True,
-            use_sockets,
+            connection_type,
             "192.168.0.18",
             5025,
         )
@@ -61,7 +64,7 @@ class WavegenDemo(QMainWindow):
 
 def main(argv):
     app = HC_App([])
-    ex = WavegenDemo(app, use_sockets)
+    ex = WavegenDemo(app, connection_type)
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())
 

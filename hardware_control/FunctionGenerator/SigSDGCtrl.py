@@ -1,10 +1,6 @@
 import re
 
-from hardware_control.HC_Backend import HC_Backend
-
-# ToDo:
-def to_NR3(x: float):
-    return f" {x:.6E}"
+from hardware_control.HC_Backend import HC_Backend, VISA
 
 
 def str_NR3(x: str):
@@ -58,7 +54,9 @@ class SigSDGCtrl(HC_Backend):
         self.dummy = dummy
         self.debug = debug
 
-        self.use_sockets = False
+        self.connection_type = VISA
+
+        self.check()
 
     def update_setting(self, setting: str, value):
 

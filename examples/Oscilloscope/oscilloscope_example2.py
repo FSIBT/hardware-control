@@ -19,7 +19,10 @@ from docopt import docopt
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
-use_sockets = commands["--socket"]
+if commands["--socket"]:
+    connection_type = "socket"
+else:
+    connection_type = "visa"
 
 from hardware_control.base import HC_App
 from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
@@ -27,7 +30,7 @@ from hardware_control.Oscilloscope.Key4000XCtrl import Key4000XCtrl
 
 
 class ScopeWindow(QMainWindow):
-    def __init__(self, app, use_sockets: bool):
+    def __init__(self, app, connection_type: str):
         super().__init__()
         self.app = app
 
@@ -39,7 +42,7 @@ class ScopeWindow(QMainWindow):
             "TCPIP0::192.168.0.14::INSTR",
             dummy,
             True,
-            use_sockets,
+            connection_type,
             "192.168.0.14",
             5025,
         )
@@ -60,7 +63,7 @@ class ScopeWindow(QMainWindow):
 
 def main(argv):
     app = HC_App([])
-    ex = ScopeWindow(app, use_sockets)
+    ex = ScopeWindow(app, connection_type)
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())
 

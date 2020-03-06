@@ -14,7 +14,7 @@ import socket
 
 import zmq
 
-from hardware_control.HC_Backend import HC_Backend
+from hardware_control.HC_Backend import HC_Backend, VISA
 
 
 def to_NR3(x: float):
@@ -55,7 +55,7 @@ class ZMQOscilloscopeCtrl(HC_Backend):
         zmq_addr,
         dummy: bool = False,
         debug: bool = False,
-        use_sockets: bool = False,
+        connection_type: str = VISA,
         ip_addr: str = "",
         port_no=5025,
     ):
@@ -73,11 +73,12 @@ class ZMQOscilloscopeCtrl(HC_Backend):
         self.debug = debug
         self.num_vert_divisions = 8  # Todo: remove this from all files
 
-        self.use_sockets = use_sockets
+        self.connection_type = connection_type
         self.port_no = port_no
         self.ip_addr = ip_addr
 
         self.settings = self.default_settings()
+        self.check()
 
     def update_setting(self, setting: str, value):
         def get_chan_str():

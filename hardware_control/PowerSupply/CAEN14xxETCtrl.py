@@ -1,5 +1,5 @@
 import socket
-from hardware_control.HC_Backend import HC_Backend
+from hardware_control.HC_Backend import HC_Backend, SOCKET, VISA
 
 
 class CAEN14xxETCtrl(HC_Backend):
@@ -8,7 +8,7 @@ class CAEN14xxETCtrl(HC_Backend):
         connection_addr,
         dummy: bool = False,
         debug: bool = False,
-        use_sockets: bool = False,
+        connection_type: str = SOCKET,
         ip_addr: str = "",
         port_no=5025,
     ):
@@ -22,13 +22,13 @@ class CAEN14xxETCtrl(HC_Backend):
         self.dummy = dummy
         self.debug = debug
 
-        self.use_sockets = use_sockets
+        self.connection_type = connection_type
         self.port_no = port_no
         self.ip_addr = ip_addr
 
         self.num_channels = 8
 
-        # This specifies the max number of channels the user can request
+        self.check()
 
     #
     # Tries to connect to the instrument. Is called by the timer every second.
@@ -65,7 +65,7 @@ class CAEN14xxETCtrl(HC_Backend):
 
         # Try to connect to instrument
         try:
-            if not self.use_sockets:  # Use visa
+            if self.connection_type == VISA:  # Use visa
                 rm = visa.ResousrceManager("@py")
                 self.device = rm.open_resource(self.connection_addr)  # Open connection
                 self.device.read_termination = "\r\n"
@@ -75,12 +75,11 @@ class CAEN14xxETCtrl(HC_Backend):
                 self.device.query("$BD:00,CMD:MON,PAR:BDNAME")
                 self.pDebug("opened connection")
 
-            else:  # Use sockets
+            elif self.connection_type == SOCKET:
                 self.device = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.device.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 0)
                 self.device.connect((self.ip_addr, self.port_no))
-        except Exception as e:  # Failed to conncet
-
+        except Exception as e:
             self.online = False
             self.pDebug(f"\t{str(e)}")
             self.pDebug("OFFLINE")

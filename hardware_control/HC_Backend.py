@@ -4,13 +4,17 @@ import pyvisa
 import socket
 from colorama import Fore, Style
 
+VISA = "visa"
+SOCKET = "socket"
+MODBUS = "modbus"
+
 
 class HC_Backend(ABC):
     """Base class for all instruments"""
 
     def __init__(self):
 
-        self.ID = "ID: should be overwritten by instrument class"
+        self.ID = None  # this should be a string with instrument name
         self.online = False  # does a connection to the instrument exist?
 
         self.device = None  # This is the physical instrument to write to
@@ -18,9 +22,11 @@ class HC_Backend(ABC):
         self.dummy = False
         self.connection_type = None
 
-    def check_connection_type(self):
-        if self.connection_type not in ["visa", "socket", "modbus"]:
+    def check(self):
+        if self.connection_type not in [VISA, SOCKET, MODBUS]:
             print(f"Error: the connection type {self.connection_type} is not supported")
+        if self.Id is None:
+            print(f"Error: Need to set the instrument ID")
 
     def update_setting(self, setting: str, value: str):
         """Overload this function to adjust settings on the device. Must return
@@ -84,7 +90,7 @@ class HC_Backend(ABC):
         self.pDebug(f"{self.ID}: trying to connect")
 
         # Try to connect to instrument
-        if not self.use_sockets:  # Use visa
+        if self.connection_type == VISA:
             try:
                 rm = pyvisa.ResourceManager("@py")
                 self.device = rm.open_resource(self.connection_addr)
@@ -99,7 +105,7 @@ class HC_Backend(ABC):
                 self.pDebug(f"{self.ID} is offline")
             else:
                 self.online = True
-        else:  # Use sockets
+        elif self.connection_type == SOCKET:
             try:
                 self.device = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.device.settimeout(2)
@@ -128,9 +134,9 @@ class HC_Backend(ABC):
             return command
 
         try:
-            if not self.use_sockets:
+            if self.connection_type == VISA:
                 self.device.write(command)
-            else:
+            elif self.connection_type == SOCKET:
                 self.device.sendall(bytes(command + "\n", "utf-8"))
                 self.pDebug(f'\t{self.ID} < "{command}"')
         except Exception as e:
@@ -157,9 +163,9 @@ class HC_Backend(ABC):
             return command
 
         try:
-            if not self.use_sockets:
+            if self.connection_type == VISA:
                 reply = self.device.query(command)
-            else:
+            elif self.connection_type == SOCKET:
                 self.device.sendall(bytes(command + "\n", "utf-8"))
                 reply_bytes = HC_Backend.recvall(self.device)
                 reply = str(reply_bytes)

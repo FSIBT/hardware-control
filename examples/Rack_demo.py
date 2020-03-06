@@ -6,7 +6,6 @@ Usage:
 Options:
   --dummy    use dummy connection for instruments that return semi-random data
              so that one run the program away from the test stand
-  --socket   use sockets instead of visa
   --debug    allow debug print statements
 """
 
@@ -17,7 +16,6 @@ from docopt import docopt
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
-use_sockets = commands["--socket"]
 debug = commands["--debug"]
 
 from hardware_control.base import HC_App
@@ -26,7 +24,7 @@ from hardware_control.TemplateDeviceType.HC_DeviceType import HC_DeviceType
 
 
 class Rack_Demo(QMainWindow):
-    def __init__(self, app, use_sockets: bool):
+    def __init__(self, app):
         super().__init__()
         self.app = app
         # set title of window
@@ -57,7 +55,7 @@ class Rack_Demo(QMainWindow):
 
 def main(argv):
     app = HC_App([])
-    ex = Rack_Demo(app, use_sockets)  # Change accordingly
+    ex = Rack_Demo(app)  # Change accordingly
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())
 

@@ -1,6 +1,6 @@
 import random
 
-from hardware_control.HC_Backend import HC_Backend
+from hardware_control.HC_Backend import HC_Backend, VISA
 
 
 class DeviceBackend(HC_Backend):
@@ -9,7 +9,7 @@ class DeviceBackend(HC_Backend):
         connection_addr,
         dummy: bool = False,
         debug: bool = False,
-        use_sockets: bool = False,
+        connection_type: str = VISA,
         ip_addr: str = "",
         port_no=5025,
     ):
@@ -24,11 +24,13 @@ class DeviceBackend(HC_Backend):
         self.debug = debug
 
         # example
-        self.use_sockets = use_sockets
+        self.connection_type = connection_type
         self.port_no = port_no
         self.ip_addr = ip_addr
 
         self.num_channels = 8
+
+        self.check()
 
     # Implementation might be needed - depends on device
     # def try_connect(self):

@@ -16,4 +16,7 @@ from docopt import docopt
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
-use_sockets = commands["--socket"]
+if commands["--socket"]:
+    connection_type = "socket"
+else:
+    connection_type = "visa"

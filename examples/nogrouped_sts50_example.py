@@ -20,7 +20,10 @@ from docopt import docopt
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
-use_sockets = commands["--socket"]
+if commands["--socket"]:
+    connection_type = "socket"
+else:
+    connection_type = "visa"
 debug = commands["--debug"]
 log = commands["--log"]
 
@@ -43,7 +46,7 @@ from hardware_control.VariableEditTool.HC_VariableEditTool import HC_VariableEdi
 
 
 class STS50Demo(QMainWindow):
-    def __init__(self, app, use_sockets: bool):
+    def __init__(self, app, connection_type: str):
         super().__init__()
         self.app = app
 
@@ -67,7 +70,7 @@ class STS50Demo(QMainWindow):
             "TCPIP0::192.168.1.14::INSTR",
             dummy,
             True,
-            use_sockets,
+            connection_type,
             "192.168.1.14",
             5025,
         )
@@ -81,12 +84,12 @@ class STS50Demo(QMainWindow):
         #####################################################################
         ######## Tab 2
 
-        # awg = Key33500BCtrl("Some-address-goes-here", dummy, True, use_sockets, "192.168.0.18", 5025)
+        # awg = Key33500BCtrl("Some-address-goes-here", dummy, True, connection_type, "192.168.0.18", 5025)
         awg = Key33500BCtrl(
             "TCPIP0::192.168.1.18::INSTR",
             dummy,
             True,
-            use_sockets,
+            connection_type,
             "192.168.1.18",
             5025,
         )  # "USB0::0x0957::0x2907::MY52500624::INSTR"
@@ -220,7 +223,7 @@ class STS50Demo(QMainWindow):
 def main(argv):
     app = HC_App([])
     app.print_debug = debug
-    ex = STS50Demo(app, use_sockets)
+    ex = STS50Demo(app, connection_type)
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())
 
