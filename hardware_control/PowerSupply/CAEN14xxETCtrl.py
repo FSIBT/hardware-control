@@ -26,6 +26,7 @@ class CAEN14xxETCtrl(HC_Backend):
         self.port_no = port_no
         self.ip_addr = ip_addr
 
+        # This specifies the max number of channels the user can request
         self.num_channels = 8
 
         self.check()

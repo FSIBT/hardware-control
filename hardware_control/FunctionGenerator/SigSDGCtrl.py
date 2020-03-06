@@ -8,29 +8,6 @@ def str_NR3(x: str):
     return f" {x_float:.6E}"
 
 
-def to_NR1(x: int):
-    return f"{x:d}"
-
-
-def str_NR1(x: str):
-    x_int = int(x)
-    return f"{x_int:d}"
-
-
-def bool_NR1(x: bool):
-    if x:
-        return "1"
-    else:
-        return "0"
-
-
-def boolstr_NR1(x: str):
-    if x == "True":
-        return "1"
-    else:
-        return "0"
-
-
 def str_to_bool(x: str):
     if x == "True":
         return True
@@ -149,40 +126,3 @@ class SigSDGCtrl(HC_Backend):
 
     def command(self, cmd: str):
         pass
-
-    def write(self, command: str):
-        if self.online and not self.dummy:
-            if not self.use_sockets:
-                self.device.write(command)
-            else:
-                self.device.sendall(bytes(command + "\n", "utf-8"))
-            self.pDebug(f'\t{self.ID}< "{command}"')
-
-    def query(self, command: str):
-        if self.online and not self.dummy:
-            if not self.use_sockets:
-                reply = self.device.query(command)
-            else:
-                self.device.sendall(bytes(command + "\n", "utf-8"))
-                reply_bytes = recvall(self.device)
-                self.pDebug(f"reply size: {len(reply_bytes)}")
-                reply = str(reply_bytes)
-                if len(reply) < 100:
-                    self.pDebug("\t\t" + reply)
-                reply = reply[2 : len(reply) - 3]
-            self.pDebug(f'\t{self.ID}< "{command}"')
-            return reply
-        else:
-            return ""
-
-
-def recvall(sock):
-    BUFF_SIZE = 4096  # 4 KiB
-    data = b""
-    while True:
-        part = sock.recv(BUFF_SIZE)
-        data += part
-        t_str = str(part)
-        if t_str[len(t_str) - 3 : len(t_str) - 1] == "\\n":
-            break
-    return data

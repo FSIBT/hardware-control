@@ -10,8 +10,6 @@ accessed by the computer on which this backend runs.
 """
 
 import json
-import socket
-
 import zmq
 
 from hardware_control.HC_Backend import HC_Backend, VISA
