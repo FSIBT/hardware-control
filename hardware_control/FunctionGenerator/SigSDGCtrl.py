@@ -169,8 +169,7 @@ class SigSDGCtrl(HC_Backend):
                 self.device.write(command)
             else:
                 self.device.sendall(bytes(command + "\n", "utf-8"))
-            if self.debug:
-                self.pDebug(f'\t{self.ID}< "{command}"')
+            self.pDebug(f'\t{self.ID}< "{command}"')
 
     def query(self, command: str):
         if self.online and not self.dummy:
@@ -184,8 +183,7 @@ class SigSDGCtrl(HC_Backend):
                 if len(reply) < 100:
                     self.pDebug("\t\t" + reply)
                 reply = reply[2 : len(reply) - 3]
-            if self.debug:
-                self.pDebug(f'\t{self.ID}< "{command}"')
+            self.pDebug(f'\t{self.ID}< "{command}"')
             return reply
         else:
             return ""

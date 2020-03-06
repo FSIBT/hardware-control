@@ -106,8 +106,7 @@ class SRSDG535Ctrl(HC_Backend):
         try:
             if self.online and not self.dummy:
                 self.device.write(cmd)
-                if self.debug:
-                    self.pDebug(f'\tSRSDG535< " {cmd} "')
+                self.pDebug(f'\tSRSDG535< " {cmd} "')
         except Exception as e:
             self.pDebug(f"{self.ID : }An exception occurred in write")
             self.pDebug(str(e))

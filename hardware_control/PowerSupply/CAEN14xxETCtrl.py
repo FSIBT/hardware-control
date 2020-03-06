@@ -85,8 +85,7 @@ class CAEN14xxETCtrl(HC_Backend):
 
                 # Verify actually connected (open_resource won't always throw error w/ disconnected USB)
                 self.device.query("$BD:00,CMD:MON,PAR:BDNAME")
-                if self.debug:
-                    self.pDebug("opened connection")
+                self.pDebug("opened connection")
 
             else:  # Use sockets
                 self.device = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -95,9 +94,8 @@ class CAEN14xxETCtrl(HC_Backend):
         except Exception as e:  # Failed to conncet
 
             self.online = False
-            if self.debug:
-                self.pDebug(f"\t{str(e)}")
-                self.pDebug("OFFLINE")
+            self.pDebug(f"\t{str(e)}")
+            self.pDebug("OFFLINE")
         else:
             self.online = True
 

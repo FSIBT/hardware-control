@@ -104,9 +104,8 @@ class Adam_6015(HC_Backend):
                 else:
                     return "Unexpected Command"
             except Exception as e:
-                if self.debug:
-                    self.pDebug(self.ID + " online status : " + str(self.try_connect()))
-                    self.pDebug(e)
+                self.pDebug(self.ID + " online status : " + str(self.try_connect()))
+                self.pDebug(e)
 
     def update_setting(self, setting: str, value: str):
         """Device has no Settings"""

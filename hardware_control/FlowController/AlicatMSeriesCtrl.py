@@ -148,10 +148,8 @@ class AlicatMSeriesCtrl(HC_Backend):
 
     def write(self, command: str):
         self.scope.write(command)
-        if self.debug:
-            self.pDebug(f'\t{self.ID}< "{command}"')
+        self.pDebug(f'\t{self.ID}< "{command}"')
 
     def query(self, command: str):
         reply = self.scope.query(command)
-        if self.debug:
-            self.pDebug(f'\t{self.ID}< "{command}" > {reply}')
+        self.pDebug(f'\t{self.ID}< "{command}" > {reply}')

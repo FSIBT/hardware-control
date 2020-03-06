@@ -193,11 +193,8 @@ class Key4000XCtrl(HC_Backend):
                     self.write(f"TRIG:SOUR CHAN{str_NR1(value)}")
                     return self.query(f"TRIG:SOUR?")
         except Exception as e:
-            if self.debug:
-                self.pDebug(
-                    "An error occured in Key4000XCtrl.py sending SCPI commands."
-                )
-                self.pDebug(str(e))
+            self.pDebug("An error occured in Key4000XCtrl.py sending SCPI commands.")
+            self.pDebug(str(e))
 
     def command(self, cmd: str):
         if not self.online:
@@ -313,30 +310,27 @@ class Key4000XCtrl(HC_Backend):
             x_orig = float(x_orig[0 : len(x_orig)])
             # Convert X Origin
         except Exception as e:
-            if self.debug:
-                self.pDebug("ERROR: Received bad origin from scope.")
-                self.pDebug(e)
-                self.pDebug(f"\t{x_orig}")
+            self.pDebug("ERROR: Received bad origin from scope.")
+            self.pDebug(e)
+            self.pDebug(f"\t{x_orig}")
             return "", [], []
         try:
             # x_ref = float(x_ref[0:len(x_ref)-1]); #Convert X Reference
             x_ref = float(x_ref[0 : len(x_ref)])
             # Convert X Reference
         except Exception as e:
-            if self.debug:
-                self.pDebug("ERROR: Received bad reference from scope.")
-                self.pDebug(e)
-                self.pDebug(f"\t{x_ref}")
+            self.pDebug("ERROR: Received bad reference from scope.")
+            self.pDebug(e)
+            self.pDebug(f"\t{x_ref}")
             return "", [], []
         try:
             # x_incr = float(x_incr[0:len(x_incr)-1]); #Convert X Increment
             x_incr = float(x_incr[0 : len(x_incr)])
             # Convert X Increment
         except Exception as e:
-            if self.debug:
-                self.pDebug("ERROR: Received bad increment from scope.")
-                self.pDebug(e)
-                self.pDebug(f"\t{x_incr}")
+            self.pDebug("ERROR: Received bad increment from scope.")
+            self.pDebug(e)
+            self.pDebug(f"\t{x_incr}")
             return "", [], []
 
         try:
@@ -353,8 +347,7 @@ class Key4000XCtrl(HC_Backend):
             ).tolist()
             # Calculate time values
         except Exception as e:
-            if self.debug:
-                self.pDebug("ERROR: Failed to calculate V & t.")
+            self.pDebug("ERROR: Failed to calculate V & t.")
             return "", [], []
 
         return f"CH{channel}_WVFM", t, fmt
@@ -383,8 +376,7 @@ class Key4000XCtrl(HC_Backend):
 #                 self.device.write(command)
 #             else:
 #                 self.device.sendall(bytes(command + "\n", "utf-8"))
-#             if self.debug:
-#                 self.pDebug(f'\tKEY4000X< "{command}"')
+#             self.pDebug(f'\tKEY4000X< "{command}"')
 #         else:
 #             return command
 #
@@ -401,8 +393,7 @@ class Key4000XCtrl(HC_Backend):
 #                 reply_bytes = recvall(self.device)
 #                 reply = str(reply_bytes)
 #                 reply = reply[2 : len(reply) - 3]
-#             if self.debug:
-#                 self.pDebug(f'\t{self.ID}< "{command}"')
+#             self.pDebug(f'\t{self.ID}< "{command}"')
 #             return reply
 #         else:
 #             return command

@@ -333,7 +333,6 @@ class HC_ScanTool(HC_Instrument):
 
                 # Update progress bar
                 self.settings["progress"] = str(count / len(vals) * 100)
-                # if self.app.print_debug:
                 self.pDebug(f"\tRunning value = '{v}'\t\t{count/len(vals)*100}%")
                 self.progress_bar.setValue(float(self.settings["progress"]))
                 QApplication.processEvents()

@@ -239,11 +239,8 @@ class RigDS1000ZCtrl(HC_Backend):
                     return self.query(":MEAS:STAT:DISP?")
 
         except Exception as e:
-            if self.debug:
-                self.pDebug(
-                    "An error occured in RigDS1000ZCtrl.py sending SCPI commands."
-                )
-                self.pDebug(str(e))
+            self.pDebug("An error occured in RigDS1000ZCtrl.py sending SCPI commands.")
+            self.pDebug(str(e))
 
     def command(self, cmd: str):
 
@@ -420,8 +417,7 @@ class RigDS1000ZCtrl(HC_Backend):
 #                 self.device.write(command)
 #             else:
 #                 self.device.sendall(bytes(command + "\n", "utf-8"))
-#             if self.debug:
-#                 self.pDebug(f'\tKEY4000X< "{command}"')
+#            self.pDebug(f'\tKEY4000X< "{command}"')
 #         else:
 #             return command
 #
@@ -438,8 +434,7 @@ class RigDS1000ZCtrl(HC_Backend):
 #                 reply_bytes = recvall(self.device)
 #                 reply = str(reply_bytes)
 #                 reply = reply[2 : len(reply) - 3]
-#             if self.debug:
-#                 self.pDebug(f'\t{self.ID}< "{command}"')
+#             self.pDebug(f'\t{self.ID}< "{command}"')
 #             return reply
 #         else:
 #             return command

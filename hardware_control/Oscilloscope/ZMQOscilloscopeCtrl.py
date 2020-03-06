@@ -104,10 +104,9 @@ class ZMQOscilloscopeCtrl(HC_Backend):
                         val = float(value) / float(self.settings["Timebase"]) * 100
                     except:
                         val = 50
-                        if self.debug:
-                            self.pDebug(
-                                f"{self.ID}ERROR: Failed to calculate valid time_offset value"
-                            )
+                        self.pDebug(
+                            f"{self.ID}ERROR: Failed to calculate valid time_offset value"
+                        )
                     self.settings[f"Ref Position (%)"] = val
                     self.send_json_settings()
                     return f"{setting}:{value}"
@@ -193,11 +192,10 @@ class ZMQOscilloscopeCtrl(HC_Backend):
                     return f"{setting}:{value}"
         except Exception as e:
 
-            if self.debug:
-                self.pDebug(
-                    f"An error occured with {self.ID} when sending commands to the instrument."
-                )
-                self.pDebug(str(e))
+            self.pDebug(
+                f"An error occured with {self.ID} when sending commands to the instrument."
+            )
+            self.pDebug(str(e))
 
     def command(self, cmd: str):
         if not self.online:

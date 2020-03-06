@@ -79,17 +79,14 @@ class HC_Backend(ABC):
 
             try:  # Check if connected by asking for instrument ID
                 self.device.query("*IDN?")
-                if self.debug:
-                    self.pDebug(f"{self.ID}: Connection verified")
+                self.pDebug(f"{self.ID}: Connection verified")
             except Exception as e:  # Not connected - reconnect
-                if self.debug:
-                    self.pDebug("Lost connection to device. Will try to reconnect")
-                    self.pDebug(f"\t{str(e)}")
+                self.pDebug("Lost connection to device. Will try to reconnect")
+                self.pDebug(f"\t{str(e)}")
             else:  # Connection stable - return True
                 return True
 
-        if self.debug:
-            self.pDebug(f"{self.ID}: trying to connect")
+        self.pDebug(f"{self.ID}: trying to connect")
 
         # Try to connect to instrument
 
@@ -100,13 +97,11 @@ class HC_Backend(ABC):
 
                 # Verify actually connected (open_resource won't always throw error w/ disconnected USB)
                 self.device.query("*IDN?")
-                if self.debug:
-                    self.pDebug("opened connection")
+                self.pDebug("opened connection")
             except Exception as e:
                 self.online = False
-                if self.debug:
-                    self.pDebug(f"\t({self.ID}) ERROR while using visa: /n {str(e)}")
-                    self.pDebug(f"{self.ID} is offline")
+                self.pDebug(f"\t({self.ID}) ERROR while using visa: /n {str(e)}")
+                self.pDebug(f"{self.ID} is offline")
             else:
                 self.online = True
         else:  # Use sockets
@@ -118,13 +113,11 @@ class HC_Backend(ABC):
 
                 # Verify actually connected (open_resource won't always throw error w/ disconnected USB)
                 self.device.query("*IDN?")  # TODO: Test that this works
-                if self.debug:
-                    self.pDebug("opened connection")
+                self.pDebug("opened connection")
             except Exception as e:
                 self.online = False
-                if self.debug:
-                    self.pDebug(f"\t({self.ID}) ERROR while using sockets: /n {str(e)}")
-                    self.pDebug(f"{self.ID} is offline")
+                self.pDebug(f"\t({self.ID}) ERROR while using sockets: /n {str(e)}")
+                self.pDebug(f"{self.ID} is offline")
             else:
                 self.online = True
         return self.online
@@ -140,8 +133,7 @@ class HC_Backend(ABC):
                     self.device.write(command)
                 else:
                     self.device.sendall(bytes(command + "\n", "utf-8"))
-                if self.debug:
-                    self.pDebug(f'\t{self.ID} < "{command}"')
+                self.pDebug(f'\t{self.ID} < "{command}"')
             else:
                 return command
         except Exception as e:
@@ -161,8 +153,7 @@ class HC_Backend(ABC):
                     reply_bytes = recvall(self.device)
                     reply = str(reply_bytes)
                     reply = reply[2 : len(reply) - 3]
-                if self.debug:
-                    self.pDebug(f'\t{self.ID}< "{command}"')
+                self.pDebug(f'\t{self.ID}< "{command}"')
                 return reply
             else:
                 return command
