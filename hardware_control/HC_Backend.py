@@ -1,22 +1,26 @@
-import re
-from abc import ABC, abstractmethod
+from abc import ABC
 
 import pyvisa
-from colorama import Fore, Back, Style
+import socket
+from colorama import Fore, Style
 
 
 class HC_Backend(ABC):
-    """Base"""
+    """Base class for all instruments"""
 
     def __init__(self):
 
-        self.ID = "Instrument"
-        self.online = False
+        self.ID = "ID: should be overwritten by instrument class"
+        self.online = False  # does a connection to the instrument exist?
 
         self.device = None  # This is the physical instrument to write to
         self.debug = False
-
         self.dummy = False
+        self.connection_type = None
+
+    def check_connection_type(self):
+        if self.connection_type not in ["visa", "socket", "modbus"]:
+            print(f"Error: the connection type {self.connection_type} is not supported")
 
     def update_setting(self, setting: str, value: str):
         """Overload this function to adjust settings on the device. Must return
@@ -28,16 +32,6 @@ class HC_Backend(ABC):
         a string (which HC_CommWorker will send back to the main thread)"""
         return value
 
-    def write(self, msg: str):
-        """Passes a command directly from the UI to the instrument"""
-        if self.device is not None:
-            return self.device.write(msg)
-
-    def query(self, msg: str):
-        """Passes a query statement directly from the UI to the instrument"""
-        if self.device is not None:
-            return self.device.query(msg)
-
     def command_listdata(self, cmd: str):
         """Overload this function to send commands to the device. Must return
         a tuple with an str, list, and list (which HC_CommWorker will send back
@@ -46,25 +40,27 @@ class HC_Backend(ABC):
 
     def close(self):
         """Close connection to instrument"""
-        if (not self.dummy) and self.online and self.device is not None:
-            self.device.close()
-            self.pDebug(f"{self.ID}: Backend Closed")
-            return (
-                False
-            )  # This can be changed to try to talk to instrument to verify close successful - prob not required
-        else:
+
+        if self.dummy:
             self.pDebug(f"{self.ID}: Dummy connection closed")
             return False
 
-    #
-    # Tries to connect to the oscilloscope. Is called by the timer every second.
-    # If already connected, returns immediately.
-    #
+        if self.device is None:
+            self.pDebug(f"{self.ID}: Called close with not device dfined")
+            return False
+
+        if self.online:
+            self.device.close()
+            self.pDebug(f"{self.ID}: Backend Closed")
+            return False
+        else:
+            self.pDebug(f"{self.ID}: device not online, no need to close")
+            return False
+
     def try_connect(self):
         """Checks if the backend is in communication with the object, if it is
         not, it tries to re-establish communication."""
 
-        # Handle dummy case
         if self.dummy:
             if self.online:
                 return True
@@ -75,8 +71,7 @@ class HC_Backend(ABC):
                 self.online = True
                 return True
 
-        if self.online:  # Has previously connected to the instrument
-
+        if self.online:
             try:  # Check if connected by asking for instrument ID
                 self.device.query("*IDN?")
                 self.pDebug(f"{self.ID}: Connection verified")
@@ -89,13 +84,13 @@ class HC_Backend(ABC):
         self.pDebug(f"{self.ID}: trying to connect")
 
         # Try to connect to instrument
-
         if not self.use_sockets:  # Use visa
             try:
                 rm = pyvisa.ResourceManager("@py")
-                self.device = rm.open_resource(self.connection_addr)  # Open connection
+                self.device = rm.open_resource(self.connection_addr)
 
-                # Verify actually connected (open_resource won't always throw error w/ disconnected USB)
+                # Verify actually connected (open_resource won't
+                # always throw error w/ disconnected USB)
                 self.device.query("*IDN?")
                 self.pDebug("opened connection")
             except Exception as e:
@@ -111,7 +106,8 @@ class HC_Backend(ABC):
                 self.device.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 0)
                 self.device.connect(self.connection_addr)
 
-                # Verify actually connected (open_resource won't always throw error w/ disconnected USB)
+                # Verify actually connected (open_resource won't
+                # always throw error w/ disconnected USB)
                 self.device.query("*IDN?")  # TODO: Test that this works
                 self.pDebug("opened connection")
             except Exception as e:
@@ -120,6 +116,7 @@ class HC_Backend(ABC):
                 self.pDebug(f"{self.ID} is offline")
             else:
                 self.online = True
+
         return self.online
 
     def write(self, command: str):
@@ -127,39 +124,19 @@ class HC_Backend(ABC):
         if not self.online:
             return f"{self.ID}-Offline"
 
+        if self.dummy:
+            return command
+
         try:
-            if not self.dummy:
-                if not self.use_sockets:
-                    self.device.write(command)
-                else:
-                    self.device.sendall(bytes(command + "\n", "utf-8"))
+            if not self.use_sockets:
+                self.device.write(command)
+            else:
+                self.device.sendall(bytes(command + "\n", "utf-8"))
                 self.pDebug(f'\t{self.ID} < "{command}"')
-            else:
-                return command
         except Exception as e:
             self.pDebug(f"ERROR: Query failed.\n\t{e}")
 
-    def query(self, command: str):
-
-        if not self.online:
-            return f"{self.ID}-Offline"
-
-        try:
-            if not self.dummy:
-                if not self.use_sockets:
-                    reply = self.device.query(command)
-                else:
-                    self.device.sendall(bytes(command + "\n", "utf-8"))
-                    reply_bytes = recvall(self.device)
-                    reply = str(reply_bytes)
-                    reply = reply[2 : len(reply) - 3]
-                self.pDebug(f'\t{self.ID}< "{command}"')
-                return reply
-            else:
-                return command
-        except Exception as e:
-            self.pDebug(f"ERROR: Query failed.\n\t{e}")
-
+    @staticmethod
     def recvall(sock):
         BUFF_SIZE = 4096  # 4 KiB
         data = b""
@@ -171,6 +148,27 @@ class HC_Backend(ABC):
                 break
         return data
 
+    def query(self, command: str):
+
+        if not self.online:
+            return f"{self.ID}-Offline"
+
+        if self.dummy:
+            return command
+
+        try:
+            if not self.use_sockets:
+                reply = self.device.query(command)
+            else:
+                self.device.sendall(bytes(command + "\n", "utf-8"))
+                reply_bytes = HC_Backend.recvall(self.device)
+                reply = str(reply_bytes)
+                reply = reply[2 : len(reply) - 3]
+                self.pDebug(f'\t{self.ID}< "{command}"')
+            return reply
+        except Exception as e:
+            self.pDebug(f"ERROR: Query failed.\n\t{e}")
+
     def pDebug(self, msg, important=False, blue=False):
         if self.debug:
             if (
@@ -179,56 +177,7 @@ class HC_Backend(ABC):
                 or ("ERROR:" in msg)
                 or ("EXCEPTION:" in msg)
             ):
-                print(Fore.RED, end="")
-                print(msg)
-                print(Style.RESET_ALL, end="")
+                print(f"{Fore.RED}{msg}{Style.RESET_ALL}")
             else:
                 if blue:
-                    print(Fore.BLUE, end="")
-                print(msg)
-                if blue:
-                    print(Style.RESET_ALL, end="")
-
-
-#
-# def regex_compare(pattern: str, comp: str):
-#     """Compares 'comp' to the pattern 'pattern'. periods ('.') act as a wildcard in the regular expression.
-#     Returns true if 'comp' matches the regex."""
-#     regex = re.compile(pattern)
-#     return bool(re.match(regex, comp))
-#
-#
-# def returnChannelNumber(s: str):
-#     """Return channel number for a string like 'CH###_TEMP' """
-#     if s[:2] == "CH":
-#         number = s[2 : s.find("_")]
-#         if number.isdigit():
-#             return number
-#     else:
-#         return None
-#
-#
-# # These functions are helpful for converting numbers to
-# # specific number formats for strings
-#
-#
-# def to_NR3(x: float):
-#     return f" {x:.6E}"
-#
-#
-# def to_NR1(x: int):
-#     return f"{x:d}"
-#
-#
-# def bool_NR1(x: bool):
-#     if x:
-#         return "1"
-#     else:
-#         return "0"
-#
-#
-# def str_to_bool(x: str):
-#     if x == "True":
-#         return True
-#     else:
-#         return False
+                    print(f"{Fore.BLUE}{msg}{Style.RESET_ALL}")
