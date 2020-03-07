@@ -33,7 +33,7 @@ class HC_Backend(ABC):
                 f"Error: the connection type {self.connection_type}"
                 + " is not supported"
             )
-        if self.Id is None:
+        if self.ID is None:
             print(f"Error: Need to set the instrument ID")
 
     def update_setting(self, setting: str, value: str):
