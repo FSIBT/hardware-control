@@ -32,8 +32,8 @@ from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
 from hardware_control.Oscilloscope.Key4000XCtrl import Key4000XCtrl
 from hardware_control.FlowController.HC_FlowController import HC_FlowController
 from hardware_control.FlowController.AlicatMSeriesCtrl import AlicatMSeriesCtrl
-from hardware_control.PulseGenerator.HC_PulseGen import HC_PulseGen
-from hardware_control.PulseGenerator.SRSDG535Ctrl import SRSDG535Ctrl
+from hardware_control.DelayGenerator.HC_DelayGenerator import HC_DelayGenerator
+from hardware_control.DelayGenerator.SRSDG535Ctrl import SRSDG535Ctrl
 from hardware_control.ScanTool.HC_ScanTool import HC_ScanTool
 from hardware_control.ConnectionStatusTool.HC_StatusTool import HC_StatusTool
 from hardware_control.FunctionGenerator.HC_FunctionGenerator import HC_FunctionGenerator
@@ -121,11 +121,11 @@ class STS50Demo(QMainWindow):
         # Todo: linux-gpib is a dependency on some systems
         self.trig1 = SRSDG535Ctrl("GPIB0::10::INSTR", dummy, True)
         self.trig1.debug = debug
-        self.trig1_ctrl = HC_PulseGen(self.trig1, self, "Trigger 1", "DEFAULT", True)
+        self.trig1_ctrl = HC_DelayGenerator(self.trig1, self, "Trigger 1", "DEFAULT")
 
         self.trig2 = SRSDG535Ctrl("GPIB0::15::INSTR", dummy, True)
         self.trig2.debug = debug
-        self.trig2_ctrl = HC_PulseGen(self.trig2, self, "Trigger 2", "DEFAULT", True)
+        self.trig2_ctrl = HC_DelayGenerator(self.trig2, self, "Trigger 2", "DEFAULT")
         try:
             self.zmqtool = HC_ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
         except Exception as e:
@@ -153,10 +153,10 @@ class STS50Demo(QMainWindow):
         app.add_macro("Wait_1s", ["FUNC:time:sleep:1"])
 
         self.run_tool = HC_MacroRunnerTool(
-            self,
-            "Macro Runner",
-            {"Dynamic": "Run Macro", "Trigger": "Trigger Beam"},
-            {},
+            window=self,
+            name="Macro Runner",
+            buttons={"Dynamic": "Run Macro", "Trigger": "Trigger Beam"},
+            indicators={},
         )
         self.run_tool.update_macros()
 
