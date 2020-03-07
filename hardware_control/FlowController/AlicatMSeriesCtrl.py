@@ -1,20 +1,10 @@
 import random
 
-from pymodbus.client.sync import ModbusTcpClient as ModbusClient
-
-from hardware_control.HC_Backend import HC_Backend
-
-
-def converter_ulong_to_IEEE754(x):
-    a = (ctypes.c_ulong * 1)(x)
-    b = ctypes.cast(a, ctypes.POINTER(ctypes.c_float))
-    return b.contents.value
-
-
-def converter_IEEE754_to_ulong(x):
-    a = (ctypes.c_float * 1)(x)
-    b = ctypes.cast(a, ctypes.POINTER(ctypes.c_ulong))
-    return b.contents.value
+from hardware_control.HC_Backend import HC_Backend, MODBUS
+from hardware_control.utility import (
+    converter_ulong_to_IEEE754,
+    converter_IEEE754_to_ulong,
+)
 
 
 class AlicatMSeriesCtrl(HC_Backend):
@@ -24,126 +14,98 @@ class AlicatMSeriesCtrl(HC_Backend):
 
         self.ID = "AlicatMSeries"
 
-        self.ip_addr = ip_addr
+        self.connection_addr = ip_addr
+        self.connection_type = MODBUS
         self.dummy = dummy
         self.debug = debug
 
-    #
-    # Tries to connect to the oscilloscope. Is called by the timer every second.
-    # If already connected, returns immediately.
-    #
-    def try_connect(self):
+        self.error_count = 0
 
-        if self.online:
-            return True
-
-        if not self.dummy:
-            try:
-                self.meter = ModbusClient(host=self.ip_addr)
-                if self.meter.connect():
-                    self.online = True
-            except:  # Failed to conncet
-                self.online = False
-
-        else:
-            self.pDebug(f"{self.ID}: creating dummy connection to {self.ip_addr}")
-            self.online = True
-
-        return self.online
+        self.check()
 
     def update_setting(self, setting: str, value):
 
         if not self.online:
             return f"{self.ID}-Offline"
 
+        if self.dummy:
+            return value
+
         try:
-            if self.dummy:
+            if setting == "rate":
+                value = float(self.rate_edit.text())
+                i = converter_IEEE754_to_ulong(value)
+                a = i >> 16
+                b = i & ((1 << 16) - 1)
+                r = self.device.write_registers(address=1009, values=[a, b], unit=0)
+
+                self.error_count = 0
                 return value
-            else:
+            elif setting == "flow":
+                value = float(self.rate_edit.text())
+                i = converter_IEEE754_to_ulong(value)
+                a = i >> 16
+                b = i & ((1 << 16) - 1)
+                r = self.device.write_registers(address=1009, values=[a, b], unit=0)
 
-                # Note: We ignore channel number because there is only
-                # one channel on this model of PSU
-                if setting == "rate":
-                    value = float(self.rate_edit.text())
-                    i = converter_IEEE754_to_ulong(value)
-                    a = i >> 16
-                    b = i & ((1 << 16) - 1)
-                    r = self.meter.write_registers(address=1009, values=[a, b], unit=0)
-                    sys.stdout.flush()
-
-                    return value
-                elif settting == "flow":
-                    value = float(self.rate_edit.text())
-                    i = converter_IEEE754_to_ulong(value)
-                    a = i >> 16
-                    b = i & ((1 << 16) - 1)
-                    r = self.meter.write_registers(address=1009, values=[a, b], unit=0)
-                    sys.stdout.flush()
-
-                    return value
+                self.error_count = 0
+                return value
         except Exception as e:
             self.pDebug(
-                "An error occured in CAEN14xxETCtrl.py when sending SCPI commands to the instrument."
+                "An error occured in Alicat flowmeter when sending commands to the instrument."
             )
             self.pDebug(f"\t{str(e)}")
             self.pDebug(f"\t{setting}, {value}")
+            self.error_count += 1
+
+        if self.error_count > 4:
+            self.online = False
 
     def command(self, cmd: str):
-
         if not self.online:
             return f"{self.ID}-Offline"
 
         try:
             # Note: usually a self.dummy check would be here, but it is taken
             # care of in get_values() for the AlicanMSeriesFlowMeter
-
-            # Note: We ignore channel number because there is only
-            # one channel on this model of PSU
+            vals = self.get_values()
             if cmd == "rate?":
-                vals = self.get_values()
-                rval = str(vals["flow"])
-                return f"rate={rval}"
+                return f"rate={vals['flow']}"
             elif cmd == "pressure?":
-                vals = self.get_values()
-                rval = str(vals["pressure"])
-                return f"pressure={rval}"
+                return f"pressure={vals['pressure']}"
         except Exception as e:
             self.pDebug(
-                f"An error occured in {self.ID} when sending SCPI commands to the instrument."
+                f"An error occured in {self.ID} when sending commands to the instrument."
             )
             self.pDebug(str(e))
 
     def get_values(self):
-        rtn = {}
-
         if not self.online:
-            rtn["pressure"] = -1
-            rtn["flow"] = -1
-            return rtn
+            return {"pressure": -1, "flow": -1}
 
         if not self.dummy:
-            r = self.meter.read_input_registers(count=2, address=1202, unit=0)
-            a, b = r.registers
-            pressure = (a << 16) + b
-            pressure = converter_ulong_to_IEEE754(pressure)
+            try:
+                r = self.device.read_input_registers(count=2, address=1202, unit=0)
+                a, b = r.registers
+                pressure = (a << 16) + b
+                pressure = converter_ulong_to_IEEE754(pressure)
 
-            r = self.meter.read_input_registers(count=2, address=1208, unit=0)
-            a, b = r.registers
-            flow = (a << 16) + b
+                r = self.device.read_input_registers(count=2, address=1208, unit=0)
+                a, b = r.registers
+                flow = (a << 16) + b
+                self.error_count = 0
+            except Exception as e:
+                self.pDebug(
+                    f"An error occured in {self.ID} when sending commands to the instrument."
+                )
+                self.pDebug(str(e))
+                self.error_count += 1
             flow = converter_ulong_to_IEEE754(value)
         else:
             pressure = random.randint(0, 10)
             flow = random.randint(0, 10)
 
-        rtn["pressure"] = pressure
-        rtn["flow"] = flow
+        if self.error_count > 4:
+            self.online = False
 
-        return rtn
-
-    def write(self, command: str):
-        self.scope.write(command)
-        self.pDebug(f'\t{self.ID}< "{command}"')
-
-    def query(self, command: str):
-        reply = self.scope.query(command)
-        self.pDebug(f'\t{self.ID}< "{command}" > {reply}')
+        return {"pressure": pressure, "flow": flow}
