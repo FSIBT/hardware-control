@@ -395,12 +395,12 @@ class MeasurementRequest:
         # ******* These parameters tell the director how to query and save the data *******************************
         #
         self.dataset_name = (
-            dataset_name
-        )  # This is the name of the dataset it is a member of
+            dataset_name  # This is the name of the dataset it is a member of
+        )
 
         self.inst_name = (
-            instrument_name
-        )  # This is the name of the instrument from which to measure
+            instrument_name  # This is the name of the instrument from which to measure
+        )
 
         self.param_name = parameter_name  # This is the name of the parameter to measure
 
@@ -416,8 +416,8 @@ class MeasurementRequest:
             steady_points
         )  # Number of points that must be measured and considered 'steady'
         self.steady_dt = (
-            equip_dt
-        )  # change in time between points checked for steady state condition
+            equip_dt  # change in time between points checked for steady state condition
+        )
         self.tol = (
             tol
         )  # Tolerance  (in percent/100 ie from 0 to 1) by which points can differ and still be considered 'steady'
@@ -934,8 +934,8 @@ class Dataset(QObject):
 
         self.name = name  # Name of dataset
         self.autosave = (
-            False
-        )  # Whether or not to enable autosave (autosave done by HC_LoggerTool)
+            False  # Whether or not to enable autosave (autosave done by HC_LoggerTool)
+        )
         self.autosave_interval = 120
         # Seconds
 
@@ -992,8 +992,8 @@ class HC_Instrument(QGroupBox):
         self.globalLineHeight = 50  # Lineheight of athe average  spinbox
         self.globalLineWidth = 300  # Linewidth of athe average  spinbox
         self.online_color = (
-            "Green"
-        )  # Color of online light for status tool. Can be Green or Blue
+            "Green"  # Color of online light for status tool. Can be Green or Blue
+        )
 
         # ConnectionTool and ScanTool widgets
 
