@@ -2,23 +2,9 @@ import socket
 
 import numpy as np
 from hardware_control.HC_Backend import HC_Backend, VISA, SOCKET
+from hardware_control.utility import regex_compare, to_NR3, to_NR1, bool_NR1
 
 import pyvisa
-
-
-def to_NR3(x: float):
-    return f" {x:.6E}"
-
-
-def to_NR1(x: int):
-    return f"{x:d}"
-
-
-def bool_NR1(x: bool):
-    if x:
-        return "1"
-    else:
-        return "0"
 
 
 class NI_DAQ:

@@ -1,50 +1,12 @@
-import re
-
-from hardware_control.HC_Backend import HC_Backend, VISA, SOCKET
-
-# ToDo:
-def to_NR3(x: float):
-    return f" {x:.6E}"
-
-
-def str_NR3(x: str):
-    x_float = float(x)
-    return f" {x_float:.6E}"
-
-
-def to_NR1(x: int):
-    return f"{x:d}"
-
-
-def str_NR1(x: str):
-    x_int = int(x)
-    return f"{x_int:d}"
-
-
-def bool_NR1(x: bool):
-    if x:
-        return "1"
-    else:
-        return "0"
-
-
-def boolstr_NR1(x: str):
-    if x == "True":
-        return "1"
-    else:
-        return "0"
-
-
-def str_to_bool(x: str):
-    if x == "True":
-        return True
-    else:
-        return False
-
-
-def regex_compare(pattern: str, comp: str):
-    regex = re.compile(pattern)
-    return bool(re.match(regex, comp))
+from hardware_control.HC_Backend import HC_Backend, VISA
+from hardware_control.utility import (
+    regex_compare,
+    to_NR3,
+    str_NR3,
+    str_NR1,
+    boolstr_NR1,
+    str_to_bool,
+)
 
 
 class Key33500BCtrl(HC_Backend):

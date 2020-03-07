@@ -1,23 +1,5 @@
-import re
-
 from hardware_control.HC_Backend import HC_Backend, VISA
-
-
-def str_NR3(x: str):
-    x_float = float(x)
-    return f" {x_float:.6E}"
-
-
-def str_to_bool(x: str):
-    if x == "True":
-        return True
-    else:
-        return False
-
-
-def regex_compare(pattern: str, comp: str):
-    regex = re.compile(pattern)
-    return bool(re.match(regex, comp))
+from hardware_control.utility import regex_compare, str_NR3, str_to_bool
 
 
 class SigSDGCtrl(HC_Backend):
