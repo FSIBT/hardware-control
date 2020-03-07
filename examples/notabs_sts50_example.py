@@ -164,12 +164,12 @@ class STS50Demo(QMainWindow):
                     f.write("%s\n" % item)
 
 
-def main(argv):
-    app = HC_App([])
+def main():
+    app = HC_App(debug=debug, dummy=dummy)
     app.print_debug = debug
     ex = STS50Demo(app, connection_type)
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())
 
 
-main(sys.argv[1:])
+main()

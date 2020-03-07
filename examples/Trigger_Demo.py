@@ -51,12 +51,12 @@ class Demo(QMainWindow):
         self.trig1_ctrl.close()
 
 
-def main(argv):
-    app = HC_App(debug, [])
+def main():
+    app = HC_App(debug=debug, dummy=dummy)
     app.print_close_info = True
     ex = Demo(app)  # Change accordingly
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())
 
 
-main(sys.argv[1:])
+main()

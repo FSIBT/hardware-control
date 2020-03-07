@@ -1241,8 +1241,10 @@ class HC_Instrument(QGroupBox):
 class HC_App(QApplication):
     """Subclass of QApplication that is aware of what hardware is connected to it and can log data"""
 
-    def __init__(self, debug: bool = False, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, debug: bool = False, dummy=False):
+        # QApplication can take a list of strings, e.g. from sys.argv
+        # we currently don't use this
+        super().__init__([])
         self.instruments = (
             []
         )  # TODO: Verify this is actually a dict and change declaration here
@@ -1251,7 +1253,7 @@ class HC_App(QApplication):
         self.variables = {}  # Dict of app variables
         self.saved_data = {}
         # Dict of data saved directly with query commmands
-        self.dummy = False
+        self.dummy = dummy
         self.print_close_info = False
         self.debug = debug
 

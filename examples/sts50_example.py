@@ -400,11 +400,11 @@ class STS50Demo(HC_MainWindow):
                     f.write("%s\n" % item)
 
 
-def main(argv):
+def main():
     warnings.filterwarnings(
         action="ignore", message="unclosed", category=ResourceWarning
     )  # ToDo Not a solution
-    app = HC_App(debug, [])
+    app = HC_App(debug=debug, dummy=dummy)
     app.print_close_info = True
 
     if dummy:
@@ -419,4 +419,4 @@ def main(argv):
     sys.exit(app.exec_())
 
 
-main(sys.argv[1:])
+main()

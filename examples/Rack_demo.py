@@ -53,11 +53,11 @@ class Rack_Demo(QMainWindow):
         self.demo_ctrl.close()
 
 
-def main(argv):
-    app = HC_App([])
+def main():
+    app = HC_App(debug=debug, dummy=dummy)
     ex = Rack_Demo(app)  # Change accordingly
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())
 
 
-main(sys.argv[1:])
+main()

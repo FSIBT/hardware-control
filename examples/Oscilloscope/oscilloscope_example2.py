@@ -61,11 +61,11 @@ class ScopeWindow(QMainWindow):
         self.scope_ctrl.close()
 
 
-def main(argv):
-    app = HC_App([])
+def main():
+    app = HC_App(dummy=dummy)
     ex = ScopeWindow(app, connection_type)
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())
 
 
-main(sys.argv[1:])
+main()
