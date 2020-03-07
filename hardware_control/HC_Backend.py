@@ -2,6 +2,8 @@ from abc import ABC
 
 import pyvisa
 import socket
+from pymodbus.client.sync import ModbusTcpClient as ModbusClient
+
 from colorama import Fore, Style
 
 VISA = "visa"
@@ -87,14 +89,7 @@ class HC_Backend(ABC):
                 return True
 
         if self.online:
-            try:  # Check if connected by asking for instrument ID
-                self.device.query("*IDN?")
-                self.pDebug(f"{self.ID}: Connection verified")
-            except Exception as e:  # Not connected - reconnect
-                self.pDebug("Lost connection to device. Will try to reconnect")
-                self.pDebug(f"\t{str(e)}")
-            else:  # Connection stable - return True
-                return True
+            return True
 
         self.pDebug(f"{self.ID}: trying to connect")
 
@@ -131,6 +126,16 @@ class HC_Backend(ABC):
                 self.pDebug(f"{self.ID} is offline")
             else:
                 self.online = True
+        elif self.connection_type == MODBUS:
+            try:
+                self.device = ModbusClient(host=self.connection_addr)
+                if self.device.connect(self.connection_addr):
+                    self.online = True
+                    self.pDebug("opened connection")
+            except Exception as e:
+                self.online = False
+                self.pDebug(f"\t({self.ID}) ERROR while using modbus: /n {str(e)}")
+                self.pDebug(f"{self.ID} is offline")
 
         return self.online
 
@@ -143,11 +148,11 @@ class HC_Backend(ABC):
             return command
 
         try:
+            self.pDebug(f'\t{self.ID} < "{command}"')
             if self.connection_type == VISA:
                 self.device.write(command)
             elif self.connection_type == SOCKET:
                 self.device.sendall(bytes(command + "\n", "utf-8"))
-                self.pDebug(f'\t{self.ID} < "{command}"')
         except Exception as e:
             self.pDebug(f"ERROR: Query failed.\n\t{e}")
 
