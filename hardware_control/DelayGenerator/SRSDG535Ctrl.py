@@ -12,7 +12,7 @@ from hardware_control.HC_Backend import HC_Backend
 
 
 class SRSDG535Ctrl(HC_Backend):
-    def __init__(self, connection_addr, dummy: bool = False, debug: bool = False):
+    def __init__(self, connection_addr, debug: bool = False):
 
         super().__init__()
 
@@ -20,7 +20,6 @@ class SRSDG535Ctrl(HC_Backend):
 
         self.connection_addr = connection_addr
         self.online = False
-        self.dummy = dummy
         self.debug = debug
         self.num_vert_divisions = 8
 

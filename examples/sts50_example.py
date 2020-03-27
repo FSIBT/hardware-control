@@ -154,7 +154,7 @@ class STS50Demo(HC_MainWindow):
         )
 
         # Todo: linux-gpib is a dependency on some systems
-        self.trig1 = SRSDG535Ctrl("GPIB0::10::INSTR", dummy)
+        self.trig1 = SRSDG535Ctrl("GPIB0::10::INSTR")
         self.trig1_ctrl = HC_DelayGenerator(self.trig1, self, "Trigger 1", "DEFAULT")
 
         self.trig2 = SRSDG535Ctrl("GPIB0::15::INSTR", debug)
