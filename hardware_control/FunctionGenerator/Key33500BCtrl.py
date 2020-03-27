@@ -13,7 +13,6 @@ class Key33500BCtrl(HC_Backend):
     def __init__(
         self,
         connection_addr,
-        dummy: bool = False,
         debug: bool = False,
         connection_type: str = VISA,
         ip_addr: str = "",
@@ -24,7 +23,7 @@ class Key33500BCtrl(HC_Backend):
 
         self.connection_addr = connection_addr
         self.online = False
-        self.dummy = dummy
+        self.dummy = False
         self.debug = debug
         self.num_vert_divisions = 8
 

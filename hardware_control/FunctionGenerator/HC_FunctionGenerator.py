@@ -36,6 +36,7 @@ class HC_FunctionGenerator(HC_Instrument):
         self.settings = {}
         self.save_on_close = save_on_close
 
+        scpi_instr.dummy = self.window.app.dummy
         self.comm = HC_Comm(scpi_instr, self)
         self.filename = ""
 
