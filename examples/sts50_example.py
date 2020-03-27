@@ -149,9 +149,7 @@ class STS50Demo(HC_MainWindow):
             self.temp_ctrl, 0, "Random Readout", "TEMP", "Unit"
         )
 
-        self.flow = AlicatMSeriesCtrl(
-            "192.168.0.15", dummy, debug
-        )  # todo "192.168.1.15"
+        self.flow = AlicatMSeriesCtrl("192.168.0.15", debug)  # todo "192.168.1.15"
         self.flow_ctrl = HC_FlowController(
             self.flow, self, "Flow Controller", "flowcontroller_state.json", True
         )

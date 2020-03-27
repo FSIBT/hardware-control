@@ -8,7 +8,7 @@ from hardware_control.utility import (
 
 
 class AlicatMSeriesCtrl(HC_Backend):
-    def __init__(self, ip_addr, dummy: bool = False, debug: bool = False):
+    def __init__(self, ip_addr, debug: bool = False):
 
         super().__init__()
 
@@ -16,7 +16,7 @@ class AlicatMSeriesCtrl(HC_Backend):
 
         self.connection_addr = ip_addr
         self.connection_type = MODBUS
-        self.dummy = dummy
+        self.dummy = False
         self.debug = debug
 
         self.error_count = 0

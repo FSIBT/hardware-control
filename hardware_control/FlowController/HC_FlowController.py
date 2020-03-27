@@ -28,6 +28,7 @@ class HC_FlowController(HC_Instrument):
         self.save_on_close = save_on_close
         self.name = name
 
+        scpi_instr.dummy = self.window.app.dummy
         self.comm = HC_Comm(scpi_instr, self, 2000)
         self.filename = ""
 
