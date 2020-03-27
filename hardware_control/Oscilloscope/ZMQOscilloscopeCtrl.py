@@ -20,7 +20,6 @@ class ZMQOscilloscopeCtrl(HC_Backend):
     def __init__(
         self,
         zmq_addr,
-        dummy: bool = False,
         debug: bool = False,
         connection_type: str = VISA,
         ip_addr: str = "",

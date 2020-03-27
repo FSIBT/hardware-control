@@ -69,6 +69,7 @@ class HC_Oscilloscope(HC_Instrument):
         self.save_on_close = save_on_close
 
         # scpi_instr.sigReturnWaves.connect(self.backend_return_waveform)
+        scpi_instr.dummy = self.window.app.dummy
         self.comm = HC_Comm(scpi_instr, self)
         self.filename = ""
 

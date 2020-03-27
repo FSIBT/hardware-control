@@ -81,7 +81,6 @@ class STS50Demo(HC_MainWindow):
 
         scpi_scope = Key4000XCtrl(
             "TCPIP0::192.168.0.14::INSTR",  # ToDo: old adress "TCPIP0::192.168.1.14::INSTR"
-            dummy,
             debug,
             connection_type,
             "192.168.0.14",  # ToDo: old adress "192.168.1.14"
@@ -97,7 +96,7 @@ class STS50Demo(HC_MainWindow):
         #####################################################################
         ######## PicoTab
 
-        self.pico = ZMQOscilloscopeCtrl("tcp://192.168.0.30:6000", dummy)
+        self.pico = ZMQOscilloscopeCtrl("tcp://192.168.0.30:6000")
         self.pico_ctrl = HC_Oscilloscope(self.pico, self, "PicoScope", "DEFAULT", True)
 
         self.tab1_5_layout = QGridLayout()
