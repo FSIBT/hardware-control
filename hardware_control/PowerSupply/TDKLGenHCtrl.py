@@ -8,7 +8,6 @@ class TDKLGenHCtrl(HC_Backend):
     def __init__(
         self,
         connection_addr,
-        dummy: bool = False,
         debug: bool = False,
         connection_type: str = VISA,
         ip_addr: str = "",
@@ -21,7 +20,7 @@ class TDKLGenHCtrl(HC_Backend):
 
         self.connection_addr = connection_addr
         self.online = False
-        self.dummy = dummy
+        self.dummy = False
         self.debug = debug
 
         self.connection_type = connection_type

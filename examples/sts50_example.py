@@ -119,7 +119,7 @@ class STS50Demo(HC_MainWindow):
             awg, self, "RF Generator", "DEFAULT", True, 1
         )
 
-        self.psu = TDKLGenHCtrl("TCPIP0::192.168.1.19::INSTR", dummy)
+        self.psu = TDKLGenHCtrl("TCPIP0::192.168.1.19::INSTR")
         self.psu_ctrl = HC_MultiPowerSupply(
             self.psu, self, [1], "TDK Lambda (RF Vin)", "DEFAULT"
         )

@@ -29,6 +29,8 @@ class HC_MultiPowerSupply(HC_Instrument):
         self.settings = {}
         self.save_on_close = save_on_close
         self.backend = backend
+
+        backend.dummy = self.window.app.dummy
         self.comm = HC_Comm(backend, self)
         self.filename = ""
 
