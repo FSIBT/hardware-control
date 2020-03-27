@@ -135,7 +135,7 @@ class STS50Demo(HC_MainWindow):
         #####################################################################
         ######## Tab 3
 
-        self.temp = Adam_6015("192.168.1.25", dummy)
+        self.temp = Adam_6015("192.168.1.25")
         self.temp_ctrl = HC_Read(
             self.temp,
             self,

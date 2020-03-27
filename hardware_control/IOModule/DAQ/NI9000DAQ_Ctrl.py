@@ -11,7 +11,6 @@ class NI_DAQ:
     def __init__(
         self,
         connection_addr,
-        dummy: bool = False,
         debug: bool = False,
         connection_type: str = VISA,
         ip_addr: str = "",

@@ -31,7 +31,9 @@ class HC_Read(HC_Instrument):
         )  # A dict to store all possible settings-Not used here,bc there are no settings
         self.save_on_close = save_on_close
         self.backend = backend
-        self.comm = HC_Comm(backend, self, 2000)
+
+        self.backend.dummy = self.window.app.dummy
+        self.comm = HC_Comm(self.backend, self, 2000)
         # self.filename = ""
 
         self.channels = channels

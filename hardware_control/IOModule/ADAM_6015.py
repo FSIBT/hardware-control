@@ -18,7 +18,6 @@ class Adam_6015(HC_Backend):
     def __init__(
         self, connection_addr="192.168.1.25", dummy=False, debug: bool = False
     ):
-        self.dummy = dummy
         self.debug = True
         self.online = False
         self.ID = "Advantac_ADAM-6015"
