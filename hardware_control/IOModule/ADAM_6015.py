@@ -15,9 +15,10 @@ from hardware_control.utility import regex_compare
 class Adam_6015(HC_Backend):
     """Control of Adam input/output module"""
 
-    def __init__(
-        self, connection_addr="192.168.1.25", dummy=False, debug: bool = False
-    ):
+    def __init__(self, connection_addr="192.168.1.25", debug: bool = False):
+
+        super().__init__()
+
         self.debug = True
         self.online = False
         self.ID = "Advantac_ADAM-6015"

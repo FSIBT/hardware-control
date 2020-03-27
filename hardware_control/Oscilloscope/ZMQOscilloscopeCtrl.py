@@ -35,7 +35,7 @@ class ZMQOscilloscopeCtrl(HC_Backend):
 
         self.zmq_address = zmq_addr
         self.online = False
-        self.dummy = dummy
+        self.dummy = False
         self.debug = debug
         self.num_vert_divisions = 8  # Todo: remove this from all files
 
