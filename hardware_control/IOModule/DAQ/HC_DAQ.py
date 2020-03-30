@@ -23,7 +23,8 @@ from PyQt5.QtWidgets import (
     QGridLayout,
     QComboBox,
 )
-
+import logging
+logger = logging.getLogger(__name__)
 from hardware_control.base import HC_Instrument
 
 

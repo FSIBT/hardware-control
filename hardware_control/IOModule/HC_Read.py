@@ -6,7 +6,8 @@ from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QLabel, QWidget, QGridLayout, QLCDNumber, QSpacerItem
 
 from hardware_control.base import HC_Instrument, HC_Comm
-
+import logging
+logger = logging.getLogger(__name__)
 
 class HC_Read(HC_Instrument):
     # Convention: __init__(self, backend, window . . . )

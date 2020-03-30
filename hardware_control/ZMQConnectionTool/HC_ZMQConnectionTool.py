@@ -19,7 +19,8 @@ from PyQt5.QtWidgets import (
 )
 
 from hardware_control.base import HC_Instrument
-
+import logging
+logger = logging.getLogger(__name__)
 
 class HC_ZMQConnectionTool(HC_Instrument):
     def __init__(

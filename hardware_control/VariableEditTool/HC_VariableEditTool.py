@@ -2,7 +2,8 @@ from PyQt5 import QtCore
 from PyQt5.QtWidgets import QLineEdit, QLabel, QGridLayout, QComboBox
 
 from hardware_control.base import HC_Instrument
-
+import logging
+logger = logging.getLogger(__name__)
 
 class HC_VariableEditTool(HC_Instrument):
     """A tool which allows the user to edit app variables from the main UI."""

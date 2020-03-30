@@ -2,7 +2,8 @@ from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QLineEdit, QLabel, QGridLayout, QDoubleSpinBox
 
 from hardware_control.base import HC_Instrument, HC_Comm
-
+import logging
+logger = logging.getLogger(__name__)
 
 class HC_DeviceType(HC_Instrument):
     # Convention: __init__(self, backend, window . . . )

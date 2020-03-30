@@ -30,7 +30,8 @@ from PyQt5.QtWidgets import (
     QComboBox,
     QDoubleSpinBox,
 )
-
+import logging
+logger = logging.getLogger(__name__)
 
 class HC_Oscilloscope(HC_Instrument):
     """This is a 4-channel oscilloscope control progam.

@@ -11,7 +11,8 @@ from PyQt5.QtGui import QDoubleValidator, QPixmap
 from PyQt5.QtWidgets import QLineEdit, QPushButton, QLabel, QWidget, QGridLayout
 
 from hardware_control.base import HC_Instrument, HC_Comm, setButtonState
-
+import logging
+logger = logging.getLogger(__name__)
 
 class HC_MultiPowerSupply(HC_Instrument):
     def __init__(

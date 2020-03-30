@@ -15,7 +15,8 @@ from PyQt5.QtWidgets import (
     QCheckBox,
 )
 from hardware_control.base import HC_Instrument
-
+import logging
+logger = logging.getLogger(__name__)
 
 class HC_ScanTool(HC_Instrument):
     def __init__(

@@ -6,6 +6,8 @@ from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QGroupBox, QLabel, QGridLayout
+import logging
+logger = logging.getLogger(__name__)
 
 
 class HC_StatusTool(QGroupBox):

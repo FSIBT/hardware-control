@@ -18,7 +18,8 @@ from PyQt5.QtWidgets import (
 )
 
 from hardware_control.base import HC_Instrument, HC_Comm, setButtonState
-
+import logging
+logger = logging.getLogger(__name__)
 
 class HC_FunctionGenerator(HC_Instrument):
     def __init__(

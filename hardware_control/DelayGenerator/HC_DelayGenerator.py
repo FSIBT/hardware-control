@@ -11,6 +11,8 @@ from PyQt5.QtWidgets import (
     QSpinBox,
     QDoubleSpinBox,
 )
+import logging
+logger = logging.getLogger(__name__)
 
 from hardware_control.base import HC_Instrument, HC_Comm
 

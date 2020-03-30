@@ -2,7 +2,8 @@ from PyQt5 import QtCore
 from PyQt5.QtWidgets import QPushButton, QLabel, QGridLayout, QComboBox
 
 from hardware_control.base import HC_Instrument
-
+import logging
+logger = logging.getLogger(__name__)
 
 class HC_MacroRunnerTool(HC_Instrument):
     """A tool which allows the user to run macros from the main UI.

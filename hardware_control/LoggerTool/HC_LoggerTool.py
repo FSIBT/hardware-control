@@ -26,7 +26,8 @@ from PyQt5.QtWidgets import (
     QMessageBox,
 )
 from hardware_control.base import HC_Instrument
-
+import logging
+logger = logging.getLogger(__name__)
 
 class HC_LoggerTool(HC_Instrument):
     def __init__(self, window, name: str = "Data Logger"):
