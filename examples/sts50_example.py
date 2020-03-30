@@ -3,15 +3,18 @@
 """oscilloscope_example to control the hardware_control test stand
 
 Usage:
-  sts50_example [--dummy] [--socket] [--debug] [--log]
+  sts50_example [--dummy] [--socket] [--debug] [--log] [--info]
 
 Options:
   --dummy    use dummy connection for instruments that return semi-random data
              so that one run the program away from the test stand
   --socket   use sockets instead of visa
   --debug    allow debug print statements
+  --info     allow info print statements
   --log      save log file
 """
+
+import logging
 
 import sys, warnings
 
@@ -20,12 +23,18 @@ from docopt import docopt
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
+info = commands["--info"]
 if commands["--socket"]:
     connection_type = "socket"
 else:
     connection_type = "visa"
 debug = commands["--debug"]
 log = commands["--log"]
+
+if debug:
+    logging.basicConfig(filename='hardware_control.log', level=logging.DEBUG)
+elif info:
+    logging.basicConfig(filename='hardware_control.log', level=logging.INFO)
 
 from hardware_control.base import HC_App, HC_MainWindow, Dataset
 from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
@@ -50,6 +59,27 @@ from hardware_control.LoggerTool.HC_LoggerTool import HC_LoggerTool
 from hardware_control.PowerSupply.NI_DaX_PowerSupplyController import (
     NI_DaX_PowerSupplyController,
 )
+
+
+logger = logging.getLogger(__name__)
+
+# handler = logging.FileHandler('sts50_example.log')
+# handler.setLevel(logging.DEBUG)
+
+# formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# handler.setFormatter(formatter)
+
+# logger.addHandler(handler)
+
+logger.info("Hey!")
+
+# logger.info("Initailizing program")
+#
+# if info:
+#     logger.setLevel(logging.INFO)
+#
+# if debug:
+#     logger.setLevel(logging.DEBUG)
 
 
 class STS50Demo(HC_MainWindow):
