@@ -3,7 +3,7 @@
 """oscilloscope_example to control the hardware_control test stand
 
 Usage:
-  sts50_example [--dummy] [--socket] [--debug] [--log] [--info]
+  sts50_example [--dummy] [--socket] [--debug] [--console] [--info]
 
 Options:
   --dummy    use dummy connection for instruments that return semi-random data
@@ -11,7 +11,7 @@ Options:
   --socket   use sockets instead of visa
   --debug    allow debug print statements
   --info     allow info print statements
-  --log      save log file
+  --console  Print logger output to console
 """
 
 import logging
@@ -29,12 +29,26 @@ if commands["--socket"]:
 else:
     connection_type = "visa"
 debug = commands["--debug"]
-log = commands["--log"]
+print_console = commands["--console"]
 
 if debug:
-    logging.basicConfig(filename='hardware_control.log', level=logging.DEBUG)
+    if print_console:
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(filename='hardware_control.log', level=logging.DEBUG)
+        print("Debug level")
 elif info:
-    logging.basicConfig(filename='hardware_control.log', level=logging.INFO)
+    if print_console:
+        logging.basicConfig(level=logging.INFO)
+    else:
+        logging.basicConfig(filename='hardware_control.log', level=logging.INFO)
+        print("info level")
+else:
+    if print_console:
+        logging.basicConfig(level=logging.WARNING)
+    else:
+        logging.basicConfig(filename='hardware_control.log', level=logging.WARNING)
+        print("Warning level")
 
 from hardware_control.base import HC_App, HC_MainWindow, Dataset
 from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
@@ -420,10 +434,10 @@ class STS50Demo(HC_MainWindow):
         print("Closing")
         self.app.close()
 
-        if log:
-            with open("example_sts50.log", "w") as f:
-                for item in self.app.log:
-                    f.write("%s\n" % item)
+        # if log:
+        #     with open("example_sts50.log", "w") as f:
+        #         for item in self.app.log:
+        #             f.write("%s\n" % item)
 
 
 def main():
