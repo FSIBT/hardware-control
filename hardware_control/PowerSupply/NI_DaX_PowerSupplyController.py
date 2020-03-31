@@ -24,6 +24,8 @@ if os.name == "nt":
 
 from hardware_control.HC_Backend import HC_Backend
 from hardware_control.utility import regex_compare
+import logging
+logger = logging.getLogger(__name__)
 
 """This class behaves like it would read from a Powersupply"""
 

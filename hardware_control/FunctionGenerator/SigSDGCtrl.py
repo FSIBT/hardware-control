@@ -1,6 +1,7 @@
 from hardware_control.HC_Backend import HC_Backend, VISA
 from hardware_control.utility import regex_compare, str_NR3, str_to_bool
-
+import logging
+logger = logging.getLogger(__name__)
 
 class SigSDGCtrl(HC_Backend):
     def __init__(self, connection_addr, dummy: bool = False, debug: bool = False):

@@ -1,6 +1,7 @@
 import socket
 from hardware_control.HC_Backend import HC_Backend, SOCKET, VISA
-
+import logging
+logger = logging.getLogger(__name__)
 
 class CAEN14xxETCtrl(HC_Backend):
     def __init__(

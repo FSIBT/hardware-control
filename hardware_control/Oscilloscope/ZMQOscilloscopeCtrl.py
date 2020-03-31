@@ -14,7 +14,8 @@ import zmq
 
 from hardware_control.HC_Backend import HC_Backend, VISA
 from hardware_control.utility import regex_compare
-
+import logging
+logger = logging.getLogger(__name__)
 
 class ZMQOscilloscopeCtrl(HC_Backend):
     def __init__(

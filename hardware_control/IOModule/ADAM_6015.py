@@ -10,7 +10,8 @@ import socket
 
 from hardware_control.HC_Backend import HC_Backend
 from hardware_control.utility import regex_compare
-
+import logging
+logger = logging.getLogger(__name__)
 
 class Adam_6015(HC_Backend):
     """Control of Adam input/output module"""

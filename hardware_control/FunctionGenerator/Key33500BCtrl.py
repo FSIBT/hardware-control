@@ -7,7 +7,8 @@ from hardware_control.utility import (
     boolstr_NR1,
     str_to_bool,
 )
-
+import logging
+logger = logging.getLogger(__name__)
 
 class Key33500BCtrl(HC_Backend):
     def __init__(

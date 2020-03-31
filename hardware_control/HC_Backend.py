@@ -5,6 +5,8 @@ import socket
 from pymodbus.client.sync import ModbusTcpClient as ModbusClient
 
 from colorama import Fore, Style
+import logging
+logger = logging.getLogger(__name__)
 
 VISA = "visa"
 SOCKET = "socket"

@@ -5,7 +5,8 @@ from hardware_control.utility import (
     converter_ulong_to_IEEE754,
     converter_IEEE754_to_ulong,
 )
-
+import logging
+logger = logging.getLogger(__name__)
 
 class AlicatMSeriesCtrl(HC_Backend):
     def __init__(self, ip_addr, debug: bool = False):

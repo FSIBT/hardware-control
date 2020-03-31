@@ -9,6 +9,8 @@ import os
 import pyvisa
 
 from hardware_control.HC_Backend import HC_Backend
+import logging
+logger = logging.getLogger(__name__)
 
 
 class SRSDG535Ctrl(HC_Backend):
@@ -66,19 +68,17 @@ class SRSDG535Ctrl(HC_Backend):
             elif setting == "trigger_period":
                 w = f"BP{value}"
             elif setting == "trigger_level":
-                print(f"TRIGGER LEVEL SET {value}")
                 w = f"TL{value}"
             else:
-                self.pDebug(f"{self.ID} : Unknown setting : {setting} | {value}")
+                logger.warning(f"{self.ID} - Unknown setting: {setting} | {value}")
                 return "False"
             #
             try:
-                self.pDebug(f"{self.ID} writes: {w}")
+                logger.debug(f"{self.ID} writes: {w}")
                 self.write(w)
                 return "True"
             except Exception as e:
-                self.pDebug(f"{self.ID} : An exception occurred in update_setting()")
-                self.pDebug(str(e))
+                self.error(f"{self.ID} - An exception occurred in update_setting()", exc_info=True)
                 return "False"
 
     def command(self, cmd: str):
@@ -88,20 +88,18 @@ class SRSDG535Ctrl(HC_Backend):
                     """Tells DG535 to trigger"""
                     self.write(self.command_str)
                 else:
-                    self.pDebug(f"{self.ID} : unknown command")
+                    logger.warning(f"{self.ID} : unknown command")
             except Exception as e:
-                self.pDebug(f"{self.ID} : An exception occurred in command()")
-                self.pDebug(str(e))
+                logger.error(f"{self.ID} - An exception occurred in command()", exc_info=True)
         return cmd
 
     def write(self, cmd: str):
         try:
             if self.online and not self.dummy:
                 self.device.write(cmd)
-                self.pDebug(f'\tSRSDG535< " {cmd} "')
+                logger.debug(f'\tSRSDG535< "{cmd}"')
         except Exception as e:
-            self.pDebug(f"{self.ID : }An exception occurred in write")
-            self.pDebug(str(e))
+            logger.error(f"{self.ID} - An exception occurred in write", exc_info=True)
 
     def try_connect(self):
         if self.dummy:
@@ -112,21 +110,21 @@ class SRSDG535Ctrl(HC_Backend):
             try:
                 rm = pyvisa.ResourceManager()
                 self.device = rm.open_resource(self.connection_addr)  # Open connection
-                self.pDebug(f"Recource list pyvisa : {rm.list_resources()}")
+                logger.debug(f"Recource list pyvisa: {rm.list_resources()}")
                 self.online = True
+            except ValueError:
+                logger.warning("Can not open this resource type.", exc_info=True)
             except Exception as e:
-                self.pDebug(f"{self.ID}: {e}")
+                # logger.error("An error occured while connecting with Pyvisa", exc_info=True)
                 self.online = False
 
         if self.online:
             try:
                 instrstat = self.device.query("IS")
                 es = self.device.query("ES")
-                self.pDebug(
-                    f"{self.ID}: Instrument status: {instrstat} \tError status: {es}"
-                )
+                logger.debug(f"{self.ID}: Instrument status: {instrstat} \tError status: {es}")
             except Exception as e:
-                self.pDebug(f"{self.ID}: {e}")
+                # logger.error("An error occured while checking online status", exc_info=True)
                 self.online = False
 
         return self.online

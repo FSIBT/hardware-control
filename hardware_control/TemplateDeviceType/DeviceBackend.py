@@ -1,7 +1,8 @@
 import random
 
 from hardware_control.HC_Backend import HC_Backend, VISA
-
+import logging
+logger = logging.getLogger(__name__)
 
 class DeviceBackend(HC_Backend):
     def __init__(

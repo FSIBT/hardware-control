@@ -30,6 +30,8 @@ from matplotlib.dates import epoch2num
 from numpy import *
 
 from .Scope_control_test import Scope
+import logging
+logger = logging.getLogger(__name__)
 
 rm = pyvisa.ResourceManager()
 

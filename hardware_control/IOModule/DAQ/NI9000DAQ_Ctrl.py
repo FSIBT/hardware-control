@@ -5,7 +5,8 @@ from hardware_control.HC_Backend import HC_Backend, VISA, SOCKET
 from hardware_control.utility import regex_compare, to_NR3, to_NR1, bool_NR1
 
 import pyvisa
-
+import logging
+logger = logging.getLogger(__name__)
 
 class NI_DAQ:
     def __init__(

@@ -10,7 +10,8 @@ from hardware_control.utility import (
     boolstr_NR1,
 )
 import numpy as np
-
+import logging
+logger = logging.getLogger(__name__)
 
 class RigDS1000ZCtrl(HC_Backend):
 
