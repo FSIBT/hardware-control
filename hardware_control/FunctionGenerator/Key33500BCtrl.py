@@ -8,7 +8,9 @@ from hardware_control.utility import (
     str_to_bool,
 )
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class Key33500BCtrl(HC_Backend):
     def __init__(
@@ -134,7 +136,6 @@ class Key33500BCtrl(HC_Backend):
 
                 elif setting == "labels_enabled":
                     self.write(f"DISP:LAB {boolstr_NR1(value)}")
-                    self.pDebug(f"DISP:LAB {boolstr_NR1(value)}")
                     return self.query(f"DISP:LAB?")
 
                 elif regex_compare("CH._invert", setting):
@@ -191,10 +192,10 @@ class Key33500BCtrl(HC_Backend):
                     self.write(f"TRIG:SOUR CHAN{str_NR1(value)}")
                     return self.query(f"TRIG:SOUR?")
         except Exception as e:
-            self.pDebug(
-                "An error occured in Key33500BCtrl.py when sending SCPI commands to the instrument."
+            logger.error(
+                "An error occured in Key33500BCtrl.py when sending SCPI commands to the instrument.",
+                exc_info=True,
             )
-            self.pDebug(str(e))
 
     def command(self, cmd: str):
         pass

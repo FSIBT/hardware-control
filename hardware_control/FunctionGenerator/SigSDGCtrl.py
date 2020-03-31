@@ -1,7 +1,9 @@
 from hardware_control.HC_Backend import HC_Backend, VISA
 from hardware_control.utility import regex_compare, str_NR3, str_to_bool
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class SigSDGCtrl(HC_Backend):
     def __init__(self, connection_addr, dummy: bool = False, debug: bool = False):
@@ -102,10 +104,10 @@ class SigSDGCtrl(HC_Backend):
                     return rval[:-1]
 
         except Exception as e:
-            self.pDebug(
-                "An error occured in SigSDGCtrl.py when sending SCPI commands to the instrument."
+            logger.error(
+                "An error occured in SigSDGCtrl.py when sending SCPI commands to the instrument.",
+                exc_info=True,
             )
-            self.pDebug(str(e))
 
     def command(self, cmd: str):
         pass
