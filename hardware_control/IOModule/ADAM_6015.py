@@ -11,7 +11,9 @@ import socket
 from hardware_control.HC_Backend import HC_Backend
 from hardware_control.utility import regex_compare
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class Adam_6015(HC_Backend):
     """Control of Adam input/output module"""
@@ -53,7 +55,7 @@ class Adam_6015(HC_Backend):
                 return self.online
         else:
             if not self.online:
-                self.pDebug(f"Adam: creating dummy connection to {self.addr}")
+                logger.debug(f"Adam: creating dummy connection to {self.addr}")
             self.online = True
             return self.online
 
@@ -62,7 +64,7 @@ class Adam_6015(HC_Backend):
         if not self.dummy:
             self.s.close()
         else:
-            self.pDebug("Adam: close dummy connection")
+            logger.debug("Adam: close dummy connection")
         return False
 
     def write(self, msg: str):
@@ -105,8 +107,10 @@ class Adam_6015(HC_Backend):
                 else:
                     return "Unexpected Command"
             except Exception as e:
-                self.pDebug(self.ID + " online status : " + str(self.try_connect()))
-                self.pDebug(e)
+                logger.error(
+                    self.ID + " online status : " + str(self.try_connect()),
+                    exc_info=True,
+                )
 
     def update_setting(self, setting: str, value: str):
         """Device has no Settings"""

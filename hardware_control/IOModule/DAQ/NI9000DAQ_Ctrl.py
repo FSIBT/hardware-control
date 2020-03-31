@@ -6,7 +6,9 @@ from hardware_control.utility import regex_compare, to_NR3, to_NR1, bool_NR1
 
 import pyvisa
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class NI_DAQ:
     def __init__(
@@ -54,13 +56,15 @@ class NI_DAQ:
                     self.scope.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 0)
                     self.scope.connect((self.ip_addr, self.port_no))
             except Exception as e:  # Failed to conncet);
-                print(e)
+                logger.error("Failed to connect to instrument", exc_info=True)
                 self.online = False
             else:
                 self.online = True
 
         else:
-            print(f"KEY4000X: creating dummy connection to {self.connection_addr}")
+            logger.debug(
+                f"KEY4000X: creating dummy connection to {self.connection_addr}"
+            )
             self.online = True
 
     #
@@ -70,7 +74,7 @@ class NI_DAQ:
         if not self.dummy and self.online:
             self.scope.close()
         else:
-            print("KEY4000X: closed dummy connection")
+            logger.debug("KEY4000X: closed dummy connection")
 
     #
     # Receives a state object from the control object.
@@ -231,8 +235,6 @@ class NI_DAQ:
 
         wave = {}
 
-        #        print(ch1, ch2, ch3, ch4);
-
         if not self.dummy:
             if ch1:
                 wave["CH1"] = self.read_waveform(1)
@@ -300,29 +302,22 @@ class NI_DAQ:
             # x_orig = float(x_orig[0:len(x_orig)-1]); #Convert X Origin
             x_orig = float(x_orig[0 : len(x_orig)])
             # Convert X Origin
-            print(x_orig)
         except Exception as e:
-            print("ERROR: Received bad origin from scope.")
-            print(e)
-            print(f"\t{x_orig}")
+            logger.error("ERROR: Received bad origin from scope.", exc_info=True)
             return ([], [])
         try:
             # x_ref = float(x_ref[0:len(x_ref)-1]); #Convert X Reference
             x_ref = float(x_ref[0 : len(x_ref)])
             # Convert X Reference
         except Exception as e:
-            print("ERROR: Received bad reference from scope.")
-            print(e)
-            print(f"\t{x_ref}")
+            logger.error("ERROR: Received bad reference from scope.", exc_info=True)
             return ([], [])
         try:
             # x_incr = float(x_incr[0:len(x_incr)-1]); #Convert X Increment
             x_incr = float(x_incr[0 : len(x_incr)])
             # Convert X Increment
         except Exception as e:
-            print("ERROR: Received bad increment from scope.")
-            print(e)
-            print(f"\t{x_incr}")
+            logger.error("ERROR: Received bad increment from scope.", exc_info=True)
             return ([], [])
 
         try:
@@ -339,7 +334,7 @@ class NI_DAQ:
             ).tolist()
             # Calculate time values
         except Exception as e:
-            print("ERROR: Failed to calculate V & t.")
+            logger.error("ERROR: Failed to calculate V & t.", exc_info=True)
             return ([], [])
 
         return (fmt, t)
@@ -363,8 +358,7 @@ class NI_DAQ:
                 self.scope.write(command)
             elif self.connection_type == SOCKET:
                 self.scope.sendall(bytes(command + "\n", "utf-8"))
-            if self.debug:
-                print(f'\tKEY4000X< "{command}"')
+            logger.debug(f'\tKEY4000X< "{command}"')
 
     def query(self, command: str):
         if self.online and not self.dummy:
@@ -373,13 +367,12 @@ class NI_DAQ:
             elif self.connection_type == SOCKET:
                 self.scope.sendall(bytes(command + "\n", "utf-8"))
                 reply_bytes = recvall(self.scope)
-                print(f"reply size: {len(reply_bytes)}")
+                logger.debug(f"reply size: {len(reply_bytes)}")
                 reply = str(reply_bytes)
                 if len(reply) < 100:
-                    print("\t\t" + reply)
+                    logger.debug("\t\t" + reply)
                 reply = reply[2 : len(reply) - 3]
-            if self.debug:
-                print(f'\t{self.ID}< "{command}"')
+            logger.debug(f'\t{self.ID}< "{command}"')
             return reply
         else:
             return ""
