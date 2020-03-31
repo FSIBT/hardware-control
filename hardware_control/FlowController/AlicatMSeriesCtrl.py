@@ -52,11 +52,7 @@ class AlicatMSeriesCtrl(HC_Backend):
                 self.error_count = 0
                 return value
         except Exception as e:
-            self.pDebug(
-                "An error occured in Alicat flowmeter when sending commands to the instrument."
-            )
-            self.pDebug(f"\t{str(e)}")
-            self.pDebug(f"\t{setting}, {value}")
+            logger.error("An error occured in Alicat flowmeter when sending commands to the instrument.", exc_info=True)
             self.error_count += 1
 
         if self.error_count > 4:
@@ -75,10 +71,7 @@ class AlicatMSeriesCtrl(HC_Backend):
             elif cmd == "pressure?":
                 return f"pressure={vals['pressure']}"
         except Exception as e:
-            self.pDebug(
-                f"An error occured in {self.ID} when sending commands to the instrument."
-            )
-            self.pDebug(str(e))
+            logger.error(f"An error occured in {self.ID} when sending commands to the instrument.", exc_info=True)
 
     def get_values(self):
         if not self.online:
@@ -96,10 +89,7 @@ class AlicatMSeriesCtrl(HC_Backend):
                 flow = (a << 16) + b
                 self.error_count = 0
             except Exception as e:
-                self.pDebug(
-                    f"An error occured in {self.ID} when sending commands to the instrument."
-                )
-                self.pDebug(str(e))
+                logger.error(f"An error occured in {self.ID} when sending commands to the instrument.", exc_info=True)
                 self.error_count += 1
             flow = converter_ulong_to_IEEE754(value)
         else:
