@@ -3,7 +3,9 @@ from PyQt5.QtWidgets import QPushButton, QLabel, QGridLayout, QComboBox
 
 from hardware_control.base import HC_Instrument
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class HC_MacroRunnerTool(HC_Instrument):
     """A tool which allows the user to run macros from the main UI.
@@ -30,7 +32,6 @@ class HC_MacroRunnerTool(HC_Instrument):
 
         super().__init__(window, name)
         self.debug = debug
-        self.pDebug("")
         self.buttons = buttons
         self.indicators = indicators
 
@@ -91,13 +92,7 @@ class HC_MacroRunnerTool(HC_Instrument):
 
             else:
 
-                self.pDebug("Sry, not a thing!")
-                self.window.app.add_log(
-                    self.name,
-                    "NO-HARDWARE-BACKEND",
-                    "WARNING",
-                    f"Macro '{but}' does not exist. Ignoring button.",
-                )
+                logger.error(f"Macro {but} does not exist. Ignoring button.")
 
         # ******* DEFINE OVERALL LAYOUT
         #
@@ -111,13 +106,13 @@ class HC_MacroRunnerTool(HC_Instrument):
     def run_macro(self, macro: str):
         try:
             cmds = self.app.macros[macro]
-            self.pDebug(f"Running macro: {macro}\n\tCommands: {cmds}")
+            logger.info(f"Running macro: {macro}\n\tCommands: {cmds}")
             self.app.run_macro(cmds)
         except Exception:
-            self.pDebug(f"An exception occurred running macro {macro}")
+            logger.error(f"An exception occurred running macro {macro}", exc_info=True)
 
     def set_macro(self, m: str):
-        self.pDebug(f"Setting macro to {m}")
+        logger.debug(f"Setting macro to {m}")
         self.settings["macro"] = m
 
     def update_macros(self):
@@ -125,7 +120,7 @@ class HC_MacroRunnerTool(HC_Instrument):
         names = []
         for m in self.app.macros:
             names.append(m)
-            self.pDebug(f"Adding macro {m}")
+            logger.debug(f"Adding macro {m}")
         self.macro_drop.addItems(names)
 
     #
