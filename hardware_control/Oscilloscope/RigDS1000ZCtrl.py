@@ -11,7 +11,9 @@ from hardware_control.utility import (
 )
 import numpy as np
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class RigDS1000ZCtrl(HC_Backend):
 
@@ -195,8 +197,10 @@ class RigDS1000ZCtrl(HC_Backend):
                     return self.query(":MEAS:STAT:DISP?")
 
         except Exception as e:
-            self.pDebug("An error occured in RigDS1000ZCtrl.py sending SCPI commands.")
-            self.pDebug(str(e))
+            logger.error(
+                "An error occured in RigDS1000ZCtrl.py sending SCPI commands.",
+                exc_info=True,
+            )
 
     def command(self, cmd: str):
 
@@ -224,7 +228,7 @@ class RigDS1000ZCtrl(HC_Backend):
             ret_str = "CLEAR_MEAS"
         elif regex_compare("meas_slot.", cmd):
 
-            self.pDebug(f"Reading slot w/ '{cmd}'", False, True)
+            logger.debug(f"Reading slot w/ '{cmd}'")
 
             # Get slot number
             slot = int(cmd[9])
@@ -265,7 +269,7 @@ class RigDS1000ZCtrl(HC_Backend):
                 ret_str = cmd + "*=" + ret_str
             else:
                 ret_str = cmd + "=" + ret_str
-            self.pDebug(f"Returning slot read w/ '{ret_str}'", False, True)
+            logger.debug(f"Returning slot read w/ '{ret_str}'")
         elif cmd == "RESET_MEAS_STAT":
 
             self.write(f":MEAS:STAT:DISP OFF")
@@ -344,7 +348,6 @@ class RigDS1000ZCtrl(HC_Backend):
             #
             # #Check that specified number of points matches number recieved
             # if npts != len(data)-12:
-            #     self.pDebug("ERROR: Header specifies different number of points than was received.")
             #     return "", [], []
 
             # Get timing data
@@ -357,7 +360,9 @@ class RigDS1000ZCtrl(HC_Backend):
             )
 
         except:
-            self.pDebug("ERROR: Failed to read waveform data from scope")
+            logger.error(
+                "ERROR: Failed to read waveform data from scope", exc_info=True
+            )
             return "", [], []
 
         return f"CH{channel}_WVFM", t, volts

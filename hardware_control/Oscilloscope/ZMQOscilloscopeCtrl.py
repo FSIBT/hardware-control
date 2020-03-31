@@ -15,7 +15,9 @@ import zmq
 from hardware_control.HC_Backend import HC_Backend, VISA
 from hardware_control.utility import regex_compare
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class ZMQOscilloscopeCtrl(HC_Backend):
     def __init__(
@@ -76,8 +78,9 @@ class ZMQOscilloscopeCtrl(HC_Backend):
                         val = float(value) / float(self.settings["Timebase"]) * 100
                     except:
                         val = 50
-                        self.pDebug(
-                            f"{self.ID}ERROR: Failed to calculate valid time_offset value"
+                        logger.error(
+                            f"{self.ID} - Failed to calculate valid time_offset value",
+                            exc_info=True,
                         )
                     self.settings[f"Ref Position (%)"] = val
                     self.send_json_settings()
@@ -164,10 +167,10 @@ class ZMQOscilloscopeCtrl(HC_Backend):
                     return f"{setting}:{value}"
         except Exception as e:
 
-            self.pDebug(
-                f"An error occured with {self.ID} when sending commands to the instrument."
+            logger.error(
+                f"An error occured with {self.ID} when sending commands to the instrument.",
+                exc_info=True,
             )
-            self.pDebug(str(e))
 
     def command(self, cmd: str):
         if not self.online:
@@ -183,7 +186,7 @@ class ZMQOscilloscopeCtrl(HC_Backend):
             if self.online:
                 return True
             else:
-                self.pDebug(
+                logger.debug(
                     f"{self.ID}: creating dummy connection to {self.zmq_address}"
                 )
                 self.online = True
