@@ -27,7 +27,9 @@ from PyQt5.QtWidgets import (
 )
 from hardware_control.base import HC_Instrument
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class HC_LoggerTool(HC_Instrument):
     def __init__(self, window, name: str = "Data Logger"):
@@ -160,7 +162,7 @@ class HC_LoggerTool(HC_Instrument):
         try:
             self.window.app.data_sets[self.settings["display_group"]].autosave = state
         except:
-            self.window.app.pDebug("ERROR: Failed to set autosave state", True)
+            logger.error("Failed to set autosave state", exc_info=True)
 
     def set_interval(self, t: str):
         """Sets the autosave interval"""
@@ -173,7 +175,7 @@ class HC_LoggerTool(HC_Instrument):
                 self.settings["display_group"]
             ].autosave_timer.setInterval(float(t) * 1000)
         except:
-            self.window.app.pDebug("ERROR: Failed to set interval time", True)
+            logger.error("ERROR: Failed to set interval time", exc_info=True)
 
     def save_data(self):
 
@@ -205,7 +207,7 @@ class HC_LoggerTool(HC_Instrument):
         try:
             self.window.app.data_sets[self.settings["display_group"]].data = []
         except:
-            self.window.app.pDebug("ERROR: Failed to delete group data", True)
+            logger.error("Failed to delete group data", exc_info=True)
 
         self.update_table()
 
@@ -272,8 +274,8 @@ class HC_LoggerTool(HC_Instrument):
             )
 
         except Exception as e:
-            self.window.app.pDebug(
-                f"ERROR: Exception occured while updating table ({str(e)})", True
+            logger.error(
+                f"Exception occured while updating table ({str(e)})", exc_info=True
             )
 
     def update_groups(self):

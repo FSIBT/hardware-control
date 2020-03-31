@@ -10,6 +10,7 @@ import pyvisa
 
 from hardware_control.HC_Backend import HC_Backend
 import logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -26,7 +27,6 @@ class SRSDG535Ctrl(HC_Backend):
         self.num_vert_divisions = 8
 
         self.command_str = ""  # string used to trigger
-        self.try_connect()
         #   Device Specific Values
         self.delayRange = 999.999999999995
         self.ExternalTriggerThreshold = 2.56
@@ -78,7 +78,10 @@ class SRSDG535Ctrl(HC_Backend):
                 self.write(w)
                 return "True"
             except Exception as e:
-                self.error(f"{self.ID} - An exception occurred in update_setting()", exc_info=True)
+                self.error(
+                    f"{self.ID} - An exception occurred in update_setting()",
+                    exc_info=True,
+                )
                 return "False"
 
     def command(self, cmd: str):
@@ -90,7 +93,9 @@ class SRSDG535Ctrl(HC_Backend):
                 else:
                     logger.warning(f"{self.ID} : unknown command")
             except Exception as e:
-                logger.error(f"{self.ID} - An exception occurred in command()", exc_info=True)
+                logger.error(
+                    f"{self.ID} - An exception occurred in command()", exc_info=True
+                )
         return cmd
 
     def write(self, cmd: str):
@@ -122,7 +127,9 @@ class SRSDG535Ctrl(HC_Backend):
             try:
                 instrstat = self.device.query("IS")
                 es = self.device.query("ES")
-                logger.debug(f"{self.ID}: Instrument status: {instrstat} \tError status: {es}")
+                logger.debug(
+                    f"{self.ID}: Instrument status: {instrstat} \tError status: {es}"
+                )
             except Exception as e:
                 # logger.error("An error occured while checking online status", exc_info=True)
                 self.online = False
