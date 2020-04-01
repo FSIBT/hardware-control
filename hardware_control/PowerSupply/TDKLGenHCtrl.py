@@ -58,11 +58,10 @@ class TDKLGenHCtrl(HC_Backend):
                     rval = self.query(":SOUR:VOLT:LEV:IMM:AMPL?")
                     return rval
         except Exception as e:
-            self.pDebug(
-                f"An error occured in {self.ID} when sending SCPI commands to the instrument."
+            logger.error(
+                f"An error occured in {self.ID} when sending SCPI commands to the instrument.",
+                exc_info=True,
             )
-            self.pDebug(f"\t{str(e)}")
-            self.pDebug(f"\t{setting}, {value}")
 
     def command(self, cmd: str):
 
@@ -94,7 +93,7 @@ class TDKLGenHCtrl(HC_Backend):
                     rval = self.query(":SOUR:VOLT:LEV:IMM:AMPL?")
                     return f"{cmd}={rval}"
         except Exception as e:
-            self.pDebug(
-                "An error occured in CAEN14xxETCtrl.py when sending SCPI commands to the instrument."
+            logger.error(
+                "An error occured in CAEN14xxETCtrl.py when sending SCPI commands to the instrument.",
+                exc_info=True,
             )
-            self.pDebug(str(e))
