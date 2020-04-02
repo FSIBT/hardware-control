@@ -157,8 +157,6 @@ class App(QMainWindow):
         self.prepare_shutdown.emit()
 
         self.rm.close()
-        # done
-        print("Good Bye!")
 
     def about(self):
         pyversion = ".".join([str(i) for i in sys.version_info])

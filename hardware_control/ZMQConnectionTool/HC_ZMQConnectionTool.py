@@ -20,7 +20,9 @@ from PyQt5.QtWidgets import (
 
 from hardware_control.base import HC_Instrument
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class HC_ZMQConnectionTool(HC_Instrument):
     def __init__(
@@ -157,7 +159,7 @@ class HC_ZMQConnectionTool(HC_Instrument):
                 return True
             else:
                 p_str = self.settings["port"]
-                print(f"{self.ID}: creating dummy connection to {p_str}")
+                logger.debug(f"{self.ID}: creating dummy connection to {p_str}")
                 self.socket_online = True
                 return True
 
@@ -173,7 +175,7 @@ class HC_ZMQConnectionTool(HC_Instrument):
             self.socket.bind(self.settings["port"])
         except:
             p_str = self.settings["port"]
-            print(f"ERROR: Failed to bind to {p_str}")
+            logger.error(f"Failed to bind to {p_str}", exc_info=True)
 
         self.poller = zmq.Poller()
         self.poller.register(self.socket, zmq.POLLIN)
@@ -212,7 +214,7 @@ class HC_ZMQConnectionTool(HC_Instrument):
         # If event found...
         if len(events) > 0:
 
-            self.pDebug("ZMQConnectionTool received message")
+            logger.debug("ZMQConnectionTool received message")
 
             message = self.socket.recv()  # Receive message...
 
@@ -232,7 +234,7 @@ class HC_ZMQConnectionTool(HC_Instrument):
 
         else:
 
-            self.pDebug("ZMQConnectionTool found no message on port")
+            logger.debug("ZMQConnectionTool found no message on port")
 
     def default_state(self):
         dflt = {}

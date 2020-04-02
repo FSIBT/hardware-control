@@ -1,7 +1,9 @@
 import socket
 from hardware_control.HC_Backend import HC_Backend, SOCKET, VISA
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class CAEN14xxETCtrl(HC_Backend):
     def __init__(
@@ -44,7 +46,7 @@ class CAEN14xxETCtrl(HC_Backend):
             if self.online:
                 return True
             else:
-                self.pDebug(
+                logger.debug(
                     f"{self.ID}: creating dummy connection to {self.connection_addr}"
                 )
                 self.online = True
@@ -56,13 +58,15 @@ class CAEN14xxETCtrl(HC_Backend):
                 self.device.query("$BD:00,CMD:MON,PAR:BDNAME")
             except visa.errors.VisaIOError as e:  # Not connected - reconnect
                 if self.debug:
-                    self.pDebug("Lost connection to device. Will try to reconnect")
-                    self.pDebug(f"\t{str(e)}")
+                    self.error(
+                        "Lost connection to device. Will try to reconnect",
+                        exc_info=True,
+                    )
             else:  # Connection stable - return True
                 return True
 
         if self.debug:
-            self.pDebug("trying to connect")
+            logger.debug("trying to connect")
 
         # Try to connect to instrument
         try:
@@ -74,7 +78,7 @@ class CAEN14xxETCtrl(HC_Backend):
 
                 # Verify actually connected (open_resource won't always throw error w/ disconnected USB)
                 self.device.query("$BD:00,CMD:MON,PAR:BDNAME")
-                self.pDebug("opened connection")
+                logger.debug("opened connection")
 
             elif self.connection_type == SOCKET:
                 self.device = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -82,8 +86,6 @@ class CAEN14xxETCtrl(HC_Backend):
                 self.device.connect((self.ip_addr, self.port_no))
         except Exception as e:
             self.online = False
-            self.pDebug(f"\t{str(e)}")
-            self.pDebug("OFFLINE")
         else:
             self.online = True
 
@@ -135,11 +137,10 @@ class CAEN14xxETCtrl(HC_Backend):
                     return result[-6:]
 
         except Exception as e:
-            self.pDebug(
-                "An error occured in CAEN14xxETCtrl.py when sending SCPI commands to the instrument."
+            logger.error(
+                "An error occured in CAEN14xxETCtrl.py when sending SCPI commands to the instrument.",
+                exc_info=True,
             )
-            self.pDebug(f"\t{str(e)}")
-            self.pDebug(f"\t{setting}, {value}")
 
     def command(self, cmd: str):
 
@@ -198,10 +199,10 @@ class CAEN14xxETCtrl(HC_Backend):
                     return f"{cmd}={rval}"
 
         except Exception as e:
-            self.pDebug(
-                "An error occured in CAEN14xxETCtrl.py when sending SCPI commands to the instrument."
+            logger.error(
+                "An error occured in CAEN14xxETCtrl.py when sending SCPI commands to the instrument.",
+                exc_info=True,
             )
-            self.pDebug(str(e))
 
     def read_status(self, channel):
         """See table on page 24 of manual"""

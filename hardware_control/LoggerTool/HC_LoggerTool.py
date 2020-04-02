@@ -213,7 +213,6 @@ class HC_LoggerTool(HC_Instrument):
 
     def data_changed_from_cell(self, row: int, col: int):
 
-        # print(f"cell changed @ ({row}, {col}). Value is now {self.table.itemAt(row, col).text()}") #TODO: Finish fixing 'data changed from cell' code
         pass
 
     def set_group(self, group):

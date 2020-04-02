@@ -31,6 +31,7 @@ from numpy import *
 
 from .Scope_control_test import Scope
 import logging
+
 logger = logging.getLogger(__name__)
 
 rm = pyvisa.ResourceManager()
@@ -153,10 +154,8 @@ class ScopeCommunication(QObject):
             #            self.values_read.emit(channel_1, channel_2, channel_3, channel_4)
             self.values_read.emit(channel_3)
             sys.stdout.flush()
-            self.pDebug("channels 3 are reading out")
 
         else:
-            self.pDebug("read loop workiing")
             return
 
 

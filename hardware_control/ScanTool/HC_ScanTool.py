@@ -16,7 +16,9 @@ from PyQt5.QtWidgets import (
 )
 from hardware_control.base import HC_Instrument
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class HC_ScanTool(HC_Instrument):
     def __init__(
@@ -242,7 +244,7 @@ class HC_ScanTool(HC_Instrument):
 
     def set_instrument(self, inst: str):
 
-        self.pDebug(f"Instrument set to '{inst}'")
+        logger.debug(f"Instrument set to '{inst}'")
 
         self.settings["instrument"] = inst
 
@@ -272,9 +274,9 @@ class HC_ScanTool(HC_Instrument):
                 for param in instr.settings:
                     params.append(param)
                 self.parameter_drop.addItems(params)
-                self.pDebug(f"\tAdded {len(params)} items to parameter dropdown.")
+                logger.debug(f"\tAdded {len(params)} items to parameter dropdown.")
             else:
-                self.pDebug(f"ERROR: Couldn't find instrument '{inst}'")
+                logger.error(f"Couldn't find instrument '{inst}'")
 
         self.settings["progress"] = 0
         self.progress_bar.setValue(self.settings["progress"])
@@ -290,14 +292,14 @@ class HC_ScanTool(HC_Instrument):
         self.macro_drop.addItems(names)
 
     def set_parameter(self, param: str):
-        self.pDebug(f"Setting parameter to {param}")
+        logger.debug(f"Setting parameter to {param}")
         self.settings["parameter"] = param
 
         self.settings["progress"] = 0
         self.progress_bar.setValue(self.settings["progress"])
 
     def set_values(self, new_values: str):
-        self.pDebug(f"Setting values to {new_values}")
+        logger.debug(f"Setting values to {new_values}")
         self.settings["values"] = new_values
 
         self.settings["progress"] = 0
@@ -311,7 +313,7 @@ class HC_ScanTool(HC_Instrument):
         m = self.settings["macro"]
         vals = self.settings["values"].split(",")
 
-        self.pDebug(
+        logger.debug(
             f"Starting scan\n\tInstrument: {i}\n\tParameter: {p}\n\tValues:{vals}"
         )
 
@@ -325,7 +327,7 @@ class HC_ScanTool(HC_Instrument):
                     found = True
                     break
             if not found:
-                self.pDebug(f"ERROR: Failed to find instrument {i}")
+                logger.errro(f"Failed to find instrument {i}")
                 return
 
             # Scan through values
@@ -334,7 +336,7 @@ class HC_ScanTool(HC_Instrument):
 
                 # Update progress bar
                 self.settings["progress"] = str(count / len(vals) * 100)
-                self.pDebug(f"\tRunning value = '{v}'\t\t{count/len(vals)*100}%")
+                logger.debug(f"\tRunning value = '{v}'\t\t{count/len(vals)*100}%")
                 self.progress_bar.setValue(float(self.settings["progress"]))
                 QApplication.processEvents()
 
@@ -342,21 +344,21 @@ class HC_ScanTool(HC_Instrument):
                 if not scan_instrument.set_setting(
                     self.settings["parameter"], v.strip()
                 ):
-                    self.pDebug(
+                    logger.error(
                         f"Failed to set parameter '{p}' to value '{v}'. Exiting scan."
                     )
                     return
                 count += 1
 
                 if m != "None":
-                    self.pDebug(f"\t\tRunning macro {m}")
+                    logger.debug(f"\t\tRunning macro {m}")
                     self.app.run_macro(self.app.macros[m])
 
         else:
 
             # Make sure variable exists
             if not (i in self.app.variables):
-                self.pDebug("Failed to find app variable.")
+                logger.error("Failed to find app variable.")
                 return
 
             # Scan thorugh values
@@ -365,8 +367,7 @@ class HC_ScanTool(HC_Instrument):
 
                 # Update progress bar
                 self.settings["progress"] = count / len(vals) * 100
-                # if self.app.print_debug:
-                self.pDebug(f"\tRunning value = '{v}'\t\t{count/len(vals)*100}%")
+                logger.debug(f"\tRunning value = '{v}'\t\t{count/len(vals)*100}%")
                 self.progress_bar.setValue(float(self.settings["progress"]))
                 QApplication.processEvents()
 
@@ -375,12 +376,12 @@ class HC_ScanTool(HC_Instrument):
                 count += 1
 
                 if m != "None":
-                    self.pDebug(f"\t\tRunning macro {m}")
+                    logger.debug(f"\t\tRunning macro {m}")
                     self.app.run_macro(self.app.macros[m])
 
         self.settings["progress"] = 100
         self.progress_bar.setValue(self.settings["progress"])
-        self.pDebug("Finished scan")
+        logger.debug("Finished scan")
 
     def update_instruments(self):
         self.instrument_drop.clear()
@@ -402,12 +403,13 @@ class HC_ScanTool(HC_Instrument):
         try:
             with open(filename) as file:
                 self.settings = json.load(file)
-                self.pDebug(
+                logger.debug(
                     f"State for {self.comm.instr.ID} read from file '{filename}'"
                 )
         except:
-            self.pDebug(
-                f"ERROR: {self.name} failed to read file '{filename}'. Using defualt case."
+            logger.error(
+                f"{self.name} failed to read file '{filename}'. Using defualt case.",
+                exc_info=True,
             )
             self.settings = self.default_state()
 
@@ -420,12 +422,12 @@ class HC_ScanTool(HC_Instrument):
         try:
             with open(filename, "w") as file:
                 json.dump(self.settings, file)
-                self.pDebug(
+                logger.debug(
                     f"State for {self.comm.instr.ID} saved to file '{filename}'"
                 )
         except Exception as e:
-            self.pDebug(f"ERROR: Failed to write file '{filename}'. State not saved.")
-            self.pDebug(f"\t{e}")
+            logger.debug(f"ERROR: Failed to write file '{filename}'. State not saved.")
+            logger.debug(f"\t{e}")
 
     # Update setting is overwritten so hc-commands can set values such as the
     # progress bar.
@@ -441,7 +443,7 @@ class HC_ScanTool(HC_Instrument):
             try:
                 self.progress_bar.setValue(float(self.settings["progress"]))
             except:
-                self.pDebug(f"ERROR: Can't convert {value} to float.")
+                logger.error(f"Can't convert {value} to float.", exc_info=True)
 
     #
     # Create a default state object if can't get state from a file

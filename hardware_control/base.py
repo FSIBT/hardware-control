@@ -170,7 +170,6 @@ class HC_Comm(QObject):
     #         self.dataset_states.append(state)
     #
     #     self.sigCommandLog.emit(cmd, time.time() + self.expire_time, state.measurement_id)
-    #     self.instrument.window.app.add_log(self.instrument.name, self.backend_model, "CMDLG", cmd)
 
     def command_log(self, cmd: str, param_str: str):
         """Sends a command to the worker in the worker thread"""

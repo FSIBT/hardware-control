@@ -3,7 +3,9 @@ from PyQt5.QtWidgets import QLineEdit, QLabel, QGridLayout, QComboBox
 
 from hardware_control.base import HC_Instrument
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class HC_VariableEditTool(HC_Instrument):
     """A tool which allows the user to edit app variables from the main UI."""
@@ -98,13 +100,7 @@ class HC_VariableEditTool(HC_Instrument):
 
             else:
 
-                self.pDebug("Sry, not a thing!")
-                self.window.app.add_log(
-                    self.name,
-                    "NO-HARDWARE-BACKEND",
-                    "WARNING",
-                    f"Variable '{v}' does not exist. Ignoring edit line.",
-                )
+                logger.warning(f"Variable '{v}' does not exist. Ignoring edit line.")
             row += 1
 
         # ******* DEFINE OVERALL LAYOUT
@@ -119,12 +115,12 @@ class HC_VariableEditTool(HC_Instrument):
     def edit_variable(self, var: str, value: str):
         try:
             self.window.app.variables[var] = value
-            self.pDebug(f"Setting {var} = '{value}'")
+            logger.debug(f"Setting {var} = '{value}'")
         except Exception:
-            self.pDebug(f"An exception occurred setting variable {var}")
+            logger.debug(f"An exception occurred setting variable {var}")
 
     def select_variable(self, m: str):
-        self.pDebug(f"Setting macro to {m}")
+        logger.debug(f"Setting macro to {m}")
         self.settings["variable"] = m
 
     def update_variables(self):
@@ -132,7 +128,7 @@ class HC_VariableEditTool(HC_Instrument):
         names = []
         for m in self.app.variables:
             names.append(m)
-            self.pDebug(f"Adding variable: {m}")
+            logger.debug(f"Adding variable: {m}")
         self.variable_drop.addItems(names)
 
     #

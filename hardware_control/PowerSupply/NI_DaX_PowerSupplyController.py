@@ -25,6 +25,7 @@ if os.name == "nt":
 from hardware_control.HC_Backend import HC_Backend
 from hardware_control.utility import regex_compare
 import logging
+
 logger = logging.getLogger(__name__)
 
 """This class behaves like it would read from a Powersupply"""
@@ -70,7 +71,7 @@ class NI_DaX_PowerSupplyController(HC_Backend):
         # Check import
         if not nidaxmxTest():
             self.dummy = True
-            self.pDebug(f"{self.ID}: import of nidaqmx failed, changing to dummy mode")
+            logger.error(f"{self.ID}: import of nidaqmx failed, changing to dummy mode")
 
     ###About this device:
     # there are two modules currently in use, NI 9264 and NI 9205
@@ -86,7 +87,7 @@ class NI_DaX_PowerSupplyController(HC_Backend):
                     if task.name:
                         self.online = True
             except Exception as e:
-                print(e)
+                logger.error("Connect failed.", exc_info=True)
                 return False
         else:
             self.online = True
@@ -110,7 +111,7 @@ class NI_DaX_PowerSupplyController(HC_Backend):
                 else:
                     raise Exception(self.ID + "updateSetting - Setting not found")
             except Exception as e:
-                self.pDebug(e)
+                logger.error("Failed to update setting.", exc_info=True)
         else:
             return "False"
 
@@ -136,7 +137,7 @@ class NI_DaX_PowerSupplyController(HC_Backend):
                 else:
                     raise Exception(self.ID + "unknown Command : ", cmd)
             except Exception as e:
-                self.pDebug(f"{self.ID} : {e}")
+                logger.error("Failed to execute command. ", exc_info=True)
 
     def close(self):
         if self.online and not self.dummy:
@@ -145,10 +146,9 @@ class NI_DaX_PowerSupplyController(HC_Backend):
                     if not task.is_task_done():
                         time.sleep(0.500)
                         if not ask.is_task_done():
-                            self.pDebug(self.ID + " : Not all Tasks are done!")
                             return True
             except Exception as e:
-                self.pDebug(f"{self.ID} closing exception : {e}")
+                logger.error(f"An error occured while trying to close.", exc_info=True)
         return False
 
 
