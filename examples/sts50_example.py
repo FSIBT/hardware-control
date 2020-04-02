@@ -31,24 +31,29 @@ else:
 debug = commands["--debug"]
 print_console = commands["--console"]
 
+logfile_name = "hardware_control.log"
+
 if debug:
     if print_console:
         logging.basicConfig(level=logging.DEBUG)
+        print("Logger configured:\n\tLevel: Debug\n\tOutput: Console")
     else:
-        logging.basicConfig(filename='hardware_control.log', level=logging.DEBUG)
-        print("Debug level")
+        logging.basicConfig(filename=logfile_name, level=logging.DEBUG)
+        print(f"Logger configured:\n\tLevel: Debug\n\tOutput: {logfile_name}")
 elif info:
     if print_console:
         logging.basicConfig(level=logging.INFO)
+        print("Logger configured:\n\tLevel: Info\n\tOutput: Console")
     else:
-        logging.basicConfig(filename='hardware_control.log', level=logging.INFO)
-        print("info level")
+        logging.basicConfig(filename=logfile_name, level=logging.INFO)
+        print(f"Logger configured:\n\tLevel: Info\n\tOutput: {logfile_name}")
 else:
     if print_console:
         logging.basicConfig(level=logging.WARNING)
+        print("Logger configured:\n\tLevel: Warning\n\tOutput: Console")
     else:
-        logging.basicConfig(filename='hardware_control.log', level=logging.WARNING)
-        print("Warning level")
+        logging.basicConfig(filename=logfile_name, level=logging.WARNING)
+        print(f"Logger configured:\n\tLevel: Warning\n\tOutput: {logfile_name}")
 
 from hardware_control.base import HC_App, HC_MainWindow, Dataset
 from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
@@ -85,7 +90,7 @@ logger = logging.getLogger(__name__)
 
 # logger.addHandler(handler)
 
-logger.info("Hey!")
+logger.info("STS50 Example Starting")
 
 # logger.info("Initailizing program")
 #
