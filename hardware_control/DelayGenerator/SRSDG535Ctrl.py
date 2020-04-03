@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 class SRSDG535Ctrl(HC_Backend):
-    def __init__(self, connection_addr, debug: bool = False):
+    def __init__(self, connection_addr):
 
         super().__init__()
 
@@ -23,7 +23,6 @@ class SRSDG535Ctrl(HC_Backend):
 
         self.connection_addr = connection_addr
         self.online = False
-        self.debug = debug
         self.num_vert_divisions = 8
 
         self.command_str = ""  # string used to trigger

@@ -449,7 +449,7 @@ def main():
     warnings.filterwarnings(
         action="ignore", message="unclosed", category=ResourceWarning
     )  # ToDo Not a solution
-    app = HC_App(debug=debug, dummy=dummy)
+    app = HC_App(dummy=dummy)
     app.print_close_info = True
 
     if dummy:
