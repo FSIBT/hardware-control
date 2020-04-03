@@ -12,7 +12,9 @@ from PyQt5.QtWidgets import QLineEdit, QPushButton, QLabel, QWidget, QGridLayout
 
 from hardware_control.base import HC_Instrument, HC_Comm, setButtonState
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class HC_MultiPowerSupply(HC_Instrument):
     def __init__(
@@ -39,7 +41,7 @@ class HC_MultiPowerSupply(HC_Instrument):
         if (len(channels) > backend.num_channels) or (
             max(channels) > self.backend.num_channels
         ):
-            self.log_note(
+            logger.warning(
                 "WARNING: Requested channel not available on instrument. Ignoring extra channels."
             )
 

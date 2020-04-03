@@ -19,7 +19,9 @@ from PyQt5.QtWidgets import (
 
 from hardware_control.base import HC_Instrument, HC_Comm, setButtonState
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class HC_FunctionGenerator(HC_Instrument):
     def __init__(
@@ -71,8 +73,6 @@ class HC_FunctionGenerator(HC_Instrument):
 
         # Write state to scope - synch scope with GUI
         self.send_state()
-
-        self.log_note("Initalized")
 
     def initialize_gui_instrument(self):
         return self.default_state()

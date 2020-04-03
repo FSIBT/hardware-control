@@ -21,6 +21,9 @@ from PyQt5.QtWidgets import (
     QInputDialog,
     QFileDialog,
 )
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class HC_Comm(QObject):
@@ -151,12 +154,10 @@ class HC_Comm(QObject):
     #
     #     #Cancel command if
     #     if state.iterations > state.max_iterations:
-    #         self.instrument.pDebug(f"command_log() function timed out after {state.iterations} iterations of command '{self.repeat_command}'.")
     #         return
     #
     #     #Check if ID is blacklisted if dataset already exists
     #     if ((state.dataset_name in self.window.app.data_sets) and (self.window.app.data_sets[state.dataset_name].is_blacklisted(state.measurement_id))):
-    #         self.instrument.pDebug(f"command_log() function called blacklisted measurement ID..")
     #         return
     #
     #     add_to_list = True
@@ -235,7 +236,6 @@ class HC_Comm(QObject):
     #     if set_idx == -1:
     #         #An error has occured an a dataset_state with a matching ID can not be found
     #         error_message = f"backend_return_log() was called, but a state object with a matching ID ({id}) cannot be found"
-    #         self.pDebug(error_message)
     #         self.intrument.backend_return(error_message)
     #
     #     #Check if req number of steady points is satisfied
@@ -427,14 +427,12 @@ class MeasurementRequest:
             key = retval[0:sep_idx]
             val = retval[sep_idx + 1 :]
         else:
-            # self.pDebug(f"Failed to find '=' in {retval}")
             return False  # Separator was not found, return early
 
         # Try to convert returned value to a float, add to list
         try:
             self.prev_data.append(float(val))
         except:
-            # self.pDebug(f"failed to convert {val} to float")
             return False
 
         return True
@@ -478,18 +476,18 @@ class MeasurementRequest:
 class MeasurementDirector:
     def __init__(self, app):
 
-        self.queue = []
         # List of MeasurementRequest objects to measure in this datapoint
+        self.queue = []
 
-        self.state = "Ready"  # Describes state of director and if new scan is possible. Options: Ready - can add requests or start scan, Busy - scanning, can not take new measurements or start again, Error - an error occured. Details in err_str, Failed - Last measurement failed. Details in err_str
+        # Describes state of director and if new scan is possible. Options: Ready - can add requests or start scan, Busy - scanning, can not take new measurements or start again, Error - an error occured. Details in err_str, Failed - Last measurement failed. Details in err_str
+        self.state = "Ready"
         self.err_str = ""
-        self.occ_instruments = (
-            []
-        )  # List of all instruments currently processing a MeasurementRequest
 
-        self.relaunch_list = (
-            []
-        )  # List of parameter_strings of MeasurementRequests in the queue that need to be relaunched once enough time has elapsed
+        # List of all instruments currently processing a MeasurementRequest
+        self.occ_instruments = []
+
+        # List of parameter_strings of MeasurementRequests in the queue that need to be relaunched once enough time has elapsed
+        self.relaunch_list = []
 
         self.cancel_batch = False
 
@@ -543,8 +541,6 @@ class MeasurementDirector:
 
     def backend_return_log(self, retval: str, param_str: str):
 
-        # self.app.pDebug(f"\t\t\t{self.state}\t\t{len(self.queue)}", False, True)
-
         # Interpret 'param_str' to get variables to match in MeasurementRequest
         components = param_str.split(":")  # Split the command up into tokens
         if len(components) != 4:
@@ -591,9 +587,7 @@ class MeasurementDirector:
             self.queue.pop(idx)
 
             logger.debug(
-                f"MeasurementRequest with param_str {param_str} deleted itself due to batch cancelation",
-                False,
-                True,
+                f"MeasurementRequest with param_str {param_str} deleted itself due to batch cancelation"
             )
 
             # Remove instrument from occupied_instruments list
@@ -721,8 +715,6 @@ class MeasurementDirector:
 
             if len(self.queue) == 0:
                 self.state = "Ready"
-
-            # self.app.pDebug(f"\t\t\t{self.state}\t\t{len(self.queue)}", False, True)
 
         else:
 
@@ -873,16 +865,17 @@ class Dataset(QObject):
 
         super().__init__()
 
-        self.name = name  # Name of dataset
-        self.autosave = (
-            False  # Whether or not to enable autosave (autosave done by HC_LoggerTool)
-        )
-        self.autosave_interval = 120
-        # Seconds
+        # Name of dataset
+        self.name = name
 
-        self.data = (
-            {}
-        )  # Dictionary of datapoints. Each key follows the <instrument>:<parameter> naming scheme. Every value is a list and all lists need to have the same length
+        # Whether or not to enable autosave (autosave done by HC_LoggerTool)
+        self.autosave = False
+
+        # Seconds
+        self.autosave_interval = 120
+
+        # Dictionary of datapoints. Each key follows the <instrument>:<parameter> naming scheme. Every value is a list and all lists need to have the same length
+        self.data = {}
 
         self.autosave_timer = QTimer(self)
         self.autosave_timer.timeout.connect(self.exec_autosave)
@@ -1174,21 +1167,19 @@ class HC_Instrument(QGroupBox):
 class HC_App(QApplication):
     """Subclass of QApplication that is aware of what hardware is connected to it and can log data"""
 
-    def __init__(self, debug: bool = False, dummy=False):
+    def __init__(self, dummy=False):
         # QApplication can take a list of strings, e.g. from sys.argv
         # we currently don't use this
         super().__init__([])
         self.instruments = (
             []
         )  # TODO: Verify this is actually a dict and change declaration here
-        self.log = []  # List of strings for debugging/logging purposes
         self.macros = {}  # Dict of hc-commands (used for scans + trigger buttons)
         self.variables = {}  # Dict of app variables
         self.saved_data = {}
         # Dict of data saved directly with query commmands
         self.dummy = dummy
         self.print_close_info = False
-        self.debug = debug
 
         self.data_sets = {}  # List of datasets
         untitled_set = Dataset("Untitled")
@@ -1484,9 +1475,11 @@ class HC_App(QApplication):
 
                 # Change value
                 if tokens[2].upper() == "ON" or tokens[2].upper() == "TRUE":
-                    self.debug = True
+                    # self.debug = True
+                    pass
                 else:
-                    self.debug = False
+                    # self.debug = False
+                    pass
 
             elif tokens[1] == "run":  # Run a macro
 

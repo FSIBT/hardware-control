@@ -137,8 +137,6 @@ class HC_ZMQConnectionTool(HC_Instrument):
         #
         self.setLayout(self.master_layout)
 
-        self.log_note("Initalized")
-
         # Create timer to query voltages
         self.service_timer = QTimer(self)
         self.service_timer.timeout.connect(self.service_commands)
@@ -188,10 +186,10 @@ class HC_ZMQConnectionTool(HC_Instrument):
 
         if button.text() == "Accept Incoming Commands":
             self.accept_commands = True
-            self.log_note("Enabled incomming commands")
+            logger.info("Enabled incomming commands")
         else:
             self.accept_commands = False
-            self.log_note("Disabled incomming commands")
+            logger.info("Disabled incomming commands")
 
     def service_commands(self):
         """This is the command that gets called every 'x' seconds to check
@@ -222,7 +220,7 @@ class HC_ZMQConnectionTool(HC_Instrument):
 
             self.received_label.setText(f"Last Message: {mess_str}")  # Update label
 
-            self.log_note("Processing command '{mess_str}'")
+            logger.info("Processing command '{mess_str}'")
             rval = self.window.app.process_hc_command(mess_str)
 
             if type(rval) == str:

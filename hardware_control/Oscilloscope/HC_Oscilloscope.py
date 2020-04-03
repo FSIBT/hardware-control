@@ -31,7 +31,9 @@ from PyQt5.QtWidgets import (
     QDoubleSpinBox,
 )
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class HC_Oscilloscope(HC_Instrument):
     """This is a 4-channel oscilloscope control progam.
@@ -115,8 +117,6 @@ class HC_Oscilloscope(HC_Instrument):
 
         # Write state to scope - synch scope with GUI
         self.send_state()
-
-        self.log_note("Initalized")
 
     def backend_return_listdata(self, descr: str, data1: list, data2: list):
 

@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import QLineEdit, QLabel, QFormLayout, QGridLayout, QComboB
 
 from hardware_control.base import HC_Instrument, HC_Comm
 import logging
+
 logger = logging.getLogger(__name__)
 
 #
@@ -122,7 +123,7 @@ class HC_FlowController(HC_Instrument):
         self.readout_timer.timeout.connect(self.update_readout)
         self.readout_timer.start(self.globalRefreshRate)
 
-        self.log_note("Initalized")
+        logger.debug("Initalized")
 
     def close(self):  # Note: this is a complete duplicate of the 'close()' function
         # in HC_Instrument, except it adds readout_timer.stop()
