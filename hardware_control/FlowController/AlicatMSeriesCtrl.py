@@ -6,10 +6,12 @@ from hardware_control.utility import (
     converter_IEEE754_to_ulong,
 )
 import logging
+
 logger = logging.getLogger(__name__)
 
+
 class AlicatMSeriesCtrl(HC_Backend):
-    def __init__(self, ip_addr, debug: bool = False):
+    def __init__(self, ip_addr):
 
         super().__init__()
 
@@ -18,7 +20,6 @@ class AlicatMSeriesCtrl(HC_Backend):
         self.connection_addr = ip_addr
         self.connection_type = MODBUS
         self.dummy = False
-        self.debug = debug
 
         self.error_count = 0
 
@@ -52,7 +53,10 @@ class AlicatMSeriesCtrl(HC_Backend):
                 self.error_count = 0
                 return value
         except Exception as e:
-            logger.error("An error occured in Alicat flowmeter when sending commands to the instrument.", exc_info=True)
+            logger.error(
+                "An error occured in Alicat flowmeter when sending commands to the instrument.",
+                exc_info=True,
+            )
             self.error_count += 1
 
         if self.error_count > 4:
@@ -71,7 +75,10 @@ class AlicatMSeriesCtrl(HC_Backend):
             elif cmd == "pressure?":
                 return f"pressure={vals['pressure']}"
         except Exception as e:
-            logger.error(f"An error occured in {self.ID} when sending commands to the instrument.", exc_info=True)
+            logger.error(
+                f"An error occured in {self.ID} when sending commands to the instrument.",
+                exc_info=True,
+            )
 
     def get_values(self):
         if not self.online:
@@ -89,7 +96,10 @@ class AlicatMSeriesCtrl(HC_Backend):
                 flow = (a << 16) + b
                 self.error_count = 0
             except Exception as e:
-                logger.error(f"An error occured in {self.ID} when sending commands to the instrument.", exc_info=True)
+                logger.error(
+                    f"An error occured in {self.ID} when sending commands to the instrument.",
+                    exc_info=True,
+                )
                 self.error_count += 1
             flow = converter_ulong_to_IEEE754(value)
         else:
