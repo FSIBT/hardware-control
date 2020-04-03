@@ -6,15 +6,14 @@ logger = logging.getLogger(__name__)
 
 
 class SigSDGCtrl(HC_Backend):
-    def __init__(self, connection_addr, dummy: bool = False, debug: bool = False):
+    def __init__(self, connection_addr):
 
         super().__init__()
         self.ID = "SIGLENT-SDG"
 
         self.connection_addr = connection_addr
         self.online = False
-        self.dummy = dummy
-        self.debug = debug
+        self.dummy = False
 
         self.connection_type = VISA
 
