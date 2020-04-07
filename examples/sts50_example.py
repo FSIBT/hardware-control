@@ -158,7 +158,6 @@ class STS50Demo(HC_MainWindow):
         # awg = Key33500BCtrl("Some-address-goes-here", dummy, True, connection_type, "192.168.0.18", 5025)
         awg = Key33500BCtrl(
             "TCPIP0::192.168.0.18::INSTR",  # toDo "TCPIP0::192.168.1.18::INSTR"
-            True,
             connection_type,
             "192.168.0.18",  # "192.168.1.18"
             5025,
