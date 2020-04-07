@@ -9,6 +9,8 @@ from collections import OrderedDict
 from colorama import Fore, Style
 import json
 import numpy as np
+import os
+import hashlib
 
 from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot, QObject, QTimer
 from PyQt5.QtWidgets import (
@@ -378,17 +380,13 @@ class MeasurementRequest:
         self.dataset_name = (
             dataset_name  # This is the name of the dataset it is a member of
         )
-
         self.inst_name = (
             instrument_name  # This is the name of the instrument from which to measure
         )
-
         self.param_name = parameter_name  # This is the name of the parameter to measure
-
         self.measurement_index = (
             -1
         )  # This is the index in the dataset arrays in which the measurement will be stored
-
         self.inst_command = cmd_str  # Command to send to the instrument
 
         # ********* These parameters tell the director how to verify the measurement's stability ******************
@@ -398,7 +396,6 @@ class MeasurementRequest:
             equip_dt  # change in time between points checked for steady state condition
         )
         self.tol = tol  # Tolerance  (in percent/100 ie from 0 to 1) by which points can differ and still be considered 'steady'
-        #
         self.iterations = 0  # Number of iterations, ie measurements, that have occcured
         self.max_iterations = max_iterations  # Maximum number of iterations before returns failure condition
 
@@ -406,9 +403,7 @@ class MeasurementRequest:
             []
         )  # Previous data values measured (for comparison for steady state determination)
         self.keep_as_string = False  # Instructs MeasurementDirector to keep the returned data as a string instead of a double. Disables all stability checks
-
         self.launched = False  # Tells the MeasurementDirector if this request has already been handled or if it needs to be sent to a backend
-
         self.cap_at_1e35 = True  # Tells the MeasurementDirector to count the point as corrupt if convertable to float and > 1e35
 
         self.last_launch_time = time.time()
@@ -868,18 +863,56 @@ class Dataset(QObject):
         # Name of dataset
         self.name = name
 
-        # Whether or not to enable autosave (autosave done by HC_LoggerTool)
-        self.autosave = False
+        self.autosave = False  # Whether or not to enable autosave
+        self.autosave_interval = 120  # Seconds
+        self.autosave_format = "JSON"  # Save format
+        self.autosave_filename = f"autosave_{self.name}"
+        self.autosave_next_row = 0
+        # Next row to save (prev. already saved)
 
-        # Seconds
-        self.autosave_interval = 120
+        self.asynchronous_mode = False  # Synchronous vs asynchronous logging
+        self.async_instruments = []  # list of instrument whose parameters to log
+        self.async_log_interval = 10  # Seconds
+        self.async_add_timestamp = True  # Option to add timestamp to all values
 
-        # Dictionary of datapoints. Each key follows the <instrument>:<parameter> naming scheme. Every value is a list and all lists need to have the same length
+        # Dictionary of datapoints. Each key follows the <instrument>:<parameter>
+        # naming scheme. Every value is a list and all lists need to have the
+        # same length
         self.data = {}
 
         self.autosave_timer = QTimer(self)
         self.autosave_timer.timeout.connect(self.exec_autosave)
+
+        self.async_log_timer = QTimer(self)
+        self.async_log_timer.timeout.connect(self.log_async)
+
+    def start_autosave(
+        self, interval: float = 120, format: str = "JSON", filename: str = "autosave"
+    ):
+        """ Activates the dataset's autosave feature. """
+
+        self.autosave = True
+        self.autosave_interval = interval
+        self.autosave_format = format
+        self.autosave_filename = filename
+
         self.autosave_timer.start(1e3 * self.autosave_interval)
+
+        logger.info(
+            f"Dataset {self.name} activated autosave. Interval: {self.autosave_interval} s"
+        )
+
+    def start_asynch(self, interval: float = 10, add_timestamp: bool = True):
+        """ Converts the dataset to an asynchronous logging dataset. """
+
+        self.async_log_interval = interval
+        self.async_add_timestamp = add_timestamp
+
+        self.async_log_timer.start(1e3 * self.async_log_interval)
+
+        logger.info(
+            f"Dataset {self.name} activated asynchronous mode. Interval: {self.async_log_interval} s"
+        )
 
     def len(self):
         """Returns the length of all of the values in self.data. If they aren't
@@ -899,10 +932,114 @@ class Dataset(QObject):
 
         return datalen  # Otherwise return current length (which is the next index)
 
+    def len_min(self):
+        """Returns the length of the shortest list in self.data."""
+
+        return min([len(self.data[key]) for key in self.data])
+
     def exec_autosave(self):
+        """ Called by the autosave timer. Triggers a call to self.save() """
+
+        logger.info(f"Dataset {self.name} autosaveing to file {self.autosave_filename}")
 
         if self.autosave:  # Check if autosave enabled
-            logger.warning(f"{self.name} would be autosaving - not implimented")
+            self.save(self.autosave_filename, self.autosave_format)
+
+    def save(self, filename: str, format: str):
+        """Saves the dataset to a file. format specifies the file format. The
+        file format specifier is not case sensitive.
+
+                File Formats:
+                    JSON
+                    Pickle
+                    CSV
+                    NPY
+                    TXT
+                    HDF"""
+
+        ext = os.path.splitext(filename)[-1].lower()
+
+        if format == "JSON":
+            logger.warning("JSON file format not implimented.")
+        elif format == "PICKLE":
+            logger.warning("JSON file format not implimented.")
+        elif format == "CSV":
+            logger.warning("JSON file format not implimented.")
+        elif format == "NPY":
+            logger.warning("JSON file format not implimented.")
+        elif format == "TXT":
+
+            # Add extension if not specified
+            if ext == "":
+                filename = filename + ".txt"
+
+            # Create directory
+
+            # Write header if file doesn't exist
+            if not os.path.exists(filename):
+                with open(filename, "w") as outfile:
+
+                    outfile.write(
+                        f"# {datetime.datetime.today().strftime('%Y-%m-%d')}\n# Logfile from hardware_control run\n"
+                    )
+
+                    datastructure = ""
+                    if self.async_add_timestamp:
+                        datastructure += "Time[s] "
+                    datastructure += " ".join(
+                        [e.get_header() for e in self.async_instruments]
+                    )
+
+                    myhash = hashlib.sha256()
+                    myhash.update(datastructure.encode("utf-8"))
+                    version = myhash.hexdigest()
+
+                    outfile.write(f"# Version: {version}\n")
+                    outfile.write(f"{datastructure}\n")
+
+            # Write file data
+            with open(filename, "a") as outfile:
+
+                length = self.len_min()
+                while self.autosave_next_row < length:
+
+                    # Write line
+                    line = " ".join(
+                        [
+                            str(self.data[key][self.autosave_next_row])
+                            for key in self.data
+                        ]
+                    )
+                    outfile.write(line + "\n")
+
+                    # Move pointer to next line
+                    self.autosave_next_row += 1
+
+        elif format == "HDF":
+            logger.warning("JSON file format not implimented.")
+        else:
+            logger.warning("unrecognized file format '{format}'.")
+
+    def log_async(self):
+        """ Periodically called by timer, logs values from included instruments
+        to the datasets. Logs timestamp if requested. """
+
+        logger.info(f"Dataset {self.name} logging asynchronous data")
+
+        if self.async_add_timestamp:
+            try:
+                self.data["time:time"].append(str(time.time()))
+            except:
+                self.data["time:time"] = [str(time.time())]
+
+        for ai in self.async_instruments:
+            vkeys = ai.get_value_keys()
+
+            for vk in vkeys:
+                try:
+                    self.data[f"{ai.name}:{vk}"].append(ai.values[vk])
+                except:
+                    self.data[f"{ai.name}:{vk}"] = [ai.values[vk]]
 
 
 class HC_Instrument(QGroupBox):
@@ -930,8 +1067,6 @@ class HC_Instrument(QGroupBox):
         )
 
         # ConnectionTool and ScanTool widgets
-
-        # self.inbox = {}  # Receives strings from the HC_comm object
 
         self.window = window  # parent needs to have a field called 'app' which
         # is an instance of 'HC_App'
@@ -1063,16 +1198,16 @@ class HC_Instrument(QGroupBox):
         if self.comm is not None:
             self.comm.close()
 
-    def read_message(self, prefix: str):
-        """Looks for an entry in self.values with the key 'prefix'. If found, the
-        key's value is returned, else it returns None."""
-
-        if prefix in self.values:  # If prefix exists as key, return vale
-            rval = self.values[prefix]
-        else:  # Else return None
-            rval = None
-
-        return rval
+    # def read_message(self, prefix: str):
+    #     """Looks for an entry in self.values with the key 'prefix'. If found, the
+    #     key's value is returned, else it returns None."""
+    #
+    #     if prefix in self.values:  # If prefix exists as key, return vale
+    #         rval = self.values[prefix]
+    #     else:  # Else return None
+    #         rval = None
+    #
+    #     return rval
 
     def backend_return(self, retval: str):
         """Is called by self.comm when the backend returns a value. The return string
@@ -1163,6 +1298,40 @@ class HC_Instrument(QGroupBox):
         # TODO: Record 'id' for each measurement
         # TODO: Erase measurements with corresponding ID if one fails
 
+    def get_header():
+        """ Returns a header to describe what is returned by get_values(). It
+        must be overwritten by the instrument if the instrument is to be
+        compatible with asynchronous logging datasets.
+
+            Example 1:
+                return ' '.join([ch.get_header() for ch in self.channels])
+
+            Example 2:
+                return 'HV-Voltage[V] HV-Current[A] Pressure[mTorr]' """
+        return None
+
+    def get_values():
+        """Returns the values tracked by the instrument. This function is called
+        by datasets during asynchronous logging. If an instrument is to work with
+        asynchronous logging, it must overwrite this function to return the
+        parameters it wants to track. These parameters must match what is listed
+        in get_header().
+
+            Example:
+                return self.values[voltage], self.values[current], self.values[pressure]"""
+        return None
+
+    def get_value_keys():
+        """ Returns the keys of the values tracked by the instrument. This
+        function is called by datasets during asynchronous logging. If an
+        instrument is to work with asynchronous logging, it must overwrite this
+        function to return the parameters it wants to track. These parameters
+        must match what is listed in get_header().
+
+        Example:
+            return ['voltage', 'current', 'pressure'] """
+        return None
+
 
 class HC_App(QApplication):
     """Subclass of QApplication that is aware of what hardware is connected to it and can log data"""
@@ -1171,9 +1340,7 @@ class HC_App(QApplication):
         # QApplication can take a list of strings, e.g. from sys.argv
         # we currently don't use this
         super().__init__([])
-        self.instruments = (
-            []
-        )  # TODO: Verify this is actually a dict and change declaration here
+        self.instruments = {}
         self.macros = {}  # Dict of hc-commands (used for scans + trigger buttons)
         self.variables = {}  # Dict of app variables
         self.saved_data = {}
@@ -1181,7 +1348,7 @@ class HC_App(QApplication):
         self.dummy = dummy
         self.print_close_info = False
 
-        self.data_sets = {}  # List of datasets
+        self.data_sets = {}  # Dict of datasets
         untitled_set = Dataset("Untitled")
         self.data_sets["Untitled"] = untitled_set
 
