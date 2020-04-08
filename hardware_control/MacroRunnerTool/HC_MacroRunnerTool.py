@@ -30,7 +30,6 @@ class HC_MacroRunnerTool(HC_Instrument):
     ):
 
         super().__init__(window, name)
-        self.debug = debug
         self.buttons = buttons
         self.indicators = indicators
 
