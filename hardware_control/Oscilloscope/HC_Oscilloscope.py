@@ -81,6 +81,7 @@ class HC_Oscilloscope(HC_Instrument):
         #     self.save_on_close = False
         #     # Can't save without filename
         self.settings = self.default_state()
+        self.values = self.default_state()
         # else:
         #     self.load_state(initialize_with)
         #     self.filename = initialize_with
@@ -123,6 +124,12 @@ class HC_Oscilloscope(HC_Instrument):
         if regex_compare("CH.+_WVFM", descr):
             c = returnChannelNumber(descr)
             self.disp.update_display(int(c), data1, data2)
+
+    def get_header(self):
+        return "CH1 Voltage Range[V]"
+
+    def get_value_keys(self):
+        return ["CH1_volts_div"]
 
     def default_state(self):
         """Create a default settings object if can't get settings from a file"""
