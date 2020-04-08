@@ -24,7 +24,6 @@ class HC_MacroRunnerTool(HC_Instrument):
     def __init__(
         self,
         window,
-        debug: bool = False,
         name: str = "Macro Runner",
         buttons={"Dynamic": "Run Macro"},
         indicators={},
