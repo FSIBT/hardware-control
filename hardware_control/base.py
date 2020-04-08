@@ -1035,6 +1035,9 @@ class Dataset(QObject):
         for ai in self.async_instruments:
             vkeys = ai.get_value_keys()
 
+            if vkeys is None:
+                continue
+
             for vk in vkeys:
                 try:
                     self.data[f"{ai.name}:{vk}"].append(ai.values[vk])
@@ -1298,7 +1301,7 @@ class HC_Instrument(QGroupBox):
         # TODO: Record 'id' for each measurement
         # TODO: Erase measurements with corresponding ID if one fails
 
-    def get_header():
+    def get_header(self):
         """ Returns a header to describe what is returned by get_values(). It
         must be overwritten by the instrument if the instrument is to be
         compatible with asynchronous logging datasets.
@@ -1308,9 +1311,9 @@ class HC_Instrument(QGroupBox):
 
             Example 2:
                 return 'HV-Voltage[V] HV-Current[A] Pressure[mTorr]' """
-        return None
+        return ""
 
-    def get_values():
+        # def get_values():
         """Returns the values tracked by the instrument. This function is called
         by datasets during asynchronous logging. If an instrument is to work with
         asynchronous logging, it must overwrite this function to return the
@@ -1319,9 +1322,9 @@ class HC_Instrument(QGroupBox):
 
             Example:
                 return self.values[voltage], self.values[current], self.values[pressure]"""
-        return None
+        # return None
 
-    def get_value_keys():
+    def get_value_keys(self):
         """ Returns the keys of the values tracked by the instrument. This
         function is called by datasets during asynchronous logging. If an
         instrument is to work with asynchronous logging, it must overwrite this
@@ -1330,7 +1333,7 @@ class HC_Instrument(QGroupBox):
 
         Example:
             return ['voltage', 'current', 'pressure'] """
-        return None
+        return []
 
 
 class HC_App(QApplication):
