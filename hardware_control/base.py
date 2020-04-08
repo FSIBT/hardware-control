@@ -107,28 +107,28 @@ class HC_Comm(QObject):
 
     def update_setting(self, setting: str, value: str):
         """Transfers the setting and value information to the worker thread"""
-        logger.info(
+        logger.debug(
             f"Instrument: {self.instrument.name} called 'update_setting()' for setting '{setting}' and sent message '{value}'."
         )
         self.sigUpdateSettings.emit(setting, value, time.time() + self.expire_time)
 
     def command(self, cmd: str):
         """Sends a command to the worker in the worker thread"""
-        logger.info(
+        logger.debug(
             f"Instrument: {self.instrument.name} called 'command()' and sent command: '{cmd}'."
         )
         self.sigCommand.emit(cmd, time.time() + self.expire_time)
 
     def write(self, msg: str):
         """Sends a command to be sent to the instrument by the worker in the worker thead"""
-        logger.info(
+        logger.debug(
             f"Instrument: {self.instrument.name} called 'write()' and sent message: '{msg}'."
         )
         self.sigWrite.emit(msg, time.time() + self.expire_time)
 
     def query(self, msg: str):
         """Sends a query statement to be sent to the instrument by the worker in the worker thead"""
-        logger.info(
+        logger.debug(
             f"Instrument: {self.instrument.name} called 'query()' and sent message: '{msg}'."
         )
         self.sigQuery.emit(msg, time.time() + self.expire_time)
@@ -140,7 +140,7 @@ class HC_Comm(QObject):
     def command_listdata(self, cmd: str):
         """Sends a command to the worker in the worker thread just like command(),
         but returns two lists instead of a string."""
-        logger.info(
+        logger.debug(
             f"Instrument: {self.instrument.name} called 'command_listdata()' and sent command: '{cmd}'."
         )
         self.sigCommandList.emit(cmd, time.time() + self.list_expire_time)
@@ -179,7 +179,7 @@ class HC_Comm(QObject):
 
         # print(f"\n\t\tCOMMAND_LOG::HC_COMM\t{param_str}\n")
 
-        logger.info(
+        logger.debug(
             f"Instrument: {self.instrument.name} called 'command()' and sent command: '{cmd}'."
         )
         self.sigCommandLog.emit(cmd, time.time() + self.expire_time, param_str)
@@ -191,7 +191,7 @@ class HC_Comm(QObject):
         , if overwritten, may process the return string immediately for example by
         updating the UI."""
 
-        logger.info(
+        logger.debug(
             f"Instrument: {self.instrument.name} received return from backend '{self.backend_model}'. Return message: {retval}"
         )
         self.instrument.backend_return(retval)
@@ -219,7 +219,7 @@ class HC_Comm(QObject):
         # print(f"\n\t\t\t\tBACKEND_RETURN_LOG::HC_COMM\t{param_str}\n")
 
         self.instrument.window.app.director.backend_return_log(retval, param_str)
-        logger.info(
+        logger.debug(
             f"Instrument: {self.instrument.name} received return from backend '{self.backend_model}'. Return message: {retval}"
         )
         self.instrument.backend_return(retval)
@@ -1044,6 +1044,10 @@ class Dataset(QObject):
                 except:
                     self.data[f"{ai.name}:{vk}"] = [ai.values[vk]]
 
+    def add_instrument(self, instr):
+
+        self.async_istruments.append(instr)
+
 
 class HC_Instrument(QGroupBox):
     def __init__(self, window, name: str):
@@ -1432,7 +1436,7 @@ class HC_App(QApplication):
     def close(self):
 
         for instr in self.instruments:
-            logger.info(f"HC_App called 'close()' for instrument: '{instr.name}'.")
+            # logger.info(f"HC_App called 'close()' for instrument: '{instr.name}'.")
             instr.close()
 
     def add_macro(self, name: str, commands: list):
