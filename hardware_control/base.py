@@ -1198,16 +1198,16 @@ class HC_Instrument(QGroupBox):
         if self.comm is not None:
             self.comm.close()
 
-    # def read_message(self, prefix: str):
-    #     """Looks for an entry in self.values with the key 'prefix'. If found, the
-    #     key's value is returned, else it returns None."""
-    #
-    #     if prefix in self.values:  # If prefix exists as key, return vale
-    #         rval = self.values[prefix]
-    #     else:  # Else return None
-    #         rval = None
-    #
-    #     return rval
+    def read_message(self, prefix: str):
+        """Looks for an entry in self.values with the key 'prefix'. If found, the
+        key's value is returned, else it returns None."""
+
+        if prefix in self.values:  # If prefix exists as key, return vale
+            rval = self.values[prefix]
+        else:  # Else return None
+            rval = None
+
+        return rval
 
     def backend_return(self, retval: str):
         """Is called by self.comm when the backend returns a value. The return string
