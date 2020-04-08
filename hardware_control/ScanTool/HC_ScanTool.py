@@ -39,18 +39,18 @@ class HC_ScanTool(HC_Instrument):
         self.ignore = True
         self.include_variables = include_variables
 
-        # Initialize state to correct values
-        if initialize_with == "INSTRUMENT":
-            self.save_on_close = False
-            # Can't save without filename
-            self.settings = self.initialize_gui_instrument()
-        elif initialize_with == "DEFAULT":
-            self.save_on_close = False
-            # Can't save without filename
-            self.settings = self.default_state()
-        else:
-            self.load_state(initialize_with)
-            self.filename = initialize_with
+        # # Initialize state to correct values
+        # if initialize_with == "INSTRUMENT":
+        #     self.save_on_close = False
+        #     # Can't save without filename
+        #     self.settings = self.initialize_gui_instrument()
+        # elif initialize_with == "DEFAULT":
+        #     self.save_on_close = False
+        #     # Can't save without filename
+        #     self.settings = self.default_state()
+        # else:
+        #     self.load_state(initialize_with)
+        #     self.filename = initialize_with
 
         # *************************Create GUI************************
 

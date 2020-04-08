@@ -34,14 +34,14 @@ class HC_FlowController(HC_Instrument):
         self.comm = HC_Comm(scpi_instr, self, 2000)
         self.filename = ""
 
-        # Initialize state to correct values
-        if initialize_with == "DEFAULT":
-            self.save_on_close = False
-            # Can't save without filename
-            self.settings = self.default_state()
-        else:
-            self.load_state(initialize_with)
-            self.filename = initialize_with
+        # # Initialize state to correct values
+        # if initialize_with == "DEFAULT":
+        #     self.save_on_close = False
+        #     # Can't save without filename
+        #     self.settings = self.default_state()
+        # else:
+        #     self.load_state(initialize_with)
+        #     self.filename = initialize_with
 
         # *************************Create GUI************************
 

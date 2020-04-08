@@ -76,14 +76,14 @@ class HC_Oscilloscope(HC_Instrument):
         self.comm = HC_Comm(scpi_instr, self)
         self.filename = ""
 
-        # Initialize settings to correct values
-        if initialize_with == "DEFAULT":
-            self.save_on_close = False
-            # Can't save without filename
-            self.settings = self.default_state()
-        else:
-            self.load_state(initialize_with)
-            self.filename = initialize_with
+        # # Initialize settings to correct values
+        # if initialize_with == "DEFAULT":
+        #     self.save_on_close = False
+        #     # Can't save without filename
+        #     self.settings = self.default_state()
+        # else:
+        #     self.load_state(initialize_with)
+        #     self.filename = initialize_with
 
         # Create GUI
         self.disp = OscilloscopeDisplayWidget(self, True)

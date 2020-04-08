@@ -7,6 +7,7 @@ from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QGroupBox, QLabel, QGridLayout
 import logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -47,18 +48,18 @@ class HC_StatusTool(QGroupBox):
             pkg_resources.resource_filename("hardware_control", "graphics/ind_blue.png")
         )
 
-        # Initialize state to correct values
-        if initialize_with == "INSTRUMENT":
-            self.save_on_close = False
-            # Can't save without filename
-            self.settings = self.initialize_gui_instrument()
-        elif initialize_with == "DEFAULT":
-            self.save_on_close = False
-            # Can't save without filename
-            self.settings = self.default_state()
-        else:
-            self.load_state(initialize_with)
-            self.filename = initialize_with
+        # # Initialize state to correct values
+        # if initialize_with == "INSTRUMENT":
+        #     self.save_on_close = False
+        #     # Can't save without filename
+        #     self.settings = self.initialize_gui_instrument()
+        # elif initialize_with == "DEFAULT":
+        #     self.save_on_close = False
+        #     # Can't save without filename
+        #     self.settings = self.default_state()
+        # else:
+        #     self.load_state(initialize_with)
+        #     self.filename = initialize_with
 
         # *************************Create GUI************************
 
@@ -151,7 +152,9 @@ class HC_StatusTool(QGroupBox):
         try:
             with open(filename) as file:
                 self.settings = json.load(file)
-                logger.info(f"State for {self.comm.instr.ID} read from file '{filename}'")
+                logger.info(
+                    f"State for {self.comm.instr.ID} read from file '{filename}'"
+                )
         except:
             logger.info(f"ERROR: Failed to read file '{filename}'. Using defualt case.")
             self.settings = self.default_state()
@@ -165,9 +168,13 @@ class HC_StatusTool(QGroupBox):
         try:
             with open(filename, "w") as file:
                 json.dump(self.settings, file)
-                logger.info(f"State for {self.comm.instr.ID} saved to file '{filename}'")
+                logger.info(
+                    f"State for {self.comm.instr.ID} saved to file '{filename}'"
+                )
         except Exception as e:
-            logger.error(f"Failed to write file '{filename}'. State not saved.", exc_info=True)
+            logger.error(
+                f"Failed to write file '{filename}'. State not saved.", exc_info=True
+            )
 
     #
     # Close connection

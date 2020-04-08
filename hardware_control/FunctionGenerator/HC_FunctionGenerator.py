@@ -43,18 +43,18 @@ class HC_FunctionGenerator(HC_Instrument):
         self.comm = HC_Comm(scpi_instr, self)
         self.filename = ""
 
-        # Initialize settings to correct values
-        if initialize_with == "INSTRUMENT":
-            self.save_on_close = False
-            # Can't save without filename
-            self.settings = self.initialize_gui_instrument()
-        elif initialize_with == "DEFAULT":
-            self.save_on_close = False
-            # Can't save without filename
-            self.settings = self.default_state()
-        else:
-            self.load_state(initialize_with)
-            self.filename = initialize_with
+        # # Initialize settings to correct values
+        # if initialize_with == "INSTRUMENT":
+        #     self.save_on_close = False
+        #     # Can't save without filename
+        #     self.settings = self.initialize_gui_instrument()
+        # elif initialize_with == "DEFAULT":
+        #     self.save_on_close = False
+        #     # Can't save without filename
+        #     self.settings = self.default_state()
+        # else:
+        #     self.load_state(initialize_with)
+        #     self.filename = initialize_with
 
         ch1 = FunctionGeneratorChannelWidget(1, self)
 

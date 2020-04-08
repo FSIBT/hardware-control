@@ -24,6 +24,7 @@ from PyQt5.QtWidgets import (
     QComboBox,
 )
 import logging
+
 logger = logging.getLogger(__name__)
 from hardware_control.base import HC_Instrument
 
@@ -83,18 +84,18 @@ class HC_DAQ(HC_Instrument):
         self.comm.moveToThread(self.comm_thread)
         self.comm_thread.start()
 
-        # Initialize settings to correct values
-        if initialize_with == "INSTRUMENT":
-            self.save_on_close = False
-            # Can't save without filename
-            self.settings = self.initialize_gui_instrument()
-        elif initialize_with == "DEFAULT":
-            self.save_on_close = False
-            # Can't save without filename
-            self.settings = self.default_state()
-        else:
-            self.load_state(initialize_with)
-            self.filename = initialize_with
+        # # Initialize settings to correct values
+        # if initialize_with == "INSTRUMENT":
+        #     self.save_on_close = False
+        #     # Can't save without filename
+        #     self.settings = self.initialize_gui_instrument()
+        # elif initialize_with == "DEFAULT":
+        #     self.save_on_close = False
+        #     # Can't save without filename
+        #     self.settings = self.default_state()
+        # else:
+        #     self.load_state(initialize_with)
+        #     self.filename = initialize_with
 
         # Create GUI
         #
