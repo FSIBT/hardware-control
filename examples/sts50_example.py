@@ -239,7 +239,6 @@ class STS50Demo(HC_MainWindow):
 
         self.run_tool = HC_MacroRunnerTool(
             self,
-            debug,
             "Macro Runner",
             {"Dynamic": "Run Macro", "Trigger": "Trigger Beam"},
             {},
