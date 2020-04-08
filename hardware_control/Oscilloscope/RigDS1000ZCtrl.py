@@ -202,6 +202,12 @@ class RigDS1000ZCtrl(HC_Backend):
                 exc_info=True,
             )
 
+    def get_header(self):
+        return "CH1 Voltage Range[V]"
+
+    def get_value_keys(self):
+        return ["CH1_volts_div"]
+
     def command(self, cmd: str):
 
         ret_str = ""
