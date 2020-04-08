@@ -12,3 +12,4 @@ python/.eggs/
 *.json
 *.log
 *.mcro
+*.txt
