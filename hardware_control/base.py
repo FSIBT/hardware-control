@@ -1340,7 +1340,7 @@ class HC_App(QApplication):
         # QApplication can take a list of strings, e.g. from sys.argv
         # we currently don't use this
         super().__init__([])
-        self.instruments = {}
+        self.instruments = []
         self.macros = {}  # Dict of hc-commands (used for scans + trigger buttons)
         self.variables = {}  # Dict of app variables
         self.saved_data = {}
