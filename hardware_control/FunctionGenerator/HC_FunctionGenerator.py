@@ -51,7 +51,7 @@ class HC_FunctionGenerator(HC_Instrument):
         # elif initialize_with == "DEFAULT":
         #     self.save_on_close = False
         #     # Can't save without filename
-        #     self.settings = self.default_state()
+        self.settings = self.default_state()
         # else:
         #     self.load_state(initialize_with)
         #     self.filename = initialize_with
