@@ -125,6 +125,9 @@ class HC_FlowController(HC_Instrument):
 
         logger.debug("Initalized")
 
+        self.values["rate"] = "-"
+        self.values["pressure"] = "-"
+
     def close(self):  # Note: this is a complete duplicate of the 'close()' function
         # in HC_Instrument, except it adds readout_timer.stop()
 
@@ -144,9 +147,20 @@ class HC_FlowController(HC_Instrument):
         flow_meas = self.read_message(f"rate=")
         press_meas = self.read_message(f"pressure=")
 
+        # Update self.values
+        self.values["rate"] = flow_meas
+        self.values["pressure"] = press_meas
+
         # Update labels
         self.pressure_label_readout.setText(press_meas)
         self.flow_label_readout.setText(flow_meas)
+
+    def get_header(self):
+        # Todo: what are the units?
+        return "Rate[?] Pressure[?]"
+
+    def get_value_keys(self):
+        return [self.values["rate"], self.values["pressure"]]
 
     #
     # Create a default state object if can't get state from a file
