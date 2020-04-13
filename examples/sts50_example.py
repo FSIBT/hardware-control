@@ -171,12 +171,11 @@ class STS50Demo(HC_MainWindow):
         self.psu_ctrl = HC_MultiPowerSupply(
             self.psu, self, [1], "TDK Lambda (RF Vin)", "DEFAULT"
         )
-        self.psu_single_channel = PowerSupplyChannel(1, self.psu_ctrl)
 
         # Put instrument(s) in tab
         self.tab2_layout = QGridLayout()
         self.tab2_layout.addWidget(self.awg_ctrl, 0, 0)
-        self.tab2_layout.addWidget(self.psu_single_channel, 0, 1)
+        self.tab2_layout.addWidget(self.psu_ctrl, 0, 1)
         self.tab2.setLayout(self.tab2_layout)
 
         #####################################################################
