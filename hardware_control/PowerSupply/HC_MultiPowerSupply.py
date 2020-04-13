@@ -50,6 +50,10 @@ class HC_MultiPowerSupply(HC_Instrument):
         for c in channels:
             if (c <= self.backend.num_channels) and (not c in self.channels):
                 self.channels.append(c)
+                self.values[f"CH{c}_V_out"] = "-"
+                self.values[f"CH{c}_I_out"] = "-"
+                self.values[f"CH{c}_V_set"] = "-"
+                self.values[f"CH{c}_I_set"] = "-"
 
         # Initialize settings to correct values
         # if initialize_with == "INSTRUMENT":
@@ -111,8 +115,30 @@ class HC_MultiPowerSupply(HC_Instrument):
             Vset = self.read_message(f"CH{c}_V_set")
             Iset = self.read_message(f"CH{c}_I_set")
 
+            self.values[f"CH{c}_V_out"] = Vout
+            self.values[f"CH{c}_I_out"] = Iout
+            self.values[f"CH{c}_V_set"] = Vset
+            self.values[f"CH{c}_I_set"] = Iset
+
             # Send newest data to GUI
             self.channel_widgets[idx].update_readout(Vout, Iout, Vset, Iset)
+
+    def get_header(self):
+
+        retval = ""
+        for c in self.channels:
+            retval = (
+                retval + f"CH{c}_V_out[V] CH{c}_I_out[A] CH{c}_V_set[V] CH{c}_I_set[A] "
+            )
+
+    def get_value_keys(self):
+
+        retval = []
+        for c in self.channels:
+            retval.append(f"CH{c}_V_out")
+            retval.append(f"CH{c}_I_out")
+            retval.append(f"CH{c}_V_set")
+            retval.append(f"CH{c}_I_set")
 
     #
     # Create a default state object if can't get state from a file
