@@ -120,6 +120,10 @@ class HC_MultiPowerSupply(HC_Instrument):
             self.values[f"CH{c}_V_set"] = Vset
             self.values[f"CH{c}_I_set"] = Iset
 
+            logger.debug(
+                f"'{self.name}'[{c}] received values: {Vout}, {Iout}, {Vset}, {Iset}"
+            )
+
             # Send newest data to GUI
             self.channel_widgets[idx].update_readout(Vout, Iout, Vset, Iset)
 
