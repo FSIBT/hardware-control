@@ -1435,9 +1435,14 @@ class HC_App(QApplication):
 
     def close(self):
 
+        # Loop through instruments, close each one...
         for instr in self.instruments:
-            # logger.info(f"HC_App called 'close()' for instrument: '{instr.name}'.")
             instr.close()
+
+        # Loop through datasets, save all set to autosave
+        for ds_key in self.data_sets:
+            if self.data_sets[ds_key].autosave:
+                self.data_sets[ds_key].exec_autosave()
 
     def add_macro(self, name: str, commands: list):
         """Adds a macro to the app's macro list. Overwrites if macro already exists"""
