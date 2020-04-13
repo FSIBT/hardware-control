@@ -1,4 +1,5 @@
 import socket
+import random
 from hardware_control.HC_Backend import HC_Backend, SOCKET, VISA
 import logging
 
@@ -149,7 +150,9 @@ class CAEN14xxETCtrl(HC_Backend):
 
         try:
             if self.dummy:
-                return cmd
+                num = random.randint(0, 10)
+                return f"{cmd.strip('?')}={num}"
+
             else:
 
                 # Note: We ignore channel number because there is only
@@ -176,6 +179,7 @@ class CAEN14xxETCtrl(HC_Backend):
 
                     return f"{cmd}={rval}"
 
+                # Todo: should this regex_compare have a '?' at the end?
                 elif regex_compare("CH._I_set", cmd):  # Get CHx I setpoint
                     cmd = cmd[:-1]
                     c = cmd[2]
@@ -187,6 +191,7 @@ class CAEN14xxETCtrl(HC_Backend):
 
                     return f"{cmd}={rval}"
 
+                # Todo: should this regex_compare have a '?' at the end?
                 elif regex_compare("CH._V_set", cmd):  # Get CHx V setpoint
                     cmd = cmd[:-1]
                     c = cmd[2]
