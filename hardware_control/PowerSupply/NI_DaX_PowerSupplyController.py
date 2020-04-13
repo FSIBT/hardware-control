@@ -116,28 +116,34 @@ class NI_DaX_PowerSupplyController(HC_Backend):
             return "False"
 
     def command(self, cmd: str):
-        if self.dummy or not self.online:
-            return cmd
-        else:
-            try:
-                if "CH1_V_out?" == cmd:
-                    with nidaqmx.Task() as task:
-                        task.ai_channels.add_ai_voltage_chan(self.readVoltageChannel)
-                        val = str(task.read())
-                    return cmd[:-1] + "=" + str(val[0])
-                if "CH1_I_out?" == cmd:
-                    with nidaqmx.Task() as task:
-                        task.ai_channels.add_ai_voltage_chan(self.readCurrentChannel)
-                        val = str(task.read())
-                    return cmd[:-1] + "=" + str(val[0])
-                elif "CH1_V_set?" == cmd:
-                    return cmd[:-1] + "=" + str(self.lastVset)
-                elif "CH1_I_set?" == cmd:
-                    return cmd[:-1] + "=" + "0"
-                else:
-                    raise Exception(self.ID + "unknown Command : ", cmd)
-            except Exception as e:
-                logger.error("Failed to execute command. ", exc_info=True)
+
+        if not self.online:
+            return "Offline"
+
+        try:
+
+            if self.dummy:
+                num = random.randint(0, 10)
+                return f"{cmd.strip('?')}={num}"
+
+            if "CH1_V_out?" == cmd:
+                with nidaqmx.Task() as task:
+                    task.ai_channels.add_ai_voltage_chan(self.readVoltageChannel)
+                    val = str(task.read())
+                return cmd[:-1] + "=" + str(val[0])
+            elif "CH1_I_out?" == cmd:
+                with nidaqmx.Task() as task:
+                    task.ai_channels.add_ai_voltage_chan(self.readCurrentChannel)
+                    val = str(task.read())
+                return cmd[:-1] + "=" + str(val[0])
+            elif "CH1_V_set?" == cmd:
+                return cmd[:-1] + "=" + str(self.lastVset)
+            elif "CH1_I_set?" == cmd:
+                return cmd[:-1] + "=" + "0"
+            else:
+                raise Exception(self.ID + "unknown Command : ", cmd)
+        except Exception as e:
+            logger.error("Failed to execute command. ", exc_info=True)
 
     def close(self):
         if self.online and not self.dummy:
