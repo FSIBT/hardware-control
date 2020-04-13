@@ -1046,7 +1046,7 @@ class Dataset(QObject):
 
     def add_instrument(self, instr):
 
-        self.async_istruments.append(instr)
+        self.async_instruments.append(instr)
 
 
 class HC_Instrument(QGroupBox):
