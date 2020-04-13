@@ -247,7 +247,7 @@ class STS50Demo(HC_MainWindow):
         # Create Datasets
         self.app.data_sets["Autolog"] = Dataset("Autolog")
         self.app.data_sets["Autolog"].start_asynch(3)
-        self.app.data_sets["Autolog"].start_autosave(12, "TXT", "sts50_autolog.txt")
+        self.app.data_sets["Autolog"].start_autosave(120, "TXT", "sts50_autolog.txt")
         self.app.data_sets["Autolog"].add_instrument(self.PS_NIDaQ)
         self.app.data_sets["Autolog"].add_instrument(self.psu_ctrl)
 
