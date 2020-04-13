@@ -150,7 +150,7 @@ class CAEN14xxETCtrl(HC_Backend):
 
         try:
             if self.dummy:
-                num = random.randint(0, 10)
+                num = random.random() * 10
                 return f"{cmd.strip('?')}={num}"
 
             else:

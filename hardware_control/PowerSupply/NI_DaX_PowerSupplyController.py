@@ -11,6 +11,7 @@ partially tested. Some statements might be unnecessary.
 NI-DaQ's will not work on Unix based OS.
 """
 
+import random
 import time
 from colorama import Fore, Style
 import os
@@ -123,7 +124,7 @@ class NI_DaX_PowerSupplyController(HC_Backend):
         try:
 
             if self.dummy:
-                num = random.randint(0, 10)
+                num = random.random() * 10
                 return f"{cmd.strip('?')}={num}"
 
             if "CH1_V_out?" == cmd:
