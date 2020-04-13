@@ -135,6 +135,8 @@ class HC_MultiPowerSupply(HC_Instrument):
                 retval + f"CH{c}_V_out[V] CH{c}_I_out[A] CH{c}_V_set[V] CH{c}_I_set[A] "
             )
 
+        return retval
+
     def get_value_keys(self):
 
         retval = []
@@ -143,6 +145,8 @@ class HC_MultiPowerSupply(HC_Instrument):
             retval.append(f"CH{c}_I_out")
             retval.append(f"CH{c}_V_set")
             retval.append(f"CH{c}_I_set")
+
+        return retval
 
     #
     # Create a default state object if can't get state from a file
