@@ -93,7 +93,6 @@ class STS50Demo(QMainWindow):
             "192.168.1.18",
             5025,
         )  # "USB0::0x0957::0x2907::MY52500624::INSTR"
-        awg.debug = debug
         self.awg_ctrl = HC_FunctionGenerator(
             awg, self, "RF Generator", "DEFAULT", True, 1
         )
@@ -120,11 +119,9 @@ class STS50Demo(QMainWindow):
 
         # Todo: linux-gpib is a dependency on some systems
         self.trig1 = SRSDG535Ctrl("GPIB0::10::INSTR", dummy, True)
-        self.trig1.debug = debug
         self.trig1_ctrl = HC_DelayGenerator(self.trig1, self, "Trigger 1", "DEFAULT")
 
         self.trig2 = SRSDG535Ctrl("GPIB0::15::INSTR", dummy, True)
-        self.trig2.debug = debug
         self.trig2_ctrl = HC_DelayGenerator(self.trig2, self, "Trigger 2", "DEFAULT")
         try:
             self.zmqtool = HC_ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
@@ -221,8 +218,7 @@ class STS50Demo(QMainWindow):
 
 
 def main():
-    app = HC_App(debug=debug, dummy=dummy)
-    app.print_debug = debug
+    app = HC_App(dummy=dummy)
     ex = STS50Demo(app, connection_type)
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())

@@ -38,7 +38,6 @@ class NI_DaX_PowerSupplyController(HC_Backend):
         setVoltageChannel: str = "cDaQ1Mod1/ao10",
         readVoltageChannel: str = "cDaQ1Mod2/ai20",
         readCurrentChannel: str = "cDaQ1Mod2/ai20",
-        debug: bool = False,
     ):
 
         super().__init__()
@@ -49,7 +48,6 @@ class NI_DaX_PowerSupplyController(HC_Backend):
         self.connection_addr = None
         self.online = False
         self.dummy = False
-        self.debug = debug
         #
         self.setVoltageChannel = setVoltageChannel
         self.readVoltageChannel = readVoltageChannel

@@ -56,7 +56,7 @@ class PSUDemo(QMainWindow):
 
 
 def main():
-    app = HC_App(debug=debug, dummy=dummy)
+    app = HC_App(dummy=dummy)
     ex = PSUDemo(app)
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())

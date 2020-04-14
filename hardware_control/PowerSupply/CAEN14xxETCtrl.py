@@ -10,7 +10,6 @@ class CAEN14xxETCtrl(HC_Backend):
     def __init__(
         self,
         connection_addr,
-        debug: bool = False,
         connection_type: str = SOCKET,
         ip_addr: str = "",
         port_no=5025,
@@ -23,7 +22,6 @@ class CAEN14xxETCtrl(HC_Backend):
         self.connection_addr = connection_addr
         self.online = False
         self.dummy = False
-        self.debug = debug
 
         self.connection_type = connection_type
         self.port_no = port_no
@@ -58,11 +56,9 @@ class CAEN14xxETCtrl(HC_Backend):
             try:  # Check if connected by asking for instrument ID
                 self.device.query("$BD:00,CMD:MON,PAR:BDNAME")
             except visa.errors.VisaIOError as e:  # Not connected - reconnect
-                if self.debug:
-                    self.error(
-                        "Lost connection to device. Will try to reconnect",
-                        exc_info=True,
-                    )
+                logger.warning(
+                    "Lost connection to device. Will try to reconnect", exc_info=True,
+                )
             else:  # Connection stable - return True
                 return True
 

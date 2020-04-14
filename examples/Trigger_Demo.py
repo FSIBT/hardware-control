@@ -52,7 +52,7 @@ class Demo(QMainWindow):
 
 
 def main():
-    app = HC_App(debug=debug, dummy=dummy)
+    app = HC_App(dummy=dummy)
     app.print_close_info = True
     ex = Demo(app)  # Change accordingly
     app.aboutToQuit.connect(ex.close)

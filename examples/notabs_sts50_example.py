@@ -165,8 +165,7 @@ class STS50Demo(QMainWindow):
 
 
 def main():
-    app = HC_App(debug=debug, dummy=dummy)
-    app.print_debug = debug
+    app = HC_App(dummy=dummy)
     ex = STS50Demo(app, connection_type)
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())

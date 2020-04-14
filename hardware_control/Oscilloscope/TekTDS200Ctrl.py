@@ -250,7 +250,7 @@ class FigureTab(QWidget):
 class ScopeControls(QGroupBox):
     write_value = pyqtSignal(int, float)
 
-    def __init__(self, port, dummy=False, debug=False, parent=None):
+    def __init__(self, port, dummy=False, parent=None):
         super().__init__("Scope")
         self.parent = parent
         self.port = port
@@ -262,7 +262,6 @@ class ScopeControls(QGroupBox):
         #        self.chbox.addWidget(self.onoff)
         self.channeldisplay = QGridLayout()
         self.dummy = dummy
-        self.debug = debug
         self.hbox = QHBoxLayout()
 
         # Buttons/Controls

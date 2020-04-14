@@ -130,7 +130,6 @@ class STS50Demo(HC_MainWindow):
 
         scpi_scope = Key4000XCtrl(
             "TCPIP0::192.168.0.14::INSTR",  # ToDo: old adress "TCPIP0::192.168.1.14::INSTR"
-            debug,
             connection_type,
             "192.168.0.14",  # ToDo: old adress "192.168.1.14"
             5025,
@@ -162,7 +161,6 @@ class STS50Demo(HC_MainWindow):
             "192.168.0.18",  # "192.168.1.18"
             5025,
         )  # "USB0::0x0957::0x2907::MY52500624::INSTR"
-        awg.debug = debug
         self.awg_ctrl = HC_FunctionGenerator(
             awg, self, "RF Generator", "DEFAULT", True, 1
         )

@@ -23,7 +23,6 @@ class HC_Backend(ABC):
         self.online = False  # does a connection to the instrument exist?
 
         self.device = None  # This is the physical instrument to write to
-        self.debug = False
         self.dummy = False
         self.connection_type = None
 

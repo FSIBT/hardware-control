@@ -21,12 +21,7 @@ logger = logging.getLogger(__name__)
 
 class ZMQOscilloscopeCtrl(HC_Backend):
     def __init__(
-        self,
-        zmq_addr,
-        debug: bool = False,
-        connection_type: str = VISA,
-        ip_addr: str = "",
-        port_no=5025,
+        self, zmq_addr, connection_type: str = VISA, ip_addr: str = "", port_no=5025,
     ):
 
         super().__init__()
@@ -39,7 +34,6 @@ class ZMQOscilloscopeCtrl(HC_Backend):
         self.zmq_address = zmq_addr
         self.online = False
         self.dummy = False
-        self.debug = debug
         self.num_vert_divisions = 8  # Todo: remove this from all files
 
         self.connection_type = connection_type

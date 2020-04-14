@@ -63,7 +63,7 @@ class WavegenDemo(QMainWindow):
 
 
 def main():
-    app = HC_App(debug=debug, dummy=dummy)
+    app = HC_App(dummy=dummy)
     ex = WavegenDemo(app, connection_type)
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())

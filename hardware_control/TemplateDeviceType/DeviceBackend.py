@@ -2,14 +2,15 @@ import random
 
 from hardware_control.HC_Backend import HC_Backend, VISA
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class DeviceBackend(HC_Backend):
     def __init__(
         self,
         connection_addr,
         dummy: bool = False,
-        debug: bool = False,
         connection_type: str = VISA,
         ip_addr: str = "",
         port_no=5025,
@@ -22,7 +23,6 @@ class DeviceBackend(HC_Backend):
         self.connection_addr = connection_addr
         self.online = False
         self.dummy = dummy
-        self.debug = debug
 
         # example
         self.connection_type = connection_type

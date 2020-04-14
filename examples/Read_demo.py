@@ -59,7 +59,7 @@ class Read_Demo(QMainWindow):
 
 
 def main():
-    app = HC_App(debug=debug, dummy=dummy)
+    app = HC_App(dummy=dummy)
     ex = Read_Demo(app)  # Change accordingly
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())
