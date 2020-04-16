@@ -245,9 +245,10 @@ class STS50Demo(HC_MainWindow):
         # Create Datasets
         self.app.data_sets["Autolog"] = Dataset("Autolog")
         self.app.data_sets["Autolog"].start_asynch(3)
-        self.app.data_sets["Autolog"].start_autosave(120, "TXT", "sts50_autolog.txt")
+        self.app.data_sets["Autolog"].start_autosave(120, "TXT", "autolog_sts50.txt")
         self.app.data_sets["Autolog"].add_instrument(self.PS_NIDaQ)
         self.app.data_sets["Autolog"].add_instrument(self.psu_ctrl)
+        self.logtool.update_groups()
 
         self.var_tool = HC_VariableEditTool(
             self,
@@ -412,7 +413,7 @@ class STS50Demo(HC_MainWindow):
         except Exception as e:
             pass
 
-        self.tab5_layout.addWidget(self.logtool, 1, 0)
+        self.tab5_layout.addWidget(self.logtool, 1, 0, 1, 2)
 
         self.tab5.setLayout(self.tab5_layout)
 
