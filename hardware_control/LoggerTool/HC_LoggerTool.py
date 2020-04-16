@@ -62,9 +62,7 @@ class HC_LoggerTool(HC_Instrument):
         self.dispgroup_drop = QComboBox()
         self.dispgroup_drop.addItems(["----------"])
         self.dispgroup_drop.setCurrentText(self.settings["display_group"])
-        self.dispgroup_drop.currentIndexChanged.connect(
-            lambda: self.set_group(self.dispgroup_drop.currentText())
-        )
+
         #
         self.new_group_button = QPushButton()
         self.new_group_button.setText("New Dataset")
@@ -131,6 +129,11 @@ class HC_LoggerTool(HC_Instrument):
         self.disp_frame_layout.addWidget(self.clear_button, 2, 3)
         self.data_disp_frame.setLayout(self.disp_frame_layout)
 
+        self.update_groups()
+        self.dispgroup_drop.currentIndexChanged.connect(
+            lambda: self.set_group(self.dispgroup_drop.currentText())
+        )
+
         # ******* DEFINE OVERALL LAYOUT
         #
         self.master_layout = QGridLayout()
@@ -140,9 +143,9 @@ class HC_LoggerTool(HC_Instrument):
         self.master_layout.addWidget(self.data_disp_frame, 0, 1)
         self.setLayout(self.master_layout)
 
-        # self.update_table_timer = QTimer(self)
-        # self.update_table_timer.timeout.connect(self.update_table)
-        # self.update_table_timer.start(1000)
+        self.update_table_timer = QTimer(self)
+        self.update_table_timer.timeout.connect(self.update_table)
+        self.update_table_timer.start(1000)
 
         # self.autosave_timer = QTimer(self)
         # self.autosave_timer.timeout.connect(self.exec_autosave)
@@ -217,6 +220,10 @@ class HC_LoggerTool(HC_Instrument):
 
     def set_group(self, group):
 
+        if group == "":
+            return
+
+        logger.debug(f"LoggerTool display group set to '{group}'")
         self.settings["display_group"] = group
         self.dispgroup_drop.setCurrentText(self.settings["display_group"])
         self.update_table()
@@ -273,9 +280,7 @@ class HC_LoggerTool(HC_Instrument):
             )
 
         except Exception as e:
-            logger.error(
-                f"Exception occured while updating table ({str(e)})", exc_info=True
-            )
+            logger.error(f"Exception occured while updating table", exc_info=True)
 
     def update_groups(self):
 
@@ -289,7 +294,14 @@ class HC_LoggerTool(HC_Instrument):
 
         # Select one group and display it if none currently displayed
         if len(names) > 0 and self.settings["display_group"] == "":
-            self.set_group(names[0])
+            print("sets")
+            print(names)
+            self.set_group(names[-1])
+
+        # if self.settings['display_group'] == "" and len(self.window.app.data_sets) > 0:
+        #     print('sets:')
+        #     print([*self.window.app.data_sets])
+        #     self.set_group([*self.window.app.data_sets][-1])
 
     #
     # Create a default state object if can't get state from a file
