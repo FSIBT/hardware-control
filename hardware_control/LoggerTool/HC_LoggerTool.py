@@ -40,6 +40,7 @@ class HC_LoggerTool(HC_Instrument):
         self.name = name
         self.app = window.app
         self.ignore = True
+        self.ignore_update_call = False
 
         self.allow_edit_data = False
 
@@ -89,6 +90,12 @@ class HC_LoggerTool(HC_Instrument):
         self.table.setRowCount(4)
         self.table.setColumnCount(4)
         self.table.cellChanged.connect(self.data_changed_from_cell)
+        self.table.cellClicked.connect(self.pause_updates)
+        #
+        self.resume_updates_button = QPushButton()
+        self.resume_updates_button.setText("Keep Table Updated")
+        self.resume_updates_button.clicked.connect(self.resume_updates)
+        self.resume_updates_button.setEnabled(False)
         #
         self.autosave_check = QCheckBox("Autosave")
         # self.autosave_check.setChecked()
@@ -121,12 +128,13 @@ class HC_LoggerTool(HC_Instrument):
         #
         self.disp_frame_layout = QGridLayout()
         self.disp_frame_layout.addWidget(self.table, 0, 0, 1, 4)
-        self.disp_frame_layout.addWidget(self.autosave_check, 1, 0)
-        self.disp_frame_layout.addItem(self.save_interval_spacer, 1, 1)
-        self.disp_frame_layout.addWidget(self.save_interval_label, 1, 2)
-        self.disp_frame_layout.addWidget(self.save_interval_edit, 1, 3)
-        self.disp_frame_layout.addWidget(self.save_button, 2, 0)
-        self.disp_frame_layout.addWidget(self.clear_button, 2, 3)
+        self.disp_frame_layout.addWidget(self.resume_updates_button, 1, 0)
+        self.disp_frame_layout.addWidget(self.autosave_check, 2, 0)
+        self.disp_frame_layout.addItem(self.save_interval_spacer, 2, 1)
+        self.disp_frame_layout.addWidget(self.save_interval_label, 2, 2)
+        self.disp_frame_layout.addWidget(self.save_interval_edit, 2, 3)
+        self.disp_frame_layout.addWidget(self.save_button, 3, 0)
+        self.disp_frame_layout.addWidget(self.clear_button, 3, 3)
         self.data_disp_frame.setLayout(self.disp_frame_layout)
 
         self.update_groups()
@@ -153,6 +161,20 @@ class HC_LoggerTool(HC_Instrument):
         #     self.autosave_timer.start(1e3*float(self.settings["save_interval"]))
         # except:
         #     self.autosave_timer.start(120*1e3)
+
+    def pause_updates(self):
+
+        print("Updates paused")
+        self.resume_updates_button.setEnabled(True)
+
+        self.ignore_update_call = True
+
+    def resume_updates(self):
+
+        print("Updates resuming...")
+        self.resume_updates_button.setEnabled(False)
+
+        self.ignore_update_call = False
 
     def create_new_group(self):
 
@@ -216,6 +238,8 @@ class HC_LoggerTool(HC_Instrument):
 
     def data_changed_from_cell(self, row: int, col: int):
 
+        # self.resume_updates()
+
         pass
 
     def set_group(self, group):
@@ -229,6 +253,10 @@ class HC_LoggerTool(HC_Instrument):
         self.update_table()
 
     def update_table(self):
+
+        if self.ignore_update_call:
+            print("\tupdated skipped...")
+            return
 
         try:
             group = self.window.app.data_sets[self.settings["display_group"]]
@@ -267,10 +295,12 @@ class HC_LoggerTool(HC_Instrument):
 
                 col += 1
 
+            # Set if autosave is on
             self.autosave_check.setChecked(
                 self.window.app.data_sets[self.settings["display_group"]].autosave
             )
 
+            # Set if autosave is on
             self.save_interval_edit.setText(
                 str(
                     self.window.app.data_sets[
