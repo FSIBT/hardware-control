@@ -152,10 +152,14 @@ class HC_Backend(ABC):
             logger.debug(f'\t{self.ID} < "{command}"')
             if self.connection_type == VISA:
                 self.device.write(command)
+                return command
             elif self.connection_type == SOCKET:
                 self.device.sendall(bytes(command + "\n", "utf-8"))
+                return command
         except Exception as e:
-            logger.debug(f"ERROR: Query failed.\n\t{e}")
+            logger.debug(f"ERROR: Write failed.\n\t{e}")
+            self.online = False
+            return f"{self.ID}-Offline"
 
     @staticmethod
     def recvall(sock):
