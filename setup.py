@@ -8,7 +8,6 @@ setup(
     packages=[
         "hardware_control.ConnectionStatusTool",
         "hardware_control.DelayGenerator",
-        "hardware_control.depreciated",
         "hardware_control.FlowController",
         "hardware_control.FunctionGenerator",
         "hardware_control.graphics",
