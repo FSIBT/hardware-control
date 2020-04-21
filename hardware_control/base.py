@@ -907,6 +907,7 @@ class Dataset(QObject):
 
         self.async_log_interval = interval
         self.async_add_timestamp = add_timestamp
+        self.asynchronous_mode = True
 
         self.async_log_timer.start(1e3 * self.async_log_interval)
 
@@ -1023,6 +1024,10 @@ class Dataset(QObject):
     def log_async(self):
         """ Periodically called by timer, logs values from included instruments
         to the datasets. Logs timestamp if requested. """
+
+        # Return immediately if not in async mode
+        if not self.asynchronous_mode:
+            return
 
         logger.info(f"Dataset {self.name} logging asynchronous data")
 
