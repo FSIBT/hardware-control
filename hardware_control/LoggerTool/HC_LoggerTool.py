@@ -87,15 +87,33 @@ class HC_LoggerTool(HC_Instrument):
         self.data_disp_frame = QGroupBox("Data")
         #
         self.table = QTableWidget()
-        self.table.setRowCount(4)
+        self.table.setRowCount(15)
         self.table.setColumnCount(4)
         self.table.cellChanged.connect(self.data_changed_from_cell)
         self.table.cellClicked.connect(self.pause_updates)
+        self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        #
+        self.autosave_label = QLabel()
+        self.autosave_label.setPixmap(
+            QPixmap(
+                pkg_resources.resource_filename(
+                    "hardware_control", "graphics/autosave_label.png"
+                )
+            )
+        )
         #
         self.resume_updates_button = QPushButton()
         self.resume_updates_button.setText("Keep Table Updated")
         self.resume_updates_button.clicked.connect(self.resume_updates)
         self.resume_updates_button.setEnabled(False)
+        #
+        self.save_button = QPushButton()
+        self.save_button.setText("Save")
+        self.save_button.clicked.connect(self.save_data)
+        #
+        self.clear_button = QPushButton()
+        self.clear_button.setText("Erase Group Data")
+        self.clear_button.clicked.connect(self.erase_group_data)
         #
         self.autosave_check = QCheckBox("Autosave")
         # self.autosave_check.setChecked()
@@ -103,7 +121,7 @@ class HC_LoggerTool(HC_Instrument):
             lambda: self.autosave_on_off(self.autosave_check.isChecked())
         )
         #
-        self.save_interval_label = QLabel("Interval Time (s):")
+        self.save_interval_label = QLabel("Save Interval Time (s):")
         self.save_interval_label.setAlignment(
             QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
         )
@@ -116,25 +134,93 @@ class HC_LoggerTool(HC_Instrument):
         self.save_interval_edit.editingFinished.connect(
             lambda: self.set_interval(self.save_interval_edit.text())
         )
-        # self.save_interval_edit.setText()
         #
-        self.save_button = QPushButton()
-        self.save_button.setText("Save")
-        self.save_button.clicked.connect(self.save_data)
+        self.save_filename_label = QLabel("Autosave Filename:")
+        self.save_filename_label.setAlignment(
+            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
+        )
         #
-        self.clear_button = QPushButton()
-        self.clear_button.setText("Erase Group Data")
-        self.clear_button.clicked.connect(self.erase_group_data)
+        self.save_filename_edit = QLineEdit()
+        self.save_filename_edit.editingFinished.connect(
+            lambda: self.set_interval(self.save_filename_edit.text())
+        )
         #
+        self.autosave_bottom_spacer = QSpacerItem(
+            40, 40, QSizePolicy.Minimum, QSizePolicy.Expanding
+        )
+        #
+        self.autolog_label = QLabel()
+        self.autolog_label.setPixmap(
+            QPixmap(
+                pkg_resources.resource_filename(
+                    "hardware_control", "graphics/async_label.png"
+                )
+            )
+        )
+        #
+        self.autolog_button = QPushButton("Change to Async")
+        # self.save_button.setText("Save")
+        self.autolog_button.clicked.connect(self.change_to_async)
+        #
+        self.autolog_interval_label = QLabel("Log Interval Time (s):")
+        self.autolog_interval_label.setAlignment(
+            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
+        )
+        #
+        self.autolog_interval_spacer = QSpacerItem(
+            150, 40, QSizePolicy.Minimum, QSizePolicy.Expanding
+        )
+        #
+        self.autolog_interval_edit = QLineEdit()
+        self.autolog_interval_edit.editingFinished.connect(
+            lambda: self.set_autolog_interval(self.autolog_interval_edit.text())
+        )
+        #
+        self.autolog_bottom_spacer = QSpacerItem(
+            40, 40, QSizePolicy.Minimum, QSizePolicy.Expanding
+        )
+        #
+        self.autolog_enabled_label = QLabel()
+        self.autolog_enabled_label.setText("Asynchronous Mode: OFF")
+        #
+        self.autolog_ind_label = QLabel()
+        self.autolog_ind_label.setPixmap(
+            QPixmap(
+                pkg_resources.resource_filename(
+                    "hardware_control", "graphics/ind_darkgrey.png"
+                )
+            )
+        )
+
         self.disp_frame_layout = QGridLayout()
-        self.disp_frame_layout.addWidget(self.table, 0, 0, 1, 4)
-        self.disp_frame_layout.addWidget(self.resume_updates_button, 1, 0)
-        self.disp_frame_layout.addWidget(self.autosave_check, 2, 0)
-        self.disp_frame_layout.addItem(self.save_interval_spacer, 2, 1)
-        self.disp_frame_layout.addWidget(self.save_interval_label, 2, 2)
-        self.disp_frame_layout.addWidget(self.save_interval_edit, 2, 3)
-        self.disp_frame_layout.addWidget(self.save_button, 3, 0)
-        self.disp_frame_layout.addWidget(self.clear_button, 3, 3)
+        self.table_layout = QGridLayout()
+        self.disp_buttons_layout = QGridLayout()
+        self.table_layout.addWidget(self.table, 0, 0, 1, 4)
+
+        self.disp_buttons_layout.addWidget(self.resume_updates_button, 1, 0)
+        self.disp_buttons_layout.addWidget(self.save_button, 1, 1)
+        self.disp_buttons_layout.addWidget(self.clear_button, 1, 3)
+
+        self.disp_buttons_layout.addWidget(self.autosave_label, 2, 0, 1, 4)
+        self.disp_buttons_layout.addWidget(self.autosave_check, 3, 0)
+        self.disp_buttons_layout.addItem(self.save_interval_spacer, 3, 1)
+        self.disp_buttons_layout.addWidget(self.save_interval_label, 3, 2)
+        self.disp_buttons_layout.addWidget(self.save_interval_edit, 3, 3)
+        self.disp_buttons_layout.addWidget(self.save_filename_label, 4, 2)
+        self.disp_buttons_layout.addWidget(self.save_filename_edit, 4, 3)
+        self.disp_buttons_layout.addItem(self.autosave_bottom_spacer, 5, 0, 1, 4)
+
+        self.disp_buttons_layout.addWidget(self.autolog_label, 6, 0, 1, 4)
+        self.disp_buttons_layout.addWidget(self.autolog_button, 7, 0)
+        self.disp_buttons_layout.addItem(self.autolog_interval_spacer, 7, 1)
+        self.disp_buttons_layout.addWidget(self.autolog_interval_label, 7, 2)
+        self.disp_buttons_layout.addWidget(self.autolog_interval_edit, 7, 3)
+        self.disp_buttons_layout.addItem(self.autolog_bottom_spacer, 8, 0, 1, 4)
+        self.disp_buttons_layout.addWidget(self.autolog_enabled_label, 9, 0)
+        self.disp_buttons_layout.addWidget(self.autolog_ind_label, 9, 1)
+
+        self.disp_frame_layout.addLayout(self.table_layout, 0, 0)
+        self.disp_frame_layout.addLayout(self.disp_buttons_layout, 1, 0)
         self.data_disp_frame.setLayout(self.disp_frame_layout)
 
         self.update_groups()
@@ -161,6 +247,25 @@ class HC_LoggerTool(HC_Instrument):
         #     self.autosave_timer.start(1e3*float(self.settings["save_interval"]))
         # except:
         #     self.autosave_timer.start(120*1e3)
+
+    def change_to_async(self):
+
+        # Don't allow async mode to be turned on if already on. Also, it can't
+        # be switched off after it's turned on
+
+        if self.window.app.data_sets[self.settings["display_group"]].asynchronous_mode:
+            return
+
+        try:
+            self.window.app.data_sets[self.settings["display_group"]].start_asynch()
+        except:
+            logger.error("Failed to start aynchronous mode", exc_info=True)
+
+        self.autolog_button.setEnabled(False)
+
+    def set_autolog_interval(self):
+
+        pass
 
     def pause_updates(self):
 
@@ -300,7 +405,7 @@ class HC_LoggerTool(HC_Instrument):
                 self.window.app.data_sets[self.settings["display_group"]].autosave
             )
 
-            # Set if autosave is on
+            # Set autosave interval
             self.save_interval_edit.setText(
                 str(
                     self.window.app.data_sets[
@@ -308,6 +413,30 @@ class HC_LoggerTool(HC_Instrument):
                     ].autosave_interval
                 )
             )
+
+            # Set if async is on
+            if self.window.app.data_sets[
+                self.settings["display_group"]
+            ].asynchronous_mode:
+                self.autolog_enabled_label.setText("Asynchronous Mode: ON ")
+                self.autolog_ind_label.setPixmap(
+                    QPixmap(
+                        pkg_resources.resource_filename(
+                            "hardware_control", "graphics/ind_blue.png"
+                        )
+                    )
+                )
+                self.autolog_button.setEnabled(False)
+            else:
+                self.autolog_enabled_label.setText("Asynchronous Mode: OFF")
+                self.autolog_ind_label.setPixmap(
+                    QPixmap(
+                        pkg_resources.resource_filename(
+                            "hardware_control", "graphics/ind_darkgrey.png"
+                        )
+                    )
+                )
+                self.autolog_button.setEnabled(True)
 
         except Exception as e:
             logger.error(f"Exception occured while updating table", exc_info=True)
