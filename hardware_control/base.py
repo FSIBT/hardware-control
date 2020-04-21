@@ -915,6 +915,18 @@ class Dataset(QObject):
             f"Dataset {self.name} activated asynchronous mode. Interval: {self.async_log_interval} s"
         )
 
+    def set_save_interval(self, interval: float):
+
+        self.autosave_interval = interval
+
+        self.autosave_timer.setInterval(1e3 * self.autosave_interval)
+
+    def set_async_interval(self, interval: float):
+
+        self.async_log_interval = interval
+
+        self.async_log_timer.setInterval(1e3 * self.async_log_interval)
+
     def len(self):
         """Returns the length of all of the values in self.data. If they aren't
         all the same length (they should be), returns -1."""

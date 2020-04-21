@@ -11,6 +11,7 @@ from PyQt5.QtGui import (
     QApplication,
     QSpacerItem,
     QSizePolicy,
+    QDoubleValidator,
 )
 from PyQt5.QtWidgets import (
     QGroupBox,
@@ -40,7 +41,7 @@ class HC_LoggerTool(HC_Instrument):
         self.name = name
         self.app = window.app
         self.ignore = True
-        self.ignore_update_call = False
+        self.prevent_overwrite_fields = False
 
         self.allow_edit_data = False
 
@@ -103,9 +104,9 @@ class HC_LoggerTool(HC_Instrument):
         )
         #
         self.resume_updates_button = QPushButton()
-        self.resume_updates_button.setText("Keep Table Updated")
-        self.resume_updates_button.clicked.connect(self.resume_updates)
-        self.resume_updates_button.setEnabled(False)
+        self.resume_updates_button.setText("Enable Editing")
+        self.resume_updates_button.clicked.connect(self.pause_unpause_clicked)
+        # self.resume_updates_button.setEnabled(False)
         #
         self.save_button = QPushButton()
         self.save_button.setText("Save")
@@ -126,11 +127,24 @@ class HC_LoggerTool(HC_Instrument):
             QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
         )
         #
+        self.save_format_label = QLabel("Autosave Format:")
+        self.save_format_label.setAlignment(
+            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
+        )
+        #
+        self.save_format_drop = QComboBox()
+        self.save_format_drop.addItems(["NPY", "CSV", "JSON", "TXT", "Pickle", "HDF"])
+        self.save_format_drop.setCurrentText("JSON")
+        self.save_format_drop.currentIndexChanged.connect(
+            lambda: self.set_autosave_format(self.save_format_drop.currentText())
+        )
+        #
         self.save_interval_spacer = QSpacerItem(
             150, 40, QSizePolicy.Minimum, QSizePolicy.Expanding
         )
         #
         self.save_interval_edit = QLineEdit()
+        self.save_interval_edit.setValidator(QDoubleValidator())
         self.save_interval_edit.editingFinished.connect(
             lambda: self.set_interval(self.save_interval_edit.text())
         )
@@ -172,6 +186,7 @@ class HC_LoggerTool(HC_Instrument):
         )
         #
         self.autolog_interval_edit = QLineEdit()
+        self.autolog_interval_edit.setValidator(QDoubleValidator())
         self.autolog_interval_edit.editingFinished.connect(
             lambda: self.set_autolog_interval(self.autolog_interval_edit.text())
         )
@@ -203,6 +218,8 @@ class HC_LoggerTool(HC_Instrument):
 
         self.disp_buttons_layout.addWidget(self.autosave_label, 2, 0, 1, 4)
         self.disp_buttons_layout.addWidget(self.autosave_check, 3, 0)
+        self.disp_buttons_layout.addWidget(self.save_format_label, 4, 0)
+        self.disp_buttons_layout.addWidget(self.save_format_drop, 4, 1)
         self.disp_buttons_layout.addItem(self.save_interval_spacer, 3, 1)
         self.disp_buttons_layout.addWidget(self.save_interval_label, 3, 2)
         self.disp_buttons_layout.addWidget(self.save_interval_edit, 3, 3)
@@ -248,6 +265,15 @@ class HC_LoggerTool(HC_Instrument):
         # except:
         #     self.autosave_timer.start(120*1e3)
 
+    def set_autosave_format(self, fmt: str):
+
+        try:
+            self.window.app.data_sets[
+                self.settings["display_group"]
+            ].autosave_format = fmt
+        except:
+            logger.error(f"Failed to set autosave format to {fmt}", exc_info=True)
+
     def change_to_async(self):
 
         # Don't allow async mode to be turned on if already on. Also, it can't
@@ -263,23 +289,31 @@ class HC_LoggerTool(HC_Instrument):
 
         self.autolog_button.setEnabled(False)
 
-    def set_autolog_interval(self):
+    def set_autolog_interval(self, interval: str):
 
-        pass
+        try:
+            self.window.app.data_sets[
+                self.settings["display_group"]
+            ].set_async_interval(float(interval))
+        except:
+            logger.error(f"Failed to set autosave format to {interval}", exc_info=True)
+
+    def pause_unpause_clicked(self):
+
+        if self.prevent_overwrite_fields:
+            self.resume_updates()
+        else:
+            self.pause_updates()
 
     def pause_updates(self):
 
-        print("Updates paused")
-        self.resume_updates_button.setEnabled(True)
-
-        self.ignore_update_call = True
+        self.resume_updates_button.setText(" Lock Editing ")
+        self.prevent_overwrite_fields = True
 
     def resume_updates(self):
 
-        print("Updates resuming...")
-        self.resume_updates_button.setEnabled(False)
-
-        self.ignore_update_call = False
+        self.resume_updates_button.setText("Enable Editing")
+        self.prevent_overwrite_fields = False
 
     def create_new_group(self):
 
@@ -298,12 +332,9 @@ class HC_LoggerTool(HC_Instrument):
         """Sets the autosave interval"""
 
         try:
-            self.window.app.data_sets[
-                self.settings["display_group"]
-            ].autosave_interval = float(t)
-            self.window.app.data_sets[
-                self.settings["display_group"]
-            ].autosave_timer.setInterval(float(t) * 1000)
+            self.window.app.data_sets[self.settings["display_group"]].set_save_interval(
+                float(t)
+            )
         except:
             logger.error("ERROR: Failed to set interval time", exc_info=True)
 
@@ -359,10 +390,27 @@ class HC_LoggerTool(HC_Instrument):
 
     def update_table(self):
 
-        if self.ignore_update_call:
-            print("\tupdated skipped...")
+        # Update which widgets are enabled
+        try:
+            group = self.window.app.data_sets[self.settings["display_group"]]
+
+            self.autosave_check.setEnabled(self.prevent_overwrite_fields)
+            self.save_format_drop.setEnabled(self.prevent_overwrite_fields)
+            self.save_interval_edit.setEnabled(self.prevent_overwrite_fields)
+            self.save_filename_edit.setEnabled(self.prevent_overwrite_fields)
+            self.autolog_interval_edit.setEnabled(self.prevent_overwrite_fields)
+
+            if group.asynchronous_mode:
+                self.autolog_button.setEnabled(False)
+            else:
+                self.autolog_button.setEnabled(True)
+        except:
+            logger.error(f"Exception occured while updating table", exc_info=True)
+
+        if self.prevent_overwrite_fields:
             return
 
+        # Update values in table and control panel
         try:
             group = self.window.app.data_sets[self.settings["display_group"]]
 
@@ -390,6 +438,7 @@ class HC_LoggerTool(HC_Instrument):
 
             self.table.setVerticalHeaderLabels(indeces_str)
 
+            # Update data in table
             col = 0
             for field in group.data:
 
@@ -401,23 +450,23 @@ class HC_LoggerTool(HC_Instrument):
                 col += 1
 
             # Set if autosave is on
-            self.autosave_check.setChecked(
-                self.window.app.data_sets[self.settings["display_group"]].autosave
-            )
+            self.autosave_check.setChecked(group.autosave)
+
+            # Set autosave format
+            self.save_format_drop.setCurrentText(group.autosave_format)
 
             # Set autosave interval
-            self.save_interval_edit.setText(
-                str(
-                    self.window.app.data_sets[
-                        self.settings["display_group"]
-                    ].autosave_interval
-                )
-            )
+            self.save_interval_edit.setText(str(group.autosave_interval))
+
+            # Set autosave filename
+            self.save_filename_edit.setText(str(group.autosave_filename))
 
             # Set if async is on
-            if self.window.app.data_sets[
-                self.settings["display_group"]
-            ].asynchronous_mode:
+            # this will:
+            #     1.) enable/disable convert to async button
+            #     2.) set indicator to blue/grey and write ON/OFF next to it
+            #     3.) enable/disable interval edit
+            if group.asynchronous_mode:
                 self.autolog_enabled_label.setText("Asynchronous Mode: ON ")
                 self.autolog_ind_label.setPixmap(
                     QPixmap(
@@ -426,7 +475,6 @@ class HC_LoggerTool(HC_Instrument):
                         )
                     )
                 )
-                self.autolog_button.setEnabled(False)
             else:
                 self.autolog_enabled_label.setText("Asynchronous Mode: OFF")
                 self.autolog_ind_label.setPixmap(
@@ -436,7 +484,9 @@ class HC_LoggerTool(HC_Instrument):
                         )
                     )
                 )
-                self.autolog_button.setEnabled(True)
+
+            # Set log interval time
+            self.autolog_interval_edit.setText(str(group.async_log_interval))
 
         except Exception as e:
             logger.error(f"Exception occured while updating table", exc_info=True)
