@@ -115,13 +115,15 @@ class STS50Demo(HC_MainWindow):
         self.tab3 = QWidget()
         self.tab4 = QWidget()
         self.tab5 = QWidget()
+        self.tab6 = QWidget()
 
         self.tabs.addTab(self.tab4, "Plasma Source")
-        self.tabs.addTab(self.tab1, "Scope Tab")
-        self.tabs.addTab(self.tab1_5, "Pico Tab")
-        self.tabs.addTab(self.tab2, "Power Tab")
-        self.tabs.addTab(self.tab3, "Other Tab")
-        self.tabs.addTab(self.tab5, "Experimental")
+        self.tabs.addTab(self.tab1, "Oscilloscope")
+        self.tabs.addTab(self.tab1_5, "Picoscope")
+        self.tabs.addTab(self.tab2, "Power Supplies")
+        self.tabs.addTab(self.tab3, "Aux 1")
+        self.tabs.addTab(self.tab5, "Aux 2")
+        self.tabs.addTab(self.tab6, "Datasets")
 
         self.main_widget = QWidget(self)
 
@@ -245,10 +247,11 @@ class STS50Demo(HC_MainWindow):
         # Create Datasets
         self.app.data_sets["Autolog"] = Dataset("Autolog")
         self.app.data_sets["Autolog"].start_asynch(3)
-        self.app.data_sets["Autolog"].start_autosave(120, "TXT", "autolog_sts50.txt")
+        self.app.data_sets["Autolog"].start_autosave(60, "TXT", "autolog_sts50.txt")
         self.app.data_sets["Autolog"].add_instrument(self.PS_NIDaQ)
         self.app.data_sets["Autolog"].add_instrument(self.psu_ctrl)
         self.logtool.update_groups()
+        self.logtool.set_group("Autolog")
 
         self.var_tool = HC_VariableEditTool(
             self,
@@ -413,11 +416,17 @@ class STS50Demo(HC_MainWindow):
         except Exception as e:
             pass
 
-        self.tab5_layout.addWidget(self.logtool, 1, 0, 1, 2)
+        # self.tab5_layout.addWidget(self.logtool, 1, 0, 1, 2)
 
         self.tab5.setLayout(self.tab5_layout)
 
         #####################################
+
+        self.tab6_layout = QGridLayout()
+
+        self.tab6_layout.addWidget(self.logtool, 0, 0)
+
+        self.tab6.setLayout(self.tab6_layout)
 
         #####################################################################
         ######## Set master window layout
@@ -433,7 +442,7 @@ class STS50Demo(HC_MainWindow):
         self.setCentralWidget(self.main_widget)
 
         # ['macintosh', 'Windows', 'Fusion']
-        # self.app.setStyle(QStyleFactory.create("Fusion"))
+        self.app.setStyle(QStyleFactory.create("Fusion"))
         # self.app.setStyle(QStyleFactory.create("Windows"))
 
         self.show()
