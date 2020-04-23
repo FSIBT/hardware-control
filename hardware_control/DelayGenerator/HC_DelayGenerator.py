@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import (
     QDoubleSpinBox,
 )
 import logging
+
 logger = logging.getLogger(__name__)
 
 from hardware_control.base import HC_Instrument, HC_Comm
@@ -96,7 +97,7 @@ class HC_DelayGenerator(HC_Instrument):
                 (
                     QPixmap(
                         pkg_resources.resource_filename(
-                            "hardware_control", "DelayGenerator/graphics/pulse.png"
+                            "hardware_control", "/graphics/pulse.png"
                         )
                     )
                 )
