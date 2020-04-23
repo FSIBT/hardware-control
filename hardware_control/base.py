@@ -1511,6 +1511,7 @@ class HC_App(QApplication):
         """Accepts a text command, and executes it on the app"""
 
         tokens = command.split(":")  # Split the command up into tokens
+        uptokens = command.upper().split(":")  # Upper case tokens...
 
         # Check if too few commands are given
         if len(tokens) < 1:
@@ -1520,9 +1521,7 @@ class HC_App(QApplication):
             return "ERROR: Invalid command"
 
         # Find out the 'mode' of the command
-        if (
-            tokens[0] == "SET"
-        ):  # THis indicates that the command provides arguments for an instrument's update_settings() function
+        if uptokens[0] == "SET":
 
             # Make sure the correct number of arguments are given
             if len(tokens) != 4:  # Requires: MODE:INSTRUMENT:PARAMETER:VALUE
@@ -1550,9 +1549,7 @@ class HC_App(QApplication):
                 f"Executed Setting Update:\n\tInstrument: {instr_str}\n\tSetting: {setting_str}\n\tValue: {value_str}"
             )
 
-        elif (
-            tokens[0] == "CMD"
-        ):  # This indicates the command provides arguments for an instrument's command() function
+        elif uptokens[0] == "CMD":
 
             # Recalculate tokens, with max of 2 splits. This allows colons to appear in the command
             tokens = command.split(":", 2)
@@ -1585,10 +1582,8 @@ class HC_App(QApplication):
                 f"Executed Command:\n\tInstrument: {instr_str}\n\tCommand: {command_str}"
             )
 
-        elif tokens[0] == "MEAS":
-            if (
-                tokens[1] == "REQ"
-            ):  # This indicates the command provides arguments for an instrument's command() function
+        elif uptokens[0] == "MEAS":
+            if uptokens[1] == "REQ":
 
                 # print("\n\tIN CMDLG\n")
 
@@ -1637,24 +1632,24 @@ class HC_App(QApplication):
                     f"Executed Command:\n\tInstrument: {instr_str}\n\tCommand: {command_str}"
                 )
 
-            elif tokens[1] == "START":
+            elif uptokens[1] == "START":
 
                 self.director.start()
 
                 return "Started"
 
-            elif tokens[1] == "PSTATE":
+            elif uptokens[1] == "PSTATE":
 
                 print(self.director.get_state())
                 if self.director.state == "Error":
                     print(f"\tError message: {self.director.err_str}")
                 print(self.director.get_state())
 
-            elif tokens[1] == "GETSTATE":
+            elif uptokens[1] == "GETSTATE":
 
                 return self.director.get_state()
 
-        elif tokens[0] == "EXEC":
+        elif uptokens[0] == "EXEC":
 
             # Recalculate tokens, with max of 2 splits. This allows colons to appear in the command
             tokens = command.split(":", 1)
@@ -1672,7 +1667,7 @@ class HC_App(QApplication):
                     "Failed to execute code. Executing python code from HC-Commands has been disabled."
                 )
 
-        elif tokens[0] == "FUNC":
+        elif uptokens[0] == "FUNC":
             # 'FUNC' indicates that the command is calling an internal function
 
             # Ensure more tokens exist
@@ -1682,24 +1677,42 @@ class HC_App(QApplication):
                 )
                 return "False"
 
-            if tokens[1] == "debug":  # Turn debug mode on or off
+            if uptokens[1] == "LEVEL":  # Turn debug mode on or off
 
                 # Ensure more tokens exist
                 if len(tokens) < 3:
                     logger.warning(
-                        f"Invalid HC-Command received. FUNC:debug requires arguments.",
+                        f"Invalid HC-Command received. FUNC:LEVEL requires arguments.",
                     )
                     return "False"
 
-                # Change value
-                if tokens[2].upper() == "ON" or tokens[2].upper() == "TRUE":
-                    # self.debug = True
-                    pass
-                else:
-                    # self.debug = False
-                    pass
+                loggers = [logging.getLogger()]  # get the root logger
+                for name in logging.root.manager.loggerDict:
+                    if "hardware_control" in name:
+                        loggers.append(logging.getLogger(name))
 
-            elif tokens[1] == "run":  # Run a macro
+                # Change value
+                if uptokens[2] == "DEBUG":
+                    for lgr in loggers:
+                        lgr.setLevel(logging.DEBUG)
+                elif uptokens[2] == "INFO":
+                    for lgr in loggers:
+                        lgr.setLevel(logging.INFO)
+                elif uptokens[2] == "WARNING":
+                    for lgr in loggers:
+                        lgr.setLevel(logging.WARNING)
+                elif uptokens[2] == "ERROR":
+                    for lgr in loggers:
+                        lgr.setLevel(logging.ERROR)
+                elif uptokens[2] == "CRITICAL":
+                    for lgr in loggers:
+                        lgr.setLevel(logging.CRITICAL)
+                else:
+                    logger.warning(
+                        f"Invalid HC-Command received. Invalid logging level provided."
+                    )
+
+            elif uptokens[1] == "RUN":
 
                 # Ensure more tokens exist
                 if len(tokens) < 3:
@@ -1719,7 +1732,7 @@ class HC_App(QApplication):
                     logger.warning(f"Requested macro to run does not exist.",)
                     return "False"
 
-            elif tokens[1] == "var":  # Change or create variable
+            elif uptokens[1] == "VAR":  # Change or create variable
 
                 # Ensure more tokens exist
                 if len(tokens) < 4:
@@ -1731,7 +1744,7 @@ class HC_App(QApplication):
                 # Update/create variable
                 self.variables[tokens[2]] = tokens[3]
 
-            elif tokens[1] == "disp":  # Display data
+            elif uptokens[1] == "DISP":  # Display data
 
                 # Ensure more tokens exist
                 if len(tokens) < 3:
@@ -1740,21 +1753,21 @@ class HC_App(QApplication):
                     )
                     return "False"
 
-                if tokens[2] == "var":  # Show all variables
+                if uptokens[2] == "VAR":  # Show all variables
 
                     print("Application Variables:")
                     for v in self.variables:
                         val = self.variables[v]
                         print(f"\t{v} = {val}")
 
-                elif tokens[2] == "macro":  # Show all macros
+                elif uptokens[2] == "MACRO":  # Show all macros
 
                     print("Application Macros:")
                     for m in self.macros:
                         cmds = self.macros[m]
                         print(f"\t{m}: {cmds}")
 
-                elif tokens[2] == "str":  # Show a string...
+                elif uptokens[2] == "STR":  # Show a string...
 
                     # Recalculate tokens w/ all after string counting as 1 token
                     tokens = command.split(":", 3)
@@ -1768,14 +1781,14 @@ class HC_App(QApplication):
                     logger.warning(f"Invalid HC-Command received.")
                     return "False"
 
-            elif tokens[1] == "time":
+            elif uptokens[1] == "TIME":
 
                 if len(tokens) < 4:
                     logger.warning(
                         f"Invalid HC-Command received. FUNC:time requires arguments."
                     )
 
-                if tokens[2] == "sleep":
+                if uptokens[2] == "SLEEP":
 
                     if self.macro_locked:
                         if time.time() >= self.macro_lock_end_time:
@@ -1790,7 +1803,7 @@ class HC_App(QApplication):
                                 exc_info=True,
                             )
 
-            elif tokens[1] == "lsdata":
+            elif uptokens[1] == "LSDATA":
 
                 print("All Data:")
                 for set_key in self.data_sets:
@@ -1806,7 +1819,7 @@ class HC_App(QApplication):
                 logger.warning(f"Invalid HC-Command received. DEV requires arguments.")
                 return "False"
 
-            if tokens[1] == "maclock":  # Turn macro lock on or off
+            if uptokens[1] == "MACLOCK":  # Turn macro lock on or off
 
                 # Ensure more tokens exist
                 if len(tokens) < 3:
@@ -1821,9 +1834,8 @@ class HC_App(QApplication):
                 else:
                     self.macro_locked = False
 
-            elif (
-                tokens[1] == "MEAS-SET-READY"
-            ):  # Set MeasurementDirector state to ready. Don't use this unless you know what you're doing. It can get measurement batches out of sync if used at the wrong time
+            # Set MeasurementDirector state to ready. Don't use this unless you know what you're doing. It can get measurement batches out of sync if used at the wrong time
+            elif uptokens[1] == "MEAS-SET-READY":
 
                 self.director.state = "Ready"
 
