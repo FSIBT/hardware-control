@@ -156,7 +156,7 @@ class HC_LoggerTool(HC_Instrument):
         #
         self.save_filename_edit = QLineEdit()
         self.save_filename_edit.editingFinished.connect(
-            lambda: self.set_interval(self.save_filename_edit.text())
+            lambda: self.set_filename(self.save_filename_edit.text())
         )
         #
         self.autosave_bottom_spacer = QSpacerItem(
@@ -264,6 +264,15 @@ class HC_LoggerTool(HC_Instrument):
         #     self.autosave_timer.start(1e3*float(self.settings["save_interval"]))
         # except:
         #     self.autosave_timer.start(120*1e3)
+
+    def set_filename(self, fn: str):
+
+        try:
+            self.window.app.data_sets[
+                self.settings["display_group"]
+            ].autosave_filename = fn
+        except:
+            logger.error(f"Failed to set autosave filename to {fn}", exc_info=True)
 
     def set_autosave_format(self, fmt: str):
 
@@ -383,6 +392,8 @@ class HC_LoggerTool(HC_Instrument):
         if group == "":
             return
 
+        self.resume_updates()
+
         logger.debug(f"LoggerTool display group set to '{group}'")
         self.settings["display_group"] = group
         self.dispgroup_drop.setCurrentText(self.settings["display_group"])
@@ -399,8 +410,9 @@ class HC_LoggerTool(HC_Instrument):
             self.save_interval_edit.setEnabled(self.prevent_overwrite_fields)
             self.save_filename_edit.setEnabled(self.prevent_overwrite_fields)
             self.autolog_interval_edit.setEnabled(self.prevent_overwrite_fields)
+            # self.autolog_button.setEnabled(self.prevent_overwrite_fields);
 
-            if group.asynchronous_mode:
+            if group.asynchronous_mode or not self.prevent_overwrite_fields:
                 self.autolog_button.setEnabled(False)
             else:
                 self.autolog_button.setEnabled(True)
