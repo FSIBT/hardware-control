@@ -349,7 +349,7 @@ class HC_LoggerTool(HC_Instrument):
 
     def save_data(self):
 
-        self.window.save_data([self.settings["display_group"]])
+        self.window.save_data(self.settings["display_group"])
 
     def save_all_data(self):
 
@@ -375,7 +375,7 @@ class HC_LoggerTool(HC_Instrument):
             return
 
         try:
-            self.window.app.data_sets[self.settings["display_group"]].data = []
+            self.window.app.data_sets[self.settings["display_group"]].data = {}
         except:
             logger.error("Failed to delete group data", exc_info=True)
 
@@ -405,6 +405,7 @@ class HC_LoggerTool(HC_Instrument):
         try:
             group = self.window.app.data_sets[self.settings["display_group"]]
 
+            self.clear_button.setEnabled(self.prevent_overwrite_fields)
             self.autosave_check.setEnabled(self.prevent_overwrite_fields)
             self.save_format_drop.setEnabled(self.prevent_overwrite_fields)
             self.save_interval_edit.setEnabled(self.prevent_overwrite_fields)

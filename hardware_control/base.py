@@ -11,6 +11,7 @@ import json
 import numpy as np
 import os
 import hashlib
+import pickle
 
 from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot, QObject, QTimer
 from PyQt5.QtWidgets import (
@@ -974,13 +975,25 @@ class Dataset(QObject):
 
         if format == "JSON":
             logger.warning("JSON file format not implimented.")
-        elif format == "PICKLE":
-            logger.warning("JSON file format not implimented.")
+        elif format == "Pickle":
+
+            print("Pickle!")
+
+            # Add extension if not specified
+            if ext == "":
+                filename = filename + ".pickle"
+
+            # Write header if file doesn't exist
+            if not os.path.exists(filename):
+                with open(filename, "wb") as outfile:
+                    pickle.dump(self.data, outfile)
+
         elif format == "CSV":
-            logger.warning("JSON file format not implimented.")
+            logger.warning("CSV file format not implimented.")
         elif format == "NPY":
-            logger.warning("JSON file format not implimented.")
-        elif format == "TXT":
+            logger.warning("NPY file format not implimented.")
+        elif format == "TXT":  # TODO: this only appends, not overwrite
+            # TODO: Jump to new file if file too big
 
             # Add extension if not specified
             if ext == "":
@@ -1029,9 +1042,9 @@ class Dataset(QObject):
                     self.autosave_next_row += 1
 
         elif format == "HDF":
-            logger.warning("JSON file format not implimented.")
+            logger.warning("HDF file format not implimented.")
         else:
-            logger.warning("unrecognized file format '{format}'.")
+            logger.warning(f"unrecognized file format '{format}'.")
 
     def log_async(self):
         """ Periodically called by timer, logs values from included instruments
@@ -1988,9 +2001,10 @@ class HC_MainWindow(QMainWindow):
         else:
             logger.error("function not supported")
 
-    def save_data(self, sets: list):
-        """Saves the data stored in the app's data_sets object. Saves the datasets who's
-        keys are listed in the list 'sets'. If 'sets' is empty, will save all datasets."""
+    def save_data(self, dataset_name: str):
+        """Saves the data stored in the app's data_sets object. Saves the dataset
+        with name specified by 'dataset_name'. If 'sets' is empty string, will save
+        all datasets."""
 
         # Use file dialog to get save location
         dlg = QFileDialog()
@@ -2000,44 +2014,53 @@ class HC_MainWindow(QMainWindow):
             return
 
         # Use input dialog to get save file type
-        save_types = ("Pickle (*.P)", "NumPy (*.npy)", "JSON (*.json)")
+        save_types = ("JSON", "Pickle", "CSV", "NPY", "TXT", "HDF")
         file_type, okay = QInputDialog.getItem(
             self, "Select File Type", "File Type:", save_types, 0, False
         )
 
+        print(f"Save set '{dataset_name}' to file '{name}' with type '{file_type}'")
+
         if okay and file_type:
             logger.info(f"Saving as {file_type} with name {name}")
+            try:
+                self.app.data_sets[dataset_name].save(name, file_type)
+            except:
+                logger.error(
+                    f"Failed to find and save dataset with name '{dataset_name}'",
+                    exc_info=True,
+                )
         else:
             logger.info("Save canceled")
 
-        if file_type == "Pickle (*.p)":
-            logger.error("Not yet implimented")
-        elif file_type == "NumPy (*.npy)":
-            logger.error("Not yet implimented")
-        elif file_type == "JSON (*.json)":
-
-            # Open file...
-            with open(name, "w") as f:
-
-                # Create buffer object
-                save_data_obj = {}
-
-                if len(sets) > 0:  # If groups are specified...
-                    for grp in sets:  # Save each specified group if it exists
-                        try:
-                            save_data_obj[
-                                self.app.data_sets[grp].name
-                            ] = self.app.data_sets[grp].data
-                        except:
-                            pass
-                else:  # Else save all...
-
-                    for ds_key in self.app.data_sets:
-                        save_data_obj[
-                            self.app.data_sets[ds_key].name
-                        ] = self.app.data_sets[ds_key].data
-
-                json.dump(save_data_obj, f)
+        # if file_type == "Pickle (*.p)":
+        #     logger.error("Not yet implimented")
+        # elif file_type == "NumPy (*.npy)":
+        #     logger.error("Not yet implimented")
+        # elif file_type == "JSON (*.json)":
+        #
+        #     # Open file...
+        #     with open(name, "w") as f:
+        #
+        #         # Create buffer object
+        #         save_data_obj = {}
+        #
+        #         if len(sets) > 0:  # If groups are specified...
+        #             for grp in sets:  # Save each specified group if it exists
+        #                 try:
+        #                     save_data_obj[
+        #                         self.app.data_sets[grp].name
+        #                     ] = self.app.data_sets[grp].data
+        #                 except:
+        #                     pass
+        #         else:  # Else save all...
+        #
+        #             for ds_key in self.app.data_sets:
+        #                 save_data_obj[
+        #                     self.app.data_sets[ds_key].name
+        #                 ] = self.app.data_sets[ds_key].data
+        #
+        #         json.dump(save_data_obj, f)
 
     def create_new_group(self):
 
