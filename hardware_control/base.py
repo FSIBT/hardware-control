@@ -12,6 +12,7 @@ import numpy as np
 import os
 import hashlib
 import pickle
+import h5py
 
 from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot, QObject, QTimer
 from PyQt5.QtWidgets import (
@@ -966,7 +967,6 @@ class Dataset(QObject):
                 File Formats:
                     JSON
                     Pickle
-                    CSV
                     NPY
                     TXT
                     HDF"""
@@ -974,24 +974,35 @@ class Dataset(QObject):
         ext = os.path.splitext(filename)[-1].lower()
 
         if format == "JSON":
-            logger.warning("JSON file format not implimented.")
-        elif format == "Pickle":
 
-            print("Pickle!")
+            # Add extension if not specified
+            if ext == "":
+                filename = filename + ".json"
+
+            # Write header if file doesn't exist
+            with open(filename, "w", encoding="utf-8") as outfile:
+                json.dump(self.data, outfile, ensure_ascii=False, indent=4)
+
+        elif format == "Pickle":
 
             # Add extension if not specified
             if ext == "":
                 filename = filename + ".pickle"
 
             # Write header if file doesn't exist
-            if not os.path.exists(filename):
-                with open(filename, "wb") as outfile:
-                    pickle.dump(self.data, outfile)
+            with open(filename, "wb") as outfile:
+                pickle.dump(self.data, outfile)
 
-        elif format == "CSV":
-            logger.warning("CSV file format not implimented.")
         elif format == "NPY":
-            logger.warning("NPY file format not implimented.")
+
+            # Add extension if not specified
+            if ext == "":
+                filename = filename + ".npy"
+
+            # Write header if file doesn't exist
+            # with open(filename, "w") as outfile:
+            np.save(filename, self.data)
+
         elif format == "TXT":  # TODO: this only appends, not overwrite
             # TODO: Jump to new file if file too big
 
@@ -1041,8 +1052,6 @@ class Dataset(QObject):
                     # Move pointer to next line
                     self.autosave_next_row += 1
 
-        elif format == "HDF":
-            logger.warning("HDF file format not implimented.")
         else:
             logger.warning(f"unrecognized file format '{format}'.")
 
@@ -2014,7 +2023,7 @@ class HC_MainWindow(QMainWindow):
             return
 
         # Use input dialog to get save file type
-        save_types = ("JSON", "Pickle", "CSV", "NPY", "TXT", "HDF")
+        save_types = ("JSON", "Pickle", "NPY", "TXT")
         file_type, okay = QInputDialog.getItem(
             self, "Select File Type", "File Type:", save_types, 0, False
         )
