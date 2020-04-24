@@ -48,7 +48,7 @@ class HC_Comm(QObject):
     def __init__(self, backend, instrument, try_connect_period=1000):
         super().__init__()
         self.backend = backend
-        self.instrument = instrument  # Calling instrument UI (eg. HC_scope)
+        self.instruments = [instrument]  # Calling instrument UI (eg. HC_scope)
         self.backend_model = backend.ID
         self.try_connect_period = try_connect_period
 
@@ -83,26 +83,32 @@ class HC_Comm(QObject):
 
         self.dataset_states = []
 
-    def close(self):
+    def addWidget(self, new_instrument):
+        """Adds a new instrument to HC_Comm. When HC_Comm gets a reply, it will
+        go to all listed instruments"""
+
+        self.instruments.append(new_instrument)
+
+    def close(self):  # TODO: Change logger messages to references address, not instr
         logger.debug(
-            f"\tInstrument: '{self.instrument.name}' closing Comm with backend of type '{self.backend_model}'."
+            f"\tInstrument: '{self.instruments[0].name}' closing Comm with backend of type '{self.backend_model}'."
         )
         self.try_connect_timer.stop()  # Stop
         self.sigClose.emit()
         self.worker_thread.quit()  # Kill thread
-        if self.instrument.window.app.print_close_info:
+        if self.instruments[0].window.app.print_close_info:
             print(
                 Fore.BLUE
-                + f"\t'{self.instrument.name}': Closing...\t\t\t--:-- sec"
+                + f"\t'{self.instruments[0].name}': Closing...\t\t\t--:-- sec"
                 + Style.RESET_ALL,
                 end="",
                 flush=True,
             )
             start_time = time.time()
         self.worker_thread.wait()  # Wait for thread to join (otherwise, if main thread exists first, stdout will be closed while the worker_thread may still be running and try to write to stdout, causing an error to arise)
-        if self.instrument.window.app.print_close_info:
+        if self.instruments[0].window.app.print_close_info:
             print(
-                f"\r\t'{self.instrument.name}': Closed    \t\t\t"
+                f"\r\t'{self.instruments[0].name}': Closed    \t\t\t"
                 + "{:.2f}".format(time.time() - start_time)
                 + " sec    "
             )
@@ -110,28 +116,28 @@ class HC_Comm(QObject):
     def update_setting(self, setting: str, value: str):
         """Transfers the setting and value information to the worker thread"""
         logger.debug(
-            f"Instrument: {self.instrument.name} called 'update_setting()' for setting '{setting}' and sent message '{value}'."
+            f"Instrument: {self.instruments[0].name} called 'update_setting()' for setting '{setting}' and sent message '{value}'."
         )
         self.sigUpdateSettings.emit(setting, value, time.time() + self.expire_time)
 
     def command(self, cmd: str):
         """Sends a command to the worker in the worker thread"""
         logger.debug(
-            f"Instrument: {self.instrument.name} called 'command()' and sent command: '{cmd}'."
+            f"Instrument: {self.instruments[0].name} called 'command()' and sent command: '{cmd}'."
         )
         self.sigCommand.emit(cmd, time.time() + self.expire_time)
 
     def write(self, msg: str):
         """Sends a command to be sent to the instrument by the worker in the worker thead"""
         logger.debug(
-            f"Instrument: {self.instrument.name} called 'write()' and sent message: '{msg}'."
+            f"Instrument: {self.instruments[0].name} called 'write()' and sent message: '{msg}'."
         )
         self.sigWrite.emit(msg, time.time() + self.expire_time)
 
     def query(self, msg: str):
         """Sends a query statement to be sent to the instrument by the worker in the worker thead"""
         logger.debug(
-            f"Instrument: {self.instrument.name} called 'query()' and sent message: '{msg}'."
+            f"Instrument: {self.instruments[0].name} called 'query()' and sent message: '{msg}'."
         )
         self.sigQuery.emit(msg, time.time() + self.expire_time)
 
@@ -143,7 +149,7 @@ class HC_Comm(QObject):
         """Sends a command to the worker in the worker thread just like command(),
         but returns two lists instead of a string."""
         logger.debug(
-            f"Instrument: {self.instrument.name} called 'command_listdata()' and sent command: '{cmd}'."
+            f"Instrument: {self.instruments[0].name} called 'command_listdata()' and sent command: '{cmd}'."
         )
         self.sigCommandList.emit(cmd, time.time() + self.list_expire_time)
 
@@ -182,7 +188,7 @@ class HC_Comm(QObject):
         # print(f"\n\t\tCOMMAND_LOG::HC_COMM\t{param_str}\n")
 
         logger.debug(
-            f"Instrument: {self.instrument.name} called 'command()' and sent command: '{cmd}'."
+            f"Instrument: {self.instruments[0].name} called 'command()' and sent command: '{cmd}'."
         )
         self.sigCommandLog.emit(cmd, time.time() + self.expire_time, param_str)
 
@@ -194,22 +200,25 @@ class HC_Comm(QObject):
         updating the UI."""
 
         logger.debug(
-            f"Instrument: {self.instrument.name} received return from backend '{self.backend_model}'. Return message: {retval}"
+            f"Instrument: {self.instruments[0].name} received return from backend '{self.backend_model}'. Return message: {retval}"
         )
-        self.instrument.backend_return(retval)
+        for instr in self.instruments:
+            instr.backend_return(retval)
 
     @pyqtSlot(bool)
     def backend_return_online(self, connected: bool):
         """ Gets called by the worker after the worker hears from the instrument if it successfully connected.
         Updates the state of the instrument - ie. if it is or is not online"""
-        self.instrument.backend_return_online(connected)
+        for instr in self.instruments:
+            instr.backend_return_online(connected)
 
     @pyqtSlot(str, list, list)
     def backend_return_listdata(self, desc: str, data1: list, data2: list):
         """Receives a return value from the CommWorker and sends it to the instrument's
         backend_return_listdata function, which can be overwritten by the UI's author
         to process the data."""
-        self.instrument.backend_return_listdata(desc, data1, data2)
+        for instr in self.instruments:
+            instr.backend_return_listdata(desc, data1, data2)
 
     @pyqtSlot(str, str)
     def backend_return_log(self, retval: str, param_str: str):
@@ -224,7 +233,8 @@ class HC_Comm(QObject):
         logger.debug(
             f"Instrument: {self.instrument.name} received return from backend '{self.backend_model}'. Return message: {retval}"
         )
-        self.instrument.backend_return(retval)
+        for instr in self.instruments:
+            instr.backend_return(retval)
 
     # @pyqtSlot(str, int, str)
     # def backend_return_log(self, retval:str, param_str:str):
@@ -1393,6 +1403,7 @@ class HC_App(QApplication):
         # Dict of data saved directly with query commmands
         self.dummy = dummy
         self.print_close_info = False
+        self.comms = {}  # Dictionary of HC_Comm objects
 
         self.data_sets = {}  # Dict of datasets
         untitled_set = Dataset("Untitled")
