@@ -13,24 +13,28 @@ import sys
 
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QGridLayout
 from docopt import docopt
-from hardware_control.PulseGenerator.SRSDG535Int import SRSDG535Int
-from hardware_control.PulseGenerator.hc_pulsegen import PulseGenControl
+from hardware_control.DelayGenerator.SRSDG535Ctrl import SRSDG535Ctrl
+from hardware_control.DelayGenerator.HC_DelayGenerator import HC_DelayGenerator
+from hardware_control.base import HC_App, HC_MainWindow, Dataset
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
 
 
-class PuslseGenDemo(QMainWindow):
+class PuslseGenDemo(HC_MainWindow):
     def __init__(self, app):
-        super().__init__()
+        super().__init__(app)
         self.app = app
 
         self.setWindowTitle("Flow Controller Demo")
 
         self.main_widget = QWidget(self)
 
-        self.instr = SRSDG535Int("GPIB0::10::INSTR", dummy, True)
-        self.instr_ctrl = PulseGenControl(self.instr, "DEFAULT", True)
+        self.instr = SRSDG535Ctrl("GPIB0::10::INSTR")
+        self.instr_ctrl = HC_DelayGenerator(self.instr, self)
+
+        self.trig1 = SRSDG535Ctrl("GPIB0::10::INSTR")
+        self.trig1_ctrl = HC_DelayGenerator(self.trig1, self, "Trigger 1", "DEFAULT")
 
         self.grid = QGridLayout()
         self.grid.addWidget(self.instr_ctrl, 0, 0)
@@ -43,7 +47,8 @@ class PuslseGenDemo(QMainWindow):
         self.instr_ctrl.close()
 
 
-app = QApplication([])
+app = HC_App(dummy=dummy)
+app.print_close_info = True
 ex = PuslseGenDemo(app)
 app.aboutToQuit.connect(ex.close)
 sys.exit(app.exec_())
