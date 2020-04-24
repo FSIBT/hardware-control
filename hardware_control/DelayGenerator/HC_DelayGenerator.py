@@ -35,7 +35,14 @@ class HC_DelayGenerator(HC_Instrument):
         self.settings = self.default_state()
 
         scpi_instr.dummy = self.window.app.dummy
-        self.comm = HC_Comm(scpi_instr, self)
+
+        if scpi_instr in self.window.app.comms:
+            self.comm = self.window.app.comms[scpi_instr]
+            self.comm.addWidget(self)
+        else:
+            self.window.app.comms[scpi_instr] = HC_Comm(scpi_instr, self)
+            self.comm = self.window.app.comms[scpi_instr]
+
         self.filename = ""
 
         # Create GUI
