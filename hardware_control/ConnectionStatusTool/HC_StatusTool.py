@@ -13,17 +13,12 @@ logger = logging.getLogger(__name__)
 
 class HC_StatusTool(QGroupBox):
     def __init__(
-        self,
-        window,
-        name: str = "Connection Status",
-        initialize_with: str = "DEFAULT",
-        save_on_close: str = False,
+        self, window, name: str = "Connection Status",
     ):
 
         super().__init__(name)
 
         self.settings = {}
-        self.save_on_close = save_on_close
         self.name = name
         self.app = window.app
         self.ignore = True

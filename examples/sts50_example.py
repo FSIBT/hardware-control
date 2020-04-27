@@ -209,7 +209,7 @@ class STS50Demo(HC_MainWindow):
         self.PS_NIDaQCtrl = NI_DaX_PowerSupplyController()
         self.PS_NIDaQ = HC_MultiPowerSupply(self.PS_NIDaQCtrl, self, [1], "NIDAXTEST")
 
-        self.statustool = HC_StatusTool(self, "Connection Status", "DEFAULT", True)
+        self.statustool = HC_StatusTool(self, "Connection Status")
         self.statustool.update_instruments()
 
         app.add_variable("FIL_AMPL_V", "5.0")  # Add a filament amplitude variable
