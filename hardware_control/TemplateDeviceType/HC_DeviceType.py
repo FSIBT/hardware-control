@@ -3,7 +3,9 @@ from PyQt5.QtWidgets import QLineEdit, QLabel, QGridLayout, QDoubleSpinBox
 
 from hardware_control.base import HC_Instrument, HC_Comm
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class HC_DeviceType(HC_Instrument):
     # Convention: __init__(self, backend, window . . . )
@@ -21,7 +23,14 @@ class HC_DeviceType(HC_Instrument):
         self.settings = {}  # A dict to store all possible settings
         self.save_on_close = save_on_close
         self.backend = backend
-        self.comm = HC_Comm(backend, self)
+
+        if scpi_instr in self.window.app.comms:
+            self.comm = self.window.app.comms[scpi_instr]
+            self.comm.addWidget(self)
+        else:
+            self.window.app.comms[scpi_instr] = HC_Comm(scpi_instr, self)
+            self.comm = self.window.app.comms[scpi_instr]
+
         # self.filename = ""  # currently not in use
 
         ### Create UI - example
