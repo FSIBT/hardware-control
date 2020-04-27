@@ -158,12 +158,8 @@ class STS50Demo(HC_MainWindow):
         awg = Key33500BCtrl(
             "TCPIP0::192.168.0.18::INSTR",  # toDo "TCPIP0::192.168.1.18::INSTR"
             connection_type,
-            "192.168.0.18",  # "192.168.1.18"
-            5025,
         )  # "USB0::0x0957::0x2907::MY52500624::INSTR"
-        self.awg_ctrl = HC_FunctionGenerator(
-            awg, self, "RF Generator", "DEFAULT", True, 1
-        )
+        self.awg_ctrl = HC_FunctionGenerator(awg, self, "RF Generator", 1)
 
         self.psu = TDKLGenHCtrl("TCPIP0::192.168.1.19::INSTR")
         self.psu_ctrl = HC_MultiPowerSupply(

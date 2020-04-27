@@ -25,19 +25,12 @@ logger = logging.getLogger(__name__)
 
 class HC_FunctionGenerator(HC_Instrument):
     def __init__(
-        self,
-        scpi_instr,
-        window,
-        name: str = "AWG Control",
-        initialize_with: str = "INSTRUMENT",
-        save_on_close: str = False,
-        num_channels: int = 2,
+        self, scpi_instr, window, name: str = "AWG Control", num_channels: int = 2,
     ):
 
         super().__init__(window, name)
 
         self.settings = {}
-        self.save_on_close = save_on_close
 
         scpi_instr.dummy = self.window.app.dummy
 
