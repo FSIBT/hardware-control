@@ -67,7 +67,14 @@ class HC_DAQ(HC_Instrument):
         self.save_on_close = save_on_close
 
         scpi_instr.dummy = self.window.app.dummy
-        self.comm = DAQComm(scpi_instr)
+
+        if scpi_instr in self.window.app.comms:
+            self.comm = self.window.app.comms[scpi_instr]
+            self.comm.addWidget(self)
+        else:
+            self.window.app.comms[scpi_instr] = HC_Comm(scpi_instr, self)
+            self.comm = self.window.app.comms[scpi_instr]
+
         self.filename = ""
 
         # Connect signals and sigs
