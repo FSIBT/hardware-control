@@ -199,7 +199,7 @@ class STS50Demo(HC_MainWindow):
 
         self.zmqtool = HC_ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
 
-        self.scantool = HC_ScanTool(self, "Scan Control", "DEFAULT", True)
+        self.scantool = HC_ScanTool(self, "Scan Control", True)
         self.scantool.update_instruments()
 
         self.logtool = HC_LoggerTool(self, "Data Logger")

@@ -22,18 +22,12 @@ logger = logging.getLogger(__name__)
 
 class HC_ScanTool(HC_Instrument):
     def __init__(
-        self,
-        window,
-        name: str = "Scan Control",
-        initialize_with: str = "DEFAULT",
-        save_on_close: str = False,
-        include_variables: bool = True,
+        self, window, name: str = "Scan Control", include_variables: bool = True,
     ):
 
         super().__init__(window, name)
 
         self.settings = {}
-        self.save_on_close = save_on_close
         self.name = name
         self.app = window.app
         self.ignore = True
