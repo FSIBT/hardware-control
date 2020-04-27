@@ -20,11 +20,7 @@ from hardware_control.base import HC_Instrument, HC_Comm
 
 class HC_DelayGenerator(HC_Instrument):
     def __init__(
-        self,
-        scpi_instr,
-        window,
-        name: str = "Pulse Generator Control",
-        initialize_with: str = "INSTRUMENT",
+        self, scpi_instr, window, name: str = "Pulse Generator Control",
     ):
 
         super().__init__(window, name)
