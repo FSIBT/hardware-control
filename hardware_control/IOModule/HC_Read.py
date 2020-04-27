@@ -7,7 +7,9 @@ from PyQt5.QtWidgets import QLabel, QWidget, QGridLayout, QLCDNumber, QSpacerIte
 
 from hardware_control.base import HC_Instrument, HC_Comm
 import logging
+
 logger = logging.getLogger(__name__)
+
 
 class HC_Read(HC_Instrument):
     # Convention: __init__(self, backend, window . . . )
@@ -34,7 +36,13 @@ class HC_Read(HC_Instrument):
         self.backend = backend
 
         self.backend.dummy = self.window.app.dummy
-        self.comm = HC_Comm(self.backend, self, 2000)
+        if backend in self.window.app.comms:
+            self.comm = self.window.app.comms[backend]
+            self.comm.addWidget(self)
+        else:
+            self.window.app.comms[backend] = HC_Comm(backend, self, 2000)
+            self.comm = self.window.app.comms[backend]
+
         # self.filename = ""
 
         self.channels = channels
