@@ -23,8 +23,6 @@ class HC_Read(HC_Instrument):
         unit: str = "Units",
         name: str = "Read Module",
         showLCD=True,
-        initialize_with: str = "INSTRUMENT",
-        save_on_close: str = False,
     ):
         # initalizing
         super().__init__(window, name)
@@ -32,7 +30,6 @@ class HC_Read(HC_Instrument):
         self.settings = (
             {}
         )  # A dict to store all possible settings-Not used here,bc there are no settings
-        self.save_on_close = save_on_close
         self.backend = backend
 
         self.backend.dummy = self.window.app.dummy
