@@ -188,9 +188,7 @@ class STS50Demo(HC_MainWindow):
         )
 
         self.flow = AlicatMSeriesCtrl("192.168.0.15")  # todo "192.168.1.15"
-        self.flow_ctrl = HC_FlowController(
-            self.flow, self, "Flow Controller", "flowcontroller_state.json", True
-        )
+        self.flow_ctrl = HC_FlowController(self.flow, self, "Flow Controller")
 
         # Todo: linux-gpib is a dependency on some systems
         self.trig1 = SRSDG535Ctrl("GPIB0::10::INSTR")

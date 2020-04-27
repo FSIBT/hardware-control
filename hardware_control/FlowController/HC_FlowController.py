@@ -15,19 +15,12 @@ logger = logging.getLogger(__name__)
 #
 class HC_FlowController(HC_Instrument):
     def __init__(
-        self,
-        scpi_instr,
-        window,
-        name: str = "Flow Controller",
-        initialize_with: str = "INSTRUMENT",
-        save_on_close: str = False,
-        dummy=False,
+        self, scpi_instr, window, name: str = "Flow Controller",
     ):
 
         super().__init__(window, name)
 
         self.settings = {}
-        self.save_on_close = save_on_close
         self.name = name
 
         scpi_instr.dummy = self.window.app.dummy
