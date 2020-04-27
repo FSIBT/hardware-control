@@ -18,19 +18,12 @@ logger = logging.getLogger(__name__)
 
 class HC_MultiPowerSupply(HC_Instrument):
     def __init__(
-        self,
-        backend,
-        window,
-        channels: list,
-        name: str = "Multi-Channel PSU",
-        initialize_with: str = "INSTRUMENT",
-        save_on_close: str = False,
+        self, backend, window, channels: list, name: str = "Multi-Channel PSU",
     ):
 
         super().__init__(window, name)
 
         self.settings = {}
-        self.save_on_close = save_on_close
         self.backend = backend
 
         backend.dummy = self.window.app.dummy

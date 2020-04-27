@@ -162,9 +162,7 @@ class STS50Demo(HC_MainWindow):
         self.awg_ctrl = HC_FunctionGenerator(awg, self, "RF Generator", 1)
 
         self.psu = TDKLGenHCtrl("TCPIP0::192.168.1.19::INSTR")
-        self.psu_ctrl = HC_MultiPowerSupply(
-            self.psu, self, [1], "TDK Lambda (RF Vin)", "DEFAULT"
-        )
+        self.psu_ctrl = HC_MultiPowerSupply(self.psu, self, [1], "TDK Lambda (RF Vin)",)
 
         # Put instrument(s) in tab
         self.tab2_layout = QGridLayout()
