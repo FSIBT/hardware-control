@@ -19,11 +19,7 @@ class Key4000XCtrl(HC_Backend):
     # sigReturnWaves = pyqtSignal(int, list, list)
 
     def __init__(
-        self,
-        connection_addr,
-        connection_type: str = VISA,
-        ip_addr: str = "",
-        port_no=5025,
+        self, connection_addr, connection_type: str = VISA,
     ):
         super().__init__()
         self.ID = "KEYSIGHT-4000X"
@@ -34,8 +30,18 @@ class Key4000XCtrl(HC_Backend):
         self.num_vert_divisions = 8
 
         self.connection_type = connection_type
-        self.port_no = port_no
-        self.ip_addr = ip_addr
+        self.port_no = None
+        self.ip_addr = None
+        if self.connection_type == "socket":
+            try:
+                tokens = self.connection_addr.split(":", 1)
+                self.ip_addr = tokens[0]
+                self.port_no = int(tokens[1])
+            except:
+                logger.warning(
+                    f"Failed to get address, port from {self.connection_addr}",
+                    exc_info=True,
+                )
 
         self.check()
 

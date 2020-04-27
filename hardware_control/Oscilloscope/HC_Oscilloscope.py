@@ -58,18 +58,12 @@ class HC_Oscilloscope(HC_Instrument):
     """
 
     def __init__(
-        self,
-        scpi_instr,
-        window,
-        name: str = "Oscilloscope Control",
-        initialize_with: str = "INSTRUMENT",
-        save_on_close: str = False,
+        self, scpi_instr, window, name: str = "Oscilloscope Control",
     ):
 
         super().__init__(window, name)
 
         self.settings = {}
-        self.save_on_close = save_on_close
 
         # scpi_instr.sigReturnWaves.connect(self.backend_return_waveform)
         scpi_instr.dummy = self.window.app.dummy

@@ -131,12 +131,10 @@ class STS50Demo(HC_MainWindow):
         ######## Tab 1
 
         scpi_scope = Key4000XCtrl(
-            "TCPIP0::192.168.0.14::INSTR",  # ToDo: old adress "TCPIP0::192.168.1.14::INSTR"
+            "TCPIP0::192.168.0.14::INSTR",  # Enter socket address as ip:port, ex: 192.168.0.14:5025
             connection_type,
-            "192.168.0.14",  # ToDo: old adress "192.168.1.14"
-            5025,
         )
-        self.scope_ctrl = HC_Oscilloscope(scpi_scope, self, "Keysight", "DEFAULT", True)
+        self.scope_ctrl = HC_Oscilloscope(scpi_scope, self, "Keysight")
 
         # Put instrument(s) in tab
         self.tab1_layout = QGridLayout()
@@ -147,7 +145,7 @@ class STS50Demo(HC_MainWindow):
         ######## PicoTab
 
         self.pico = ZMQOscilloscopeCtrl("tcp://192.168.0.30:6000")
-        self.pico_ctrl = HC_Oscilloscope(self.pico, self, "PicoScope", "DEFAULT", True)
+        self.pico_ctrl = HC_Oscilloscope(self.pico, self, "PicoScope")
 
         self.tab1_5_layout = QGridLayout()
         self.tab1_5_layout.addWidget(self.pico_ctrl, 0, 0)
@@ -186,7 +184,7 @@ class STS50Demo(HC_MainWindow):
             self.temp,
             self,
             [0, 3, 5],
-            ["Chamber", "Source", "Tomato"],
+            ["Chamber", "Source", "Cabinet"],
             "TEMP",
             "K",
             "Temperature Instrument",
