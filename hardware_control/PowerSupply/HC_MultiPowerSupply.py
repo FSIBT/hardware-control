@@ -34,7 +34,14 @@ class HC_MultiPowerSupply(HC_Instrument):
         self.backend = backend
 
         backend.dummy = self.window.app.dummy
-        self.comm = HC_Comm(backend, self)
+
+        if backend in self.window.app.comms:
+            self.comm = self.window.app.comms[backend]
+            self.comm.addWidget(self)
+        else:
+            self.window.app.comms[backend] = HC_Comm(backend, self)
+            self.comm = self.window.app.comms[backend]
+
         self.filename = ""
 
         # Check that the user provided valid channel request...
