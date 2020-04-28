@@ -193,3 +193,5 @@ class HC_Backend(ABC):
             return reply
         except Exception as e:
             logger.debug(f"ERROR: Query failed.\n\t{e}")
+            self.online = False
+            return f"{self.ID}-Offline"
