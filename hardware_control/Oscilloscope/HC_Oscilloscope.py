@@ -95,18 +95,18 @@ class HC_Oscilloscope(HC_Instrument):
         self.meas = OscilloscopeMeasurementWidget(self)
 
         self.top_panel = QGridLayout()
-        trig = OscilloscopeTriggerWidget(self)
-        self.top_panel.addWidget(trig, 0, 0)
+        self.trig = OscilloscopeTriggerWidget(self)
+        self.top_panel.addWidget(self.trig, 0, 0)
 
-        ch1 = OscillscopeChannelWidget(1, self)
-        ch2 = OscillscopeChannelWidget(2, self)
-        ch3 = OscillscopeChannelWidget(3, self)
-        ch4 = OscillscopeChannelWidget(4, self)
+        self.ch1 = OscillscopeChannelWidget(1, self)
+        self.ch2 = OscillscopeChannelWidget(2, self)
+        self.ch3 = OscillscopeChannelWidget(3, self)
+        self.ch4 = OscillscopeChannelWidget(4, self)
         self.channel_panel = QGridLayout()
-        self.channel_panel.addWidget(ch1, 0, 0)
-        self.channel_panel.addWidget(ch2, 0, 1)
-        self.channel_panel.addWidget(ch3, 0, 2)
-        self.channel_panel.addWidget(ch4, 0, 3)
+        self.channel_panel.addWidget(self.ch1, 0, 0)
+        self.channel_panel.addWidget(self.ch2, 0, 1)
+        self.channel_panel.addWidget(self.ch3, 0, 2)
+        self.channel_panel.addWidget(self.ch4, 0, 3)
 
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.disp, 0, 0, 2, 2)
@@ -213,6 +213,18 @@ class HC_Oscilloscope(HC_Instrument):
 
         return dflt
 
+    def settings_to_UI(self):
+
+        # self.disp.settings_to_UI()
+        self.horiz.settings_to_UI()
+        self.meas.settings_to_UI()
+        self.trig.settings_to_UI()
+
+        self.ch1.settings_to_UI()
+        self.ch2.settings_to_UI()
+        self.ch3.settings_to_UI()
+        self.ch4.settings_to_UI()
+
 
 class OscillscopeChannelWidget(QWidget):
     """Defines a UI for oscilloscope channels"""
@@ -221,6 +233,7 @@ class OscillscopeChannelWidget(QWidget):
         super().__init__()
 
         self.channel = channel
+        self.control = control
 
         # ************** DEFINE UI *********************#
 
@@ -413,10 +426,40 @@ class OscillscopeChannelWidget(QWidget):
         self.master_layout.addLayout(self.lower_grid, 2, 0)
         self.setLayout(self.master_layout)
 
+    def settings_to_UI(self):
+
+        try:
+            self.v_div_edit.setValue(float(control.settings[f"CH{channel}_volts_div"]))
+        except:
+            self.v_div_edit.setValue(0)
+
+        try:
+            self.offset_edit.setValue(float(control.settings[f"CH{channel}_offset"]))
+        except:
+            self.offset_edit.setValue(0)
+
+        self.label_edit.setText(self.control.settings[f"CH{self.channel}_label"])
+        setButtonState(
+            self.active_but, self.control.settings[f"CH{self.channel}_active"]
+        )
+        setButtonState(self.BW_but, self.control.settings[f"CH{self.channel}_BW_lim"])
+        setButtonState(self.Inv_but, self.control.settings[f"CH{self.channel}_invert"])
+        self.coupling_drop.setCurrentText(
+            self.control.settings[f"CH{self.channel}_coupling"]
+        )
+        self.impedance_drop.setCurrentText(
+            str(self.control.settings[f"CH{self.channel}_impedance"])
+        )
+        self.probe_drop.setCurrentText(
+            str(self.control.settings[f"CH{self.channel}_probe_atten"])
+        )
+
 
 class OscilloscopeTriggerWidget(QWidget):
     def __init__(self, control):
         super().__init__()
+
+        self.control = control
 
         # ************** DEFINE UI *********************#
         self.trigger_label_box = QHBoxLayout()
@@ -510,10 +553,21 @@ class OscilloscopeTriggerWidget(QWidget):
         self.master_layout.addLayout(self.lower_grid, 2, 0)
         self.setLayout(self.master_layout)
 
+    def settings_to_UI(self):
+
+        self.level_edit.setValue(float(self.control.settings["trigger_level"]))
+        self.trig_chan_drop.setCurrentText(
+            str(self.control.settings["trigger_channel"])
+        )
+        self.coupling_drop.setCurrentText(self.control.settings["trigger_coupling"])
+        self.edge_drop.setCurrentText(str(self.control.settings["trigger_edge"]))
+
 
 class OscilloscopeHorizontalWidget(QWidget):
     def __init__(self, control):
         super().__init__()
+
+        self.control = control
 
         # Define timescale options
         self.units = {"s": 1, "ms": 1e-3, "us": 1e-6, "ns": 1e-9}
@@ -594,6 +648,17 @@ class OscilloscopeHorizontalWidget(QWidget):
         self.master_layout.addLayout(self.horizontal_label_box, 0, 0)
         self.master_layout.addLayout(self.form, 1, 0)
         self.setLayout(self.master_layout)
+
+    def settings_to_UI(self):
+
+        try:
+            self.timebase_edit.setValue(float(self.control.settings["timebase"]))
+        except:
+            self.timebase_edit.setValue(1e-3)
+
+        self.time_offset_edit.setValue(
+            float(self.control.settings["time_offset"]) * 1e3
+        )
 
 
 class OscilloscopeDisplayWidget(QGroupBox):
@@ -788,3 +853,7 @@ class OscilloscopeMeasurementWidget(QWidget):
     # TODO: Make this delete measurements in internal settings variables
     def clear_measurements(self):
         self.control.command("CLEAR_MEAS")
+
+    def settings_to_UI(self):
+
+        pass

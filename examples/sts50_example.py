@@ -135,6 +135,7 @@ class STS50Demo(HC_MainWindow):
             connection_type,
         )
         self.scope_ctrl = HC_Oscilloscope(scpi_scope, self, "Keysight")
+        self.scope_ctrl.load_state("scope_state.json")
 
         # Put instrument(s) in tab
         self.tab1_layout = QGridLayout()
