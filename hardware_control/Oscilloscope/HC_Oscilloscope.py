@@ -429,12 +429,16 @@ class OscillscopeChannelWidget(QWidget):
     def settings_to_UI(self):
 
         try:
-            self.v_div_edit.setValue(float(control.settings[f"CH{channel}_volts_div"]))
+            self.v_div_edit.setValue(
+                float(self.control.settings[f"CH{self.channel}_volts_div"])
+            )
         except:
             self.v_div_edit.setValue(0)
 
         try:
-            self.offset_edit.setValue(float(control.settings[f"CH{channel}_offset"]))
+            self.offset_edit.setValue(
+                float(self.control.settings[f"CH{self.channel}_offset"])
+            )
         except:
             self.offset_edit.setValue(0)
 
@@ -651,8 +655,11 @@ class OscilloscopeHorizontalWidget(QWidget):
 
     def settings_to_UI(self):
 
+        self.timebase_edit_units.setCurrentText("ms")
+        self.time_offset_edit_units.setCurrentText("ms")
+
         try:
-            self.timebase_edit.setValue(float(self.control.settings["timebase"]))
+            self.timebase_edit.setValue(1e3 * float(self.control.settings["timebase"]))
         except:
             self.timebase_edit.setValue(1e-3)
 
