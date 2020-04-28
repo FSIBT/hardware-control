@@ -302,6 +302,11 @@ class HC_CommWorker(QObject):
             ret_val = f'EXPIRED=CMD:"{cmd}" \t[Exec: {time.time()}, Exp: {expire_time}] [{self.backend.ID}]'
         else:
             ret_val = self.backend.command(cmd)
+
+        # Set online to false if special 'offline' message comes across
+        if ret_val == f"{self.backend.ID}-Offline":
+            self.sigReturnOnline.emit(False)
+
         self.sigReturnValues.emit(ret_val)
 
     @pyqtSlot(str, float)
@@ -311,6 +316,11 @@ class HC_CommWorker(QObject):
             ret_val = f'EXPIRED=WRT:"{msg}" \t[Exec: {time.time()}, Exp: {expire_time}] [{self.backend.ID}]'
         else:
             ret_val = self.backend.write(msg)
+
+        # Set online to false if special 'offline' message comes across
+        if ret_val == f"{self.backend.ID}-Offline":
+            self.sigReturnOnline.emit(False)
+
         self.sigReturnValues.emit(ret_val)
 
     @pyqtSlot(str, float)
@@ -320,6 +330,11 @@ class HC_CommWorker(QObject):
             ret_val = f'EXPIRED=QRY:"{msg}" \t[Exec: {time.time()}, Exp: {expire_time}] [{self.backend.ID}]'
         else:
             ret_val = self.backend.query(msg)
+
+        # Set online to false if special 'offline' message comes across
+        if ret_val == f"{self.backend.ID}-Offline":
+            self.sigReturnOnline.emit(False)
+
         self.sigReturnValues.emit(ret_val)
 
     @pyqtSlot(float)
@@ -1388,6 +1403,9 @@ class HC_Instrument(QGroupBox):
             return ['voltage', 'current', 'pressure'] """
         return []
 
+    def settings_to_UI(self):
+        logger.warning(f"settings_to_UI not implimented for instrument {self.name}")
+
 
 class HC_App(QApplication):
     """Subclass of QApplication that is aware of what hardware is connected to it and can log data"""
@@ -1722,6 +1740,11 @@ class HC_App(QApplication):
                     logger.warning(
                         f"Invalid HC-Command received. Invalid logging level provided."
                     )
+
+            elif uptokens[1] == "SETUI":
+
+                for instr in self.instruments:
+                    instr.settings_to_UI()
 
             elif uptokens[1] == "RUN":
 
