@@ -200,3 +200,13 @@ class HC_DelayGenerator(HC_Instrument):
         dflt["trigger_period"] = "4"
         dflt["trigger_level"] = "0"
         return dflt
+
+    def settings_to_UI(self):
+
+        self.trig_mode_drop.setCurrentText(str(self.settings[f"trigger_mode"]))
+        self.trig_edge_drop.setCurrentText(str(self.settings[f"trigger_edge"]))
+        self.trig_z_drop.setCurrentText(str(self.settings[f"ext_trig_Zin"]))
+        self.trig_lev_edit.setValue(float(self.settings["trigger_level"]))
+        self.pulse_edit.setValue(int(self.settings["pulses_per_burst"]))
+        self.period_edit.setValue(int(self.settings["trigger_period"]))
+        self.write_edit.setText(self.settings["direct_command"])
