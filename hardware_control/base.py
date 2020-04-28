@@ -1741,10 +1741,56 @@ class HC_App(QApplication):
                         f"Invalid HC-Command received. Invalid logging level provided."
                     )
 
-            elif uptokens[1] == "SETUI":
+            elif uptokens[1] == "SYNC":
 
                 for instr in self.instruments:
                     instr.settings_to_UI()
+
+            elif uptokens[1] == "SVSTATE":
+
+                # Make sure the correct number of arguments are given
+                if len(tokens) != 4:  # Requires: FUNC:SVSTATE:INSTRUMENT:filename
+                    logger.warning(
+                        f"Invalid HC-Command received. Wrong number of tokens. Command: '{command}'"
+                    )
+                    return "ERROR: Invalid command"
+
+                instr_str = tokens[2]
+                filename_str = tokens[3]
+
+                # If instrument exists...
+                if instr_str in [x.name for x in self.instruments]:
+
+                    # Find instrument....
+                    for inst in self.instruments:
+                        if instr_str == inst.name:
+                            inst.save_state(filename_str)
+                else:
+                    logger.warning(f"Instrument '{instr_str}' not found.")
+                    return "ERROR: Instrument not found"
+
+            elif uptokens[1] == "LDSTATE":
+
+                # Make sure the correct number of arguments are given
+                if len(tokens) != 4:  # Requires: FUNC:LDSTATE:INSTRUMENT:filename
+                    logger.warning(
+                        f"Invalid HC-Command received. Wrong number of tokens. Command: '{command}'"
+                    )
+                    return "ERROR: Invalid command"
+
+                instr_str = tokens[2]
+                filename_str = tokens[3]
+
+                # If instrument exists...
+                if instr_str in [x.name for x in self.instruments]:
+
+                    # Find instrument....
+                    for inst in self.instruments:
+                        if instr_str == inst.name:
+                            inst.load_state(filename_str)
+                else:
+                    logger.warning(f"Instrument '{instr_str}' not found.")
+                    return "ERROR: Instrument not found"
 
             elif uptokens[1] == "RUN":
 
