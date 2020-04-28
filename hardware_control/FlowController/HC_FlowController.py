@@ -173,3 +173,8 @@ class HC_FlowController(HC_Instrument):
         dflt["rate"] = 0.0
 
         return dflt
+
+    def settings_to_UI(self):
+
+        self.rate_edit.setText(str(self.settings["rate"]))
+        self.gas_drop.setCurrentText(self.settings["gas"])
