@@ -56,14 +56,15 @@ class HC_FunctionGenerator(HC_Instrument):
         #     self.load_state(initialize_with)
         #     self.filename = initialize_with
 
-        ch1 = FunctionGeneratorChannelWidget(1, self)
+        self.channel_widgets = []
+        self.channel_widgets.append(FunctionGeneratorChannelWidget(1, self))
 
         self.channel_panel = QGridLayout()
-        self.channel_panel.addWidget(ch1, 0, 0)
+        self.channel_panel.addWidget(self.channel_widgets[0], 0, 0)
 
         if num_channels == 2:
-            ch2 = FunctionGeneratorChannelWidget(2, self)
-            self.channel_panel.addWidget(ch2, 0, 1)
+            self.channel_widgets.append(FunctionGeneratorChannelWidget(2, self))
+            self.channel_panel.addWidget(self.channel_widgets[-1], 0, 1)
 
         self.master_layout = QGridLayout()
         self.master_layout.addLayout(self.channel_panel, 1, 0, 1, 4)
@@ -108,6 +109,11 @@ class HC_FunctionGenerator(HC_Instrument):
 
         return dflt
 
+    def settings_to_UI(self):
+
+        for chan in self.channel_widgets:
+            chan.settings_to_UI()
+
 
 #
 # Defines a UI for AWG channels
@@ -117,6 +123,7 @@ class FunctionGeneratorChannelWidget(QWidget):
         super().__init__()
 
         self.channel = channel
+        self.control = control
 
         # ************** DEFINE UI *********************#
 
@@ -298,3 +305,34 @@ class FunctionGeneratorChannelWidget(QWidget):
         self.master_layout.addLayout(self.lower_grid, 2, 0)
         self.master_layout.addLayout(self.form2, 2, 1)
         self.setLayout(self.master_layout)
+
+    def settings_to_UI(self):
+
+        self.amplitude_edit.setText(
+            str(self.control.settings[f"CH{self.channel}_amplitude"])
+        )
+        self.offset_edit.setText(str(self.control.settings[f"CH{self.channel}_offset"]))
+        self.frequency_edit.setText(
+            str(self.control.settings[f"CH{self.channel}_frequency"])
+        )
+        self.num_pulse_edit.setText(
+            str(self.control.settings[f"CH{self.channel}_num_pulse"])
+        )
+        self.burst_freq_edit.setText(
+            str(self.control.settings[f"CH{self.channel}_burst_freq"])
+        )
+        setButtonState(
+            self.active_but, self.control.settings[f"CH{self.channel}_enabled"]
+        )
+        setButtonState(
+            self.mod_but, self.control.settings[f"CH{self.channel}_modulate"]
+        )
+        setButtonState(
+            self.burst_but, self.control.settings[f"CH{self.channel}_burst_en"]
+        )
+        self.waveform_drop.setCurrentText(
+            self.control.settings[f"CH{self.channel}_waveform"]
+        )
+        self.impedance_drop.setCurrentText(
+            str(self.control.settings[f"CH{self.channel}_impedance"])
+        )
