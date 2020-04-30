@@ -238,3 +238,20 @@ class HC_ZMQConnectionTool(HC_Instrument):
         dflt = {}
         dflt["port"] = "tcp://*:5555"
         return dflt
+
+    def settings_to_UI(self):
+
+        print(":)")
+
+        self.port_edit.setText(self.settings["port"])
+        print(self.settings["port"])
+
+        # if self.accept_commands:
+        #     self.accept_cmd_button.setChecked(True)
+        #     self.disable_cmd_button.setChecked(False)
+        # else:
+        #     self.accept_cmd_button.setChecked(False)
+        #     self.disable_cmd_button.setChecked(True)
+
+        pstr = self.settings["port"]
+        self.port_label.setText(f"Port: {pstr}")
