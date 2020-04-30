@@ -1553,12 +1553,13 @@ class HC_App(QApplication):
         if uptokens[0] == "SET":
 
             # Make sure the correct number of arguments are given
-            if len(tokens) != 4:  # Requires: MODE:INSTRUMENT:PARAMETER:VALUE
+            if len(tokens) < 4:  # Requires: MODE:INSTRUMENT:PARAMETER:VALUE
                 logger.warning(
                     f"Invalid HC-Command received. Wrong number of tokens. Command: '{command}'"
                 )
                 return "ERROR: Invalid command"
 
+            tokens = command.split(":", 3)
             instr_str = tokens[1]
             setting_str = tokens[2]
             value_str = tokens[3]
