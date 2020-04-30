@@ -162,6 +162,11 @@ class HC_MultiPowerSupply(HC_Instrument):
 
         return dflt
 
+    def settings_to_UI(self):
+
+        for c in self.channel_widgets:
+            c.settings_to_UI()
+
 
 class PowerSupplyChannel(QWidget):
     def __init__(self, channel: int, main_widget):
@@ -291,25 +296,51 @@ class PowerSupplyChannel(QWidget):
 
     def update_readout(self, Vout, Iout, Vset, Iset):
 
-        if Vout == None:
-            Vout = "-----"
-        if Iout == None:
-            Iout = "-----"
-        if Vset == None:
-            Vset = "-----"
-        if Iset == None:
-            Iset = "-----"
+        if Vout is not None:
+            try:
+                self.V_out_label_val.setText(f"{round(float(Vout), 3)} V")
+            except:
+                self.V_out_label_val.setText(f"----- V")
+        else:
+            self.V_out_label_val.setText(f"----- V")
 
-        self.V_set_label_val.setText(f"{Vset} V")
-        self.V_out_label_val.setText(f"{Vout} V")
-        self.I_set_label_val.setText(f"{Iset} A")
-        self.I_out_label_val.setText(f"{Iout} A")
+        if Iout is not None:
+            try:
+                self.I_out_label_val.setText(f"{round(float(Iout), 3)} A")
+            except:
+                self.I_out_label_val.setText(f"----- A")
+        else:
+            self.I_out_label_val.setText(f"----- A")
+
+        if Vset is not None:
+            try:
+                self.V_set_label_val.setText(f"{round(float(Vset), 3)} V")
+            except:
+                self.V_set_label_val.setText(f"----- V")
+        else:
+            self.V_set_label_val.setText(f"----- V")
+
+        if Iset is not None:
+            try:
+                self.I_set_label_val.setText(f"{round(float(Iset), 3)} A")
+            except:
+                self.I_set_label_val.setText(f"----- A")
+        else:
+            self.I_set_label_val.setText(f"----- A")
+
         if Vout is not None and Iout is not None:
             try:
-                pwr = str(float(Vout) * float(Iout))
-                self.P_out_label_val.setText(f"{pwr} W")
+                pwr = float(Vout) * float(Iout)
+                self.P_out_label_val.setText(f"{round(pwr, 3)} W")
             except Exception as e:
                 self.P_out_label_val.setText("-----")
-                # print(e)
         else:
             self.P_out_label_val.setText("-----")
+
+    def settings_to_UI(self):
+
+        self.V_edit.setText(str(self.main_widget.settings[f"CH{self.channel}_V_set"]))
+        self.I_edit.setText(str(self.main_widget.settings[f"CH{self.channel}_I_set"]))
+        setButtonState(
+            self.enabled_but, self.main_widget.settings[f"CH{self.channel}_enabled"]
+        )
