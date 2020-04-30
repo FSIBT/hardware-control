@@ -78,3 +78,9 @@ class HC_DeviceType(HC_Instrument):
         )  # recived messige will be stored, once available this will read it out, that way the UI wont freeze
         if mess:
             self.text.setText(mess)
+
+    def settings_to_UI(self):
+        """ Add code to this function to make the widgets in the GUI update
+        to reflect the state of the 'self.settings' dictionary. """
+
+        pass
