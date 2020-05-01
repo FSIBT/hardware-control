@@ -2108,7 +2108,7 @@ class HC_MainWindow(QMainWindow):
 
     def process_file_menu(self, q):
 
-        if q.text() == "Save Instrument States":  # TODO: impliment
+        if q.text() == "Save Instrument States":
 
             all_states = {}
             filename = ""
@@ -2137,16 +2137,16 @@ class HC_MainWindow(QMainWindow):
                     exc_info=True,
                 )
 
-        elif q.text() == "Save Data":  # TODO: Impliment actual save + options
+        elif q.text() == "Save Data":
 
             self.save_all()
 
-        elif q.text() == "Clear Data":  # TODO: Impliment actual save + options
+        elif q.text() == "Clear Data":
 
             for ds_name in self.app.data_sets:
                 self.app.data_sets[ds_name].clear()
 
-        elif q.text() == "New Dataset":  # TODO: Impliment actual save + options
+        elif q.text() == "New Dataset":
 
             self.create_new_group()
 
@@ -2165,13 +2165,15 @@ class HC_MainWindow(QMainWindow):
     def process_instr_menu(self, q):
 
         if q.text() == "Sync from Instrument":  # TODO: impliment
-            logger.error("Not implimented")
-            # Todo: impliment sync from instr
-        elif q.text() == "Sync from UI":  # TODO: impliment
+
+            self.app.backends_to_settings()
+            self.app.settings_to_UI()
+
+        elif q.text() == "Sync from UI":
 
             self.app.settings_to_backends()
 
-        elif q.text() == "Sync from File":  # TODO: impliment
+        elif q.text() == "Sync from File":
 
             filename = ""
 
@@ -2184,12 +2186,12 @@ class HC_MainWindow(QMainWindow):
 
             self.app.load_state_from_file(filename)
 
-        elif q.text() == "Refresh UI":  # TODO: impliment
+        elif q.text() == "Refresh UI":
 
             for instr in self.app.instruments:
                 instr.settings_to_UI()
 
-        elif q.text() == "Print Addresses":  # TODO: impliment
+        elif q.text() == "Print Addresses":
 
             print("Instrument Addresses")
             for inst in self.app.instruments:
