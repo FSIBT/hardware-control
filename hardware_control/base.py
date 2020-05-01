@@ -1491,6 +1491,34 @@ class HC_App(QApplication):
             if i.model is None:
                 logger.error(f"Instrument  {i} needs a .model")
 
+    def save_all(self):
+        """ Save all datasets to a file, specified by a file dialog """
+
+        filename = ""
+
+        # Use file dialog to get save location
+        dlg = QFileDialog()
+        name_tuple = dlg.getSaveFileName()
+        filename = name_tuple[0]
+        if not filename:  # If cancel bttonw as hit, name will be null
+            return
+
+        all_data = {}
+
+        # Collect all datasets data in one dictionary
+        for ds_name in self.data_sets:
+            set_name = self.data_sets[ds_name].name
+            all_data[f"{set_name}"] = self.data_sets[ds_name].data
+
+        # Add extension if not specified
+        ext = os.path.splitext(filename)[-1].lower()
+        if ext == "":
+            filename = filename + ".json"
+
+        # Write file
+        with open(filename, "w", encoding="utf-8") as outfile:
+            json.dump(all_data, outfile, ensure_ascii=False, indent=4)
+
     def close(self):
         """Closes all instruments"""
         for instr in self.instruments:
@@ -2071,7 +2099,7 @@ class HC_MainWindow(QMainWindow):
 
         elif q.text() == "Save Data":  # TODO: Impliment actual save + options
 
-            self.save_data([])
+            self.app.save_all()
 
         elif q.text() == "New Dataset":  # TODO: Impliment actual save + options
 
