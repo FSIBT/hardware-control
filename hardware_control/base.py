@@ -2041,7 +2041,34 @@ class HC_MainWindow(QMainWindow):
     def process_file_menu(self, q):
 
         if q.text() == "Save Instrument States":  # TODO: impliment
-            print("This is where I save a state")
+
+            all_states = {}
+            filename = ""
+
+            # Use file dialog to get save location
+            dlg = QFileDialog()
+            name_tuple = dlg.getSaveFileName()
+            filename = name_tuple[0]
+            if not filename:  # If cancel bttonw as hit, name will be null
+                return
+
+            # Combine all widgets into one state object
+            for inst in self.app.instruments:
+                all_states[inst.name] = inst.settings
+
+            # Save to file
+            try:
+                with open(filename, "w") as file:
+                    json.dump(all_states, file)
+                    logger.info(
+                        f"Settings for all instruments saved to file '{filename}'"
+                    )
+            except Exception as e:
+                logger.error(
+                    f"Failed to write file '{filename}'. settings not saved.",
+                    exc_info=True,
+                )
+
         elif q.text() == "Save Data":  # TODO: Impliment actual save + options
 
             self.save_data([])
