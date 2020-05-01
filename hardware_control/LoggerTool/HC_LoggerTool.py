@@ -353,7 +353,7 @@ class HC_LoggerTool(HC_Instrument):
 
     def save_all_data(self):
 
-        self.window.save_data("")
+        self.window.app.save_all()
 
     def erase_group_data(self):
 
