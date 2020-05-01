@@ -67,6 +67,7 @@ class HC_Oscilloscope(HC_Instrument):
 
         # scpi_instr.sigReturnWaves.connect(self.backend_return_waveform)
         scpi_instr.dummy = self.window.app.dummy
+        self.address = scpi_instr.connection_addr
 
         if scpi_instr in self.window.app.comms:
             self.comm = self.window.app.comms[scpi_instr]

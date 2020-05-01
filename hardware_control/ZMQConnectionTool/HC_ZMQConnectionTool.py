@@ -42,6 +42,7 @@ class HC_ZMQConnectionTool(HC_Instrument):
 
         self.settings = self.default_state()
         self.settings["port"] = port
+        self.address = port
 
         # Note: unlike most HC_Instruments, this uses self.online to describe if
         # it is *enabled*, not if it is connected to an instrument becausee it has
@@ -241,10 +242,7 @@ class HC_ZMQConnectionTool(HC_Instrument):
 
     def settings_to_UI(self):
 
-        print(":)")
-
         self.port_edit.setText(self.settings["port"])
-        print(self.settings["port"])
 
         # if self.accept_commands:
         #     self.accept_cmd_button.setChecked(True)

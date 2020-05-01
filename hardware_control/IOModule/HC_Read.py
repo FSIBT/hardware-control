@@ -31,6 +31,7 @@ class HC_Read(HC_Instrument):
             {}
         )  # A dict to store all possible settings-Not used here,bc there are no settings
         self.backend = backend
+        self.address = backend.connection_addr
 
         self.backend.dummy = self.window.app.dummy
         if backend in self.window.app.comms:

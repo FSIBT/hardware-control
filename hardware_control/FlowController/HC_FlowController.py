@@ -22,6 +22,7 @@ class HC_FlowController(HC_Instrument):
 
         self.settings = {}
         self.name = name
+        self.address = scpi_instr.connection_addr
 
         scpi_instr.dummy = self.window.app.dummy
 

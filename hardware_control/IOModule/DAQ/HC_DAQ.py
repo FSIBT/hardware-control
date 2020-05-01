@@ -58,13 +58,12 @@ class HC_DAQ(HC_Instrument):
         window,
         name: str = "DAQ Control",
         initialize_with: str = "INSTRUMENT",
-        save_on_close: str = False,
     ):
 
         super().__init__(window, name)
 
         self.settings = {}
-        self.save_on_close = save_on_close
+        self.address = scpi_instr.connection_addr
 
         scpi_instr.dummy = self.window.app.dummy
 

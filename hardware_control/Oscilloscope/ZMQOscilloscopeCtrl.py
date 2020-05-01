@@ -32,6 +32,7 @@ class ZMQOscilloscopeCtrl(HC_Backend):
         self.socket = self.context.socket(zmq.REQ)
 
         self.zmq_address = zmq_addr
+        self.connection_addr = self.zmq_address  # So widget can read address
         self.online = False
         self.dummy = False
         self.num_vert_divisions = 8  # Todo: remove this from all files

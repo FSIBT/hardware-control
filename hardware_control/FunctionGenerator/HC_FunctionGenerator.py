@@ -31,6 +31,7 @@ class HC_FunctionGenerator(HC_Instrument):
         super().__init__(window, name)
 
         self.settings = {}
+        self.address = scpi_instr.connection_addr
 
         scpi_instr.dummy = self.window.app.dummy
 

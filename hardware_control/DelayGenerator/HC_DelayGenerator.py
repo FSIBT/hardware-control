@@ -27,6 +27,7 @@ class HC_DelayGenerator(HC_Instrument):
 
         self.settings = {}
         self.name = name
+        self.address = scpi_instr.connection_addr
 
         self.settings = self.default_state()
 

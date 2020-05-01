@@ -27,6 +27,7 @@ class HC_MultiPowerSupply(HC_Instrument):
         self.backend = backend
 
         backend.dummy = self.window.app.dummy
+        self.address = backend.connection_addr
 
         if backend in self.window.app.comms:
             self.comm = self.window.app.comms[backend]
