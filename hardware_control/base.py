@@ -1274,6 +1274,11 @@ class HC_Instrument(QGroupBox):
         for key in self.settings:
             if self.comm is not None:
                 self.comm.update_setting(key, str(self.settings[key]))
+                x = str(self.settings[key])
+
+    def read_state_from_backend(self):
+
+        pass
 
     def close(self):
         if self.comm is not None:
@@ -2003,6 +2008,16 @@ class HC_App(QApplication):
                 # Write new setting to instrument's dictionary
                 instr.settings[param] = instr_settings[param]
 
+    def settings_to_backends(self):
+
+        for instr in self.instruments:
+            instr.send_state()
+
+    def backends_to_settings(self):
+
+        for instr in self.instruments:
+            instr.read_state_from_backend()
+
 
 class HC_MainWindow(QMainWindow):
     def __init__(self, app):
@@ -2153,8 +2168,9 @@ class HC_MainWindow(QMainWindow):
             logger.error("Not implimented")
             # Todo: impliment sync from instr
         elif q.text() == "Sync from UI":  # TODO: impliment
-            logger.error("Not implimented")
-            # Todo: impliment sync from ui
+
+            self.app.settings_to_backends()
+
         elif q.text() == "Sync from File":  # TODO: impliment
 
             filename = ""
