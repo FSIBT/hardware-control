@@ -913,6 +913,12 @@ class Dataset(QObject):
         self.async_log_timer = QTimer(self)
         self.async_log_timer.timeout.connect(self.log_async)
 
+    def clear(self):
+        """ Clears the dataset's contents """
+
+        self.data = {}
+        self.autosave_next_row = 0
+
     def start_autosave(
         self, interval: float = 120, format: str = "JSON", filename: str = "autosave"
     ):
@@ -1126,7 +1132,11 @@ class HC_Instrument(QGroupBox):
         self.company = None
         self.online = False
         self.comm = None
-        self.ignore = False  # Dictates if instrument should be ignored by
+        self.ignore = (
+            False  # Dictates if instrument should be ignored by connectiontool
+        )
+        self.address = ""  # This is used mostly for displaying the instrument's
+        # address to the user
 
         # Global Constants
         self.globalRefreshRate = 500  # ms refresh
@@ -1953,6 +1963,46 @@ class HC_App(QApplication):
         # if not self.macro_locked:
         self.curr_cmd_idx += 1
 
+    def load_state_from_file(self, filename: str):
+        """ Reads a JSON file to overwrite instrument's settings dictionaries.
+        Expectss JSON to be a dictionary of dictionaries. The first-level key in the
+        instrument name, the value for that key is the instrument's settings
+        dictionary. If a parameter in the file does not exist in the instrment's
+        settings dictionary it is ignored. If the file does not specify a parameter
+        held by th instrument's settings dictionary then that parameter is unchanged.
+        """
+
+        # Read file
+        try:
+            with open(filename) as file:
+                all_settings = json.load(file)
+                logger.info(f"settings for all instruments read from file '{filename}'")
+        except:
+            logger.error(f"Failed to read file '{filename}'.", exc_info=True)
+            return
+
+        # For each instrument...
+        for instr in self.instruments:
+
+            # Proceed if instrument's settings are in master file...
+            # (else skip to next instrument)
+            if instr.name not in all_settings:
+                continue
+
+            # Get instrument's new settings from file
+            instr_settings = all_settings[instr.name]
+
+            # For each parameters specified in new settings...
+            for param in instr_settings:
+
+                # If paraeter is valid in instrument settings...
+                # (else skip to next parameter)
+                if param not in instr.settings:
+                    continue
+
+                # Write new setting to instrument's dictionary
+                instr.settings[param] = instr_settings[param]
+
 
 class HC_MainWindow(QMainWindow):
     def __init__(self, app):
@@ -2006,6 +2056,9 @@ class HC_MainWindow(QMainWindow):
         self.instr_menu.addAction(self.sync_from_instr_act)
         #
         self.sync_from_file_act = QAction("Sync from File", self)
+        self.instr_menu.addAction(self.sync_from_file_act)
+        #
+        self.sync_from_file_act = QAction("Refresh UI", self)
         self.instr_menu.addAction(self.sync_from_file_act)
         #
         self.instr_menu.addSeparator()
@@ -2073,6 +2126,11 @@ class HC_MainWindow(QMainWindow):
 
             self.save_all()
 
+        elif q.text() == "Clear Data":  # TODO: Impliment actual save + options
+
+            for ds_name in self.app.data_sets:
+                self.app.data_sets[ds_name].clear()
+
         elif q.text() == "New Dataset":  # TODO: Impliment actual save + options
 
             self.create_new_group()
@@ -2098,8 +2156,38 @@ class HC_MainWindow(QMainWindow):
             logger.error("Not implimented")
             # Todo: impliment sync from ui
         elif q.text() == "Sync from File":  # TODO: impliment
-            logger.error("Not implimented")
-            # Todo: impliment sync from file
+
+            filename = ""
+
+            # Use file dialog to get save location
+            dlg = QFileDialog()
+            name_tuple = dlg.getOpenFileName()
+            filename = name_tuple[0]
+            if not filename:  # If cancel bttonw as hit, name will be null
+                return
+
+            self.app.load_state_from_file(filename)
+
+        elif q.text() == "Refresh UI":  # TODO: impliment
+
+            for instr in self.app.instruments:
+                instr.settings_to_UI()
+
+        elif q.text() == "Print Addresses":  # TODO: impliment
+
+            print("Instrument Addresses")
+            for inst in self.app.instruments:
+
+                try:
+                    addr = inst.address
+                except Exception as e:
+                    addr = "---"
+
+                if addr == "" or addr == None:
+                    addr = "---"
+
+                print(f"\t{inst.name}:\t {addr}")
+
         else:
             logger.error("function not supported")
 
