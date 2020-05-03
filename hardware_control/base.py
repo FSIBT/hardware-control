@@ -1304,35 +1304,36 @@ class HC_Instrument(QGroupBox):
         sep_idx = retval.find("=")
         if sep_idx != -1:  # Separator was found...
 
-            # Check for asterisk at end of key, ie. right before '='. This indicates
-            # that this command unlocks HC_App's Macro runner and that the parameter
-            # needs to be logged in HC_App.saved_data immediately by appending the
-            # received value to the back of the list in HC_App.saved_data with the
-            # key specified by the returned value.
-            if sep_idx > 0 and retval[sep_idx - 1] == "*":
+            # # Check for asterisk at end of key, ie. right before '='. This indicates
+            # # that this command unlocks HC_App's Macro runner and that the parameter
+            # # needs to be logged in HC_App.saved_data immediately by appending the
+            # # received value to the back of the list in HC_App.saved_data with the
+            # # key specified by the returned value.
+            # if sep_idx > 0 and retval[sep_idx - 1] == "*":
+            #
+            #     self.window.app.macro_locked = False
+            #     # Unlock macro
+            #
+            #     sep_idx -= 1
+            #     # Remove asterisk from key
+            #     key = retval[0:sep_idx]  # Get key
+            #     val = retval[sep_idx + 2 :]  # Get value
+            #
+            #     val_f = -1
+            #     try:
+            #         val_f = float(val)
+            #     except:
+            #         logger.error(f"Failed to convert {val} to a float", exc_info=True)
+            #
+            #     try:  # Append data
+            #         self.window.app.saved_data[key].append(val_f)
+            #     except:  # Does not exist, create list and key
+            #         self.window.app.saved_data[key] = [val_f]
+            #
+            # else:
 
-                self.window.app.macro_locked = False
-                # Unlock macro
-
-                sep_idx -= 1
-                # Remove asterisk from key
-                key = retval[0:sep_idx]  # Get key
-                val = retval[sep_idx + 2 :]  # Get value
-
-                val_f = -1
-                try:
-                    val_f = float(val)
-                except:
-                    logger.error(f"Failed to convert {val} to a float", exc_info=True)
-
-                try:  # Append data
-                    self.window.app.saved_data[key].append(val_f)
-                except:  # Does not exist, create list and key
-                    self.window.app.saved_data[key] = [val_f]
-
-            else:
-                key = retval[0:sep_idx]
-                val = retval[sep_idx + 1 :]
+            key = retval[0:sep_idx]
+            val = retval[sep_idx + 1 :]
 
             self.values[key] = val
 
@@ -1432,7 +1433,7 @@ class HC_App(QApplication):
         self.instruments = []
         self.macros = {}  # Dict of hc-commands (used for scans + trigger buttons)
         self.variables = {}  # Dict of app variables
-        self.saved_data = {}
+        # self.saved_data = {}
         # Dict of data saved directly with query commmands
         self.dummy = dummy
         self.print_close_info = False
@@ -2008,6 +2009,25 @@ class HC_App(QApplication):
                 # Write new setting to instrument's dictionary
                 instr.settings[param] = instr_settings[param]
 
+    def save_all_states(self, filename: str):
+
+        all_states = {}
+
+        # Combine all widgets into one state object
+        for inst in self.instruments:
+            all_states[inst.name] = inst.settings
+
+        # Save to file
+        try:
+            with open(filename, "w") as file:
+                json.dump(all_states, file)
+                logger.info(f"Settings for all instruments saved to file '{filename}'")
+        except Exception as e:
+            logger.error(
+                f"Failed to write file '{filename}'. settings not saved.",
+                exc_info=True,
+            )
+
     def settings_to_backends(self):
 
         for instr in self.instruments:
@@ -2110,7 +2130,6 @@ class HC_MainWindow(QMainWindow):
 
         if q.text() == "Save Instrument States":
 
-            all_states = {}
             filename = ""
 
             # Use file dialog to get save location
@@ -2120,22 +2139,7 @@ class HC_MainWindow(QMainWindow):
             if not filename:  # If cancel bttonw as hit, name will be null
                 return
 
-            # Combine all widgets into one state object
-            for inst in self.app.instruments:
-                all_states[inst.name] = inst.settings
-
-            # Save to file
-            try:
-                with open(filename, "w") as file:
-                    json.dump(all_states, file)
-                    logger.info(
-                        f"Settings for all instruments saved to file '{filename}'"
-                    )
-            except Exception as e:
-                logger.error(
-                    f"Failed to write file '{filename}'. settings not saved.",
-                    exc_info=True,
-                )
+            self.app.save_all_states(filename)
 
         elif q.text() == "Save Data":
 
