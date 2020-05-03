@@ -111,10 +111,10 @@ class HC_MultiPowerSupply(HC_Instrument):
             self.comm.command(f"CH{c}_I_set?")
 
             # Get latest inbox entries for readout data...
-            Vout = self.read_message(f"CH{c}_V_out")
-            Iout = self.read_message(f"CH{c}_I_out")
-            Vset = self.read_message(f"CH{c}_V_set")
-            Iset = self.read_message(f"CH{c}_I_set")
+            Vout = self.read_values(f"CH{c}_V_out")
+            Iout = self.read_values(f"CH{c}_I_out")
+            Vset = self.read_values(f"CH{c}_V_set")
+            Iset = self.read_values(f"CH{c}_I_set")
 
             self.values[f"CH{c}_V_out"] = Vout
             self.values[f"CH{c}_I_out"] = Iout

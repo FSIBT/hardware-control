@@ -73,7 +73,7 @@ class HC_DeviceType(HC_Instrument):
     # Updates the readout
     def update_readout(self):
         self.command("RND")  # Sends readout command (for example)
-        mess = self.read_message(
+        mess = self.read_values(
             "RND"
         )  # recived messige will be stored, once available this will read it out, that way the UI wont freeze
         if mess:

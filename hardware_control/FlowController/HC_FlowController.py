@@ -145,8 +145,8 @@ class HC_FlowController(HC_Instrument):
         self.comm.command(f"pressure?")
 
         # Get latest inbox entries for readout data...
-        flow_meas = self.read_message(f"rate=")
-        press_meas = self.read_message(f"pressure=")
+        flow_meas = self.read_values(f"rate=")
+        press_meas = self.read_values(f"pressure=")
 
         # Update self.values
         self.values["rate"] = flow_meas

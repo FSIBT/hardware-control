@@ -127,7 +127,7 @@ class HC_singleChannelRead(QWidget):
         self.mainWindow.command(
             "CH" + str(self.channelNumber) + "_TEMP?"
         )  # send request to backend
-        mess = self.mainWindow.read_message(
+        mess = self.mainWindow.read_values(
             "CH" + str(self.channelNumber) + "_TEMP"
         )  # check for awnsers
         if mess:  # only write to UI if message not None

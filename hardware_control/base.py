@@ -1284,7 +1284,7 @@ class HC_Instrument(QGroupBox):
         if self.comm is not None:
             self.comm.close()
 
-    def read_message(self, prefix: str):
+    def read_values(self, prefix: str):
         """Looks for an entry in self.values with the key 'prefix'. If found, the
         key's value is returned, else it returns None."""
 
