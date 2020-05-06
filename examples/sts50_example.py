@@ -216,22 +216,32 @@ class STS50Demo(HC_MainWindow):
         app.add_variable("FIL_AMPL_V", "5.0")  # Add a filament amplitude variable
         app.add_variable("DELAY_TIME_S", "7.5")  # Add a delay time variable
         app.add_variable("PULSE_TIME_S", "500e-6")  # Add a spark time variable
+        app.add_variable("SHOT_ID_NUM", "--")  # Add a shot number variable
+        # app.add_macro(
+        #     "Trigger",
+        #     [
+        #         "SET:Filament DAC:VOLT:FIL_AMPL",
+        #         "CMD:Keysight Scope:SINGLE",
+        #         "SET:Filament DAC:VOLT:0",
+        #     ],
+        # )  # Add a trigger macro
         app.add_macro(
-            "Trigger",
-            [
-                "SET:Filament DAC:VOLT:FIL_AMPL",
-                "CMD:Keysight Scope:SINGLE",
-                "SET:Filament DAC:VOLT:0",
-            ],
+            "Trigger", ["FUNC:VAR:SHOT_ID_NUM:10", "FUNC:UPDATE:MACRO_IND",],
         )  # Add a trigger macro
         app.add_macro("Safe", ["CMD:PSU:ALL_OFF", "CMD:AWG:ALL_OFF"])
         app.add_macro("Wait_1s", ["FUNC:time:sleep:1"])
 
+        # self.run_tool = HC_MacroRunnerTool(
+        #     self,
+        #     "Trigger Beam",
+        #     {"Dynamic": "Run Macro", "Trigger": "Trigger Beam"},
+        #     {"FIL_AMPL_V" : "Filament Amplitude: "},
+        # )
         self.run_tool = HC_MacroRunnerTool(
             self,
             "Macro Runner",
-            {"Dynamic": "Run Macro", "Trigger": "Trigger Beam"},
-            {},
+            {"Trigger": "Trigger Beam"},
+            {"SHOT_ID_NUM": "Shot ID Number: "},
         )
         self.run_tool.update_macros()
 
@@ -269,7 +279,7 @@ class STS50Demo(HC_MainWindow):
         self.tab3_layout.addWidget(self.trig2_ctrl, 2, 0)
         self.tab3_layout.addWidget(self.zmqtool, 3, 0, 2, 1)
         # self.tab3_layout.addWidget(self.scantool, 0, 1)
-        self.tab3_layout.addWidget(self.run_tool, 1, 1)
+        # self.tab3_layout.addWidget(self.run_tool, 1, 1)
         self.tab3_layout.addWidget(self.var_tool, 2, 1)
 
         # self.tab3_layout.addWidget(self.statustool, 3, 1)
@@ -313,8 +323,9 @@ class STS50Demo(HC_MainWindow):
 
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.tabs, 0, 0, 3, 1)
-        self.master_layout.addWidget(self.scantool, 0, 1)
-        self.master_layout.addWidget(self.statustool, 1, 1)
+        self.master_layout.addWidget(self.run_tool, 0, 1)
+        self.master_layout.addWidget(self.scantool, 1, 1)
+        self.master_layout.addWidget(self.statustool, 2, 1)
         # self.master_layout.addWidget(self.logtool, 2, 1)
 
         self.main_widget = QWidget(self)

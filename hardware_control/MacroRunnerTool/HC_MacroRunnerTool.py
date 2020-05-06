@@ -17,9 +17,13 @@ class HC_MacroRunnerTool(HC_Instrument):
     'Indicators' specifies which indicators are available to add to the widget.
     Options must be in dictionary, s.t. option is the key name, and it specifies
     a string value for the option. Options include:
+    1.) name of any application variable (value is populates a label describing
+    the application variable's value)
+
      1.) 'Label' adds a plain text label, 2.) 'Light', which adds
     a tri-color light with values 'green', 'grey', 'red', and 3.) 'ProgBar' which
-    adds a progress bar and takes a value between 0 and 100 for a value."""
+    adds a progress bar and takes a value between 0 and 100 for a value.
+    """
 
     def __init__(
         self,
@@ -37,6 +41,7 @@ class HC_MacroRunnerTool(HC_Instrument):
         self.name = name
         self.app = window.app
         self.ignore = True
+        self.label_widgets = {}
 
         # *************************Create GUI************************
 
@@ -76,9 +81,8 @@ class HC_MacroRunnerTool(HC_Instrument):
                 self.button_panel.addWidget(macro_drop_label, idx, 1)
                 self.button_panel.addWidget(self.macro_drop, idx, 2)
 
-            elif but in [
-                x for x in self.window.app.macros
-            ]:  # But is a valid macro name....
+            # But is a valid macro name....
+            elif but in [x for x in self.window.app.macros]:
 
                 run_button = QPushButton()
                 run_button.setText(self.buttons[but])
@@ -91,6 +95,30 @@ class HC_MacroRunnerTool(HC_Instrument):
             else:
 
                 logger.error(f"Macro {but} does not exist. Ignoring button.")
+
+        for idx, ind in enumerate(self.indicators):  # Requests dynamic...
+
+            if ind in [x for x in self.window.app.variables]:
+
+                # Create macro selection dropdown label
+                ind_desc_label = QLabel(self.indicators[ind])
+                ind_desc_label.setAlignment(
+                    QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
+                )
+
+                self.label_widgets[ind] = QLabel(self.window.app.variables[ind])
+                self.label_widgets[ind].setAlignment(
+                    QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
+                )
+
+                self.button_panel.addWidget(ind_desc_label, idx + len(self.buttons), 0)
+                self.button_panel.addWidget(
+                    self.label_widgets[ind], idx + len(self.buttons), 1
+                )
+
+            else:
+
+                logger.error(f"Macro {but} does not exist. Ignoring indicator.")
 
         # ******* DEFINE OVERALL LAYOUT
         #
@@ -114,12 +142,31 @@ class HC_MacroRunnerTool(HC_Instrument):
         self.settings["macro"] = m
 
     def update_macros(self):
-        self.macro_drop.clear()
-        names = []
-        for m in self.app.macros:
-            names.append(m)
-            logger.debug(f"Adding macro {m}")
-        self.macro_drop.addItems(names)
+
+        try:
+
+            self.macro_drop.clear()
+            names = []
+            for m in self.app.macros:
+                names.append(m)
+                logger.debug(f"Adding macro {m}")
+            self.macro_drop.addItems(names)
+
+        except:
+            pass  # no macros to update
+
+    def update_indicators(self):
+
+        for idx, ind in enumerate(self.indicators):  # Requests dynamic...
+
+            if ind in [x for x in self.window.app.variables]:
+
+                # Create macro selection dropdown label
+                self.label_widgets[ind].setText(self.window.app.variables[ind])
+
+            else:
+
+                logger.error(f"Macro {but} does not exist. Ignoring indicator.")
 
     #
     # Create a default state object if can't get state from a file
