@@ -1420,6 +1420,7 @@ class HC_Instrument(QGroupBox):
         return []
 
     def settings_to_UI(self):
+        """ Overwrites the values in the UI with the values in self.settings """
         logger.warning(f"settings_to_UI not implimented for instrument {self.name}")
 
 
@@ -1756,6 +1757,25 @@ class HC_App(QApplication):
                 else:
                     logger.warning(
                         f"Invalid HC-Command received. Invalid logging level provided."
+                    )
+
+            elif uptokens[1] == "UPDATE":
+
+                # Ensure more tokens exist
+                if len(tokens) < 3:
+                    logger.warning(
+                        f"Invalid HC-Command received. FUNC:UPDATE requires arguments.",
+                    )
+                    return "False"
+
+                # Change value
+                if uptokens[2] == "MACRO_IND":
+                    for inst in self.instruments:
+                        if inst.name == "Macro Runner":
+                            inst.update_indicators()
+                else:
+                    logger.warning(
+                        f"Invalid HC-Command received. Invalid update option provided."
                     )
 
             elif uptokens[1] == "SYNC":
