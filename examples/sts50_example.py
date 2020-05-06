@@ -17,7 +17,7 @@ Options:
 import logging
 
 import sys, warnings
-
+import time
 from PyQt5.QtWidgets import QDoubleSpinBox, QStyleFactory, QTabWidget, QGroupBox
 from docopt import docopt
 
@@ -213,6 +213,8 @@ class STS50Demo(HC_MainWindow):
         self.statustool = HC_StatusTool(self, "Connection Status")
         self.statustool.update_instruments()
 
+        app.function_handles["trigger_function"] = self.trigger_function
+
         app.add_variable("FIL_AMPL_V", "5.0")  # Add a filament amplitude variable
         app.add_variable("DELAY_TIME_S", "7.5")  # Add a delay time variable
         app.add_variable("PULSE_TIME_S", "500e-6")  # Add a spark time variable
@@ -225,9 +227,8 @@ class STS50Demo(HC_MainWindow):
         #         "SET:Filament DAC:VOLT:0",
         #     ],
         # )  # Add a trigger macro
-        app.add_macro(
-            "Trigger", ["FUNC:VAR:SHOT_ID_NUM:10", "FUNC:UPDATE:MACRO_IND",],
-        )  # Add a trigger macro
+        app.add_macro("Trigger", ["FUNC:HANDLE:trigger_function"])
+        # "Trigger", ["FUNC:VAR:SHOT_ID_NUM:10", "FUNC:UPDATE:MACRO_IND",],
         app.add_macro("Safe", ["CMD:PSU:ALL_OFF", "CMD:AWG:ALL_OFF"])
         app.add_macro("Wait_1s", ["FUNC:time:sleep:1"])
 
@@ -346,6 +347,11 @@ class STS50Demo(HC_MainWindow):
         #     with open("example_sts50.log", "w") as f:
         #         for item in self.app.log:
         #             f.write("%s\n" % item)
+
+    def trigger_function(self):
+
+        self.app.variables["SHOT_ID_NUM"] = str(time.time())
+        self.run_tool.update_indicators()
 
 
 def main():

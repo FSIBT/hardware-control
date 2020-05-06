@@ -1434,6 +1434,7 @@ class HC_App(QApplication):
         self.instruments = []
         self.macros = {}  # Dict of hc-commands (used for scans + trigger buttons)
         self.variables = {}  # Dict of app variables
+        self.function_handles = {}  # Dict of function handles for macros to call
         # self.saved_data = {}
         # Dict of data saved directly with query commmands
         self.dummy = dummy
@@ -1771,7 +1772,9 @@ class HC_App(QApplication):
                 # Change value
                 if uptokens[2] == "MACRO_IND":
                     for inst in self.instruments:
-                        if inst.name == "Macro Runner":
+                        if (
+                            inst.name == "Macro Runner"
+                        ):  # TODO: Fix how it ID's the runner tool
                             inst.update_indicators()
                 else:
                     logger.warning(
@@ -1782,6 +1785,36 @@ class HC_App(QApplication):
 
                 for instr in self.instruments:
                     instr.settings_to_UI()
+
+            elif uptokens[1] == "HANDLE":
+
+                # Ensure more tokens exist
+                if len(tokens) < 3:
+                    logger.warning(
+                        f"Invalid HC-Command received. FUNC:handle requires arguments.",
+                    )
+                    return "False"
+
+                # Make sure handle exists
+                if tokens[2] in self.function_handles:
+
+                    # Run function - note: this can become recursive and get stuck in
+                    # an infinite loop if the user runs a function that calls itself
+                    if len(tokens) > 3:
+                        tokens = command.split(":", 3)
+                        try:
+                            return self.function_handles[tokens[2]](token_handles[3])
+                        except:
+                            return "Error"
+                    else:
+                        try:
+                            return self.function_handles[tokens[2]]()
+                        except:
+                            return "Error"
+
+                else:
+                    logger.warning(f"Requested macro to run does not exist.",)
+                    return "False"
 
             elif uptokens[1] == "SVSTATE":
 
