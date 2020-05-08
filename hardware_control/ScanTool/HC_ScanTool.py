@@ -16,6 +16,7 @@ from PyQt5.QtWidgets import (
 )
 from hardware_control.base import HC_Instrument
 import logging
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -32,19 +33,9 @@ class HC_ScanTool(HC_Instrument):
         self.app = window.app
         self.ignore = True
         self.include_variables = include_variables
+        self.val_list = []
 
-        # # Initialize state to correct values
-        # if initialize_with == "INSTRUMENT":
-        #     self.save_on_close = False
-        #     # Can't save without filename
-        #     self.settings = self.initialize_gui_instrument()
-        # elif initialize_with == "DEFAULT":
-        #     self.save_on_close = False
-        #     # Can't save without filename
         self.settings = self.default_state()
-        # else:
-        #     self.load_state(initialize_with)
-        #     self.filename = initialize_with
 
         # *************************Create GUI************************
 
@@ -75,9 +66,9 @@ class HC_ScanTool(HC_Instrument):
         self.parameter_drop = QComboBox()
         self.parameter_drop.addItems(["----------"])
         self.parameter_drop.setCurrentText(self.settings["parameter"])
-        self.parameter_drop.currentIndexChanged.connect(
-            lambda: self.set_parameter(self.parameter_drop.currentText())
-        )
+        # self.parameter_drop.currentIndexChanged.connect(
+        #     lambda: self.set_parameter(self.parameter_drop.currentText())
+        # )
 
         self.values_select_frame = QGridLayout()
         #
@@ -85,28 +76,28 @@ class HC_ScanTool(HC_Instrument):
         #
         self.use_list = QRadioButton("List")
         self.use_list.setChecked(True)
-        self.use_list.toggled.connect(lambda: self.values_src_set(self.use_list))
+        # self.use_list.toggled.connect(lambda: self.values_src_set(self.use_list))
         #
         self.use_space = QRadioButton("Spacing")
-        self.use_space.toggled.connect(lambda: self.values_src_set(self.use_space))
+        # self.use_space.toggled.connect(lambda: self.values_src_set(self.use_space))
 
         self.use_file = QRadioButton("File")
-        self.use_file.toggled.connect(lambda: self.values_src_set(self.use_file))
+        # self.use_file.toggled.connect(lambda: self.values_src_set(self.use_file))
 
-        self.lin_rb = QRadioButton("Linear")
-        self.lin_rb.setChecked(True)
-        self.lin_rb.toggled.connect(lambda: self.space_rule_set(self.lin_rb))
+        # self.lin_rb = QRadioButton("Linear")
+        # self.lin_rb.setChecked(True)
+        # self.lin_rb.toggled.connect(lambda: self.space_rule_set(self.lin_rb))
         #
-        self.log_rb = QRadioButton("Logarithmic")
-        self.log_rb.toggled.connect(lambda: self.space_rule_set(self.log_rb))
+        # self.log_rb = QRadioButton("Logarithmic")
+        # self.log_rb.toggled.connect(lambda: self.space_rule_set(self.log_rb))
         #
         self.values_label = QLabel("Values:")
         self.values_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         #
         self.values_edit = QLineEdit()
-        self.values_edit.editingFinished.connect(
-            lambda: self.set_values(self.values_edit.text())
-        )
+        # self.values_edit.editingFinished.connect(
+        #     lambda: self.set_values(self.values_edit.text())
+        # )
         self.values_edit.setText(str(self.settings["values"]))
         #
         self.spacing_start_label = QLabel("Start: ")
@@ -115,7 +106,7 @@ class HC_ScanTool(HC_Instrument):
         )
         #
         self.spacing_start_edit = QLineEdit()
-        self.spacing_start_edit.editingFinished.connect(lambda: self.set_start_value)
+        # self.spacing_start_edit.editingFinished.connect(lambda: self.set_start_value)
 
         self.spacing_end_label = QLabel("End: ")
         self.spacing_end_label.setAlignment(
@@ -123,7 +114,16 @@ class HC_ScanTool(HC_Instrument):
         )
         #
         self.spacing_end_edit = QLineEdit()
-        self.spacing_end_edit.editingFinished.connect(lambda: self.set_end_value)
+        # self.spacing_end_edit.editingFinished.connect(lambda: self.set_end_value)
+
+        self.num_points_label = QLabel("Num Points: ")
+        self.num_points_label.setAlignment(
+            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
+        )
+        #
+        self.num_points_edit = QLineEdit()
+        # self.num_points_edit.editingFinished.connect(lambda: self.set_num_points)
+
         #
         self.spacing_log_check = QCheckBox("Log Spacing")
         #
@@ -143,10 +143,12 @@ class HC_ScanTool(HC_Instrument):
         #
         self.values_select_frame.addWidget(self.use_space, 1, 0, 1, 1)
         self.values_select_frame.addWidget(self.spacing_start_label, 1, 1, 1, 1)
-        self.values_select_frame.addWidget(self.spacing_start_edit, 1, 2, 1, 3)
+        self.values_select_frame.addWidget(self.spacing_start_edit, 1, 2, 1, 2)
         self.values_select_frame.addWidget(self.spacing_end_label, 1, 4, 1, 2)
         self.values_select_frame.addWidget(self.spacing_end_edit, 1, 6, 1, 2)
-        self.values_select_frame.addWidget(self.spacing_log_check, 2, 4, 1, 2)
+        self.values_select_frame.addWidget(self.num_points_label, 2, 1, 1, 1)
+        self.values_select_frame.addWidget(self.num_points_edit, 2, 2, 1, 2)
+        self.values_select_frame.addWidget(self.spacing_log_check, 2, 4, 1, 4)
         #
         self.values_select_frame.addWidget(self.use_file, 3, 0, 1, 1)
         self.values_select_frame.addWidget(self.values_file_label, 3, 1, 1, 2)
@@ -160,9 +162,9 @@ class HC_ScanTool(HC_Instrument):
         self.macro_drop = QComboBox()
         self.macro_drop.addItems(["None"])
         self.macro_drop.setCurrentText(self.settings["macro"])
-        self.macro_drop.currentIndexChanged.connect(
-            lambda: self.set_macro(self.macro_drop.currentText())
-        )
+        # self.macro_drop.currentIndexChanged.connect(
+        #     lambda: self.set_macro(self.macro_drop.currentText())
+        # )
         #
 
         #
@@ -221,20 +223,24 @@ class HC_ScanTool(HC_Instrument):
         self.master_layout.addWidget(self.scan_button, 3, 0)
         self.setLayout(self.master_layout)
 
-    def space_rule_set(self, rule):
-        pass
-
-    def values_src_set(self, rule):
-        pass
-
+    # def space_rule_set(self, rule):
+    #     pass
+    #
+    # def values_src_set(self, rule):
+    #     pass
+    #
     def browse_values_files(self):
         pass
 
-    def set_end_value(self):
-        pass
-
-    def set_start_value(self):
-        pass
+    #
+    # def set_end_value(self):
+    #     pass
+    #
+    # def set_start_value(self):
+    #     pass
+    #
+    # def set_num_points(self):
+    #     pass
 
     def set_instrument(self, inst: str):
 
@@ -275,8 +281,8 @@ class HC_ScanTool(HC_Instrument):
         self.settings["progress"] = 0
         self.progress_bar.setValue(self.settings["progress"])
 
-    def set_macro(self, mac: str):
-        self.settings["macro"] = mac
+    # def set_macro(self, mac: str):
+    #     self.settings["macro"] = mac
 
     def update_macros(self):
         self.macro_drop.clear()
@@ -285,21 +291,75 @@ class HC_ScanTool(HC_Instrument):
             names.append(m)
         self.macro_drop.addItems(names)
 
-    def set_parameter(self, param: str):
-        logger.debug(f"Setting parameter to {param}")
-        self.settings["parameter"] = param
+    # def set_parameter(self, param: str):
+    #     logger.debug(f"Setting parameter to {param}")
+    #     self.settings["parameter"] = param
+    #
+    #     self.settings["progress"] = 0
+    #     self.progress_bar.setValue(self.settings["progress"])
+    #
+    # def set_values(self, new_values: str):
+    #     """ Changes the internal values parameter to a new value """
+    #
+    #     logger.debug(f"Setting values to {new_values}")
+    #     self.settings["values"] = new_values
+    #
+    #     self.settings["progress"] = 0
+    #     self.progress_bar.setValue(self.settings["progress"])
 
-        self.settings["progress"] = 0
-        self.progress_bar.setValue(self.settings["progress"])
+    def compute_values(self):
 
-    def set_values(self, new_values: str):
-        logger.debug(f"Setting values to {new_values}")
-        self.settings["values"] = new_values
+        # Get value entry mode from radiobuttons
+        mode = None
+        if self.use_list.isChecked():
+            mode = "list"
+        elif self.use_space.isChecked():
+            mode = "space"
+        elif self.use_file.isChecked():
+            mode = "file"
 
-        self.settings["progress"] = 0
-        self.progress_bar.setValue(self.settings["progress"])
+        # Make sure a radiobutton is selected
+        if mode is None:
+            logger.error("No mode selected in scan tool")
+            return False
+
+        if mode == "list":  # Saves as strings
+
+            # Break values at commas
+            self.val_list = self.values_edit.text().split(",")
+
+        elif mode == "space":  # Saves as floats
+
+            # Read start, end, num points
+            try:
+                start = float(self.spacing_start_edit.text())
+                end = float(self.spacing_end_edit.text())
+                num_points = float(self.num_points_edit.text())
+            except:
+                logger.error(f"Invalid values for start, end, or num_points")
+                return False
+
+            # Generate log/lin spacing
+            if self.spacing_log_check.isChecked():
+                self.val_list = np.logspace(
+                    np.log10(start), np.log10(end), int(num_points)
+                )
+            else:
+                self.val_list = np.linspace(start, end, int(num_points))
+
+        elif mode == "file":  # Saves as strings
+
+            pass
+
+        return True
 
     def scan(self):
+
+        if not self.compute_values():
+            return
+
+        print(self.val_list)
+        return
 
         # Get parameters, instrument, etc...
         i = self.settings["instrument"]
@@ -310,6 +370,7 @@ class HC_ScanTool(HC_Instrument):
         logger.debug(
             f"Starting scan\n\tInstrument: {i}\n\tParameter: {p}\n\tValues:{vals}"
         )
+        print(f"Starting scan\n\tInstrument: {i}\n\tParameter: {p}\n\tValues:{vals}")
 
         if i != "App variables":  # Is real instrument, not App Variable
 
