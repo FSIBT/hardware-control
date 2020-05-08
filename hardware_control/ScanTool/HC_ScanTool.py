@@ -13,6 +13,7 @@ from PyQt5.QtWidgets import (
     QComboBox,
     QRadioButton,
     QCheckBox,
+    QFileDialog,
 )
 from hardware_control.base import HC_Instrument
 import logging
@@ -230,7 +231,17 @@ class HC_ScanTool(HC_Instrument):
     #     pass
     #
     def browse_values_files(self):
-        pass
+
+        filename = ""
+
+        # Use file dialog to get save location
+        dlg = QFileDialog()
+        name_tuple = dlg.getOpenFileName()
+        filename = name_tuple[0]
+        if not filename:  # If cancel bttonw as hit, name will be null
+            return
+
+        self.values_file_edit.setText(filename)
 
     #
     # def set_end_value(self):
@@ -320,6 +331,7 @@ class HC_ScanTool(HC_Instrument):
 
         # Make sure a radiobutton is selected
         if mode is None:
+
             logger.error("No mode selected in scan tool")
             return False
 
@@ -349,7 +361,16 @@ class HC_ScanTool(HC_Instrument):
 
         elif mode == "file":  # Saves as strings
 
-            pass
+            filename = self.values_file_edit.text()
+            if filename == "":
+                logger.error("no filename provided for values file")
+                return False
+
+            # Read files
+            with open(filename) as file:
+                file_str = file.read().replace("\n", "")
+
+            self.val_list = file_str.split(",")
 
         return True
 
