@@ -214,6 +214,7 @@ class STS50Demo(HC_MainWindow):
         self.statustool.update_instruments()
 
         app.function_handles["trigger_function"] = self.trigger_function
+        app.function_handles["print_fil"] = self.print_fil
 
         app.add_variable("FIL_AMPL_V", "5.0")  # Add a filament amplitude variable
         app.add_variable("DELAY_TIME_S", "7.5")  # Add a delay time variable
@@ -231,6 +232,7 @@ class STS50Demo(HC_MainWindow):
         # "Trigger", ["FUNC:VAR:SHOT_ID_NUM:10", "FUNC:UPDATE:MACRO_IND",],
         app.add_macro("Safe", ["CMD:PSU:ALL_OFF", "CMD:AWG:ALL_OFF"])
         app.add_macro("Wait_1s", ["FUNC:time:sleep:1"])
+        app.add_macro("print_fil_ampl", ["FUNC:HANDLE:print_fil"])
 
         # self.run_tool = HC_MacroRunnerTool(
         #     self,
@@ -352,6 +354,10 @@ class STS50Demo(HC_MainWindow):
 
         self.app.variables["SHOT_ID_NUM"] = str(time.time())
         self.run_tool.update_indicators()
+
+    def print_fil(self):
+
+        print("Filament amplitude = " + str(self.app.variables["FIL_AMPL_V"]))
 
 
 def main():

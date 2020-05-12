@@ -1998,6 +1998,8 @@ class HC_App(QApplication):
         return "True"
 
     def run_macro(self, m_commands):
+        """ Accepts a list of hc-commands (from a macro) and runs one at a time,
+        evey 300ms until the macro is complete. """
 
         # Start timer, check every 300 ms
         self.macro_timer.start(300)
@@ -2005,6 +2007,13 @@ class HC_App(QApplication):
         # Load macro and pointer into object memory
         self.curr_macro = m_commands
         self.curr_cmd_idx = 0
+
+    def run_macro_blocking(self, m_commands):
+        """ Accepts a list of hc-commands (from a macro) and runs all, blocking
+        the GUI until they are complete """
+
+        for cmd in m_commands:
+            self.process_hc_command(cmd)
 
     def resume_macro(self):
 

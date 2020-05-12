@@ -387,20 +387,21 @@ class HC_ScanTool(HC_Instrument):
             return
 
         print(self.val_list)
-        return
 
         # Get parameters, instrument, etc...
-        i = self.settings["instrument"]
-        p = self.settings["parameter"]
-        m = self.settings["macro"]
-        vals = self.settings["values"].split(",")
+        i = self.instrument_drop.currentText()
+        p = self.parameter_drop.currentText()
+        m = self.macro_drop.currentText()
+        # vals = self.settings["values"].split(",")
 
         logger.debug(
-            f"Starting scan\n\tInstrument: {i}\n\tParameter: {p}\n\tValues:{vals}"
+            f"Starting scan\n\tInstrument: {i}\n\tParameter: {p}\n\tValues:{self.val_list}"
         )
-        print(f"Starting scan\n\tInstrument: {i}\n\tParameter: {p}\n\tValues:{vals}")
+        print(
+            f"Starting scan\n\tInstrument: {i}\n\tParameter: {p}\n\tValues:{self.val_list}"
+        )
 
-        if i != "App variables":  # Is real instrument, not App Variable
+        if i != "App Variables":  # Is real instrument, not App Variable
 
             # Find instrument, get current setting for parameter
             found = False
@@ -410,16 +411,18 @@ class HC_ScanTool(HC_Instrument):
                     found = True
                     break
             if not found:
-                logger.errro(f"Failed to find instrument {i}")
+                logger.error(f"Failed to find instrument {i}")
                 return
 
             # Scan through values
             count = 0
-            for v in vals:
+            for v in self.val_list:
 
                 # Update progress bar
-                self.settings["progress"] = str(count / len(vals) * 100)
-                logger.debug(f"\tRunning value = '{v}'\t\t{count/len(vals)*100}%")
+                self.settings["progress"] = str(count / len(self.val_list) * 100)
+                logger.debug(
+                    f"\tRunning value = '{v}'\t\t{count/len(self.val_list)*100}%"
+                )
                 self.progress_bar.setValue(float(self.settings["progress"]))
                 QApplication.processEvents()
 
@@ -440,27 +443,30 @@ class HC_ScanTool(HC_Instrument):
         else:
 
             # Make sure variable exists
-            if not (i in self.app.variables):
+            if not (p in self.app.variables):
                 logger.error("Failed to find app variable.")
+                print(self.app.variables)
                 return
 
             # Scan thorugh values
             count = 0
-            for v in vals:
+            for v in self.val_list:
 
                 # Update progress bar
-                self.settings["progress"] = count / len(vals) * 100
-                logger.debug(f"\tRunning value = '{v}'\t\t{count/len(vals)*100}%")
+                self.settings["progress"] = count / len(self.val_list) * 100
+                logger.debug(
+                    f"\tRunning value = '{v}'\t\t{count/len(self.val_list)*100}%"
+                )
                 self.progress_bar.setValue(float(self.settings["progress"]))
                 QApplication.processEvents()
 
                 # Change value of variable
-                self.app.variables[i] = v.strip()  # Set value
+                self.app.variables[p] = v.strip()  # Set value
                 count += 1
 
                 if m != "None":
                     logger.debug(f"\t\tRunning macro {m}")
-                    self.app.run_macro(self.app.macros[m])
+                    self.app.run_macro_blocking(self.app.macros[m])
 
         self.settings["progress"] = 100
         self.progress_bar.setValue(self.settings["progress"])
