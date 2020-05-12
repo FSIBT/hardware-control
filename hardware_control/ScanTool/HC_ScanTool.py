@@ -319,6 +319,8 @@ class HC_ScanTool(HC_Instrument):
     #     self.progress_bar.setValue(self.settings["progress"])
 
     def compute_values(self):
+        """ Reads the values of the widgets and computes the values for the scan
+        to iterate over. """
 
         # Get value entry mode from radiobuttons
         mode = None
@@ -353,6 +355,11 @@ class HC_ScanTool(HC_Instrument):
 
             # Generate log/lin spacing
             if self.spacing_log_check.isChecked():
+
+                # Make sure 'start' isn't too low
+                if start <= 0:
+                    start = 1
+
                 self.val_list = np.logspace(
                     np.log10(start), np.log10(end), int(num_points)
                 )
