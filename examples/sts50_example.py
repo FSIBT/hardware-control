@@ -233,6 +233,7 @@ class STS50Demo(HC_MainWindow):
         app.add_macro("Safe", ["CMD:PSU:ALL_OFF", "CMD:AWG:ALL_OFF"])
         app.add_macro("Wait_1s", ["FUNC:time:sleep:1"])
         app.add_macro("print_fil_ampl", ["FUNC:HANDLE:print_fil"])
+        app.add_macro("MeasurementRequest", ["FUNC:DISP:str:MEAS:REQ"])
 
         # self.run_tool = HC_MacroRunnerTool(
         #     self,

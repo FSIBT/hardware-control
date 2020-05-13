@@ -168,9 +168,9 @@ class HC_ScanTool(HC_Instrument):
         self.macro_drop = QComboBox()
         self.macro_drop.addItems(["None"])
         self.macro_drop.setCurrentText(self.settings["macro"])
-        # self.macro_drop.currentIndexChanged.connect(
-        #     lambda: self.set_macro(self.macro_drop.currentText())
-        # )
+        self.macro_drop.currentIndexChanged.connect(
+            lambda: self.macro_changed(self.macro_drop.currentText())
+        )
         #
         #
         self.sync_measdir_check = QCheckBox("Sync Measurements")
@@ -300,8 +300,23 @@ class HC_ScanTool(HC_Instrument):
         self.settings["progress"] = 0
         self.progress_bar.setValue(self.settings["progress"])
 
-    # def set_macro(self, mac: str):
-    #     self.settings["macro"] = mac
+    def macro_changed(self, new_macro_name: str):
+        """ Called when the macro selection is changed. Checks to see if the macro
+        submits a measurementrequest, if so, it sets the 'sync with director' check
+        to true, otherwise sets it to false. """
+
+        # Quit if macro can't be found
+        if new_macro_name not in self.app.macros:
+            logger.error(
+                f"Failed to find macro {new_macro_name} despite being option in dropdown"
+            )
+            return
+
+        all_cmds = "".join(self.app.macros[new_macro_name])
+        if "MEAS:REQ" in all_cmds.upper():
+            self.sync_measdir_check.setChecked(True)
+        else:
+            self.sync_measdir_check.setChecked(False)
 
     def update_macros(self):
         self.macro_drop.clear()
