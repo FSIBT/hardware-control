@@ -117,7 +117,7 @@ class HC_ScanTool(HC_Instrument):
         self.spacing_end_edit = QLineEdit()
         # self.spacing_end_edit.editingFinished.connect(lambda: self.set_end_value)
 
-        self.num_points_label = QLabel("Num Points: ")
+        self.num_points_label = QLabel("steps: ")
         self.num_points_label.setAlignment(
             QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
         )
@@ -128,7 +128,7 @@ class HC_ScanTool(HC_Instrument):
         #
         self.spacing_log_check = QCheckBox("Log Spacing")
         #
-        self.values_file_label = QLabel("Source file:")
+        self.values_file_label = QLabel("File:")
         self.values_file_label.setAlignment(
             QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
         )
@@ -137,6 +137,9 @@ class HC_ScanTool(HC_Instrument):
         #
         self.values_file_select_button = QPushButton("Browse")
         self.values_file_select_button.clicked.connect(self.browse_values_files)
+
+        self.values_select_box = QGroupBox()
+        self.values_select_box.setStyleSheet("QGroupBox{padding-top:3px}")
 
         self.values_select_frame.addWidget(self.use_list, 0, 0, 1, 1)
         self.values_select_frame.addWidget(self.values_label, 0, 1, 1, 1)
@@ -149,12 +152,14 @@ class HC_ScanTool(HC_Instrument):
         self.values_select_frame.addWidget(self.spacing_end_edit, 1, 6, 1, 2)
         self.values_select_frame.addWidget(self.num_points_label, 2, 1, 1, 1)
         self.values_select_frame.addWidget(self.num_points_edit, 2, 2, 1, 2)
-        self.values_select_frame.addWidget(self.spacing_log_check, 2, 4, 1, 4)
+        self.values_select_frame.addWidget(self.spacing_log_check, 2, 6, 1, 2)
         #
         self.values_select_frame.addWidget(self.use_file, 3, 0, 1, 1)
-        self.values_select_frame.addWidget(self.values_file_label, 3, 1, 1, 2)
-        self.values_select_frame.addWidget(self.values_file_edit, 3, 3, 1, 3)
+        self.values_select_frame.addWidget(self.values_file_label, 3, 1, 1, 1)
+        self.values_select_frame.addWidget(self.values_file_edit, 3, 2, 1, 2)
         self.values_select_frame.addWidget(self.values_file_select_button, 3, 6, 1, 2)
+
+        self.values_select_box.setLayout(self.values_select_frame)
 
         #
         self.macro_label = QLabel("Scan Macro:")
@@ -167,22 +172,25 @@ class HC_ScanTool(HC_Instrument):
         #     lambda: self.set_macro(self.macro_drop.currentText())
         # )
         #
-
+        #
+        self.sync_measdir_check = QCheckBox("Sync Measurements")
         #
         self.upper_grid = QGridLayout()
         self.middle_grid = QGridLayout()
 
         # Add widgets to grid layout
-        self.upper_grid.addWidget(self.instrument_label, 0, 0)
-        self.upper_grid.addWidget(self.instrument_drop, 1, 0)
-        self.upper_grid.addWidget(self.arrow_symbol, 1, 1)
-        self.upper_grid.addWidget(self.parameter_label, 0, 2)
-        self.upper_grid.addWidget(self.parameter_drop, 1, 2)
+        self.upper_grid.addWidget(self.instrument_label, 0, 0, 1, 2)
+        self.upper_grid.addWidget(self.instrument_drop, 1, 0, 1, 2)
+        self.upper_grid.addWidget(self.arrow_symbol, 1, 2)
+        self.upper_grid.addWidget(self.parameter_label, 0, 3)
+        self.upper_grid.addWidget(self.parameter_drop, 1, 3)
 
-        self.upper_grid.addLayout(self.values_select_frame, 2, 0, 1, 3)
+        # self.upper_grid.addLayout(self.values_select_frame, 2, 0, 1, 4)
+        self.upper_grid.addWidget(self.values_select_box, 2, 0, 1, 4)
 
-        self.upper_grid.addWidget(self.macro_label, 3, 0, 1, 2)
-        self.upper_grid.addWidget(self.macro_drop, 3, 2)
+        self.upper_grid.addWidget(self.sync_measdir_check, 3, 3)
+        self.upper_grid.addWidget(self.macro_label, 3, 0)
+        self.upper_grid.addWidget(self.macro_drop, 3, 1)
         # self.middle_grid.addWidget(self.values_label, 2, 0)
         # self.middle_grid.addWidget(self.values_edit, 2, 1, 1, 2)
 
