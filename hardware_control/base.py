@@ -1451,7 +1451,6 @@ class HC_App(QApplication):
         # via teh 'exec' function
         self.exec_enabled = True
 
-        self.macro_locked = False
         self.macro_lock_end_time = None
         self.curr_macro = []
         self.curr_cmd_idx = 0
