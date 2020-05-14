@@ -1456,8 +1456,8 @@ class HC_App(QApplication):
         self.curr_cmd_idx = 0
 
         # Start a timer to resume timer after any pauses
-        self.macro_timer = QTimer(self)
-        self.macro_timer.timeout.connect(self.resume_macro)
+        # self.macro_timer = QTimer(self)
+        # self.macro_timer.timeout.connect(self.resume_macro)
         # Don't start timer yet...
 
     def add_instrument(self, widget):
