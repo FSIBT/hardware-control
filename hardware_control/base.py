@@ -1931,28 +1931,6 @@ class HC_App(QApplication):
                     logger.warning(f"Invalid HC-Command received.")
                     return "False"
 
-            elif uptokens[1] == "TIME":
-
-                if len(tokens) < 4:
-                    logger.warning(
-                        f"Invalid HC-Command received. FUNC:time requires arguments."
-                    )
-
-                if uptokens[2] == "SLEEP":
-
-                    if self.macro_locked:
-                        if time.time() >= self.macro_lock_end_time:
-                            self.macro_locked = False
-                    else:  # Lock for 'x' seconds
-                        try:
-                            self.macro_lock_end_time = time.time() + float(tokens[3])
-                            self.macro_locked = True
-                        except Exception:
-                            logger.error(
-                                f"Failed to convert hc-command argument to float",
-                                exc_info=True,
-                            )
-
             elif uptokens[1] == "LSDATA":
 
                 print("All Data:")
@@ -1968,21 +1946,6 @@ class HC_App(QApplication):
             if len(tokens) < 2:
                 logger.warning(f"Invalid HC-Command received. DEV requires arguments.")
                 return "False"
-
-            if uptokens[1] == "MACLOCK":  # Turn macro lock on or off
-
-                # Ensure more tokens exist
-                if len(tokens) < 3:
-                    logger.warning(
-                        f"Invalid HC-Command received. DEV:maclock requires arguments."
-                    )
-                    return "False"
-
-                # Change value
-                if tokens[2].upper() == "ON" or tokens[2].upper() == "TRUE":
-                    self.macro_locked = True
-                else:
-                    self.macro_locked = False
 
             # Set MeasurementDirector state to ready. Don't use this unless you know what you're doing. It can get measurement batches out of sync if used at the wrong time
             elif uptokens[1] == "MEAS-SET-READY":
