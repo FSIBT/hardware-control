@@ -1961,38 +1961,11 @@ class HC_App(QApplication):
         return "True"
 
     def run_macro(self, m_commands):
-        """ Accepts a list of hc-commands (from a macro) and runs one at a time,
-        evey 300ms until the macro is complete. """
-
-        # Start timer, check every 300 ms
-        self.macro_timer.start(300)
-
-        # Load macro and pointer into object memory
-        self.curr_macro = m_commands
-        self.curr_cmd_idx = 0
-
-    def run_macro_blocking(self, m_commands):
         """ Accepts a list of hc-commands (from a macro) and runs all, blocking
         the GUI until they are complete """
 
         for cmd in m_commands:
             self.process_hc_command(cmd)
-
-    def resume_macro(self):
-
-        # If out of bounds, end timer, kill macro
-        if self.curr_cmd_idx >= len(self.curr_macro):
-            self.macro_timer.stop()
-            return
-
-        if self.macro_locked:
-            return
-
-        self.process_hc_command(self.curr_macro[self.curr_cmd_idx])
-
-        # # If macro isn't locked, advance to next command
-        # if not self.macro_locked:
-        self.curr_cmd_idx += 1
 
     def load_state_from_file(self, filename: str):
         """ Reads a JSON file to overwrite instrument's settings dictionaries.
