@@ -27,7 +27,7 @@ setup(
         "hardware_control.VariableEditTool",
     ],
     package_data={
-        "hardware-control": [os.path.join("hardware_control", "icons", "*svg")]
+        "hardware_control": [os.path.join("icons", "*svg")]
     },
     install_requires=[
         "pytest",
