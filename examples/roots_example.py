@@ -1,0 +1,185 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""oscilloscope_example to control the hardware_control test stand
+
+Usage:
+  sts50_example [--dummy] [--socket] [--debug] [--console] [--info]
+
+Options:
+  --dummy    use dummy connection for instruments that return semi-random data
+             so that one run the program away from the test stand
+  --socket   use sockets instead of visa
+  --debug    allow debug print statements
+  --info     allow info print statements
+  --console  Print logger output to console
+"""
+
+import logging
+
+import sys, warnings
+import time
+from PyQt5.QtWidgets import QDoubleSpinBox, QStyleFactory, QTabWidget, QGroupBox
+from docopt import docopt
+
+commands = docopt(__doc__)
+dummy = commands["--dummy"]
+info = commands["--info"]
+if commands["--socket"]:
+    connection_type = "socket"
+else:
+    connection_type = "visa"
+debug = commands["--debug"]
+print_console = commands["--console"]
+
+logfile_name = "hardware_control.log"
+
+if debug:
+    if print_console:
+        logging.basicConfig(level=logging.DEBUG)
+        print("Logger configured:\n\tLevel: Debug\n\tOutput: Console")
+    else:
+        logging.basicConfig(filename=logfile_name, level=logging.DEBUG)
+        print(f"Logger configured:\n\tLevel: Debug\n\tOutput: {logfile_name}")
+elif info:
+    if print_console:
+        logging.basicConfig(level=logging.INFO)
+        print("Logger configured:\n\tLevel: Info\n\tOutput: Console")
+    else:
+        logging.basicConfig(filename=logfile_name, level=logging.INFO)
+        print(f"Logger configured:\n\tLevel: Info\n\tOutput: {logfile_name}")
+else:
+    if print_console:
+        logging.basicConfig(level=logging.WARNING)
+        print("Logger configured:\n\tLevel: Warning\n\tOutput: Console")
+    else:
+        logging.basicConfig(filename=logfile_name, level=logging.WARNING)
+        print(f"Logger configured:\n\tLevel: Warning\n\tOutput: {logfile_name}")
+
+from hardware_control.base import HC_App, HC_MainWindow, Dataset
+from hardware_control.ConnectionStatusTool.HC_StatusTool import HC_StatusTool
+from hardware_control.PowerSupply.HC_MultiPowerSupply import *
+from hardware_control.PowerSupply.CAEN14xxETCtrl import CAEN14xxETCtrl
+from hardware_control.ZMQConnectionTool.HC_ZMQConnectionTool import HC_ZMQConnectionTool
+from hardware_control.LoggerTool.HC_LoggerTool import HC_LoggerTool
+
+logger = logging.getLogger(__name__)
+
+# handler = logging.FileHandler('sts50_example.log')
+# handler.setLevel(logging.DEBUG)
+
+# formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# handler.setFormatter(formatter)
+
+# logger.addHandler(handler)
+
+logger.info("Roots Example Starting")
+
+# logger.info("Initailizing program")
+#
+# if info:
+#     logger.setLevel(logging.INFO)
+#
+# if debug:
+#     logger.setLevel(logging.DEBUG)
+
+
+class RootsDemo(HC_MainWindow):
+    def __init__(self, app):
+        super().__init__(app)
+        self.app = app
+
+        self.setWindowTitle("ROOTS Control")
+
+        self.tabs = QTabWidget()
+        self.tab_psu = QWidget()
+        self.tab_aux = QWidget()
+        self.tab_data = QWidget()
+
+        self.tabs.addTab(self.tab_psu, "Power Supplies")
+        self.tabs.addTab(self.tab_aux, "Aux")
+        self.tabs.addTab(self.tab_data, "Datasets")
+
+        self.main_widget = QWidget(self)
+
+        #####################################################################
+        ######## Tab 1
+
+        self.caen_be = CAEN14xxETCtrl("TCPIP0::192.168.0.1")
+        self.caen_wdgt_123 = HC_MultiPowerSupply(
+            self.caen_be, self, [1, 2, 3], "CAEN Power Supply 1-3"
+        )
+        self.caen_wdgt_456 = HC_MultiPowerSupply(
+            self.caen_be, self, [4, 5, 6], "CAEN Power Supply 4-6"
+        )
+
+        # Put instrument(s) in tab
+        self.tab_psu_layout = QGridLayout()
+        self.tab_psu_layout.addWidget(self.caen_wdgt_123, 0, 0)
+        self.tab_psu_layout.addWidget(self.caen_wdgt_456, 1, 0)
+        self.tab_psu.setLayout(self.tab_psu_layout)
+
+        #####################################################################
+        ######### Aux Tab
+
+        self.zmqtool = HC_ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
+
+        self.tab_aux_layout = QGridLayout()
+        self.tab_aux_layout.addWidget(self.zmqtool, 0, 0)
+        self.tab_aux.setLayout(self.tab_aux_layout)
+
+        #####################################################################
+        ######## Tab 3
+
+        self.logtool = HC_LoggerTool(self, "Data Logger")
+        self.logtool.update_groups()
+
+        self.app.data_sets["Autolog"] = Dataset("Autolog")
+        self.app.data_sets["Autolog"].start_asynch(3)
+        self.app.data_sets["Autolog"].add_instrument(self.caen_wdgt_123)
+        self.app.data_sets["Autolog"].add_instrument(self.caen_wdgt_456)
+        self.logtool.update_groups()
+        self.logtool.set_group("Autolog")
+
+        self.tab_data_layout = QGridLayout()
+        self.tab_data_layout.addWidget(self.logtool, 1, 0)
+        self.tab_data.setLayout(self.tab_data_layout)
+
+        #####################################################################
+        ######## Set master window layout
+
+        self.statustool = HC_StatusTool(self, "Connection Status")
+        self.statustool.update_instruments()
+
+        self.master_layout = QGridLayout()
+        self.master_layout.addWidget(self.tabs, 0, 0, 3, 1)
+        self.master_layout.addWidget(self.statustool, 0, 1)
+        # self.master_layout.addWidget(self.logtool, 2, 1)
+
+        self.main_widget = QWidget(self)
+        self.main_widget.setLayout(self.master_layout)
+        self.setCentralWidget(self.main_widget)
+
+        # ['macintosh', 'Windows', 'Fusion']
+        self.app.setStyle(QStyleFactory.create("Fusion"))
+        # self.app.setStyle(QStyleFactory.create("Windows"))
+
+        self.show()
+
+    def close(self):
+        print("Closing")
+        self.app.close()
+
+
+def main():
+    warnings.filterwarnings(
+        action="ignore", message="unclosed", category=ResourceWarning
+    )  # ToDo Not a solution
+    app = HC_App(dummy=dummy)
+    app.print_close_info = True
+
+    ex = RootsDemo(app)
+    app.aboutToQuit.connect(ex.close)
+    sys.exit(app.exec_())
+
+
+main()
