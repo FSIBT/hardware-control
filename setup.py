@@ -48,7 +48,6 @@ setup(
         "pytest-runner",
         "nidaqmx",
         "colorama",
-        "pickle",
         "h5py",
     ],
     setup_requires=["pytest-runner"],
