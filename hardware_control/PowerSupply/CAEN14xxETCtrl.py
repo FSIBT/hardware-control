@@ -62,8 +62,7 @@ class CAEN14xxETCtrl(HC_Backend):
             else:  # Connection stable - return True
                 return True
 
-        if self.debug:
-            logger.debug("trying to connect")
+        logger.debug("trying to connect")
 
         # Try to connect to instrument
         try:
