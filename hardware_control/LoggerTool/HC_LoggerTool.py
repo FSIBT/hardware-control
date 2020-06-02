@@ -4,6 +4,7 @@ import json
 import pkg_resources
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
+import pyqtgraph as pg  # For some reason, without this line QPushButton won't import
 from PyQt5.QtGui import (
     QPixmap,
     QProgressBar,
