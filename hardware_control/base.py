@@ -551,9 +551,8 @@ class MeasurementDirector:
         self.cancel_batch = False
 
         if self.state == "Ready":
-            self.launch_avail()
-
             self.state = "Busy"
+            self.launch_avail()
 
     def stop(self):
         pass
