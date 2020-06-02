@@ -2,6 +2,7 @@ import json
 import json
 
 import pkg_resources
+import pyqtgraph as pg  # For some reason, without this line QPushButton won't import
 from PyQt5 import QtCore
 from PyQt5.QtGui import QPixmap, QProgressBar, QIcon, QApplication
 from PyQt5.QtWidgets import (
@@ -18,6 +19,7 @@ from PyQt5.QtWidgets import (
 from hardware_control.base import HC_Instrument
 import logging
 import numpy as np
+from hardware_control.ZMQConnectionTool.HC_ZMQConnectionTool import HC_ZMQConnectionTool
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +40,11 @@ class HC_ScanTool(HC_Instrument):
 
         self.settings = self.default_state()
 
+        # This ZMQConnectionTool will receive commands from the scan thread
+        self.zmq_receiver = HC_ZMQConnectionTool(
+            window, f"{self.name}-ZMQ Receiver", "tcp://*:5600", 100
+        )
+
         # *************************Create GUI************************
 
         self.arrow_symbol = QLabel()
@@ -49,6 +56,7 @@ class HC_ScanTool(HC_Instrument):
             )
         )
         self.arrow_symbol.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
+
         # ****** DEFINE TEXT BOXES
         #
         self.instrument_label = QLabel("Instrument:")
@@ -406,15 +414,15 @@ class HC_ScanTool(HC_Instrument):
 
     def scan(self):
 
+        # Compute scan values
         if not self.compute_values():
             return
-
-        print(self.val_list)
 
         # Get parameters, instrument, etc...
         i = self.instrument_drop.currentText()
         p = self.parameter_drop.currentText()
         m = self.macro_drop.currentText()
+        sync = self.sync_measdir_check.isChecked()
         # vals = self.settings["values"].split(",")
 
         logger.debug(
@@ -459,9 +467,17 @@ class HC_ScanTool(HC_Instrument):
                     return
                 count += 1
 
+                # Run Macro (if macro selected)
                 if m != "None":
                     logger.debug(f"\t\tRunning macro {m}")
                     self.app.run_macro(self.app.macros[m])
+
+                # Sync with director (if box checked)
+                if (
+                    self.sync_measdir_check.isChecked()
+                ):  # Todo: Put this function in new thread, prevent blocking
+                    while self.app.director.get_state().upper() == "BUSY":
+                        time.sleep(0.1)
 
         else:
 
@@ -489,7 +505,7 @@ class HC_ScanTool(HC_Instrument):
 
                 if m != "None":
                     logger.debug(f"\t\tRunning macro {m}")
-                    self.app.run_macro_blocking(self.app.macros[m])
+                    self.app.run_macro(self.app.macros[m])
 
         self.settings["progress"] = 100
         self.progress_bar.setValue(self.settings["progress"])
@@ -573,3 +589,50 @@ class HC_ScanTool(HC_Instrument):
         dflt["macro"] = "None"
 
         return dflt
+
+
+# class ScanThread(QObject):
+#
+#     def __init__(self, instr, param, macro, sync, vals, key):
+#
+#         super().__init__()
+#
+#         self.instr = instr
+#         self.param = param
+#         self.macro = macro
+#         self.sync = sync
+#         self.vals = vals
+#
+#         #Make sure vals is a list
+#         if type(vals) != list:
+#             logger.error("Scan thread received single value instead of list")
+#             self.vals = [self.vals]
+#
+#     def send_hc(socket, command_str:str):
+#         """ Sends an HC Command to the  """
+#
+#
+#         print(f"Sending {command_str}")
+#         socket.send(str.encode(command_str));
+#         rval = socket.recv();
+#         print("\t"+str(rval));
+#
+#     def is_busy():
+#         req_str = "MEAS:GETSTATE"
+#         socket.send(str.encode(req_str))
+#         rval = socket.recv();
+#         return rval == "Busy"
+#
+#     def run_scan(self):
+#
+#         for val in self.vals:
+#
+#             #First set parameter to value
+#             f"SET:{self.instr}:{self.param}:{str(val)}"
+#
+#             #Second, run macro (if requested)
+#
+#             #Third, sync w/ MeasDir (if requested)
+#
+#
+#         self.finished.emit()
