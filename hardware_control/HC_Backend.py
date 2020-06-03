@@ -45,7 +45,7 @@ class HC_Backend(ABC):
             self.connection_type = VISA
         else:
             self.connection_type = SOCKET
-            self.id_addr, self.port_no = self.connection_addr.split(":")
+            self.ip_addr, self.port_no = self.connection_addr.split(":")
 
     def check(self):
         """Some error checking
@@ -87,13 +87,7 @@ class HC_Backend(ABC):
             logger.debug(f"{self.ID}: Called close with not device dfined")
             return False
 
-        if self.online:
-            self.device.close()
-            logger.debug(f"{self.ID}: Backend Closed")
-            return False
-        else:
-            logger.debug(f"{self.ID}: device not online, no need to close")
-            return False
+        self.device.close()
 
     def try_connect(self):
         """Checks if the backend is in communication with the object, if it is
@@ -121,9 +115,6 @@ class HC_Backend(ABC):
                 rm = pyvisa.ResourceManager("@py")
                 self.device = rm.open_resource(self.connection_addr)
 
-                # Verify actually connected (open_resource won't
-                # always throw error w/ disconnected USB)
-                self.device.query("*IDN?")
                 logger.debug("opened connection")
             except Exception as e:
                 self.online = False
@@ -138,11 +129,8 @@ class HC_Backend(ABC):
                 self.device = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.device.settimeout(2)
                 self.device.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 0)
-                self.device.connect((self.id_addr, self.port_no))
+                self.device.connect((self.ip_addr, int(self.port_no)))
 
-                # Verify actually connected (open_resource won't
-                # always throw error w/ disconnected USB)
-                self.device.query("*IDN?")  # TODO: Test that this works
                 logger.debug("opened connection")
             except Exception as e:
                 self.online = False

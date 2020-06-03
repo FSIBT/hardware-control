@@ -100,7 +100,7 @@ class RootsDemo(HC_MainWindow):
         #####################################################################
         ######## Tab 1
 
-        self.caen_be = CAEN14xxETCtrl("TCPIP0::192.168.0.1::INSTR")
+        self.caen_be = CAEN14xxETCtrl("192.168.0.1:1470")
         self.caen_wdgt_123 = HC_MultiPowerSupply(
             self.caen_be, self, [1, 2, 3], "CAEN Power Supply 1-3"
         )
