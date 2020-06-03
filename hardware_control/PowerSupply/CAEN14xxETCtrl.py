@@ -8,11 +8,7 @@ logger = logging.getLogger(__name__)
 
 class CAEN14xxETCtrl(HC_Backend):
     def __init__(
-        self,
-        connection_addr,
-        connection_type: str = SOCKET,
-        ip_addr: str = "",
-        port_no=5025,
+        self, connection_addr,
     ):
 
         super().__init__()
@@ -23,9 +19,7 @@ class CAEN14xxETCtrl(HC_Backend):
         self.online = False
         self.dummy = False
 
-        self.connection_type = connection_type
-        self.port_no = port_no
-        self.ip_addr = ip_addr
+        self.parse_connection_addr()
 
         # This specifies the max number of channels the user can request
         self.num_channels = 8
@@ -35,60 +29,94 @@ class CAEN14xxETCtrl(HC_Backend):
 
         self.check()
 
+    # #
+    # # Tries to connect to the instrument. Is called by the timer every second.
+    # # If already connected, returns immediately.
+    # #
+    # def try_connect(self):
+    #     """Checks if the backend is in communication with the object, if it is
+    #     not, it tries to re-establish communication."""
     #
-    # Tries to connect to the instrument. Is called by the timer every second.
-    # If already connected, returns immediately.
+    #     # Handle dummy case
+    #     if self.dummy:
+    #         if self.online:
+    #             return True
+    #         else:
+    #             logger.debug(
+    #                 f"{self.ID}: creating dummy connection to {self.connection_addr}"
+    #             )
+    #             self.online = True
+    #             return True
     #
-    def try_connect(self):
-        """Checks if the backend is in communication with the object, if it is
-        not, it tries to re-establish communication."""
+    #     if self.online:  # Has previously connected to the isntrument
+    #
+    #         try:  # Check if connected by asking for instrument ID
+    #             self.device.query("$BD:00,CMD:MON,PAR:BDNAME")
+    #         except visa.errors.VisaIOError as e:  # Not connected - reconnect
+    #             logger.warning(
+    #                 "Lost connection to device. Will try to reconnect", exc_info=True,
+    #             )
+    #         else:  # Connection stable - return True
+    #             return True
+    #
+    #     logger.debug("trying to connect")
+    #
+    #     # Try to connect to instrument
+    #     try:
+    #         if self.connection_type == VISA:  # Use visa
+    #             rm = visa.ResousrceManager("@py")
+    #             self.device = rm.open_resource(self.connection_addr)  # Open connection
+    #             self.device.read_termination = "\r\n"
+    #             self.device.write_termination = "\r\n"
+    #
+    #             # Verify actually connected (open_resource won't always throw error w/ disconnected USB)
+    #             self.device.query("$BD:00,CMD:MON,PAR:BDNAME")
+    #             logger.debug("opened connection")
+    #
+    #         elif self.connection_type == SOCKET:
+    #             self.device = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    #             self.device.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 0)
+    #             self.device.connect((self.ip_addr, self.port_no))
+    #     except Exception as e:
+    #         self.online = False
+    #     else:
+    #         self.online = True
+    #
+    #     return self.online
 
-        # Handle dummy case
-        if self.dummy:
-            if self.online:
-                return True
-            else:
-                logger.debug(
-                    f"{self.ID}: creating dummy connection to {self.connection_addr}"
-                )
-                self.online = True
-                return True
+    def check_connection(self):
 
-        if self.online:  # Has previously connected to the isntrument
+        if self.connection_type == VISA:
 
-            try:  # Check if connected by asking for instrument ID
+            # Check if connected by asking for instrument ID
+            # Verify actually connected (open_resource won't always throw error w/ disconnected USB)
+            try:
                 self.device.query("$BD:00,CMD:MON,PAR:BDNAME")
             except visa.errors.VisaIOError as e:  # Not connected - reconnect
                 logger.warning(
-                    "Lost connection to device. Will try to reconnect", exc_info=True,
+                    "Device connection check failed. Setting online to false.",
+                    exc_info=True,
                 )
+                return False
             else:  # Connection stable - return True
                 return True
 
-        logger.debug("trying to connect")
+        elif connection_type == SOCKET:
 
-        # Try to connect to instrument
-        try:
-            if self.connection_type == VISA:  # Use visa
-                rm = visa.ResousrceManager("@py")
-                self.device = rm.open_resource(self.connection_addr)  # Open connection
-                self.device.read_termination = "\r\n"
-                self.device.write_termination = "\r\n"
+            try:
+                self.query("$BD:00,CMD:MON,PAR:BDNAME")
+            except Exception as e:
+                logger.warning(
+                    "Device connection check fail. Setting online to false",
+                    exc_info=True,
+                )
+                return False
+            else:
+                return True
 
-                # Verify actually connected (open_resource won't always throw error w/ disconnected USB)
-                self.device.query("$BD:00,CMD:MON,PAR:BDNAME")
-                logger.debug("opened connection")
-
-            elif self.connection_type == SOCKET:
-                self.device = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                self.device.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 0)
-                self.device.connect((self.ip_addr, self.port_no))
-        except Exception as e:
-            self.online = False
         else:
-            self.online = True
 
-        return self.online
+            return None
 
     def update_setting(self, setting: str, value):
 
