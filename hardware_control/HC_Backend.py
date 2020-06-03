@@ -138,7 +138,7 @@ class HC_Backend(ABC):
                 self.device = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.device.settimeout(2)
                 self.device.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 0)
-                self.device.connect(self.connection_addr)
+                self.device.connect((self.id_addr, self.port_no))
 
                 # Verify actually connected (open_resource won't
                 # always throw error w/ disconnected USB)
