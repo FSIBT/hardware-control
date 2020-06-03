@@ -34,26 +34,22 @@ print_console = commands["--console"]
 logfile_name = "hardware_control.log"
 
 if debug:
-    if print_console:
-        logging.basicConfig(level=logging.DEBUG)
-        print("Logger configured:\n\tLevel: Debug\n\tOutput: Console")
-    else:
-        logging.basicConfig(filename=logfile_name, level=logging.DEBUG)
-        print(f"Logger configured:\n\tLevel: Debug\n\tOutput: {logfile_name}")
+    loglevel = logging.DEBUG
+    loglevelname = "Debug"
 elif info:
-    if print_console:
-        logging.basicConfig(level=logging.INFO)
-        print("Logger configured:\n\tLevel: Info\n\tOutput: Console")
-    else:
-        logging.basicConfig(filename=logfile_name, level=logging.INFO)
-        print(f"Logger configured:\n\tLevel: Info\n\tOutput: {logfile_name}")
+    loglevel = logging.INFO
+    loglevelname = "Info"
 else:
-    if print_console:
-        logging.basicConfig(level=logging.WARNING)
-        print("Logger configured:\n\tLevel: Warning\n\tOutput: Console")
-    else:
-        logging.basicConfig(filename=logfile_name, level=logging.WARNING)
-        print(f"Logger configured:\n\tLevel: Warning\n\tOutput: {logfile_name}")
+    loglevel = logging.WARNING
+    loglevelname = "Warning"
+
+if print_console:
+    logging.basicConfig(level=loglevel)
+    print(f"Logger configured:\n\tLevel: {loglevelname}\n\tOutput: Console")
+else:
+    logging.basicConfig(filename=logfile_name, level=loglevel)
+    print(f"Logger configured:\n\tLevel: {loglevelname}\n\tOutput: {logfile_name}")
+
 
 from hardware_control.base import HC_App, HC_MainWindow, Dataset
 from hardware_control.ConnectionStatusTool.HC_StatusTool import HC_StatusTool
