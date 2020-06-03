@@ -6,6 +6,7 @@ from pymodbus.client.sync import ModbusTcpClient as ModbusClient
 
 from colorama import Fore, Style
 import logging
+from hardware_control.utility import regex_compare
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,27 @@ class HC_Backend(ABC):
 
         self.device = None  # This is the physical instrument to write to
         self.dummy = False
+
+        self.connection_addr = None
         self.connection_type = None
+        self.port_no = None
+        self.ip_addr = None
+
+    def parse_connection_addr(self):
+
+        if (
+            regex_compare("ASRL*", self.connection_addr)
+            or regex_compare("GPIB*", self.connection_addr)
+            or regex_compare("PXI*", self.connection_addr)
+            or regex_compare("VISA*", self.connection_addr)
+            or regex_compare("TCPIP*", self.connection_addr)
+            or regex_compare("USB*", self.connection_addr)
+            or regex_compare("VXI*", self.connection_addr)
+        ):
+            self.connection_type = VISA
+        else:
+            self.connection_type = SOCKET
+            self.id_addr, self.port_no = self.connection_addr.split(":")
 
     def check(self):
         """Some error checking
@@ -90,7 +111,7 @@ class HC_Backend(ABC):
                 return True
 
         if self.online:
-            return True
+            return True  # Todo: Add check_connection() here?
 
         logger.debug(f"{self.ID}: trying to connect")
 
@@ -106,7 +127,9 @@ class HC_Backend(ABC):
                 logger.debug("opened connection")
             except Exception as e:
                 self.online = False
-                logger.debug(f"\t({self.ID}) ERROR while using visa: /n {str(e)}")
+                logger.debug(
+                    f"\t({self.ID}) ERROR connecting with visa.", exc_info=True
+                )
                 logger.debug(f"{self.ID} is offline")
             else:
                 self.online = True
@@ -123,7 +146,9 @@ class HC_Backend(ABC):
                 logger.debug("opened connection")
             except Exception as e:
                 self.online = False
-                logger.debug(f"\t({self.ID}) ERROR while using sockets: /n {str(e)}")
+                logger.debug(
+                    f"\t({self.ID}) ERROR connecting with sockets.", exc_info=True
+                )
                 logger.debug(f"{self.ID} is offline")
             else:
                 self.online = True
@@ -135,10 +160,28 @@ class HC_Backend(ABC):
                     logger.debug("opened connection")
             except Exception as e:
                 self.online = False
-                logger.debug(f"\t({self.ID}) ERROR while using modbus: /n {str(e)}")
+                logger.debug(
+                    f"\t({self.ID}) ERROR connecting with modbus.", exc_info=True
+                )
                 logger.debug(f"{self.ID} is offline")
 
+        # If connection purportedly successful, verify connection
+        if self.online == True:
+            if self.check_connection() == False:
+                self.online = False
+
         return self.online
+
+    def check_connection(self):
+        """
+        This function should be overwritten by each backend. It will verify
+        that the instrument is actually connected by querying something from the
+        instrument such as the instrument's model number or ID.
+
+        Return True if connected, False if not connected, None if not implimented
+        """
+
+        return None
 
     def write(self, command: str):
 
