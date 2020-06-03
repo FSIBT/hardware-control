@@ -17,7 +17,7 @@ class CAEN14xxETCtrl(HC_Backend):
 
         super().__init__()
 
-        self.ID = "TDKL-GenH"
+        self.ID = "CAEN14xxET"
 
         self.connection_addr = connection_addr
         self.online = False
@@ -216,7 +216,7 @@ class CAEN14xxETCtrl(HC_Backend):
                     return f"{cmd}={rval}"
 
                 # Todo: should this regex_compare have a '?' at the end?
-                elif regex_compare("CH._I_set", cmd):  # Get CHx I setpoint
+                elif regex_compare("CH._I_set?", cmd):  # Get CHx I setpoint
                     cmd = cmd[:-1]
                     c = cmd[2]
                     result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:ISET")
@@ -228,7 +228,7 @@ class CAEN14xxETCtrl(HC_Backend):
                     return f"{cmd}={rval}"
 
                 # Todo: should this regex_compare have a '?' at the end?
-                elif regex_compare("CH._V_set", cmd):  # Get CHx V setpoint
+                elif regex_compare("CH._V_set?", cmd):  # Get CHx V setpoint
                     cmd = cmd[:-1]
                     c = cmd[2]
                     result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:VSET")
@@ -236,6 +236,29 @@ class CAEN14xxETCtrl(HC_Backend):
                     if result is None:
                         return "None"
                     rval = result[-6:]
+
+                    return f"{cmd}={rval}"
+
+                elif regex_compare("CH._I_max?", cmd):  # Get CHx I max
+                    cmd = cmd[:-1]
+                    c = cmd[2]
+
+                    try:
+                        rval = self.max_I[c]
+                    except:
+                        rval = "Error"
+
+                    return f"{cmd}={rval}"
+
+                # Todo: should this regex_compare have a '?' at the end?
+                elif regex_compare("CH._V_max?", cmd):  # Get CHx V max
+                    cmd = cmd[:-1]
+                    c = cmd[2]
+
+                    try:
+                        rval = self.max_V[c]
+                    except:
+                        rval = "Error"
 
                     return f"{cmd}={rval}"
 
