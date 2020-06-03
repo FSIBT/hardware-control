@@ -13,6 +13,7 @@ import os
 import hashlib
 import pickle
 import h5py
+from sys import platform
 
 from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot, QObject, QTimer
 from PyQt5.QtWidgets import (
@@ -2071,8 +2072,13 @@ class HC_MainWindow(QMainWindow):
         #
         self.file_menu.addSeparator()
         #
-        self.close_act = QAction("Close Window", self)
-        self.close_act.setShortcut("Ctrl+W")
+
+        if platform == "linux" or platform == "linux2" or platform == "darwin":
+            self.close_act = QAction("Close Window", self)
+            self.close_act.setShortcut("Ctrl+W")
+        elif platform == "win32":
+            self.close_act = QAction("Exit", self)
+            self.close_act.setShortcut("Ctrl+Q")
         self.file_menu.addAction(self.close_act)
 
         ####### Instrument Menu
@@ -2156,7 +2162,7 @@ class HC_MainWindow(QMainWindow):
                 ):  # TODO: Find resilient way to automatically identify LoggerTool objects to update their group lists
                     inst.update_groups()
 
-        elif q.text() == "Close Window":
+        elif q.text() == "Exit" or q.text() == "Close Window":
             self.close()
             sys.exit(0)
         else:
