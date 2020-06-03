@@ -104,9 +104,21 @@ class RootsDemo(HC_MainWindow):
         self.caen_wdgt_123 = HC_MultiPowerSupply(
             self.caen_be, self, [1, 2, 3], "CAEN Power Supply 1-3"
         )
+        self.caen_wdgt_123.set_maxV(1, 2e3)
+        self.caen_wdgt_123.set_maxV(2, 1e3)
+        self.caen_wdgt_123.set_maxV(3, 1.1e3)
+        self.caen_wdgt_123.set_maxI(1, 300e-6)
+        self.caen_wdgt_123.set_maxI(2, 300e-6)
+        self.caen_wdgt_123.set_maxI(3, 300e-6)
         self.caen_wdgt_456 = HC_MultiPowerSupply(
             self.caen_be, self, [4, 5, 6], "CAEN Power Supply 4-6"
         )
+        self.caen_wdgt_456.set_maxV(4, 1705)
+        self.caen_wdgt_456.set_maxV(5, 2e3)
+        self.caen_wdgt_456.set_maxV(6, 500)
+        self.caen_wdgt_456.set_maxI(4, 300e-6)
+        self.caen_wdgt_456.set_maxI(5, 300e-6)
+        self.caen_wdgt_456.set_maxI(6, 800e-6)
 
         # Put instrument(s) in tab
         self.tab_psu_layout = QGridLayout()
