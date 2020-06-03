@@ -2,6 +2,7 @@ import socket
 import random
 from hardware_control.HC_Backend import HC_Backend, SOCKET, VISA
 import logging
+from hardware_control.utility import regex_compare
 
 logger = logging.getLogger(__name__)
 

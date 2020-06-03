@@ -33,14 +33,13 @@ class HC_Backend(ABC):
 
     def parse_connection_addr(self):
 
-        if (
-            regex_compare("ASRL*", self.connection_addr)
-            or regex_compare("GPIB*", self.connection_addr)
-            or regex_compare("PXI*", self.connection_addr)
-            or regex_compare("VISA*", self.connection_addr)
-            or regex_compare("TCPIP*", self.connection_addr)
-            or regex_compare("USB*", self.connection_addr)
-            or regex_compare("VXI*", self.connection_addr)
+        if (self.connection_addr.startswith("ASRL")
+            or self.connection_addr.startswith("GPIB")
+            or self.connection_addr.startswith("PXI")
+            or self.connection_addr.startswith("VISA")
+            or self.connection_addr.startswith("TCPIP")
+            or self.connection_addr.startswith("USB")
+            or self.connection_addr.startswith("VXI")
         ):
             self.connection_type = VISA
         else:
