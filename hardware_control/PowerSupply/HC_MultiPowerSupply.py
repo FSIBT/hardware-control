@@ -7,7 +7,7 @@
 import pkg_resources
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
-from PyQt5.QtGui import QDoubleValidator, QPixmap
+from PyQt5.QtGui import QDoubleValidator, QPixmap, QFont
 from PyQt5.QtWidgets import QLineEdit, QPushButton, QLabel, QWidget, QGridLayout
 
 from hardware_control.base import HC_Instrument, HC_Comm, setButtonState
@@ -175,6 +175,17 @@ class HC_MultiPowerSupply(HC_Instrument):
 
         return retval
 
+    def set_channel_label(self, channel: int, label: str):
+        """ Sets a channel label to a new custom value """
+
+        try:
+            for cw in self.channel_widgets:
+                if cw.channel == channel:
+                    cw.set_label(label)
+            # self.channel_widgets[channel].set_label(label)
+        except:
+            logger.error(f"Failed to set channel {channel} label to {label}")
+
     #
     # Create a default state object if can't get state from a file
     #
@@ -202,12 +213,15 @@ class PowerSupplyChannel(QWidget):
         self.channel = channel
         self.main_widget = main_widget
 
+        # Style options
         self.show_VI_limits = True
+        self.show_custom_labels = True
+        self.custom_labels_colorcoded = False
 
         # ************** DEFINE UI *********************#
         #
         self.channel_label = QLabel()
-        if self.channel <= 20:
+        if self.channel <= 20 and not self.show_custom_labels:
             self.channel_label.setPixmap(
                 QPixmap(
                     pkg_resources.resource_filename(
@@ -216,9 +230,16 @@ class PowerSupplyChannel(QWidget):
                 )
             )
         else:
-            self.channel_label.setText(f"Channel {channel}")
+            if self.custom_labels_colorcoded:
+                colors = ["yellow", "green", "blue", "red", "violet", "orange"]
+                self.channel_label.setText(
+                    f'<font color="{colors[(channel-1)%6]}">Channel {channel}</font>'
+                )
+            else:
+                self.channel_label.setText(f"Channel {channel}")
+            self.channel_label.setFont(QFont("Arial", 20))
             self.channel_label.setAlignment(
-                QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter
+                QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
             )
 
         # ****** DEFINE READOUTS
@@ -405,6 +426,18 @@ class PowerSupplyChannel(QWidget):
                     self.I_max_label_val.setText("---- A")
             else:
                 self.I_max_label_val.setText("None")
+
+    def set_label(self, label: str):
+
+        if self.custom_labels_colorcoded:
+            colors = ["yellow", "green", "blue", "red", "violet", "orange"]
+            self.channel_label.setText(
+                f'<font color="{colors[(self.channel-1)%6]}">{label}</font>'
+            )
+        else:
+            self.channel_label.setText(f"{label}")
+        self.channel_label.setFont(QFont("Arial", 20))
+        self.channel_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
 
     def settings_to_UI(self):
 
