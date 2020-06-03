@@ -8,7 +8,14 @@ import pkg_resources
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QDoubleValidator, QPixmap, QFont
-from PyQt5.QtWidgets import QLineEdit, QPushButton, QLabel, QWidget, QGridLayout
+from PyQt5.QtWidgets import (
+    QLineEdit,
+    QPushButton,
+    QLabel,
+    QWidget,
+    QGridLayout,
+    QGroupBox,
+)
 
 from hardware_control.base import HC_Instrument, HC_Comm, setButtonState
 import logging
@@ -109,23 +116,34 @@ class HC_MultiPowerSupply(HC_Instrument):
             self.comm.command(f"CH{c}_I_out?")
             self.comm.command(f"CH{c}_V_set?")
             self.comm.command(f"CH{c}_I_set?")
-            self.comm.command(f"CH{c}_V_max?")
-            self.comm.command(f"CH{c}_I_max?")
+            if self.channel_widgets[idx].show_VI_limits:
+                self.comm.command(f"CH{c}_V_max?")
+                self.comm.command(f"CH{c}_I_max?")
+            # if self.channel_widgets[idx].show_status_panel:
+            #     self.comm.command(f"CH{c}_current_limited?")
+            #     self.comm.command(f"CH{c}_output_enabled?")
+            #     self.comm.command(f"CH{c}_ramp_direction?")
 
             # Get latest inbox entries for readout data...
             Vout = self.read_values(f"CH{c}_V_out")
             Iout = self.read_values(f"CH{c}_I_out")
             Vset = self.read_values(f"CH{c}_V_set")
             Iset = self.read_values(f"CH{c}_I_set")
-            Vmax = self.read_values(f"CH{c}_V_max")
-            Imax = self.read_values(f"CH{c}_I_max")
+            if self.channel_widgets[idx].show_VI_limits:
+                Vmax = self.read_values(f"CH{c}_V_max")
+                Imax = self.read_values(f"CH{c}_I_max")
+            # if self.channel_widgets[idx].show_status_panel:
+            #     self.comm.command(f"CH{c}_current_limited?")
+            #     self.comm.command(f"CH{c}_output_enabled?")
+            #     self.comm.command(f"CH{c}_ramp_direction?")
 
             self.values[f"CH{c}_V_out"] = Vout
             self.values[f"CH{c}_I_out"] = Iout
             self.values[f"CH{c}_V_set"] = Vset
             self.values[f"CH{c}_I_set"] = Iset
-            self.values[f"CH{c}_V_max"] = Vmax
-            self.values[f"CH{c}_I_max"] = Imax
+            # if self.channel_widgets[idx].show_VI_limits:
+            #     self.values[f"CH{c}_V_max"] = Vmax
+            #     self.values[f"CH{c}_I_max"] = Imax
 
             logger.debug(
                 f"'{self.name}'[{c}] received values: {Vout}, {Iout}, {Vset}, {Iset}, {Vmax}, {Imax}"
@@ -217,6 +235,7 @@ class PowerSupplyChannel(QWidget):
         self.show_VI_limits = True
         self.show_custom_labels = True
         self.custom_labels_colorcoded = False
+        self.show_status_panel = True
 
         # ************** DEFINE UI *********************#
         #
@@ -359,12 +378,66 @@ class PowerSupplyChannel(QWidget):
         self.controls_grid.addWidget(self.I_edit, 1, 1)
         self.controls_grid.addWidget(self.enabled_but, 2, 1)
 
+        # Load pix maps
+        self.steady_pix = QPixmap(
+            pkg_resources.resource_filename("hardware_control", f"icons/steady_ind.svg")
+        )
+        self.falling_pix = QPixmap(
+            pkg_resources.resource_filename(
+                "hardware_control", f"icons/falling_ind.svg"
+            )
+        )
+        self.rising_pix = QPixmap(
+            pkg_resources.resource_filename("hardware_control", f"icons/rising_ind.svg")
+        )
+        self.grey_pix = QPixmap(
+            pkg_resources.resource_filename("hardware_control", f"icons/grey_ind.svg")
+        )
+        self.red_pix = QPixmap(
+            pkg_resources.resource_filename("hardware_control", f"icons/red_ind.svg")
+        )
+        self.green_pix = QPixmap(
+            pkg_resources.resource_filename("hardware_control", f"icons/green_ind.svg")
+        )
+        self.blue_pix = QPixmap(
+            pkg_resources.resource_filename("hardware_control", f"icons/blue_ind.svg")
+        )
+
+        self.CC_ind_label = QLabel("CC:")
+        self.CC_ind_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        self.CC_ind = QLabel()
+        self.CC_ind.setPixmap(self.grey_pix)
+
+        self.enabled_ind_label = QLabel("Output:")
+        self.enabled_ind_label.setAlignment(
+            QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
+        )
+        self.enabled_ind = QLabel()
+        self.enabled_ind.setPixmap(self.grey_pix)
+
+        self.ramp_ind_label = QLabel("Ramp:")
+        self.ramp_ind_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        self.ramp_ind = QLabel()
+        self.ramp_ind.setPixmap(self.steady_pix)
+
+        self.status_panel = QGroupBox()
+        self.status_grid = QGridLayout()
+        self.status_grid.addWidget(self.CC_ind_label, 0, 1)
+        self.status_grid.addWidget(self.enabled_ind_label, 0, 2)
+        self.status_grid.addWidget(self.ramp_ind_label, 0, 3)
+        self.status_grid.addWidget(self.CC_ind, 1, 1)
+        self.status_grid.addWidget(self.enabled_ind, 1, 2)
+        self.status_grid.addWidget(self.ramp_ind, 1, 3)
+        self.status_panel.setLayout(self.status_grid)
+
         # ******* DEFINE OVERALL LAYOUT
         #
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.channel_label, 0, 0)
         self.master_layout.addLayout(self.readout_grid, 1, 0)
         self.master_layout.addLayout(self.controls_grid, 2, 0)
+        if self.show_status_panel:
+            self.master_layout.addWidget(self.status_panel, 3, 0)
         self.setLayout(self.master_layout)
 
     def update_readout(self, Vout, Iout, Vset, Iset, Vmax=None, Imax=None):
