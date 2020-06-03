@@ -102,7 +102,7 @@ class CAEN14xxETCtrl(HC_Backend):
             else:  # Connection stable - return True
                 return True
 
-        elif connection_type == SOCKET:
+        elif self.connection_type == SOCKET:
 
             try:
                 self.query("$BD:00,CMD:MON,PAR:BDNAME")
