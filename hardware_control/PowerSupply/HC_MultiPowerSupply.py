@@ -128,6 +128,26 @@ class HC_MultiPowerSupply(HC_Instrument):
             # Send newest data to GUI
             self.channel_widgets[idx].update_readout(Vout, Iout, Vset, Iset)
 
+    def set_maxI(self, channel: int, maxI: float):
+        """ Sets an internal limit for the current from channel 'n'. """
+
+        try:
+            channel = int(channel)
+        except:
+            return
+
+        self.comm.update_setting("CH{channel}_I_max", str(maxI))
+
+    def set_maxV(self, channel: int, maxV: float):
+        """ Sets an internal limit for the voltage from channel 'n'. """
+
+        try:
+            channel = int(channel)
+        except:
+            return
+
+        self.comm.update_setting("CH{channel}_V_max", str(maxV))
+
     def get_header(self):
 
         retval = ""
