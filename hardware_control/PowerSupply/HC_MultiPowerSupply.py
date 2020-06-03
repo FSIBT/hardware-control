@@ -109,24 +109,30 @@ class HC_MultiPowerSupply(HC_Instrument):
             self.comm.command(f"CH{c}_I_out?")
             self.comm.command(f"CH{c}_V_set?")
             self.comm.command(f"CH{c}_I_set?")
+            self.comm.command(f"CH{c}_V_max?")
+            self.comm.command(f"CH{c}_I_max?")
 
             # Get latest inbox entries for readout data...
             Vout = self.read_values(f"CH{c}_V_out")
             Iout = self.read_values(f"CH{c}_I_out")
             Vset = self.read_values(f"CH{c}_V_set")
             Iset = self.read_values(f"CH{c}_I_set")
+            Vmax = self.read_values(f"CH{c}_V_max")
+            Imax = self.read_values(f"CH{c}_I_max")
 
             self.values[f"CH{c}_V_out"] = Vout
             self.values[f"CH{c}_I_out"] = Iout
             self.values[f"CH{c}_V_set"] = Vset
             self.values[f"CH{c}_I_set"] = Iset
+            self.values[f"CH{c}_V_max"] = Vmax
+            self.values[f"CH{c}_I_max"] = Imax
 
             logger.debug(
-                f"'{self.name}'[{c}] received values: {Vout}, {Iout}, {Vset}, {Iset}"
+                f"'{self.name}'[{c}] received values: {Vout}, {Iout}, {Vset}, {Iset}, {Vmax}, {Imax}"
             )
 
             # Send newest data to GUI
-            self.channel_widgets[idx].update_readout(Vout, Iout, Vset, Iset)
+            self.channel_widgets[idx].update_readout(Vout, Iout, Vset, Iset, Vmax, Imax)
 
     def set_maxI(self, channel: int, maxI: float):
         """ Sets an internal limit for the current from channel 'n'. """
@@ -196,6 +202,8 @@ class PowerSupplyChannel(QWidget):
         self.channel = channel
         self.main_widget = main_widget
 
+        self.show_VI_limits = True
+
         # ************** DEFINE UI *********************#
         #
         self.channel_label = QLabel()
@@ -249,6 +257,23 @@ class PowerSupplyChannel(QWidget):
         self.P_out_label_val = QLabel("-------")
         self.P_out_label_val.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
 
+        if self.show_VI_limits:
+            self.V_max_label = QLabel("Vmax:")
+            self.V_max_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+            #
+            self.V_max_label_val = QLabel("-------")
+            self.V_max_label_val.setAlignment(
+                QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
+            )
+            #
+            self.I_max_label = QLabel("Imax:")
+            self.I_max_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+            #
+            self.I_max_label_val = QLabel("-------")
+            self.I_max_label_val.setAlignment(
+                QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
+            )
+
         # Layout readout
         self.readout_grid = QGridLayout()
         self.readout_grid.addWidget(self.V_set_label, 0, 0)
@@ -263,6 +288,12 @@ class PowerSupplyChannel(QWidget):
         #
         self.readout_grid.addWidget(self.P_out_label, 2, 2)
         self.readout_grid.addWidget(self.P_out_label_val, 2, 3)
+        #
+        if self.show_VI_limits:
+            self.readout_grid.addWidget(self.V_max_label, 3, 0)
+            self.readout_grid.addWidget(self.V_max_label_val, 3, 1)
+            self.readout_grid.addWidget(self.I_max_label, 3, 2)
+            self.readout_grid.addWidget(self.I_max_label_val, 3, 3)
 
         # ****** DEFINE CONTROLS
         #
@@ -315,7 +346,7 @@ class PowerSupplyChannel(QWidget):
         self.master_layout.addLayout(self.controls_grid, 2, 0)
         self.setLayout(self.master_layout)
 
-    def update_readout(self, Vout, Iout, Vset, Iset):
+    def update_readout(self, Vout, Iout, Vset, Iset, Vmax=None, Imax=None):
 
         if Vout is not None:
             try:
@@ -354,9 +385,26 @@ class PowerSupplyChannel(QWidget):
                 pwr = float(Vout) * float(Iout)
                 self.P_out_label_val.setText(f"{round(pwr, 3)} W")
             except Exception as e:
-                self.P_out_label_val.setText("-----")
+                self.P_out_label_val.setText("----- W")
         else:
-            self.P_out_label_val.setText("-----")
+            self.P_out_label_val.setText("----- W")
+
+        if self.show_VI_limits:
+            if Vmax is not None:
+                try:
+                    self.V_max_label_val.setText(f"{round(float(Vmax), 3)} V")
+                except:
+                    self.V_max_label_val.setText("---- V")
+            else:
+                self.V_max_label_val.setText("None")
+
+            if Imax is not None:
+                try:
+                    self.I_max_label_val.setText(f"{round(float(Vmax), 3)} A")
+                except:
+                    self.I_max_label_val.setText("---- A")
+            else:
+                self.I_max_label_val.setText("None")
 
     def settings_to_UI(self):
 
