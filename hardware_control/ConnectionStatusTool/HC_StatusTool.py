@@ -35,10 +35,10 @@ class HC_StatusTool(QGroupBox):
             )
         )
         self.red_indicator = QPixmap(
-            pkg_resources.resource_filename("hardware_control", "graphics/red_ind.svg")
+            pkg_resources.resource_filename("hardware_control", "icons/red_ind.svg")
         )
         self.blue_indicator = QPixmap(
-            pkg_resources.resource_filename("hardware_control", "graphics/blue_ind.svg")
+            pkg_resources.resource_filename("hardware_control", "icons/blue_ind.svg")
         )
 
         # # Initialize state to correct values
