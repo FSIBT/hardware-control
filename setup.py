@@ -6,6 +6,7 @@ import setuptools
 setup(
     name="hardware_control",
     packages=[
+        "hardware_control",
         "hardware_control.ConnectionStatusTool",
         "hardware_control.DelayGenerator",
         "hardware_control.FlowController",
