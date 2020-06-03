@@ -24,12 +24,10 @@ class HC_StatusTool(QGroupBox):
         self.ignore = True
 
         self.green_indicator = QPixmap(
-            pkg_resources.resource_filename(
-                "hardware_control", "graphics/ind_green.png"
-            )
+            pkg_resources.resource_filename("hardware_control", "icons/green_ind.svg")
         )
         self.grey_indicator = QPixmap(
-            pkg_resources.resource_filename("hardware_control", "graphics/ind_grey.png")
+            pkg_resources.resource_filename("hardware_control", "icons/grey_ind.svg")
         )
         self.darkgrey_indicator = QPixmap(
             pkg_resources.resource_filename(
@@ -37,10 +35,10 @@ class HC_StatusTool(QGroupBox):
             )
         )
         self.red_indicator = QPixmap(
-            pkg_resources.resource_filename("hardware_control", "graphics/ind_red.png")
+            pkg_resources.resource_filename("hardware_control", "graphics/red_ind.svg")
         )
         self.blue_indicator = QPixmap(
-            pkg_resources.resource_filename("hardware_control", "graphics/ind_blue.png")
+            pkg_resources.resource_filename("hardware_control", "graphics/blue_ind.svg")
         )
 
         # # Initialize state to correct values
@@ -131,7 +129,7 @@ class HC_StatusTool(QGroupBox):
                         else:
                             if instr.online_color == "Blue":
                                 self.instrument_grid.itemAt(i + 1).widget().setPixmap(
-                                    self.darkgrey_indicator
+                                    self.grey_indicator
                                 )
                             else:
                                 self.instrument_grid.itemAt(i + 1).widget().setPixmap(
