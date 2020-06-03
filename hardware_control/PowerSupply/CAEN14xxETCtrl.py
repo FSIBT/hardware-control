@@ -30,6 +30,9 @@ class CAEN14xxETCtrl(HC_Backend):
         # This specifies the max number of channels the user can request
         self.num_channels = 8
 
+        self.max_V = [None] * self.num_channels
+        self.max_I = [None] * self.num_channels
+
         self.check()
 
     #
@@ -112,9 +115,39 @@ class CAEN14xxETCtrl(HC_Backend):
                         return "None"
                     return str(bool(status["on_off"]))
 
+                elif regex_compare("CH._I_max", setting):
+
+                    c = setting[2]
+
+                    try:
+                        self.max_I[c] = float(value)
+                    except:
+                        return "Invalid value"
+
+                    return value
+
+                elif regex_compare("CH._V_max", setting):
+
+                    c = setting[2]
+
+                    try:
+                        self.max_V[c] = float(value)
+                    except:
+                        return "Invalid value"
+
+                    return value
+
                 elif regex_compare("CH._I_set", setting):
 
                     c = setting[2]
+
+                    try:
+                        if self.max_I[c] is not None:
+                            if float(value) > self.max_I:
+                                value = str(self.max_I)
+                    except:
+                        return "Invalid value"
+
                     self.query(f"$BD:00,CMD:SET,CH:{c},PAR:ISET,VAL:{value}")
                     result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:ISET")
 
@@ -125,6 +158,14 @@ class CAEN14xxETCtrl(HC_Backend):
                 elif regex_compare("CH._V_set", setting):
 
                     c = setting[2]
+
+                    try:
+                        if self.max_V[c] is not None:
+                            if float(value) > self.max_V:
+                                value = str(self.max_V)
+                    except:
+                        return "Invalid value"
+
                     self.query(f"$BD:00,CMD:SET,CH:{c},PAR:VSET,VAL:{value}")
                     result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:VSET")
 
