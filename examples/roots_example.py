@@ -55,6 +55,7 @@ from hardware_control.base import HC_App, HC_MainWindow, Dataset
 from hardware_control.ConnectionStatusTool.HC_StatusTool import HC_StatusTool
 from hardware_control.PowerSupply.HC_MultiPowerSupply import *
 from hardware_control.PowerSupply.CAEN14xxETCtrl import CAEN14xxETCtrl
+from hardware_control.PowerSupply.Key36300Ctrl import Key36300Ctrl
 from hardware_control.ZMQConnectionTool.HC_ZMQConnectionTool import HC_ZMQConnectionTool
 from hardware_control.LoggerTool.HC_LoggerTool import HC_LoggerTool
 
@@ -102,7 +103,13 @@ class RootsDemo(HC_MainWindow):
 
         self.caen_be = CAEN14xxETCtrl("192.168.0.1:1470")
         self.caen_wdgt_123 = HC_MultiPowerSupply(
-            self.caen_be, self, [1, 2, 3], "CAEN Power Supply 1-3"
+            self.caen_be,
+            self,
+            [1, 2, 3],
+            "CAEN Power Supply 1-3",
+            show_VI_limits=True,
+            show_custom_labels=True,
+            show_status_panel=True,
         )
         self.caen_wdgt_123.set_maxV(1, 2e3)
         self.caen_wdgt_123.set_maxV(2, 1e3)
@@ -114,7 +121,13 @@ class RootsDemo(HC_MainWindow):
         self.caen_wdgt_123.set_channel_label(2, "2: LaBr")
         self.caen_wdgt_123.set_channel_label(3, "3: YAP")
         self.caen_wdgt_456 = HC_MultiPowerSupply(
-            self.caen_be, self, [4, 5, 6], "CAEN Power Supply 4-6"
+            self.caen_be,
+            self,
+            [4, 5, 6],
+            "CAEN Power Supply 4-6",
+            show_VI_limits=True,
+            show_custom_labels=True,
+            show_status_panel=True,
         )
         self.caen_wdgt_456.set_maxV(4, 1705)
         self.caen_wdgt_456.set_maxV(5, 2e3)
@@ -126,10 +139,24 @@ class RootsDemo(HC_MainWindow):
         self.caen_wdgt_456.set_channel_label(5, "5: UCB")
         self.caen_wdgt_456.set_channel_label(6, "6: Target")
 
+        self.keysight_ps_be = Key36300Ctrl("TCPIP::192.168.0.3::5025::SOCKET")
+        self.keysight_wdgt = HC_MultiPowerSupply(
+            self.keysight_ps_be,
+            self,
+            [1, 2, 3],
+            "Keysight Power Supply",
+            show_VI_limits=True,
+            show_custom_labels=True,
+        )
+        self.keysight_wdgt.set_maxV(1, 5)
+        self.keysight_wdgt.set_maxV(2, 5)
+        self.keysight_wdgt.set_maxV(3, 5)
+
         # Put instrument(s) in tab
         self.tab_psu_layout = QGridLayout()
-        self.tab_psu_layout.addWidget(self.caen_wdgt_123, 0, 0)
-        self.tab_psu_layout.addWidget(self.caen_wdgt_456, 1, 0)
+        self.tab_psu_layout.addWidget(self.caen_wdgt_123, 0, 1)
+        self.tab_psu_layout.addWidget(self.caen_wdgt_456, 1, 1)
+        self.tab_psu_layout.addWidget(self.keysight_wdgt, 0, 0)
         self.tab_psu.setLayout(self.tab_psu_layout)
 
         #####################################################################
