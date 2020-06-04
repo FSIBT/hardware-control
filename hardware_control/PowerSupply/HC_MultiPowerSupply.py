@@ -25,7 +25,14 @@ logger = logging.getLogger(__name__)
 
 class HC_MultiPowerSupply(HC_Instrument):
     def __init__(
-        self, backend, window, channels: list, name: str = "Multi-Channel PSU",
+        self,
+        backend,
+        window,
+        channels: list,
+        name: str = "Multi-Channel PSU",
+        show_VI_limits=False,
+        show_custom_labels=False,
+        show_status_panel=False,
     ):
 
         super().__init__(window, name)
@@ -83,7 +90,11 @@ class HC_MultiPowerSupply(HC_Instrument):
         self.channel_widgets = []
         self.channel_panel = QGridLayout()
         for idx, c in enumerate(self.channels):
-            self.channel_widgets.append(PowerSupplyChannel(c, self))
+            self.channel_widgets.append(
+                PowerSupplyChannel(
+                    c, self, show_VI_limits, show_custom_labels, show_status_panel
+                )
+            )
             self.channel_panel.addWidget(self.channel_widgets[-1], 0, idx)
         #
         self.master_layout = QGridLayout()
@@ -141,16 +152,26 @@ class HC_MultiPowerSupply(HC_Instrument):
             self.values[f"CH{c}_I_out"] = Iout
             self.values[f"CH{c}_V_set"] = Vset
             self.values[f"CH{c}_I_set"] = Iset
-            # if self.channel_widgets[idx].show_VI_limits:
-            #     self.values[f"CH{c}_V_max"] = Vmax
-            #     self.values[f"CH{c}_I_max"] = Imax
+            if self.channel_widgets[idx].show_VI_limits:
+                self.values[f"CH{c}_V_max"] = Vmax
+                self.values[f"CH{c}_I_max"] = Imax
 
-            logger.debug(
-                f"'{self.name}'[{c}] received values: {Vout}, {Iout}, {Vset}, {Iset}, {Vmax}, {Imax}"
-            )
+            if self.channel_widgets[idx].show_VI_limits:
+                logger.debug(
+                    f"'{self.name}'[{c}] received values: {Vout}, {Iout}, {Vset}, {Iset}, {Vmax}, {Imax}"
+                )
+            else:
+                logger.debug(
+                    f"'{self.name}'[{c}] received values: {Vout}, {Iout}, {Vset}, {Iset}"
+                )
 
             # Send newest data to GUI
-            self.channel_widgets[idx].update_readout(Vout, Iout, Vset, Iset, Vmax, Imax)
+            if self.channel_widgets[idx].show_VI_limits:
+                self.channel_widgets[idx].update_readout(
+                    Vout, Iout, Vset, Iset, Vmax, Imax
+                )
+            else:
+                self.channel_widgets[idx].update_readout(Vout, Iout, Vset, Iset)
 
     def set_maxI(self, channel: int, maxI: float):
         """ Sets an internal limit for the current from channel 'n'. """
@@ -225,17 +246,24 @@ class HC_MultiPowerSupply(HC_Instrument):
 
 
 class PowerSupplyChannel(QWidget):
-    def __init__(self, channel: int, main_widget):
+    def __init__(
+        self,
+        channel: int,
+        main_widget,
+        show_VI_limits=False,
+        show_custom_labels=False,
+        show_status_panel=False,
+    ):
         super().__init__()
 
         self.channel = channel
         self.main_widget = main_widget
 
         # Style options
-        self.show_VI_limits = True
-        self.show_custom_labels = True
+        self.show_VI_limits = show_VI_limits
+        self.show_custom_labels = show_custom_labels
+        self.show_status_panel = show_status_panel
         self.custom_labels_colorcoded = False
-        self.show_status_panel = True
 
         # ************** DEFINE UI *********************#
         #
