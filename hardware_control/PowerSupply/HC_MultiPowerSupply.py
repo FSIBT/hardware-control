@@ -19,6 +19,7 @@ from PyQt5.QtWidgets import (
 
 from hardware_control.base import HC_Instrument, HC_Comm, setButtonState
 import logging
+from hardware_control.utility import remove_end_carriage_return
 
 logger = logging.getLogger(__name__)
 
@@ -148,13 +149,13 @@ class HC_MultiPowerSupply(HC_Instrument):
             #     self.comm.command(f"CH{c}_output_enabled?")
             #     self.comm.command(f"CH{c}_ramp_direction?")
 
-            self.values[f"CH{c}_V_out"] = Vout
-            self.values[f"CH{c}_I_out"] = Iout
-            self.values[f"CH{c}_V_set"] = Vset
-            self.values[f"CH{c}_I_set"] = Iset
+            self.values[f"CH{c}_V_out"] = remove_end_carriage_return(Vout)
+            self.values[f"CH{c}_I_out"] = remove_end_carriage_return(Iout)
+            self.values[f"CH{c}_V_set"] = remove_end_carriage_return(Vset)
+            self.values[f"CH{c}_I_set"] = remove_end_carriage_return(Iset)
             if self.channel_widgets[idx].show_VI_limits:
-                self.values[f"CH{c}_V_max"] = Vmax
-                self.values[f"CH{c}_I_max"] = Imax
+                self.values[f"CH{c}_V_max"] = remove_end_carriage_return(Vmax)
+                self.values[f"CH{c}_I_max"] = remove_end_carriage_return(Imax)
 
             if self.channel_widgets[idx].show_VI_limits:
                 logger.debug(
