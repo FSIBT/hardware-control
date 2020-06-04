@@ -37,8 +37,6 @@ class Key36300Ctrl(HC_Backend):
 
                 if len(setting) >= 3:
                     c = setting[2]
-                else:
-                    c = -1
 
                 # Note: We ignore channel number because there is only
                 # one channel on this model of PSU
@@ -52,7 +50,7 @@ class Key36300Ctrl(HC_Backend):
                 elif regex_compare("CH._I_set", setting):
 
                     try:
-                        if self.max_I[c] is not None:
+                        if self.max_I[c - 1] is not None:
                             if float(value) > self.max_I:
                                 value = str(self.max_I)
                     except:
@@ -64,7 +62,7 @@ class Key36300Ctrl(HC_Backend):
                 elif regex_compare("CH._V_set", setting):
 
                     try:
-                        if self.max_V[c] is not None:
+                        if self.max_V[c - 1] is not None:
                             if float(value) > self.max_V:
                                 value = str(self.max_V)
                     except:
@@ -76,7 +74,7 @@ class Key36300Ctrl(HC_Backend):
                 elif regex_compare("CH._V_max", setting):
 
                     try:
-                        self.max_V[c] = float(value)
+                        self.max_V[c - 1] = float(value)
                     except:
                         return "Invalid value"
 
@@ -85,7 +83,7 @@ class Key36300Ctrl(HC_Backend):
                 elif regex_compare("CH._I_max", setting):
 
                     try:
-                        self.max_I[c] = float(value)
+                        self.max_I[c - 1] = float(value)
                     except:
                         return "Invalid value"
 
@@ -132,14 +130,14 @@ class Key36300Ctrl(HC_Backend):
                 elif regex_compare("CH._I_max?", cmd):  # Get CHx I max
 
                     try:
-                        rval = self.max_I[c]
+                        rval = self.max_I[c - 1]
                     except:
                         rval = "Error"
 
                 elif regex_compare("CH._V_max?", cmd):  # Get CHx V max
 
                     try:
-                        rval = self.max_V[c]
+                        rval = self.max_V[c - 1]
                     except:
                         rval = "Error"
 
