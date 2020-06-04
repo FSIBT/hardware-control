@@ -17,13 +17,11 @@ class Key36300Ctrl(HC_Backend):
 
         self.ID = "Key36300"
 
-        self.connection_addr = connection_addr
         self.online = False
         self.dummy = False
 
-        self.connection_type = connection_type
-        self.port_no = port_no
-        self.ip_addr = ip_addr
+        self.connection_addr = connection_addr
+        self.parse_connection_addr()
 
         self.num_channels = 1
         # This specifies the max number of channels the user can request

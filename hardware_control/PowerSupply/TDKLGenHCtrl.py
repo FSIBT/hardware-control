@@ -6,11 +6,7 @@ from hardware_control.utility import regex_compare, str_to_bool
 
 class TDKLGenHCtrl(HC_Backend):
     def __init__(
-        self,
-        connection_addr,
-        connection_type: str = VISA,
-        ip_addr: str = "",
-        port_no=5025,
+        self, connection_addr: str,
     ):
 
         super().__init__()
@@ -21,9 +17,7 @@ class TDKLGenHCtrl(HC_Backend):
         self.online = False
         self.dummy = False
 
-        self.connection_type = connection_type
-        self.port_no = port_no
-        self.ip_addr = ip_addr
+        self.parse_connection_addr()
 
         self.num_channels = 1
         # This specifies the max number of channels the user can request
