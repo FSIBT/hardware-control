@@ -119,47 +119,28 @@ class Key36300Ctrl(HC_Backend):
 
                 # Note: We ignore channel number because there is only
                 # one channel on this model of PSU
+                c = cmd[2]
+                cmd = cmd[:-1]
                 if regex_compare("CH._V_out?", cmd):
-                    c = setting[2]
-                    cmd = cmd[:-1]
                     rval = self.query("MEAS:VOLT? (@{c})")
-                    return f"{cmd}={rval}"
                 elif regex_compare("CH._I_out?", cmd):
-                    c = setting[2]
-                    cmd = cmd[:-1]
                     rval = self.query("MEAS:CURR? (@{c})")
-                    return f"{cmd}={rval}"
                 elif regex_compare("CH._I_set?", cmd):
-                    c = setting[2]
-                    cmd = cmd[:-1]
                     rval = self.query(f":SOURCE:CURR? (@{c})")
-                    return f"{cmd}={rval}"
                 elif regex_compare("CH._V_set?", cmd):
-                    c = setting[2]
-                    cmd = cmd[:-1]
                     rval = self.query(f":SOURCE:VOLT? (@{c})")
-                    return f"{cmd}={rval}"
                 elif regex_compare("CH._I_max?", cmd):  # Get CHx I max
-                    cmd = cmd[:-1]
-                    c = cmd[2]
-
                     try:
                         rval = self.max_I[c]
                     except:
                         rval = "Error"
-
-                    return f"{cmd}={rval}"
-
                 elif regex_compare("CH._V_max?", cmd):  # Get CHx V max
-                    cmd = cmd[:-1]
-                    c = cmd[2]
-
                     try:
                         rval = self.max_V[c]
                     except:
                         rval = "Error"
 
-                    return f"{cmd}={rval}"
+                return f"{cmd}={rval}"
         except Exception as e:
             logger.error(
                 "An error occured in Key36300.py when sending SCPI commands to the instrument.",
