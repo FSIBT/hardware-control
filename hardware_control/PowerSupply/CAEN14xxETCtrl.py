@@ -189,7 +189,6 @@ class CAEN14xxETCtrl(HC_Backend):
 
                     return f"{cmd}={rval}"
 
-                # Todo: should this regex_compare have a '?' at the end?
                 elif regex_compare("CH._I_set?", cmd):  # Get CHx I setpoint
                     cmd = cmd[:-1]
                     c = cmd[2]
@@ -201,7 +200,6 @@ class CAEN14xxETCtrl(HC_Backend):
 
                     return f"{cmd}={rval}"
 
-                # Todo: should this regex_compare have a '?' at the end?
                 elif regex_compare("CH._V_set?", cmd):  # Get CHx V setpoint
                     cmd = cmd[:-1]
                     c = cmd[2]
@@ -224,7 +222,6 @@ class CAEN14xxETCtrl(HC_Backend):
 
                     return f"{cmd}={rval}"
 
-                # Todo: should this regex_compare have a '?' at the end?
                 elif regex_compare("CH._V_max?", cmd):  # Get CHx V max
                     cmd = cmd[:-1]
                     c = cmd[2]
