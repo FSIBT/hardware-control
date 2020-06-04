@@ -1139,7 +1139,7 @@ class HC_Instrument(QGroupBox):
         # address to the user
 
         # Global Constants
-        self.globalRefreshRate = 500  # ms refresh
+        self.globalRefreshRate = 1000  # ms refresh
         # this is a global reference for limiting the scaling the widgets
         self.globalLineHeight = 50  # Lineheight of athe average  spinbox
         self.globalLineWidth = 300  # Linewidth of athe average  spinbox
