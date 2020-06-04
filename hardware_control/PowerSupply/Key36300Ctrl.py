@@ -6,11 +6,7 @@ from hardware_control.utility import regex_compare, str_to_bool
 
 class Key36300Ctrl(HC_Backend):
     def __init__(
-        self,
-        connection_addr,
-        connection_type: str = VISA,
-        ip_addr: str = "",
-        port_no=5025,
+        self, connection_addr: str,
     ):
 
         super().__init__()
@@ -23,8 +19,11 @@ class Key36300Ctrl(HC_Backend):
         self.connection_addr = connection_addr
         self.parse_connection_addr()
 
-        self.num_channels = 1
+        self.num_channels = 3
         # This specifies the max number of channels the user can request
+
+        self.max_V = [None] * self.num_channels
+        self.max_I = [None] * self.num_channels
 
     def update_setting(self, setting: str, value):
 
@@ -48,14 +47,53 @@ class Key36300Ctrl(HC_Backend):
                     return str(rval == "1")
                 elif regex_compare("CH._I_set", setting):
                     c = setting[2]
+
+                    try:
+                        if self.max_I[c] is not None:
+                            if float(value) > self.max_I:
+                                value = str(self.max_I)
+                    except:
+                        return "Invalid value"
+
                     self.write(f"SOURCE:CURR {value}, (@{c})")
                     rval = self.query(f":SOURCE:CURR? (@{c})")
                     return rval
                 elif regex_compare("CH._V_set", setting):
                     c = setting[2]
+
+                    try:
+                        if self.max_V[c] is not None:
+                            if float(value) > self.max_V:
+                                value = str(self.max_V)
+                    except:
+                        return "Invalid value"
+
                     self.write(f"SOURCE:VOLT {value}, (@{c})")
                     rval = self.query(f":SOURCE:VOLT? (@{c})")
                     return rval
+
+                elif regex_compare("CH._V_max", setting):
+
+                    c = setting[2]
+
+                    try:
+                        self.max_V[c] = float(value)
+                    except:
+                        return "Invalid value"
+
+                    return value
+
+                elif regex_compare("CH._I_max", setting):
+
+                    c = setting[2]
+
+                    try:
+                        self.max_I[c] = float(value)
+                    except:
+                        return "Invalid value"
+
+                    return value
+
         except Exception as e:
             logger.error(
                 f"An error occured in {self.ID} when sending SCPI commands to the instrument.",
@@ -77,19 +115,44 @@ class Key36300Ctrl(HC_Backend):
                 # one channel on this model of PSU
                 if regex_compare("CH._V_out?", cmd):
                     c = setting[2]
+                    cmd = cmd[:-1]
                     rval = self.query("MEAS:VOLT? (@{c})")
                     return f"{cmd}={rval}"
                 elif regex_compare("CH._I_out?", cmd):
                     c = setting[2]
+                    cmd = cmd[:-1]
                     rval = self.query("MEAS:CURR? (@{c})")
                     return f"{cmd}={rval}"
                 elif regex_compare("CH._I_set?", cmd):
                     c = setting[2]
+                    cmd = cmd[:-1]
                     rval = self.query(f":SOURCE:CURR? (@{c})")
                     return f"{cmd}={rval}"
                 elif regex_compare("CH._V_set?", cmd):
                     c = setting[2]
+                    cmd = cmd[:-1]
                     rval = self.query(f":SOURCE:VOLT? (@{c})")
+                    return f"{cmd}={rval}"
+                elif regex_compare("CH._I_max?", cmd):  # Get CHx I max
+                    cmd = cmd[:-1]
+                    c = cmd[2]
+
+                    try:
+                        rval = self.max_I[c]
+                    except:
+                        rval = "Error"
+
+                    return f"{cmd}={rval}"
+
+                elif regex_compare("CH._V_max?", cmd):  # Get CHx V max
+                    cmd = cmd[:-1]
+                    c = cmd[2]
+
+                    try:
+                        rval = self.max_V[c]
+                    except:
+                        rval = "Error"
+
                     return f"{cmd}={rval}"
         except Exception as e:
             logger.error(
