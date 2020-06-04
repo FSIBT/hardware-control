@@ -30,61 +30,6 @@ class CAEN14xxETCtrl(HC_Backend):
 
         self.check()
 
-    # #
-    # # Tries to connect to the instrument. Is called by the timer every second.
-    # # If already connected, returns immediately.
-    # #
-    # def try_connect(self):
-    #     """Checks if the backend is in communication with the object, if it is
-    #     not, it tries to re-establish communication."""
-    #
-    #     # Handle dummy case
-    #     if self.dummy:
-    #         if self.online:
-    #             return True
-    #         else:
-    #             logger.debug(
-    #                 f"{self.ID}: creating dummy connection to {self.connection_addr}"
-    #             )
-    #             self.online = True
-    #             return True
-    #
-    #     if self.online:  # Has previously connected to the isntrument
-    #
-    #         try:  # Check if connected by asking for instrument ID
-    #             self.device.query("$BD:00,CMD:MON,PAR:BDNAME")
-    #         except visa.errors.VisaIOError as e:  # Not connected - reconnect
-    #             logger.warning(
-    #                 "Lost connection to device. Will try to reconnect", exc_info=True,
-    #             )
-    #         else:  # Connection stable - return True
-    #             return True
-    #
-    #     logger.debug("trying to connect")
-    #
-    #     # Try to connect to instrument
-    #     try:
-    #         if self.connection_type == VISA:  # Use visa
-    #             rm = visa.ResousrceManager("@py")
-    #             self.device = rm.open_resource(self.connection_addr)  # Open connection
-    #             self.device.read_termination = "\r\n"
-    #             self.device.write_termination = "\r\n"
-    #
-    #             # Verify actually connected (open_resource won't always throw error w/ disconnected USB)
-    #             self.device.query("$BD:00,CMD:MON,PAR:BDNAME")
-    #             logger.debug("opened connection")
-    #
-    #         elif self.connection_type == SOCKET:
-    #             self.device = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    #             self.device.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 0)
-    #             self.device.connect((self.ip_addr, self.port_no))
-    #     except Exception as e:
-    #         self.online = False
-    #     else:
-    #         self.online = True
-    #
-    #     return self.online
-
     def check_connection(self):
 
         if self.connection_type == VISA:

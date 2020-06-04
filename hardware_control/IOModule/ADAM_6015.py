@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class Adam_6015(HC_Backend):
     """Control of Adam input/output module"""
 
-    def __init__(self, connection_addr="192.168.1.25"):
+    def __init__(self, connection_addr="192.168.1.25:1025"):
 
         super().__init__()
 
@@ -26,8 +26,11 @@ class Adam_6015(HC_Backend):
         self.ID = "Advantac_ADAM-6015"
         self.buf = 200
         self.connection_addr = connection_addr
-        self.port = 1025
-        self.addr = (self.connection_addr, self.port)
+
+        self.parse_connection_addr()
+
+        self.addr = (self.ip_addr, self.port_no)
+
         self.try_connect()
 
     def try_connect(self):

@@ -8,12 +8,7 @@ logger = logging.getLogger(__name__)
 
 class DeviceBackend(HC_Backend):
     def __init__(
-        self,
-        connection_addr,
-        dummy: bool = False,
-        connection_type: str = VISA,
-        ip_addr: str = "",
-        port_no=5025,
+        self, connection_addr, dummy: bool = False,
     ):
 
         super().__init__()
@@ -25,9 +20,7 @@ class DeviceBackend(HC_Backend):
         self.dummy = dummy
 
         # example
-        self.connection_type = connection_type
-        self.port_no = port_no
-        self.ip_addr = ip_addr
+        self.parse_connection_addr()
 
         self.num_channels = 8
 

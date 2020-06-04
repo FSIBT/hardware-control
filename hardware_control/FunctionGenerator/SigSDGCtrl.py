@@ -6,7 +6,7 @@ logger = logging.getLogger(__name__)
 
 
 class SigSDGCtrl(HC_Backend):
-    def __init__(self, connection_addr):
+    def __init__(self, connection_addr: str):
 
         super().__init__()
         self.ID = "SIGLENT-SDG"
@@ -15,7 +15,7 @@ class SigSDGCtrl(HC_Backend):
         self.online = False
         self.dummy = False
 
-        self.connection_type = VISA
+        self.parse_connection_addr()
 
         self.check()
 

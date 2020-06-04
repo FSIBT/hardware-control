@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 class ZMQOscilloscopeCtrl(HC_Backend):
     def __init__(
-        self, zmq_addr, connection_type: str = VISA, ip_addr: str = "", port_no=5025,
+        self, connection_addr: str,
     ):
 
         super().__init__()
@@ -31,15 +31,13 @@ class ZMQOscilloscopeCtrl(HC_Backend):
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.REQ)
 
-        self.zmq_address = zmq_addr
-        self.connection_addr = self.zmq_address  # So widget can read address
+        self.zmq_address = connection_addr
+        self.connection_addr = connection_address  # So widget can read address
         self.online = False
         self.dummy = False
         self.num_vert_divisions = 8  # Todo: remove this from all files
 
-        self.connection_type = connection_type
-        self.port_no = port_no
-        self.ip_addr = ip_addr
+        self.parse_connection_addr()
 
         self.settings = self.default_settings()
         self.check()

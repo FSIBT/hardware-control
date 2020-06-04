@@ -12,11 +12,7 @@ logger = logging.getLogger(__name__)
 
 class NI_DAQ:
     def __init__(
-        self,
-        connection_addr,
-        connection_type: str = VISA,
-        ip_addr: str = "",
-        port_no=5025,
+        self, connection_addr,
     ):
 
         self.ID = "KEY4000X"
@@ -26,9 +22,8 @@ class NI_DAQ:
         self.dummy = dummy
         self.num_vert_divisions = 8
 
-        self.connection_type = connection_type
-        self.port_no = port_no
-        self.ip_addr = ip_addr
+        self.parse_connection_addr()
+
         self.try_connect()
 
     #

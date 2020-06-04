@@ -19,7 +19,7 @@ class Key4000XCtrl(HC_Backend):
     # sigReturnWaves = pyqtSignal(int, list, list)
 
     def __init__(
-        self, connection_addr, connection_type: str = VISA,
+        self, connection_addr: str,
     ):
         super().__init__()
         self.ID = "KEYSIGHT-4000X"
@@ -29,9 +29,8 @@ class Key4000XCtrl(HC_Backend):
         self.dummy = False
         self.num_vert_divisions = 8
 
-        self.connection_type = connection_type
-        self.port_no = None
-        self.ip_addr = None
+        self.parse_connection_addr()
+
         if self.connection_type == "socket":
             try:
                 tokens = self.connection_addr.split(":", 1)

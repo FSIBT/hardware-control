@@ -18,7 +18,9 @@ class AlicatMSeriesCtrl(HC_Backend):
         self.ID = "AlicatMSeries"
 
         self.connection_addr = ip_addr
-        self.connection_type = MODBUS
+        self.connection_type = (
+            MODBUS  # TODO: Add modbus as option to 'self.parse_connection_addr()'
+        )
         self.dummy = False
 
         self.error_count = 0
