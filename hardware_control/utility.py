@@ -19,6 +19,17 @@ def returnChannelNumber(s: str):
         return None
 
 
+def remove_end_carriage_return(text: str):
+
+    try:
+        if text[-1] == "\r":
+            return text[:-1]
+        else:
+            return text
+    except:
+        return text
+
+
 # These functions are helpful for converting numbers to
 # specific number formats for strings
 
