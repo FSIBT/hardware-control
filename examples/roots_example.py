@@ -151,6 +151,9 @@ class RootsDemo(HC_MainWindow):
         self.keysight_wdgt.set_maxV(1, 5)
         self.keysight_wdgt.set_maxV(2, 5)
         self.keysight_wdgt.set_maxV(3, 5)
+        self.keysight_wdgt.set_maxI(1, 2.5)
+        self.keysight_wdgt.set_maxI(2, 0.5)
+        self.keysight_wdgt.set_maxI(3, 0.5)
 
         # Put instrument(s) in tab
         self.tab_psu_layout = QGridLayout()
