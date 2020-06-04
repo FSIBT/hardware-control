@@ -137,25 +137,25 @@ class HC_MultiPowerSupply(HC_Instrument):
             #     self.comm.command(f"CH{c}_ramp_direction?")
 
             # Get latest inbox entries for readout data...
-            Vout = self.read_values(f"CH{c}_V_out")
-            Iout = self.read_values(f"CH{c}_I_out")
-            Vset = self.read_values(f"CH{c}_V_set")
-            Iset = self.read_values(f"CH{c}_I_set")
+            Vout = remove_end_carriage_return(self.read_values(f"CH{c}_V_out"))
+            Iout = remove_end_carriage_return(self.read_values(f"CH{c}_I_out"))
+            Vset = remove_end_carriage_return(self.read_values(f"CH{c}_V_set"))
+            Iset = remove_end_carriage_return(self.read_values(f"CH{c}_I_set"))
             if self.channel_widgets[idx].show_VI_limits:
-                Vmax = self.read_values(f"CH{c}_V_max")
-                Imax = self.read_values(f"CH{c}_I_max")
+                Vmax = remove_end_carriage_return(self.read_values(f"CH{c}_V_max"))
+                Imax = remove_end_carriage_return(self.read_values(f"CH{c}_I_max"))
             # if self.channel_widgets[idx].show_status_panel:
             #     self.comm.command(f"CH{c}_current_limited?")
             #     self.comm.command(f"CH{c}_output_enabled?")
             #     self.comm.command(f"CH{c}_ramp_direction?")
 
-            self.values[f"CH{c}_V_out"] = remove_end_carriage_return(Vout)
-            self.values[f"CH{c}_I_out"] = remove_end_carriage_return(Iout)
-            self.values[f"CH{c}_V_set"] = remove_end_carriage_return(Vset)
-            self.values[f"CH{c}_I_set"] = remove_end_carriage_return(Iset)
+            self.values[f"CH{c}_V_out"] = Vout
+            self.values[f"CH{c}_I_out"] = Iout
+            self.values[f"CH{c}_V_set"] = Vset
+            self.values[f"CH{c}_I_set"] = Iset
             if self.channel_widgets[idx].show_VI_limits:
-                self.values[f"CH{c}_V_max"] = remove_end_carriage_return(Vmax)
-                self.values[f"CH{c}_I_max"] = remove_end_carriage_return(Imax)
+                self.values[f"CH{c}_V_max"] = Vmax
+                self.values[f"CH{c}_I_max"] = Imax
 
             if self.channel_widgets[idx].show_VI_limits:
                 logger.debug(
