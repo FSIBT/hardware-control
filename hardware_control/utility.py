@@ -20,10 +20,9 @@ def returnChannelNumber(s: str):
 
 
 def remove_end_carriage_return(text: str):
-
     try:
-        if text[-1] == "\r":
-            return text[:-1]
+        if text.endswith(r"\r"):
+            return text[:-2]
         else:
             return text
     except:
