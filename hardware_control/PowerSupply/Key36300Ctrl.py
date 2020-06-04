@@ -1,13 +1,7 @@
-import logging
 import random
 
 from hardware_control.HC_Backend import HC_Backend, VISA
 from hardware_control.utility import regex_compare, str_to_bool
-
-
-logger = logging.getLogger(__name__)
-
-
 
 
 class Key36300Ctrl(HC_Backend):
@@ -41,18 +35,21 @@ class Key36300Ctrl(HC_Backend):
                 return value
             else:
 
+                if len(setting) >= 3:
+                    c = setting[2]
+                else:
+                    c = -1
+
                 # Note: We ignore channel number because there is only
                 # one channel on this model of PSU
                 if regex_compare("CH._enable", setting):
-                    c = setting[2]
                     if str_to_bool(value):
                         self.write(f"OUTPUT ON (@{c})")
                     else:
                         self.write(f"OUTPUT OFF (@{c})")
                     out = self.query("output:state?")
-                    return str(rval == "1")
+                    rval = str(rval == "1")
                 elif regex_compare("CH._I_set", setting):
-                    c = setting[2]
 
                     try:
                         if self.max_I[c] is not None:
@@ -63,9 +60,8 @@ class Key36300Ctrl(HC_Backend):
 
                     self.write(f"SOURCE:CURR {value}, (@{c})")
                     rval = self.query(f":SOURCE:CURR? (@{c})")
-                    return rval
+
                 elif regex_compare("CH._V_set", setting):
-                    c = setting[2]
 
                     try:
                         if self.max_V[c] is not None:
@@ -76,29 +72,26 @@ class Key36300Ctrl(HC_Backend):
 
                     self.write(f"SOURCE:VOLT {value}, (@{c})")
                     rval = self.query(f":SOURCE:VOLT? (@{c})")
-                    return rval
 
                 elif regex_compare("CH._V_max", setting):
-
-                    c = setting[2]
 
                     try:
                         self.max_V[c] = float(value)
                     except:
                         return "Invalid value"
 
-                    return value
+                    rval = value
 
                 elif regex_compare("CH._I_max", setting):
-
-                    c = setting[2]
 
                     try:
                         self.max_I[c] = float(value)
                     except:
                         return "Invalid value"
 
-                    return value
+                    rval = value
+
+                return rval
 
         except Exception as e:
             logger.error(
@@ -117,24 +110,34 @@ class Key36300Ctrl(HC_Backend):
                 return f"{cmd.strip('?')}={num}"
             else:
 
-                # Note: We ignore channel number because there is only
-                # one channel on this model of PSU
                 c = cmd[2]
                 cmd = cmd[:-1]
+
                 if regex_compare("CH._V_out?", cmd):
+
                     rval = self.query("MEAS:VOLT? (@{c})")
+
                 elif regex_compare("CH._I_out?", cmd):
+
                     rval = self.query("MEAS:CURR? (@{c})")
+
                 elif regex_compare("CH._I_set?", cmd):
+
                     rval = self.query(f":SOURCE:CURR? (@{c})")
+
                 elif regex_compare("CH._V_set?", cmd):
+
                     rval = self.query(f":SOURCE:VOLT? (@{c})")
+
                 elif regex_compare("CH._I_max?", cmd):  # Get CHx I max
+
                     try:
                         rval = self.max_I[c]
                     except:
                         rval = "Error"
+
                 elif regex_compare("CH._V_max?", cmd):  # Get CHx V max
+
                     try:
                         rval = self.max_V[c]
                     except:
