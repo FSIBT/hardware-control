@@ -56,7 +56,7 @@ class HC_IOModule(HC_Instrument):
         self.V_edit = QLineEdit()
         self.V_edit.setValidator(QDoubleValidator())
         self.V_edit.editingFinished.connect(
-            lambda: update_setting(f"CH{self.channel}_V_set", (self.V_edit.text()))
+            lambda: self.comm.update_setting(f"CH1_V_set", (self.V_edit.text()))
         )
         self.V_edit.setText("0")
 
