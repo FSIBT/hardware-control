@@ -44,6 +44,7 @@ class HC_Backend(ABC):
         self.connection_type = None
         self.port_no = None
         self.ip_addr = None
+        self.termination = "\n"
 
     def parse_connection_addr(self):
 
@@ -132,7 +133,7 @@ class HC_Backend(ABC):
             try:
                 rm = pyvisa.ResourceManager("@py")
                 self.device = rm.open_resource(self.connection_addr)
-
+                self.device.read_termination = self.termination
                 logger.debug("opened connection")
             except Exception as e:
                 self.online = False
