@@ -59,7 +59,11 @@ class HC_Backend(ABC):
             self.connection_type = VISA
         else:
             self.connection_type = SOCKET
-            self.ip_addr, self.port_no = self.connection_addr.split(":")
+            try:
+                self.ip_addr, self.port_no = self.connection_addr.rsplit(":", 1)
+            except ValueError as e:
+                self.ip_addr = self.connection_addr
+                self.port_no = None
 
     def check(self):
         """Some error checking
