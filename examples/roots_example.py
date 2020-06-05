@@ -58,6 +58,8 @@ from hardware_control.PowerSupply.CAEN14xxETCtrl import CAEN14xxETCtrl
 from hardware_control.PowerSupply.Key36300Ctrl import Key36300Ctrl
 from hardware_control.ZMQConnectionTool.HC_ZMQConnectionTool import HC_ZMQConnectionTool
 from hardware_control.LoggerTool.HC_LoggerTool import HC_LoggerTool
+from hardware_control.IOModule.ADAM_nCtrl import ADAM_nCtrl
+from hardware_control.IOModule.HC_IOModule import HC_IOModule
 
 logger = logging.getLogger(__name__)
 
@@ -154,12 +156,19 @@ class RootsDemo(HC_MainWindow):
         self.keysight_wdgt.set_maxI(1, 2.5)
         self.keysight_wdgt.set_maxI(2, 0.5)
         self.keysight_wdgt.set_maxI(3, 0.5)
+        self.keysight_wdgt.set_channel_label(1, "1: Heater")
+        self.keysight_wdgt.set_channel_label(2, "Channel 2")
+        self.keysight_wdgt.set_channel_label(3, "Channel 3")
+
+        self.adam_be = ADAM_nCtrl("192.168.0.5:1025")
+        self.adam_wdgt = HC_IOModule(self.adam_be, self, [1, 2, 3], "ADAM")
 
         # Put instrument(s) in tab
         self.tab_psu_layout = QGridLayout()
+        self.tab_psu_layout.addWidget(self.keysight_wdgt, 0, 0)
+        self.tab_psu_layout.addWidget(self.adam_wdgt, 1, 0)
         self.tab_psu_layout.addWidget(self.caen_wdgt_123, 0, 1)
         self.tab_psu_layout.addWidget(self.caen_wdgt_456, 1, 1)
-        self.tab_psu_layout.addWidget(self.keysight_wdgt, 0, 0)
         self.tab_psu.setLayout(self.tab_psu_layout)
 
         #####################################################################
