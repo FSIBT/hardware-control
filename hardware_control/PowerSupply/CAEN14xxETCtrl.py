@@ -2,7 +2,7 @@ import socket
 import random
 from hardware_control.HC_Backend import HC_Backend, SOCKET, VISA
 import logging
-from hardware_control.utility import regex_compare
+from hardware_control.utility import regex_compare, ensure_float
 
 logger = logging.getLogger(__name__)
 
@@ -69,89 +69,54 @@ class CAEN14xxETCtrl(HC_Backend):
         if not self.online:
             return "Offline"
 
-        try:
-            if self.dummy:
-                return value
+        if self.dummy:
+            return value
+
+        c = int(setting[2])
+
+        # overwrite channel number for easier comparison
+        setting_X = setting[:2] + "X" + setting[3:]
+
+        if setting_X == "CHX_enable":
+            if value == "True":
+                self.query(f"$BD:00,CMD:SET,CH:{c},PAR:ON")
             else:
+                self.query(f"$BD:00,CMD:SET,CH:{c},PAR:OFF")
+            status = self.read_status(c)
 
-                # Note: We ignore channel number because there is only
-                # one channel on this model of PSU
-                if regex_compare("CH._enable", setting):
+            if status is None:
+                return "None"
+            return str(bool(status["on_off"]))
 
-                    c = setting[2]
-                    if str_to_bool(value):
-                        self.query(f"$BD:00,CMD:SET,CH:{c},PAR:ON")
-                    else:
-                        self.query(f"$BD:00,CMD:SET,CH:{c},PAR:OFF")
-                    status = self.read_status(c)
+        value = ensure_float(value)
 
-                    if status is None:
-                        return "None"
-                    return str(bool(status["on_off"]))
+        if setting_X == "CHX_I_max":
+            self.max_I[c] = float(value)
+            return value
+        elif setting_X == "CHX_V_max":
+            self.max_V[c] = float(value)
+            return value
+        elif setting_X == "CHX_I_set":
+            if self.max_I[c] is not None:
+                value = min(value, self.max_I[c-1])
 
-                elif regex_compare("CH._I_max", setting):
+            self.query(f"$BD:00,CMD:SET,CH:{c},PAR:ISET,VAL:{value}")
+            result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:ISET")
 
-                    c = setting[2]
+            if result is None:
+                return "None"
+            return result[-7:]
+        elif setting_X == "CHX_V_set":
+            if self.max_V[c] is not None:
+                value = min(value, self.max_V[c-1])
 
-                    try:
-                        self.max_I[c] = float(value)
-                    except:
-                        return "Invalid value"
+            self.query(f"$BD:00,CMD:SET,CH:{c},PAR:VSET,VAL:{value}")
+            result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:VSET")
 
-                    return value
+            if result is None:
+                return "None"
+            return result[-6:]
 
-                elif regex_compare("CH._V_max", setting):
-
-                    c = setting[2]
-
-                    try:
-                        self.max_V[c] = float(value)
-                    except:
-                        return "Invalid value"
-
-                    return value
-
-                elif regex_compare("CH._I_set", setting):
-
-                    c = setting[2]
-
-                    try:
-                        if self.max_I[c] is not None:
-                            if float(value) > self.max_I:
-                                value = str(self.max_I)
-                    except:
-                        return "Invalid value"
-
-                    self.query(f"$BD:00,CMD:SET,CH:{c},PAR:ISET,VAL:{value}")
-                    result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:ISET")
-
-                    if result is None:
-                        return "None"
-                    return result[-7:]
-
-                elif regex_compare("CH._V_set", setting):
-
-                    c = setting[2]
-
-                    try:
-                        if self.max_V[c] is not None:
-                            if float(value) > self.max_V:
-                                value = str(self.max_V)
-                    except:
-                        return "Invalid value"
-
-                    self.query(f"$BD:00,CMD:SET,CH:{c},PAR:VSET,VAL:{value}")
-                    result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:VSET")
-
-                    if result is None:
-                        return "None"
-                    return result[-6:]
-
-        except Exception as e:
-            logger.error(
-                "An error occured in CAEN14xxETCtrl.py when sending SCPI commands to the instrument.",
-                exc_info=True,
-            )
 
     def command(self, cmd: str):
 
