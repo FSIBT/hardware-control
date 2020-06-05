@@ -1,3 +1,4 @@
+import logging
 import random
 
 from hardware_control.HC_Backend import HC_Backend, ensure_online
@@ -39,9 +40,11 @@ class Key36300Ctrl(HC_Backend):
 
         if setting_X == "CHX_enable":
             if value == "True":
-                self.write(f"OUTPUT ON (@{channel})")
+                #self.write(f"OUTPUT ON (@{channel})")
+                self.write(f"OUTPUT ON")
             else:
-                self.write(f"OUTPUT OFF (@{channel})")
+                #self.write(f"OUTPUT OFF (@{channel})")
+                self.write(f"OUTPUT OFF")
             out = self.query("OUTPUT:STATE?")
             return str(out == "1")
 
@@ -77,15 +80,14 @@ class Key36300Ctrl(HC_Backend):
             return f"{cmd.strip('?')}={num}"
 
         channel = int(cmd[2])
-        cmd = cmd[:-1]
 
         # overwrite channel number for easier comparison
         cmd_X = cmd[:2] + "X" + cmd[3:]
 
         if cmd_X == "CHX_V_out?":
-            rval = self.query("MEAS:VOLT? (@{channel})")
+            rval = self.query(f"MEAS:VOLT? (@{channel})")
         elif cmd_X == "CHX_I_out?":
-            rval = self.query("MEAS:CURR? (@{channel})")
+            rval = self.query(f"MEAS:CURR? (@{channel})")
         elif cmd_X == "CHX_I_set?":
             rval = self.query(f":SOURCE:CURR? (@{channel})")
         elif cmd_X == "CHX_V_set?":
@@ -94,5 +96,9 @@ class Key36300Ctrl(HC_Backend):
             rval = self.max_I[channel - 1]
         elif cmd_X == "CHX_V_max?":
             rval = self.max_V[channel - 1]
+        else:
+            logger.error(f"Error: {cmd_X} in {self.ID} not known")
+            rval = "Error"
 
-        return f"{cmd}={rval}"
+        # remove question mark from return statement
+        return f"{cmd[:-1]}={rval}"
