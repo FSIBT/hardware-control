@@ -62,6 +62,7 @@ class HC_Backend(ABC):
             self.connection_type = SOCKET
             try:
                 self.ip_addr, self.port_no = self.connection_addr.rsplit(":", 1)
+                self.port_no = int(self.port_no)
             except ValueError as e:
                 self.ip_addr = self.connection_addr
                 self.port_no = None
