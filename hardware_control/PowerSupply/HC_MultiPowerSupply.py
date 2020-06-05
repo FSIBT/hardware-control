@@ -182,7 +182,7 @@ class HC_MultiPowerSupply(HC_Instrument):
         except:
             return
 
-        self.comm.update_setting("CH{channel}_I_max", str(maxI))
+        self.comm.update_setting(f"CH{channel}_I_max", str(maxI))
 
     def set_maxV(self, channel: int, maxV: float):
         """ Sets an internal limit for the voltage from channel 'n'. """
@@ -192,7 +192,7 @@ class HC_MultiPowerSupply(HC_Instrument):
         except:
             return
 
-        self.comm.update_setting("CH{channel}_V_max", str(maxV))
+        self.comm.update_setting(f"CH{channel}_V_max", str(maxV))
 
     def get_header(self):
 
