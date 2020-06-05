@@ -72,6 +72,13 @@ def str_to_bool(x: str):
         return False
 
 
+def ensure_float(x):
+    try:
+        return float(x)
+    except ValueError:
+        return "Invalid value"
+
+
 def converter_ulong_to_IEEE754(x):
     a = (ctypes.c_ulong * 1)(x)
     b = ctypes.cast(a, ctypes.POINTER(ctypes.c_float))

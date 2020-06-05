@@ -1,4 +1,5 @@
 from abc import ABC
+from functools import wraps
 
 import pyvisa
 import socket
@@ -13,6 +14,19 @@ logger = logging.getLogger(__name__)
 VISA = "visa"
 SOCKET = "socket"
 MODBUS = "modbus"
+
+
+def ensure_online(f):
+    @wraps(f)
+    def wrapped(*args, **kwargs):
+        self = args[0]
+
+        if not self.online:
+            return f"{self.ID}-Offline"
+
+        return f(*args, **kwargs)
+
+    return wrapped
 
 
 class HC_Backend(ABC):
@@ -33,7 +47,8 @@ class HC_Backend(ABC):
 
     def parse_connection_addr(self):
 
-        if (self.connection_addr.startswith("ASRL")
+        if (
+            self.connection_addr.startswith("ASRL")
             or self.connection_addr.startswith("GPIB")
             or self.connection_addr.startswith("PXI")
             or self.connection_addr.startswith("VISA")
@@ -170,10 +185,8 @@ class HC_Backend(ABC):
 
         return None
 
+    @ensure_online
     def write(self, command: str):
-
-        if not self.online:
-            return f"{self.ID}-Offline"
 
         if self.dummy:
             return command
@@ -186,8 +199,8 @@ class HC_Backend(ABC):
             elif self.connection_type == SOCKET:
                 self.device.sendall(bytes(command + "\n", "utf-8"))
                 return command
-        except Exception as e:
-            logger.debug(f"ERROR: Write failed.\n\t{e}")
+        except Exception:
+            logger.debug(f"ERROR: Write {command} failed in {self.ID}", exec_info=True)
             self.online = False
             return f"{self.ID}-Offline"
 
@@ -203,10 +216,8 @@ class HC_Backend(ABC):
                 break
         return data
 
+    @ensure_online
     def query(self, command: str):
-
-        if not self.online:
-            return f"{self.ID}-Offline"
 
         if self.dummy:
             return command
@@ -221,7 +232,7 @@ class HC_Backend(ABC):
                 reply = reply[2 : len(reply) - 3]
                 logger.debug(f'\t{self.ID}< "{command}"')
             return reply
-        except Exception as e:
-            logger.debug(f"ERROR: Query failed.\n\t{e}")
+        except Exception:
+            logger.debug(f"ERROR: Query {command} failed in {self.ID}", exc_info=True)
             self.online = False
             return f"{self.ID}-Offline"
