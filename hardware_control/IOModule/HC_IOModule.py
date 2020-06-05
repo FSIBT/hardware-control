@@ -84,7 +84,7 @@ class HC_IOModule(HC_Instrument):
             P_meas = remove_end_carriage_return(self.read_values(f"CH3_V_meas"))
 
             self.voltage_meas_label.setText(f"Voltage: {round(float(V_meas), 3)}")
-            self.voltage_meas_label.setText(f"Voltage: {round(float(I_meas), 3)}")
-            self.voltage_meas_label.setText(f"Voltage: {round(float(P_meas), 3)}")
+            self.press_meas_label.setText(f"Voltage: {round(float(I_meas), 3)}")
+            self.curr_meas_label.setText(f"Voltage: {round(float(P_meas), 3)}")
         except:
             logger.error("update readout failed")

@@ -50,7 +50,9 @@ class ADAM_nCtrl(HC_Backend):
                     self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                     self.s.settimeout(0.950)
                     self.s.connect(self.addr)
+                    logger.debug(f"opened socket connection to {self.ID} at {self.ip_addr}:{self.port_no}")
                 except:
+                    logger.debug(f"exception during try connect", exc_info=True)
                     self.online = False
                     return self.online
 
@@ -93,6 +95,7 @@ class ADAM_nCtrl(HC_Backend):
             cmd = f"#01{channel:02d}{value:06.3f}\r"
 
             if not self.dummy:
+                logger.debug(f"{self.ID} sending command {cmd} at {self.ip_addr}:{self.port_no}")
                 self.s.sendto(cmd.encode("ascii"), self.addr)
                 indata, inaddr = self.s.recvfrom(self.buf)
                 output = indata.decode("ascii")
@@ -115,7 +118,6 @@ class ADAM_nCtrl(HC_Backend):
             return f"{cmd.strip('?')}={num}"
 
         channel = int(cmd[2])
-        cmd = cmd[:-1]
 
         # overwrite channel number for easier comparison
         cmd_X = cmd[:2] + "X" + cmd[3:]
@@ -123,10 +125,7 @@ class ADAM_nCtrl(HC_Backend):
         if cmd_X == "CHX_V_meas?":
 
             # Read all data
-            self.query("#01\r")
-            # self.s.send("#01\r".encode("ascii"))
-            # indata = self.s.recv(self.buf)
-            # data = indata.decode("ascii")[1:-1]
+            data = self.query("#01\r")
             # the data comes as one string with 7 bytes for each value
             # 1 byte: +- sign
             # 2 digits decimalpoint 3 digits
@@ -140,8 +139,14 @@ class ADAM_nCtrl(HC_Backend):
                 logger.error(
                     f"Adam: Error in read values: p={data[0:7]} I={data[7:14]} V={data[14:21]}"
                 )
+        else:
+            rval = "Error"
+            logger.error(
+                f"Adam: unkonwn command {cmd}"
+            )
 
-        return f"{cmd}={rval}"
+        # remove question mark in cmd
+        return f"{cmd[:-1]}={rval}"
 
     ##########################
 
