@@ -64,6 +64,7 @@ class HC_Backend(ABC):
                 self.ip_addr, self.port_no = self.connection_addr.rsplit(":", 1)
                 self.port_no = int(self.port_no)
             except ValueError as e:
+                logger.error(f"{self.ID} cannot parse connection address {self.conection_addr}")
                 self.ip_addr = self.connection_addr
                 self.port_no = None
 
@@ -135,7 +136,7 @@ class HC_Backend(ABC):
                 rm = pyvisa.ResourceManager("@py")
                 self.device = rm.open_resource(self.connection_addr)
                 self.device.read_termination = self.termination
-                logger.debug("opened connection")
+                logger.debug(f"opened pyvisa connection to {self.ID} at {self.connection_addr}")
             except Exception as e:
                 self.online = False
                 logger.debug(
@@ -151,7 +152,7 @@ class HC_Backend(ABC):
                 self.device.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 0)
                 self.device.connect((self.ip_addr, int(self.port_no)))
 
-                logger.debug("opened connection")
+                logger.debug(f"opened socket connection to {self.ID} at {self.ip_addr}:{self.port_no}")
             except Exception as e:
                 self.online = False
                 logger.debug(
@@ -165,7 +166,7 @@ class HC_Backend(ABC):
                 self.device = ModbusClient(host=self.connection_addr)
                 if self.device.connect(self.connection_addr):
                     self.online = True
-                    logger.debug("opened connection")
+                    logger.debug(f"opened modbus connection to {self.ID} at {self.connection_addr}")
             except Exception as e:
                 self.online = False
                 logger.debug(
@@ -229,6 +230,7 @@ class HC_Backend(ABC):
             return command
 
         try:
+            logger.debug(f"INFO: Sending query {command} in {self.ID}")
             if self.connection_type == VISA:
                 reply = self.device.query(command)
             elif self.connection_type == SOCKET:
