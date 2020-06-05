@@ -132,7 +132,6 @@ class STS50Demo(HC_MainWindow):
 
         scpi_scope = Key4000XCtrl(
             "TCPIP0::192.168.0.14::INSTR",  # Enter socket address as ip:port, ex: 192.168.0.14:5025
-            connection_type,
         )
         self.scope_ctrl = HC_Oscilloscope(scpi_scope, self, "Keysight")
         self.scope_ctrl.load_state("scope_state.json")
@@ -158,7 +157,6 @@ class STS50Demo(HC_MainWindow):
         # awg = Key33500BCtrl("Some-address-goes-here", dummy, True, connection_type, "192.168.0.18", 5025)
         awg = Key33500BCtrl(
             "TCPIP0::192.168.0.18::INSTR",  # toDo "TCPIP0::192.168.1.18::INSTR"
-            connection_type,
         )  # "USB0::0x0957::0x2907::MY52500624::INSTR"
         self.awg_ctrl = HC_FunctionGenerator(awg, self, "RF Generator", 1)
 
