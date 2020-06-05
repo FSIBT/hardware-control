@@ -3,6 +3,8 @@ import random
 from hardware_control.HC_Backend import HC_Backend, ensure_online
 from hardware_control.utility import ensure_float
 
+logger = logging.getLogger(__name__)
+
 
 class Key36300Ctrl(HC_Backend):
     """Class to control the KeysightE36300 Series Triple Output Power Supply
