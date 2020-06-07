@@ -60,6 +60,8 @@ from hardware_control.ZMQConnectionTool.HC_ZMQConnectionTool import HC_ZMQConnec
 from hardware_control.LoggerTool.HC_LoggerTool import HC_LoggerTool
 from hardware_control.IOModule.ADAM_nCtrl import ADAM_nCtrl
 from hardware_control.IOModule.HC_IOModule import HC_IOModule
+from hardware_control.base import HC_ConsoleWidget
+
 
 logger = logging.getLogger(__name__)
 
@@ -93,10 +95,12 @@ class RootsDemo(HC_MainWindow):
         self.tab_psu = QWidget()
         self.tab_aux = QWidget()
         self.tab_data = QWidget()
+        self.python = HC_ConsoleWidget(main_app=app)
 
         self.tabs.addTab(self.tab_psu, "Power Supplies")
         self.tabs.addTab(self.tab_aux, "Aux")
         self.tabs.addTab(self.tab_data, "Datasets")
+        self.tabs.addTab(self.python, "Console")
 
         self.main_widget = QWidget(self)
 
