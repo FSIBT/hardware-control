@@ -50,7 +50,9 @@ class ADAM_nCtrl(HC_Backend):
                     self.s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                     self.s.settimeout(0.950)
                     self.s.connect(self.addr)
-                    logger.debug(f"opened socket connection to {self.ID} at {self.ip_addr}:{self.port_no}")
+                    logger.debug(
+                        f"opened socket connection to {self.ID} at {self.ip_addr}:{self.port_no}"
+                    )
                 except:
                     logger.debug(f"exception during try connect", exc_info=True)
                     self.online = False
@@ -95,7 +97,9 @@ class ADAM_nCtrl(HC_Backend):
             cmd = f"#01{channel:02d}{value:06.3f}\r"
 
             if not self.dummy:
-                logger.debug(f"{self.ID} sending command {cmd} at {self.ip_addr}:{self.port_no}")
+                logger.debug(
+                    f"{self.ID} sending command {cmd} at {self.ip_addr}:{self.port_no}"
+                )
                 self.s.sendto(cmd.encode("ascii"), self.addr)
                 indata, inaddr = self.s.recvfrom(self.buf)
                 output = indata.decode("ascii")
@@ -141,9 +145,7 @@ class ADAM_nCtrl(HC_Backend):
                 )
         else:
             rval = "Error"
-            logger.error(
-                f"Adam: unkonwn command {cmd}"
-            )
+            logger.error(f"Adam: unkonwn command {cmd}")
 
         # remove question mark in cmd
         return f"{cmd[:-1]}={rval}"

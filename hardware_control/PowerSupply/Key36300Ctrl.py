@@ -40,10 +40,10 @@ class Key36300Ctrl(HC_Backend):
 
         if setting_X == "CHX_enable":
             if value == "True":
-                #self.write(f"OUTPUT ON (@{channel})")
+                # self.write(f"OUTPUT ON (@{channel})")
                 self.write(f"OUTPUT ON")
             else:
-                #self.write(f"OUTPUT OFF (@{channel})")
+                # self.write(f"OUTPUT OFF (@{channel})")
                 self.write(f"OUTPUT OFF")
             out = self.query("OUTPUT:STATE?")
             return str(out == "1")
