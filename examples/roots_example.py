@@ -15,9 +15,9 @@ Options:
 """
 
 import logging
+import sys
+import warnings
 
-import sys, warnings
-import time
 from PyQt5.QtWidgets import QDoubleSpinBox, QStyleFactory, QTabWidget, QGroupBox
 from docopt import docopt
 
@@ -87,7 +87,6 @@ logger.info("Roots Example Starting")
 class RootsDemo(HC_MainWindow):
     def __init__(self, app):
         super().__init__(app)
-        self.app = app
 
         self.setWindowTitle("ROOTS Control")
 

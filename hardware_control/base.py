@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import datetime
 import hashlib
 import pathlib
@@ -11,9 +10,7 @@ import json
 import logging
 import numpy as np
 import os
-import hashlib
 import pickle
-import h5py
 from sys import platform
 
 from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot, QObject, QTimer
