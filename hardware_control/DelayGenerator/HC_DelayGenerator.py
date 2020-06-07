@@ -98,11 +98,11 @@ class HC_DelayGenerator(HC_Instrument):
         self.single_trig_but.setText("Single Trigger")
         self.single_trig_but.setIcon(
             QIcon(
-                    QPixmap(
-                        pkg_resources.resource_filename(
-                            "hardware_control", "/graphics/pulse.png"
-                        )
+                QPixmap(
+                    pkg_resources.resource_filename(
+                        "hardware_control", "/graphics/pulse.png"
                     )
+                )
             )
         )
         self.single_trig_but.setCheckable(False)

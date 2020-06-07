@@ -206,11 +206,11 @@ class HC_ScanTool(HC_Instrument):
         self.scan_button.setText("Scan")
         self.scan_button.setIcon(
             QIcon(
-                    QPixmap(
-                        pkg_resources.resource_filename(
-                            "hardware_control", "graphics/scan.png"
-                        )
+                QPixmap(
+                    pkg_resources.resource_filename(
+                        "hardware_control", "graphics/scan.png"
                     )
+                )
             )
         )
         self.scan_button.setCheckable(False)

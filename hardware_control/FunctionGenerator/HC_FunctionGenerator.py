@@ -222,11 +222,11 @@ class FunctionGeneratorChannelWidget(QWidget):
         self.mod_but.setText("Modulation")
         self.mod_but.setIcon(
             QIcon(
-                    QPixmap(
-                        pkg_resources.resource_filename(
-                            "hardware_control", "graphics/modulation.png",
-                        )
+                QPixmap(
+                    pkg_resources.resource_filename(
+                        "hardware_control", "graphics/modulation.png",
                     )
+                )
             )
         )
         self.mod_but.setCheckable(True)
@@ -242,11 +242,11 @@ class FunctionGeneratorChannelWidget(QWidget):
         self.burst_but.setCheckable(True)
         self.burst_but.setIcon(
             QIcon(
-                    QPixmap(
-                        pkg_resources.resource_filename(
-                            "hardware_control", "graphics/burst.png"
-                        )
+                QPixmap(
+                    pkg_resources.resource_filename(
+                        "hardware_control", "graphics/burst.png"
                     )
+                )
             )
         )
         self.burst_but.clicked.connect(
