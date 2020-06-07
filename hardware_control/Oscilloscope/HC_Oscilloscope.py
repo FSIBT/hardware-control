@@ -331,13 +331,11 @@ class OscillscopeChannelWidget(QWidget):
         self.BW_but.setText("BW Limit")
         self.BW_but.setIcon(
             QIcon(
-                (
                     QPixmap(
                         pkg_resources.resource_filename(
                             "hardware_control", "graphics/BWlim.png"
                         )
                     )
-                )
             )
         )
         self.BW_but.setCheckable(True)
@@ -353,13 +351,11 @@ class OscillscopeChannelWidget(QWidget):
         self.Inv_but.setCheckable(True)
         self.Inv_but.setIcon(
             QIcon(
-                (
                     QPixmap(
                         pkg_resources.resource_filename(
                             "hardware_control", "graphics/invert.png"
                         )
                     )
-                )
             )
         )
         self.Inv_but.clicked.connect(

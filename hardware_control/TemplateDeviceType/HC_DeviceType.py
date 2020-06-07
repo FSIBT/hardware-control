@@ -47,7 +47,7 @@ class HC_DeviceType(HC_Instrument):
         self.spinbox.setRange(0, 10)
         self.spinbox.setSingleStep(0.15)
         self.spinbox.editingFinished.connect(
-            (lambda: self.update_setting("Volt_Channel1", str(self.spinbox.value())))
+            lambda: self.update_setting("Volt_Channel1", str(self.spinbox.value()))
         )
 
         self.layout = QGridLayout()

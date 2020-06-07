@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """oscilloscope_example to control the hardware_control test stand
 
 Usage:

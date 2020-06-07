@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from PyQt5.QtCore import QTimer, QThread, pyqtSignal, pyqtSlot, QObject
 from PyQt5.QtGui import QIntValidator, QDoubleValidator
 from PyQt5.QtWidgets import (

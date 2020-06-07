@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """hardware_control-control to control the hardware_control test stand
 
 Usage:

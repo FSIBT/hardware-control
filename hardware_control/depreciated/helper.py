@@ -27,7 +27,7 @@ def get_data_dir():
     except (configparser.NoOptionError, configparser.NoSectionError):
         path = None
         print()
-        print("No data path found, please add it to {}".format(inifile))
+        print(f"No data path found, please add it to {inifile}")
         print("   The file should contain something like:")
         print("       [Paths]")
         print("       data = <path to data>")

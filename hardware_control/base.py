@@ -1541,7 +1541,7 @@ class HC_App(QApplication):
         commands = []
 
         # Read file line by line
-        with open(filename, "r") as infile:
+        with open(filename) as infile:
             for line in infile:
                 commands.append(line.rstrip("\n"))
 

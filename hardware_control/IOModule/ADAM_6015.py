@@ -48,7 +48,7 @@ class Adam_6015(HC_Backend):
 
             # Independent of the state, try to receive data, if nothing is returned, then the device is offline
             try:
-                self.s.send("#01\r".encode("ascii"))
+                self.s.send(b"#01\r")
                 indata = self.s.recv(self.buf)
                 self.online = True
                 return self.online
@@ -82,7 +82,7 @@ class Adam_6015(HC_Backend):
         """Read values from Adam"""
         """this is a override - sockets are used"""
         if not self.dummy:
-            self.s.send("#01\r".encode("ascii"))
+            self.s.send(b"#01\r")
             indata = self.s.recv(self.buf)
             data = indata.decode("ascii")
         else:

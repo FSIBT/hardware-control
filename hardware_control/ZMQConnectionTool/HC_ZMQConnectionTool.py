@@ -38,7 +38,7 @@ class HC_ZMQConnectionTool(HC_Instrument):
         self.socket = None
         self.poller = None
 
-        super(HC_ZMQConnectionTool, self).__init__(window, name)
+        super().__init__(window, name)
 
         self.settings = self.default_state()
         self.settings["port"] = port

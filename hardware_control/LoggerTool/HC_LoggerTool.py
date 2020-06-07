@@ -458,7 +458,7 @@ class HC_LoggerTool(HC_Instrument):
 
                 for ridx, val in enumerate(group.data[field]):
                     temp_item = QTableWidgetItem()
-                    temp_item.setText((str(val)))
+                    temp_item.setText(str(val))
                     self.table.setItem(ridx, col, temp_item)
 
                 col += 1

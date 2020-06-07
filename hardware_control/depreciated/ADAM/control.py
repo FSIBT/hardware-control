@@ -43,7 +43,7 @@ class Adam(HC_Control):
     def read(self):
         """Read values from Adam, correct for voltage offset"""
         if not self.dummy:
-            self.s.send("#01\r".encode("ascii"))
+            self.s.send(b"#01\r")
             indata = self.s.recv(self.buf)
             data = indata.decode("ascii")[1:-1]
             # the data comes as one string with 7 bytes for each value
