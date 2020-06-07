@@ -375,7 +375,7 @@ class HC_CommWorker(QObject):
 
     @pyqtSlot()
     def close(self):
-        """"Tells backend to close the connection. Then reports if instrument is
+        """Tells backend to close the connection. Then reports if instrument is
         offline."""
         online = self.backend.close()
         self.sigReturnOnline.emit(online)
@@ -1355,10 +1355,12 @@ class HC_Instrument(QGroupBox):
         pass
 
     def backend_return_log(self, retval: str, point_data):
-        """When HC_Comm's command_log() returns, backend_return_log() is called
-        prior to backend_return(). backend_return_log() performs the logging
-        action before backend_return() updates the UI, stores the value in
-        self.values, or whatever else it may be configured to do."""
+        """Performs the logging action before backend_return() updates the UI.
+
+        When HC_Comm's command_log() returns, backend_return_log() is called
+        prior to backend_return(). backend_return_log() stores the value in
+        self.values, or whatever else it may be configured to do.
+        """
 
         found = False
         for ds in self.window.app.data_sets:

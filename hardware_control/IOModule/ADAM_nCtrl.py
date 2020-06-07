@@ -4,13 +4,11 @@ It receives a string "CH#_TEMP?"
 There are no settings to be set
 """
 
+import logging
 import random
-import re
 import socket
 
 from hardware_control.HC_Backend import HC_Backend, ensure_online
-from hardware_control.utility import regex_compare
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +16,7 @@ logger = logging.getLogger(__name__)
 class ADAM_nCtrl(HC_Backend):
     """Control of Adam input/output module"""
 
-    def __init__(self, connection_addr="192.168.1.25:1025"):
+    def __init__(self, connection_addr):
 
         super().__init__()
 

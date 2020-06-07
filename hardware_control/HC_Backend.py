@@ -107,7 +107,7 @@ class HC_Backend(ABC):
             return False
 
         if self.device is None:
-            logger.debug(f"{self.ID}: Called close with not device dfined")
+            logger.debug(f"{self.ID}: Called close with not device defined")
             return False
 
         self.device.close()

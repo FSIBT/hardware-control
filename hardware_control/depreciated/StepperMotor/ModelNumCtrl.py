@@ -86,7 +86,7 @@ class STM(HC_Control):
         self.sock.close()
 
     def read(self):
-        """Read the return statement from a motor command
+        r"""Read the return statement from a motor command
 
         Receive one byte at a time until we read a \r.
         Form a single string out of it and then remove the leading op-code
