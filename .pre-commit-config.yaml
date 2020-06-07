@@ -1,5 +1,17 @@
 repos:
--   repo: https://github.com/ambv/black
-    rev: stable
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.1.0
     hooks:
-    - id: black
+    -   id: trailing-whitespace
+    -   id: requirements-txt-fixer
+    -   id: debug-statements
+    -   id: check-merge-conflict
+-   repo: https://github.com/asottile/pyupgrade
+    rev: v2.4.4
+    hooks:
+    -   id: pyupgrade
+        args: ["--py36-plus"]
+-   repo: https://github.com/ambv/black
+    rev: 19.10b0
+    hooks:
+    -   id: black
