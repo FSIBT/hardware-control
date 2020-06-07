@@ -1153,6 +1153,9 @@ class HC_Instrument(QGroupBox):
 
         window.app.add_instrument(self)
 
+    def __repr__(self):
+        return f"HC_Instrument {self.name} {self.manufacturer} @ {self.address} online:{self.online}"
+
     def __str__(self):
         # return f"{self.manufacturer} {self.model}"
         return f"{self.name}"
