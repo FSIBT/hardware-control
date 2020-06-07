@@ -3,11 +3,8 @@ docopt
 matplotlib
 mpmath
 numpy
-pandas
+qtconsole
 pymodbus
-pyqode.core
-pyqode.python
-visa
 pyvisa-py
-scipy
 setuptools
+visa
