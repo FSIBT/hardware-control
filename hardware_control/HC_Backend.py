@@ -242,7 +242,7 @@ class HC_Backend(ABC):
             if self.connection_type == VISA:
                 reply = self.device.query(command)
             elif self.connection_type == SOCKET:
-                self.device.sendall(bytes(command + "\n", "utf-8"))
+                self.device.sendall(bytes(command + self.termination, "utf-8"))
                 reply_bytes = HC_Backend.recvall(self.device)
                 reply = str(reply_bytes)
                 reply = reply[2 : len(reply) - 3]
