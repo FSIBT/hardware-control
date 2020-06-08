@@ -57,7 +57,7 @@ from hardware_control.PowerSupply.CAEN14xxETCtrl import CAEN14xxETCtrl
 from hardware_control.PowerSupply.Key36300Ctrl import Key36300Ctrl
 from hardware_control.ZMQConnectionTool.HC_ZMQConnectionTool import HC_ZMQConnectionTool
 from hardware_control.LoggerTool.HC_LoggerTool import HC_LoggerTool
-from hardware_control.IOModule.ADAM_nCtrl import ADAM_nCtrl
+from hardware_control.IOModule.ADAM_6024Ctrl import ADAM_6024Ctrl
 from hardware_control.IOModule.HC_IOModule import HC_IOModule
 from hardware_control.base import HC_ConsoleWidget
 
@@ -163,7 +163,7 @@ class RootsDemo(HC_MainWindow):
         self.keysight_wdgt.set_channel_label(2, "Channel 2")
         self.keysight_wdgt.set_channel_label(3, "Channel 3")
 
-        self.adam_be = ADAM_nCtrl("192.168.0.5:1025")
+        self.adam_be = ADAM_6024Ctrl("192.168.0.5:1025")
         self.adam_wdgt = HC_IOModule(self.adam_be, self, [1, 2, 3], "ADAM")
 
         # Put instrument(s) in tab

@@ -1,7 +1,5 @@
 """
-This is a device for reading Temperatures
-It receives a string "CH#_TEMP?"
-There are no settings to be set
+
 """
 
 import logging
@@ -21,15 +19,15 @@ class ADAM_6024Ctrl(HC_Backend):
         super().__init__()
 
         self.online = False
-        self.ID = "Advantac_ADAM-6015"
+        self.ID = "Advantac_ADAM-6025"
         self.buf = 200
         self.connection_addr = connection_addr
 
         self.parse_connection_addr()
 
         # This specifies the max number of channels the user can request
-        self.num_ichannels = 3
-        self.num_ochannels = 1
+        self.num_ichannels = 8
+        self.num_ochannels = 4
 
         # Min/max voltages output supports
         self.out_min = 0

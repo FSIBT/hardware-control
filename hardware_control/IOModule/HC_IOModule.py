@@ -53,6 +53,8 @@ class HC_IOModule(HC_Instrument):
         self.press_meas_label = QLabel("Current: ----")
         self.curr_meas_label = QLabel("Pressure: ----")
         #
+        self.v_edit_label = QLabel(" kV")
+        #
         self.V_edit = QLineEdit()
         self.V_edit.setValidator(QDoubleValidator())
         self.V_edit.editingFinished.connect(
@@ -60,11 +62,15 @@ class HC_IOModule(HC_Instrument):
         )
         self.V_edit.setText("0")
 
+        # self.v_to_zero = QPushButton("Set to 0 V")
+        # self.v_to_zero.
+
         self.main_layout = QGridLayout()
         self.main_layout.addWidget(self.voltage_meas_label, 0, 0)
         self.main_layout.addWidget(self.curr_meas_label, 1, 0)
         self.main_layout.addWidget(self.press_meas_label, 2, 0)
         self.main_layout.addWidget(self.V_edit, 0, 1)
+        self.main_layout.addWidget(self.V_edit, 0, 2)
         self.setLayout(self.main_layout)
 
         # Create timer to query voltages
@@ -79,12 +85,14 @@ class HC_IOModule(HC_Instrument):
         self.comm.command("CH3_V_meas?")
 
         try:
-            V_meas = remove_end_carriage_return(self.read_values(f"CH1_V_meas"))
+            V_meas = remove_end_carriage_return(self.read_values(f"CH3_V_meas"))
             I_meas = remove_end_carriage_return(self.read_values(f"CH2_V_meas"))
-            P_meas = remove_end_carriage_return(self.read_values(f"CH3_V_meas"))
+            P_meas = remove_end_carriage_return(self.read_values(f"CH1_V_meas"))
 
-            self.voltage_meas_label.setText(f"Voltage: {round(float(V_meas), 3)}")
-            self.press_meas_label.setText(f"Voltage: {round(float(I_meas), 3)}")
-            self.curr_meas_label.setText(f"Voltage: {round(float(P_meas), 3)}")
+            self.voltage_meas_label.setText(f"Voltage: {round(float(V_meas), 3)} V")
+            self.press_meas_label.setText(f"Current: {round(float(I_meas)*1e6, 3)} uA")
+            self.curr_meas_label.setText(
+                f"Pressure: {round(float(P_meas)*1e3, 3)} mTorr"
+            )
         except:
-            logger.error("update readout failed")
+            logger.error("update readout failed", exc_info=True)
