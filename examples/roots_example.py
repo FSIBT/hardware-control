@@ -151,6 +151,7 @@ class RootsDemo(HC_MainWindow):
             "Keysight Power Supply",
             show_VI_limits=True,
             show_custom_labels=True,
+            all_enable_button=ONLY,
         )
         self.keysight_wdgt.set_maxV(1, 5)
         self.keysight_wdgt.set_maxV(2, 5)

@@ -15,6 +15,8 @@ from PyQt5.QtWidgets import (
     QWidget,
     QGridLayout,
     QGroupBox,
+    QSpacerItem,
+    QSizePolicy,
 )
 
 from hardware_control.base import HC_Instrument, HC_Comm, setButtonState
@@ -22,6 +24,10 @@ import logging
 from hardware_control.utility import remove_end_carriage_return
 
 logger = logging.getLogger(__name__)
+
+ADD = "Add"
+ONLY = "Only"
+HIDE = "Hide"
 
 
 class HC_MultiPowerSupply(HC_Instrument):
@@ -34,6 +40,7 @@ class HC_MultiPowerSupply(HC_Instrument):
         show_VI_limits=False,
         show_custom_labels=False,
         show_status_panel=False,
+        all_enable_button=HIDE,
     ):
 
         super().__init__(window, name)
@@ -43,6 +50,8 @@ class HC_MultiPowerSupply(HC_Instrument):
 
         backend.dummy = self.window.app.dummy
         self.address = backend.connection_addr
+
+        self.all_enable_button = all_enable_button
 
         if backend in self.window.app.comms:
             self.comm = self.window.app.comms[backend]
@@ -93,13 +102,33 @@ class HC_MultiPowerSupply(HC_Instrument):
         for idx, c in enumerate(self.channels):
             self.channel_widgets.append(
                 PowerSupplyChannel(
-                    c, self, show_VI_limits, show_custom_labels, show_status_panel
+                    c,
+                    self,
+                    show_VI_limits,
+                    show_custom_labels,
+                    show_status_panel,
+                    (all_enable_button == ONLY),
                 )
             )
             self.channel_panel.addWidget(self.channel_widgets[-1], 0, idx)
         #
+
+        self.all_enable_but = QPushButton("All On/Off")
+        if self.all_enable_button == ONLY:
+            self.all_enable_but.setCheckable(True)
+        else:
+            self.all_enable_but.setCheckable(False)
+        self.all_enable_but.clicked.connect(self.all_on_off)
+        setButtonState(self.all_enable_but, False)
+
         self.master_layout = QGridLayout()
-        self.master_layout.addLayout(self.channel_panel, 0, 0)
+        self.master_layout.addLayout(self.channel_panel, 0, 0, 1, 3)
+        if all_enable_button == ADD or all_enable_button == ONLY:
+            self.enable_all_spacer = QSpacerItem(
+                10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
+            )
+            self.master_layout.addItem(self.enable_all_spacer, 1, 0, 1, 2)
+            self.master_layout.addWidget(self.all_enable_but, 1, 2)
         #
         self.setLayout(self.master_layout)
 
@@ -110,6 +139,33 @@ class HC_MultiPowerSupply(HC_Instrument):
         self.readout_timer = QTimer(self)
         self.readout_timer.timeout.connect(self.update_readout)
         self.readout_timer.start(self.globalRefreshRate)
+
+    def all_on_off(self):
+
+        # IF channel buttons are displayed, check their status to determine if
+        # all need to be turned on vs off.
+        if self.all_enable_button != ONLY:
+
+            any_on = False
+            for c in self.channel_widgets:
+                if c.enabled_but.isChecked():
+                    any_on = True
+                    break
+
+            for c in self.channel_widgets:
+                if any_on:
+                    self.update_setting(f"CH{c.channel}_enabled", str(False))
+                    setButtonState(c.enabled_but, False)
+                else:
+                    self.update_setting(f"CH{c.channel}_enabled", str(True))
+                    setButtonState(c.enabled_but, True)
+
+        else:
+
+            for c in self.channel_widgets:
+                self.update_setting(
+                    f"CH{c.channel}_enabled", str(self.all_enable_but.isChecked())
+                )
 
     def close(self):  # Note: this is a complete duplicate of the 'close()' function
         # in HC_Instrument, except it adds readout_timer.stop()
@@ -254,6 +310,7 @@ class PowerSupplyChannel(QWidget):
         show_VI_limits=False,
         show_custom_labels=False,
         show_status_panel=False,
+        hide_power_button=False,
     ):
         super().__init__()
 
@@ -405,7 +462,8 @@ class PowerSupplyChannel(QWidget):
         self.controls_grid.addWidget(self.V_edit, 0, 1)
         self.controls_grid.addWidget(self.I_ctrl_label, 1, 0)
         self.controls_grid.addWidget(self.I_edit, 1, 1)
-        self.controls_grid.addWidget(self.enabled_but, 2, 1)
+        if not hide_power_button:
+            self.controls_grid.addWidget(self.enabled_but, 2, 1)
 
         # Load pix maps
         self.steady_pix = QPixmap(
