@@ -13,7 +13,7 @@ from hardware_control.HC_Backend import HC_Backend, ensure_online
 logger = logging.getLogger(__name__)
 
 
-class ADAM_nCtrl(HC_Backend):
+class ADAM_6024Ctrl(HC_Backend):
     """Control of Adam input/output module"""
 
     def __init__(self, connection_addr):
