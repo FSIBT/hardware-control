@@ -98,8 +98,13 @@ class CAEN14xxETCtrl(HC_Backend):
             return str(bool(status["on_off"]))
 
         elif setting_X == "CHX_I_set":
-            if self.max_I[c] is not None:
+
+            logger.debug(f"Iset called with value {value}")
+
+            if self.max_I[c - 1] is not None:
                 value = min(value, self.max_I[c - 1])
+
+                logger.debug(f"Iset value changed to {value} because it exceeded limit")
 
             self.query(f"$BD:00,CMD:SET,CH:{c},PAR:ISET,VAL:{value}")
             result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:ISET")
@@ -108,8 +113,13 @@ class CAEN14xxETCtrl(HC_Backend):
                 return "None"
             return result[-7:]
         elif setting_X == "CHX_V_set":
-            if self.max_V[c] is not None:
+
+            logger.debug(f"Vset called with value {value}")
+
+            if self.max_V[c - 1] is not None:
                 value = min(value, self.max_V[c - 1])
+
+                logger.debug(f"Vset value changed to {value} because it exceeded limit")
 
             self.query(f"$BD:00,CMD:SET,CH:{c},PAR:VSET,VAL:{value}")
             result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:VSET")
