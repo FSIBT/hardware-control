@@ -66,16 +66,33 @@ class CAEN14xxETCtrl(HC_Backend):
 
     def update_setting(self, setting: str, value):
 
-        if not self.online:
-            return "Offline"
-
-        if self.dummy:
-            return value
+        print(setting, value)
+        print(f"\tdummy: {self.dummy}, online: {self.online}")
 
         c = int(setting[2])
 
         # overwrite channel number for easier comparison
         setting_X = setting[:2] + "X" + setting[3:]
+
+        value = ensure_float(value)
+        print(f"val: {value}")
+
+        if setting_X == "CHX_I_max":
+            print("\tImax")
+            self.max_I[c - 1] = float(value)
+            return str(value)
+        elif setting_X == "CHX_V_max":
+            print("\tImax")
+            self.max_V[c - 1] = float(value)
+            return str(value)
+        else:
+            print(f"\tNot a limit: {setting_X}")
+
+        if not self.online:
+            return "Offline"
+
+        if self.dummy:
+            return value
 
         if setting_X == "CHX_enable":
             if value == "True":
@@ -88,14 +105,6 @@ class CAEN14xxETCtrl(HC_Backend):
                 return "None"
             return str(bool(status["on_off"]))
 
-        value = ensure_float(value)
-
-        if setting_X == "CHX_I_max":
-            self.max_I[c] = float(value)
-            return value
-        elif setting_X == "CHX_V_max":
-            self.max_V[c] = float(value)
-            return value
         elif setting_X == "CHX_I_set":
             if self.max_I[c] is not None:
                 value = min(value, self.max_I[c - 1])
@@ -119,83 +128,86 @@ class CAEN14xxETCtrl(HC_Backend):
 
     def command(self, cmd: str):
 
-        if not self.online:
-            return "Offline"
+        print("************************************")
+        for idx, mv in enumerate(self.max_V):
+            print(f"Vmax[{idx}] = {mv}")
+        for idx, mi in enumerate(self.max_I):
+            print(f"Imax[{idx}] = {mi}")
 
         try:
+
+            if regex_compare("CH._I_max?", cmd):  # Get CHx I max
+                cmd = cmd[:-1]
+                c = cmd[2]
+
+                try:
+                    rval = self.max_I[c - 1]
+                except:
+                    rval = "Error"
+
+                return f"{cmd}={rval}"
+
+            elif regex_compare("CH._V_max?", cmd):  # Get CHx V max
+                cmd = cmd[:-1]
+                c = cmd[2]
+
+                try:
+                    rval = self.max_V[c - 1]
+                except:
+                    rval = "Error"
+
+                return f"{cmd}={rval}"
+
+            if not self.online:
+                return "Offline"
+
             if self.dummy:
                 num = random.random() * 10
                 return f"{cmd.strip('?')}={num}"
 
-            else:
+            if regex_compare("CH._V_out?", cmd):  # Get CHx V out
+                cmd = cmd[:-1]
+                c = cmd[2]
+                result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:VMON")
 
-                # Note: We ignore channel number because there is only
-                # one channel on this model of PSU
-                if regex_compare("CH._V_out?", cmd):  # Get CHx V out
-                    cmd = cmd[:-1]
-                    c = cmd[2]
-                    result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:VMON")
+                if result is None:
+                    return "None"
+                rval = result[-6:]
 
-                    if result is None:
-                        return "None"
-                    rval = result[-6:]
+                return f"{cmd}={rval}"
 
-                    return f"{cmd}={rval}"
+            elif regex_compare("CH._I_out?", cmd):  # Get CHx I out
+                cmd = cmd[:-1]
+                c = cmd[2]
+                result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:IMON")
 
-                elif regex_compare("CH._I_out?", cmd):  # Get CHx I out
-                    cmd = cmd[:-1]
-                    c = cmd[2]
-                    result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:IMON")
+                if result is None:
+                    return "None"
+                rval = result[-7:]
 
-                    if result is None:
-                        return "None"
-                    rval = result[-7:]
+                return f"{cmd}={rval}"
 
-                    return f"{cmd}={rval}"
+            elif regex_compare("CH._I_set?", cmd):  # Get CHx I setpoint
+                cmd = cmd[:-1]
+                c = cmd[2]
+                result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:ISET")
 
-                elif regex_compare("CH._I_set?", cmd):  # Get CHx I setpoint
-                    cmd = cmd[:-1]
-                    c = cmd[2]
-                    result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:ISET")
+                if result is None:
+                    return "None"
+                rval = result[-6:]
 
-                    if result is None:
-                        return "None"
-                    rval = result[-6:]
+                return f"{cmd}={rval}"
 
-                    return f"{cmd}={rval}"
+            elif regex_compare("CH._V_set?", cmd):  # Get CHx V setpoint
+                cmd = cmd[:-1]
+                c = cmd[2]
+                result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:VSET")
 
-                elif regex_compare("CH._V_set?", cmd):  # Get CHx V setpoint
-                    cmd = cmd[:-1]
-                    c = cmd[2]
-                    result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:VSET")
+                if result is None:
+                    return "None"
+                rval = result[-6:]
 
-                    if result is None:
-                        return "None"
-                    rval = result[-6:]
-
-                    return f"{cmd}={rval}"
-
-                elif regex_compare("CH._I_max?", cmd):  # Get CHx I max
-                    cmd = cmd[:-1]
-                    c = cmd[2]
-
-                    try:
-                        rval = self.max_I[c]
-                    except:
-                        rval = "Error"
-
-                    return f"{cmd}={rval}"
-
-                elif regex_compare("CH._V_max?", cmd):  # Get CHx V max
-                    cmd = cmd[:-1]
-                    c = cmd[2]
-
-                    try:
-                        rval = self.max_V[c]
-                    except:
-                        rval = "Error"
-
-                    return f"{cmd}={rval}"
+                return f"{cmd}={rval}"
 
         except Exception as e:
             logger.error(
