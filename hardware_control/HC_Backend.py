@@ -83,6 +83,41 @@ class HC_Backend(ABC):
         if self.ID is None:
             logger.error(f"Need to set the instrument ID")
 
+    def get_channel_from_command(self, command: str):
+        """
+        Processes a command from the front end and returns a tuple with:
+            1.) channel number
+            2.) original command with all channel numbers replaced by a single 'X'
+        If the channel is not specified, the channel number is returned as 'None'
+        and the original command is returned without any replacements.
+
+        The channel is specified by writing CH#_
+        """
+
+        # Check command length
+        if len(command) < 3:
+            return None, command
+
+        # Check 'CH' specifier comes first
+        if command[:2] != "CH":
+            return None, command
+
+        # Find end of channel number
+        idx_underscore = command.find("_")
+        if idx_underscore == -1:
+            return None, command
+
+        # Get channel number
+        try:
+            chan = int(command[2:idx_underscore])
+        except Exception as e:
+            return None, command
+
+        # overwrite channel number for easier comparison
+        command_X = command[:2] + "X" + command[idx_underscore:]
+
+        return chan, command_X
+
     def update_setting(self, setting: str, value: str):
         """Overload this function to adjust settings on the device. Must return
         a string (which HC_CommWorker will send back to the main thread)"""
