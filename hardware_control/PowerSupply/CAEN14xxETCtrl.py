@@ -1,6 +1,11 @@
 import socket
 import random
-from hardware_control.HC_Backend import HC_Backend, SOCKET, VISA
+from hardware_control.HC_Backend import (
+    HC_Backend,
+    SOCKET,
+    VISA,
+    get_channel_from_command,
+)
 import logging
 from hardware_control.utility import regex_compare, ensure_float
 
@@ -66,18 +71,15 @@ class CAEN14xxETCtrl(HC_Backend):
 
     def update_setting(self, setting: str, value):
 
-        c = int(setting[2])
-
-        # overwrite channel number for easier comparison
-        setting_X = setting[:2] + "X" + setting[3:]
+        channel, setting_X = get_channel_from_command(setting)
 
         value = ensure_float(value)
 
         if setting_X == "CHX_I_max":
-            self.max_I[c - 1] = float(value)
+            self.max_I[channel - 1] = float(value)
             return str(value)
         elif setting_X == "CHX_V_max":
-            self.max_V[c - 1] = float(value)
+            self.max_V[channel - 1] = float(value)
             return str(value)
 
         if not self.online:
@@ -88,10 +90,10 @@ class CAEN14xxETCtrl(HC_Backend):
 
         if setting_X == "CHX_enable":
             if value == "True":
-                self.query(f"$BD:00,CMD:SET,CH:{c},PAR:ON")
+                self.query(f"$BD:00,CMD:SET,CH:{channel},PAR:ON")
             else:
-                self.query(f"$BD:00,CMD:SET,CH:{c},PAR:OFF")
-            status = self.read_status(c)
+                self.query(f"$BD:00,CMD:SET,CH:{channel},PAR:OFF")
+            status = self.read_status(channel)
 
             if status is None:
                 return "None"
@@ -101,13 +103,13 @@ class CAEN14xxETCtrl(HC_Backend):
 
             logger.debug(f"Iset called with value {value}")
 
-            if self.max_I[c - 1] is not None:
-                value = min(value, self.max_I[c - 1])
+            if self.max_I[channel - 1] is not None:
+                value = min(value, self.max_I[channel - 1])
 
                 logger.debug(f"Iset value changed to {value} because it exceeded limit")
 
-            self.query(f"$BD:00,CMD:SET,CH:{c},PAR:ISET,VAL:{value}")
-            result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:ISET")
+            self.query(f"$BD:00,CMD:SET,CH:{channel},PAR:ISET,VAL:{value}")
+            result = self.query(f"$BD:00,CMD:MON,CH:{channel},PAR:ISET")
 
             if result is None:
                 return "None"
@@ -116,13 +118,13 @@ class CAEN14xxETCtrl(HC_Backend):
 
             logger.debug(f"Vset called with value {value}")
 
-            if self.max_V[c - 1] is not None:
-                value = min(value, self.max_V[c - 1])
+            if self.max_V[channel - 1] is not None:
+                value = min(value, self.max_V[channel - 1])
 
                 logger.debug(f"Vset value changed to {value} because it exceeded limit")
 
-            self.query(f"$BD:00,CMD:SET,CH:{c},PAR:VSET,VAL:{value}")
-            result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:VSET")
+            self.query(f"$BD:00,CMD:SET,CH:{channel},PAR:VSET,VAL:{value}")
+            result = self.query(f"$BD:00,CMD:MON,CH:{channel},PAR:VSET")
 
             if result is None:
                 return "None"
@@ -130,25 +132,21 @@ class CAEN14xxETCtrl(HC_Backend):
 
     def command(self, cmd: str):
 
-        if len(cmd) >= 3:
-            c = int(cmd[2])
-            cmd_X = cmd[:2] + "X" + cmd[3:]
-        else:
-            cmd_X = cmd
+        channel, command_X = get_channel_from_command(cmd)
 
-        if cmd_X == "CHX_I_max?":
+        if command_X == "CHX_I_max?":
 
             try:
-                rval = self.max_I[c - 1]
+                rval = self.max_I[channel - 1]
             except Exception as e:
                 rval = f"Error {str(e)}"
 
             return f"{cmd[:-1]}={rval}"
 
-        elif cmd_X == "CH._V_max?":
+        elif command_X == "CH._V_max?":
 
             try:
-                rval = self.max_V[c - 1]
+                rval = self.max_V[channel - 1]
             except Exception as e:
                 rval = f"Error {str(e)}"
 
@@ -161,21 +159,21 @@ class CAEN14xxETCtrl(HC_Backend):
             num = random.random() * 10
             return f"{cmd.strip('?')}={num}"
 
-        if cmd_X == "CH._V_out?":
+        if command_X == "CH._V_out?":
             command = "VMON"
             offset = -6
-        elif cmd_X == "CH._I_out?":
+        elif command_X == "CH._I_out?":
             command = "IMON"
             offset = -7
-        elif cmd_X == "CH._I_set?":
+        elif command_X == "CH._I_set?":
             command = "ISET"
             offset = -6
-        elif cmd_X == "CH._V_set?":
+        elif command_X == "CH._V_set?":
             command = "VSET"
             offset = -6
-        elif cmd_X == "CH._enabled?":
+        elif command_X == "CH._enabled?":
 
-            result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:STATUS")
+            result = self.query(f"$BD:00,CMD:MON,CH:{channel},PAR:STATUS")
             if result is None:
                 return "None"
 
@@ -188,7 +186,7 @@ class CAEN14xxETCtrl(HC_Backend):
                 rval = "True"
             return f"{cmd[:-1]}={rval}"
 
-        result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:{command}")
+        result = self.query(f"$BD:00,CMD:MON,CH:{channel},PAR:{command}")
         if result is None:
             return "None"
         rval = result[offset:]

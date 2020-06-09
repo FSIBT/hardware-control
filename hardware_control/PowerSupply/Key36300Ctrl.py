@@ -1,7 +1,11 @@
 import logging
 import random
 
-from hardware_control.HC_Backend import HC_Backend, ensure_online
+from hardware_control.HC_Backend import (
+    HC_Backend,
+    ensure_online,
+    get_channel_from_command,
+)
 from hardware_control.utility import ensure_float
 
 logger = logging.getLogger(__name__)
@@ -29,11 +33,7 @@ class Key36300Ctrl(HC_Backend):
     # @ensure_online
     def update_setting(self, setting: str, value):
 
-        if len(setting) >= 3:
-            channel = int(setting[2])
-
-        # overwrite channel number for easier comparison
-        setting_X = setting[:2] + "X" + setting[3:]
+        channel, setting_X = get_channel_from_command(setting)
 
         if setting_X == "CHX_V_max":
             self.max_V[channel - 1] = value
@@ -79,15 +79,12 @@ class Key36300Ctrl(HC_Backend):
     def command(self, cmd: str):
 
         # overwrite channel number for easier comparison
-        cmd_X = cmd[:2] + "X" + cmd[3:]
+        channel, command_X = get_channel_from_command(cmd)
 
-        if len(cmd) >= 3:
-            channel = int(cmd[2])
-
-        if cmd_X == "CHX_I_max?":
+        if command_X == "CHX_I_max?":
             rval = self.max_I[channel - 1]
             return f"{cmd[:-1]}={rval}"
-        elif cmd_X == "CHX_V_max?":
+        elif command_X == "CHX_V_max?":
             rval = self.max_V[channel - 1]
             return f"{cmd[:-1]}={rval}"
 
@@ -98,7 +95,7 @@ class Key36300Ctrl(HC_Backend):
 
             num = random.random() * 10
 
-            if cmd_X == "CHX_enabled?":
+            if command_X == "CHX_enabled?":
                 if num > 5:
                     return "True"
                 else:
@@ -106,19 +103,19 @@ class Key36300Ctrl(HC_Backend):
 
             return f"{cmd.strip('?')}={num}"
 
-        if cmd_X == "CHX_V_out?":
+        if command_X == "CHX_V_out?":
             rval = self.query(f"MEAS:VOLT? (@{channel})")
-        elif cmd_X == "CHX_I_out?":
+        elif command_X == "CHX_I_out?":
             rval = self.query(f"MEAS:CURR? (@{channel})")
-        elif cmd_X == "CHX_I_set?":
+        elif command_X == "CHX_I_set?":
             rval = self.query(f":SOURCE:CURR? (@{channel})")
-        elif cmd_X == "CHX_V_set?":
+        elif command_X == "CHX_V_set?":
             rval = self.query(f":SOURCE:VOLT? (@{channel})")
-        elif cmd_X == "CHX_enabled?":
+        elif command_X == "CHX_enabled?":
             rval = self.query(f":OUTPUT:STATE? (@{channel})")
             rval = rval == "1"
         else:
-            logger.error(f"Error: {cmd_X} in {self.ID} not known")
+            logger.error(f"Error: {command_X} in {self.ID} not known")
             rval = "Error"
 
         # remove question mark from return statement
