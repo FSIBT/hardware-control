@@ -32,11 +32,14 @@ class Key36300Ctrl(HC_Backend):
         if len(setting) >= 3:
             channel = int(setting[2])
 
-        if setting == "CHX_V_max":
+        # overwrite channel number for easier comparison
+        setting_X = setting[:2] + "X" + setting[3:]
+
+        if setting_X == "CHX_V_max":
             self.max_V[channel - 1] = value
             return value
 
-        if setting == "CHX_I_max":
+        if setting_X == "CHX_I_max":
             self.max_I[channel - 1] = value
             return value
 
@@ -45,9 +48,6 @@ class Key36300Ctrl(HC_Backend):
 
         if self.dummy:
             return value
-
-        # overwrite channel number for easier comparison
-        setting_X = setting[:2] + "X" + setting[3:]
 
         if setting_X == "CHX_enable":
             if value == "True":
