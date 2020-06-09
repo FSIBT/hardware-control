@@ -66,27 +66,19 @@ class CAEN14xxETCtrl(HC_Backend):
 
     def update_setting(self, setting: str, value):
 
-        print(setting, value)
-        print(f"\tdummy: {self.dummy}, online: {self.online}")
-
         c = int(setting[2])
 
         # overwrite channel number for easier comparison
         setting_X = setting[:2] + "X" + setting[3:]
 
         value = ensure_float(value)
-        print(f"val: {value}")
 
         if setting_X == "CHX_I_max":
-            print("\tImax")
             self.max_I[c - 1] = float(value)
             return str(value)
         elif setting_X == "CHX_V_max":
-            print("\tImax")
             self.max_V[c - 1] = float(value)
             return str(value)
-        else:
-            print(f"\tNot a limit: {setting_X}")
 
         if not self.online:
             return "Offline"
@@ -128,33 +120,27 @@ class CAEN14xxETCtrl(HC_Backend):
 
     def command(self, cmd: str):
 
-        print("************************************")
-        for idx, mv in enumerate(self.max_V):
-            print(f"Vmax[{idx}] = {mv}")
-        for idx, mi in enumerate(self.max_I):
-            print(f"Imax[{idx}] = {mi}")
-
         try:
 
             if regex_compare("CH._I_max?", cmd):  # Get CHx I max
                 cmd = cmd[:-1]
-                c = cmd[2]
+                c = int(cmd[2])
 
                 try:
                     rval = self.max_I[c - 1]
-                except:
-                    rval = "Error"
+                except Exception as e:
+                    rval = f"Error {str(e)}"
 
                 return f"{cmd}={rval}"
 
             elif regex_compare("CH._V_max?", cmd):  # Get CHx V max
                 cmd = cmd[:-1]
-                c = cmd[2]
+                c = int(cmd[2])
 
                 try:
                     rval = self.max_V[c - 1]
-                except:
-                    rval = "Error"
+                except Exception as e:
+                    rval = f"Error {str(e)}"
 
                 return f"{cmd}={rval}"
 
