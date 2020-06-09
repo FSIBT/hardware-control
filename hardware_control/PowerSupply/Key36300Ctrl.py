@@ -26,14 +26,25 @@ class Key36300Ctrl(HC_Backend):
         self.max_V = [None] * self.num_channels
         self.max_I = [None] * self.num_channels
 
-    @ensure_online
+    # @ensure_online
     def update_setting(self, setting: str, value):
-
-        if self.dummy:
-            return value
 
         if len(setting) >= 3:
             channel = int(setting[2])
+
+        if setting == "CHX_V_max":
+            self.max_V[channel - 1] = value
+            return value
+
+        if setting == "CHX_I_max":
+            self.max_I[channel - 1] = value
+            return value
+
+        if not self.online:
+            return "Offline"
+
+        if self.dummy:
+            return value
 
         # overwrite channel number for easier comparison
         setting_X = setting[:2] + "X" + setting[3:]
@@ -64,25 +75,28 @@ class Key36300Ctrl(HC_Backend):
             self.write(f"SOURCE:VOLT {value}, (@{channel})")
             return self.query(f":SOURCE:VOLT? (@{channel})")
 
-        if setting == "CHX_V_max":
-            self.max_V[channel - 1] = value
-            return value
-
-        if setting == "CHX_I_max":
-            self.max_I[channel - 1] = value
-            return value
-
-    @ensure_online
+    # @ensure_online
     def command(self, cmd: str):
+
+        # overwrite channel number for easier comparison
+        cmd_X = cmd[:2] + "X" + cmd[3:]
+
+        if len(cmd) >= 3:
+            channel = int(cmd[2])
+
+        if cmd_X == "CHX_I_max?":
+            rval = self.max_I[channel - 1]
+            return f"{cmd[:-1]}={rval}"
+        elif cmd_X == "CHX_V_max?":
+            rval = self.max_V[channel - 1]
+            return f"{cmd[:-1]}={rval}"
+
+        if not self.online:
+            return "Offline"
 
         if self.dummy:
             num = random.random() * 10
             return f"{cmd.strip('?')}={num}"
-
-        channel = int(cmd[2])
-
-        # overwrite channel number for easier comparison
-        cmd_X = cmd[:2] + "X" + cmd[3:]
 
         if cmd_X == "CHX_V_out?":
             rval = self.query(f"MEAS:VOLT? (@{channel})")
@@ -92,10 +106,6 @@ class Key36300Ctrl(HC_Backend):
             rval = self.query(f":SOURCE:CURR? (@{channel})")
         elif cmd_X == "CHX_V_set?":
             rval = self.query(f":SOURCE:VOLT? (@{channel})")
-        elif cmd_X == "CHX_I_max?":
-            rval = self.max_I[channel - 1]
-        elif cmd_X == "CHX_V_max?":
-            rval = self.max_V[channel - 1]
         else:
             logger.error(f"Error: {cmd_X} in {self.ID} not known")
             rval = "Error"
