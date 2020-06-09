@@ -95,7 +95,15 @@ class Key36300Ctrl(HC_Backend):
             return "Offline"
 
         if self.dummy:
+
             num = random.random() * 10
+
+            if cmd_X == "CHX_enabled?":
+                if num > 5:
+                    return "True"
+                else:
+                    return "False"
+
             return f"{cmd.strip('?')}={num}"
 
         if cmd_X == "CHX_V_out?":
@@ -106,6 +114,9 @@ class Key36300Ctrl(HC_Backend):
             rval = self.query(f":SOURCE:CURR? (@{channel})")
         elif cmd_X == "CHX_V_set?":
             rval = self.query(f":SOURCE:VOLT? (@{channel})")
+        elif cmd_X == "CHX_enabled?":
+            rval = self.query(f":OUTPUT:STATE? (@{channel})")
+            rval = rval == "1"
         else:
             logger.error(f"Error: {cmd_X} in {self.ID} not known")
             rval = "Error"
