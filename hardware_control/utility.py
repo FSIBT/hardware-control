@@ -79,6 +79,26 @@ def ensure_float(x):
         return "Invalid value"
 
 
+def change_units(x: float, base_unit: str, decimals: int = 3):
+
+    if x < 1e-9:
+        return f"{round(x*1e12, decimals)} p{base_unit}"
+    if x < 1e-6:
+        return f"{round(x*1e9, decimals)} n{base_unit}"
+    if x < 1e-3:
+        return f"{round(x*1e6, decimals)} µ{base_unit}"
+    if x < 1:
+        return f"{round(x*1e3, decimals)} m{base_unit}"
+    if x < 1e3:
+        return f"{round(x, decimals)} {base_unit}"
+    if x < 1e6:
+        return f"{round(x*1e-3, decimals)} k{base_unit}"
+    if x < 1e9:
+        return f"{round(x*1e-6, decimals)} M{base_unit}"
+    if x < 1e12:
+        return f"{round(x*1e-9, decimals)} G{base_unit}"
+
+
 def converter_ulong_to_IEEE754(x):
     a = (ctypes.c_ulong * 1)(x)
     b = ctypes.cast(a, ctypes.POINTER(ctypes.c_float))
