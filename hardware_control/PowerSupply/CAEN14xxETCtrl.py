@@ -130,86 +130,90 @@ class CAEN14xxETCtrl(HC_Backend):
 
     def command(self, cmd: str):
 
-        try:
+        if len(cmd) >= 3:
+            c = int(cmd[2])
+            cmd_X = cmd[:2] + "X" + cmd[3:]
+        else:
+            cmd_X = cmd
 
-            if regex_compare("CH._I_max?", cmd):  # Get CHx I max
-                cmd = cmd[:-1]
-                c = int(cmd[2])
+        if cmd_X == "CHX_I_max?":  # Get CHx I max
 
-                try:
-                    rval = self.max_I[c - 1]
-                except Exception as e:
-                    rval = f"Error {str(e)}"
+            try:
+                rval = self.max_I[c - 1]
+            except Exception as e:
+                rval = f"Error {str(e)}"
 
-                return f"{cmd}={rval}"
+            return f"{cmd[:-1]}={rval}"
 
-            elif regex_compare("CH._V_max?", cmd):  # Get CHx V max
-                cmd = cmd[:-1]
-                c = int(cmd[2])
+        elif cmd_X == "CH._V_max?":  # Get CHx V max
 
-                try:
-                    rval = self.max_V[c - 1]
-                except Exception as e:
-                    rval = f"Error {str(e)}"
+            try:
+                rval = self.max_V[c - 1]
+            except Exception as e:
+                rval = f"Error {str(e)}"
 
-                return f"{cmd}={rval}"
+            return f"{cmd[:-1]}={rval}"
 
-            if not self.online:
-                return "Offline"
+        if not self.online:
+            return "Offline"
 
-            if self.dummy:
-                num = random.random() * 10
-                return f"{cmd.strip('?')}={num}"
+        if self.dummy:
+            num = random.random() * 10
+            return f"{cmd.strip('?')}={num}"
 
-            if regex_compare("CH._V_out?", cmd):  # Get CHx V out
-                cmd = cmd[:-1]
-                c = cmd[2]
-                result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:VMON")
+        if cmd_X == "CH._V_out?":  # Get CHx V out
 
-                if result is None:
-                    return "None"
-                rval = result[-6:]
+            result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:VMON")
 
-                return f"{cmd}={rval}"
+            if result is None:
+                return "None"
+            rval = result[-6:]
 
-            elif regex_compare("CH._I_out?", cmd):  # Get CHx I out
-                cmd = cmd[:-1]
-                c = cmd[2]
-                result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:IMON")
+        elif cmd_X == "CH._I_out?":  # Get CHx I out
 
-                if result is None:
-                    return "None"
-                rval = result[-7:]
+            result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:IMON")
 
-                return f"{cmd}={rval}"
+            if result is None:
+                return "None"
+            rval = result[-7:]
 
-            elif regex_compare("CH._I_set?", cmd):  # Get CHx I setpoint
-                cmd = cmd[:-1]
-                c = cmd[2]
-                result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:ISET")
+        elif cmd_X == "CH._I_set?":  # Get CHx I setpoint
 
-                if result is None:
-                    return "None"
-                rval = result[-6:]
+            result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:ISET")
 
-                return f"{cmd}={rval}"
+            if result is None:
+                return "None"
+            rval = result[-6:]
 
-            elif regex_compare("CH._V_set?", cmd):  # Get CHx V setpoint
-                cmd = cmd[:-1]
-                c = cmd[2]
-                result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:VSET")
+        elif cmd_X == "CH._V_set?":  # Get CHx V setpoint
 
-                if result is None:
-                    return "None"
-                rval = result[-6:]
+            result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:VSET")
 
-                return f"{cmd}={rval}"
+            if result is None:
+                return "None"
+            rval = result[-6:]
 
-        except Exception as e:
-            logger.error(
-                "An error occured in CAEN14xxETCtrl.py when sending SCPI commands to the instrument.",
-                exc_info=True,
-            )
+        elif cmd_X == "CH._enabled?":  # Get CHx V setpoint
+
+            result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:STATUS")
+            if result is None:
+                return "None"
+
+            result = result[-6:]
+            result = result.strip("\r")
+
+            if result == "KILL" or result == "OFF" or result == "TRIP":
+                rval = "False"
+            else:
+                rval = "True"
+
+        return f"{cmd[:-1]}={rval}"
+
+        # except Exception as e:
+        #     logger.error(
+        #         "An error occured in CAEN14xxETCtrl.py when sending SCPI commands to the instrument.",
+        #         exc_info=True,
+        #     )
 
     def read_status(self, channel):
         """See table on page 24 of manual"""
