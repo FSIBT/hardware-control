@@ -188,6 +188,8 @@ class HC_MultiPowerSupply(HC_Instrument):
             if self.channel_widgets[idx].show_VI_limits:
                 self.comm.command(f"CH{c}_V_max?")
                 self.comm.command(f"CH{c}_I_max?")
+            if self.channel_widgets[idx].show_status_panel:
+                self.comm.command(f"CH{c}_enabled?")
             # if self.channel_widgets[idx].show_status_panel:
             #     self.comm.command(f"CH{c}_current_limited?")
             #     self.comm.command(f"CH{c}_output_enabled?")
@@ -201,6 +203,10 @@ class HC_MultiPowerSupply(HC_Instrument):
             if self.channel_widgets[idx].show_VI_limits:
                 Vmax = remove_end_carriage_return(self.read_values(f"CH{c}_V_max"))
                 Imax = remove_end_carriage_return(self.read_values(f"CH{c}_I_max"))
+            if self.channel_widgets[idx].show_status_panel:
+                enabled = remove_end_carriage_return(self.read_values(f"CH{c}_enabled"))
+            else:
+                enabled = None
             # if self.channel_widgets[idx].show_status_panel:
             #     self.comm.command(f"CH{c}_current_limited?")
             #     self.comm.command(f"CH{c}_output_enabled?")
@@ -213,6 +219,8 @@ class HC_MultiPowerSupply(HC_Instrument):
             if self.channel_widgets[idx].show_VI_limits:
                 self.values[f"CH{c}_V_max"] = Vmax
                 self.values[f"CH{c}_I_max"] = Imax
+            if self.channel_widgets[idx].show_status_panel:
+                self.values[f"CH{c}_enabeld"] = enabled
 
             if self.channel_widgets[idx].show_VI_limits:
                 logger.debug(
@@ -226,10 +234,12 @@ class HC_MultiPowerSupply(HC_Instrument):
             # Send newest data to GUI
             if self.channel_widgets[idx].show_VI_limits:
                 self.channel_widgets[idx].update_readout(
-                    Vout, Iout, Vset, Iset, Vmax, Imax
+                    Vout, Iout, Vset, Iset, Vmax, Imax, enabled
                 )
             else:
-                self.channel_widgets[idx].update_readout(Vout, Iout, Vset, Iset)
+                self.channel_widgets[idx].update_readout(
+                    Vout, Iout, Vset, Iset, enabled=enabled
+                )
 
     def set_maxI(self, channel: int, maxI: float):
         """ Sets an internal limit for the current from channel 'n'. """
@@ -528,65 +538,41 @@ class PowerSupplyChannel(QWidget):
             self.master_layout.addWidget(self.status_panel, 3, 0)
         self.setLayout(self.master_layout)
 
-    def update_readout(self, Vout, Iout, Vset, Iset, Vmax=None, Imax=None):
+    def update_readout(
+        self, Vout, Iout, Vset, Iset, Vmax=None, Imax=None, enabled=None
+    ):
 
-        if Vout is not None:
-            try:
-                self.V_out_label_val.setText(change_units(float(Vout), "V"))
-            except:
-                self.V_out_label_val.setText(f"----- V")
-        else:
-            self.V_out_label_val.setText(f"----- V")
-
-        if Iout is not None:
-            try:
-                self.I_out_label_val.setText(change_units(float(Iout), "A"))
-            except:
-                self.I_out_label_val.setText(f"----- A")
-        else:
-            self.I_out_label_val.setText(f"----- A")
-
-        if Vset is not None:
-            try:
-                self.V_set_label_val.setText(change_units(float(Vset), "V"))
-            except:
-                self.V_set_label_val.setText(f"----- V")
-        else:
-            self.V_set_label_val.setText(f"----- V")
-
-        if Iset is not None:
-            try:
-                self.I_set_label_val.setText(change_units(float(Iset), "A"))
-            except:
-                self.I_set_label_val.setText(f"----- A")
-        else:
-            self.I_set_label_val.setText(f"----- A")
+        apply_to_label(self.V_out_label_val, Vout, "V")
+        apply_to_label(self.I_out_label_val, Iout, "A")
+        apply_to_label(self.V_set_label_val, Vset, "V")
+        apply_to_label(self.I_set_label_val, Iset, "A")
 
         if Vout is not None and Iout is not None:
             try:
                 pwr = float(Vout) * float(Iout)
-                self.P_out_label_val.setText(change_units(float(pwr), "W"))
-            except Exception as e:
-                self.P_out_label_val.setText("----- W")
-        else:
-            self.P_out_label_val.setText("----- W")
+                apply_to_label(self.P_out_label_val, pwr, "W")
+            except:
+                apply_to_label(self.P_out_label_val, "----", "W")
 
         if self.show_VI_limits:
-            if Vmax is not None:
-                try:
-                    self.V_max_label_val.setText(change_units(float(Vmax), "V"))
-                except:
-                    self.V_max_label_val.setText("---- V")
-            else:
-                self.V_max_label_val.setText("None")
+            apply_to_label(self.V_max_label_val, Vmax, "V")
+            apply_to_label(self.I_max_label_val, Imax, "A")
 
-            if Imax is not None:
+        if self.show_status_panel:
+            if Iout is not None and Iset is not None:
                 try:
-                    self.I_max_label_val.setText(change_units(float(Imax), "A"))
+                    if float(Iout) >= float(Iset) * 0.95:
+                        self.CC_ind.setPixmap(self.red_pix)
+                    else:
+                        self.CC_ind.setPixmap(self.grey_pix)
                 except:
-                    self.I_max_label_val.setText("---- A")
-            else:
-                self.I_max_label_val.setText("None")
+                    pass
+
+            if enabled is not None:
+                if bool(enabled):
+                    self.enabled_ind.setPixmap(self.green_pix)
+                else:
+                    self.enabled_ind.setPixmap(self.red_pix)
 
     def set_label(self, label: str):
 
@@ -607,3 +593,14 @@ class PowerSupplyChannel(QWidget):
         setButtonState(
             self.enabled_but, self.main_widget.settings[f"CH{self.channel}_enabled"]
         )
+
+
+def apply_to_label(label, value, units: str):
+
+    if value is not None:
+        try:
+            self.label.setText(change_units(float(value), units))
+        except:
+            self.label.setText(f"----- {units}")
+    else:
+        self.label.setText(f"----- {units}")
