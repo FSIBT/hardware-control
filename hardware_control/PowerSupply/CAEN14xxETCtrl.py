@@ -136,7 +136,7 @@ class CAEN14xxETCtrl(HC_Backend):
         else:
             cmd_X = cmd
 
-        if cmd_X == "CHX_I_max?":  # Get CHx I max
+        if cmd_X == "CHX_I_max?":
 
             try:
                 rval = self.max_I[c - 1]
@@ -145,7 +145,7 @@ class CAEN14xxETCtrl(HC_Backend):
 
             return f"{cmd[:-1]}={rval}"
 
-        elif cmd_X == "CH._V_max?":  # Get CHx V max
+        elif cmd_X == "CH._V_max?":
 
             try:
                 rval = self.max_V[c - 1]
@@ -161,39 +161,19 @@ class CAEN14xxETCtrl(HC_Backend):
             num = random.random() * 10
             return f"{cmd.strip('?')}={num}"
 
-        if cmd_X == "CH._V_out?":  # Get CHx V out
-
-            result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:VMON")
-
-            if result is None:
-                return "None"
-            rval = result[-6:]
-
-        elif cmd_X == "CH._I_out?":  # Get CHx I out
-
-            result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:IMON")
-
-            if result is None:
-                return "None"
-            rval = result[-7:]
-
-        elif cmd_X == "CH._I_set?":  # Get CHx I setpoint
-
-            result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:ISET")
-
-            if result is None:
-                return "None"
-            rval = result[-6:]
-
-        elif cmd_X == "CH._V_set?":  # Get CHx V setpoint
-
-            result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:VSET")
-
-            if result is None:
-                return "None"
-            rval = result[-6:]
-
-        elif cmd_X == "CH._enabled?":  # Get CHx V setpoint
+        if cmd_X == "CH._V_out?":
+            command = "VMON"
+            offset = -6
+        elif cmd_X == "CH._I_out?":
+            command = "IMON"
+            offset = -7
+        elif cmd_X == "CH._I_set?":
+            command = "ISET"
+            offset = -6
+        elif cmd_X == "CH._V_set?":
+            command = "VSET"
+            offset = -6
+        elif cmd_X == "CH._enabled?":
 
             result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:STATUS")
             if result is None:
@@ -202,18 +182,17 @@ class CAEN14xxETCtrl(HC_Backend):
             result = result[-6:]
             result = result.strip("\r")
 
-            if result == "KILL" or result == "OFF" or result == "TRIP":
+            if result in ["KILL", "OFF", "TRIP"]:
                 rval = "False"
             else:
                 rval = "True"
+            return f"{cmd[:-1]}={rval}"
 
+        result = self.query(f"$BD:00,CMD:MON,CH:{c},PAR:{command}")
+        if result is None:
+            return "None"
+        rval = result[offset:]
         return f"{cmd[:-1]}={rval}"
-
-        # except Exception as e:
-        #     logger.error(
-        #         "An error occured in CAEN14xxETCtrl.py when sending SCPI commands to the instrument.",
-        #         exc_info=True,
-        #     )
 
     def read_status(self, channel):
         """See table on page 24 of manual"""
