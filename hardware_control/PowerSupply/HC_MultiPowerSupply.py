@@ -22,6 +22,7 @@ from PyQt5.QtWidgets import (
 from hardware_control.base import HC_Instrument, HC_Comm, setButtonState
 import logging
 from hardware_control.utility import remove_end_carriage_return
+from hardware_control.utility import change_units
 
 logger = logging.getLogger(__name__)
 
@@ -531,7 +532,7 @@ class PowerSupplyChannel(QWidget):
 
         if Vout is not None:
             try:
-                self.V_out_label_val.setText(f"{round(float(Vout), 3)} V")
+                self.V_out_label_val.setText(change_units(float(Vout), "V"))
             except:
                 self.V_out_label_val.setText(f"----- V")
         else:
@@ -539,7 +540,7 @@ class PowerSupplyChannel(QWidget):
 
         if Iout is not None:
             try:
-                self.I_out_label_val.setText(f"{round(float(Iout), 3)} A")
+                self.I_out_label_val.setText(change_units(float(Iout), "A"))
             except:
                 self.I_out_label_val.setText(f"----- A")
         else:
@@ -547,7 +548,7 @@ class PowerSupplyChannel(QWidget):
 
         if Vset is not None:
             try:
-                self.V_set_label_val.setText(f"{round(float(Vset), 3)} V")
+                self.V_set_label_val.setText(change_units(float(Vset), "V"))
             except:
                 self.V_set_label_val.setText(f"----- V")
         else:
@@ -555,7 +556,7 @@ class PowerSupplyChannel(QWidget):
 
         if Iset is not None:
             try:
-                self.I_set_label_val.setText(f"{round(float(Iset), 3)} A")
+                self.I_set_label_val.setText(change_units(float(Iset), "A"))
             except:
                 self.I_set_label_val.setText(f"----- A")
         else:
@@ -564,7 +565,7 @@ class PowerSupplyChannel(QWidget):
         if Vout is not None and Iout is not None:
             try:
                 pwr = float(Vout) * float(Iout)
-                self.P_out_label_val.setText(f"{round(pwr, 3)} W")
+                self.P_out_label_val.setText(change_units(float(pwr), "W"))
             except Exception as e:
                 self.P_out_label_val.setText("----- W")
         else:
@@ -573,7 +574,7 @@ class PowerSupplyChannel(QWidget):
         if self.show_VI_limits:
             if Vmax is not None:
                 try:
-                    self.V_max_label_val.setText(f"{round(float(Vmax), 3)} V")
+                    self.V_max_label_val.setText(change_units(float(Vmax), "V"))
                 except:
                     self.V_max_label_val.setText("---- V")
             else:
@@ -581,7 +582,7 @@ class PowerSupplyChannel(QWidget):
 
             if Imax is not None:
                 try:
-                    self.I_max_label_val.setText(f"{round(float(Vmax), 3)} A")
+                    self.I_max_label_val.setText(change_units(float(Imax), "A"))
                 except:
                     self.I_max_label_val.setText("---- A")
             else:
