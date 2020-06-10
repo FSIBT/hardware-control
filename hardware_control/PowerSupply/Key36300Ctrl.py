@@ -35,6 +35,8 @@ class Key36300Ctrl(HC_Backend):
 
         channel, setting_X = get_channel_from_command(setting)
 
+        value = ensure_float(value)
+
         if setting_X == "CHX_V_max":
             self.max_V[channel - 1] = value
             return value
