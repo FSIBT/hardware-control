@@ -99,6 +99,17 @@ def change_units(x: float, base_unit: str, decimals: int = 3):
         return f"{round(x*1e-9, decimals)} G{base_unit}"
 
 
+def apply_to_label(label, value, units: str):
+
+    if value is not None:
+        try:
+            label.setText(change_units(float(value), units))
+        except:
+            label.setText(f"----- {units}")
+    else:
+        label.setText(f"----- {units}")
+
+
 def converter_ulong_to_IEEE754(x):
     a = (ctypes.c_ulong * 1)(x)
     b = ctypes.cast(a, ctypes.POINTER(ctypes.c_float))

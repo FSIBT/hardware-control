@@ -22,7 +22,7 @@ from PyQt5.QtWidgets import (
 from hardware_control.base import HC_Instrument, HC_Comm, setButtonState
 import logging
 from hardware_control.utility import remove_end_carriage_return
-from hardware_control.utility import change_units
+from hardware_control.utility import change_units, apply_to_label
 
 logger = logging.getLogger(__name__)
 
@@ -593,14 +593,3 @@ class PowerSupplyChannel(QWidget):
         setButtonState(
             self.enabled_but, self.main_widget.settings[f"CH{self.channel}_enabled"]
         )
-
-
-def apply_to_label(label, value, units: str):
-
-    if value is not None:
-        try:
-            label.setText(change_units(float(value), units))
-        except:
-            label.setText(f"----- {units}")
-    else:
-        label.setText(f"----- {units}")
