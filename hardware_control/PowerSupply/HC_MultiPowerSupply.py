@@ -599,8 +599,8 @@ def apply_to_label(label, value, units: str):
 
     if value is not None:
         try:
-            self.label.setText(change_units(float(value), units))
+            label.setText(change_units(float(value), units))
         except:
-            self.label.setText(f"----- {units}")
+            label.setText(f"----- {units}")
     else:
-        self.label.setText(f"----- {units}")
+        label.setText(f"----- {units}")
