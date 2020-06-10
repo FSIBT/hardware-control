@@ -22,7 +22,7 @@ from PyQt5.QtWidgets import (
     QDoubleSpinBox,
     QSizePolicy,
 )
-from hardware_control.utility import remove_end_carriage_return
+from hardware_control.utility import remove_end_carriage_return, apply_to_label
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +61,7 @@ class HC_IOModule(HC_Instrument):
         self.channel_panel = QGridLayout()
         self.in_channel_widgets = []
         self.out_channel_widgets = []
+        lowest_row = 0
         for idx, ic in enumerate(self.in_channels):
 
             if len(ic) != 4:
@@ -72,6 +73,8 @@ class HC_IOModule(HC_Instrument):
 
             self.channel_panel.addWidget(self.in_channel_widgets[-1], idx, 0)
 
+            lowest_row = max(lowest_row, idx)
+
         for idx, oc in enumerate(self.out_channels):
 
             if len(oc) != 4:
@@ -82,6 +85,13 @@ class HC_IOModule(HC_Instrument):
             )
 
             self.channel_panel.addWidget(self.out_channel_widgets[-1], idx, 1)
+
+            lowest_row = max(lowest_row, idx)
+
+        self.bottom_spacer = QSpacerItem(
+            10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
+        )
+        self.channel_panel.addItem(self.bottom_spacer, lowest_row + 1, 0, 1, 2)
 
         # self.v_edit_label = QLabel(" kV")
         # #
@@ -101,9 +111,6 @@ class HC_IOModule(HC_Instrument):
         # self.v_to_zero.setCheckable(False)
         # self.v_to_zero.clicked.connect(lambda: self.set_to_zero())
         # #
-        # self.bottom_spacer = QSpacerItem(
-        #     10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
-        # )
 
         self.main_layout = QGridLayout()
         self.main_layout.addLayout(self.channel_panel, 0, 0)
@@ -215,25 +222,23 @@ class InputChannel(QWidget):
     def update_readout(self):
 
         # Query value
-        self.control.comm.command("CH{self.channel}_V_meas?")
+        self.control.comm.command(f"CH{self.channel}_V_meas?")
 
         try:
 
             # Read return value
             V_meas = remove_end_carriage_return(
-                self.read_values(f"CH{self.channel}_V_meas")
+                self.control.read_values(f"CH{self.channel}_V_meas")
             )
 
             # Convert to float. Run through conversion function if provided
             if callable(self.conversion_function):
                 V_meas = self.conversion_function(float(V_meas))
-            else:
-                V_meas = float(V_meas)
 
             # Update label
-            apply_to_label(self.measurement_label, V_meas)
+            apply_to_label(self.measurement_label, V_meas, self.units)
 
-        except:
+        except Exception as e:
             self.measurement_label.setText(f"---- V")
 
 
