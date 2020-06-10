@@ -81,7 +81,7 @@ class HC_IOModule(HC_Instrument):
                 continue
 
             self.out_channel_widgets.append(
-                OutputChannel(self, oc[0], oc[1], oc[2], oc[3])
+                OutputChannel(self, oc[0], oc[1], oc[2], oc[3], set_to_zero_button=True)
             )
 
             self.channel_panel.addWidget(self.out_channel_widgets[-1], idx, 1)
@@ -129,10 +129,6 @@ class HC_IOModule(HC_Instrument):
         self.readout_timer = QTimer(self)
         self.readout_timer.timeout.connect(self.update_readout)
         self.readout_timer.start(self.globalRefreshRate)
-
-    def set_to_zero(self):
-        self.V_edit.setText("0")
-        self.update_setting(f"CH1_V_set", "0")
 
     def update_readout(self):
 
@@ -243,7 +239,15 @@ class InputChannel(QWidget):
 
 
 class OutputChannel(QWidget):
-    def __init__(self, control, channel, function=None, units="V", label="Voltage: "):
+    def __init__(
+        self,
+        control,
+        channel,
+        function=None,
+        units="V",
+        label="Set voltage: ",
+        set_to_zero_button=False,
+    ):
 
         super().__init__()
 
@@ -253,18 +257,38 @@ class OutputChannel(QWidget):
         self.conversion_function = function
         self.units = units
 
-        self.label_str = label
-        self.param_label = QLabel(self.label_str)
-        if not self.label_str.endswith(": "):
-            self.label_str = self.label_str + ": "
-            self.param_label.setText(self.label_str)
+        self.set_to_zero_button = set_to_zero_button
 
-        self.measurement_label = QLabel(f"---- {self.units}")
-        self.measurement_label.setFixedWidth(120)
+        self.edit_label = QLabel(label)
+        # #
+        self.edit_spacer = QSpacerItem(
+            10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
+        )
+        # #
+        self.editbox = QLineEdit()
+        self.editbox.setValidator(QDoubleValidator())
+        self.editbox.setFixedWidth(100)
+        self.editbox.editingFinished.connect(
+            lambda: self.control.comm.update_setting(
+                f"CH{self.channel}_V_set", (self.editbox.text())
+            )
+        )
+        self.editbox.setText("0")
+
+        self.unit_label = QLabel(f" {self.units}")
+
+        if self.set_to_zero_button:
+            self.to_zero_but = QPushButton("Set to 0 V")
+            self.to_zero_but.setCheckable(False)
+            self.to_zero_but.clicked.connect(lambda: self.set_to_zero())
+        # #
 
         self.main_layout = QGridLayout()
-        self.main_layout.addWidget(self.param_label, 0, 0)
-        self.main_layout.addWidget(self.measurement_label, 0, 1)
+        self.main_layout.addWidget(self.edit_label, 0, 0)
+        self.main_layout.addWidget(self.editbox, 0, 1)
+        self.main_layout.addWidget(self.unit_label, 0, 2)
+        if self.set_to_zero_button:
+            self.main_layout.addWidget(self.to_zero_but, 1, 1, 1, 2)
 
         self.setLayout(self.main_layout)
 
@@ -291,3 +315,7 @@ class OutputChannel(QWidget):
 
         except:
             self.measurement_label.setText(f"---- V")
+
+    def set_to_zero(self):
+        self.editbox.setText("0")
+        self.control.update_setting(f"CH{self.channel}_V_set", "0")
