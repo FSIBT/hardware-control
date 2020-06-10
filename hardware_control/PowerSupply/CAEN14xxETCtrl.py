@@ -143,7 +143,7 @@ class CAEN14xxETCtrl(HC_Backend):
 
             return f"{cmd[:-1]}={rval}"
 
-        elif command_X == "CH._V_max?":
+        elif command_X == "CHX_V_max?":
 
             try:
                 rval = self.max_V[channel - 1]
@@ -159,19 +159,19 @@ class CAEN14xxETCtrl(HC_Backend):
             num = random.random() * 10
             return f"{cmd.strip('?')}={num}"
 
-        if command_X == "CH._V_out?":
+        if command_X == "CHX_V_out?":
             command = "VMON"
             offset = -6
-        elif command_X == "CH._I_out?":
+        elif command_X == "CHX_I_out?":
             command = "IMON"
             offset = -7
-        elif command_X == "CH._I_set?":
+        elif command_X == "CHX_I_set?":
             command = "ISET"
             offset = -6
-        elif command_X == "CH._V_set?":
+        elif command_X == "CHX_V_set?":
             command = "VSET"
             offset = -6
-        elif command_X == "CH._enabled?":
+        elif command_X == "CHX_enabled?":
 
             result = self.query(f"$BD:00,CMD:MON,CH:{channel},PAR:STATUS")
             if result is None:
