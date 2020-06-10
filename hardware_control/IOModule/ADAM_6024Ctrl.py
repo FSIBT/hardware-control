@@ -7,6 +7,7 @@ import random
 import socket
 
 from hardware_control.HC_Backend import HC_Backend, ensure_online
+from hardware_control.utility import ensure_float
 
 logger = logging.getLogger(__name__)
 
