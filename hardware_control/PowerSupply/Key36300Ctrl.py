@@ -39,17 +39,17 @@ class Key36300Ctrl(HC_Backend):
 
         if setting_X == "CHX_V_max":
             self.max_V[channel - 1] = value
-            return value
+            return str(value)
 
         if setting_X == "CHX_I_max":
             self.max_I[channel - 1] = value
-            return value
+            return str(value)
 
         if not self.online:
             return "Offline"
 
         if self.dummy:
-            return value
+            return str(value)
 
         if setting_X == "CHX_enable":
             if value == "True":
@@ -60,8 +60,6 @@ class Key36300Ctrl(HC_Backend):
                 self.write(f"OUTPUT OFF")
             out = self.query("OUTPUT:STATE?")
             return str(out == "1")
-
-        value = ensure_float(value)
 
         if setting_X == "CHX_I_set":
             if self.max_I[channel - 1] is not None:
