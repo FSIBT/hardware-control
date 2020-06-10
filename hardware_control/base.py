@@ -29,6 +29,9 @@ from qtconsole.inprocess import QtInProcessKernelManager
 
 logger = logging.getLogger(__name__)
 
+ipy_logger = logging.getLogger("ipykernel")
+ipy_logger.setLevel("ERROR")
+
 
 class HC_Comm(QObject):
     """This object is used to automate creating threads and communication objects.
