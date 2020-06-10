@@ -86,7 +86,7 @@ class CAEN14xxETCtrl(HC_Backend):
             return "Offline"
 
         if self.dummy:
-            return value
+            return str(value)
 
         if setting_X == "CHX_enable":
             if value == "True":
