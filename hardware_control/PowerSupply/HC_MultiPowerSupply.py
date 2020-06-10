@@ -147,6 +147,10 @@ class HC_MultiPowerSupply(HC_Instrument):
         # all need to be turned on vs off.
         if self.all_enable_button != ONLY:
 
+            logger.debug(
+                "All channels on/off button pressed. Will check other channels' button states"
+            )
+
             any_on = False
             for c in self.channel_widgets:
                 if c.enabled_but.isChecked():
@@ -162,6 +166,10 @@ class HC_MultiPowerSupply(HC_Instrument):
                     setButtonState(c.enabled_but, True)
 
         else:
+
+            logger.debug(
+                "All channels on/off button pressed. Will set based on button.isChecked()"
+            )
 
             for c in self.channel_widgets:
                 self.update_setting(
