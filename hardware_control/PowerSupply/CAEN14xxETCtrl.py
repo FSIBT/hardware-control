@@ -173,17 +173,12 @@ class CAEN14xxETCtrl(HC_Backend):
             offset = -6
         elif command_X == "CHX_enabled?":
 
-            result = self.query(f"$BD:00,CMD:MON,CH:{channel},PAR:STATUS")
-            if result is None:
-                return "None"
+            result = self.read_status(channel)
 
-            result = result[-6:]
-            result = result.strip("\r")
-
-            if result in ["KILL", "OFF", "TRIP"]:
-                rval = "False"
-            else:
+            if result["on_off"]:
                 rval = "True"
+            else:
+                rval = "False"
             return f"{cmd[:-1]}={rval}"
 
         result = self.query(f"$BD:00,CMD:MON,CH:{channel},PAR:{command}")
@@ -201,6 +196,7 @@ class CAEN14xxETCtrl(HC_Backend):
             result = self.query(f"$BD:00,CMD:MON,CH:{channel},PAR:STAT")
             if result is None:
                 return None
+            result = result.strip(r"\r")
             value = int(result[-5:])
 
         status = {
