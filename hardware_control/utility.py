@@ -79,35 +79,55 @@ def ensure_float(x):
         return "Invalid value"
 
 
-def change_units(x: float, base_unit: str, decimals: int = 3):
+def change_units(x: float, base_unit: str, decimals: int = 3, min_width: int = -1):
 
     if abs(x) < 1e-9:
-        return f"{round(x*1e12, decimals)} p{base_unit}"
-    if abs(x) < 1e-6:
-        return f"{round(x*1e9, decimals)} n{base_unit}"
-    if abs(x) < 1e-3:
-        return f"{round(x*1e6, decimals)} µ{base_unit}"
-    if abs(x) < 1:
-        return f"{round(x*1e3, decimals)} m{base_unit}"
-    if abs(x) < 1e3:
-        return f"{round(x, decimals)} {base_unit}"
-    if abs(x) < 1e6:
-        return f"{round(x*1e-3, decimals)} k{base_unit}"
-    if abs(x) < 1e9:
-        return f"{round(x*1e-6, decimals)} M{base_unit}"
-    if abs(x) < 1e12:
-        return f"{round(x*1e-9, decimals)} G{base_unit}"
+        rval = f"{round(x*1e12, decimals)} p{base_unit}"
+    elif abs(x) < 1e-6:
+        rval = f"{round(x*1e9, decimals)} n{base_unit}"
+    elif abs(x) < 1e-3:
+        rval = f"{round(x*1e6, decimals)} µ{base_unit}"
+    elif abs(x) < 1:
+        rval = f"{round(x*1e3, decimals)} m{base_unit}"
+    elif abs(x) < 1e3:
+        rval = f"{round(x, decimals)} {base_unit}"
+    elif abs(x) < 1e6:
+        rval = f"{round(x*1e-3, decimals)} k{base_unit}"
+    elif abs(x) < 1e9:
+        rval = f"{round(x*1e-6, decimals)} M{base_unit}"
+    elif abs(x) < 1e12:
+        rval = f"{round(x*1e-9, decimals)} G{base_unit}"
+
+    print(f"\t{rval}")
+
+    # if min_width >= 1:
+    #     rval = rval.rjust(min_width)
+
+    return rval
 
 
-def apply_to_label(label, value, units: str = ""):
+def apply_to_label(
+    label, value, units: str = "", decimals: int = 3, min_width: int = -1
+):
+
+    print(value)
 
     if value is not None:
         try:
-            label.setText(change_units(float(value), units))
-        except:
-            label.setText(f"----- {units}")
+            new_str = change_units(
+                float(value), units, decimals=decimals, min_width=min_width - 3
+            )
+            print(f"\t\t{new_str}")
+        except Exception as e:
+            print(str(e))
+            new_str = f"----- {units}"
     else:
-        label.setText(f"----- {units}")
+        new_str = f"----- {units}"
+
+    # if min_width != -1:
+    #     new_str.rjust(min_width)
+
+    label.setText(new_str)
 
 
 def converter_ulong_to_IEEE754(x):
