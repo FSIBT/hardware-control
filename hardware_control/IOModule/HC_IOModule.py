@@ -26,6 +26,9 @@ from hardware_control.utility import remove_end_carriage_return, apply_to_label
 
 logger = logging.getLogger(__name__)
 
+LABEL_MIN_WIDTH = -15
+DISP_DECIMAL_PLACES = 1
+
 
 class HC_IOModule(HC_Instrument):
     # Convention: __init__(self, backend, window . . . )
@@ -232,7 +235,13 @@ class InputChannel(QWidget):
                 V_meas = self.conversion_function(float(V_meas))
 
             # Update label
-            apply_to_label(self.measurement_label, V_meas, self.units)
+            apply_to_label(
+                self.measurement_label,
+                V_meas,
+                self.units,
+                DISP_DECIMAL_PLACES,
+                LABEL_MIN_WIDTH,
+            )
 
         except Exception as e:
             self.measurement_label.setText(f"---- V")
@@ -311,7 +320,9 @@ class OutputChannel(QWidget):
                 V_meas = float(V_meas)
 
             # Update label
-            apply_to_label(self.measurement_label, V_meas)
+            apply_to_label(
+                self.measurement_label, V_meas, DISP_DECIMAL_PLACES, LABEL_MIN_WIDTH
+            )
 
         except:
             self.measurement_label.setText(f"---- V")

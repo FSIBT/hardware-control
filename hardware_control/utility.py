@@ -100,8 +100,8 @@ def change_units(x: float, base_unit: str, decimals: int = 3, min_width: int = -
 
     print(f"\t{rval}")
 
-    # if min_width >= 1:
-    #     rval = rval.rjust(min_width)
+    if min_width >= 1:
+        rval = rval.rjust(min_width)
 
     return rval
 
@@ -124,8 +124,8 @@ def apply_to_label(
     else:
         new_str = f"----- {units}"
 
-    # if min_width != -1:
-    #     new_str.rjust(min_width)
+    if min_width != -1:
+        new_str.rjust(min_width)
 
     label.setText(new_str)
 

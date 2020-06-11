@@ -30,6 +30,9 @@ ADD = "Add"
 ONLY = "Only"
 HIDE = "Hide"
 
+LABEL_MIN_WIDTH = 15
+DISP_DECIMAL_PLACES = 1
+
 
 class HC_MultiPowerSupply(HC_Instrument):
     def __init__(
@@ -550,21 +553,41 @@ class PowerSupplyChannel(QWidget):
         self, Vout, Iout, Vset, Iset, Vmax=None, Imax=None, enabled=None
     ):
 
-        apply_to_label(self.V_out_label_val, Vout, "V")
-        apply_to_label(self.I_out_label_val, Iout, "A")
-        apply_to_label(self.V_set_label_val, Vset, "V")
-        apply_to_label(self.I_set_label_val, Iset, "A")
+        apply_to_label(
+            self.V_out_label_val, Vout, "V", DISP_DECIMAL_PLACES, LABEL_MIN_WIDTH
+        )
+        apply_to_label(
+            self.I_out_label_val, Iout, "A", DISP_DECIMAL_PLACES, LABEL_MIN_WIDTH
+        )
+        apply_to_label(
+            self.V_set_label_val, Vset, "V", DISP_DECIMAL_PLACES, LABEL_MIN_WIDTH
+        )
+        apply_to_label(
+            self.I_set_label_val, Iset, "A", DISP_DECIMAL_PLACES, LABEL_MIN_WIDTH
+        )
 
         if Vout is not None and Iout is not None:
             try:
                 pwr = float(Vout) * float(Iout)
-                apply_to_label(self.P_out_label_val, pwr, "W")
+                apply_to_label(
+                    self.P_out_label_val, pwr, "W", DISP_DECIMAL_PLACES, LABEL_MIN_WIDTH
+                )
             except:
-                apply_to_label(self.P_out_label_val, "----", "W")
+                apply_to_label(
+                    self.P_out_label_val,
+                    "----",
+                    "W",
+                    DISP_DECIMAL_PLACES,
+                    LABEL_MIN_WIDTH,
+                )
 
         if self.show_VI_limits:
-            apply_to_label(self.V_max_label_val, Vmax, "V")
-            apply_to_label(self.I_max_label_val, Imax, "A")
+            apply_to_label(
+                self.V_max_label_val, Vmax, "V", DISP_DECIMAL_PLACES, LABEL_MIN_WIDTH
+            )
+            apply_to_label(
+                self.I_max_label_val, Imax, "A", DISP_DECIMAL_PLACES, LABEL_MIN_WIDTH
+            )
 
         if self.show_status_panel:
             if Iout is not None and Iset is not None:
