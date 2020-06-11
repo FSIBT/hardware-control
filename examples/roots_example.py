@@ -168,11 +168,11 @@ class RootsDemo(HC_MainWindow):
             self.adam_be,
             self,
             [
-                (1, adam_conversion_voltageCH1, "V", "Voltage"),
-                (2, adam_conversion_currentCH2, "A", "Current"),
-                (3, adam_conversion_pressureCH3, "Torr", "Pressure"),
+                (1, lambda p: p*100 , "Torr", "Pressure"),
+                (2, lambda i: i/10*3e-3+8.1e-6 , "A", "Current"),
+                (3, lambda v: v/10*100e3+420, "V", "Voltage"),
             ],
-            [(1, None, "V", "Voltage")],
+            [(0, lambda v: v/10, "kV", "Voltage")],
             "ADAM",
         )
 
@@ -234,18 +234,6 @@ class RootsDemo(HC_MainWindow):
     def close(self):
         print("Closing")
         self.app.close()
-
-
-def adam_conversion_voltageCH1(x: float):
-    return x * 10 * 100e3 + 420
-
-
-def adam_conversion_currentCH2(x: float):
-    return x / 10 * 3e-3 + 8.1e-6
-
-
-def adam_conversion_pressureCH3(x: float):
-    return x * 100
 
 
 def main():
