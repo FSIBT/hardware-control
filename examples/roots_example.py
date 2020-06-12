@@ -60,6 +60,8 @@ from hardware_control.LoggerTool.HC_LoggerTool import HC_LoggerTool
 from hardware_control.IOModule.ADAM_6024Ctrl import ADAM_6024Ctrl
 from hardware_control.IOModule.HC_IOModule import HC_IOModule
 from hardware_control.base import HC_ConsoleWidget
+from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
+from hardware_control.Oscilloscope.Pico5000ACtrl import Pico5000ACtrl
 
 
 logger = logging.getLogger(__name__)
@@ -91,11 +93,13 @@ class RootsDemo(HC_MainWindow):
 
         self.tabs = QTabWidget()
         self.tab_psu = QWidget()
+        self.tab_pico1 = QWidget()
         self.tab_aux = QWidget()
         self.tab_data = QWidget()
         self.python = HC_ConsoleWidget(main_app=app)
 
         self.tabs.addTab(self.tab_psu, "Power Supplies")
+        self.tabs.addTab(self.tab_pico1, "Picoscope")
         self.tabs.addTab(self.tab_aux, "Aux")
         self.tabs.addTab(self.tab_data, "Datasets")
         self.tabs.addTab(self.python, "Console")
@@ -168,11 +172,11 @@ class RootsDemo(HC_MainWindow):
             self.adam_be,
             self,
             [
-                (1, lambda p: p*100 , "Torr", "Pressure"),
-                (2, lambda i: i/10*3e-3+8.1e-6 , "A", "Current"),
-                (3, lambda v: v/10*100e3+420, "V", "Voltage"),
+                (1, lambda p: p * 100, "Torr", "Pressure"),
+                (2, lambda i: i / 10 * 3e-3 + 8.1e-6, "A", "Current"),
+                (3, lambda v: v / 10 * 100e3 + 420, "V", "Voltage"),
             ],
-            [(0, lambda v: v/10, "kV", "Voltage")],
+            [(0, lambda v: v / 10, "kV", "Voltage")],
             "ADAM",
         )
 
@@ -183,6 +187,16 @@ class RootsDemo(HC_MainWindow):
         self.tab_psu_layout.addWidget(self.caen_wdgt_123, 0, 1)
         self.tab_psu_layout.addWidget(self.caen_wdgt_456, 1, 1)
         self.tab_psu.setLayout(self.tab_psu_layout)
+
+        #####################################################################
+        ######### Aux Tab
+
+        self.pico1_be = Pico5000ACtrl("?")
+        self.pico1_wdgt = HC_Oscilloscope(self.pico1_be, self, "Pico1")
+
+        self.tab_pico1_layout = QGridLayout()
+        self.tab_pico1_layout.addWidget(self.pico1_wdgt, 0, 0)
+        self.tab_pico1.setLayout(self.tab_pico1_layout)
 
         #####################################################################
         ######### Aux Tab
