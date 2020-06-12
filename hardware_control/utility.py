@@ -98,8 +98,6 @@ def change_units(x: float, base_unit: str, decimals: int = 3, min_width: int = -
     elif abs(x) < 1e12:
         rval = f"{round(x*1e-9, decimals)} G{base_unit}"
 
-    print(f"\t{rval}")
-
     if min_width >= 1:
         rval = rval.rjust(min_width)
 
@@ -110,16 +108,12 @@ def apply_to_label(
     label, value, units: str = "", decimals: int = 3, min_width: int = -1
 ):
 
-    print(value)
-
     if value is not None:
         try:
             new_str = change_units(
                 float(value), units, decimals=decimals, min_width=min_width - 3
             )
-            print(f"\t\t{new_str}")
         except Exception as e:
-            print(str(e))
             new_str = f"----- {units}"
     else:
         new_str = f"----- {units}"
