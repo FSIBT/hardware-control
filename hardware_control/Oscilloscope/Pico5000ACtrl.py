@@ -10,7 +10,7 @@ from hardware_control.utility import (
 import numpy as np
 import logging
 import picoscope
-from picoscope import ps5000a
+from picoscope.ps6000 import PS6000
 from hardware_control.utility import regex_compare, ensure_float
 
 logger = logging.getLogger(__name__)
@@ -58,7 +58,8 @@ class Pico5000ACtrl(HC_Backend):
         logger.debug(f"{self.ID}: trying to connect")
 
         try:
-            self.ps = ps5000a()
+            self.ps = PS6000()
+            self.online=True
         except Exception as e:
             self.online = False
             logger.debug(f"\t({self.ID}) ERROR connecting with visa.", exc_info=True)
@@ -74,7 +75,7 @@ class Pico5000ACtrl(HC_Backend):
         return self.online
 
     def check_connection(self):
-
+        return True
         try:
             self.ps.ping()
         except:
