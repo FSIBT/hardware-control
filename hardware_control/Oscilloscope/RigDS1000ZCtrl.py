@@ -182,7 +182,7 @@ class RigDS1000ZCtrl(HC_Backend):
                     for slot, meas in enumerate(self.measurements):
                         if meas != "":
                             self.write(f":MEAS:STAT:ITEM {meas}")
-                elif regex_compare("use_meas_avg"):
+                elif regex_compare("use_meas_avg", setting):
 
                     self.use_avg = boolstr_NR1(value)
                     return f"Use avg.: {value}"

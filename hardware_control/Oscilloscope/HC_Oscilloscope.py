@@ -125,6 +125,8 @@ class HC_Oscilloscope(HC_Instrument):
 
         if regex_compare("CH.+_WVFM", descr):
             c = returnChannelNumber(descr)
+            if not c:
+                c = 1
             self.disp.update_display(int(c), data1, data2)
 
     def get_header(self):

@@ -1,4 +1,4 @@
-from hardware_control.HC_Backend import HC_Backend, VISA
+from hardware_control.HC_Backend import HC_Backend, VISA, get_channel_from_command
 from hardware_control.utility import returnChannelNumber
 from hardware_control.utility import (
     regex_compare,
@@ -9,6 +9,9 @@ from hardware_control.utility import (
 )
 import numpy as np
 import logging
+import picoscope
+from picoscope import ps5000a
+from hardware_control.utility import regex_compare, ensure_float
 
 logger = logging.getLogger(__name__)
 
@@ -21,17 +24,10 @@ class Pico5000ACtrl(HC_Backend):
         self.ID = "Pico-5000A"
 
         self.connection_addr = connection_addr
-        self.parse_connection_addr()
 
         self.online = False
         self.dummy = False
         self.num_vert_divisions = 8
-
-        self.connection_type = connection_type
-        self.port_no = port_no
-        self.ip_addr = ip_addr
-
-        self.use_avg = False
 
         self.record_length = 1e6  # Maximum 64 MS
         self.trigger_channel = "A"
@@ -40,6 +36,51 @@ class Pico5000ACtrl(HC_Backend):
 
         self.measurements = ["", "", "", "", ""]
         self.check()
+
+    def try_connect(self):
+        """Checks if the backend is in communication with the object, if it is
+        not, it tries to re-establish communication."""
+
+        if self.dummy:
+            if self.online:
+                return True
+            else:
+                logger.debug(
+                    f"{self.ID}: creating dummy connection"
+                    + f" to {self.connection_addr}"
+                )
+                self.online = True
+                return True
+
+        if self.online:
+            return True  # Todo: Add check_connection() here?
+
+        logger.debug(f"{self.ID}: trying to connect")
+
+        try:
+            self.ps = ps5000a()
+        except Exception as e:
+            self.online = False
+            logger.debug(f"\t({self.ID}) ERROR connecting with visa.", exc_info=True)
+            logger.debug(f"{self.ID} is offline")
+        else:
+            self.online = True
+
+        # If connection purportedly successful, verify connection
+        if self.online == True:
+            if self.check_connection() == False:
+                self.online = False
+
+        return self.online
+
+    def check_connection(self):
+
+        try:
+            self.ps.ping()
+        except:
+            return False
+
+        return True
 
     def update_setting(self, setting: str, value):
 
@@ -66,7 +107,7 @@ class Pico5000ACtrl(HC_Backend):
             else:
                 if setting_X == "CHX_volts_div":
 
-                    ps.setChannel(channel=chan, VRange=value)
+                    self.ps.setChannel(channel=chan, VRange=value)
 
                     return "Success"
 
@@ -83,7 +124,7 @@ class Pico5000ACtrl(HC_Backend):
                             obs_duration / sampling_interval
                         )
 
-                    rval = scope.setSamplingInterval(sampling_interval, obs_duration)
+                    rval = self.ps.setSamplingInterval(sampling_interval, obs_duration)
 
                     return rval
 
@@ -93,19 +134,19 @@ class Pico5000ACtrl(HC_Backend):
 
                 elif setting_X == "CHX_offset":
 
-                    ps.setChannel(channel=chan, VOffset=value)
+                    self.ps.setChannel(channel=chan, VOffset=value)
 
                     return "Success"
 
                 elif setting_X == "CHX_BW_lim":
 
-                    ps.setChannel(channel=chan, BWLimited=value)
+                    self.ps.setChannel(channel=chan, BWLimited=value)
 
                     return "Success"
 
                 elif setting_X == "CHX_active":
 
-                    ps.setChannel(channel=chan, enabled=value)
+                    self.ps.setChannel(channel=chan, enabled=value)
 
                     return "Success"
 
@@ -128,7 +169,7 @@ class Pico5000ACtrl(HC_Backend):
 
                 elif setting_X == "CHX_probe_atten":
 
-                    ps.setChannel(channel=chan, probeAttenuation=value)
+                    self.ps.setChannel(channel=chan, probeAttenuation=value)
 
                     return "Success"
 
@@ -138,13 +179,13 @@ class Pico5000ACtrl(HC_Backend):
                     if value != "AC" and value != "DC":
                         value = "DC"
 
-                    ps.setChannel(channel=chan, coupling=value)
+                    self.ps.setChannel(channel=chan, coupling=value)
 
                     return "Success"
 
                 elif setting == "trigger_level":
 
-                    ps.setSimpleTrigger(self.trigger_channel, threshold_V=value)
+                    self.ps.setSimpleTrigger(self.trigger_channel, threshold_V=value)
 
                     return "Success"
 
@@ -176,7 +217,7 @@ class Pico5000ACtrl(HC_Backend):
                     if value == "ALT":
                         value = "Rising"
 
-                    ps.setSimpleTrigger(self.trigger_channel, direction=value)
+                    self.ps.setSimpleTrigger(self.trigger_channel, direction=value)
 
                     return "Success"
 
@@ -184,7 +225,7 @@ class Pico5000ACtrl(HC_Backend):
 
                     self.trigger_channel = value
 
-                    ps.setSimpleTrigger(value)
+                    self.ps.setSimpleTrigger(value)
 
                     return "Success"
 
@@ -219,11 +260,11 @@ class Pico5000ACtrl(HC_Backend):
             return "Offline"
 
         if cmd == "SINGLE_TRIGGER":
-            scope.runBlock(pretrig=self.offset_position / self.timebase)
+            self.ps.runBlock(pretrig=self.offset_position / self.timebase)
         elif cmd == "RUN":
-            scope.runBlock(pretrig=self.offset_position / self.timebase)
+            self.ps.runBlock(pretrig=self.offset_position / self.timebase)
         elif cmd == "STOP":
-            return "Not available"
+            self.ps.stop()
         elif cmd == "CLEAR_MEAS":
             return "Not available"
         elif regex_compare("meas_slot.", cmd):
@@ -257,7 +298,7 @@ class Pico5000ACtrl(HC_Backend):
             return self.read_waveform(channel)  # Returns a tuple (str, list, list)
 
         if regex_compare("CH.+_CLEAR", cmd):
-            return f"CH{c}_WVFM", [], []
+            return f"CH{chan}_WVFM", [], []
         else:
             return "", [], []
 
@@ -275,6 +316,8 @@ class Pico5000ACtrl(HC_Backend):
             chan = 3
         elif channel == "D":
             chan = 4
+        else:
+            chan = 1
 
         if self.dummy or not self.online:
             t = np.linspace(0, 1e-3, 100, False)
@@ -288,10 +331,12 @@ class Pico5000ACtrl(HC_Backend):
 
         try:
 
-            volts = list(scope.getDataV(channel))
+            volts = list(self.ps.getDataV(channel))
 
             # Get time values
-            t = list(np.linspace(0, scope.noSamples / scope.sampleInterval, len(volts)))
+            t = list(
+                np.linspace(0, self.ps.noSamples / self.ps.sampleInterval, len(volts))
+            )
 
         except:
             logger.error(
