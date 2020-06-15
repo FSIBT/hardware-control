@@ -62,6 +62,7 @@ from hardware_control.IOModule.HC_IOModule import HC_IOModule
 from hardware_control.base import HC_ConsoleWidget
 from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
 from hardware_control.Oscilloscope.Pico5000ACtrl import Pico5000ACtrl
+from hardware_control.PlotTool.HC_PlotTool import *
 
 
 logger = logging.getLogger(__name__)
@@ -95,12 +96,14 @@ class RootsDemo(HC_MainWindow):
         self.tab_psu = QWidget()
         self.tab_pico1 = QWidget()
         self.tab_aux = QWidget()
+        self.tab_plot = QWidget()
         self.tab_data = QWidget()
         self.python = HC_ConsoleWidget(main_app=app)
 
         self.tabs.addTab(self.tab_psu, "Power Supplies")
         self.tabs.addTab(self.tab_pico1, "Picoscope")
         self.tabs.addTab(self.tab_aux, "Aux")
+        self.tabs.addTab(self.tab_plot, "Plots")
         self.tabs.addTab(self.tab_data, "Datasets")
         self.tabs.addTab(self.python, "Console")
 
@@ -189,7 +192,7 @@ class RootsDemo(HC_MainWindow):
         self.tab_psu.setLayout(self.tab_psu_layout)
 
         #####################################################################
-        ######### Aux Tab
+        ######### Pico Tab
 
         self.pico1_be = Pico5000ACtrl("?")
         self.pico1_wdgt = HC_Oscilloscope(self.pico1_be, self, "Pico1")
@@ -206,6 +209,15 @@ class RootsDemo(HC_MainWindow):
         self.tab_aux_layout = QGridLayout()
         self.tab_aux_layout.addWidget(self.zmqtool, 0, 0)
         self.tab_aux.setLayout(self.tab_aux_layout)
+
+        #####################################################################
+        ######### Plot Tab
+
+        self.plot_wdgt = HC_PlotTool(self, "Plot")
+
+        self.tab_plot_layout = QGridLayout()
+        self.tab_plot_layout.addWidget(self.plot_wdgt, 0, 0)
+        self.tab_plot.setLayout(self.tab_plot_layout)
 
         #####################################################################
         ######## Tab 3
