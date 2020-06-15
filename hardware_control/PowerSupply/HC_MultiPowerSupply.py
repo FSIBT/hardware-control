@@ -183,7 +183,8 @@ class HC_MultiPowerSupply(HC_Instrument):
         # in HC_Instrument, except it adds readout_timer.stop()
 
         if self.comm is not None:
-            self.comm.close()
+            if self.comm.try_connect_timer.isActive():
+                self.comm.close()
         self.readout_timer.stop()
 
     def update_readout(self):
