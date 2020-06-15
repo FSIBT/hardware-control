@@ -130,7 +130,12 @@ class HC_PlotTool(QWidget):
         if "time:time" not in self.app.data_sets[self.plot_set].data:
             return
 
-        x_arr = np.array(self.app.data_sets[self.plot_set].data["time:time"])
+        x_arr = np.array(
+            [
+                float(tval)
+                for tval in self.app.data_sets[self.plot_set].data["time:time"]
+            ]
+        )
 
         xleft, xright = self.axes.get_xlim()
         ybottom, ytop = self.axes.get_ylim()
@@ -140,8 +145,13 @@ class HC_PlotTool(QWidget):
         for key in self.app.data_sets[self.plot_set].data:
             if key == "time:time":
                 continue
-            y_arr = np.array(self.app.data_sets[self.plot_set].data[key])
-            self.axes.plot(x_arr, y_arr, "o-", label=key)
+            y_arr = np.array(
+                [float(yval) for yval in self.app.data_sets[self.plot_set].data[key]]
+            )
+            self.axes.plot_date(
+                epoch2num(x_arr), y_arr, "o-", label=key, tz="America/Los_Angeles"
+            )
+            print(f"{min(y_arr)}, {max(y_arr)}")
 
         # for k, v in self.data.items():
         #     myX = np.array([x[0] for x in v])
@@ -152,6 +162,8 @@ class HC_PlotTool(QWidget):
         #         epoch2num(myX), myY, "o-", label=k, tz="America/Los_Angeles"
         #     )
         self.axes.legend(loc="best")
+        plt.locator_params(axis="y", nbins=6)
+        self.axes.set_ylim([0, 10])
         if not self.autoscale:
             self.axes.set_xlim([xleft, xright])
             self.axes.set_ylim([ybottom, ytop])
