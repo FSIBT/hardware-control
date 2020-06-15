@@ -63,6 +63,7 @@ from hardware_control.base import HC_ConsoleWidget
 from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
 from hardware_control.Oscilloscope.Pico5000ACtrl import Pico5000ACtrl
 from hardware_control.PlotTool.HC_PlotTool import *
+from hardware_control.PlotTool.HC_MiniPlotTool import *
 
 
 logger = logging.getLogger(__name__)
@@ -94,13 +95,15 @@ class RootsDemo(HC_MainWindow):
 
         self.tabs = QTabWidget()
         self.tab_psu = QWidget()
+        self.tab_psu2 = QWidget()
         self.tab_pico1 = QWidget()
         self.tab_aux = QWidget()
         self.tab_plot = QWidget()
         self.tab_data = QWidget()
         self.python = HC_ConsoleWidget(main_app=app)
 
-        self.tabs.addTab(self.tab_psu, "Power Supplies")
+        self.tabs.addTab(self.tab_psu, "Power Supplies 1")
+        self.tabs.addTab(self.tab_psu2, "Power Supplies 2")
         self.tabs.addTab(self.tab_pico1, "Picoscope")
         self.tabs.addTab(self.tab_aux, "Aux")
         self.tabs.addTab(self.tab_plot, "Plots")
@@ -185,11 +188,16 @@ class RootsDemo(HC_MainWindow):
 
         # Put instrument(s) in tab
         self.tab_psu_layout = QGridLayout()
-        self.tab_psu_layout.addWidget(self.keysight_wdgt, 0, 0)
-        self.tab_psu_layout.addWidget(self.adam_wdgt, 1, 0)
+        # self.tab_psu_layout.addWidget(self.keysight_wdgt, 0, 0)
+        # self.tab_psu_layout.addWidget(self.adam_wdgt, 1, 0)
         self.tab_psu_layout.addWidget(self.caen_wdgt_123, 0, 1)
         self.tab_psu_layout.addWidget(self.caen_wdgt_456, 1, 1)
         self.tab_psu.setLayout(self.tab_psu_layout)
+
+        self.tab_psu2_layout = QGridLayout()
+        self.tab_psu2_layout.addWidget(self.keysight_wdgt, 0, 0)
+        self.tab_psu2_layout.addWidget(self.adam_wdgt, 1, 0)
+        self.tab_psu2.setLayout(self.tab_psu2_layout)
 
         #####################################################################
         ######### Pico Tab
@@ -229,8 +237,12 @@ class RootsDemo(HC_MainWindow):
         self.app.data_sets["Autolog"].start_asynch(3)
         self.app.data_sets["Autolog"].add_instrument(self.caen_wdgt_123)
         self.app.data_sets["Autolog"].add_instrument(self.caen_wdgt_456)
+        self.app.data_sets["Keysight"] = Dataset("Keysight")
+        self.app.data_sets["Keysight"].start_asynch(1)
+        self.app.data_sets["Keysight"].add_instrument(self.keysight_wdgt)
         self.logtool.update_groups()
         self.logtool.set_group("Autolog")
+        self.plot_wdgt.set_dataset("Keysight")
 
         self.tab_data_layout = QGridLayout()
         self.tab_data_layout.addWidget(self.logtool, 1, 0)
@@ -242,10 +254,12 @@ class RootsDemo(HC_MainWindow):
         self.statustool = HC_StatusTool(self, "Connection Status")
         self.statustool.update_instruments()
 
+        self.miniplot = HC_MiniPlotTool(self, "Plot", 220, 220)
+
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.tabs, 0, 0, 3, 1)
         self.master_layout.addWidget(self.statustool, 0, 1)
-        # self.master_layout.addWidget(self.logtool, 2, 1)
+        self.master_layout.addWidget(self.miniplot, 1, 1)
 
         self.main_widget = QWidget(self)
         self.main_widget.setLayout(self.master_layout)

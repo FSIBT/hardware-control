@@ -1,6 +1,7 @@
 import json
 import json
 
+import numpy as np
 import pkg_resources
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
@@ -31,8 +32,10 @@ logger = logging.getLogger(__name__)
 class HC_PlotTool(QWidget):
     """A single matplotlib figure"""
 
-    def __init__(self, parent=None, active=True):
+    def __init__(self, window, name="Plot Window", active=True):
         super().__init__()
+
+        self.app = window.app
 
         self.normalize = False
         self.autoscale = True
@@ -64,31 +67,42 @@ class HC_PlotTool(QWidget):
 
         self.setLayout(self.vbox)
 
-        self.elements_and_name = []
-        self.data = defaultdict(deque)
+        self.plot_set = None
+
+        # self.elements_and_name = []
+        # self.data = defaultdict(deque)
 
         self.interval = 1000
         self.active = active
 
-        self.timer = QtCore.QTimer(self)
-        self.timer.timeout.connect(self.add_data)
-
-        # always get data
+        self.update_timer = QTimer(self)
+        self.update_timer.timeout.connect(self.update)
         if self.active:
-            self.timer.start(self.interval)
+            self.update_timer.start(self.interval)
 
-    def add_element(self, element, name):
-        self.elements_and_name.append((element, name))
+    #     self.timer = QtCore.QTimer(self)
+    #     self.timer.timeout.connect(self.add_data)
+    #
+    #     # always get data
+    #     if self.active:
+    #         self.timer.start(self.interval)
+    #
+    # def add_element(self, element, name):
+    #     self.elements_and_name.append((element, name))
+    #
+    # def add_data(self):
+    #     t = time.time()
+    #     for e, n in self.elements_and_name:
+    #         self.data[n].append([t, getattr(e, n)])
+    #
+    #     # only save the last 10000 data points
+    #     for k, v in self.data.items():
+    #         while len(v) > 10000:
+    #             v.popleft()
 
-    def add_data(self):
-        t = time.time()
-        for e, n in self.elements_and_name:
-            self.data[n].append([t, getattr(e, n)])
+    def set_dataset(self, set_name: str):
 
-        # only save the last 10000 data points
-        for k, v in self.data.items():
-            while len(v) > 10000:
-                v.popleft()
+        self.plot_set = set_name
 
     def toggle_autoscale(self):
         self.autoscale = not self.autoscale
@@ -101,14 +115,42 @@ class HC_PlotTool(QWidget):
         ybottom, ytop = self.axes.get_ylim()
         self.axes.clear()
         self.axes.set_xlabel("Time")
-        for k, v in self.data.items():
-            myX = np.array([x[0] for x in v])
-            myY = np.array([x[1] for x in v])
-            if self.normalize and len(myY) and myY.max() > 0:
-                myY = myY / myY.max()
-            self.axes.plot_date(
-                epoch2num(myX), myY, "o-", label=k, tz="America/Los_Angeles"
-            )
+
+    def update(self):
+
+        # Return if nothing set
+        if self.plot_set is None:
+            return
+
+        # Check that set exists
+        if self.plot_set not in self.app.data_sets:
+            return
+
+        # Check that is a function of time
+        if "time:time" not in self.app.data_sets[self.plot_set].data:
+            return
+
+        x_arr = np.array(self.app.data_sets[self.plot_set].data["time:time"])
+
+        xleft, xright = self.axes.get_xlim()
+        ybottom, ytop = self.axes.get_ylim()
+
+        self.axes.clear()
+        self.axes.set_xlabel("Time (s)")
+        for key in self.app.data_sets[self.plot_set].data:
+            if key == "time:time":
+                continue
+            y_arr = np.array(self.app.data_sets[self.plot_set].data[key])
+            self.axes.plot(x_arr, y_arr, "o-", label=key)
+
+        # for k, v in self.data.items():
+        #     myX = np.array([x[0] for x in v])
+        #     myY = np.array([x[1] for x in v])
+        #     if self.normalize and len(myY) and myY.max() > 0:
+        #         myY = myY / myY.max()
+        #     self.axes.plot_date(
+        #         epoch2num(myX), myY, "o-", label=k, tz="America/Los_Angeles"
+        #     )
         self.axes.legend(loc="best")
         if not self.autoscale:
             self.axes.set_xlim([xleft, xright])
