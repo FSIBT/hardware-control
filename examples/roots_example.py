@@ -255,6 +255,7 @@ class RootsDemo(HC_MainWindow):
         self.statustool.update_instruments()
 
         self.miniplot = HC_MiniPlotTool(self, "Plot", 220, 220)
+        self.miniplot.set_dataset("Keysight")
 
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.tabs, 0, 0, 3, 1)
