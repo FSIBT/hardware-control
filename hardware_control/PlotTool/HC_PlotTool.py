@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 class HC_PlotTool(QWidget):
     """A single matplotlib figure"""
 
-    def __init__(self, window, name="Plot Window", active=True):
+    def __init__(self, window, name="Plot Tool", active=True):
         super().__init__()
 
         self.app = window.app
@@ -109,12 +109,6 @@ class HC_PlotTool(QWidget):
 
     def toggle_normalize(self):
         self.normalize = not self.normalize
-
-    def update(self):
-        xleft, xright = self.axes.get_xlim()
-        ybottom, ytop = self.axes.get_ylim()
-        self.axes.clear()
-        self.axes.set_xlabel("Time")
 
     def update(self):
 
