@@ -900,7 +900,9 @@ class Dataset(QObject):
         # Next row to save (prev. already saved)
 
         self.asynchronous_mode = False  # Synchronous vs asynchronous logging
-        self.async_instruments = []  # list of instrument whose parameters to log
+        # list of tuples of instrument and parameters to log. If the parameters
+        # list is None, will log all parameters
+        self.async_instruments = []
         self.async_log_interval = 10  # Seconds
         self.async_add_timestamp = True  # Option to add timestamp to all values
 
@@ -1057,7 +1059,7 @@ class Dataset(QObject):
                     if self.async_add_timestamp:
                         datastructure += "Time[s] "
                     datastructure += " ".join(
-                        [e.get_header() for e in self.async_instruments]
+                        [e[0].get_header(e[1]) for e in self.async_instruments]
                     )
 
                     myhash = hashlib.sha256()
@@ -1105,20 +1107,21 @@ class Dataset(QObject):
                 self.data["time:time"] = [str(time.time())]
 
         for ai in self.async_instruments:
-            vkeys = ai.get_value_keys()
+            vkeys = ai[0].get_value_keys(ai[1])
 
             if vkeys is None:
                 continue
 
             for vk in vkeys:
+                name = ai[0].name
                 try:
-                    self.data[f"{ai.name}:{vk}"].append(ai.values[vk])
+                    self.data[f"{name}:{vk}"].append(ai[0].values[vk])
                 except:
-                    self.data[f"{ai.name}:{vk}"] = [ai.values[vk]]
+                    self.data[f"{name}:{vk}"] = [ai[0].values[vk]]
 
-    def add_instrument(self, instr):
+    def add_instrument(self, instr, parameters=None):
 
-        self.async_instruments.append(instr)
+        self.async_instruments.append((instr, parameters))
 
 
 class HC_Instrument(QGroupBox):
@@ -1127,8 +1130,7 @@ class HC_Instrument(QGroupBox):
         # ToDo Why ordered dict??
         self.settings = OrderedDict()
         self.values = OrderedDict()
-        self.values_unit = []
-        self.logging_groups = []
+        self.values_unit = OrderedDict()
         self.name = name
         self.manufacturer = None
         self.company = None
@@ -1392,7 +1394,7 @@ class HC_Instrument(QGroupBox):
         # TODO: Record 'id' for each measurement
         # TODO: Erase measurements with corresponding ID if one fails
 
-    def get_header(self):
+    def get_header(self, parameters=None):
         """ Returns a header to describe what is returned by get_values(). It
         must be overwritten by the instrument if the instrument is to be
         compatible with asynchronous logging datasets.
@@ -1402,20 +1404,29 @@ class HC_Instrument(QGroupBox):
 
             Example 2:
                 return 'HV-Voltage[V] HV-Current[A] Pressure[mTorr]' """
-        return ""
 
-        # def get_values():
-        """Returns the values tracked by the instrument. This function is called
-        by datasets during asynchronous logging. If an instrument is to work with
-        asynchronous logging, it must overwrite this function to return the
-        parameters it wants to track. These parameters must match what is listed
-        in get_header().
+        # Make sure parameters is list or None
+        if type(parameters) != list and parameters is not None:
+            return None
 
-            Example:
-                return self.values[voltage], self.values[current], self.values[pressure]"""
-        # return None
+        #
+        header = ""
+        for v in self.values:
 
-    def get_value_keys(self):
+            # If parameters is a list (not None) and 'v' is not listed, skip
+            if v is not None and v not in parameters:
+                continue
+
+            header = header + v
+            if v in self.values_unit:
+                unit = self.values_unit[v]
+                header = header + f"[{unit}] "
+            else:
+                self.values_unit[v] = "?"
+                header = header + " "
+        return header
+
+    def get_value_keys(self, parameters=None):
         """ Returns the keys of the values tracked by the instrument. This
         function is called by datasets during asynchronous logging. If an
         instrument is to work with asynchronous logging, it must overwrite this
@@ -1424,7 +1435,20 @@ class HC_Instrument(QGroupBox):
 
         Example:
             return ['voltage', 'current', 'pressure'] """
-        return []
+
+        # If nothing specified, return all values
+        if parameters is None:
+            return [str(v) for v in self.values]
+
+        # Otherwise make sure is list
+        if type(parameters) != list:
+            return None
+
+        rval = []
+        for p in parameters:
+            if p in self.values:
+                rval.append(p)
+        return rval
 
     def settings_to_UI(self):
         """ Overwrites the values in the UI with the values in self.settings """
