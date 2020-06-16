@@ -34,16 +34,24 @@ class HC_MiniPlotTool(QWidget):
     """A single matplotlib figure"""
 
     def __init__(
-        self, window, name="Mini Plot", fixed_width=100, fixed_height=100, active=True
+            self, window, name="Mini Plot", fixed_width=100, fixed_height=100, active=True, tz="America/Los_Angeles"
     ):
         super().__init__()
 
         self.app = window.app
 
+        self.tz = tz
+
         self.normalize = False
         self.autoscale = True
 
-        self.fig, self.axes = plt.subplots()
+        self.dpi = 300
+
+        self.fig = plt.figure(figsize=(fixed_width/self.dpi,
+                                       fixed_height/self.dpi),
+                              dpi=self.dpi)
+        self.axes = self.fig.add_axes([0, 0, 1, 1])
+        self.axes.axis('off')
         self.plot = FigureCanvas(self.fig)
         self.plot.setMaximumWidth(fixed_width)
         self.plot.setMaximumHeight(fixed_height)
@@ -93,24 +101,18 @@ class HC_MiniPlotTool(QWidget):
         ybottom, ytop = self.axes.get_ylim()
 
         self.axes.clear()
-        self.axes.set_xlabel("Time (s)")
+        self.axes.axis('off')
+        self.axes.grid(True)
         for key in self.app.data_sets[self.plot_set].data:
             if key == "time:time":
                 continue
             y_arr = np.array(
                 [float(yval) for yval in self.app.data_sets[self.plot_set].data[key]]
             )
+            if len(x_arr) == len(y_arr)+1:
+                x_arr = x_arr[:-1]
             self.axes.plot_date(
-                epoch2num(x_arr), y_arr, "o-", label=key, tz="America/Los_Angeles"
+                epoch2num(x_arr), y_arr, "-", label=key, tz=self.tz
             )
 
-        # for k, v in self.data.items():
-        #     myX = np.array([x[0] for x in v])
-        #     myY = np.array([x[1] for x in v])
-        #     if self.normalize and len(myY) and myY.max() > 0:
-        #         myY = myY / myY.max()
-        #     self.axes.plot_date(
-        #         epoch2num(myX), myY, "o-", label=k, tz="America/Los_Angeles"
-        #     )
-        self.axes.set_ylim([0, 10])
         self.plot.draw()

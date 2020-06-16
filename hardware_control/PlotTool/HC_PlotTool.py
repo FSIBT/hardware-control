@@ -144,22 +144,15 @@ class HC_PlotTool(QWidget):
             y_arr = np.array(
                 [float(yval) for yval in self.app.data_sets[self.plot_set].data[key]]
             )
+            if len(x_arr) == len(y_arr)+1:
+                x_arr = x_arr[:-1]
             self.axes.plot_date(
                 epoch2num(x_arr), y_arr, "o-", label=key, tz="America/Los_Angeles"
             )
 
-        # for k, v in self.data.items():
-        #     myX = np.array([x[0] for x in v])
-        #     myY = np.array([x[1] for x in v])
-        #     if self.normalize and len(myY) and myY.max() > 0:
-        #         myY = myY / myY.max()
-        #     self.axes.plot_date(
-        #         epoch2num(myX), myY, "o-", label=k, tz="America/Los_Angeles"
-        #     )
         self.axes.legend(loc="best")
         self.axes.grid(True)
         plt.locator_params(axis="y", nbins=6)
-        self.axes.set_ylim([0, 10])
         if not self.autoscale:
             self.axes.set_xlim([xleft, xright])
             self.axes.set_ylim([ybottom, ytop])
