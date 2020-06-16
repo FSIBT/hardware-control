@@ -156,12 +156,12 @@ class HC_FlowController(HC_Instrument):
         self.pressure_label_readout.setText(press_meas)
         self.flow_label_readout.setText(flow_meas)
 
-    def get_header(self):
-        # Todo: what are the units?
-        return "Rate[?] Pressure[?]"
-
-    def get_value_keys(self):
-        return [self.values["rate"], self.values["pressure"]]
+    # def get_header(self):
+    #     # Todo: what are the units?
+    #     return "Rate[?] Pressure[?]"
+    #
+    # def get_value_keys(self):
+    #     return [self.values["rate"], self.values["pressure"]]
 
     #
     # Create a default state object if can't get state from a file

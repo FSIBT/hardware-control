@@ -273,26 +273,26 @@ class HC_MultiPowerSupply(HC_Instrument):
 
         self.comm.update_setting(f"CH{channel}_V_max", str(maxV))
 
-    def get_header(self):
-
-        retval = ""
-        for c in self.channels:
-            retval = (
-                retval + f"CH{c}_V_out[V] CH{c}_I_out[A] CH{c}_V_set[V] CH{c}_I_set[A] "
-            )
-
-        return retval
-
-    def get_value_keys(self):
-
-        retval = []
-        for c in self.channels:
-            retval.append(f"CH{c}_V_out")
-            retval.append(f"CH{c}_I_out")
-            retval.append(f"CH{c}_V_set")
-            retval.append(f"CH{c}_I_set")
-
-        return retval
+    # def get_header(self):
+    #
+    #     retval = ""
+    #     for c in self.channels:
+    #         retval = (
+    #             retval + f"CH{c}_V_out[V] CH{c}_I_out[A] CH{c}_V_set[V] CH{c}_I_set[A] "
+    #         )
+    #
+    #     return retval
+    #
+    # def get_value_keys(self):
+    #
+    #     retval = []
+    #     for c in self.channels:
+    #         retval.append(f"CH{c}_V_out")
+    #         retval.append(f"CH{c}_I_out")
+    #         retval.append(f"CH{c}_V_set")
+    #         retval.append(f"CH{c}_I_set")
+    #
+    #     return retval
 
     def set_channel_label(self, channel: int, label: str):
         """ Sets a channel label to a new custom value """
