@@ -240,9 +240,14 @@ class RootsDemo(HC_MainWindow):
         self.app.data_sets["Keysight"] = Dataset("Keysight")
         self.app.data_sets["Keysight"].start_asynch(1)
         self.app.data_sets["Keysight"].add_instrument(self.keysight_wdgt)
+        self.app.data_sets["ADAM"] = Dataset("ADAM")
+        self.app.data_sets["ADAM"].start_asynch(1)
+        self.app.data_sets["ADAM"].add_instrument(
+            self.adam_wdgt, ["CH1_V_meas", "CH2_V_meas", "CH3_V_meas"]
+        )
         self.logtool.update_groups()
         self.logtool.set_group("Autolog")
-        self.plot_wdgt.set_dataset("Keysight")
+        self.plot_wdgt.set_dataset("ADAM")
 
         self.tab_data_layout = QGridLayout()
         self.tab_data_layout.addWidget(self.logtool, 1, 0)
@@ -255,7 +260,7 @@ class RootsDemo(HC_MainWindow):
         self.statustool.update_instruments()
 
         self.miniplot = HC_MiniPlotTool(self, "Plot", 220, 220)
-        self.miniplot.set_dataset("Keysight")
+        self.miniplot.set_dataset("ADAM")
 
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.tabs, 0, 0, 3, 1)
