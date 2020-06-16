@@ -48,7 +48,7 @@ class HC_Comm(QObject):
     sigClose = pyqtSignal()
 
     # TODO: @TImo Bauer Add 'try_connect' frequency
-    def __init__(self, backend, instrument, try_connect_period=1000):
+    def __init__(self, backend, instrument, try_connect_period=5000):
         super().__init__()
         self.backend = backend
         self.instruments = [instrument]  # Calling instrument UI (eg. HC_scope)
@@ -1120,6 +1120,8 @@ class Dataset(QObject):
                     self.data[f"{name}:{vk}"] = [ai[0].values[vk]]
 
     def add_instrument(self, instr, parameters=None):
+
+        # TODO: Add units to backends
 
         self.async_instruments.append((instr, parameters))
 
