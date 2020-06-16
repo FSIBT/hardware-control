@@ -101,7 +101,6 @@ class HC_MiniPlotTool(QWidget):
             self.axes.plot_date(
                 epoch2num(x_arr), y_arr, "o-", label=key, tz="America/Los_Angeles"
             )
-            print(f"{min(y_arr)}, {max(y_arr)}")
 
         # for k, v in self.data.items():
         #     myX = np.array([x[0] for x in v])

@@ -145,7 +145,6 @@ class HC_PlotTool(QWidget):
             self.axes.plot_date(
                 epoch2num(x_arr), y_arr, "o-", label=key, tz="America/Los_Angeles"
             )
-            print(f"{min(y_arr)}, {max(y_arr)}")
 
         # for k, v in self.data.items():
         #     myX = np.array([x[0] for x in v])
@@ -156,6 +155,7 @@ class HC_PlotTool(QWidget):
         #         epoch2num(myX), myY, "o-", label=k, tz="America/Los_Angeles"
         #     )
         self.axes.legend(loc="best")
+        self.axes.grid(True)
         plt.locator_params(axis="y", nbins=6)
         self.axes.set_ylim([0, 10])
         if not self.autoscale:
