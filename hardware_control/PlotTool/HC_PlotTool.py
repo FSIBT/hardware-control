@@ -26,6 +26,8 @@ from matplotlib.dates import epoch2num
 
 import logging
 
+plt.ioff()
+
 logger = logging.getLogger(__name__)
 
 

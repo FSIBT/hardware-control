@@ -23,6 +23,8 @@ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as Navigatio
 import matplotlib.pyplot as plt
 from matplotlib.dates import epoch2num
 
+plt.ioff()
+
 import logging
 
 logger = logging.getLogger(__name__)
