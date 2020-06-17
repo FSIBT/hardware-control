@@ -150,7 +150,7 @@ class RigolDP832Ctrl(HC_Backend):
         elif command_X == "CHX_V_set?":
             rval = self.query(f"SOUR{channel}:VOLT?")
         elif command_X == "CHX_enable?":
-            rval = self.query(f"OUTP:STAT?")
+            rval = self.query(f"OUTP:STAT? CH{channel}")
             rval = "ON" in rval
         else:
             logger.error(f"Error: {command_X} in {self.ID} not known")
