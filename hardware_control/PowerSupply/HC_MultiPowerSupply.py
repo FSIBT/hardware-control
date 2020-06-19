@@ -84,6 +84,8 @@ class HC_MultiPowerSupply(HC_Instrument):
                 self.values[f"CH{c}_V_set"] = "-"
                 self.values[f"CH{c}_I_set"] = "-"
 
+        self.init_values()
+
         # Initialize settings to correct values
         # if initialize_with == "INSTRUMENT":
         #     self.save_on_close = False
@@ -144,6 +146,18 @@ class HC_MultiPowerSupply(HC_Instrument):
         self.readout_timer.timeout.connect(self.update_readout)
         self.readout_timer.start(self.globalRefreshRate)
 
+    def init_values(self):
+
+        self.values = {}
+        for c in self.channels:
+            self.values[f"CH{c}_V_out"] = ""
+            self.values[f"CH{c}_I_out"] = ""
+            self.values[f"CH{c}_V_max"] = ""
+            self.values[f"CH{c}_I_max"] = ""
+            self.values[f"CH{c}_V_set"] = ""
+            self.values[f"CH{c}_I_set"] = ""
+            self.values[f"CH{c}_enable"] = ""
+
     def all_on_off(self):
 
         # IF channel buttons are displayed, check their status to determine if
@@ -162,10 +176,10 @@ class HC_MultiPowerSupply(HC_Instrument):
 
             for c in self.channel_widgets:
                 if any_on:
-                    self.update_setting(f"CH{c.channel}_enabled", str(False))
+                    self.update_setting(f"CH{c.channel}_enable", str(False))
                     setButtonState(c.enabled_but, False)
                 else:
-                    self.update_setting(f"CH{c.channel}_enabled", str(True))
+                    self.update_setting(f"CH{c.channel}_enable", str(True))
                     setButtonState(c.enabled_but, True)
 
         else:
@@ -176,7 +190,7 @@ class HC_MultiPowerSupply(HC_Instrument):
 
             for c in self.channel_widgets:
                 self.update_setting(
-                    f"CH{c.channel}_enabled", str(self.all_enable_but.isChecked())
+                    f"CH{c.channel}_enable", str(self.all_enable_but.isChecked())
                 )
 
     def close(self):  # Note: this is a complete duplicate of the 'close()' function
@@ -201,7 +215,7 @@ class HC_MultiPowerSupply(HC_Instrument):
                 self.comm.command(f"CH{c}_V_max?")
                 self.comm.command(f"CH{c}_I_max?")
             if self.channel_widgets[idx].show_status_panel:
-                self.comm.command(f"CH{c}_enabled?")
+                self.comm.command(f"CH{c}_enable?")
             # if self.channel_widgets[idx].show_status_panel:
             #     self.comm.command(f"CH{c}_current_limited?")
             #     self.comm.command(f"CH{c}_output_enabled?")
@@ -216,7 +230,7 @@ class HC_MultiPowerSupply(HC_Instrument):
                 Vmax = remove_end_carriage_return(self.read_values(f"CH{c}_V_max"))
                 Imax = remove_end_carriage_return(self.read_values(f"CH{c}_I_max"))
             if self.channel_widgets[idx].show_status_panel:
-                enabled = remove_end_carriage_return(self.read_values(f"CH{c}_enabled"))
+                enabled = remove_end_carriage_return(self.read_values(f"CH{c}_enable"))
             else:
                 enabled = None
             # if self.channel_widgets[idx].show_status_panel:
@@ -224,16 +238,17 @@ class HC_MultiPowerSupply(HC_Instrument):
             #     self.comm.command(f"CH{c}_output_enabled?")
             #     self.comm.command(f"CH{c}_ramp_direction?")
 
-            self.values[f"CH{c}_V_out"] = Vout
-            self.values[f"CH{c}_I_out"] = Iout
-            self.values[f"CH{c}_V_set"] = Vset
-            self.values[f"CH{c}_I_set"] = Iset
-            if self.channel_widgets[idx].show_VI_limits:
-                self.values[f"CH{c}_V_max"] = Vmax
-                self.values[f"CH{c}_I_max"] = Imax
-            if self.channel_widgets[idx].show_status_panel:
-                self.values[f"CH{c}_enabeld"] = enabled
+            # self.values[f"CH{c}_V_out"] = Vout
+            # self.values[f"CH{c}_I_out"] = Iout
+            # self.values[f"CH{c}_V_set"] = Vset
+            # self.values[f"CH{c}_I_set"] = Iset
+            # if self.channel_widgets[idx].show_VI_limits:
+            #     self.values[f"CH{c}_V_max"] = Vmax
+            #     self.values[f"CH{c}_I_max"] = Imax
+            # if self.channel_widgets[idx].show_status_panel:
+            #     self.values[f"CH{c}_enabeld"] = enabled
 
+            # print(f"Instr '{self.name}' sending values to widget # {idx} (CH: {c}). There are {len(self.channel_widgets)} total widgets.")
             if self.channel_widgets[idx].show_VI_limits:
                 logger.debug(
                     f"'{self.name}'[{c}] received values: {Vout}, {Iout}, {Vset}, {Iset}, {Vmax}, {Imax}"
@@ -313,7 +328,7 @@ class HC_MultiPowerSupply(HC_Instrument):
         dflt = {}
 
         for c in self.channels:
-            dflt[f"CH{c}_enabled"] = False
+            dflt[f"CH{c}_enable"] = False
             dflt[f"CH{c}_V_set"] = 0
             dflt[f"CH{c}_I_set"] = 0.5
 
@@ -475,10 +490,10 @@ class PowerSupplyChannel(QWidget):
         self.enabled_but.setCheckable(True)
         self.enabled_but.clicked.connect(
             lambda: main_widget.update_setting(
-                f"CH{channel}_enabled", str(self.enabled_but.isChecked())
+                f"CH{channel}_enable", str(self.enabled_but.isChecked())
             )
         )
-        setButtonState(self.enabled_but, main_widget.settings[f"CH{channel}_enabled"])
+        setButtonState(self.enabled_but, main_widget.settings[f"CH{channel}_enable"])
         #
         self.controls_grid = QGridLayout()
         self.controls_grid.addWidget(self.V_ctrl_label, 0, 0)
@@ -601,7 +616,7 @@ class PowerSupplyChannel(QWidget):
                     pass
 
             if enabled is not None:
-                if bool(enabled):
+                if enabled == "True":
                     self.enabled_ind.setPixmap(self.green_pix)
                 else:
                     self.enabled_ind.setPixmap(self.red_pix)
@@ -623,5 +638,5 @@ class PowerSupplyChannel(QWidget):
         self.V_edit.setText(str(self.main_widget.settings[f"CH{self.channel}_V_set"]))
         self.I_edit.setText(str(self.main_widget.settings[f"CH{self.channel}_I_set"]))
         setButtonState(
-            self.enabled_but, self.main_widget.settings[f"CH{self.channel}_enabled"]
+            self.enabled_but, self.main_widget.settings[f"CH{self.channel}_enable"]
         )
