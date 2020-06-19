@@ -27,6 +27,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+mtpl_logger = logging.getLogger("matplotlib")
+mtpl_logger.setLevel("ERROR")
+
 
 class HC_MiniPlotTool(QWidget):
     """A single matplotlib figure"""
@@ -95,12 +98,18 @@ class HC_MiniPlotTool(QWidget):
         for key in self.app.data_sets[self.plot_set].data:
             if key == "time:time":
                 continue
-            y_arr = np.array(
-                [float(yval) for yval in self.app.data_sets[self.plot_set].data[key]]
-            )
-            self.axes.plot_date(
-                epoch2num(x_arr), y_arr, "o-", label=key, tz="America/Los_Angeles"
-            )
+            try:
+                y_arr = np.array(
+                    [
+                        float(yval)
+                        for yval in self.app.data_sets[self.plot_set].data[key]
+                    ]
+                )
+                self.axes.plot_date(
+                    epoch2num(x_arr), y_arr, "o-", label=key, tz="America/Los_Angeles"
+                )
+            except:
+                logger.debug(f"Failed to plot Y-data", exc_info=True)
 
         # for k, v in self.data.items():
         #     myX = np.array([x[0] for x in v])
