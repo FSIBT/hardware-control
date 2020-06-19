@@ -26,6 +26,7 @@ from PyQt5.QtWidgets import (
 )
 from qtconsole.rich_jupyter_widget import RichJupyterWidget
 from qtconsole.inprocess import QtInProcessKernelManager
+from hardware_control.utility import convertibleToFloat
 
 logger = logging.getLogger(__name__)
 
@@ -905,6 +906,11 @@ class Dataset(QObject):
         self.async_instruments = []
         self.async_log_interval = 10  # Seconds
         self.async_add_timestamp = True  # Option to add timestamp to all values
+        self.async_require_float = True  # Whether to requrire async data to be floats
+
+        # Whether or not to require all data to present before allowing data to
+        # be logged. If is False, missing values will be saved as None
+        self.require_all = False
 
         # Dictionary of datapoints. Each key follows the <instrument>:<parameter>
         # naming scheme. Every value is a list and all lists need to have the
@@ -1100,24 +1106,109 @@ class Dataset(QObject):
 
         logger.info(f"Dataset {self.name} logging asynchronous data")
 
+        # Check that all requested parameters are available. If they aren't, don't
+        # log anything. This ensures the dataset's columns are all the same length
+        if self.require_all:
+            for ai in self.async_instruments:
+                name = ai[0].name
+                vkeys = ai[0].get_value_keys(ai[1])
+
+                if vkeys is None:
+                    logger.info(
+                        f"Async log for dataset {self.name} aborted because not all values present"
+                    )
+                    return
+
+            # If all values must be valid (because require_all is true) and all
+            # values must be convertible to float, check that values are valid num
+            if self.async_require_float:
+                for ai in self.async_instruments:
+                    for vk in vkeys:
+                        try:
+                            float(ai[0].values[vk])
+                        except:
+                            v = ai[0].values[vk]
+                            logger.info(
+                                f"Async log for dataset {self.name} aborted because value '{v}' for parameter '{vk}' cannot be converted to a float."
+                            )
+                            return
+
+        # Add timestamp if requested
         if self.async_add_timestamp:
             try:
                 self.data["time:time"].append(str(time.time()))
             except:
                 self.data["time:time"] = [str(time.time())]
 
+        # Add data from each specified instrument
         for ai in self.async_instruments:
-            vkeys = ai[0].get_value_keys(ai[1])
+            name = ai[0].name
 
-            if vkeys is None:
-                continue
+            vkeys = ai[0].get_value_keys(ai[1], False)
+            logger.debug(f"Logging data for instrument: {name}. Keys: {vkeys}")
 
+            # Get each key
+            name = ai[0].name
             for vk in vkeys:
-                name = ai[0].name
+
+                # Check that parameter exists
+                if vk not in ai[0].values:
+                    try:
+                        self.data[f"{name}:{vk}"].append(None)
+                        logger.info(f"Adding data: data[{name}:{vk}] = None")
+                    except:
+                        self.data[f"{name}:{vk}"] = [None]
+                    continue
+
+                # Check that parameter exists
+                if self.async_require_float and convertibleToFloat(ai[0].values[vk]):
+                    try:
+                        self.data[f"{name}:{vk}"].append(None)
+                        logger.info(f"Adding data: data[{name}:{vk}] = None")
+                    except:
+                        self.data[f"{name}:{vk}"] = [None]
+                    continue
+
+                # Otherwise add raw data
                 try:
                     self.data[f"{name}:{vk}"].append(ai[0].values[vk])
+                    nd = ai[0].values[vk]
+                    logger.info(f"Adding data: data[{name}:{vk}]='{nd}'")
                 except:
                     self.data[f"{name}:{vk}"] = [ai[0].values[vk]]
+
+    def get_corresponding_arrays(set_names: list, convert_to_float=False):
+        """ Returns lists for each of the parameters specified in set_names (
+        indicated as <instrument>:<parameter>). If 'None' appears in any of the
+        specified lists, all data points at that index for all returned lists are
+        removed. This guarantees all returned lists have the same length and that
+        the lists indecies correspond with eachother.
+
+        Returns a dictionary, key = parameter name, value = list
+        """
+
+        # Initialze return dictionary with the valid values in set_names
+        ret_dic = {}
+        for sn in set_names:
+            if sn in self.data:
+                ret_dic[sn] = []
+
+        # Populate ret_dic
+        for idx in range(self.len_min()):
+
+            # Check that no elements are 'None' at this index
+            for sn in ret_dic:
+                if self.data[sn][idx] == None:  # If 'None' present, skip to next index
+                    continue
+
+            # Add data to ret_dic
+            for sn in ret_dic:
+                if convert_to_float:
+                    ret_dic[sn].append(float(self.data[sn][idx]))
+                else:
+                    ret_dic[sn].append(self.data[sn][idx])
+
+        return ret_dic
 
     def add_instrument(self, instr, parameters=None):
 
@@ -1428,12 +1519,15 @@ class HC_Instrument(QGroupBox):
                 header = header + " "
         return header
 
-    def get_value_keys(self, parameters=None):
+    def get_value_keys(self, parameters=None, require_all: bool = True):
         """ Returns the keys of the values tracked by the instrument. This
         function is called by datasets during asynchronous logging. If an
         instrument is to work with asynchronous logging, it must overwrite this
         function to return the parameters it wants to track. These parameters
         must match what is listed in get_header().
+
+        If require_all is true and not all requested parameters are present the
+        function returns None.
 
         Example:
             return ['voltage', 'current', 'pressure'] """
@@ -1444,12 +1538,25 @@ class HC_Instrument(QGroupBox):
 
         # Otherwise make sure is list
         if type(parameters) != list:
+            logger.info(
+                f"get_value_keys() received bad 'parameter' argument. type must be list or None but was '{type(parameter)}'."
+            )
             return None
 
         rval = []
         for p in parameters:
+
+            if not require_all:
+                rval.append(p)
+                continue
+
             if p in self.values:
                 rval.append(p)
+            else:
+                logger.warning(
+                    f"get_value_keys() skipped parameter '{p}' because it was not listed in values ({self.values})"
+                )
+                return None
         return rval
 
     def settings_to_UI(self):
