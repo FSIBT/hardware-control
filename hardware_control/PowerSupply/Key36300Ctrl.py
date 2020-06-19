@@ -95,7 +95,7 @@ class Key36300Ctrl(HC_Backend):
 
             num = random.random() * 10
 
-            if command_X == "CHX_enabled?":
+            if command_X == "CHX_enable?":
                 if num > 5:
                     return "True"
                 else:
@@ -111,7 +111,7 @@ class Key36300Ctrl(HC_Backend):
             rval = self.query(f":SOURCE:CURR? (@{channel})")
         elif command_X == "CHX_V_set?":
             rval = self.query(f":SOURCE:VOLT? (@{channel})")
-        elif command_X == "CHX_enabled?":
+        elif command_X == "CHX_enable?":
             rval = self.query(f":OUTPUT:STATE? (@{channel})")
             rval = rval == "1"
         else:
