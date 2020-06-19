@@ -146,14 +146,14 @@ class HC_PlotTool(QWidget):
                 continue
             try:
                 arrs = self.app.data_sets[self.plot_set].get_corresponding_arrays(
-                    ["time:time", key]
+                    ["time:time", key], True
                 )
                 # y_arr = np.array(
                 #     [float(yval) for yval in self.app.data_sets[self.plot_set].data[key]]
                 # )
                 self.axes.plot_date(
-                    epoch2num(arrs[0]),
-                    arrs[1],
+                    epoch2num(np.array(arrs["time:time"])),
+                    np.array(arrs[key]),
                     "o-",
                     label=key,
                     tz="America/Los_Angeles",
