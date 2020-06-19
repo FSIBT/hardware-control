@@ -1161,7 +1161,9 @@ class Dataset(QObject):
                     continue
 
                 # Check that parameter exists
-                if self.async_require_float and convertibleToFloat(ai[0].values[vk]):
+                if self.async_require_float and not convertibleToFloat(
+                    ai[0].values[vk]
+                ):
                     try:
                         self.data[f"{name}:{vk}"].append(None)
                         logger.info(f"Adding data: data[{name}:{vk}] = None")
@@ -1177,7 +1179,7 @@ class Dataset(QObject):
                 except:
                     self.data[f"{name}:{vk}"] = [ai[0].values[vk]]
 
-    def get_corresponding_arrays(set_names: list, convert_to_float=False):
+    def get_corresponding_arrays(self, set_names: list, convert_to_float=False):
         """ Returns lists for each of the parameters specified in set_names (
         indicated as <instrument>:<parameter>). If 'None' appears in any of the
         specified lists, all data points at that index for all returned lists are
