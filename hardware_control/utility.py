@@ -29,6 +29,16 @@ def remove_end_carriage_return(text: str):
         return text
 
 
+def convertibleToFloat(input: str):
+    """ Checks if a string can be converted to a float and returns T/F """
+
+    try:
+        float(input)
+        return True
+    except:
+        return False
+
+
 # These functions are helpful for converting numbers to
 # specific number formats for strings
 
