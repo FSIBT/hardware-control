@@ -26,6 +26,8 @@ from matplotlib.dates import epoch2num
 
 import logging
 
+plt.ioff()
+
 logger = logging.getLogger(__name__)
 
 mtpl_logger = logging.getLogger("matplot")
@@ -159,18 +161,9 @@ class HC_PlotTool(QWidget):
             except:
                 logger.debug(f"Failed to plot Y-data", exc_info=True)
 
-        # for k, v in self.data.items():
-        #     myX = np.array([x[0] for x in v])
-        #     myY = np.array([x[1] for x in v])
-        #     if self.normalize and len(myY) and myY.max() > 0:
-        #         myY = myY / myY.max()
-        #     self.axes.plot_date(
-        #         epoch2num(myX), myY, "o-", label=k, tz="America/Los_Angeles"
-        #     )
         self.axes.legend(loc="best")
         self.axes.grid(True)
         plt.locator_params(axis="y", nbins=6)
-        self.axes.set_ylim([0, 10])
         if not self.autoscale:
             self.axes.set_xlim([xleft, xright])
             self.axes.set_ylim([ybottom, ytop])

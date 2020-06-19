@@ -18,6 +18,7 @@ setup(
         "hardware_control.MacroRunnerTool",
         "hardware_control.Oscilloscope",
         "hardware_control.PowerSupply",
+        "hardware_control.PlotTool",
         "hardware_control.ScanTool",
         "hardware_control.TemplateDeviceType",
         "hardware_control.VariableEditTool",

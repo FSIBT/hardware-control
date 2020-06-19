@@ -30,6 +30,8 @@ class ADAM_6024Ctrl(HC_Backend):
         self.num_ichannels = 8
         self.num_ochannels = 4
 
+        self.values = {'CH1_V_meas':[], 'CH2_V_meas':[], 'CH3_V_meas':[]}
+
         # Min/max voltages output supports
         self.out_min = 0
         self.out_max = 10

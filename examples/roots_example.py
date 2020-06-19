@@ -17,7 +17,7 @@ import logging
 import sys
 import warnings
 
-from PyQt5.QtWidgets import QDoubleSpinBox, QStyleFactory, QTabWidget, QGroupBox
+from PyQt5.QtWidgets import QDoubleSpinBox, QStyleFactory, QTabWidget, QGroupBox, QWidget, QGridLayout
 from docopt import docopt
 
 commands = docopt(__doc__)
@@ -52,7 +52,7 @@ else:
 
 from hardware_control.base import HC_App, HC_MainWindow, Dataset
 from hardware_control.ConnectionStatusTool.HC_StatusTool import HC_StatusTool
-from hardware_control.PowerSupply.HC_MultiPowerSupply import *
+from hardware_control.PowerSupply.HC_MultiPowerSupply import HC_MultiPowerSupply, ONLY
 from hardware_control.PowerSupply.CAEN14xxETCtrl import CAEN14xxETCtrl
 from hardware_control.PowerSupply.Key36300Ctrl import Key36300Ctrl
 from hardware_control.ZMQConnectionTool.HC_ZMQConnectionTool import HC_ZMQConnectionTool
@@ -62,8 +62,8 @@ from hardware_control.IOModule.HC_IOModule import HC_IOModule
 from hardware_control.base import HC_ConsoleWidget
 from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
 from hardware_control.Oscilloscope.Pico5000ACtrl import Pico5000ACtrl
-from hardware_control.PlotTool.HC_PlotTool import *
-from hardware_control.PlotTool.HC_MiniPlotTool import *
+from hardware_control.PlotTool.HC_PlotTool import HC_PlotTool
+from hardware_control.PlotTool.HC_MiniPlotTool import HC_MiniPlotTool
 
 
 logger = logging.getLogger(__name__)
