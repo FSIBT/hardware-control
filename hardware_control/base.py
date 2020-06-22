@@ -33,6 +33,11 @@ logger = logging.getLogger(__name__)
 ipy_logger = logging.getLogger("ipykernel")
 ipy_logger.setLevel("ERROR")
 
+# ramp_mode options
+MANUAL = "manual"
+AUTOMATIC = "automatic"
+OFF = "off"
+
 
 class HC_Comm(QObject):
     """This object is used to automate creating threads and communication objects.
@@ -1243,6 +1248,15 @@ class HC_Instrument(QGroupBox):
         self.address = ""  # This is used mostly for displaying the instrument's
         # address to the user
 
+        self.us_hooks = []  # Run every time update settings is called
+        self.ramp_hooks = []  # Run every time update_ramp is called
+        self.ramp_mode = OFF
+        self.ramp_val = OrderedDict()
+        self.ramp_target = OrderedDict()
+        self.default_ramp_speed = 100  # Units/sec
+        self.ramp_speed = {}  # Override default_ramp_speed for specific parameters here
+        self.ramp_update_period = 1e3  # time between ramp steps in ms
+
         # Global Constants
         self.globalRefreshRate = 1000  # ms refresh
         # this is a global reference for limiting the scaling the widgets
@@ -1259,12 +1273,93 @@ class HC_Instrument(QGroupBox):
 
         window.app.add_instrument(self)
 
+        self.ramp_timer = QTimer(self)
+        self.ramp_timer.timeout.connect(self.update_ramp)
+
     def __repr__(self):
         return f"HC_Instrument {self.name} {self.manufacturer} @ {self.address} online:{self.online}"
 
     def __str__(self):
         # return f"{self.manufacturer} {self.model}"
         return f"{self.name}"
+
+    def update_ramp(self):
+
+        if self.ramp_mode == MANUAL:
+
+            # For each parameter being ramped
+            for key in self.ramp_target:
+
+                # Get current value. Set to 0 if not specified
+                curr = 0
+                if key in self.ramp_val:
+                    curr = self.ramp_val[key]
+
+                # Run all hooks
+                for rhook in self.ramp_hooks:
+
+                    if callable(rhook):
+                        try:
+                            curr = rhook(self, key, curr, self.ramp_target[key])
+                        except:
+                            logger.warning(
+                                f"Call to hook '{rhook}' failed. skipping. ",
+                                exc_info=True,
+                            )
+
+                # If curr == None, that indicates ramp is complete. Delete value from targets
+                if curr == None:
+                    self.ramp_target.pop(key, None)
+
+                self.ramp_val[key] = curr
+                self.comm.update_setting(key, curr)
+
+        if self.ramp_mode == AUTOMATIC:
+
+            # For each parameter being ramped
+            for key in self.ramp_target:
+
+                # Get current value. Set to 0 if not specified
+                curr = 0
+                if key in self.ramp_val:
+                    curr = self.ramp_val[key]
+                try:
+                    curr = float(curr)
+                except:
+                    logger.warning("Invalid value for 'curr'. Ramping from 0.")
+                    curr = 0
+
+                # Get increment
+                if key in self.ramp_speed:
+                    dVal = self.ramp_speed[key]
+                else:
+                    dVal = self.default_ramp_speed
+                try:
+                    dVal = float(dVal)
+                except:
+                    logger.error(
+                        "Ramp speeds must be floats. Cannot ramp. Changing ramp_mode to OFF."
+                    )
+                    self.ramp_mode = OFF
+                    self.ramp_timer.stop()
+                    return
+
+                # Update value
+                if self.ramp_target[key] > curr:
+                    curr = min(curr + dVal, self.ramp_target[key])
+                else:
+                    curr = max(curr - dVal, self.ramp_target[key])
+
+                # If curr == None, that indicates ramp is complete. Delete value from targets
+                if curr == self.ramp_target[key]:
+                    self.ramp_target.pop(key, None)
+
+                self.ramp_val[key] = curr
+                self.comm.update_setting(key, curr)
+
+        # IF all ramps complete, stop timer
+        if len(self.ramp_target) < 1:
+            self.ramp_timer.stop()
 
     def enableDisableWidgets(self, setting: str, value: str):
         """User can overwrite this to enable/disable widgets when conditions/settings
@@ -1285,6 +1380,14 @@ class HC_Instrument(QGroupBox):
             )
 
         if self.comm is not None:
+
+            # If ramp mode is on, set the target value and activate the timer
+            if self.ramp_mode in [AUTOMATIC, MANUAL]:
+                self.ramp_target[setting] = value
+                if not self.ramp_timer.isActive():
+                    self.ramp_timer.start(self.ramp_update_period)
+                return
+
             try:
                 self.values[setting] = self.comm.update_setting(setting, value)
             except KeyError:
