@@ -1198,10 +1198,16 @@ class Dataset(QObject):
         # Populate ret_dic
         for idx in range(self.len_min()):
 
+            skip_idx = False
+
             # Check that no elements are 'None' at this index
             for sn in ret_dic:
                 if self.data[sn][idx] == None:  # If 'None' present, skip to next index
-                    continue
+                    skip_idx = True
+                    break
+
+            if skip_idx:
+                continue
 
             # Add data to ret_dic
             for sn in ret_dic:
