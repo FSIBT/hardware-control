@@ -1,5 +1,8 @@
 from abc import ABC
 from functools import wraps
+import inspect
+import time
+import threading
 
 import pyvisa
 import socket
@@ -14,6 +17,28 @@ logger = logging.getLogger(__name__)
 VISA = "visa"
 SOCKET = "socket"
 MODBUS = "modbus"
+
+
+def thread_info(f):
+    @wraps(f)
+    def wrapped(*args, **kwargs):
+        self = args[0]
+        start = time.time()
+
+        frame = inspect.currentframe()
+        retval = f(*args, **kwargs)
+        end = time.time()
+        print(
+            f"Function: {inspect.getframeinfo(frame).function}, start: {start}, end: {end}, thread: {threading.get_ident()} dt: {start-end}"
+        )
+        inspect.getframeinfo(frame).function
+        print(
+            "Function: %-20.20s thread: %17.17d dt: %15f"
+            % (inspect.stack()[1][3], threading.get_ident(), end - start)
+        )
+        return retval
+
+    return wrapped
 
 
 def ensure_online(f):
@@ -32,6 +57,7 @@ def ensure_online(f):
 class HC_Backend(ABC):
     """Base class for all instruments"""
 
+    # @thread_info
     def __init__(self):
 
         self.ID = None  # this should be a string with instrument name
@@ -65,11 +91,12 @@ class HC_Backend(ABC):
                 self.port_no = int(self.port_no)
             except ValueError as e:
                 logger.error(
-                    f"{self.ID} cannot parse connection address {self.conection_addr}"
+                    f"{self.ID} cannot parse connection address {self.connection_addr}"
                 )
                 self.ip_addr = self.connection_addr
                 self.port_no = None
 
+    # @thread_info
     def check(self):
         """Some error checking
 
@@ -83,22 +110,26 @@ class HC_Backend(ABC):
         if self.ID is None:
             logger.error(f"Need to set the instrument ID")
 
+    # @thread_info
     def update_setting(self, setting: str, value: str):
         """Overload this function to adjust settings on the device. Must return
         a string (which HC_CommWorker will send back to the main thread)"""
         return value
 
+    # @thread_info
     def command(self, cmd: str):
         """Overload this function to send commands to the device. Must return
         a string (which HC_CommWorker will send back to the main thread)"""
         return cmd
 
+    # @thread_info
     def command_listdata(self, cmd: str):
         """Overload this function to send commands to the device. Must return
         a tuple with an str, list, and list (which HC_CommWorker will send back
          to the main thread)"""
         return "", [], []
 
+    # @thread_info
     def close(self):
         """Close connection to instrument"""
 
@@ -112,6 +143,7 @@ class HC_Backend(ABC):
 
         self.device.close()
 
+    # @thread_info
     def try_connect(self):
         """Checks if the backend is in communication with the object, if it is
         not, it tries to re-establish communication."""
@@ -189,6 +221,7 @@ class HC_Backend(ABC):
 
         return self.online
 
+    # @thread_info
     def check_connection(self):
         """
         This function should be overwritten by each backend. It will verify
@@ -200,6 +233,7 @@ class HC_Backend(ABC):
 
         return None
 
+    # @thread_info
     @ensure_online
     def write(self, command: str):
 
@@ -219,6 +253,7 @@ class HC_Backend(ABC):
             self.online = False
             return f"{self.ID}-Offline"
 
+    # @thread_info
     @staticmethod
     def recvall(sock):
         BUFF_SIZE = 4096  # 4 KiB
@@ -231,6 +266,7 @@ class HC_Backend(ABC):
                 break
         return data
 
+    # @thread_info
     @ensure_online
     def query(self, command: str):
 
