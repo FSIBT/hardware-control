@@ -17,7 +17,14 @@ import logging
 import sys
 import warnings
 
-from PyQt5.QtWidgets import QDoubleSpinBox, QStyleFactory, QTabWidget, QGroupBox, QWidget, QGridLayout
+from PyQt5.QtWidgets import (
+    QDoubleSpinBox,
+    QStyleFactory,
+    QTabWidget,
+    QGroupBox,
+    QWidget,
+    QGridLayout,
+)
 from docopt import docopt
 
 commands = docopt(__doc__)
@@ -42,13 +49,6 @@ else:
     loglevel = logging.WARNING
     loglevelname = "Warning"
 
-if print_console:
-    logging.basicConfig(level=loglevel)
-    print(f"Logger configured:\n\tLevel: {loglevelname}\n\tOutput: Console")
-else:
-    logging.basicConfig(filename=logfile_name, level=loglevel)
-    print(f"Logger configured:\n\tLevel: {loglevelname}\n\tOutput: {logfile_name}")
-
 
 from hardware_control.base import HC_App, HC_MainWindow, Dataset
 from hardware_control.ConnectionStatusTool.HC_StatusTool import HC_StatusTool
@@ -67,6 +67,18 @@ from hardware_control.PlotTool.HC_MiniPlotTool import HC_MiniPlotTool
 
 
 logger = logging.getLogger(__name__)
+hc_logger = logging.getLogger("hardware_control")
+
+if print_console:
+    # logging.basicConfig(level=loglevel)
+    logger.setLevel(level=loglevel)
+    hc_logger.setLevel(level=loglevel)
+    print(f"Logger configured:\n\tLevel: {loglevelname}\n\tOutput: Console")
+else:
+    logger.setLevel(level=loglevel)
+    hc_logger.setLevel(level=loglevel, filename=logfile_name)
+    # logging.basicConfig(filename=logfile_name, level=loglevel)
+
 
 # handler = logging.FileHandler('sts50_example.log')
 # handler.setLevel(logging.DEBUG)
