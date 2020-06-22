@@ -115,11 +115,23 @@ class HC_MiniPlotTool(QWidget):
         for key in self.app.data_sets[self.plot_set].data:
             if key == "time:time":
                 continue
-            y_arr = np.array(
-                [float(yval) for yval in self.app.data_sets[self.plot_set].data[key]]
-            )
-            if len(x_arr) == len(y_arr) + 1:
-                x_arr = x_arr[:-1]
-            self.axes.plot_date(epoch2num(x_arr), y_arr, "-", label=key, tz=self.tz)
+            try:
+                arrs = self.app.data_sets[self.plot_set].get_corresponding_arrays(
+                    ["time:time", key], True
+                )
+                print(f"{key} -> mini")
+                # y_arr = np.array(
+                #     [float(yval) for yval in self.app.data_sets[self.plot_set].data[key]]
+                # )
+                self.axes.plot_date(
+                    epoch2num(np.array(arrs["time:time"])),
+                    np.array(arrs[key]),
+                    "-",
+                    label=key,
+                    tz="America/Los_Angeles",
+                    linewidth=0.25,
+                )
+            except:
+                logger.debug(f"Failed to plot Y-data", exc_info=True)
 
         self.plot.draw()
