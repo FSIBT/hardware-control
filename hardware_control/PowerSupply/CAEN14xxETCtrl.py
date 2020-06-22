@@ -5,6 +5,7 @@ from hardware_control.HC_Backend import (
     SOCKET,
     VISA,
     get_channel_from_command,
+    thread_info,
 )
 import logging
 from hardware_control.utility import regex_compare, ensure_float
@@ -90,9 +91,9 @@ class CAEN14xxETCtrl(HC_Backend):
 
         if setting_X == "CHX_enable":
             if value == "True":
-                self.query(f"$BD:00,CMD:SET,CH:{channel},PAR:ON")
+                self.write(f"$BD:00,CMD:SET,CH:{channel},PAR:ON")
             else:
-                self.query(f"$BD:00,CMD:SET,CH:{channel},PAR:OFF")
+                self.write(f"$BD:00,CMD:SET,CH:{channel},PAR:OFF")
             status = self.read_status(channel)
 
             if status is None:
@@ -108,7 +109,7 @@ class CAEN14xxETCtrl(HC_Backend):
 
                 logger.debug(f"Iset value changed to {value} because it exceeded limit")
 
-            self.query(f"$BD:00,CMD:SET,CH:{channel},PAR:ISET,VAL:{value}")
+            self.write(f"$BD:00,CMD:SET,CH:{channel},PAR:ISET,VAL:{value}")
             result = self.query(f"$BD:00,CMD:MON,CH:{channel},PAR:ISET")
 
             if result is None:
@@ -123,7 +124,7 @@ class CAEN14xxETCtrl(HC_Backend):
 
                 logger.debug(f"Vset value changed to {value} because it exceeded limit")
 
-            self.query(f"$BD:00,CMD:SET,CH:{channel},PAR:VSET,VAL:{value}")
+            self.write(f"$BD:00,CMD:SET,CH:{channel},PAR:VSET,VAL:{value}")
             result = self.query(f"$BD:00,CMD:MON,CH:{channel},PAR:VSET")
 
             if result is None:
@@ -171,7 +172,7 @@ class CAEN14xxETCtrl(HC_Backend):
         elif command_X == "CHX_V_set?":
             command = "VSET"
             offset = -6
-        elif command_X == "CHX_enabled?":
+        elif command_X == "CHX_enable?":
 
             result = self.read_status(channel)
 
