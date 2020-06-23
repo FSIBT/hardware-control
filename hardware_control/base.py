@@ -1285,6 +1285,11 @@ class HC_Instrument(QGroupBox):
 
     def update_ramp(self):
 
+        # List of parameters to remove from ramp_target after for loop. Note that
+        # removing items from dict while iterating over dict is not well-defined,
+        # hence why 'pop_list' is neccesary
+        pop_list = []
+
         if self.ramp_mode == MANUAL:
 
             # For each parameter being ramped
@@ -1294,6 +1299,13 @@ class HC_Instrument(QGroupBox):
                 curr = 0
                 if key in self.ramp_val:
                     curr = self.ramp_val[key]
+                elif key in self.values:
+                    curr = self.values[key]
+                try:
+                    curr = float(curr)
+                except:
+                    logger.warning("Invalid value for 'curr'. Ramping from 0.")
+                    curr = 0
 
                 # Run all hooks
                 for rhook in self.ramp_hooks:
@@ -1309,10 +1321,13 @@ class HC_Instrument(QGroupBox):
 
                 # If curr == None, that indicates ramp is complete. Delete value from targets
                 if curr == None:
-                    self.ramp_target.pop(key, None)
+                    pop_list.append(key)
                 else:
                     self.ramp_val[key] = curr
                     self.comm.update_setting(key, str(curr))
+
+            for pkey in pop_list:
+                self.ramp_target.pop(pkey, None)
 
         if self.ramp_mode == AUTOMATIC:
 
@@ -1327,6 +1342,8 @@ class HC_Instrument(QGroupBox):
                 curr = 0
                 if key in self.ramp_val:
                     curr = self.ramp_val[key]
+                elif key in self.values:
+                    curr = self.values[key]
                 try:
                     curr = float(curr)
                 except:
@@ -1362,10 +1379,13 @@ class HC_Instrument(QGroupBox):
 
                 # If curr == None, that indicates ramp is complete. Delete value from targets
                 if curr == self.ramp_target[key]:
-                    self.ramp_target.pop(key, None)
+                    pop_list.append(key)
 
                 self.ramp_val[key] = curr
                 self.comm.update_setting(key, str(curr))
+
+            for pkey in pop_list:
+                self.ramp_target.pop(pkey, None)
 
         # IF all ramps complete, stop timer
         if len(self.ramp_target) < 1:
