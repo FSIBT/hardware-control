@@ -1310,9 +1310,9 @@ class HC_Instrument(QGroupBox):
                 # If curr == None, that indicates ramp is complete. Delete value from targets
                 if curr == None:
                     self.ramp_target.pop(key, None)
-
-                self.ramp_val[key] = curr
-                self.comm.update_setting(key, curr)
+                else:
+                    self.ramp_val[key] = curr
+                    self.comm.update_setting(key, str(curr))
 
         if self.ramp_mode == AUTOMATIC:
 
