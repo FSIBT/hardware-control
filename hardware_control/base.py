@@ -1109,7 +1109,7 @@ class Dataset(QObject):
         if not self.asynchronous_mode:
             return
 
-        logger.info(f"Dataset {self.name} logging asynchronous data")
+        logger.debug(f"Dataset {self.name} logging asynchronous data")
 
         # Check that all requested parameters are available. If they aren't, don't
         # log anything. This ensures the dataset's columns are all the same length
@@ -1160,7 +1160,7 @@ class Dataset(QObject):
                 if vk not in ai[0].values:
                     try:
                         self.data[f"{name}:{vk}"].append(None)
-                        logger.info(f"Adding data: data[{name}:{vk}] = None")
+                        logger.debug(f"Adding data: data[{name}:{vk}] = None")
                     except:
                         self.data[f"{name}:{vk}"] = [None]
                     continue
@@ -1171,7 +1171,7 @@ class Dataset(QObject):
                 ):
                     try:
                         self.data[f"{name}:{vk}"].append(None)
-                        logger.info(f"Adding data: data[{name}:{vk}] = None")
+                        logger.debug(f"Adding data: data[{name}:{vk}] = None")
                     except:
                         self.data[f"{name}:{vk}"] = [None]
                     continue
@@ -1180,7 +1180,7 @@ class Dataset(QObject):
                 try:
                     self.data[f"{name}:{vk}"].append(ai[0].values[vk])
                     nd = ai[0].values[vk]
-                    logger.info(f"Adding data: data[{name}:{vk}]='{nd}'")
+                    logger.debug(f"Adding data: data[{name}:{vk}]='{nd}'")
                 except:
                     self.data[f"{name}:{vk}"] = [ai[0].values[vk]]
 
@@ -1316,8 +1316,12 @@ class HC_Instrument(QGroupBox):
 
         if self.ramp_mode == AUTOMATIC:
 
+            logger.info("Callback Automatic ramp")
+
             # For each parameter being ramped
             for key in self.ramp_target:
+
+                logger.info(f"Handling ramp for parameter {key}")
 
                 # Get current value. Set to 0 if not specified
                 curr = 0
@@ -1328,6 +1332,8 @@ class HC_Instrument(QGroupBox):
                 except:
                     logger.warning("Invalid value for 'curr'. Ramping from 0.")
                     curr = 0
+
+                logger.info(f"Value at start for parameter {key} was {curr}")
 
                 # Get increment
                 if key in self.ramp_speed:
@@ -1344,21 +1350,26 @@ class HC_Instrument(QGroupBox):
                     self.ramp_timer.stop()
                     return
 
+                logger.info(f"Increment for parameter {key} will be {dVal}")
+
                 # Update value
                 if self.ramp_target[key] > curr:
                     curr = min(curr + dVal, self.ramp_target[key])
                 else:
                     curr = max(curr - dVal, self.ramp_target[key])
 
+                logger.info(f"New value for parameter {key} will be {curr}")
+
                 # If curr == None, that indicates ramp is complete. Delete value from targets
                 if curr == self.ramp_target[key]:
                     self.ramp_target.pop(key, None)
 
                 self.ramp_val[key] = curr
-                self.comm.update_setting(key, curr)
+                self.comm.update_setting(key, str(curr))
 
         # IF all ramps complete, stop timer
         if len(self.ramp_target) < 1:
+            logger.info("Killing ramp timer")
             self.ramp_timer.stop()
 
     def enableDisableWidgets(self, setting: str, value: str):
@@ -1375,7 +1386,7 @@ class HC_Instrument(QGroupBox):
             self.settings[setting] = value
         except KeyError:
             logger.error(
-                "Key '{parameter}' does not exist for instrument '{self.name}' in settings dictionary.",
+                f"Key '{setting}' does not exist for instrument '{self.name}' in settings dictionary.",
                 exc_info=True,
             )
 
@@ -1383,18 +1394,19 @@ class HC_Instrument(QGroupBox):
 
             # If ramp mode is on, set the target value and activate the timer
             if self.ramp_mode in [AUTOMATIC, MANUAL]:
-                self.ramp_target[setting] = value
+                try:
+                    self.ramp_target[setting] = float(value)
+                except:
+                    logger.warning(
+                        f"Cannot set received value '{value}' as ramp target value because it cannot be converted to a float. Setting '{setting}' directly to '{value}'."
+                    )
+                    self.values[setting] = self.comm.update_setting(setting, value)
+                    return
                 if not self.ramp_timer.isActive():
                     self.ramp_timer.start(self.ramp_update_period)
                 return
 
-            try:
-                self.values[setting] = self.comm.update_setting(setting, value)
-            except KeyError:
-                logger.error(
-                    "Key '{parameter}' does not exist for instrument '{self.name}' in values dictionary.",
-                    exc_info=True,
-                )
+            self.values[setting] = self.comm.update_setting(setting, value)
 
     def command(self, cmd_str: str):
         """Update a setting in settings and values dictionary for the instrument"""
