@@ -307,6 +307,10 @@ class HC_CommWorker(QObject):
     @pyqtSlot(str, float)
     def command(self, cmd: str, expire_time: float):
         """Transfers a command to the backend"""
+
+        if cmd == "SYNC_BACKEND":
+            self.sigReturnValues.emit(cmd)
+
         if time.time() > expire_time:  # Skip command if too old
             ret_val = f'EXPIRED=CMD:"{cmd}" \t[Exec: {time.time()}, Exp: {expire_time}] [{self.backend.ID}]'
         else:
@@ -1283,6 +1287,19 @@ class HC_Instrument(QGroupBox):
         # return f"{self.manufacturer} {self.model}"
         return f"{self.name}"
 
+    def init_values(self):
+        """
+        This function should be overwritten by child classes to initialize the
+        values dictionary. The child class (such as HC_MultiPowerSupply) can
+        then initialize its values dict such that all queryable values are
+        listed.
+
+        The values loaded into the values dict by this function will also be used
+        by the read_state_from_backend() function to initialize the settings
+        dictionary and/or UI.
+        """
+        pass
+
     def update_ramp(self):
 
         # List of parameters to remove from ramp_target after for loop. Note that
@@ -1331,12 +1348,12 @@ class HC_Instrument(QGroupBox):
 
         if self.ramp_mode == AUTOMATIC:
 
-            logger.info("Callback Automatic ramp")
+            logger.debug("Callback Automatic ramp")
 
             # For each parameter being ramped
             for key in self.ramp_target:
 
-                logger.info(f"Handling ramp for parameter {key}")
+                logger.debug(f"Handling ramp for parameter {key}")
 
                 # Get current value. Set to 0 if not specified
                 curr = 0
@@ -1350,7 +1367,7 @@ class HC_Instrument(QGroupBox):
                     logger.warning("Invalid value for 'curr'. Ramping from 0.")
                     curr = 0
 
-                logger.info(f"Value at start for parameter {key} was {curr}")
+                logger.debug(f"Value at start for parameter {key} was {curr}")
 
                 # Get increment
                 if key in self.ramp_speed:
@@ -1367,7 +1384,7 @@ class HC_Instrument(QGroupBox):
                     self.ramp_timer.stop()
                     return
 
-                logger.info(f"Increment for parameter {key} will be {dVal}")
+                logger.debug(f"Increment for parameter {key} will be {dVal}")
 
                 # Update value
                 if self.ramp_target[key] > curr:
@@ -1375,7 +1392,7 @@ class HC_Instrument(QGroupBox):
                 else:
                     curr = max(curr - dVal, self.ramp_target[key])
 
-                logger.info(f"New value for parameter {key} will be {curr}")
+                logger.debug(f"New value for parameter {key} will be {curr}")
 
                 # If curr == None, that indicates ramp is complete. Delete value from targets
                 if curr == self.ramp_target[key]:
@@ -1389,7 +1406,7 @@ class HC_Instrument(QGroupBox):
 
         # IF all ramps complete, stop timer
         if len(self.ramp_target) < 1:
-            logger.info("Killing ramp timer")
+            logger.debug("Killing ramp timer")
             self.ramp_timer.stop()
 
     def enableDisableWidgets(self, setting: str, value: str):
@@ -1521,7 +1538,14 @@ class HC_Instrument(QGroupBox):
 
     def read_state_from_backend(self):
 
-        pass
+        # Send a query to the backend for every possible value
+        for v in self.values:
+            self.comm.command(f"{v}?")
+
+        # Send a 'sync' command to the backend. It will be returned
+        # immediately and used by the backend as an indicator for when all
+        # of the previous commands have been processed
+        self.comm.command("SYNC_BACKEND")
 
     def close(self):
         if self.comm is not None:
@@ -1538,11 +1562,29 @@ class HC_Instrument(QGroupBox):
 
         return rval
 
+    def sync_backend_called(self):
+        """
+        This function is called when 'SYNC_BACKEND' is received from HC_Comm. It
+        is used in read_state_from_backend to indicate when the backend has sent
+        all queried values back to the front end.
+        """
+
+        # Transfer 'values' to 'settings'
+        for v in self.values:
+            if v in self.settings:
+                self.settings[v] = self.values[v]
+
+        # Transfer 'settings' to UI
+        self.settings_to_UI()
+
     def backend_return(self, retval: str):
         """Is called by self.comm when the backend returns a value. The return string
         is converted here into a dictionary's key/value pair and added to self.values.
         An equals sign ('=') is used to separate the key and value, with key coming
         first."""
+
+        if retval == "SYNC_BACKEND":
+            self.sync_backend_called()
 
         sep_idx = retval.find("=")
         if sep_idx != -1:  # Separator was found...
