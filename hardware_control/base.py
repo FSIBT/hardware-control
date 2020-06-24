@@ -54,12 +54,16 @@ class HC_Comm(QObject):
     sigClose = pyqtSignal()
 
     # TODO: @TImo Bauer Add 'try_connect' frequency
-    def __init__(self, backend, instrument, try_connect_period=5000):
+    def __init__(
+        self, backend, instrument, try_connect_period=5000, lock_until_sync=False
+    ):
         super().__init__()
         self.backend = backend
         self.instruments = [instrument]  # Calling instrument UI (eg. HC_scope)
         self.backend_model = backend.ID
         self.try_connect_period = try_connect_period
+
+        self.lock_until_sync = lock_until_sync
 
         self.expire_time = 40
         self.list_expire_time = 5
@@ -124,6 +128,12 @@ class HC_Comm(QObject):
 
     def update_setting(self, setting: str, value: str):
         """Transfers the setting and value information to the worker thread"""
+
+        if self.lock_until_sync:
+            logger.debug(
+                f"Instrument {self.instruments[0].name} block update_setting because UI has not yet synced with instrument"
+            )
+
         logger.debug(
             f"Instrument: {self.instruments[0].name} called 'update_setting()' for setting '{setting}' and sent message '{value}'."
         )
@@ -207,6 +217,9 @@ class HC_Comm(QObject):
         backend_return function, which adds it to the instrument's values dictionary or
         , if overwritten, may process the return string immediately for example by
         updating the UI."""
+
+        if retval == "SYNC_BACKEND":
+            self.lock_until_sync = False
 
         logger.debug(
             f"Instrument: {self.instruments[0].name} received return from backend '{self.backend_model}'. Return message: {retval}"
@@ -310,6 +323,7 @@ class HC_CommWorker(QObject):
 
         if cmd == "SYNC_BACKEND":
             self.sigReturnValues.emit(cmd)
+            return
 
         if time.time() > expire_time:  # Skip command if too old
             ret_val = f'EXPIRED=CMD:"{cmd}" \t[Exec: {time.time()}, Exp: {expire_time}] [{self.backend.ID}]'
