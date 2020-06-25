@@ -1,5 +1,4 @@
 import json
-import json
 
 import pkg_resources
 from PyQt5 import QtCore
