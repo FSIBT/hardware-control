@@ -1249,7 +1249,7 @@ class Dataset(QObject):
 
 
 class HC_Instrument(QGroupBox):
-    def __init__(self, window, name: str):
+    def __init__(self, window, name: str, backend=None, lock_until_sync=False):
         super().__init__(name)
         # ToDo Why ordered dict??
         self.settings = OrderedDict()
@@ -1260,11 +1260,22 @@ class HC_Instrument(QGroupBox):
         self.company = None
         self.online = False
         self.comm = None
+        self.window = window
         self.ignore = (
             False  # Dictates if instrument should be ignored by connectiontool
         )
         self.address = ""  # This is used mostly for displaying the instrument's
         # address to the user
+
+        if backend is not None:
+            if backend.connection_addr in self.window.app.comms:
+                self.comm = self.window.app.comms[backend.connection_addr]
+                self.comm.addWidget(self)
+            else:
+                self.window.app.comms[backend.connection_addr] = HC_Comm(
+                    backend, self, lock_until_sync=lock_until_sync
+                )
+                self.comm = self.window.app.comms[backend.connection_addr]
 
         self.us_hooks = []  # Run every time update settings is called
         self.ramp_hooks = []  # Run every time update_ramp is called
