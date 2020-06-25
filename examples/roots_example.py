@@ -50,7 +50,7 @@ else:
     loglevelname = "Warning"
 
 
-from hardware_control.base import HC_App, HC_MainWindow, Dataset
+from hardware_control.base import HC_App, HC_MainWindow, Dataset, AUTOMATIC
 from hardware_control.ConnectionStatusTool.HC_StatusTool import HC_StatusTool
 from hardware_control.PowerSupply.HC_MultiPowerSupply import HC_MultiPowerSupply, ONLY
 from hardware_control.PowerSupply.CAEN14xxETCtrl import CAEN14xxETCtrl
@@ -184,6 +184,8 @@ class RootsDemo(HC_MainWindow):
         self.keysight_wdgt.set_channel_label(1, "1: Heater")
         self.keysight_wdgt.set_channel_label(2, "Channel 2")
         self.keysight_wdgt.set_channel_label(3, "Channel 3")
+        self.keysight_wdgt.ramp_mode = AUTOMATIC
+        self.keysight_wdgt.default_ramp_speed = 1
 
         self.adam_be = ADAM_6024Ctrl("192.168.0.5:1025")
         self.adam_wdgt = HC_IOModule(
@@ -247,8 +249,8 @@ class RootsDemo(HC_MainWindow):
 
         self.app.data_sets["Autolog"] = Dataset("Autolog")
         self.app.data_sets["Autolog"].start_asynch(3)
-        self.app.data_sets["Autolog"].add_instrument(self.caen_wdgt_123)
-        self.app.data_sets["Autolog"].add_instrument(self.caen_wdgt_456)
+        self.app.data_sets["Autolog"].add_instrument(self.keysight_wdgt)
+        # self.app.data_sets["Autolog"].add_instrument(self.caen_wdgt_456)
         self.app.data_sets["Keysight"] = Dataset("Keysight")
         self.app.data_sets["Keysight"].start_asynch(1)
         self.app.data_sets["Keysight"].add_instrument(self.keysight_wdgt)
