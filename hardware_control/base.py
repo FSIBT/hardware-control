@@ -96,6 +96,13 @@ class HC_Comm(QObject):
 
         self.dataset_states = []
 
+    def __repr__(self):
+        return f"HC_Comm {self.backend_model} @ {self.backend.connection_addr}  {hex(id(self))}"
+
+    def __str__(self):
+        # return f"{self.manufacturer} {self.model}"
+        return f"{self.backend.connection_addr}"
+
     def addWidget(self, new_instrument):
         """Adds a new instrument to HC_Comm. When HC_Comm gets a reply, it will
         go to all listed instruments"""
@@ -307,6 +314,13 @@ class HC_CommWorker(QObject):
 
         self.backend = backend
 
+    def __repr__(self):
+        return f"HC_CommWorker {self.backend.ID} @ {self.backend.connection_addr} {hex(id(self))}"
+
+    def __str__(self):
+        # return f"{self.manufacturer} {self.model}"
+        return f"{self.backend.connection_addr}"
+
     @pyqtSlot(str, str, float)
     def update_setting(self, setting: str, value: str, expire_time: float):
         """Transfers a setting and value to the backend"""
@@ -461,6 +475,13 @@ class MeasurementRequest:
         self.cap_at_1e35 = True  # Tells the MeasurementDirector to count the point as corrupt if convertable to float and > 1e35
 
         self.last_launch_time = time.time()
+
+    def __repr__(self):
+        return f"MeasurementRequest from {self.dataset_name} {self.inst_name} {self.param_name} @ {hex(id(self))}"
+
+    def __str__(self):
+        # return f"{self.manufacturer} {self.model}"
+        return f"{self.dataset_name} {self.inst_name} {self.param_name}"
 
     def add_point(self, retval: str):
         """Checks if the last return value (passed as 'retva') qualifies as a steady
@@ -945,6 +966,13 @@ class Dataset(QObject):
 
         self.async_log_timer = QTimer(self)
         self.async_log_timer.timeout.connect(self.log_async)
+
+    def __repr__(self):
+        return f"Dataset {self.name} @ {hex(id(self))}"
+
+    def __str__(self):
+        # return f"{self.manufacturer} {self.model}"
+        return f"{self.name}"
 
     def clear(self):
         """ Clears the dataset's contents """
