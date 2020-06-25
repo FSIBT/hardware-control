@@ -17,9 +17,10 @@ class HC_DeviceType(HC_Instrument):
         name: str = "TemplateDevice",
         initialize_with: str = "INSTRUMENT",
         save_on_close: str = False,
+        lock_until_sync=False,
     ):
         # initalizing
-        super().__init__(window, name)
+        super().__init__(window, name, backend, lock_until_sync)
         self.settings = {}  # A dict to store all possible settings
         self.save_on_close = save_on_close
         self.backend = backend

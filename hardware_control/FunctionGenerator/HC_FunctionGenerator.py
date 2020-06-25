@@ -25,10 +25,15 @@ logger = logging.getLogger(__name__)
 
 class HC_FunctionGenerator(HC_Instrument):
     def __init__(
-        self, scpi_instr, window, name: str = "AWG Control", num_channels: int = 2,
+        self,
+        scpi_instr,
+        window,
+        name: str = "AWG Control",
+        num_channels: int = 2,
+        lock_until_sync=False,
     ):
 
-        super().__init__(window, name)
+        super().__init__(window, name, backend, lock_until_sync)
 
         self.settings = {}
         self.address = scpi_instr.connection_addr

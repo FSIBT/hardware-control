@@ -20,10 +20,14 @@ from hardware_control.base import HC_Instrument, HC_Comm
 
 class HC_DelayGenerator(HC_Instrument):
     def __init__(
-        self, scpi_instr, window, name: str = "Pulse Generator Control",
+        self,
+        scpi_instr,
+        window,
+        name: str = "Pulse Generator Control",
+        lock_until_sync=False,
     ):
 
-        super().__init__(window, name)
+        super().__init__(window, name, backend, lock_until_sync)
 
         self.settings = {}
         self.name = name
@@ -32,13 +36,6 @@ class HC_DelayGenerator(HC_Instrument):
         self.settings = self.default_state()
 
         scpi_instr.dummy = self.window.app.dummy
-
-        if scpi_instr in self.window.app.comms:
-            self.comm = self.window.app.comms[scpi_instr]
-            self.comm.addWidget(self)
-        else:
-            self.window.app.comms[scpi_instr] = HC_Comm(scpi_instr, self)
-            self.comm = self.window.app.comms[scpi_instr]
 
         self.filename = ""
 
