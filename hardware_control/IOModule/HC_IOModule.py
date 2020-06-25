@@ -38,6 +38,7 @@ class HC_IOModule(HC_Instrument):
         in_channels: list,
         out_channels: list,
         name: str = "IO Module",
+        lock_until_sync=False,
     ):
 
         super().__init__(window, name, backend, lock_until_sync)
