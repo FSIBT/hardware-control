@@ -498,7 +498,7 @@ class OscilloscopeTriggerWidget(QWidget):
         self.trig_chan_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
         self.trig_chan_drop = QComboBox()
-        self.trig_chan_drop.addItems(["1", "2", "3", "4"])
+        self.trig_chan_drop.addItems(["None", "1", "2", "3", "4"])
         self.trig_chan_drop.currentIndexChanged.connect(
             lambda: control.update_setting(
                 "trigger_channel", self.trig_chan_drop.currentText()
@@ -613,8 +613,16 @@ class OscilloscopeHorizontalWidget(QWidget):
 
         self.timebase_edit_units = QComboBox()
         self.timebase_edit_units.addItems(self.units.keys())
-        # self.timebase_edit_units.currentIndexChanged.connect(lambda: control.update_setting("time_offset", str(float(self.timebase_edit.text()) * self.units[self.timebase_edit_units.currentText()]),))
         self.timebase_edit_units.setCurrentText("ms")
+        self.timebase_edit_units.currentIndexChanged.connect(
+            lambda: control.update_setting(
+                "timebase",
+                str(
+                    float(self.timebase_edit.text())
+                    * self.units[self.timebase_edit_units.currentText()]
+                ),
+            )
+        )
 
         self.timebase_edit_layout = QGridLayout()
         self.timebase_edit_layout.addWidget(self.timebase_edit, 0, 0)

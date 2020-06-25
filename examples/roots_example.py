@@ -61,7 +61,7 @@ from hardware_control.IOModule.ADAM_6024Ctrl import ADAM_6024Ctrl
 from hardware_control.IOModule.HC_IOModule import HC_IOModule
 from hardware_control.base import HC_ConsoleWidget
 from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
-from hardware_control.Oscilloscope.Pico5000ACtrl import Pico5000ACtrl
+from hardware_control.Oscilloscope.Pico6000Ctrl import Pico6000Ctrl
 from hardware_control.PlotTool.HC_PlotTool import HC_PlotTool
 from hardware_control.PlotTool.HC_MiniPlotTool import HC_MiniPlotTool
 
@@ -220,10 +220,12 @@ class RootsDemo(HC_MainWindow):
         #####################################################################
         ######### Pico Tab
 
-        self.pico1_be = Pico5000ACtrl("?")
+        self.pico1_be = Pico6000Ctrl("?")
+        self.pico1_be.record_length = 70e3
         self.pico1_wdgt = HC_Oscilloscope(self.pico1_be, self, "Pico1")
         self.pico1_wdgt.load_state("./picoscope_init.json")
         self.pico1_wdgt.settings_to_UI()
+        self.pico1_wdgt.send_state()
 
         self.tab_pico1_layout = QGridLayout()
         self.tab_pico1_layout.addWidget(self.pico1_wdgt, 0, 0)

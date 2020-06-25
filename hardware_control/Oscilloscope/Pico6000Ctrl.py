@@ -16,12 +16,12 @@ from hardware_control.utility import regex_compare, ensure_float
 logger = logging.getLogger(__name__)
 
 
-class Pico5000ACtrl(HC_Backend):
+class Pico6000Ctrl(HC_Backend):
     def __init__(
         self, connection_addr,
     ):
         super().__init__()
-        self.ID = "Pico-5000A"
+        self.ID = "Pico-6000"
 
         self.connection_addr = connection_addr
 
@@ -30,7 +30,7 @@ class Pico5000ACtrl(HC_Backend):
         self.num_vert_divisions = 8
 
         self.record_length = 1e6  # Maximum 64 MS
-        self.trigger_channel = "A"
+        self.trigger_channel = 0
         self.offset_position = 0
         self.timebase = 10e-3  # time/div * number of divisions
 
@@ -84,167 +84,178 @@ class Pico5000ACtrl(HC_Backend):
         return True
 
     def update_setting(self, setting: str, value):
-
-        channel, setting_X = get_channel_from_command(setting)
-        if channel == 1:
-            chan = "A"
-        elif channel == 2:
-            chan = "B"
-        elif channel == 3:
-            chan = "C"
-        elif channel == 4:
-            chan = "D"
-        else:
-            return "Bad channel number"
-
+        value_orig = value
         value = ensure_float(value)
 
         if not self.online:
             return "Offline"
 
+        if self.dummy:
+            return value
+
         try:
-            if self.dummy:
-                return value
+            # first check for commands that are not channel specific
+            if setting == "labels_enabled":  # TODO
+
+                return "Not available"
+
+            elif setting == "timebase":
+                self.timebase = value * 10  # Time/div * #div
+
+                obs_duration = value
+                sampling_interval = obs_duration / self.record_length
+
+                if sampling_interval < 1e-9:
+                    sampling_interval = 1e-9
+                    obs_duration = sampling_interval * int(
+                        obs_duration / sampling_interval
+                    )
+
+                rval = self.ps.setSamplingInterval(sampling_interval, obs_duration)
+                # could not get normal readout mode to work, so using memory Segments and bulk readout
+                self.ps.memorySegments(1)
+                self.ps.setNoOfCaptures(1)
+
+                return "Success"
+
+            elif setting == "time_offset":
+
+                self.offset_position = value
+
+            elif setting == "trigger_level":
+                if self.trigger_channel != "None":
+                    self.ps.setSimpleTrigger(self.trigger_channel, threshold_V=value, enabled=True)
+
+                return "Success"
+
+            elif setting == "trigger_coupling":
+
+                return "Not available"
+
+            elif setting == "trigger_edge":
+
+                # Make sure valid option given
+                if (
+                    value != "BOTH"
+                    and value != "NEG"
+                    and value != "POS"
+                    and value != "ALT"
+                ):
+                    value = "Rising"
+
+                if value == "POS":
+                    value = "Rising"
+                else:
+                    value = "Falling"
+
+                # This model does not support BOTH mode
+                if value == "BOTH":
+                    value = "Rising"
+
+                # This model does not support alternating trigger
+                if value == "ALT":
+                    value = "Rising"
+
+                if self.trigger_channel != "None":
+                    self.ps.setSimpleTrigger(self.trigger_channel, direction=value, enabled=True)
+
+                return "Success"
+
+            elif setting == "trigger_channel":
+                if value_orig == "None":
+                    self.trigger_channel = value_orig
+                else:
+                    self.trigger_channel = int(value_orig)-1
+                if self.trigger_channel == "None":
+                    self.ps.setSimpleTrigger(0, enabled=False)
+                else:
+                    self.ps.setSimpleTrigger(self.trigger_channel, enabled=True)
+
+                return "Success"
+
+            elif regex_compare("meas_slot.", setting):
+
+                return "Not available"
+
+            elif setting == "use_meas_avg":
+
+                return "Not available"
+
+            elif setting == "meas_stat_enabled":
+
+                return "Not available"
+
+            # verify channel and check for all channel related commands
+
+            channel, setting_X = get_channel_from_command(setting)
+            if channel == 1:
+                chan = "A"
+            elif channel == 2:
+                chan = "B"
+            elif channel == 3:
+                chan = "C"
+            elif channel == 4:
+                chan = "D"
             else:
-                if setting_X == "CHX_volts_div":
+                return "Bad channel number"
 
-                    self.ps.setChannel(channel=chan, VRange=value)
+            if setting_X == "CHX_volts_div":
 
-                    return "Success"
+                self.ps.setChannel(channel=chan, VRange=value)
 
-                elif setting == "timebase":
+                return "Success"
 
-                    self.timebase = value * 10  # Time/div * #div
+            elif setting_X == "CHX_offset":
 
-                    obs_duration = value
-                    sampling_interval = obs_duration / self.record_length
+                self.ps.setChannel(channel=chan, VOffset=value)
 
-                    if sampling_interval < 1e-9:
-                        sampling_interval = 1e-9
-                        obs_duration = sampling_interval * int(
-                            obs_duration / sampling_interval
-                        )
+                return "Success"
 
-                    rval = self.ps.setSamplingInterval(sampling_interval, obs_duration)
+            elif setting_X == "CHX_BW_lim":
 
-                    return rval
+                self.ps.setChannel(channel=chan, BWLimited=value)
 
-                elif setting == "time_offset":
+                return "Success"
 
-                    self.offset_position = value
+            elif setting_X == "CHX_active":
 
-                elif setting_X == "CHX_offset":
+                self.ps.setChannel(channel=chan, enabled=value)
 
-                    self.ps.setChannel(channel=chan, VOffset=value)
+                return "Success"
 
-                    return "Success"
+            elif setting_X == "CHX_impedance":
 
-                elif setting_X == "CHX_BW_lim":
+                return "Not available"
 
-                    self.ps.setChannel(channel=chan, BWLimited=value)
+            elif setting_X == "CHX_label":  # TODO
 
-                    return "Success"
+                # Length is capped at 32 characters
+                return "Not available"
 
-                elif setting_X == "CHX_active":
+            elif setting_X == "CHX_invert":
 
-                    self.ps.setChannel(channel=chan, enabled=value)
+                return "Not availanle"
 
-                    return "Success"
+            elif setting_X == "CHX_probe_atten":
 
-                elif setting_X == "CHX_impedance":
+                self.ps.setChannel(channel=chan, probeAttenuation=value)
 
-                    return "Not available"
+                return "Success"
 
-                elif setting_X == "CHX_label":  # TODO
+            elif setting_X == "CHX_coupling":
 
-                    # Length is capped at 32 characters
-                    return "Not available"
+                # Make sure valid value provided
+                if value != "AC" and value != "DC":
+                    value = "DC"
 
-                elif setting == "labels_enabled":  # TODO
+                self.ps.setChannel(channel=chan, coupling=value)
 
-                    return "Not available"
+                return "Success"
 
-                elif setting_X == "CHX_invert":
-
-                    return "Not availanle"
-
-                elif setting_X == "CHX_probe_atten":
-
-                    self.ps.setChannel(channel=chan, probeAttenuation=value)
-
-                    return "Success"
-
-                elif setting_X == "CHX_coupling":
-
-                    # Make sure valid value provided
-                    if value != "AC" and value != "DC":
-                        value = "DC"
-
-                    self.ps.setChannel(channel=chan, coupling=value)
-
-                    return "Success"
-
-                elif setting == "trigger_level":
-
-                    self.ps.setSimpleTrigger(self.trigger_channel, threshold_V=value)
-
-                    return "Success"
-
-                elif setting == "trigger_coupling":
-
-                    return "Not available"
-
-                elif setting == "trigger_edge":
-
-                    # Make sure valid option given
-                    if (
-                        value != "BOTH"
-                        and value != "NEG"
-                        and value != "POS"
-                        and value != "ALT"
-                    ):
-                        value = "Rising"
-
-                    if value == "POS":
-                        value = "Rising"
-                    else:
-                        value = "Falling"
-
-                    # This model does not support BOTH mode
-                    if value == "BOTH":
-                        value = "Rising"
-
-                    # This model does not support alternating trigger
-                    if value == "ALT":
-                        value = "Rising"
-
-                    self.ps.setSimpleTrigger(self.trigger_channel, direction=value)
-
-                    return "Success"
-
-                elif setting == "trigger_channel":
-
-                    self.trigger_channel = value
-
-                    self.ps.setSimpleTrigger(value)
-
-                    return "Success"
-
-                elif regex_compare("meas_slot.", setting):
-
-                    return "Not available"
-
-                elif setting == "use_meas_avg":
-
-                    return "Not available"
-
-                elif setting == "meas_stat_enabled":
-
-                    return "Not available"
 
         except Exception as e:
             logger.error(
-                "An error occured in RigDS1000ZCtrl.py sending SCPI commands.",
+                "An error occured in Picoscope6000.",
                 exc_info=True,
             )
 
@@ -262,8 +273,10 @@ class Pico5000ACtrl(HC_Backend):
 
         if cmd == "SINGLE_TRIGGER":
             self.ps.runBlock(pretrig=self.offset_position / self.timebase)
+            self.ps.waitReady()
         elif cmd == "RUN":
             self.ps.runBlock(pretrig=self.offset_position / self.timebase)
+            self.ps.waitReady()
         elif cmd == "STOP":
             self.ps.stop()
         elif cmd == "CLEAR_MEAS":
@@ -309,16 +322,8 @@ class Pico5000ACtrl(HC_Backend):
     def read_waveform(self, channel: str):
         """Reads a waveform from the oscilloscope."""
 
-        if channel == "A":
-            chan = 1
-        elif channel == "B":
-            chan = 2
-        elif channel == "C":
-            chan = 3
-        elif channel == "D":
-            chan = 4
-        else:
-            chan = 1
+        channel_orig = channel
+        channel = int(channel)-1
 
         if self.dummy or not self.online:
             t = np.linspace(0, 1e-3, 100, False)
@@ -331,18 +336,41 @@ class Pico5000ACtrl(HC_Backend):
             return f"CH{chan}_WVFM", t.tolist(), v.tolist()
 
         try:
+            number_samples = min(self.ps.noSamples, self.ps.maxSamples)
 
-            volts = list(self.ps.getDataV(channel))
+            # seems data and dataR are needed
+            data = np.zeros(number_samples, dtype=np.float64)
+            dataR = np.zeros(number_samples, dtype=np.int16)
+            data = self.ps.getDataV(channel, dataV=data, dataRaw=dataR)
+            volts = list(data)
 
             # Get time values
-            t = list(
-                np.linspace(0, self.ps.noSamples / self.ps.sampleInterval, len(volts))
-            )
-
-        except:
-            logger.error(
-                "ERROR: Failed to read waveform data from scope", exc_info=True
-            )
+            t = np.linspace(0, self.ps.sampleInterval * self.noSamples, len(volts))
+            t = t - t[-1]*self.offset_position / self.timebase
+            t = list(t)
+        except IOError as e:
+            if "PICO_NO_SAMPLES_AVAILABLE" in e.args[0]:
+                logger.error(
+                    "ERROR: Failed to read waveform data from scope: no data available"
+                )
+            else:
+                logger.error(
+                    "ERROR: Failed to read waveform data from scope", exc_info=True
+                )
+            return "", [], []
+        except AttributeError as e:
+            if "maxSamples" in e.args[0]:
+                logger.error(
+                    "ERROR: Failed to read waveform data from scope: time base not set"
+                )
+            elif "noSamples" in e.args[0]:
+                logger.error(
+                    "ERROR: Failed to read waveform data from scope: time base not set"
+                )
+            else:
+                logger.error(
+                    "ERROR: Failed to read waveform data from scope", exc_info=True
+                )
             return "", [], []
 
-        return f"CH{chan}_WVFM", t, volts
+        return f"CH{channel_orig}_WVFM", t, volts
