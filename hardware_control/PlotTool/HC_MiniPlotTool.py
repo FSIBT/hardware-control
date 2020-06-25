@@ -119,7 +119,7 @@ class HC_MiniPlotTool(QWidget):
                 arrs = self.app.data_sets[self.plot_set].get_corresponding_arrays(
                     ["time:time", key], True
                 )
-                print(f"{key} -> mini")
+                # print(f"{key} -> mini")
                 # y_arr = np.array(
                 #     [float(yval) for yval in self.app.data_sets[self.plot_set].data[key]]
                 # )
