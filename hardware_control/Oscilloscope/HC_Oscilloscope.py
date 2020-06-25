@@ -58,23 +58,25 @@ class HC_Oscilloscope(HC_Instrument):
     """
 
     def __init__(
-        self, scpi_instr, window, name: str = "Oscilloscope Control",
+        self, backend, window, name: str = "Oscilloscope Control", lock_until_sync=False
     ):
 
-        super().__init__(window, name)
+        super().__init__(window, name, backend, lock_until_sync)
 
         self.settings = {}
 
-        # scpi_instr.sigReturnWaves.connect(self.backend_return_waveform)
-        scpi_instr.dummy = self.window.app.dummy
-        self.address = scpi_instr.connection_addr
+        # backend.sigReturnWaves.connect(self.backend_return_waveform)
+        backend.dummy = self.window.app.dummy
+        self.address = backend.connection_addr
 
-        if scpi_instr in self.window.app.comms:
-            self.comm = self.window.app.comms[scpi_instr]
+        if backend.connection_addr in self.window.app.comms:
+            self.comm = self.window.app.comms[backend.connection_addr]
             self.comm.addWidget(self)
         else:
-            self.window.app.comms[scpi_instr] = HC_Comm(scpi_instr, self)
-            self.comm = self.window.app.comms[scpi_instr]
+            self.window.app.comms[backend.connection_addr] = HC_Comm(
+                backend, self, lock_until_sync=lock_until_sync
+            )
+            self.comm = self.window.app.comms[backend.connection_addr]
 
         self.filename = ""
 
