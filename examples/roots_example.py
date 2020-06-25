@@ -136,6 +136,7 @@ class RootsDemo(HC_MainWindow):
             show_VI_limits=True,
             show_custom_labels=True,
             show_status_panel=True,
+            lock_until_sync=True,
         )
         self.caen_wdgt_123.set_maxV(1, 2e3)
         self.caen_wdgt_123.set_maxV(2, 1e3)
@@ -154,6 +155,7 @@ class RootsDemo(HC_MainWindow):
             show_VI_limits=True,
             show_custom_labels=True,
             show_status_panel=True,
+            lock_until_sync=True,
         )
         self.caen_wdgt_456.set_maxV(4, 1705)
         self.caen_wdgt_456.set_maxV(5, 2e3)
@@ -174,6 +176,7 @@ class RootsDemo(HC_MainWindow):
             show_VI_limits=True,
             show_custom_labels=True,
             all_enable_button=ONLY,
+            lock_until_sync=True,
         )
         self.keysight_wdgt.set_maxV(1, 5)
         self.keysight_wdgt.set_maxV(2, 5)
@@ -198,6 +201,7 @@ class RootsDemo(HC_MainWindow):
             ],
             [(0, lambda v: v / 10, "kV", "Voltage")],
             "ADAM",
+            lock_until_sync=True,
         )
 
         # Put instrument(s) in tab
@@ -218,6 +222,8 @@ class RootsDemo(HC_MainWindow):
 
         self.pico1_be = Pico5000ACtrl("?")
         self.pico1_wdgt = HC_Oscilloscope(self.pico1_be, self, "Pico1")
+        self.pico1_wdgt.load_state("./picoscope_init.json")
+        self.pico1_wdgt.settings_to_UI()
 
         self.tab_pico1_layout = QGridLayout()
         self.tab_pico1_layout.addWidget(self.pico1_wdgt, 0, 0)
