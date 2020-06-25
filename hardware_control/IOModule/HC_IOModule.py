@@ -40,7 +40,7 @@ class HC_IOModule(HC_Instrument):
         name: str = "IO Module",
     ):
 
-        super().__init__(window, name)
+        super().__init__(window, name, backend, lock_until_sync)
 
         self.settings = {}
         self.backend = backend
@@ -50,13 +50,6 @@ class HC_IOModule(HC_Instrument):
 
         backend.dummy = self.window.app.dummy
         self.address = backend.connection_addr
-
-        if backend in self.window.app.comms:
-            self.comm = self.window.app.comms[backend]
-            self.comm.addWidget(self)
-        else:
-            self.window.app.comms[backend] = HC_Comm(backend, self)
-            self.comm = self.window.app.comms[backend]
 
         self.filename = ""
 
