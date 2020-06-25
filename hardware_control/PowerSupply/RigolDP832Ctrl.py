@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class RigolDP832Ctrl(HC_Backend):
-    @thread_info
+    # @thread_info
     def __init__(
         self, connection_addr,
     ):
@@ -37,7 +37,7 @@ class RigolDP832Ctrl(HC_Backend):
 
         self.check()
 
-    @thread_info
+    ##@thread_info
     def check_connection(self):
 
         if self.connection_type == VISA:
@@ -58,7 +58,7 @@ class RigolDP832Ctrl(HC_Backend):
 
             return None
 
-    @thread_info
+    ##@thread_info
     def update_setting(self, setting: str, value):
 
         channel, setting_X = get_channel_from_command(setting)
@@ -113,7 +113,7 @@ class RigolDP832Ctrl(HC_Backend):
             return str(value)
 
     # @ensure_online
-    @thread_info
+    ##@thread_info
     def command(self, cmd: str):
 
         # overwrite channel number for easier comparison
@@ -159,7 +159,6 @@ class RigolDP832Ctrl(HC_Backend):
         # remove question mark from return statement
         return f"{cmd[:-1]}={rval}"
 
-    @thread_info
     def read_status(self, channel):
         """See table on page 24 of manual"""
         if self.dummy:
