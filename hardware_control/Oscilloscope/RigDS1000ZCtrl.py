@@ -32,10 +32,6 @@ class RigDS1000ZCtrl(HC_Backend):
         self.dummy = False
         self.num_vert_divisions = 8
 
-        self.connection_type = connection_type
-        self.port_no = port_no
-        self.ip_addr = ip_addr
-
         self.use_avg = False
 
         self.measurements = ["", "", "", "", ""]
