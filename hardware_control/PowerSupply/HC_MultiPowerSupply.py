@@ -45,9 +45,10 @@ class HC_MultiPowerSupply(HC_Instrument):
         show_custom_labels=False,
         show_status_panel=False,
         all_enable_button=HIDE,
+        lock_until_sync=False,
     ):
 
-        super().__init__(window, name)
+        super().__init__(window, name, backend, lock_until_sync)
 
         self.settings = {}
         self.backend = backend
@@ -56,13 +57,6 @@ class HC_MultiPowerSupply(HC_Instrument):
         self.address = backend.connection_addr
 
         self.all_enable_button = all_enable_button
-
-        if backend in self.window.app.comms:
-            self.comm = self.window.app.comms[backend]
-            self.comm.addWidget(self)
-        else:
-            self.window.app.comms[backend] = HC_Comm(backend, self)
-            self.comm = self.window.app.comms[backend]
 
         self.filename = ""
 
@@ -145,6 +139,8 @@ class HC_MultiPowerSupply(HC_Instrument):
         self.readout_timer = QTimer(self)
         self.readout_timer.timeout.connect(self.update_readout)
         self.readout_timer.start(self.globalRefreshRate)
+
+        self.read_state_from_backend()
 
     def init_values(self):
 
