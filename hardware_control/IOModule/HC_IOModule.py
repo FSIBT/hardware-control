@@ -206,10 +206,6 @@ class OutputChannel(QWidget):
         if callable(self.conversion_function):
             voltage = self.conversion_function(voltage)
 
-            # Update label
-            apply_to_label(
-                self.measurement_label, V_meas, DISP_DECIMAL_PLACES, LABEL_MIN_WIDTH
-            )
             self.control.update_setting(f"CH{self.channel}_V_set", str(voltage))
 
     def set_to_zero(self):
