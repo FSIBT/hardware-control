@@ -16,6 +16,7 @@ Options:
 import logging
 import sys
 import warnings
+import time
 
 from PyQt5.QtWidgets import (
     QDoubleSpinBox,
@@ -100,8 +101,31 @@ logger.info("Roots Example Starting")
 #     logger.setLevel(logging.DEBUG)
 
 
-def example_function():
-    pass
+def example_function(tool, hook_name):
+
+    print(f"{tool.name} called hook {hook_name}")
+
+    try:
+        tool.counter
+    except:
+        print("Created counter")
+        tool.counter = 0
+
+    if tool.counter < 1:
+        tool.set_indicator(hook_name, "GREEN")
+    elif tool.counter < 2:
+        tool.set_indicator(hook_name, "RED")
+    elif tool.counter < 3:
+        tool.set_indicator(hook_name, "GREY")
+    elif tool.counter < 4:
+        tool.set_indicator(hook_name, "DARKGREY")
+    elif tool.counter < 5:
+        tool.set_indicator(hook_name, "BLUE")
+    else:
+        tool.counter = -0.5
+    tool.counter += 0.5
+
+    print(f"\t{tool.counter}")
 
 
 class RootsDemo(HC_MainWindow):
@@ -308,6 +332,7 @@ class RootsDemo(HC_MainWindow):
         self.monitor = HC_MonitorTool(self, "Error Monitor")
         self.monitor.add_hook("Hook 1", example_function)
         self.monitor.add_hook("Hook 2", example_function)
+        self.monitor.add_spacer()
 
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.tabs, 0, 0, 3, 1)
