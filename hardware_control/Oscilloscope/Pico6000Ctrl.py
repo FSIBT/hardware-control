@@ -59,7 +59,7 @@ class Pico6000Ctrl(HC_Backend):
 
         try:
             self.ps = PS6000()
-            self.online=True
+            self.online = True
         except Exception as e:
             self.online = False
             logger.debug(f"\t({self.ID}) ERROR connecting with visa.", exc_info=True)
@@ -124,7 +124,9 @@ class Pico6000Ctrl(HC_Backend):
 
             elif setting == "trigger_level":
                 if self.trigger_channel != "None":
-                    self.ps.setSimpleTrigger(self.trigger_channel, threshold_V=value, enabled=True)
+                    self.ps.setSimpleTrigger(
+                        self.trigger_channel, threshold_V=value, enabled=True
+                    )
 
                 return "Success"
 
@@ -157,7 +159,9 @@ class Pico6000Ctrl(HC_Backend):
                     value = "Rising"
 
                 if self.trigger_channel != "None":
-                    self.ps.setSimpleTrigger(self.trigger_channel, direction=value, enabled=True)
+                    self.ps.setSimpleTrigger(
+                        self.trigger_channel, direction=value, enabled=True
+                    )
 
                 return "Success"
 
@@ -165,7 +169,7 @@ class Pico6000Ctrl(HC_Backend):
                 if value_orig == "None":
                     self.trigger_channel = value_orig
                 else:
-                    self.trigger_channel = int(value_orig)-1
+                    self.trigger_channel = int(value_orig) - 1
                 if self.trigger_channel == "None":
                     self.ps.setSimpleTrigger(0, enabled=False)
                 else:
@@ -252,11 +256,9 @@ class Pico6000Ctrl(HC_Backend):
 
                 return "Success"
 
-
         except Exception as e:
             logger.error(
-                "An error occured in Picoscope6000.",
-                exc_info=True,
+                "An error occured in Picoscope6000.", exc_info=True,
             )
 
     def command(self, cmd: str):
@@ -323,7 +325,7 @@ class Pico6000Ctrl(HC_Backend):
         """Reads a waveform from the oscilloscope."""
 
         channel_orig = channel
-        channel = int(channel)-1
+        channel = int(channel) - 1
 
         if self.dummy or not self.online:
             t = np.linspace(0, 1e-3, 100, False)
@@ -333,7 +335,7 @@ class Pico6000Ctrl(HC_Backend):
             # is 2D array w/ 1 row and we need a 1D array
             v = np.sin(t * 5e3 * float(channel)) + noise[0]
 
-            return f"CH{chan}_WVFM", t.tolist(), v.tolist()
+            return f"CH{channel}_WVFM", t.tolist(), v.tolist()
 
         try:
             number_samples = min(self.ps.noSamples, self.ps.maxSamples)
@@ -346,9 +348,9 @@ class Pico6000Ctrl(HC_Backend):
 
             # Get time values
             t = np.linspace(0, self.ps.sampleInterval * self.noSamples, len(volts))
-            t = t - t[-1]*self.offset_position / self.timebase
+            t = t - t[-1] * self.offset_position / self.timebase
             t = list(t)
-        except IOError as e:
+        except OSError as e:
             if "PICO_NO_SAMPLES_AVAILABLE" in e.args[0]:
                 logger.error(
                     "ERROR: Failed to read waveform data from scope: no data available"
