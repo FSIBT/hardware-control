@@ -145,17 +145,22 @@ class HC_PlotTool(QWidget):
             if key == "time:time":
                 continue
             try:
+
                 arrs = self.app.data_sets[self.plot_set].get_corresponding_arrays(
                     ["time:time", key], True
                 )
-                # y_arr = np.array(
-                #     [float(yval) for yval in self.app.data_sets[self.plot_set].data[key]]
-                # )
+
+                # Get channel name
+                if key in self.app.data_sets[self.plot_set].channel_names:
+                    label_name = self.app.data_sets[self.plot_set].channel_names[key]
+                else:
+                    label_name = key
+
                 self.axes.plot_date(
                     epoch2num(np.array(arrs["time:time"])),
                     np.array(arrs[key]),
                     "o-",
-                    label=key,
+                    label=label_name,
                     tz="America/Los_Angeles",
                 )
             except:
