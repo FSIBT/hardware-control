@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class HC_MonitorTool(QGroupBox):
-    def __init__(self, window, name: str = "Monitor", hooks=[]):
+    def __init__(self, window, name: str = "Monitor"):
 
         super().__init__(name)
 
@@ -20,8 +20,9 @@ class HC_MonitorTool(QGroupBox):
         self.app = window.app
         self.ignore = True
 
-        self.hooks = hooks
+        self.hooks = {}
 
+        # Load indicators
         self.green_indicator = QPixmap(
             pkg_resources.resource_filename("hardware_control", "icons/green_ind.svg")
         )
@@ -40,136 +41,59 @@ class HC_MonitorTool(QGroupBox):
             pkg_resources.resource_filename("hardware_control", "icons/blue_ind.svg")
         )
 
-        self.settings = self.default_state()
+        self.widgets = []
 
-        self.instruments_label = QLabel()
-        self.instruments_label.setPixmap(
-            QPixmap(
-                pkg_resources.resource_filename(
-                    "hardware_control", "ConnectionStatusTool/graphics/status_label.png"
-                )
-            )
-        )
-        self.instruments_label.setAlignment(
-            QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
-        )
-        self.instrument_grid = QGridLayout()
+        self.idx = 0
+        self.indicator_grid = QGridLayout()
 
         self.master_layout = QGridLayout()
-        self.master_layout.addWidget(self.instruments_label, 0, 0, 1, 1)
-        self.master_layout.addLayout(self.instrument_grid, 1, 0, 1, 1)
+        self.master_layout.addLayout(self.indicator_grid, 0, 0)
         self.setLayout(self.master_layout)
 
-        self.update_timer = QTimer(self)
-        self.update_timer.timeout.connect(self.update_status)
-        self.update_timer.start(1000)
+        self.hook_timer = QTimer(self)
+        self.hook_timer.timeout.connect(self.run_hooks)
+        self.hook_timer.start(1000)
 
-    def update_instruments(self):
+    def add_hook(self, hook_name: str, hook, show_indicator=True):
 
-        # Clear layout
-        for i in reversed(range(self.instrument_grid.count())):
-            self.instrument_grid.itemAt(i).widget().setParent(None)
+        # Add hook to list
 
-        row = 0
-        for inst in self.app.instruments:
-
-            if inst.ignore:
-                continue
-
-            label = QLabel(inst.name)
-            indicator = QLabel()
-            indicator.setPixmap(self.grey_indicator)
-            indicator.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-
-            self.instrument_grid.addWidget(label, row, 0)
-            self.instrument_grid.addWidget(indicator, row, 1)
-            row += 1
-
-    def update_status(self):
-
-        for i in range(self.instrument_grid.count()):
-            if i % 2 == 0:  # Only want even indecies - these are instrument names
-
-                for instr in self.app.instruments:
-                    if (
-                        instr.name == self.instrument_grid.itemAt(i).widget().text()
-                    ):  # Found instrument....
-                        if instr.online:
-                            if instr.online_color == "Blue":
-                                self.instrument_grid.itemAt(i + 1).widget().setPixmap(
-                                    self.blue_indicator
-                                )
-                            else:
-                                self.instrument_grid.itemAt(i + 1).widget().setPixmap(
-                                    self.green_indicator
-                                )
-                        else:
-                            if instr.online_color == "Blue":
-                                self.instrument_grid.itemAt(i + 1).widget().setPixmap(
-                                    self.grey_indicator
-                                )
-                            else:
-                                self.instrument_grid.itemAt(i + 1).widget().setPixmap(
-                                    self.red_indicator
-                                )
-
-    def load_state(self, filename: str):
-
-        # Get default state - this identifies all required fields
-        dflt = self.default_state()
-
-        # Read a state from file
-        try:
-            with open(filename) as file:
-                self.settings = json.load(file)
-                logger.info(
-                    f"State for {self.comm.instr.ID} read from file '{filename}'"
-                )
-        except:
-            logger.info(f"ERROR: Failed to read file '{filename}'. Using defualt case.")
-            self.settings = self.default_state()
-
-        # Ensure all fields in default_state are present in the loaded state
-        for key in dflt:
-            if not (key in self.settings):
-                self.settings[key] = dflt[key]
-
-    def save_state(self, filename: str):
-        try:
-            with open(filename, "w") as file:
-                json.dump(self.settings, file)
-                logger.info(
-                    f"State for {self.comm.instr.ID} saved to file '{filename}'"
-                )
-        except Exception as e:
-            logger.error(
-                f"Failed to write file '{filename}'. State not saved.", exc_info=True
+        if hook_name in self.hooks:
+            logger.warning(
+                f"Failed to add hook '{hook_name}' because a hook with that name already exists."
             )
 
-    #
-    # Close connection
-    #
-    def close(self, filename: str = ""):
+        self.hooks[hook_name] = (hook, self.idx)
 
-        # Save state if asked
-        if self.save_on_close:
-            self.save_state(self.filename)
+        if show_indicator:
+            self.widgets.append(QLabel(hook_name))
+            self.indicator_grid.addWidget(self.widgets[-1], self.idx, 0)
 
-        # Tell scope to close
-        self.comm.close()
+            self.widgets.append(QLabel())
+            self.widgets[-1].setPixmap(self.grey_indicator)
+            self.indicator_grid.addWidget(self.widgets[-1], self.idx, 1)
 
-    #
-    # Create a default state object if can't get state from a file
-    #
-    def default_state(self):
+        self.idx += 1
 
-        dflt = {}
+    def run_hooks(self):
 
-        dflt["values"] = ""
-        dflt["instrument"] = "----------"
-        dflt["parameter"] = "----------"
-        dflt["action_instrument"] = "----------"
-        dflt["action_parameter"] = "----------"
-        dflt["progress"] = 0
+        # # Clear layout
+        # for i in reversed(range(self.instrument_grid.count())):
+        #     self.instrument_grid.itemAt(i).widget().setParent(None)
+        #
+        # row = 0
+        # for inst in self.app.instruments:
+        #
+        #     if inst.ignore:
+        #         continue
+        #
+        #     label = QLabel(inst.name)
+        #     indicator = QLabel()
+        #     indicator.setPixmap(self.grey_indicator)
+        #     indicator.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        #
+        #     self.instrument_grid.addWidget(label, row, 0)
+        #     self.instrument_grid.addWidget(indicator, row, 1)
+        #     row += 1
 
-        return dflt
+        pass
