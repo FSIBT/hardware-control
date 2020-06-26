@@ -270,11 +270,17 @@ class RootsDemo(HC_MainWindow):
         self.app.data_sets["ADAM"].add_instrument(
             self.adam_wdgt, ["CH2_V_meas", "CH3_V_meas"]
         )
+        self.app.data_sets["ADAM"].name_channel("ADAM:CH2_V_meas", "HV Current")
+        self.app.data_sets["ADAM"].name_channel("ADAM:CH3_V_meas", "High Voltage")
 
         self.app.data_sets["HEATER"] = Dataset("HEATER")
         self.app.data_sets["HEATER"].start_asynch(1)
         self.app.data_sets["HEATER"].add_instrument(self.keysight_wdgt, ["CH1_I_out"])
         self.app.data_sets["HEATER"].add_instrument(self.adam_wdgt, ["CH1_V_meas"])
+        self.app.data_sets["HEATER"].name_channel(
+            "Keysight Power Supply:CH1_I_out", "Heater Current"
+        )
+        self.app.data_sets["HEATER"].name_channel("ADAM:CH1_V_meas", "Pressure")
 
         self.logtool.update_groups()
         self.logtool.set_group("Autolog")
