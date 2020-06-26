@@ -35,6 +35,7 @@ class Key36300Ctrl(HC_Backend):
 
         channel, setting_X = get_channel_from_command(setting)
 
+        value_orig = value
         value = ensure_float(value)
 
         if setting_X == "CHX_V_max":
@@ -52,7 +53,7 @@ class Key36300Ctrl(HC_Backend):
             return str(value)
 
         if setting_X == "CHX_enable":
-            if value == "True":
+            if value_orig == "True":
                 # self.write(f"OUTPUT ON (@{channel})")
                 self.write(f"OUTPUT ON")
             else:
