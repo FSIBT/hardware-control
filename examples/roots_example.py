@@ -241,10 +241,12 @@ class RootsDemo(HC_MainWindow):
         #####################################################################
         ######### Plot Tab
 
-        self.plot_wdgt = HC_PlotTool(self, "Plot")
+        self.plot_wdgt1 = HC_PlotTool(self, "Heater Current")
+        self.plot_wdgt2 = HC_PlotTool(self, "High Voltage")
 
         self.tab_plot_layout = QGridLayout()
-        self.tab_plot_layout.addWidget(self.plot_wdgt, 0, 0)
+        self.tab_plot_layout.addWidget(self.plot_wdgt1, 0, 0)
+        self.tab_plot_layout.addWidget(self.plot_wdgt2, 1, 0)
         self.tab_plot.setLayout(self.tab_plot_layout)
 
         #####################################################################
@@ -256,18 +258,26 @@ class RootsDemo(HC_MainWindow):
         self.app.data_sets["Autolog"] = Dataset("Autolog")
         self.app.data_sets["Autolog"].start_asynch(3)
         self.app.data_sets["Autolog"].add_instrument(self.keysight_wdgt)
-        # self.app.data_sets["Autolog"].add_instrument(self.caen_wdgt_456)
+
         self.app.data_sets["Keysight"] = Dataset("Keysight")
         self.app.data_sets["Keysight"].start_asynch(1)
         self.app.data_sets["Keysight"].add_instrument(self.keysight_wdgt)
+
         self.app.data_sets["ADAM"] = Dataset("ADAM")
         self.app.data_sets["ADAM"].start_asynch(1)
         self.app.data_sets["ADAM"].add_instrument(
-            self.adam_wdgt, ["CH1_V_meas", "CH2_V_meas", "CH3_V_meas"]
+            self.adam_wdgt, ["CH2_V_meas", "CH3_V_meas"]
         )
+
+        self.app.data_sets["HEATER"] = Dataset("HEATER")
+        self.app.data_sets["HEATER"].start_asynch(1)
+        self.app.data_sets["HEATER"].add_instrument(self.keysight_wdgt, ["CH1_I_out"])
+        self.app.data_sets["HEATER"].add_instrument(self.adam_wdgt, ["CH1_V_meas"])
+
         self.logtool.update_groups()
         self.logtool.set_group("Autolog")
-        self.plot_wdgt.set_dataset("ADAM")
+        self.plot_wdgt1.set_dataset("HEATER")
+        self.plot_wdgt2.set_dataset("ADAM")
 
         self.tab_data_layout = QGridLayout()
         self.tab_data_layout.addWidget(self.logtool, 1, 0)
