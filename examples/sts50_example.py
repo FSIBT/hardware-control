@@ -33,26 +33,14 @@ print_console = commands["--console"]
 logfile_name = "hardware_control.log"
 
 if debug:
-    if print_console:
-        logging.basicConfig(level=logging.DEBUG)
-        print("Logger configured:\n\tLevel: Debug\n\tOutput: Console")
-    else:
-        logging.basicConfig(filename=logfile_name, level=logging.DEBUG)
-        print(f"Logger configured:\n\tLevel: Debug\n\tOutput: {logfile_name}")
+    loglevel = logging.DEBUG
+    loglevelname = "Debug"
 elif info:
-    if print_console:
-        logging.basicConfig(level=logging.INFO)
-        print("Logger configured:\n\tLevel: Info\n\tOutput: Console")
-    else:
-        logging.basicConfig(filename=logfile_name, level=logging.INFO)
-        print(f"Logger configured:\n\tLevel: Info\n\tOutput: {logfile_name}")
+    loglevel = logging.INFO
+    loglevelname = "Info"
 else:
-    if print_console:
-        logging.basicConfig(level=logging.WARNING)
-        print("Logger configured:\n\tLevel: Warning\n\tOutput: Console")
-    else:
-        logging.basicConfig(filename=logfile_name, level=logging.WARNING)
-        print(f"Logger configured:\n\tLevel: Warning\n\tOutput: {logfile_name}")
+    loglevel = logging.WARNING
+    loglevelname = "Warning"
 
 from hardware_control.base import HC_App, HC_MainWindow, Dataset
 from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
@@ -80,24 +68,20 @@ from hardware_control.PowerSupply.NI_DaX_PowerSupplyController import (
 
 
 logger = logging.getLogger(__name__)
+hc_logger = logging.getLogger("hardware_control")
 
-# handler = logging.FileHandler('sts50_example.log')
-# handler.setLevel(logging.DEBUG)
-
-# formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-# handler.setFormatter(formatter)
-
-# logger.addHandler(handler)
+if print_console:
+    logger.setLevel(level=loglevel)
+    hc_logger.setLevel(level=loglevel)
+    print(f"Logger configured:\n\tLevel: {loglevelname}\n\tOutput: Console")
+else:
+    logger.setLevel(level=loglevel)
+    hc_logger.setLevel(level=loglevel)
+    fh = logging.FileHandler(logfile_name)
+    fh.setLevel(loglevel)
+    hc_logger.addHandler(fh)
 
 logger.info("STS50 Example Starting")
-
-# logger.info("Initailizing program")
-#
-# if info:
-#     logger.setLevel(logging.INFO)
-#
-# if debug:
-#     logger.setLevel(logging.DEBUG)
 
 
 class STS50Demo(HC_MainWindow):

@@ -72,33 +72,17 @@ logger = logging.getLogger(__name__)
 hc_logger = logging.getLogger("hardware_control")
 
 if print_console:
-    # logging.basicConfig(level=loglevel)
     logger.setLevel(level=loglevel)
     hc_logger.setLevel(level=loglevel)
     print(f"Logger configured:\n\tLevel: {loglevelname}\n\tOutput: Console")
 else:
     logger.setLevel(level=loglevel)
-    hc_logger.setLevel(level=loglevel, filename=logfile_name)
-    # logging.basicConfig(filename=logfile_name, level=loglevel)
-
-
-# handler = logging.FileHandler('sts50_example.log')
-# handler.setLevel(logging.DEBUG)
-
-# formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-# handler.setFormatter(formatter)
-
-# logger.addHandler(handler)
+    hc_logger.setLevel(level=loglevel)
+    fh = logging.FileHandler(logfile_name)
+    fh.setLevel(loglevel)
+    hc_logger.addHandler(fh)
 
 logger.info("Roots Example Starting")
-
-# logger.info("Initailizing program")
-#
-# if info:
-#     logger.setLevel(logging.INFO)
-#
-# if debug:
-#     logger.setLevel(logging.DEBUG)
 
 
 def example_function(tool, hook_name):
