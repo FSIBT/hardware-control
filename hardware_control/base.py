@@ -961,6 +961,10 @@ class Dataset(QObject):
         # same length
         self.data = {}
 
+        # Dictionary to optionally rename channels. key is 'instrument:parameter'
+        # of channel to rename. Value is new name
+        self.channel_names = {}
+
         self.autosave_timer = QTimer(self)
         self.autosave_timer.timeout.connect(self.exec_autosave)
 
@@ -979,6 +983,15 @@ class Dataset(QObject):
 
         self.data = {}
         self.autosave_next_row = 0
+
+    def name_channel(self, channel: str, name: str):
+        """
+        Channel must be a string listing the instrument and parameter of the channel
+        to rename. THe instrument:parameter pair must be listed in self.data.
+        """
+
+        # Set name
+        self.channel_names[channel] = name
 
     def start_autosave(
         self, interval: float = 120, format: str = "JSON", filename: str = "autosave"
