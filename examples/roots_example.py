@@ -64,6 +64,7 @@ from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
 from hardware_control.Oscilloscope.Pico6000Ctrl import Pico6000Ctrl
 from hardware_control.PlotTool.HC_PlotTool import HC_PlotTool
 from hardware_control.PlotTool.HC_MiniPlotTool import HC_MiniPlotTool
+from hardware_control.MonitorTool.HC_MonitorTool import HC_MonitorTool
 
 
 logger = logging.getLogger(__name__)
@@ -97,6 +98,10 @@ logger.info("Roots Example Starting")
 #
 # if debug:
 #     logger.setLevel(logging.DEBUG)
+
+
+def example_function():
+    pass
 
 
 class RootsDemo(HC_MainWindow):
@@ -300,10 +305,15 @@ class RootsDemo(HC_MainWindow):
         self.miniplot = HC_MiniPlotTool(self, "Plot", 220, 220)
         self.miniplot.set_dataset("ADAM")
 
+        self.monitor = HC_MonitorTool(self, "Error Monitor")
+        self.monitor.add_hook("Hook 1", example_function)
+        self.monitor.add_hook("Hook 2", example_function)
+
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.tabs, 0, 0, 3, 1)
         self.master_layout.addWidget(self.statustool, 0, 1)
         self.master_layout.addWidget(self.miniplot, 1, 1)
+        self.master_layout.addWidget(self.monitor, 2, 1)
 
         self.main_widget = QWidget(self)
         self.main_widget.setLayout(self.master_layout)
