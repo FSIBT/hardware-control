@@ -97,7 +97,7 @@ class STS50Demo(HC_MainWindow):
         self.tab2 = QWidget()
         self.tab3 = QWidget()
         self.tab4 = QWidget()
-        self.tab5 = QWidget()
+        # self.tab5 = QWidget()
         self.tab6 = QWidget()
 
         self.tabs.addTab(self.tab4, "Plasma Source")
@@ -105,7 +105,7 @@ class STS50Demo(HC_MainWindow):
         self.tabs.addTab(self.tab1_5, "Picoscope")
         self.tabs.addTab(self.tab2, "Power Supplies")
         self.tabs.addTab(self.tab3, "Aux 1")
-        self.tabs.addTab(self.tab5, "Aux 2")
+        # self.tabs.addTab(self.tab5, "Aux 2")
         self.tabs.addTab(self.tab6, "Datasets")
 
         self.main_widget = QWidget(self)
@@ -224,7 +224,7 @@ class STS50Demo(HC_MainWindow):
         # )
         self.run_tool = HC_MacroRunnerTool(
             self,
-            "Macro Runner",
+            "Beam Trigger",
             {"Trigger": "Trigger Beam"},
             {"SHOT_ID_NUM": "Shot ID Number: "},
         )
@@ -239,16 +239,16 @@ class STS50Demo(HC_MainWindow):
         self.logtool.update_groups()
         self.logtool.set_group("Autolog")
 
-        self.var_tool = HC_VariableEditTool(
-            self,
-            "Application Variable Editor",
-            {
-                "Dynamic": "Value:",
-                "FIL_AMPL_V": "Filament Amplitude:",
-                "DELAY_TIME_S": "Filament Heating Time:",
-            },
-        )
-        self.var_tool.update_variables()
+        # self.var_tool = HC_VariableEditTool(
+        #     self,
+        #     "Application Variable Editor",
+        #     {
+        #         "Dynamic": "Value:",
+        #         "FIL_AMPL_V": "Filament Amplitude:",
+        #         "DELAY_TIME_S": "Filament Heating Time:",
+        #     },
+        # )
+        # self.var_tool.update_variables()
 
         self.scantool.update_macros()
 
@@ -263,37 +263,37 @@ class STS50Demo(HC_MainWindow):
         self.tab3_layout.addWidget(self.trig1_ctrl, 1, 0)
         self.tab3_layout.addWidget(self.trig2_ctrl, 2, 0)
         self.tab3_layout.addWidget(self.zmqtool, 3, 0, 2, 1)
+        self.tab3_layout.addWidget(self.PS_NIDaQ, 2, 2, 3, 1)
+        self.tab3_layout.addWidget(self.temp_ctrl, 1, 2)
         # self.tab3_layout.addWidget(self.scantool, 0, 1)
         # self.tab3_layout.addWidget(self.run_tool, 1, 1)
-        self.tab3_layout.addWidget(self.var_tool, 2, 1)
+        # self.tab3_layout.addWidget(self.var_tool, 2, 1)
 
         # self.tab3_layout.addWidget(self.statustool, 3, 1)
         self.tab3.setLayout(self.tab3_layout)
 
         # #####################################################################
         # ######## Custom Tab
-        #
-        self.tab_sts_layout = QGridLayout()
 
-        ######## Set Tab Layout
+        self.tab_sts_layout = QGridLayout()
 
         self.tab_sts_layout.addWidget(self.flow_ctrl, 2, 2, 2, 2)
         self.tab4.setLayout(self.tab_sts_layout)
 
-        ########## Tab 5 - Experimental
-
-        self.tab5_layout = QGridLayout()
-
-        self.tab5_layout.addWidget(self.temp_ctrl, 0, 1)
-        # self.tab5_layout.addWidget(self.randomReadout,3,1)
-        try:
-            self.tab5_layout.addWidget(self.PS_NIDaQ, 0, 0)
-        except Exception as e:
-            pass
-
-        # self.tab5_layout.addWidget(self.logtool, 1, 0, 1, 2)
-
-        self.tab5.setLayout(self.tab5_layout)
+        # ########## Tab 5 - Experimental
+        #
+        # self.tab5_layout = QGridLayout()
+        #
+        #
+        # # self.tab5_layout.addWidget(self.randomReadout,3,1)
+        # try:
+        #     self.tab5_layout.addWidget(self.PS_NIDaQ, 0, 0)
+        # except Exception as e:
+        #     pass
+        #
+        # # self.tab5_layout.addWidget(self.logtool, 1, 0, 1, 2)
+        #
+        # self.tab5.setLayout(self.tab5_layout)
 
         #####################################
 
