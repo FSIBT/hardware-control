@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 class HC_FunctionGenerator(HC_Instrument):
     def __init__(
         self,
-        scpi_instr,
+        backend,
         window,
         name: str = "AWG Control",
         num_channels: int = 2,
@@ -36,16 +36,16 @@ class HC_FunctionGenerator(HC_Instrument):
         super().__init__(window, name, backend, lock_until_sync)
 
         self.settings = {}
-        self.address = scpi_instr.connection_addr
+        self.address = backend.connection_addr
 
-        scpi_instr.dummy = self.window.app.dummy
+        backend.dummy = self.window.app.dummy
 
-        if scpi_instr in self.window.app.comms:
-            self.comm = self.window.app.comms[scpi_instr]
+        if backend in self.window.app.comms:
+            self.comm = self.window.app.comms[backend]
             self.comm.addWidget(self)
         else:
-            self.window.app.comms[scpi_instr] = HC_Comm(scpi_instr, self)
-            self.comm = self.window.app.comms[scpi_instr]
+            self.window.app.comms[backend] = HC_Comm(backend, self)
+            self.comm = self.window.app.comms[backend]
 
         self.filename = ""
 

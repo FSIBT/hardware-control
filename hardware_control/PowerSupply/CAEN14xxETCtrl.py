@@ -76,6 +76,10 @@ class CAEN14xxETCtrl(HC_Backend):
 
         value = ensure_float(value)
 
+        logger.info(
+            f"CAEN u_s received {setting}, {value} and interpreted chan={channel}, setting_X={setting_X}, value={value}"
+        )
+
         if setting_X == "CHX_I_max":
             self.max_I[channel - 1] = float(value)
             return str(value)
@@ -84,6 +88,7 @@ class CAEN14xxETCtrl(HC_Backend):
             return str(value)
 
         if not self.online:
+            logger.info("CAEN")
             return "Offline"
 
         if self.dummy:

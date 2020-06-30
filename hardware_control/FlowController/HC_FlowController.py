@@ -15,23 +15,23 @@ logger = logging.getLogger(__name__)
 #
 class HC_FlowController(HC_Instrument):
     def __init__(
-        self, scpi_instr, window, name: str = "Flow Controller", lock_until_sync=False,
+        self, backend, window, name: str = "Flow Controller", lock_until_sync=False,
     ):
 
         super().__init__(window, name, backend, lock_until_sync)
 
         self.settings = {}
         self.name = name
-        self.address = scpi_instr.connection_addr
+        self.address = backend.connection_addr
 
-        scpi_instr.dummy = self.window.app.dummy
+        backend.dummy = self.window.app.dummy
 
-        if scpi_instr in self.window.app.comms:
-            self.comm = self.window.app.comms[scpi_instr]
+        if backend in self.window.app.comms:
+            self.comm = self.window.app.comms[backend]
             self.comm.addWidget(self)
         else:
-            self.window.app.comms[scpi_instr] = HC_Comm(scpi_instr, self, 2000)
-            self.comm = self.window.app.comms[scpi_instr]
+            self.window.app.comms[backend] = HC_Comm(backend, self, 2000)
+            self.comm = self.window.app.comms[backend]
 
         self.filename = ""
 

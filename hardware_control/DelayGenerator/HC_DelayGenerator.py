@@ -21,7 +21,7 @@ from hardware_control.base import HC_Instrument, HC_Comm
 class HC_DelayGenerator(HC_Instrument):
     def __init__(
         self,
-        scpi_instr,
+        backend,
         window,
         name: str = "Pulse Generator Control",
         lock_until_sync=False,
@@ -31,11 +31,11 @@ class HC_DelayGenerator(HC_Instrument):
 
         self.settings = {}
         self.name = name
-        self.address = scpi_instr.connection_addr
+        self.address = backend.connection_addr
 
         self.settings = self.default_state()
 
-        scpi_instr.dummy = self.window.app.dummy
+        backend.dummy = self.window.app.dummy
 
         self.filename = ""
 
@@ -84,10 +84,9 @@ class HC_DelayGenerator(HC_Instrument):
         )
         self.trig_lev_edit.setDecimals(3)
         self.trig_lev_edit.setSingleStep(0.05)
-        if hasattr(scpi_instr, "ExternalTriggerThreshold"):
+        if hasattr(backend, "ExternalTriggerThreshold"):
             self.trig_lev_edit.setRange(
-                -scpi_instr.ExternalTriggerThreshold,
-                scpi_instr.ExternalTriggerThreshold,
+                -backend.ExternalTriggerThreshold, backend.ExternalTriggerThreshold,
             )
         self.trig_lev_edit.setValue(float(self.settings["trigger_level"]))
         #
@@ -113,8 +112,8 @@ class HC_DelayGenerator(HC_Instrument):
         self.pulse_edit.editingFinished.connect(
             lambda: self.update_setting("pulses_per_burst", self.pulse_edit.text())
         )
-        if hasattr(scpi_instr, "PulsesPerBurst"):
-            self.pulse_edit.setRange(2, scpi_instr.PulsesPerBurst)
+        if hasattr(backend, "PulsesPerBurst"):
+            self.pulse_edit.setRange(2, backend.PulsesPerBurst)
         self.pulse_edit.setValue(int(self.settings["pulses_per_burst"]))
         #
         self.period_label = QLabel("Triggers per Burst:")
