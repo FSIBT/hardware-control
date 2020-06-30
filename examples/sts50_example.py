@@ -349,13 +349,6 @@ def main():
     app = HC_App(dummy=dummy)
     app.print_close_info = True
 
-    if dummy:
-        dummy_set = Dataset("Dummy")
-        app.data_sets["Dummy"] = dummy_set
-        app.data_sets["Dummy"].data["t"] = [1, 2, 3, 4, 5]
-        app.data_sets["Dummy"].data["CH1 Vpp"] = [1, 1.5, 2, 2.5, 3]
-        app.data_sets["Dummy"].data["CH2 Vpp"] = [-1, -2, -3, -3, -3]
-
     ex = STS50Demo(app)
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())
