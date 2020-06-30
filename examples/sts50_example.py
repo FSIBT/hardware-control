@@ -65,6 +65,8 @@ from hardware_control.LoggerTool.HC_LoggerTool import HC_LoggerTool
 from hardware_control.PowerSupply.NI_DaX_PowerSupplyController import (
     NI_DaX_PowerSupplyController,
 )
+from hardware_control.PlotTool.HC_PlotTool import HC_PlotTool
+from hardware_control.PlotTool.HC_MiniPlotTool import HC_MiniPlotTool
 
 
 logger = logging.getLogger(__name__)
@@ -97,7 +99,7 @@ class STS50Demo(HC_MainWindow):
         self.tab2 = QWidget()
         self.tab3 = QWidget()
         self.tab4 = QWidget()
-        # self.tab5 = QWidget()
+        self.tab5 = QWidget()
         self.tab6 = QWidget()
 
         self.tabs.addTab(self.tab4, "Plasma Source")
@@ -105,7 +107,7 @@ class STS50Demo(HC_MainWindow):
         self.tabs.addTab(self.tab1_5, "Picoscope")
         self.tabs.addTab(self.tab2, "Power Supplies")
         self.tabs.addTab(self.tab3, "Aux 1")
-        # self.tabs.addTab(self.tab5, "Aux 2")
+        self.tabs.addTab(self.tab5, "Plots")
         self.tabs.addTab(self.tab6, "Datasets")
 
         self.main_widget = QWidget(self)
@@ -233,9 +235,13 @@ class STS50Demo(HC_MainWindow):
         # Create Datasets
         self.app.data_sets["Autolog"] = Dataset("Autolog")
         self.app.data_sets["Autolog"].start_asynch(3)
-        # self.app.data_sets["Autolog"].start_autosave(60, "TXT", "autolog_sts50.txt")
         self.app.data_sets["Autolog"].add_instrument(self.PS_NIDaQ)
         self.app.data_sets["Autolog"].add_instrument(self.psu_ctrl)
+
+        self.app.data_sets["High Voltage"] = Dataset("High Voltage")
+        self.app.data_sets["High Voltage"].start_asynch(3)
+        self.app.data_sets["High Voltage"].add_instrument(self.PS_NIDaQ, ["CH1_V_meas"])
+
         self.logtool.update_groups()
         self.logtool.set_group("Autolog")
 
@@ -281,19 +287,13 @@ class STS50Demo(HC_MainWindow):
         self.tab4.setLayout(self.tab_sts_layout)
 
         # ########## Tab 5 - Experimental
-        #
-        # self.tab5_layout = QGridLayout()
-        #
-        #
-        # # self.tab5_layout.addWidget(self.randomReadout,3,1)
-        # try:
-        #     self.tab5_layout.addWidget(self.PS_NIDaQ, 0, 0)
-        # except Exception as e:
-        #     pass
-        #
-        # # self.tab5_layout.addWidget(self.logtool, 1, 0, 1, 2)
-        #
-        # self.tab5.setLayout(self.tab5_layout)
+
+        self.plot_wdgt1 = HC_PlotTool(self, "Floating Rack")
+
+        self.tab5_layout = QGridLayout()
+        self.tab5_layout.addWidget(self.plot_wdgt1, 0, 0)
+
+        self.tab5.setLayout(self.tab5_layout)
 
         #####################################
 
