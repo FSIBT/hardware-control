@@ -237,6 +237,8 @@ class Key4000XCtrl(HC_Backend):
     def read_waveform(self, channel: int):
         """Reads a waveform from the oscilloscope."""
 
+        self.configure_read_waveform()
+
         if self.dummy or not self.online:
             t = np.linspace(0, 1e-3, 100, False)
             noise = 0.02 * np.random.rand(1, 100)
