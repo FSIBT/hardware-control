@@ -33,6 +33,7 @@ class SRSDG535Ctrl(HC_Backend):
         self.PulsesPerBurst = 32766
 
         self.channels_relative = {}
+        self.channels_ampl = {}
 
     def convert_to_SRS_number_scheme(self, x: int):
 
@@ -118,11 +119,17 @@ class SRSDG535Ctrl(HC_Backend):
             elif setting_X == "CHX_relative":
 
                 self.channels_relative[channel] = value_orig
-                self.update_settings("CH")
 
-                w = f"DT {channel},{rel_chan}"
+                if channel in self.channels_ampl:
+                    ampl_chan = self.channels_ampl[channel]
+                else:
+                    ampl_chan = "1"
+
+                w = f"DT {channel},{ampl_chan}"
 
             elif setting_X == "CHX_delay":
+
+                self.channels_ampl[channel] = value_orig
 
                 if channel in self.channels_relative:
                     rel_chan = self.channels_relative[channel]
