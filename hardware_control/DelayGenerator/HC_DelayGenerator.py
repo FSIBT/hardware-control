@@ -293,7 +293,7 @@ class DelayChannelWidget(QWidget):
         self.rel_label = QLabel("Relative to:")
 
         self.rel_drop = QComboBox()
-        rels = ["Trig", "A", "B", "C", "D"]
+        rels = ["Trig", "A", "B", "C", "D", "T0"]
         rels.remove(channel_str)
         self.rel_drop.addItems(rels)
         self.rel_drop.setCurrentText("Trig")
@@ -366,6 +366,12 @@ class DelayChannelWidget(QWidget):
             f"CH{self.combined_channel_num}_output_amplitude", new_val
         )
 
-    def relative_changed(self, new_val: str):
+    def relative_changed(self, rel_to: str):
 
-        pass
+        self.main_widget.update_setting(
+            f"CH{self.combined_channel_num}_relative", rel_to
+        )
+
+    def delay_changed(self, t_delay: str):
+
+        self.main_widget.update_setting(f"CH{self.combined_channel_num}_delay", t_delay)
