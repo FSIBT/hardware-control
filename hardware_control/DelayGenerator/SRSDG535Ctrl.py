@@ -81,43 +81,46 @@ class SRSDG535Ctrl(HC_Backend):
         elif self.online:
             if setting == "trigger_mode":
                 mode = 0
-                if value == "Internal":
+                if value_orig == "Internal":
                     mode = 0
-                elif value == "External":
+                elif value_orig == "External":
                     mode = 1
-                elif value == "Single":
+                elif value_orig == "Single":
                     mode = 2
-                elif value == "Burst":
+                elif value_orig == "Burst":
                     mode = 3
                 w = f"TM{mode}"
             elif setting == "trigger_edge":
                 mode = 0
-                if value == "Positive":
+                if value_orig == "Positive":
                     mode = 1
-                elif value == "Negative":
+                elif value_orig == "Negative":
                     mode = 0
                 w = f"TS{mode}"
             elif setting == "ext_trig_Zin":
                 mode = 0
-                if value == "50 Ohms":
+                if value_orig == "50 Ohms":
                     mode = 0
-                elif value == "Hi-Z":
+                elif value_orig == "Hi-Z":
                     mode = 1
                 w = f"TZ{mode}"
             elif setting_X == "CHX_output_mode":
                 mode = 0
-                if value == "TTL":
+                if value_orig == "TTL":
                     mode = 0
-                elif value == "NIM":
+                elif value_orig == "NIM":
                     mode = 1
-                elif value == "ECL":
+                elif value_orig == "ECL":
                     mode = 2
-                elif value == "VAR":
+                elif value_orig == "VAR":
                     mode = 3
-                w = f"OM {channel},{j}"
+                w = f"OM {channel},{mode}"
             elif setting_X == "CHX_relative":
 
                 self.channels_relative[channel] = value_orig
+                self.update_settings("CH")
+
+                w = f"DT {channel},{rel_chan}"
 
             elif setting_X == "CHX_delay":
 
