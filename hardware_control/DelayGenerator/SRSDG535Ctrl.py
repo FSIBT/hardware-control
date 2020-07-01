@@ -50,7 +50,7 @@ class SRSDG535Ctrl(HC_Backend):
         if x == 34:  # Combined 3&4
             return 7
 
-    def convert_relative_to_SRS_number_scheme(self, x: int):
+    def convert_relative_to_SRS_number_scheme(self, x: str):
 
         if x == "A":
             return 2
@@ -124,9 +124,8 @@ class SRSDG535Ctrl(HC_Backend):
                     ampl_chan = self.channels_ampl[channel]
                 else:
                     ampl_chan = "1"
-
-                w = f"DT {channel},{value_orig},{ampl_chan}"
-
+                channel_number = self.convert_relative_to_SRS_number_scheme(value_orig)
+                w = f"DT {channel},{channel_number},{ampl_chan}"
             elif setting_X == "CHX_delay":
 
                 self.channels_ampl[channel] = value_orig
