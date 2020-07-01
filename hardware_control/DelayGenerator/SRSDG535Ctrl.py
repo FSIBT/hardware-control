@@ -31,11 +31,35 @@ class SRSDG535Ctrl(HC_Backend):
         self.ExternalTriggerThreshold = 2.56
         self.PulsesPerBurst = 32766
 
+    def convert_to_SRS_number_scheme(self, x: int):
+
+        if x == 1:
+            return 2
+        if x == 2:
+            return 3
+        if x == 3:
+            return 5
+        if x == 4:
+            return 6
+        if x == 12:  # Combined 1&2
+            return 4
+        if x == 34:  # Combined 3&4
+            return 7
+
     def update_setting(self, setting: str, value):
+
+        channel, setting_X = get_channel_from_command(setting)
+
+        channel = convert_to_SRS_number_scheme(channel)
+
+        value_orig = value
+        value = ensure_float(value)
+
         if self.dummy:
             return value
         elif not self.online:
             return "offline"
+
         elif self.online:
             if setting == "trigger_mode":
                 mode = 0
@@ -62,6 +86,27 @@ class SRSDG535Ctrl(HC_Backend):
                 elif value == "Hi-Z":
                     mode = 1
                 w = f"TZ{mode}"
+            elif setting_X == "CHX_output_mode":
+                mode = 0
+                if value == "TTL":
+                    mode = 0
+                elif value == "NIM":
+                    mode = 1
+                elif value == "ECL":
+                    mode = 2
+                elif value == "VAR":
+                    mode = 3
+                w = f"OM {channel},{j}"
+            elif setting_X == "CHX_output_offset":
+                w = f"OO {channel},{value_orig}"
+            elif setting_X == "CHX_output_amplitude":
+
+                if value > 4:
+                    value = 4
+                if value < 0.1:
+                    value = 0.1
+
+                w = f"OA {channel},{value}"
             elif setting == "pulses_per_burst":
                 w = f"BC{value}"
             elif setting == "trigger_period":
