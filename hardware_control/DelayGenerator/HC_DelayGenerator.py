@@ -290,6 +290,17 @@ class DelayChannelWidget(QWidget):
         # )
         self.time_edit.setText("0")
 
+        self.rel_label = QLabel("Relative to:")
+
+        self.rel_drop = QComboBox()
+        rels = ["Trig", "A", "B", "C", "D"]
+        rels.remove(channel_str)
+        self.rel_drop.addItems(rels)
+        self.rel_drop.setCurrentText("Trig")
+        self.rel_drop.currentIndexChanged.connect(
+            lambda: self.relative_changed(self.rel_drop.currentText())
+        )
+
         self.level_label = QLabel("Output mode: ")
 
         self.volt_edit_label = QLabel("High Level (V):")
@@ -313,13 +324,17 @@ class DelayChannelWidget(QWidget):
         if combine_with == -1:
             self.channel_layout.addWidget(self.time_edit, 1, 1)
             self.channel_layout.addWidget(self.time_label, 1, 0)
+            self.channel_layout.addWidget(self.rel_label, 2, 0)
+            self.channel_layout.addWidget(self.rel_drop, 2, 1)
         else:
             self.blank_label = QLabel(" ")
             self.channel_layout.addWidget(self.blank_label, 1, 0, 1, 2)
-        self.channel_layout.addWidget(self.level_label, 2, 0)
-        self.channel_layout.addWidget(self.level_drop, 2, 1)
-        self.channel_layout.addWidget(self.volt_edit_label, 3, 0)
-        self.channel_layout.addWidget(self.volt_edit, 3, 1)
+            self.blank_label2 = QLabel(" ")
+            self.channel_layout.addWidget(self.blank_label2, 2, 0, 1, 2)
+        self.channel_layout.addWidget(self.level_label, 3, 0)
+        self.channel_layout.addWidget(self.level_drop, 3, 1)
+        self.channel_layout.addWidget(self.volt_edit_label, 4, 0)
+        self.channel_layout.addWidget(self.volt_edit, 4, 1)
         self.setLayout(self.channel_layout)
 
     def set_output_level(self, new_val: str):
@@ -350,3 +365,7 @@ class DelayChannelWidget(QWidget):
         self.main_widget.update_setting(
             f"CH{self.combined_channel_num}_output_amplitude", new_val
         )
+
+    def relative_changed(self, new_val: str):
+
+        pass
