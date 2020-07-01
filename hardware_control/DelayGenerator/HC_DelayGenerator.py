@@ -1,6 +1,6 @@
 import pkg_resources
 from PyQt5 import QtCore
-from PyQt5.QtGui import QIntValidator, QPixmap, QIcon
+from PyQt5.QtGui import QIntValidator, QPixmap, QIcon, QFont, QDoubleValidator
 from PyQt5.QtWidgets import (
     QGroupBox,
     QLineEdit,
@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import (
     QComboBox,
     QSpinBox,
     QDoubleSpinBox,
+    QWidget,
 )
 import logging
 
@@ -25,6 +26,7 @@ class HC_DelayGenerator(HC_Instrument):
         window,
         name: str = "Pulse Generator Control",
         lock_until_sync=False,
+        channels: int = 4,
     ):
 
         super().__init__(window, name, backend, lock_until_sync)
@@ -142,7 +144,40 @@ class HC_DelayGenerator(HC_Instrument):
         self.write_but.clicked.connect(
             lambda: self.command(self.settings["direct_command"])
         )
-        #
+
+        widget_col = 0
+        self.channel_widgets = []
+        self.channel_box = QGroupBox()
+        self.channel_box_layout = QGridLayout()
+        if channels == 4:
+            for i in range(1, 5):
+                self.channel_widgets.append(DelayChannelWidget(self, i))
+                self.channel_box_layout.addWidget(
+                    self.channel_widgets[-1], 0, widget_col
+                )
+                widget_col += 1
+
+            self.channel_widgets.append(DelayChannelWidget(self, 1, 2))
+            self.channel_box_layout.addWidget(self.channel_widgets[-1], 0, widget_col)
+            widget_col += 1
+
+            self.channel_widgets.append(DelayChannelWidget(self, 3, 4))
+            self.channel_box_layout.addWidget(self.channel_widgets[-1], 0, widget_col)
+            widget_col += 1
+        if channels == 2:
+            for i in range(1, 3):
+                self.channel_widgets.append(DelayChannelWidget(self, i))
+                self.channel_box_layout.addWidget(
+                    self.channel_widgets[-1], 0, widget_col
+                )
+                widget_col += 1
+
+            self.channel_widgets.append(DelayChannelWidget(self, 1, 2))
+            self.channel_box_layout.addWidget(self.channel_widgets[-1], 0, widget_col)
+            widget_col += 1
+
+        self.channel_box.setLayout(self.channel_box_layout)
+
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.trig_mode_label, 0, 0)
         self.master_layout.addWidget(self.trig_mode_drop, 0, 1)
@@ -166,6 +201,8 @@ class HC_DelayGenerator(HC_Instrument):
         self.master_layout.addWidget(self.write_edit, 4, 1)
 
         self.master_layout.addWidget(self.write_but, 4, 3)
+
+        self.master_layout.addWidget(self.channel_box, 5, 0, 1, 4)
         #
         self.setLayout(self.master_layout)
 
@@ -205,3 +242,78 @@ class HC_DelayGenerator(HC_Instrument):
         self.pulse_edit.setValue(int(self.settings["pulses_per_burst"]))
         self.period_edit.setValue(int(self.settings["trigger_period"]))
         self.write_edit.setText(self.settings["direct_command"])
+
+
+class DelayChannelWidget(QWidget):
+    def __init__(self, main_widget, channel, combine_with: int = -1, use_alpha=True):
+
+        super().__init__()
+
+        self.channel = channel
+        self.main_widget = main_widget
+
+        def num_to_alpha(x: int):
+            if x == 1:
+                return "A"
+            if x == 2:
+                return "B"
+            if x == 3:
+                return "C"
+            if x == 4:
+                return "D"
+            else:
+                return "?"
+
+        if use_alpha:
+            channel_str = num_to_alpha(channel)
+            combine_with_str = num_to_alpha(combine_with)
+
+        self.channel_label = QLabel()
+        if combine_with == -1:
+            self.channel_label.setText(f"Channel {channel_str}")
+        else:
+            self.channel_label.setText(f"Channel {channel_str}+{combine_with_str}")
+        self.channel_label.setFont(QFont("Arial", 20))
+        self.channel_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+
+        self.time_label = QLabel("t_offset: ")
+
+        self.time_edit = QLineEdit()
+        self.time_edit.setValidator(QDoubleValidator())
+        # self.time_edit.editingFinished.connect(
+        #     lambda: main_widget.update_setting(
+        #         f"CH{self.channel}_V_set", (self.V_edit.text())
+        #     )
+        # )
+        self.time_edit.setText("0")
+
+        self.level_label = QLabel("Output mode: ")
+
+        self.level_drop = QComboBox()
+        self.level_drop.addItems(["TTL", "Voltage"])
+        # self.level_drop.currentIndexChanged.connect(
+        #     lambda: control.update_setting(
+        #         f"CH{channel}_coupling", self.coupling_drop.currentText()
+        #     )
+        # )
+        self.level_drop.setCurrentText("TTL")
+
+        self.volt_edit_label = QLabel("High Level (V):")
+        self.volt_edit = QLineEdit()
+        self.volt_edit.setValidator(QDoubleValidator())
+        self.volt_edit.setText("5")
+        self.volt_edit.setEnabled(False)
+
+        self.channel_layout = QGridLayout()
+        self.channel_layout.addWidget(self.channel_label, 0, 0, 1, 2)
+        if combine_with == -1:
+            self.channel_layout.addWidget(self.time_edit, 1, 1)
+            self.channel_layout.addWidget(self.time_label, 1, 0)
+        else:
+            self.blank_label = QLabel(" ")
+            self.channel_layout.addWidget(self.blank_label, 1, 0, 1, 2)
+        self.channel_layout.addWidget(self.level_label, 2, 0)
+        self.channel_layout.addWidget(self.level_drop, 2, 1)
+        self.channel_layout.addWidget(self.volt_edit_label, 3, 0)
+        self.channel_layout.addWidget(self.volt_edit, 3, 1)
+        self.setLayout(self.channel_layout)
