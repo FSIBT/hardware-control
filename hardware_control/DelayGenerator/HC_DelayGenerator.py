@@ -251,6 +251,9 @@ class DelayChannelWidget(QWidget):
 
         self.channel = channel
         self.main_widget = main_widget
+        self.combined_channel_num = channel
+        if combine_with != -1:
+            combined_channel_num = channel * 10 + combine_with
 
         def num_to_alpha(x: int):
             if x == 1:
@@ -289,20 +292,21 @@ class DelayChannelWidget(QWidget):
 
         self.level_label = QLabel("Output mode: ")
 
-        self.level_drop = QComboBox()
-        self.level_drop.addItems(["TTL", "Voltage"])
-        # self.level_drop.currentIndexChanged.connect(
-        #     lambda: control.update_setting(
-        #         f"CH{channel}_coupling", self.coupling_drop.currentText()
-        #     )
-        # )
-        self.level_drop.setCurrentText("TTL")
-
         self.volt_edit_label = QLabel("High Level (V):")
         self.volt_edit = QLineEdit()
         self.volt_edit.setValidator(QDoubleValidator())
         self.volt_edit.setText("5")
+        self.volt_edit.editingFinished.connect(
+            lambda: self.voltage_changed(self.volt_edit.text())
+        )
         self.volt_edit.setEnabled(False)
+
+        self.level_drop = QComboBox()
+        self.level_drop.addItems(["TTL", "Voltage", "NIM", "ECL"])
+        self.level_drop.setCurrentText("TTL")
+        self.level_drop.currentIndexChanged.connect(
+            lambda: self.set_output_level(self.level_drop.currentText())
+        )
 
         self.channel_layout = QGridLayout()
         self.channel_layout.addWidget(self.channel_label, 0, 0, 1, 2)
@@ -317,3 +321,32 @@ class DelayChannelWidget(QWidget):
         self.channel_layout.addWidget(self.volt_edit_label, 3, 0)
         self.channel_layout.addWidget(self.volt_edit, 3, 1)
         self.setLayout(self.channel_layout)
+
+    def set_output_level(self, new_val: str):
+        """
+        Sets the output mode for the channel
+        """
+        if new_val is None:
+            return
+
+        if new_val == "Voltage":
+            self.volt_edit.setEnabled(True)
+            new_val = "VAR"
+        else:
+            self.volt_edit.setEnabled(False)
+
+        self.main_widget.update_setting(
+            f"CH{self.combined_channel_num}_output_mode", new_val
+        )
+
+    def voltage_changed(self, new_val: str):
+        """
+        Sets a new output amplitude
+        """
+
+        self.main_widget.update_setting(
+            f"CH{self.combined_channel_num}_output_offset", "0"
+        )
+        self.main_widget.update_setting(
+            f"CH{self.combined_channel_num}_output_amplitude", new_val
+        )
