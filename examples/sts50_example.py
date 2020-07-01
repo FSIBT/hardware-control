@@ -177,9 +177,13 @@ class STS50Demo(HC_MainWindow):
         # Todo: linux-gpib is a dependency on some systems
         self.trig1 = SRSDG535Ctrl("GPIB0::10::INSTR")
         self.trig1_ctrl = HC_DelayGenerator(self.trig1, self, "Trigger 1")
+        self.trig1_ctrl.load_state("Trigger1_state.json")
+        self.trig1_ctrl.settings_to_UI()
 
         self.trig2 = SRSDG535Ctrl("GPIB0::15::INSTR")
         self.trig2_ctrl = HC_DelayGenerator(self.trig2, self, "Trigger 2")
+        self.trig2_ctrl.load_state("Trigger2_state.json")
+        self.trig2_ctrl.settings_to_UI()
 
         self.zmqtool = HC_ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
 
