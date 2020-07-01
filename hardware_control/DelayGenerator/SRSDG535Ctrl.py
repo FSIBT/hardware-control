@@ -125,7 +125,7 @@ class SRSDG535Ctrl(HC_Backend):
                 else:
                     ampl_chan = "1"
 
-                w = f"DT {channel},{ampl_chan}"
+                w = f"DT {channel},{value_orig},{ampl_chan}"
 
             elif setting_X == "CHX_delay":
 
