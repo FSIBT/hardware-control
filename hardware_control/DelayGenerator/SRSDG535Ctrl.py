@@ -8,7 +8,8 @@ import socket
 import os
 import pyvisa
 
-from hardware_control.HC_Backend import HC_Backend
+from hardware_control.HC_Backend import HC_Backend, get_channel_from_command
+from hardware_control.utility import ensure_float
 import logging
 
 logger = logging.getLogger(__name__)
@@ -50,13 +51,13 @@ class SRSDG535Ctrl(HC_Backend):
 
         channel, setting_X = get_channel_from_command(setting)
 
-        channel = convert_to_SRS_number_scheme(channel)
+        channel = self.convert_to_SRS_number_scheme(channel)
 
         value_orig = value
         value = ensure_float(value)
 
         if self.dummy:
-            return value
+            return value_orig
         elif not self.online:
             return "offline"
 
