@@ -34,6 +34,7 @@ class HC_DelayGenerator(HC_Instrument):
         self.settings = {}
         self.name = name
         self.address = backend.connection_addr
+        self.channels = channels
 
         self.settings = self.default_state()
 
@@ -231,6 +232,19 @@ class HC_DelayGenerator(HC_Instrument):
         dflt["pulses_per_burst"] = "2"
         dflt["trigger_period"] = "4"
         dflt["trigger_level"] = "0"
+        for c in range(1, self.channels + 1):
+            dflt[f"CH{c}_delay"] = "1"
+            dflt[f"CH{c}_relative"] = "Trig"
+            dflt[f"CH{c}_output_mode"] = "TTL"
+            dflt[f"CH{c}_output_amplitude"] = "5"
+        if self.channels == 4:
+            dflt[f"CH12_output_mode"] = "TTL"
+            dflt[f"CH12_output_amplitude"] = "5"
+            dflt[f"CH34_output_mode"] = "TTL"
+            dflt[f"CH34_output_amplitude"] = "5"
+        if self.channels == 2:
+            dflt[f"CH12_output_mode"] = "TTL"
+            dflt[f"CH12_output_amplitude"] = "5"
         return dflt
 
     def settings_to_UI(self):
@@ -243,6 +257,9 @@ class HC_DelayGenerator(HC_Instrument):
         self.period_edit.setValue(int(self.settings["trigger_period"]))
         self.write_edit.setText(self.settings["direct_command"])
 
+        for cw in self.channel_widgets:
+            cw.settings_to_UI()
+
 
 class DelayChannelWidget(QWidget):
     def __init__(self, main_widget, channel, combine_with: int = -1, use_alpha=True):
@@ -251,9 +268,10 @@ class DelayChannelWidget(QWidget):
 
         self.channel = channel
         self.main_widget = main_widget
+        self.combine_with = combine_with
         self.combined_channel_num = channel
         if combine_with != -1:
-            combined_channel_num = channel * 10 + combine_with
+            self.combined_channel_num = channel * 10 + combine_with
 
         def num_to_alpha(x: int):
             if x == 1:
@@ -283,11 +301,9 @@ class DelayChannelWidget(QWidget):
 
         self.time_edit = QLineEdit()
         self.time_edit.setValidator(QDoubleValidator())
-        # self.time_edit.editingFinished.connect(
-        #     lambda: main_widget.update_setting(
-        #         f"CH{self.channel}_V_set", (self.V_edit.text())
-        #     )
-        # )
+        self.time_edit.editingFinished.connect(
+            lambda: self.delay_changed(self.time_edit.text())
+        )
         self.time_edit.setText("0")
 
         self.rel_label = QLabel("Relative to:")
@@ -336,6 +352,25 @@ class DelayChannelWidget(QWidget):
         self.channel_layout.addWidget(self.volt_edit_label, 4, 0)
         self.channel_layout.addWidget(self.volt_edit, 4, 1)
         self.setLayout(self.channel_layout)
+
+        self.settings_to_UI()
+
+    def settings_to_UI(self):
+
+        if self.combine_with == -1:
+            self.time_edit.setText(
+                self.main_widget.settings[f"CH{self.combined_channel_num}_delay"]
+            )
+            self.rel_drop.setCurrentText(
+                self.main_widget.settings[f"CH{self.combined_channel_num}_relative"]
+            )
+        mode = self.main_widget.settings[f"CH{self.combined_channel_num}_output_mode"]
+        if mode == "VAR":
+            mode = "Voltage"
+        self.level_drop.setCurrentText(mode)
+        self.volt_edit.setText(
+            self.main_widget.settings[f"CH{self.combined_channel_num}_output_amplitude"]
+        )
 
     def set_output_level(self, new_val: str):
         """
