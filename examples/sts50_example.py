@@ -67,6 +67,7 @@ from hardware_control.PowerSupply.NI_DaX_PowerSupplyController import (
 )
 from hardware_control.PlotTool.HC_PlotTool import HC_PlotTool
 from hardware_control.PlotTool.HC_MiniPlotTool import HC_MiniPlotTool
+from hardware_control.base import HC_ConsoleWidget
 
 
 logger = logging.getLogger(__name__)
@@ -101,6 +102,7 @@ class STS50Demo(HC_MainWindow):
         self.tab4 = QWidget()
         self.tab5 = QWidget()
         self.tab6 = QWidget()
+        self.console_tab = HC_ConsoleWidget(main_app=app)
 
         self.tabs.addTab(self.tab4, "Plasma Source")
         self.tabs.addTab(self.tab1, "Oscilloscope")
@@ -109,6 +111,7 @@ class STS50Demo(HC_MainWindow):
         self.tabs.addTab(self.tab3, "Aux 1")
         self.tabs.addTab(self.tab5, "Plots")
         self.tabs.addTab(self.tab6, "Datasets")
+        self.tabs.addTab(self.console_tab, "Console")
 
         self.main_widget = QWidget(self)
 
