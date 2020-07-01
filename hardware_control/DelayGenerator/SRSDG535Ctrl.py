@@ -32,6 +32,8 @@ class SRSDG535Ctrl(HC_Backend):
         self.ExternalTriggerThreshold = 2.56
         self.PulsesPerBurst = 32766
 
+        self.channels_relative = {}
+
     def convert_to_SRS_number_scheme(self, x: int):
 
         if x == 1:
@@ -46,6 +48,21 @@ class SRSDG535Ctrl(HC_Backend):
             return 4
         if x == 34:  # Combined 3&4
             return 7
+
+    def convert_relative_to_SRS_number_scheme(self, x: int):
+
+        if x == "A":
+            return 2
+        if x == "B":
+            return 3
+        if x == "C":
+            return 5
+        if x == "D":
+            return 6
+        if x == "Trig":  # Combined 1&2
+            return 0
+        if x == "T0":  # Combined 3&4
+            return 1
 
     def update_setting(self, setting: str, value):
 
@@ -98,6 +115,20 @@ class SRSDG535Ctrl(HC_Backend):
                 elif value == "VAR":
                     mode = 3
                 w = f"OM {channel},{j}"
+            elif setting_X == "CHX_relative":
+
+                self.channels_relative[channel] = value_orig
+
+            elif setting_X == "CHX_delay":
+
+                if channel in self.channels_relative:
+                    rel_chan = self.channels_relative[channel]
+                else:
+                    rel_chan = "Trig"
+                rel_chan = self.convert_relative_to_SRS_number_scheme(rel_chan)
+
+                w = f"DT {channel},{rel_chan},{value}"
+
             elif setting_X == "CHX_output_offset":
                 w = f"OO {channel},{value_orig}"
             elif setting_X == "CHX_output_amplitude":
