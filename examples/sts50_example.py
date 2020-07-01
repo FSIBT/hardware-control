@@ -266,8 +266,8 @@ class STS50Demo(HC_MainWindow):
         # Put instrument(s) in tab
         self.tab3_layout = QGridLayout()
         # self.tab3_layout.addWidget(self.flow_ctrl, 0, 0)
-        self.tab3_layout.addWidget(self.trig1_ctrl, 1, 0)
-        self.tab3_layout.addWidget(self.trig2_ctrl, 2, 0)
+        self.tab3_layout.addWidget(self.flow_ctrl, 1, 0, 2, 1)
+        # self.tab3_layout.addWidget(self.trig2_ctrl, 2, 0)
         self.tab3_layout.addWidget(self.zmqtool, 3, 0, 2, 1)
         self.tab3_layout.addWidget(self.PS_NIDaQ, 2, 2, 3, 1)
         self.tab3_layout.addWidget(self.temp_ctrl, 1, 2)
@@ -283,7 +283,8 @@ class STS50Demo(HC_MainWindow):
 
         self.tab_sts_layout = QGridLayout()
 
-        self.tab_sts_layout.addWidget(self.flow_ctrl, 2, 2, 2, 2)
+        self.tab_sts_layout.addWidget(self.trig1_ctrl, 0, 0)
+        self.tab_sts_layout.addWidget(self.trig2_ctrl, 1, 0)
         self.tab4.setLayout(self.tab_sts_layout)
 
         # ########## Tab 5 - Experimental
