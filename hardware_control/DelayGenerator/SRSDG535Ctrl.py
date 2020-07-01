@@ -168,7 +168,7 @@ class SRSDG535Ctrl(HC_Backend):
             try:
                 if cmd == "single_trigger":
                     """Tells DG535 to trigger"""
-                    self.write(self.command_str)
+                    self.write("SS")
                 else:
                     logger.warning(f"{self.ID} : unknown command")
             except Exception as e:
