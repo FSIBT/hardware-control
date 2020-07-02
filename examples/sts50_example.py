@@ -104,14 +104,21 @@ def trigger_function(window):
 
     print("Trigger!")
 
+    # Update shot number and shot number widget
     window.app.variables["SHOT_ID_NUM"] = strftime("%H%M%S", gmtime())
-
     window.run_tool.update_indicators()
+
+    # Start countdown timer and widget
     window.run_tool.start_countdown(7.5)
 
+    # Disable trigger button
+    window.run_tool.button_widgets[0].setEnabled(False)
 
-def countdown_end_fn(self):
-    print("Countdown ended!")
+
+def countdown_end_fn(macro_runner_tool):
+
+    # Re-enable trigger button
+    macro_runner_tool.button_widgets[0].setEnabled(True)
 
 
 class STS50Demo(HC_MainWindow):
