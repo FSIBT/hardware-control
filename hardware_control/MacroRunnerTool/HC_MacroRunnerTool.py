@@ -1,5 +1,6 @@
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import QPushButton, QLabel, QGridLayout, QComboBox
+from PyQt5.QtCore import QTimer
+from PyQt5.QtWidgets import QPushButton, QLabel, QGridLayout, QComboBox, QLCDNumber
 
 from hardware_control.base import HC_Instrument
 import logging
@@ -23,6 +24,10 @@ class HC_MacroRunnerTool(HC_Instrument):
      1.) 'Label' adds a plain text label, 2.) 'Light', which adds
     a tri-color light with values 'green', 'grey', 'red', and 3.) 'ProgBar' which
     adds a progress bar and takes a value between 0 and 100 for a value.
+
+    Add countdown lets the user add an optional countdown timer which can be
+    started with the start_countdown() function and calls the callback
+    countdown_end when it reaches zero.
     """
 
     def __init__(
@@ -31,6 +36,7 @@ class HC_MacroRunnerTool(HC_Instrument):
         name: str = "Macro Runner",
         buttons={"Dynamic": "Run Macro"},
         indicators={},
+        add_countdown=False,
     ):
 
         super().__init__(window, name)
@@ -42,6 +48,10 @@ class HC_MacroRunnerTool(HC_Instrument):
         self.app = window.app
         self.ignore = True
         self.label_widgets = {}
+
+        self.countdown_end = None
+        self.add_countdown = add_countdown
+        self.countdown_val = 0
 
         # *************************Create GUI************************
 
@@ -118,16 +128,61 @@ class HC_MacroRunnerTool(HC_Instrument):
 
             else:
 
-                logger.error(f"Macro {but} does not exist. Ignoring indicator.")
+                logger.error(
+                    f"Application variable {ind} does not exist. Ignoring indicator."
+                )
+
+        if add_countdown:
+            self.countdown_wdgt = QLCDNumber()
+            self.countdown_wdgt.setSmallDecimalPoint(True)
+            self.countdown_wdgt.display(0)
 
         # ******* DEFINE OVERALL LAYOUT
         #
         self.master_layout = QGridLayout()
         self.master_layout.addLayout(self.button_panel, 0, 0)
-        # self.master_layout.addLayout(self.middle_grid, 1, 0, 1, 2)
+        if add_countdown:
+            self.master_layout.addWidget(self.countdown_wdgt, 0, 1)
+
         # self.master_layout.addLayout(self.progress_grid, 2, 0, 1, 3)
         # self.master_layout.addWidget(self.scan_button, 3, 0)
         self.setLayout(self.master_layout)
+
+        if add_countdown:
+            self.countdown_timer = QTimer()
+            self.countdown_timer.timeout.connect(self.update_countdown)
+
+    def update_countdown(self):
+
+        self.countdown_val -= 0.1
+
+        if self.countdown_val <= 0:
+            self.countdown_val = 0
+            self.countdown_timer.stop()
+
+            if self.countdown_end is not None and callable(self.countdown_end):
+                self.countdown_end(self)
+
+        self.set_timer_readout(self.countdown_val)
+
+    def set_timer_readout(self, val: float):
+
+        if self.add_countdown:
+            try:
+                self.countdown_wdgt.display(val)
+            except:
+                logger.error(f"Failed to display {val} as number on countdown")
+                self.countdown_wdgt.display(-1)
+
+    def start_countdown(self, t_start: float):
+
+        print("Start timer")
+
+        self.set_timer_readout(t_start)
+
+        self.countdown_val = t_start
+
+        self.countdown_timer.start(100)
 
     def run_macro(self, macro: str):
         try:
