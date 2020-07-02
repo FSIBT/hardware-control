@@ -57,6 +57,7 @@ class HC_MacroRunnerTool(HC_Instrument):
 
         self.button_panel = QGridLayout()
         allow_dynamic = True
+        self.button_widgets = []
         for idx, but in enumerate(self.buttons):  # Requests dynamic...
 
             if but == "Dynamic":
@@ -86,6 +87,7 @@ class HC_MacroRunnerTool(HC_Instrument):
                 run_button.clicked.connect(
                     lambda: self.run_macro(self.macro_drop.currentText())
                 )
+                self.button_widgets.append(run_button)
 
                 self.button_panel.addWidget(run_button, idx, 0)
                 self.button_panel.addWidget(macro_drop_label, idx, 1)
@@ -99,6 +101,7 @@ class HC_MacroRunnerTool(HC_Instrument):
                 # run_button.setIcon(QIcon((QPixmap(pkg_resources.resource_filename("hardware_control", "ScanTool/graphics/scan.png")))))
                 run_button.setCheckable(False)
                 run_button.clicked.connect(lambda: self.run_macro(but))
+                self.button_widgets.append(run_button)
 
                 self.button_panel.addWidget(run_button, idx, 0)
 
