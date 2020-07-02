@@ -1308,6 +1308,8 @@ class HC_Instrument(QGroupBox):
         self.address = ""  # This is used mostly for displaying the instrument's
         # address to the user
 
+        self.online_callback = None
+
         if backend is not None:
             if backend.connection_addr in self.window.app.comms:
                 self.comm = self.window.app.comms[backend.connection_addr]
@@ -1365,6 +1367,20 @@ class HC_Instrument(QGroupBox):
         dictionary and/or UI.
         """
         pass
+
+    def set_online_callback(self, callback_function):
+        """
+        This function allows the user to specify a callback function which will
+        be called when the backend reports 'online' the next time.
+        """
+
+        if not callable(callback_function):
+            logger.warning(
+                f"Specified a non-callable object ({callback_function}) for a callback function. "
+            )
+            return
+
+        self.online_callback = callback_function
 
     def update_ramp(self):
 
@@ -1696,6 +1712,16 @@ class HC_Instrument(QGroupBox):
         """Is called by self.comm when the backend returns an online status."""
 
         self.online = connected
+
+        if self.online_callback is None:
+            return
+
+        if not callable(self.online_callback):
+            self.online_callback = None
+            return
+
+        self.online_callback(self)
+        self.online_callback = None
 
     def backend_return_listdata(self, descr: str, data1: list, data2: list):
         """Is called by self.comm when the backend returns from command_listdata,
