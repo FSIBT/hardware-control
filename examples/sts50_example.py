@@ -84,6 +84,14 @@ else:
     fh.setLevel(loglevel)
     hc_logger.addHandler(fh)
 
+
+def init_osc_when_online(obj):
+
+    send_state_when_online(obj)
+
+    obj.command("CONFIG_READ_WAVE")
+
+
 logger.info("STS50 Example Starting")
 
 
@@ -128,6 +136,7 @@ class STS50Demo(HC_MainWindow):
         )
         self.scope_ctrl = HC_Oscilloscope(scpi_scope, self, "Keysight")
         self.scope_ctrl.load_state("scope_state.json")
+        self.scope_ctrl.set_online_callback(init_osc_when_online)
 
         # Put instrument(s) in tab
         self.tab1_layout = QGridLayout()
