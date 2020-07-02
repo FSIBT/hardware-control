@@ -114,6 +114,15 @@ def trigger_function(window):
     # Disable trigger button
     window.run_tool.button_widgets[0].setEnabled(False)
 
+    # Set Keysight oscilloscope to single trigger
+    window.scope_ctrl.comand("SINGLE_TRIGGER")
+
+    # Set Picoscope to single trigger
+    window.pico_ctrl.comand("SINGLE_TRIGGER")
+
+    # Trigger the delay generator
+    window.trig1_ctrl.command("single_trigger")
+
 
 def countdown_end_fn(macro_runner_tool):
 
