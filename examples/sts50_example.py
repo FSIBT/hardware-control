@@ -19,6 +19,7 @@ import sys, warnings
 import time
 from PyQt5.QtWidgets import QDoubleSpinBox, QStyleFactory, QTabWidget, QGroupBox
 from docopt import docopt
+from time import gmtime, strftime
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
@@ -84,6 +85,13 @@ else:
     fh.setLevel(loglevel)
     hc_logger.addHandler(fh)
 
+logger.info("STS50 Example Starting")
+
+
+def send_state_when_online(obj):
+    obj.send_state()
+    print(f"{time.time()}\t\t{obj}")
+
 
 def init_osc_when_online(obj):
 
@@ -92,12 +100,18 @@ def init_osc_when_online(obj):
     obj.command("CONFIG_READ_WAVE")
 
 
-logger.info("STS50 Example Starting")
+def trigger_function(window):
+
+    print("Trigger!")
+
+    window.app.variables["SHOT_ID_NUM"] = strftime("%H%M%S", gmtime())
+
+    window.run_tool.update_indicators()
+    window.run_tool.start_countdown(7.5)
 
 
-def send_state_when_online(obj):
-    obj.send_state()
-    print(f"{time.time()}\t\t{obj}")
+def countdown_end_fn(self):
+    print("Countdown ended!")
 
 
 class STS50Demo(HC_MainWindow):
@@ -219,9 +233,6 @@ class STS50Demo(HC_MainWindow):
         self.statustool = HC_StatusTool(self, "Connection Status")
         self.statustool.update_instruments()
 
-        app.function_handles["trigger_function"] = self.trigger_function
-        app.function_handles["print_fil"] = self.print_fil
-
         app.add_variable("FIL_AMPL_V", "5.0")  # Add a filament amplitude variable
         app.add_variable("DELAY_TIME_S", "7.5")  # Add a delay time variable
         app.add_variable("PULSE_TIME_S", "500e-6")  # Add a spark time variable
@@ -234,6 +245,7 @@ class STS50Demo(HC_MainWindow):
         #         "SET:Filament DAC:VOLT:0",
         #     ],
         # )  # Add a trigger macro
+
         app.add_macro("Trigger", ["FUNC:HANDLE:trigger_function"])
         # "Trigger", ["FUNC:VAR:SHOT_ID_NUM:10", "FUNC:UPDATE:MACRO_IND",],
         app.add_macro("Safe", ["CMD:PSU:ALL_OFF", "CMD:AWG:ALL_OFF"])
@@ -241,19 +253,25 @@ class STS50Demo(HC_MainWindow):
         app.add_macro("print_fil_ampl", ["FUNC:HANDLE:print_fil"])
         app.add_macro("MeasurementRequest", ["FUNC:DISP:str:MEAS:REQ"])
 
+        self.run_tool = HC_MacroRunnerTool(
+            self,
+            "Beam Trigger",
+            {"Trigger": "Trigger Beam"},
+            {"SHOT_ID_NUM": "Shot ID Number: "},
+            add_countdown=True,
+        )
+        self.run_tool.update_macros()
+        self.run_tool.countdown_end = countdown_end_fn
+
+        app.function_handles["trigger_function"] = lambda: trigger_function(self)
+        app.function_handles["print_fil"] = self.print_fil
+
         # self.run_tool = HC_MacroRunnerTool(
         #     self,
         #     "Trigger Beam",
         #     {"Dynamic": "Run Macro", "Trigger": "Trigger Beam"},
         #     {"FIL_AMPL_V" : "Filament Amplitude: "},
         # )
-        self.run_tool = HC_MacroRunnerTool(
-            self,
-            "Beam Trigger",
-            {"Trigger": "Trigger Beam"},
-            {"SHOT_ID_NUM": "Shot ID Number: "},
-        )
-        self.run_tool.update_macros()
 
         # Create Datasets
         self.app.data_sets["Autolog"] = Dataset("Autolog")
@@ -355,11 +373,6 @@ class STS50Demo(HC_MainWindow):
         #     with open("example_sts50.log", "w") as f:
         #         for item in self.app.log:
         #             f.write("%s\n" % item)
-
-    def trigger_function(self):
-
-        self.app.variables["SHOT_ID_NUM"] = str(time.time())
-        self.run_tool.update_indicators()
 
     def print_fil(self):
 
