@@ -166,6 +166,8 @@ class Key4000XCtrl(HC_Backend):
             self.write(":SING")
         elif cmd == "RUN":
             self.write(":RUN")
+        elif cmd == "CONFIG_READ_WAVE":
+            self.configure_read_waveform()
         elif cmd == "STOP":
             self.write(":STOP")
 
@@ -236,8 +238,6 @@ class Key4000XCtrl(HC_Backend):
     # Returns (V, t) as float[]
     def read_waveform(self, channel: int):
         """Reads a waveform from the oscilloscope."""
-
-        self.configure_read_waveform()
 
         if self.dummy or not self.online:
             t = np.linspace(0, 1e-3, 100, False)
