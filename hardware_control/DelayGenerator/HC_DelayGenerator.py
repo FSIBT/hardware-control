@@ -99,7 +99,7 @@ class HC_DelayGenerator(HC_Instrument):
             QIcon(
                 QPixmap(
                     pkg_resources.resource_filename(
-                        "hardware_control", "/graphics/pulse.png"
+                        "hardware_control", "/icons/pulse.png"
                     )
                 )
             )

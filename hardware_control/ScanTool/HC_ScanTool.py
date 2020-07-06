@@ -51,7 +51,7 @@ class HC_ScanTool(HC_Instrument):
         self.arrow_symbol.setPixmap(
             QPixmap(
                 pkg_resources.resource_filename(
-                    "hardware_control", "graphics/arrow.png"
+                    "hardware_control", "icons/arrow.png"
                 )
             )
         )
@@ -208,7 +208,7 @@ class HC_ScanTool(HC_Instrument):
             QIcon(
                 QPixmap(
                     pkg_resources.resource_filename(
-                        "hardware_control", "graphics/scan.png"
+                        "hardware_control", "icons/scan.png"
                     )
                 )
             )

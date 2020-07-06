@@ -364,7 +364,7 @@ class PowerSupplyChannel(QWidget):
             self.channel_label.setPixmap(
                 QPixmap(
                     pkg_resources.resource_filename(
-                        "hardware_control", f"graphics/channel_{self.channel}.png",
+                        "hardware_control", f"icons/channel_{self.channel}.png",
                     )
                 )
             )

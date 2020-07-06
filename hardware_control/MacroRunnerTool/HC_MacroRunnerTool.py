@@ -67,7 +67,7 @@ class HC_MacroRunnerTool(HC_Instrument):
 
                 # Create macro selection dropdown label
                 macro_drop_label = QLabel("Macro:")
-                # macro_drop_label.setPixmap(QPixmap(pkg_resources.resource_filename("hardware_control", "ScanTool/graphics/arrow.png")))
+                # macro_drop_label.setPixmap(QPixmap(pkg_resources.resource_filename("hardware_control", "ScanTool/icons/arrow.png")))
                 macro_drop_label.setAlignment(
                     QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
                 )
@@ -82,7 +82,7 @@ class HC_MacroRunnerTool(HC_Instrument):
 
                 run_button = QPushButton()
                 run_button.setText(self.buttons[but])
-                # run_button.setIcon(QIcon((QPixmap(pkg_resources.resource_filename("hardware_control", "ScanTool/graphics/scan.png")))))
+                # run_button.setIcon(QIcon((QPixmap(pkg_resources.resource_filename("hardware_control", "ScanTool/icons/scan.png")))))
                 run_button.setCheckable(False)
                 run_button.clicked.connect(
                     lambda: self.run_macro(self.macro_drop.currentText())
@@ -98,7 +98,7 @@ class HC_MacroRunnerTool(HC_Instrument):
 
                 run_button = QPushButton()
                 run_button.setText(self.buttons[but])
-                # run_button.setIcon(QIcon((QPixmap(pkg_resources.resource_filename("hardware_control", "ScanTool/graphics/scan.png")))))
+                # run_button.setIcon(QIcon((QPixmap(pkg_resources.resource_filename("hardware_control", "ScanTool/icons/scan.png")))))
                 run_button.setCheckable(False)
                 run_button.clicked.connect(lambda: self.run_macro(but))
                 self.button_widgets.append(run_button)

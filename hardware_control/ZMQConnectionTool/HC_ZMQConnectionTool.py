@@ -68,14 +68,14 @@ class HC_ZMQConnectionTool(HC_Instrument):
 
         self.darkgrey_ind = QPixmap(
             pkg_resources.resource_filename(
-                "hardware_control", "graphics/ind_darkgrey.png"
+                "hardware_control", "icons/ind_darkgrey.png"
             )
         )
         self.blue_ind = QPixmap(
-            pkg_resources.resource_filename("hardware_control", "graphics/ind_blue.png")
+            pkg_resources.resource_filename("hardware_control", "icons/ind_blue.png")
         )
         self.grey_ind = QPixmap(
-            pkg_resources.resource_filename("hardware_control", "graphics/ind_grey.png")
+            pkg_resources.resource_filename("hardware_control", "icons/ind_grey.png")
         )
 
         # Create GUI

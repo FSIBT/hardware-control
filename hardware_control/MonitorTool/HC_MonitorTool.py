@@ -31,7 +31,7 @@ class HC_MonitorTool(QGroupBox):
         )
         self.darkgrey_indicator = QPixmap(
             pkg_resources.resource_filename(
-                "hardware_control", "graphics/ind_darkgrey.png"
+                "hardware_control", "icons/ind_darkgrey.png"
             )
         )
         self.red_indicator = QPixmap(

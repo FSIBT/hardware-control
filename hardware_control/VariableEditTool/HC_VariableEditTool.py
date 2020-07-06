@@ -40,7 +40,7 @@ class HC_VariableEditTool(HC_Instrument):
 
                 # Create macro selection dropdown label
                 variable_drop_label = QLabel("Variable:")
-                # variable_drop_label.setPixmap(QPixmap(pkg_resources.resource_filename("hardware_control", "ScanTool/graphics/arrow.png")))
+                # variable_drop_label.setPixmap(QPixmap(pkg_resources.resource_filename("hardware_control", "ScanTool/icons/arrow.png")))
                 variable_drop_label.setAlignment(
                     QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
                 )
@@ -55,7 +55,7 @@ class HC_VariableEditTool(HC_Instrument):
 
                 # Create edit box label
                 value_edit_label = QLabel(vars[v])
-                # variable_drop_label.setPixmap(QPixmap(pkg_resources.resource_filename("hardware_control", "ScanTool/graphics/arrow.png")))
+                # variable_drop_label.setPixmap(QPixmap(pkg_resources.resource_filename("hardware_control", "ScanTool/icons/arrow.png")))
                 value_edit_label.setAlignment(
                     QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
                 )
@@ -82,7 +82,7 @@ class HC_VariableEditTool(HC_Instrument):
 
                 # Create edit box label
                 value_edit_label = QLabel(vars[v])
-                # variable_drop_label.setPixmap(QPixmap(pkg_resources.resource_filename("hardware_control", "ScanTool/graphics/arrow.png")))
+                # variable_drop_label.setPixmap(QPixmap(pkg_resources.resource_filename("hardware_control", "ScanTool/icons/arrow.png")))
                 value_edit_label.setAlignment(
                     QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
                 )

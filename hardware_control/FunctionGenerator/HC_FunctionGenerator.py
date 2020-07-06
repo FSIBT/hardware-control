@@ -138,7 +138,7 @@ class FunctionGeneratorChannelWidget(QWidget):
             self.channel_label.setPixmap(
                 QPixmap(
                     pkg_resources.resource_filename(
-                        "hardware_control", "graphics/channel1_yellow.png",
+                        "hardware_control", "icons/channel1_yellow.png",
                     )
                 )
             )
@@ -146,7 +146,7 @@ class FunctionGeneratorChannelWidget(QWidget):
             self.channel_label.setPixmap(
                 QPixmap(
                     pkg_resources.resource_filename(
-                        "hardware_control", "graphics/channel2_green.png",
+                        "hardware_control", "icons/channel2_green.png",
                     )
                 )
             )
@@ -229,7 +229,7 @@ class FunctionGeneratorChannelWidget(QWidget):
             QIcon(
                 QPixmap(
                     pkg_resources.resource_filename(
-                        "hardware_control", "graphics/modulation.png",
+                        "hardware_control", "icons/modulation.png",
                     )
                 )
             )
@@ -249,7 +249,7 @@ class FunctionGeneratorChannelWidget(QWidget):
             QIcon(
                 QPixmap(
                     pkg_resources.resource_filename(
-                        "hardware_control", "graphics/burst.png"
+                        "hardware_control", "icons/burst.png"
                     )
                 )
             )

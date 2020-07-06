@@ -51,7 +51,7 @@ class HC_LoggerTool(HC_Instrument):
         # *************************Create GUI************************
 
         # self.arrow_symbol = QLabel()
-        # self.arrow_symbol.setPixmap(QPixmap(pkg_resources.resource_filename("hardware_control", "ScanTool/graphics/arrow.png")))
+        # self.arrow_symbol.setPixmap(QPixmap(pkg_resources.resource_filename("hardware_control", "ScanTool/icons/arrow.png")))
         # self.arrow_symbol.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
         # # ****** DEFINE TEXT BOXES
         # #
@@ -99,7 +99,7 @@ class HC_LoggerTool(HC_Instrument):
         self.autosave_label.setPixmap(
             QPixmap(
                 pkg_resources.resource_filename(
-                    "hardware_control", "graphics/autosave_label.png"
+                    "hardware_control", "icons/autosave_label.png"
                 )
             )
         )
@@ -168,7 +168,7 @@ class HC_LoggerTool(HC_Instrument):
         self.autolog_label.setPixmap(
             QPixmap(
                 pkg_resources.resource_filename(
-                    "hardware_control", "graphics/async_label.png"
+                    "hardware_control", "icons/async_label.png"
                 )
             )
         )
@@ -203,7 +203,7 @@ class HC_LoggerTool(HC_Instrument):
         self.autolog_ind_label.setPixmap(
             QPixmap(
                 pkg_resources.resource_filename(
-                    "hardware_control", "graphics/ind_darkgrey.png"
+                    "hardware_control", "icons/ind_darkgrey.png"
                 )
             )
         )
@@ -485,7 +485,7 @@ class HC_LoggerTool(HC_Instrument):
                 self.autolog_ind_label.setPixmap(
                     QPixmap(
                         pkg_resources.resource_filename(
-                            "hardware_control", "graphics/ind_blue.png"
+                            "hardware_control", "icons/ind_blue.png"
                         )
                     )
                 )
@@ -494,7 +494,7 @@ class HC_LoggerTool(HC_Instrument):
                 self.autolog_ind_label.setPixmap(
                     QPixmap(
                         pkg_resources.resource_filename(
-                            "hardware_control", "graphics/ind_darkgrey.png"
+                            "hardware_control", "icons/ind_darkgrey.png"
                         )
                     )
                 )

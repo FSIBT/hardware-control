@@ -11,7 +11,6 @@ setup(
         "hardware_control.DelayGenerator",
         "hardware_control.FlowController",
         "hardware_control.FunctionGenerator",
-        "hardware_control.graphics",
         "hardware_control.icons",
         "hardware_control.IOModule",
         "hardware_control.LoggerTool",

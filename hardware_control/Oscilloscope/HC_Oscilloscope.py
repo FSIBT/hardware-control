@@ -247,7 +247,7 @@ class OscillscopeChannelWidget(QWidget):
             self.channel_label.setPixmap(
                 QPixmap(
                     pkg_resources.resource_filename(
-                        "hardware_control", "graphics/channel1_yellow.png"
+                        "hardware_control", "icons/channel1_yellow.png"
                     )
                 )
             )
@@ -255,7 +255,7 @@ class OscillscopeChannelWidget(QWidget):
             self.channel_label.setPixmap(
                 QPixmap(
                     pkg_resources.resource_filename(
-                        "hardware_control", "graphics/channel2_green.png"
+                        "hardware_control", "icons/channel2_green.png"
                     )
                 )
             )
@@ -263,7 +263,7 @@ class OscillscopeChannelWidget(QWidget):
             self.channel_label.setPixmap(
                 QPixmap(
                     pkg_resources.resource_filename(
-                        "hardware_control", "graphics/channel3_blue.png"
+                        "hardware_control", "icons/channel3_blue.png"
                     )
                 )
             )
@@ -271,7 +271,7 @@ class OscillscopeChannelWidget(QWidget):
             self.channel_label.setPixmap(
                 QPixmap(
                     pkg_resources.resource_filename(
-                        "hardware_control", "graphics/channel4_red.png"
+                        "hardware_control", "icons/channel4_red.png"
                     )
                 )
             )
@@ -337,7 +337,7 @@ class OscillscopeChannelWidget(QWidget):
             QIcon(
                 QPixmap(
                     pkg_resources.resource_filename(
-                        "hardware_control", "graphics/BWlim.png"
+                        "hardware_control", "icons/BWlim.png"
                     )
                 )
             )
@@ -357,7 +357,7 @@ class OscillscopeChannelWidget(QWidget):
             QIcon(
                 QPixmap(
                     pkg_resources.resource_filename(
-                        "hardware_control", "graphics/invert.png"
+                        "hardware_control", "icons/invert.png"
                     )
                 )
             )
@@ -472,7 +472,7 @@ class OscilloscopeTriggerWidget(QWidget):
         self.trigger_label.setPixmap(
             QPixmap(
                 pkg_resources.resource_filename(
-                    "hardware_control", "graphics/trigger_label.png"
+                    "hardware_control", "icons/trigger_label.png"
                 )
             )
         )
@@ -583,7 +583,7 @@ class OscilloscopeHorizontalWidget(QWidget):
         self.horizontal_label.setPixmap(
             QPixmap(
                 pkg_resources.resource_filename(
-                    "hardware_control", "graphics/horizontal_label.png"
+                    "hardware_control", "icons/horizontal_label.png"
                 )
             )
         )
@@ -803,7 +803,7 @@ class OscilloscopeMeasurementWidget(QWidget):
         self.measurement_label.setPixmap(
             QPixmap(
                 pkg_resources.resource_filename(
-                    "hardware_control", "graphics/measurement_label.png"
+                    "hardware_control", "icons/measurement_label.png"
                 )
             )
         )

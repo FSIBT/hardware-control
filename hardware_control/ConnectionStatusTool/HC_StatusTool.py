@@ -30,7 +30,7 @@ class HC_StatusTool(QGroupBox):
         )
         self.darkgrey_indicator = QPixmap(
             pkg_resources.resource_filename(
-                "hardware_control", "graphics/ind_darkgrey.png"
+                "hardware_control", "icons/ind_darkgrey.png"
             )
         )
         self.red_indicator = QPixmap(
@@ -56,14 +56,14 @@ class HC_StatusTool(QGroupBox):
         # *************************Create GUI************************
 
         #        self.arrow_symbol = QLabel();
-        #        self.arrow_symbol.setPixmap(QPixmap(pkg_resources.resource_filename('hardware_control', 'ScanTool/graphics/arrow.png')));
+        #        self.arrow_symbol.setPixmap(QPixmap(pkg_resources.resource_filename('hardware_control', 'ScanTool/icons/arrow.png')));
         #        self.arrow_symbol.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
         #
         self.instruments_label = QLabel()
         self.instruments_label.setPixmap(
             QPixmap(
                 pkg_resources.resource_filename(
-                    "hardware_control", "ConnectionStatusTool/graphics/status_label.png"
+                    "hardware_control", "ConnectionStatusTool/icons/status_label.png"
                 )
             )
         )
