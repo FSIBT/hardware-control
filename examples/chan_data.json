@@ -1,0 +1,4 @@
+{"Enable": {"DIR": "OUTPUT", "TYPE": "DIGITAL", "ID_STR": "D1", "LABEL": "Enabled", "UNITS":""},
+ "CURR": {"DIR": "OUTPUT", "TYPE": "ANALOG", "ID_STR": "A4", "LABEL": "Current: ", "UNITS":" A"},
+"CURR_MEAS": {"DIR": "INPUT", "TYPE": "ANALOG", "ID_STR": "A0", "LABEL": "Current Reading", "UNITS":" A"},
+"VOLT": {"DIR": "INPUT", "TYPE": "ANALOG", "ID_STR": "A1", "LABEL": "Temperature Reading", "UNITS":" K"}}
