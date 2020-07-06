@@ -23,6 +23,7 @@ from PyQt5.QtWidgets import (
     QSizePolicy,
 )
 from hardware_control.utility import remove_end_carriage_return, apply_to_label
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +32,9 @@ DISP_DECIMAL_PLACES = 1
 
 
 def read_channel_file(filename: str):
-    pass
+
+    with open(filename) as file:
+        return json.load(file)
 
 
 class HC_IOModule(HC_Instrument):
@@ -72,7 +75,7 @@ class HC_IOModule(HC_Instrument):
                 continue
 
             c_dict = self.ensure_all_fields(c_dict)
-
+            print(c_dict)
             if c_dict["DIR"] == "OUTPUT":
                 if c_dict["TYPE"] == "DIGITAL":
                     last_wdgt = DigitalOutputChannel(
@@ -82,7 +85,7 @@ class HC_IOModule(HC_Instrument):
                         c_dict["UNITS"],
                         c_dict["LABEL"],
                     )
-                    self.dig_out_channels.append(last_wdt)
+                    self.dig_out_channels.append(last_wdgt)
                 else:  # "ANALOG"
                     last_wdgt = AnalogOutputChannel(
                         self,
@@ -91,7 +94,7 @@ class HC_IOModule(HC_Instrument):
                         c_dict["UNITS"],
                         c_dict["LABEL"],
                     )
-                    self.an_out_channels.append(last_wdt)
+                    self.an_out_channels.append(last_wdgt)
             else:  # "INPUT"
                 if c_dict["TYPE"] == "DIGITAL":
                     last_wdgt = DigitalInputChannel(
@@ -101,7 +104,7 @@ class HC_IOModule(HC_Instrument):
                         c_dict["UNITS"],
                         c_dict["LABEL"],
                     )
-                    self.dig_in_channels.append(last_wdt)
+                    self.dig_in_channels.append(last_wdgt)
                 else:  # "ANALOG"
                     last_wdgt = AnalogInputChannel(
                         self,
@@ -110,7 +113,7 @@ class HC_IOModule(HC_Instrument):
                         c_dict["UNITS"],
                         c_dict["LABEL"],
                     )
-                    self.an_in_channels.append(last_wdt)
+                    self.an_in_channels.append(last_wdgt)
 
             self.channel_panel.addWidget(
                 last_wdgt,
@@ -160,10 +163,12 @@ class HC_IOModule(HC_Instrument):
             if field_name not in x:
                 x[field_name] = None
 
+        return x
+
     def update_readout(self):
-        for ic in self.an_in_channel:
+        for ic in self.an_in_channels:
             ic.update_readout()
-        for ic in self.dig_in_channel:
+        for ic in self.dig_in_channels:
             ic.update_readout()
 
 
@@ -176,6 +181,10 @@ class AnalogInputChannel(QWidget):
         self.channel = channel
 
         self.conversion_function = function
+        if units is None:
+            units = ""
+        if label is None:
+            label = ""
         self.units = units
 
         self.label_str = label
@@ -238,6 +247,10 @@ class AnalogOutputChannel(QWidget):
         self.channel = channel
 
         self.conversion_function = function
+        if units is None:
+            units = ""
+        if label is None:
+            label = ""
         self.units = units
 
         self.set_to_zero_button = set_to_zero_button
@@ -292,6 +305,10 @@ class DigitalInputChannel(QWidget):
         self.channel = channel
 
         self.conversion_function = function
+        if units is None:
+            units = ""
+        if label is None:
+            label = ""
         self.units = units
 
         self.label_str = label
@@ -354,6 +371,10 @@ class DigitalOutputChannel(QWidget):
         self.channel = channel
 
         self.conversion_function = function
+        if units is None:
+            units = ""
+        if label is None:
+            label = ""
         self.units = units
 
         self.set_to_zero_button = set_to_zero_button
