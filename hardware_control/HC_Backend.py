@@ -249,7 +249,7 @@ class HC_Backend(ABC):
                 self.device.sendall(bytes(command + "\n", "utf-8"))
                 return command
         except Exception:
-            logger.debug(f"ERROR: Write {command} failed in {self.ID}", exec_info=True)
+            logger.debug(f"ERROR: Write {command} failed in {self.ID}", exc_info=True)
             self.online = False
             return f"{self.ID}-Offline"
 
