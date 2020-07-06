@@ -66,8 +66,7 @@ from hardware_control.widgets.logger import HC_LoggerTool
 from hardware_control.PowerSupply.NI_DaX_PowerSupplyController import (
     NI_DaX_PowerSupplyController,
 )
-from hardware_control.widgets.plot import HC_PlotTool
-from hardware_control.widgets.mini_plot import HC_MiniPlotTool
+from hardware_control.widgets.plot import HC_PlotTool, HC_MiniPlotTool
 from hardware_control.base import HC_ConsoleWidget
 from hardware_control.IOModule.HC_IOModule import HC_IOModule, read_channel_file
 from hardware_control.IOModule.NI9000Ctrl import NI9000Ctrl

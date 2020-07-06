@@ -62,8 +62,7 @@ from hardware_control.IOModule.HC_IOModule import HC_IOModule
 from hardware_control.base import HC_ConsoleWidget
 from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
 from hardware_control.Oscilloscope.Pico5000ACtrl import Pico5000ACtrl
-from hardware_control.widgets.mini_plot import HC_MiniPlotTool
-from hardware_control.widgets.plot import HC_PlotTool
+from hardware_control.widgets.plot import HC_PlotTool, HC_MiniPlotTool
 
 
 logger = logging.getLogger(__name__)
