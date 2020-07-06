@@ -382,36 +382,18 @@ class DigitalOutputChannel(QWidget):
             10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
         )
 
-        self.editbox = QLineEdit()
-        self.editbox.setValidator(QDoubleValidator())
-        self.editbox.setFixedWidth(100)
-        self.editbox.editingFinished.connect(self.set_voltage)
-        self.editbox.setText("0")
-
-        self.unit_label = QLabel(f" {self.units}")
-
-        if self.set_to_zero_button:
-            self.to_zero_but = QPushButton("Set to 0 V")
-            self.to_zero_but.setCheckable(False)
-            self.to_zero_but.clicked.connect(lambda: self.set_to_zero())
+        self.ctrl_but = QPushButton("On/Off")
+        self.ctrl_but.setCheckable(True)
+        self.ctrl_but.clicked.connect(lambda: self.ctrl())
 
         self.main_layout = QGridLayout()
         self.main_layout.addWidget(self.edit_label, 0, 0)
-        self.main_layout.addWidget(self.editbox, 0, 1)
-        self.main_layout.addWidget(self.unit_label, 0, 2)
-        if self.set_to_zero_button:
-            self.main_layout.addWidget(self.to_zero_but, 1, 1, 1, 2)
+        self.main_layout.addWidget(self.ctrl_but, 0, 1)
 
         self.setLayout(self.main_layout)
 
-    def set_voltage(self):
-        voltage = float(self.editbox.text())
+    def ctrl(self):
 
-        if callable(self.conversion_function):
-            voltage = self.conversion_function(voltage)
-
-            self.control.update_setting(f"CH{self.channel}_V_set", str(voltage))
-
-    def set_to_zero(self):
-        self.editbox.setText("0")
-        self.control.update_setting(f"CH{self.channel}_V_set", "0")
+        self.control.update_setting(
+            f"CH{self.channel}_V_set", str(self.ctrl_but.isChecked())
+        )
