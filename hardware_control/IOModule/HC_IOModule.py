@@ -297,7 +297,7 @@ class AnalogOutputChannel(QWidget):
 
 
 class DigitalInputChannel(QWidget):
-    def __init__(self, control, channel, function=None, units="V", label="Voltage: "):
+    def __init__(self, control, channel, function=None, units="", label="Digital: "):
 
         super().__init__()
 
@@ -342,13 +342,10 @@ class DigitalInputChannel(QWidget):
                 V_meas = self.conversion_function(float(V_meas))
 
             # Update label
-            apply_to_label(
-                self.measurement_label,
-                V_meas,
-                self.units,
-                DISP_DECIMAL_PLACES,
-                LABEL_MIN_WIDTH,
-            )
+            if V_meas:
+                self.measurement_label.setText(f"HIGH {self.units}")
+            else:
+                self.measurement_label.setText(f"LOW {self.units}")
 
         except Exception as e:
             self.measurement_label.setText(f"---- V")
