@@ -61,7 +61,7 @@ from hardware_control.ZMQConnectionTool.HC_ZMQConnectionTool import HC_ZMQConnec
 from hardware_control.MacroRunnerTool.HC_MacroRunnerTool import HC_MacroRunnerTool
 from hardware_control.VariableEditTool.HC_VariableEditTool import HC_VariableEditTool
 from hardware_control.IOModule.HC_Read import HC_Read, HC_singleChannelRead
-from hardware_control.IOModule.ADAM_6015 import Adam_6015
+from hardware_control.IOModule.ADAM6015Ctrl import Adam_6015
 from hardware_control.LoggerTool.HC_LoggerTool import HC_LoggerTool
 from hardware_control.PowerSupply.NI_DaX_PowerSupplyController import (
     NI_DaX_PowerSupplyController,
@@ -69,6 +69,8 @@ from hardware_control.PowerSupply.NI_DaX_PowerSupplyController import (
 from hardware_control.PlotTool.HC_PlotTool import HC_PlotTool
 from hardware_control.PlotTool.HC_MiniPlotTool import HC_MiniPlotTool
 from hardware_control.base import HC_ConsoleWidget
+from hardware_control.IOModule.HC_IOModule import HC_IOModule, read_channel_file
+from hardware_control.IOModule.NI9000Ctrl import NI9000Ctrl
 
 
 logger = logging.getLogger(__name__)
@@ -234,6 +236,13 @@ class STS50Demo(HC_MainWindow):
         self.trig2_ctrl.settings_to_UI()
         self.trig2_ctrl.set_online_callback(send_state_when_online)
 
+        channel_data = read_channel_file("chan_data.json")
+        print(channel_data)
+        self.iomod0 = NI9000Ctrl("192.168.0.0")
+        self.iomod_wdgt = HC_IOModule(
+            self.iomod0, self, channel_data, "IO Module", num_columns=2
+        )
+
         self.zmqtool = HC_ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
 
         self.scantool = HC_ScanTool(self, "Scan Control", True)
@@ -325,7 +334,8 @@ class STS50Demo(HC_MainWindow):
         # self.tab3_layout.addWidget(self.flow_ctrl, 0, 0)
         self.tab3_layout.addWidget(self.flow_ctrl, 1, 0, 2, 1)
         # self.tab3_layout.addWidget(self.trig2_ctrl, 2, 0)
-        self.tab3_layout.addWidget(self.zmqtool, 3, 0, 2, 1)
+        self.tab3_layout.addWidget(self.zmqtool, 3, 0, 1, 1)
+        self.tab3_layout.addWidget(self.iomod_wdgt, 4, 0, 1, 1)
         self.tab3_layout.addWidget(self.PS_NIDaQ, 2, 2, 3, 1)
         self.tab3_layout.addWidget(self.temp_ctrl, 1, 2)
         # self.tab3_layout.addWidget(self.scantool, 0, 1)
