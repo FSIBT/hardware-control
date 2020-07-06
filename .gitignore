@@ -13,3 +13,4 @@ python/.eggs/
 *.log
 *.mcro
 *.txt
+.idea/*
