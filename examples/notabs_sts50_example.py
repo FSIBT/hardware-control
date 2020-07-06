@@ -33,15 +33,15 @@ from hardware_control.FlowController.HC_FlowController import HC_FlowController
 from hardware_control.FlowController.AlicatMSeriesCtrl import AlicatMSeriesCtrl
 from hardware_control.PulseGenerator.HC_PulseGen import HC_PulseGen
 from hardware_control.PulseGenerator.SRSDG535Ctrl import SRSDG535Ctrl
-from hardware_control.ScanTool.HC_ScanTool import HC_ScanTool
-from hardware_control.ConnectionStatusTool.HC_StatusTool import HC_StatusTool
+from hardware_control.widgets.scan import HC_ScanTool
+from hardware_control.widgets.connection_status import HC_StatusTool
 from hardware_control.FunctionGenerator.HC_FunctionGenerator import HC_FunctionGenerator
 from hardware_control.FunctionGenerator.Key33500BCtrl import Key33500BCtrl
 from hardware_control.PowerSupply.HC_MultiPowerSupply import HC_MultiPowerSupply
 from hardware_control.PowerSupply.TDKLGenHCtrl import TDKLGenHCtrl
-from hardware_control.ZMQConnectionTool.HC_ZMQConnectionTool import HC_ZMQConnectionTool
-from hardware_control.MacroRunnerTool.HC_MacroRunnerTool import HC_MacroRunnerTool
-from hardware_control.VariableEditTool.HC_VariableEditTool import HC_VariableEditTool
+from hardware_control.widgets.zmq_connection import HC_ZMQConnectionTool
+from hardware_control.widgets.macro_runner import HC_MacroRunnerTool
+from hardware_control.widgets.variable_edit import HC_VariableEditTool
 
 
 class STS50Demo(QMainWindow):

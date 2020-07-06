@@ -51,23 +51,23 @@ from hardware_control.FlowController.HC_FlowController import HC_FlowController
 from hardware_control.FlowController.AlicatMSeriesCtrl import AlicatMSeriesCtrl
 from hardware_control.DelayGenerator.HC_DelayGenerator import HC_DelayGenerator
 from hardware_control.DelayGenerator.SRSDG535Ctrl import SRSDG535Ctrl
-from hardware_control.ScanTool.HC_ScanTool import HC_ScanTool
-from hardware_control.ConnectionStatusTool.HC_StatusTool import HC_StatusTool
+from hardware_control.widgets.scan import HC_ScanTool
+from hardware_control.widgets.connection_status import HC_StatusTool
 from hardware_control.FunctionGenerator.HC_FunctionGenerator import HC_FunctionGenerator
 from hardware_control.FunctionGenerator.Key33500BCtrl import Key33500BCtrl
 from hardware_control.PowerSupply.HC_MultiPowerSupply import *
 from hardware_control.PowerSupply.TDKLGenHCtrl import TDKLGenHCtrl
-from hardware_control.ZMQConnectionTool.HC_ZMQConnectionTool import HC_ZMQConnectionTool
-from hardware_control.MacroRunnerTool.HC_MacroRunnerTool import HC_MacroRunnerTool
-from hardware_control.VariableEditTool.HC_VariableEditTool import HC_VariableEditTool
+from hardware_control.widgets.zmq_connection import HC_ZMQConnectionTool
+from hardware_control.widgets.macro_runner import HC_MacroRunnerTool
+from hardware_control.widgets.variable_edit import HC_VariableEditTool
 from hardware_control.IOModule.HC_Read import HC_Read, HC_singleChannelRead
 from hardware_control.IOModule.ADAM6015Ctrl import Adam_6015
-from hardware_control.LoggerTool.HC_LoggerTool import HC_LoggerTool
+from hardware_control.widgets.logger import HC_LoggerTool
 from hardware_control.PowerSupply.NI_DaX_PowerSupplyController import (
     NI_DaX_PowerSupplyController,
 )
-from hardware_control.PlotTool.HC_PlotTool import HC_PlotTool
-from hardware_control.PlotTool.HC_MiniPlotTool import HC_MiniPlotTool
+from hardware_control.widgets.plot import HC_PlotTool
+from hardware_control.widgets.mini_plot import HC_MiniPlotTool
 from hardware_control.base import HC_ConsoleWidget
 from hardware_control.IOModule.HC_IOModule import HC_IOModule, read_channel_file
 from hardware_control.IOModule.NI9000Ctrl import NI9000Ctrl

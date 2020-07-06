@@ -44,15 +44,15 @@ else:
 
 
 from hardware_control.base import HC_App, HC_MainWindow, Dataset, AUTOMATIC, MANUAL
-from hardware_control.ConnectionStatusTool.HC_StatusTool import HC_StatusTool
+from hardware_control.widgets.connection_status import HC_StatusTool
 from hardware_control.PowerSupply.HC_MultiPowerSupply import *
 from hardware_control.PowerSupply.RigolDP832Ctrl import RigolDP832Ctrl
-from hardware_control.ZMQConnectionTool.HC_ZMQConnectionTool import HC_ZMQConnectionTool
-from hardware_control.LoggerTool.HC_LoggerTool import HC_LoggerTool
+from hardware_control.widgets.zmq_connection import HC_ZMQConnectionTool
+from hardware_control.widgets.logger import HC_LoggerTool
 from hardware_control.base import HC_ConsoleWidget
 from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
-from hardware_control.PlotTool.HC_PlotTool import HC_PlotTool
-from hardware_control.PlotTool.HC_MiniPlotTool import HC_MiniPlotTool
+from hardware_control.widgets.plot import HC_PlotTool
+from hardware_control.widgets.mini_plot import HC_MiniPlotTool
 
 
 logger = logging.getLogger(__name__)
