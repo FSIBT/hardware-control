@@ -2,6 +2,7 @@
 This is the Base class for reading modules
 it provides a simple UI.
 """
+import pkg_resources
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QLabel, QWidget, QGridLayout, QLCDNumber, QSpacerItem
 
@@ -31,10 +32,34 @@ LABEL_MIN_WIDTH = -15
 DISP_DECIMAL_PLACES = 1
 
 
-def read_channel_file(filename: str):
+def read_channel_file(filename: str, functions_handles: dict = {}):
+    """
+    Reads channel parameters from a JSON file. Returns a dictionary for
+    initializing an HC_IOModule class.
 
+    fucntion_handles allows function handles to be specified in the JSON file as
+    a string. That string must then be used as a key in functioN_handles with the
+    handle as the value or else the hook for that channel will be ignored.
+    """
+
+    # Read data from file
     with open(filename) as file:
-        return json.load(file)
+        data = json.load(file)
+
+    # Replace hook strings with actual function handle from dict
+    for chan_key in data:  # For each channel dict...
+
+        # If a hook is not given, skip
+        if "HOOK" not in data[chan_key]:
+            continue
+
+        # If function listed as hook is listed in functioN_handles, get handle
+        if data[chan_key]["HOOK"] in functions_handles:
+            data[chan_key]["HOOK"] = functions_handles[data[chan_key]["HOOK"]]
+        else:  # else delete hook
+            del data[chan_key]["HOOK"]
+
+    return data
 
 
 class HC_IOModule(HC_Instrument):
@@ -172,10 +197,21 @@ class HC_IOModule(HC_Instrument):
             ic.update_readout()
 
 
-class AnalogInputChannel(QWidget):
-    def __init__(self, control, channel, function=None, units="V", label="Voltage: "):
+class AnalogInputChannel(QGroupBox):
+    def __init__(
+        self,
+        control,
+        channel,
+        function=None,
+        units="V",
+        label="Voltage: ",
+        show_ID_labels=True,
+    ):
 
-        super().__init__()
+        if show_ID_labels:
+            super().__init__(channel)
+        else:
+            super().__init__()
 
         self.control = control
         self.channel = channel
@@ -230,7 +266,7 @@ class AnalogInputChannel(QWidget):
             self.measurement_label.setText(f"---- V")
 
 
-class AnalogOutputChannel(QWidget):
+class AnalogOutputChannel(QGroupBox):
     def __init__(
         self,
         control,
@@ -239,9 +275,13 @@ class AnalogOutputChannel(QWidget):
         units="V",
         label="Set voltage: ",
         set_to_zero_button=False,
+        show_ID_labels=True,
     ):
 
-        super().__init__()
+        if show_ID_labels:
+            super().__init__(channel)
+        else:
+            super().__init__()
 
         self.control = control
         self.channel = channel
@@ -296,10 +336,28 @@ class AnalogOutputChannel(QWidget):
         self.control.update_setting(f"CH{self.channel}_V_set", "0")
 
 
-class DigitalInputChannel(QWidget):
-    def __init__(self, control, channel, function=None, units="", label="Digital: "):
+class DigitalInputChannel(QGroupBox):
+    def __init__(
+        self,
+        control,
+        channel,
+        function=None,
+        units="",
+        label="Digital: ",
+        show_ID_labels=True,
+    ):
 
-        super().__init__()
+        if show_ID_labels:
+            super().__init__(channel)
+        else:
+            super().__init__()
+
+        self.high_indicator = QPixmap(
+            pkg_resources.resource_filename("hardware_control", "icons/high_label.svg")
+        )
+        self.low_indicator = QPixmap(
+            pkg_resources.resource_filename("hardware_control", "icons/low_label.svg")
+        )
 
         self.control = control
         self.channel = channel
@@ -343,15 +401,16 @@ class DigitalInputChannel(QWidget):
 
             # Update label
             if V_meas:
-                self.measurement_label.setText(f"HIGH {self.units}")
+                self.measurement_label.setPixmap(self.high_indicator)
             else:
-                self.measurement_label.setText(f"LOW {self.units}")
+                self.measurement_label.setPixmap(self.low_indicator)
 
         except Exception as e:
+            # self.measurement_label.setPixmap(self.low_indicator)
             self.measurement_label.setText(f"---- V")
 
 
-class DigitalOutputChannel(QWidget):
+class DigitalOutputChannel(QGroupBox):
     def __init__(
         self,
         control,
@@ -359,10 +418,20 @@ class DigitalOutputChannel(QWidget):
         function=None,
         units="V",
         label="Set voltage: ",
-        set_to_zero_button=False,
+        show_ID_labels=True,
     ):
 
-        super().__init__()
+        if show_ID_labels:
+            super().__init__(channel)
+        else:
+            super().__init__()
+
+        self.high_indicator = QPixmap(
+            pkg_resources.resource_filename("hardware_control", "icons/high_label.svg")
+        )
+        self.low_indicator = QPixmap(
+            pkg_resources.resource_filename("hardware_control", "icons/low_label.svg")
+        )
 
         self.control = control
         self.channel = channel
@@ -374,10 +443,6 @@ class DigitalOutputChannel(QWidget):
             label = ""
         self.units = units
 
-        self.set_to_zero_button = set_to_zero_button
-
-        self.edit_label = QLabel(label)
-
         self.edit_spacer = QSpacerItem(
             10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
         )
@@ -386,13 +451,26 @@ class DigitalOutputChannel(QWidget):
         self.ctrl_but.setCheckable(True)
         self.ctrl_but.clicked.connect(lambda: self.ctrl())
 
+        self.edit_label = QLabel(label)
+        self.ind_label = QLabel()
+        if self.ctrl_but.isChecked():
+            self.ind_label.setPixmap(self.high_indicator)
+        else:
+            self.ind_label.setPixmap(self.low_indicator)
+
         self.main_layout = QGridLayout()
         self.main_layout.addWidget(self.edit_label, 0, 0)
-        self.main_layout.addWidget(self.ctrl_but, 0, 1)
+        self.main_layout.addWidget(self.ind_label, 0, 1)
+        self.main_layout.addWidget(self.ctrl_but, 0, 2)
 
         self.setLayout(self.main_layout)
 
     def ctrl(self):
+
+        if self.ctrl_but.isChecked():
+            self.ind_label.setPixmap(self.high_indicator)
+        else:
+            self.ind_label.setPixmap(self.low_indicator)
 
         self.control.update_setting(
             f"CH{self.channel}_V_set", str(self.ctrl_but.isChecked())
