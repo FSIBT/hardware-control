@@ -1,20 +1,28 @@
 import os
-from setuptools import setup, Command
 import setuptools
+import versioneer
+
+with open("README.md", "r") as f:
+    long_description = f.read()
 
 
-setup(
-    name="hardware_control",
+setuptools.setup(
+    name="hardware-control",
+    description="A package to write QT programs to control hardware",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    version=versioneer.get_version(),
+    license="modified BSD",
     packages=[
         "hardware_control",
+        "hardware_control.icons",
+        "hardware_control.widgets",
         "hardware_control.DelayGenerator",
         "hardware_control.FlowController",
         "hardware_control.FunctionGenerator",
-        "hardware_control.icons",
         "hardware_control.IOModule",
         "hardware_control.Oscilloscope",
         "hardware_control.PowerSupply",
-        "hardware_control.widgets",
         "hardware_control.TemplateDeviceType",
     ],
     package_data={"hardware_control": [os.path.join("icons", "*svg")]},
@@ -25,6 +33,7 @@ setup(
         "matplotlib",
         "nidaqmx",
         "numpy",
+        "picoscope",
         "pymodbus",
         "pyqt5",
         "pyqtgraph",
@@ -43,6 +52,20 @@ setup(
     scripts=[],
     author="Arun Persaud",
     author_email="apersaud@lbl.gov",
-    description="",
     url="https://bitbucket.org/berkeleylab/hardware-control.git",
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "Operating System :: OS Independent",
+        "Development Status :: 3 - Alpha",
+        "License :: OSI Approved :: BSD License",
+        "Intended Audience :: Science/Research",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Topic :: Scientific/Engineering :: Physics",
+    ],
+    python_requires=">=3.6",
+    include_package_data=True,
+    zip_safe=False,
 )
