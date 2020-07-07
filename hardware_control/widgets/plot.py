@@ -193,7 +193,7 @@ class HC_MiniPlotTool(HC_PlotBase):
     No axes, no lables, just the data in a small window that can be included in a status bar for example.
     """
 
-    def __init__(self, window, name="Mini Plot", width=100, height=100):
+    def __init__(self, window, name="Mini Plot", width=100, height=100, **kwargs):
         super().__init__(window, name=name, **kwargs)
 
         self.axes = self.fig.add_axes([0, 0, 1, 1])
