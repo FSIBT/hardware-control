@@ -318,7 +318,7 @@ def get_channel_from_command(command: str):
     try:
         chan = int(command[2:idx_underscore])
     except Exception as e:
-        return None, command
+        chan = command[2:idx_underscore]
 
     # overwrite channel number for easier comparison
     command_X = command[:2] + "X" + command[idx_underscore:]
