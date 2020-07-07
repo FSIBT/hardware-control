@@ -1,6 +1,5 @@
 import os
 import setuptools
-import versioneer
 
 with open("README.md", "r") as f:
     long_description = f.read()
@@ -11,7 +10,6 @@ setuptools.setup(
     description="A package to write QT programs to control hardware",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    version=versioneer.get_version(),
     license="modified BSD",
     packages=[
         "hardware_control",
