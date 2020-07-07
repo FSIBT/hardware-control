@@ -62,18 +62,20 @@ from hardware_control.FlowController.HC_FlowController import HC_FlowController
 from hardware_control.FlowController.AlicatMSeriesCtrl import AlicatMSeriesCtrl
 from hardware_control.DelayGenerator.HC_DelayGenerator import HC_DelayGenerator
 from hardware_control.DelayGenerator.SRSDG535Ctrl import SRSDG535Ctrl
-from hardware_control.widgets.scan import HC_ScanTool
-from hardware_control.widgets.connection_status import HC_StatusTool
 from hardware_control.FunctionGenerator.HC_FunctionGenerator import HC_FunctionGenerator
 from hardware_control.FunctionGenerator.Key33500BCtrl import Key33500BCtrl
 from hardware_control.PowerSupply.HC_MultiPowerSupply import *
 from hardware_control.PowerSupply.TDKLGenHCtrl import TDKLGenHCtrl
-from hardware_control.widgets.zmq_connection import HC_ZMQConnectionTool
-from hardware_control.widgets.macro_runner import HC_MacroRunnerTool
-from hardware_control.widgets.variable_edit import HC_VariableEditTool
+from hardware_control.widgets import (
+    HC_ZMQConnectionTool,
+    HC_LoggerTool,
+    HC_ScanTool,
+    HC_StatusTool,
+    HC_MacroRunnerTool,
+    HC_VariableEditTool,
+)
 from hardware_control.IOModule.HC_Read import HC_Read, HC_singleChannelRead
 from hardware_control.IOModule.ADAM_6015 import Adam_6015
-from hardware_control.widgets.logger import HC_LoggerTool
 from hardware_control.PowerSupply.NI_DaX_PowerSupplyController import (
     NI_DaX_PowerSupplyController,
 )

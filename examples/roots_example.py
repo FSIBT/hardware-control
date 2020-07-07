@@ -52,19 +52,22 @@ else:
 
 
 from hardware_control.base import HC_App, HC_MainWindow, Dataset, AUTOMATIC
-from hardware_control.widgets.connection_status import HC_StatusTool
 from hardware_control.PowerSupply.HC_MultiPowerSupply import HC_MultiPowerSupply, ONLY
 from hardware_control.PowerSupply.CAEN14xxETCtrl import CAEN14xxETCtrl
 from hardware_control.PowerSupply.Key36300Ctrl import Key36300Ctrl
-from hardware_control.widgets.zmq_connection import HC_ZMQConnectionTool
-from hardware_control.widgets.logger import HC_LoggerTool
 from hardware_control.IOModule.ADAM_6024Ctrl import ADAM_6024Ctrl
 from hardware_control.IOModule.HC_IOModule import HC_IOModule
 from hardware_control.base import HC_ConsoleWidget
 from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
 from hardware_control.Oscilloscope.Pico6000Ctrl import Pico6000Ctrl
-from hardware_control.widgets.plot import HC_PlotTool, HC_MiniPlotTool
-from hardware_control.widgets.monitor import HC_MonitorTool
+from hardware_control.widgets import (
+    HC_PlotTool,
+    HC_MiniPlotTool,
+    HC_MonitorTool,
+    HC_StatusTool,
+    HC_ZMQConnectionTool,
+    HC_LoggerTool,
+)
 
 
 logger = logging.getLogger(__name__)
