@@ -1,7 +1,8 @@
 import json
-import json
-
+import logging
+import numpy as np
 import pkg_resources
+
 import pyqtgraph as pg  # For some reason, without this line QPushButton won't import
 from PyQt5 import QtCore
 from PyQt5.QtGui import QPixmap, QProgressBar, QIcon, QApplication
@@ -17,9 +18,7 @@ from PyQt5.QtWidgets import (
     QFileDialog,
 )
 from hardware_control.base import HC_Instrument
-import logging
-import numpy as np
-from hardware_control.ZMQConnectionTool.HC_ZMQConnectionTool import HC_ZMQConnectionTool
+from hardware_control.widgets.zmq_connection import HC_ZMQConnectionTool
 
 logger = logging.getLogger(__name__)
 
