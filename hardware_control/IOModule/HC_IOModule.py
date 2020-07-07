@@ -329,11 +329,17 @@ class AnalogOutputChannel(QGroupBox):
         if callable(self.conversion_function):
             voltage = self.conversion_function(voltage)
 
-            self.control.update_setting(f"CH{self.channel}_analog_write", str(voltage))
+        self.control.update_setting(f"CH{self.channel}_analog_write", str(voltage))
 
     def set_to_zero(self):
+
+        if callable(self.conversion_function):
+            voltage = self.conversion_function(0)
+        else:
+            voltage = 0
+
         self.editbox.setText("0")
-        self.control.update_setting(f"CH{self.channel}_analog_write", "0")
+        self.control.update_setting(f"CH{self.channel}_analog_write", str(voltage))
 
 
 class DigitalInputChannel(QGroupBox):
@@ -401,10 +407,6 @@ class DigitalInputChannel(QGroupBox):
             V_meas = remove_end_carriage_return(
                 self.control.read_values(f"CH{self.channel}_digital_read")
             )
-
-            # Convert to float. Run through conversion function if provided
-            if callable(self.conversion_function):
-                V_meas = self.conversion_function(float(V_meas))
 
             # Update label
             if V_meas:
