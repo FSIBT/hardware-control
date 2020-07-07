@@ -1,11 +1,11 @@
 import json
-
+import logging
 import pkg_resources
+
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QGroupBox, QLabel, QGridLayout
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -136,7 +136,6 @@ class HC_StatusTool(QGroupBox):
                                 )
 
     def load_state(self, filename: str):
-
         # Get default state - this identifies all required fields
         dflt = self.default_state()
 
@@ -168,11 +167,8 @@ class HC_StatusTool(QGroupBox):
                 f"Failed to write file '{filename}'. State not saved.", exc_info=True
             )
 
-    #
-    # Close connection
-    #
     def close(self, filename: str = ""):
-
+        """Close connection."""
         # Save state if asked
         if self.save_on_close:
             self.save_state(self.filename)
@@ -180,11 +176,8 @@ class HC_StatusTool(QGroupBox):
         # Tell scope to close
         self.comm.close()
 
-    #
-    # Create a default state object if can't get state from a file
-    #
     def default_state(self):
-
+        """ Create a default state object if can't get state from a file."""
         dflt = {}
 
         dflt["values"] = ""
