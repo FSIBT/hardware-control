@@ -56,7 +56,7 @@ from hardware_control.PowerSupply.HC_MultiPowerSupply import HC_MultiPowerSupply
 from hardware_control.PowerSupply.CAEN14xxETCtrl import CAEN14xxETCtrl
 from hardware_control.PowerSupply.Key36300Ctrl import Key36300Ctrl
 from hardware_control.IOModule.ADAM_6024Ctrl import ADAM_6024Ctrl
-from hardware_control.IOModule.HC_IOModule import HC_IOModule
+from hardware_control.IOModule.HC_IOModule import HC_IOModule, read_channel_file
 from hardware_control.base import HC_ConsoleWidget
 from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
 from hardware_control.Oscilloscope.Pico6000Ctrl import Pico6000Ctrl
@@ -205,18 +205,37 @@ class RootsDemo(HC_MainWindow):
         self.keysight_wdgt.ramp_mode = AUTOMATIC
         self.keysight_wdgt.default_ramp_speed = 1
 
+        # self.adam_be = ADAM_6024Ctrl("192.168.0.5:1025")
+        # self.adam_wdgt = HC_IOModule(
+        #     self.adam_be,
+        #     self,
+        #     [
+        #         (1, lambda p: p * 100, "Torr", "Pressure"),
+        #         (2, lambda i: i / 10 * 3e-3 + 8.1e-6, "A", "Current"),
+        #         (3, lambda v: v / 10 * 100e3 + 420, "V", "Voltage"),
+        #     ],
+        #     [(0, lambda v: v / 10, "kV", "Voltage")],
+        #     "ADAM",
+        #     lock_until_sync=True,
+        # )
+
+        adam_config = read_channel_file(
+            "adam_config.json",
+            {
+                "hook_ai1": lambda p: p * 100,
+                "hook_ai2": lambda i: i / 10 * 3e-3 + 8.1e-6,
+                "hook_ai3": lambda v: v / 10 * 100e3 + 420,
+                "hook_a01": lambda v: v / 10,
+            },
+        )
         self.adam_be = ADAM_6024Ctrl("192.168.0.5:1025")
         self.adam_wdgt = HC_IOModule(
             self.adam_be,
             self,
-            [
-                (1, lambda p: p * 100, "Torr", "Pressure"),
-                (2, lambda i: i / 10 * 3e-3 + 8.1e-6, "A", "Current"),
-                (3, lambda v: v / 10 * 100e3 + 420, "V", "Voltage"),
-            ],
-            [(0, lambda v: v / 10, "kV", "Voltage")],
+            adam_config,
             "ADAM",
             lock_until_sync=True,
+            num_columns=2,
         )
 
         # Put instrument(s) in tab
