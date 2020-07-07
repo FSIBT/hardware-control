@@ -500,46 +500,61 @@ class PowerSupplyChannel(QWidget):
             self.controls_grid.addWidget(self.enabled_but, 2, 1)
 
         # Load pix maps
-        self.steady_pix = QPixmap(
-            pkg_resources.resource_filename("hardware_control", f"icons/steady_ind.svg")
-        )
-        self.falling_pix = QPixmap(
+        self.steady_ind = QPixmap(
             pkg_resources.resource_filename(
-                "hardware_control", f"icons/falling_ind.svg"
+                "hardware_control", f"icons/steady_label.svg"
             )
         )
-        self.rising_pix = QPixmap(
-            pkg_resources.resource_filename("hardware_control", f"icons/rising_ind.svg")
+        self.rampdn_ind = QPixmap(
+            pkg_resources.resource_filename(
+                "hardware_control", f"icons/rampdn_label.svg"
+            )
         )
-        self.grey_pix = QPixmap(
-            pkg_resources.resource_filename("hardware_control", f"icons/grey_ind.svg")
+        self.rampup_ind = QPixmap(
+            pkg_resources.resource_filename(
+                "hardware_control", f"icons/rampup_label.svg"
+            )
         )
-        self.red_pix = QPixmap(
-            pkg_resources.resource_filename("hardware_control", f"icons/red_ind.svg")
+        self.disabled_ind = QPixmap(
+            pkg_resources.resource_filename(
+                "hardware_control", f"icons/disabled_label.svg"
+            )
         )
-        self.green_pix = QPixmap(
-            pkg_resources.resource_filename("hardware_control", f"icons/green_ind.svg")
+        self.enabled_ind = QPixmap(
+            pkg_resources.resource_filename(
+                "hardware_control", f"icons/enabled_label.svg"
+            )
         )
-        self.blue_pix = QPixmap(
-            pkg_resources.resource_filename("hardware_control", f"icons/blue_ind.svg")
+        self.ccurr_ind = QPixmap(
+            pkg_resources.resource_filename(
+                "hardware_control", f"icons/ccurrent_label.svg"
+            )
+        )
+        self.cvolt_ind = QPixmap(
+            pkg_resources.resource_filename(
+                "hardware_control", f"icons/cvoltage_label.svg"
+            )
+        )
+        self.na_ind = QPixmap(
+            pkg_resources.resource_filename("hardware_control", f"icons/na_label.svg")
         )
 
         self.CC_ind_label = QLabel("CC:")
         self.CC_ind_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
         self.CC_ind = QLabel()
-        self.CC_ind.setPixmap(self.grey_pix)
+        self.CC_ind.setPixmap(self.na_ind)
 
         self.enabled_ind_label = QLabel("Output:")
         self.enabled_ind_label.setAlignment(
             QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
         )
         self.enabled_ind = QLabel()
-        self.enabled_ind.setPixmap(self.grey_pix)
+        self.enabled_ind.setPixmap(self.na_ind)
 
         self.ramp_ind_label = QLabel("Ramp:")
         self.ramp_ind_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
         self.ramp_ind = QLabel()
-        self.ramp_ind.setPixmap(self.steady_pix)
+        self.ramp_ind.setPixmap(self.na_ind)
 
         self.status_panel = QGroupBox()
         self.status_grid = QGridLayout()
@@ -605,17 +620,17 @@ class PowerSupplyChannel(QWidget):
             if Iout is not None and Iset is not None:
                 try:
                     if float(Iout) >= float(Iset) * 0.95:
-                        self.CC_ind.setPixmap(self.red_pix)
+                        self.CC_ind.setPixmap(self.ccurr_ind)
                     else:
-                        self.CC_ind.setPixmap(self.grey_pix)
+                        self.CC_ind.setPixmap(self.cvolt_ind)
                 except:
                     pass
 
             if enabled is not None:
                 if enabled == "True":
-                    self.enabled_ind.setPixmap(self.green_pix)
+                    self.enabled_ind.setPixmap(self.enabled_ind)
                 else:
-                    self.enabled_ind.setPixmap(self.red_pix)
+                    self.enabled_ind.setPixmap(self.disabled_ind)
 
     def set_label(self, label: str):
 
