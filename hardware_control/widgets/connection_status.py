@@ -11,9 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class HC_StatusTool(QGroupBox):
-    def __init__(
-        self, window, name: str = "Connection Status",
-    ):
+    def __init__(self, window, name: str = "Connection Status", short_indicators=False):
 
         super().__init__(name)
 
@@ -22,23 +20,56 @@ class HC_StatusTool(QGroupBox):
         self.app = window.app
         self.ignore = True
 
-        self.green_indicator = QPixmap(
-            pkg_resources.resource_filename("hardware_control", "icons/green_ind.svg")
-        )
-        self.grey_indicator = QPixmap(
-            pkg_resources.resource_filename("hardware_control", "icons/grey_ind.svg")
-        )
-        self.darkgrey_indicator = QPixmap(
-            pkg_resources.resource_filename(
-                "hardware_control", "icons/ind_darkgrey.png"
+        if short_indicators:
+            self.green_indicator = QPixmap(
+                pkg_resources.resource_filename(
+                    "hardware_control", "icons/green_ind.svg"
+                )
             )
-        )
-        self.red_indicator = QPixmap(
-            pkg_resources.resource_filename("hardware_control", "icons/red_ind.svg")
-        )
-        self.blue_indicator = QPixmap(
-            pkg_resources.resource_filename("hardware_control", "icons/blue_ind.svg")
-        )
+            self.grey_indicator = QPixmap(
+                pkg_resources.resource_filename(
+                    "hardware_control", "icons/grey_ind.svg"
+                )
+            )
+            self.darkgrey_indicator = QPixmap(
+                pkg_resources.resource_filename(
+                    "hardware_control", "icons/ind_darkgrey.png"
+                )
+            )
+            self.red_indicator = QPixmap(
+                pkg_resources.resource_filename("hardware_control", "icons/red_ind.svg")
+            )
+            self.blue_indicator = QPixmap(
+                pkg_resources.resource_filename(
+                    "hardware_control", "icons/blue_ind.svg"
+                )
+            )
+        else:
+            self.green_indicator = QPixmap(
+                pkg_resources.resource_filename(
+                    "hardware_control", "icons/online_label.svg"
+                )
+            )
+            self.grey_indicator = QPixmap(
+                pkg_resources.resource_filename(
+                    "hardware_control", "icons/na_label.svg"
+                )
+            )
+            self.darkgrey_indicator = QPixmap(
+                pkg_resources.resource_filename(
+                    "hardware_control", "icons/disabled_label.svg"
+                )
+            )
+            self.red_indicator = QPixmap(
+                pkg_resources.resource_filename(
+                    "hardware_control", "icons/offline_label.svg"
+                )
+            )
+            self.blue_indicator = QPixmap(
+                pkg_resources.resource_filename(
+                    "hardware_control", "icons/enabled_label.svg"
+                )
+            )
 
         # # Initialize state to correct values
         # if initialize_with == "INSTRUMENT":
@@ -128,7 +159,7 @@ class HC_StatusTool(QGroupBox):
                         else:
                             if instr.online_color == "Blue":
                                 self.instrument_grid.itemAt(i + 1).widget().setPixmap(
-                                    self.grey_indicator
+                                    self.darkgrey_indicator
                                 )
                             else:
                                 self.instrument_grid.itemAt(i + 1).widget().setPixmap(
