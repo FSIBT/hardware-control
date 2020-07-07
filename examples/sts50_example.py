@@ -93,11 +93,19 @@ logger.info("STS50 Example Starting")
 
 
 def send_state_when_online(obj):
+    """
+    This function is used by multiple instruments to sync the instrument state
+    and backend once the instrument comes online.
+    """
     obj.send_state()
     print(f"{time.time()}\t\t{obj}")
 
 
 def init_osc_when_online(obj):
+    """
+    This function is used by the oscilloscope specifically to sync the instrument
+    state and configure the oscilloscope when it comes online.
+    """
 
     send_state_when_online(obj)
 
@@ -105,6 +113,10 @@ def init_osc_when_online(obj):
 
 
 def trigger_function(window):
+    """
+    This function is used by the app to describe the beam triggering sequence. It
+    is called when the beam trigger button is pressed or the trigger macro is run.
+    """
 
     print("Trigger!")
 
@@ -129,9 +141,21 @@ def trigger_function(window):
 
 
 def countdown_end_fn(macro_runner_tool):
+    """
+    This function is called at the end of the trigger button countdown timer. It
+    re-enables the trigger button (which is disabled during countdown).
+    """
 
     # Re-enable trigger button
     macro_runner_tool.button_widgets[0].setEnabled(True)
+
+
+def NIDAQ_voltage_conversion(x):
+    return x / 1000
+
+
+def NIDAQ_rev_voltage_conversion(x):
+    return x * 1000
 
 
 class STS50Demo(HC_MainWindow):
@@ -238,8 +262,13 @@ class STS50Demo(HC_MainWindow):
         self.trig2_ctrl.settings_to_UI()
         self.trig2_ctrl.set_online_callback(send_state_when_online)
 
-        channel_data = read_channel_file("chan_data.json")
-        print(channel_data)
+        channel_data = read_channel_file(
+            "chan_data.json",
+            {
+                "hook_a4": NIDAQ_voltage_conversion,
+                "hook_ai0": NIDAQ_rev_voltage_conversion,
+            },
+        )
         self.iomod0 = NI9000Ctrl("192.168.0.0")
         self.iomod_wdgt = HC_IOModule(
             self.iomod0, self, channel_data, "IO Module", num_columns=2
