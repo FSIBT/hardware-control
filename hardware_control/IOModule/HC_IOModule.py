@@ -358,6 +358,12 @@ class DigitalInputChannel(QGroupBox):
         self.low_indicator = QPixmap(
             pkg_resources.resource_filename("hardware_control", "icons/low_label.svg")
         )
+        self.error_indicator = QPixmap(
+            pkg_resources.resource_filename("hardware_control", "icons/error_label.svg")
+        )
+        self.na_indicator = QPixmap(
+            pkg_resources.resource_filename("hardware_control", "icons/na_label.svg")
+        )
 
         self.control = control
         self.channel = channel
@@ -375,7 +381,8 @@ class DigitalInputChannel(QGroupBox):
             self.label_str = self.label_str + ": "
             self.param_label.setText(self.label_str)
 
-        self.measurement_label = QLabel(f"---- {self.units}")
+        self.measurement_label = QLabel()
+        self.measurement_label.setPixmap(self.na_indicator)
         self.measurement_label.setFixedWidth(120)
 
         self.main_layout = QGridLayout()
@@ -407,7 +414,7 @@ class DigitalInputChannel(QGroupBox):
 
         except Exception as e:
             logger.debug("Failed to read digital input from IOModule")
-            # self.measurement_label.setPixmap(self.low_indicator)
+            self.measurement_label.setPixmap(self.error_indicator)
             # self.measurement_label.setText(f"---- {self.units}")
 
 
