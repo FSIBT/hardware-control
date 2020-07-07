@@ -240,13 +240,13 @@ class AnalogInputChannel(QGroupBox):
 
     def update_readout(self):
         # Query value
-        self.control.comm.command(f"CH{self.channel}_V_meas?")
+        self.control.comm.command(f"CH{self.channel}_analog_read?")
 
         try:
 
             # Read return value
             V_meas = remove_end_carriage_return(
-                self.control.read_values(f"CH{self.channel}_V_meas")
+                self.control.read_values(f"CH{self.channel}_analog_read")
             )
 
             # Convert to float. Run through conversion function if provided
@@ -263,7 +263,7 @@ class AnalogInputChannel(QGroupBox):
             )
 
         except Exception as e:
-            self.measurement_label.setText(f"---- V")
+            self.measurement_label.setText(f"---- {self.units}")
 
 
 class AnalogOutputChannel(QGroupBox):
@@ -310,7 +310,7 @@ class AnalogOutputChannel(QGroupBox):
         self.unit_label = QLabel(f" {self.units}")
 
         if self.set_to_zero_button:
-            self.to_zero_but = QPushButton("Set to 0 V")
+            self.to_zero_but = QPushButton(f"Set to 0 {self.units}")
             self.to_zero_but.setCheckable(False)
             self.to_zero_but.clicked.connect(lambda: self.set_to_zero())
 
@@ -329,11 +329,11 @@ class AnalogOutputChannel(QGroupBox):
         if callable(self.conversion_function):
             voltage = self.conversion_function(voltage)
 
-            self.control.update_setting(f"CH{self.channel}_V_set", str(voltage))
+            self.control.update_setting(f"CH{self.channel}_analog_write", str(voltage))
 
     def set_to_zero(self):
         self.editbox.setText("0")
-        self.control.update_setting(f"CH{self.channel}_V_set", "0")
+        self.control.update_setting(f"CH{self.channel}_analog_write", "0")
 
 
 class DigitalInputChannel(QGroupBox):
@@ -386,13 +386,13 @@ class DigitalInputChannel(QGroupBox):
 
     def update_readout(self):
         # Query value
-        self.control.comm.command(f"CH{self.channel}_V_meas?")
+        self.control.comm.command(f"CH{self.channel}_digital_read?")
 
         try:
 
             # Read return value
             V_meas = remove_end_carriage_return(
-                self.control.read_values(f"CH{self.channel}_V_meas")
+                self.control.read_values(f"CH{self.channel}_digital_read")
             )
 
             # Convert to float. Run through conversion function if provided
@@ -406,8 +406,9 @@ class DigitalInputChannel(QGroupBox):
                 self.measurement_label.setPixmap(self.low_indicator)
 
         except Exception as e:
+            logger.debug("Failed to read digital input from IOModule")
             # self.measurement_label.setPixmap(self.low_indicator)
-            self.measurement_label.setText(f"---- V")
+            # self.measurement_label.setText(f"---- {self.units}")
 
 
 class DigitalOutputChannel(QGroupBox):
@@ -473,5 +474,5 @@ class DigitalOutputChannel(QGroupBox):
             self.ind_label.setPixmap(self.low_indicator)
 
         self.control.update_setting(
-            f"CH{self.channel}_V_set", str(self.ctrl_but.isChecked())
+            f"CH{self.channel}_digital_write", str(self.ctrl_but.isChecked())
         )
