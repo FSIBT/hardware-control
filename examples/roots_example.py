@@ -55,7 +55,7 @@ from hardware_control.base import HC_App, HC_MainWindow, Dataset, AUTOMATIC
 from hardware_control.PowerSupply.HC_MultiPowerSupply import HC_MultiPowerSupply, ONLY
 from hardware_control.PowerSupply.CAEN14xxETCtrl import CAEN14xxETCtrl
 from hardware_control.PowerSupply.Key36300Ctrl import Key36300Ctrl
-from hardware_control.IOModule.ADAM_6024Ctrl import ADAM_6024Ctrl
+from hardware_control.IOModule.ADAM6024Ctrl import ADAM6024Ctrl
 from hardware_control.IOModule.HC_IOModule import HC_IOModule, read_channel_file
 from hardware_control.base import HC_ConsoleWidget
 from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
@@ -205,7 +205,7 @@ class RootsDemo(HC_MainWindow):
         self.keysight_wdgt.ramp_mode = AUTOMATIC
         self.keysight_wdgt.default_ramp_speed = 1
 
-        # self.adam_be = ADAM_6024Ctrl("192.168.0.5:1025")
+        # self.adam_be = ADAM6024Ctrl("192.168.0.5:1025")
         # self.adam_wdgt = HC_IOModule(
         #     self.adam_be,
         #     self,
@@ -228,7 +228,7 @@ class RootsDemo(HC_MainWindow):
                 "hook_a01": lambda v: v / 10,
             },
         )
-        self.adam_be = ADAM_6024Ctrl("192.168.0.5:1025")
+        self.adam_be = ADAM6024Ctrl("192.168.0.5:1025")
         self.adam_wdgt = HC_IOModule(
             self.adam_be,
             self,
