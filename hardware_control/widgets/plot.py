@@ -44,7 +44,7 @@ class HC_PlotBase(QWidget):
         height=500,
         active=True,
         tz="America/Los_Angeles",
-        dpi=300,
+        dpi=100,
     ):
         super().__init__()
 
@@ -53,6 +53,7 @@ class HC_PlotBase(QWidget):
         self.autoscale = True
         self.tz = tz
         self.dpi = dpi
+        self.fmt = "o-"
 
         self.plot_set = None
 
@@ -99,6 +100,9 @@ class HC_PlotBase(QWidget):
         if "time:time" not in self.app.data_sets[self.plot_set].data:
             return
 
+        xleft, xright = self.axes.get_xlim()
+        ybottom, ytop = self.axes.get_ylim()
+
         self.axes.clear()
         for key in self.app.data_sets[self.plot_set].data:
             if key == "time:time":
@@ -122,17 +126,15 @@ class HC_PlotBase(QWidget):
 
                 self.axes.plot_date(
                     epoch2num(np.array(arrs["time:time"])),
-                    np.array(arrs[key]),
+                    y_values,
                     self.fmt,
                     label=label_name,
-                    tz="America/Los_Angeles",
+                    tz=self.tz,
                     linewidth=self.linewidth,
                 )
             except:
                 logger.debug(f"Failed to plot Y-data", exc_info=True)
 
-        xleft, xright = self.axes.get_xlim()
-        ybottom, ytop = self.axes.get_ylim()
         if not self.autoscale:
             self.axes.set_xlim([xleft, xright])
             self.axes.set_ylim([ybottom, ytop])
@@ -149,7 +151,6 @@ class HC_PlotTool(HC_PlotBase):
 
         self.axes = self.fig.add_subplot()
 
-        self.fmt = "o-"
         self.linewidth = 1
 
         self.plot.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
