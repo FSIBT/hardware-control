@@ -15,7 +15,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class Adam_6015(HC_Backend):
+class ADAM6015Ctrl(HC_Backend):
     """Control of Adam input/output module"""
 
     def __init__(self, connection_addr="192.168.1.25:1025"):

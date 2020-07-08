@@ -12,7 +12,7 @@ from hardware_control.utility import ensure_float
 logger = logging.getLogger(__name__)
 
 
-class ADAM_6024Ctrl(HC_Backend):
+class ADAM6024Ctrl(HC_Backend):
     """Control of Adam input/output module"""
 
     def __init__(self, connection_addr):
