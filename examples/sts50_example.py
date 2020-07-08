@@ -124,8 +124,24 @@ def trigger_function(window):
     window.app.variables["SHOT_ID_NUM"] = strftime("%H%M%S", gmtime())
     window.run_tool.update_indicators()
 
+    # Check all time delay fields from trigger 1, get max delay time
+    max_t = 0
+    for cw in window.trig1_ctrl.channel_widgets:
+
+        # Get text from field
+        delay_text = cw.time_edit.text()
+
+        # Convert text to float
+        try:
+            t_delay = float(delay_text)
+        except:
+            t_delay = 0
+
+        # Compare maxima
+        max_t = max(t_delay, max_t)
+
     # Start countdown timer and widget
-    window.run_tool.start_countdown(7.5)
+    window.run_tool.start_countdown(max_t)
 
     # Disable trigger button
     window.run_tool.button_widgets[0].setEnabled(False)
