@@ -30,7 +30,7 @@ class ADAM_6024Ctrl(HC_Backend):
         self.num_ichannels = 8
         self.num_ochannels = 4
 
-        self.values = {'CH1_V_meas':[], 'CH2_V_meas':[], 'CH3_V_meas':[]}
+        self.values = {"CH1_V_meas": [], "CH2_V_meas": [], "CH3_V_meas": []}
 
         # Min/max voltages output supports
         self.out_min = 0
@@ -87,7 +87,7 @@ class ADAM_6024Ctrl(HC_Backend):
 
         value = ensure_float(value)
 
-        if setting_X == "CHX_V_set":
+        if setting_X == "CHX_analog_write":
 
             if value < self.out_min or value > self.out_max:
                 return "Error: value out of bounds"
@@ -124,7 +124,7 @@ class ADAM_6024Ctrl(HC_Backend):
         # overwrite channel number for easier comparison
         cmd_X = cmd[:2] + "X" + cmd[3:]
 
-        if cmd_X == "CHX_V_meas?":
+        if cmd_X == "CHX_analog_read?":  # Read a voltage
 
             # Read all data
             data = self.query("#01\r")
