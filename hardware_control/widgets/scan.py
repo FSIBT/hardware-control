@@ -5,6 +5,7 @@ import pkg_resources
 
 import pyqtgraph as pg  # For some reason, without this line QPushButton won't import
 from PyQt5 import QtCore
+from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
 from PyQt5.QtGui import QPixmap, QProgressBar, QIcon, QApplication
 from PyQt5.QtWidgets import (
     QGroupBox,
@@ -19,11 +20,25 @@ from PyQt5.QtWidgets import (
 )
 from hardware_control.base import HC_Instrument
 from hardware_control.widgets.zmq_connection import HC_ZMQConnectionTool
+import time
+import zmq
 
 logger = logging.getLogger(__name__)
 
 
+class FakeButton:
+    def __init__(self, fakeText):
+
+        self.str = fakeText
+
+    def text(self):
+        return self.str
+
+
 class HC_ScanTool(HC_Instrument):
+
+    sigStartScan = pyqtSignal()
+
     def __init__(
         self, window, name: str = "Scan Control", include_variables: bool = True,
     ):
@@ -37,21 +52,24 @@ class HC_ScanTool(HC_Instrument):
         self.include_variables = include_variables
         self.val_list = []
 
+        self.socket_addr = "tcp://127.0.0.1:5555"
+
+        self.running_scan = False
+
         self.settings = self.default_state()
 
         # This ZMQConnectionTool will receive commands from the scan thread
         self.zmq_receiver = HC_ZMQConnectionTool(
-            window, f"{self.name}-ZMQ Receiver", "tcp://*:5600", 100
+            window, f"{self.name}-ZMQ Receiver", self.socket_addr, 100
         )
+        self.zmq_receiver.connectionOnOff(FakeButton("Disable Incoming Commands"))
 
         # *************************Create GUI************************
 
         self.arrow_symbol = QLabel()
         self.arrow_symbol.setPixmap(
             QPixmap(
-                pkg_resources.resource_filename(
-                    "hardware_control", "icons/arrow.png"
-                )
+                pkg_resources.resource_filename("hardware_control", "icons/arrow.png")
             )
         )
         self.arrow_symbol.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
@@ -213,7 +231,7 @@ class HC_ScanTool(HC_Instrument):
             )
         )
         self.scan_button.setCheckable(False)
-        self.scan_button.clicked.connect(self.scan)
+        self.scan_button.clicked.connect(self.start_scan_thread)
 
         self.progress_grid = QGridLayout()
         #
@@ -409,6 +427,50 @@ class HC_ScanTool(HC_Instrument):
 
         return True
 
+    def start_scan_thread(self):
+
+        self.zmq_receiver.connectionOnOff(FakeButton("Accept Incoming Commands"))
+
+        # Make sure a scan not already in progress
+        if self.running_scan:
+            logger.warning("Cannot run scan while a scan is in progress")
+            return
+
+        # Compute scan values
+        if not self.compute_values():
+            return
+
+        # Get parameters, instrument, etc...
+        i = self.instrument_drop.currentText()
+        p = self.parameter_drop.currentText()
+        m = self.macro_drop.currentText()
+        sync = self.sync_measdir_check.isChecked()
+
+        # Generate a starting key and a socket address
+        key = 10
+
+        self.worker = ScanWorker(i, p, m, sync, self.val_list, key, self.socket_addr)
+        self.worker_thread = QThread()
+        self.worker.moveToThread(self.worker_thread)
+        self.worker.finished.connect(self.scan_thread_finished)
+        self.sigStartScan.connect(self.worker.run_scan)
+
+        self.scan_button.setEnabled(False)
+
+        self.worker_thread.start()
+
+        self.sigStartScan.emit()
+
+    @pyqtSlot()
+    def scan_thread_finished(self):
+
+        print("ending thread")
+
+        self.zmq_receiver.connectionOnOff(FakeButton("Disable Incoming Commands"))
+
+        self.scan_button.setEnabled(True)
+        self.worker_thread.quit()
+
     def scan(self):
 
         # Compute scan values
@@ -588,48 +650,70 @@ class HC_ScanTool(HC_Instrument):
         return dflt
 
 
-# class ScanThread(QObject):
-#
-#     def __init__(self, instr, param, macro, sync, vals, key):
-#
-#         super().__init__()
-#
-#         self.instr = instr
-#         self.param = param
-#         self.macro = macro
-#         self.sync = sync
-#         self.vals = vals
-#
-#         #Make sure vals is a list
-#         if type(vals) != list:
-#             logger.error("Scan thread received single value instead of list")
-#             self.vals = [self.vals]
-#
-#     def send_hc(socket, command_str:str):
-#         """ Sends an HC Command to the  """
-#
-#
-#         print(f"Sending {command_str}")
-#         socket.send(str.encode(command_str));
-#         rval = socket.recv();
-#         print("\t"+str(rval));
-#
-#     def is_busy():
-#         req_str = "MEAS:GETSTATE"
-#         socket.send(str.encode(req_str))
-#         rval = socket.recv();
-#         return rval == "Busy"
-#
-#     def run_scan(self):
-#
-#         for val in self.vals:
-#
-#             #First set parameter to value
-#             f"SET:{self.instr}:{self.param}:{str(val)}"
-#
-#             #Second, run macro (if requested)
-#
-#             #Third, sync w/ MeasDir (if requested)
-#
-#
-#         self.finished.emit()
+class ScanWorker(QObject):
+
+    finished = pyqtSignal()
+
+    def __init__(self, instr, param, macro, sync, vals, key, socket_addr):
+
+        super().__init__()
+
+        self.instr = instr
+        self.param = param
+        self.macro = macro
+        self.sync = sync
+        self.vals = vals
+
+        self.socket_addr = socket_addr
+
+        context = zmq.Context()
+        print("Connecting to Control")
+        self.socket = context.socket(zmq.REQ)
+        self.socket.connect(self.socket_addr)
+
+        # Make sure vals is a list
+        if type(vals) != list:
+            logger.error("Scan thread received single value instead of list")
+            self.vals = [self.vals]
+
+    def send_hc(self, command_str: str):
+        """ Sends an HC Command to the  """
+
+        # print(f"Sending {command_str}")
+        self.socket.send(str.encode(command_str))
+        rval = self.socket.recv()
+        # print("\t"+str(rval));
+
+    def is_busy(self):
+        req_str = "MEAS:GETSTATE"
+        socket.send(str.encode(req_str))
+        rval = socket.recv()
+        return rval == "Busy"
+
+    @pyqtSlot()
+    def run_scan(self):
+
+        for val in self.vals:
+
+            print(val)
+
+            # First set parameter to value
+            self.send_hc(f"SET:{self.instr}:{self.param}:{str(val)}")
+
+            # Second, run macro (if requested)
+            if self.macro != "None":
+                pass
+                self.send_hc(f"FUNC:run:{self.macro}")
+
+            time.sleep(1)
+
+            # Third, sync w/ MeasDir (if requested)
+            if self.sync:
+                while True:
+                    if not self.is_busy():
+                        break
+
+        print("done")
+
+        # End thread
+        self.finished.emit()
