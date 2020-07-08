@@ -1,4 +1,0 @@
-{"Enable": {"DIR": "OUTPUT", "TYPE": "DIGITAL", "ID_STR": "D1", "LABEL": "Enabled:", "UNITS":""},
-"CURR": {"DIR": "OUTPUT", "TYPE": "ANALOG", "ID_STR": "A4", "LABEL": "Current: ", "UNITS":" A", "HOOK":"hook_ao4"},
-"CURR_MEAS": {"DIR": "INPUT", "TYPE": "ANALOG", "ID_STR": "A0", "LABEL": "Current Reading", "UNITS":" A", "HOOK":"hook_ai0"},
-"Enable_meas": {"DIR": "INPUT", "TYPE": "DIGITAL", "ID_STR": "D7", "LABEL": "Output State", "UNITS":""}}

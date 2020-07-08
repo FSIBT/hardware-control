@@ -56,7 +56,7 @@ from hardware_control.FunctionGenerator.Key33500BCtrl import Key33500BCtrl
 from hardware_control.PowerSupply.HC_MultiPowerSupply import *
 from hardware_control.PowerSupply.TDKLGenHCtrl import TDKLGenHCtrl
 from hardware_control.IOModule.HC_Read import HC_Read, HC_singleChannelRead
-from hardware_control.IOModule.ADAM6015Ctrl import Adam_6015
+from hardware_control.IOModule.ADAM6015Ctrl import ADAM6015Ctrl
 from hardware_control.widgets import (
     HC_ZMQConnectionTool,
     HC_MacroRunnerTool,
@@ -232,7 +232,7 @@ class STS50Demo(HC_MainWindow):
         #####################################################################
         ######## Tab 3
 
-        self.temp = Adam_6015("192.168.1.25")
+        self.temp = ADAM6015Ctrl("192.168.1.25")
         self.temp_ctrl = HC_Read(
             self.temp,
             self,
@@ -262,16 +262,35 @@ class STS50Demo(HC_MainWindow):
         self.trig2_ctrl.settings_to_UI()
         self.trig2_ctrl.set_online_callback(send_state_when_online)
 
-        channel_data = read_channel_file(
-            "chan_data.json",
+        float_channel_data = read_channel_file(
+            "sts50_floatIO_config.json",
             {
                 "hook_a4": NIDAQ_voltage_conversion,
                 "hook_ai0": NIDAQ_rev_voltage_conversion,
             },
         )
-        self.iomod0 = NI9000Ctrl("192.168.0.0")
-        self.iomod_wdgt = HC_IOModule(
-            self.iomod0, self, channel_data, "IO Module", num_columns=2
+        usb_channel_data = read_channel_file(
+            "sts50_usbIO_config.json",
+            {
+                "hook_a4": NIDAQ_voltage_conversion,
+                "hook_ai0": NIDAQ_rev_voltage_conversion,
+            },
+        )
+        self.iomod_float = NI9000Ctrl("192.168.0.0")
+        self.iomod_float_wdgt = HC_IOModule(
+            self.iomod_float,
+            self,
+            float_channel_data,
+            "Floating Rack Power Supplies",
+            num_columns=2,
+        )
+        self.iomod_usb = NI9000Ctrl("192.168.0.0")
+        self.iomod_usb_wdgt = HC_IOModule(
+            self.iomod_usb,
+            self,
+            usb_channel_data,
+            "High Voltage Power Supplies",
+            num_columns=2,
         )
 
         self.zmqtool = HC_ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
@@ -366,8 +385,9 @@ class STS50Demo(HC_MainWindow):
         self.tab3_layout.addWidget(self.flow_ctrl, 1, 0, 2, 1)
         # self.tab3_layout.addWidget(self.trig2_ctrl, 2, 0)
         self.tab3_layout.addWidget(self.zmqtool, 3, 0, 1, 1)
-        self.tab3_layout.addWidget(self.iomod_wdgt, 4, 0, 1, 1)
-        self.tab3_layout.addWidget(self.PS_NIDaQ, 2, 2, 3, 1)
+        self.tab3_layout.addWidget(self.iomod_float_wdgt, 4, 0, 1, 1)
+        self.tab3_layout.addWidget(self.iomod_usb_wdgt, 5, 0, 1, 1)
+        self.tab3_layout.addWidget(self.PS_NIDaQ, 2, 2, 4, 1)
         self.tab3_layout.addWidget(self.temp_ctrl, 1, 2)
         # self.tab3_layout.addWidget(self.scantool, 0, 1)
         # self.tab3_layout.addWidget(self.run_tool, 1, 1)
