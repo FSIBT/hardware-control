@@ -15,8 +15,6 @@ qtconsole
 setuptools
 setuptools-scm
 Sphinx
-sphinx.ext.autodoc
-sphinx.ext.napoleon
 tqdm
 visa
 zmq
