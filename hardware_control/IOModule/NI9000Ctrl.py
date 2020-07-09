@@ -139,18 +139,18 @@ class NI9000Ctrl(HC_Backend):
             return f"{cmd.strip('?')}={num}"
 
         try:
-            if "CHX_analog_read?" == cmd:
+            if "CHX_analog_read?" == setting_X:
 
                 with nidaqmx.Task() as task:
                     task.ai_channels.add_ai_voltage_chan(channel)
                     val = str(task.read())
-                return cmd[:-1] + "=" + str(val[0])
-            if "CHX_digital_read?" == cmd:
+                return cmd[:-1] + "=" + str(val)
+            if "CHX_digital_read?" == setting_X:
 
                 with nidaqmx.Task() as task:
                     task.ai_channels.add_di_chan(channel)
                     val = str(task.read())
-                return cmd[:-1] + "=" + str(val[0])
+                return cmd[:-1] + "=" + str(val)
 
         except:
             logger.error("Error occured in NI9000 command.", exc_info=True)
