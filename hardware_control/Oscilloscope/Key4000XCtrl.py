@@ -249,7 +249,14 @@ class Key4000XCtrl(HC_Backend):
 
             return f"CH{channel}_WVFM", t.tolist(), v.tolist()
 
-        # Read data from oscilloscope
+        # Check if we have data and read it from oscilloscope
+        try:
+            data_length = int(self.query(":WAV:POINTS?"))
+            if data_length == 0:
+                return "", [], []
+        except ValueError:
+            return "", [], []
+
         try:
             self.write(f":WAV:SOUR CHAN{channel}")
             # Set the source channel
