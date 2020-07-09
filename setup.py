@@ -5,6 +5,10 @@ with open("README.md") as f:
     long_description = f.read()
 
 
+with open("requirements.txt") as f:
+    required = f.read().splitlines()
+
+
 setuptools.setup(
     name="hardware-control",
     description="A package to write QT programs to control hardware",
@@ -24,29 +28,7 @@ setuptools.setup(
         "hardware_control.TemplateDeviceType",
     ],
     package_data={"hardware_control": [os.path.join("icons", "*svg")]},
-    install_requires=[
-        "appdirs",
-        "colorama",
-        "docopt",
-        "matplotlib",
-        "nidaqmx",
-        "numpy",
-        "picoscope",
-        "pymodbus",
-        "pyqt5",
-        "pyqtgraph",
-        "pytest",
-        "pytest-runner",
-        "pyvisa-py",
-        "qtconsole",
-        "setuptools",
-        "setuptools-scm",
-        "Sphinx",
-        "sphinxcontrib.napoleon",
-        "tqdm",
-        "visa",
-        "zmq",
-    ],
+    install_requires=required,
     setup_requires=["pytest-runner"],
     tests_require=["pytest"],
     scripts=[],
