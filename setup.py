@@ -1,7 +1,7 @@
 import os
 import setuptools
 
-with open("README.md", "r") as f:
+with open("README.md") as f:
     long_description = f.read()
 
 
@@ -41,6 +41,8 @@ setuptools.setup(
         "qtconsole",
         "setuptools",
         "setuptools-scm",
+        "Sphinx",
+        "sphinxcontrib.napoleon",
         "tqdm",
         "visa",
         "zmq",
