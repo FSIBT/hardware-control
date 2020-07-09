@@ -6,6 +6,7 @@ Welcome to Hardware-control's documentation!
    :caption: Contents:
 
    getting_started
+   hardware_control
 
 Indices and tables
 ==================
