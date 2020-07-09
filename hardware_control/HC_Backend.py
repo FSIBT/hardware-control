@@ -202,7 +202,7 @@ class HC_Backend(ABC):
         elif self.connection_type == MODBUS:
             try:
                 self.device = ModbusClient(host=self.connection_addr)
-                if self.device.connect(self.connection_addr):
+                if self.device.connect():
                     self.online = True
                     logger.debug(
                         f"opened modbus connection to {self.ID} at {self.connection_addr}"
