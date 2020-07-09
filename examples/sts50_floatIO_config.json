@@ -1,1 +1,9 @@
-{"extraction_voltage": {"DIR": "OUTPUT", "TYPE": "Analog", "ID_STR": "A1", "LABEL": "Extraction Voltage:", "UNITS":"V"}}
+{
+    "extraction_voltage": {
+        "DIR": "OUTPUT",
+        "TYPE": "Analog",
+        "ID_STR": "cDaQ1Mod1/ao10",
+        "LABEL": "Extraction Voltage:",
+        "UNITS": "V"
+    }
+}
