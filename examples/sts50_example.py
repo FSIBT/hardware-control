@@ -210,6 +210,7 @@ class STS50Demo(HC_MainWindow):
         )
         self.scope_ctrl = HC_Oscilloscope(scpi_scope, self, "Keysight")
         self.scope_ctrl.load_state("scope_state.json")
+        self.scope_ctrl.settings_to_UI()
         self.scope_ctrl.set_online_callback(init_osc_when_online)
 
         # Put instrument(s) in tab
@@ -372,7 +373,7 @@ class STS50Demo(HC_MainWindow):
 
         self.app.data_sets["High Voltage"] = Dataset("High Voltage")
         self.app.data_sets["High Voltage"].start_asynch(3)
-        self.app.data_sets["High Voltage"].add_instrument(self.PS_NIDaQ, ["CH1_V_meas"])
+        self.app.data_sets["High Voltage"].add_instrument(self.PS_NIDaQ, ["CH1_V_out"])
 
         self.logtool.update_groups()
         self.logtool.set_group("Autolog")
@@ -424,6 +425,7 @@ class STS50Demo(HC_MainWindow):
         # ########## Tab 5 - Experimental
 
         self.plot_wdgt1 = HC_PlotTool(self, "Floating Rack")
+        self.plot_wdgt1.set_dataset("High Voltage")
 
         self.tab5_layout = QGridLayout()
         self.tab5_layout.addWidget(self.plot_wdgt1, 0, 0)
