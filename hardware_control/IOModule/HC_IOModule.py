@@ -166,6 +166,8 @@ class HC_IOModule(HC_Instrument):
         #     self.channel_panel.addWidget(self.out_channel_widgets[-1], idx, 1)
         #     lowest_row = max(lowest_row, idx)
 
+        self.init_values()
+
         self.bottom_spacer = QSpacerItem(
             10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
         )
@@ -195,6 +197,18 @@ class HC_IOModule(HC_Instrument):
             ic.update_readout()
         for ic in self.dig_in_channels:
             ic.update_readout()
+
+    def init_values(self):
+
+        self.values = {}
+
+        for c in self.an_in_channels:
+            self.values[f"CH{c.channel}_analog_read"] = ""
+        for c in self.dig_in_channels:
+            self.values[f"CH{c.channel}_digital_read"] = ""
+
+        print("\n\nvalues")
+        print(self.values)
 
 
 class AnalogInputChannel(QGroupBox):
