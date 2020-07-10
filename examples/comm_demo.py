@@ -61,7 +61,7 @@ from hardware_control.widgets import (
     HC_MiniPlotTool,
     HC_LoggerTool,
 )
-from hardware_control.IOModule.ADAM_6024Ctrl import ADAM_6024Ctrl
+from hardware_control.IOModule.ADAM6024Ctrl import ADAM6024Ctrl
 from hardware_control.IOModule.HC_IOModule import HC_IOModule
 from hardware_control.base import HC_ConsoleWidget
 from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
