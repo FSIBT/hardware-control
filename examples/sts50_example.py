@@ -310,11 +310,7 @@ class STS50Demo(HC_MainWindow):
         )
         self.iomod_usb = NI9000Ctrl("192.168.0.0")
         self.iomod_usb_wdgt = HC_IOModule(
-            self.iomod_usb,
-            self,
-            usb_channel_data,
-            "High Voltage Power Supplies",
-            num_columns=2,
+            self.iomod_usb, self, usb_channel_data, "USB NI-DAC", num_columns=2,
         )
 
         self.zmqtool = HC_ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
@@ -370,15 +366,12 @@ class STS50Demo(HC_MainWindow):
         # )
 
         # Create Datasets
-        self.app.data_sets["Autolog"] = Dataset("Autolog")
-        self.app.data_sets["Autolog"].start_asynch(3)
-        self.app.data_sets["Autolog"].add_instrument(self.psu_ctrl)
-
         self.app.data_sets["High Voltage"] = Dataset("High Voltage")
         self.app.data_sets["High Voltage"].start_asynch(3)
+        self.app.data_sets["High Voltage"].add_instrument(self.iomod_usb_wdgt)
 
         self.logtool.update_groups()
-        self.logtool.set_group("Autolog")
+        self.logtool.set_group("High Voltage")
 
         # self.var_tool = HC_VariableEditTool(
         #     self,
