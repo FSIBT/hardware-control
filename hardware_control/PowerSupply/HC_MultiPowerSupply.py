@@ -19,7 +19,13 @@ from PyQt5.QtWidgets import (
     QSizePolicy,
 )
 
-from hardware_control.base import HC_Instrument, HC_Comm, setButtonState
+from hardware_control.base import (
+    HC_Instrument,
+    HC_Comm,
+    setButtonState,
+    AUTOMATIC,
+    MANUAL,
+)
 import logging
 from hardware_control.utility import remove_end_carriage_return
 from hardware_control.utility import change_units, apply_to_label
@@ -633,6 +639,33 @@ class PowerSupplyChannel(QWidget):
                 else:
                     self.enabled_indic.setPixmap(self.disabled_ind)
                     self.enabled_but.setChecked(False)
+
+            if (
+                self.main_widget.ramp_mode in [AUTOMATIC, MANUAL]
+                and self.main_widget.ramp_timer.isActive()
+                and f"CH{self.channel}_V_set" in self.main_widget.ramp_target
+            ):
+
+                curr = 0
+                key = f"CH{self.channel}_V_set"
+                if key in self.main_widget.ramp_val:
+                    curr = self.main_widget.ramp_val[key]
+                elif key in self.main_widget.values:
+                    curr = self.main_widget.values[key]
+                try:
+                    curr = float(curr)
+                except:
+                    curr = 0
+                    logger.warning(
+                        "Invalid value for 'curr'. Updating indicator with assumption of ramping from 0."
+                    )
+
+                if self.main_widget.ramp_target[f"CH{self.channel}_V_set"] > curr:
+                    self.ramp_indic.setPixmap(self.rampup_ind)
+                else:
+                    self.ramp_indic.setPixmap(self.rampdn_ind)
+            else:
+                self.ramp_indic.setPixmap(self.steady_ind)
 
     def set_label(self, label: str):
 
