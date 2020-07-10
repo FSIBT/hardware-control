@@ -541,29 +541,29 @@ class PowerSupplyChannel(QWidget):
 
         self.CC_ind_label = QLabel("CC:")
         self.CC_ind_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
-        self.CC_ind = QLabel()
-        self.CC_ind.setPixmap(self.na_ind)
+        self.CC_indic = QLabel()
+        self.CC_indic.setPixmap(self.na_ind)
 
         self.enabled_ind_label = QLabel("Output:")
         self.enabled_ind_label.setAlignment(
             QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
         )
-        self.enabled_ind = QLabel()
-        self.enabled_ind.setPixmap(self.na_ind)
+        self.enabled_indic = QLabel()
+        self.enabled_indic.setPixmap(self.na_ind)
 
         self.ramp_ind_label = QLabel("Ramp:")
         self.ramp_ind_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
-        self.ramp_ind = QLabel()
-        self.ramp_ind.setPixmap(self.na_ind)
+        self.ramp_indic = QLabel()
+        self.ramp_indic.setPixmap(self.na_ind)
 
         self.status_panel = QGroupBox()
         self.status_grid = QGridLayout()
         self.status_grid.addWidget(self.CC_ind_label, 0, 1)
         self.status_grid.addWidget(self.enabled_ind_label, 0, 2)
         self.status_grid.addWidget(self.ramp_ind_label, 0, 3)
-        self.status_grid.addWidget(self.CC_ind, 1, 1)
-        self.status_grid.addWidget(self.enabled_ind, 1, 2)
-        self.status_grid.addWidget(self.ramp_ind, 1, 3)
+        self.status_grid.addWidget(self.CC_indic, 1, 1)
+        self.status_grid.addWidget(self.enabled_indic, 1, 2)
+        self.status_grid.addWidget(self.ramp_indic, 1, 3)
         self.status_panel.setLayout(self.status_grid)
 
         # ******* DEFINE OVERALL LAYOUT
@@ -620,17 +620,19 @@ class PowerSupplyChannel(QWidget):
             if Iout is not None and Iset is not None:
                 try:
                     if float(Iout) >= float(Iset) * 0.95:
-                        self.CC_ind.setPixmap(self.ccurr_ind)
+                        self.CC_indic.setPixmap(self.ccurr_ind)
                     else:
-                        self.CC_ind.setPixmap(self.cvolt_ind)
+                        self.CC_indic.setPixmap(self.cvolt_ind)
                 except:
                     pass
 
             if enabled is not None:
                 if enabled == "True":
-                    self.enabled_ind.setPixmap(self.enabled_ind)
+                    self.enabled_indic.setPixmap(self.enabled_ind)
+                    self.enabled_but.setChecked(True)
                 else:
-                    self.enabled_ind.setPixmap(self.disabled_ind)
+                    self.enabled_indic.setPixmap(self.disabled_ind)
+                    self.enabled_but.setChecked(False)
 
     def set_label(self, label: str):
 
