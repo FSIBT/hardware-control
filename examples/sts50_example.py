@@ -319,9 +319,6 @@ class STS50Demo(HC_MainWindow):
         self.logtool.update_groups()
         # self.logtool.update_instruments()
 
-        self.PS_NIDaQCtrl = NI_DaX_PowerSupplyController()
-        self.PS_NIDaQ = HC_MultiPowerSupply(self.PS_NIDaQCtrl, self, [1], "NIDAXTEST")
-
         self.statustool = HC_StatusTool(self, "Connection Status")
         self.statustool.update_instruments()
 
@@ -368,12 +365,10 @@ class STS50Demo(HC_MainWindow):
         # Create Datasets
         self.app.data_sets["Autolog"] = Dataset("Autolog")
         self.app.data_sets["Autolog"].start_asynch(3)
-        self.app.data_sets["Autolog"].add_instrument(self.PS_NIDaQ)
         self.app.data_sets["Autolog"].add_instrument(self.psu_ctrl)
 
         self.app.data_sets["High Voltage"] = Dataset("High Voltage")
         self.app.data_sets["High Voltage"].start_asynch(3)
-        self.app.data_sets["High Voltage"].add_instrument(self.PS_NIDaQ, ["CH1_V_out"])
 
         self.logtool.update_groups()
         self.logtool.set_group("Autolog")
@@ -404,7 +399,6 @@ class STS50Demo(HC_MainWindow):
         self.tab3_layout.addWidget(self.zmqtool, 3, 0, 1, 1)
         self.tab3_layout.addWidget(self.iomod_float_wdgt, 4, 0, 1, 1)
         self.tab3_layout.addWidget(self.iomod_usb_wdgt, 5, 0, 1, 1)
-        self.tab3_layout.addWidget(self.PS_NIDaQ, 2, 2, 4, 1)
         self.tab3_layout.addWidget(self.temp_ctrl, 1, 2)
         # self.tab3_layout.addWidget(self.scantool, 0, 1)
         # self.tab3_layout.addWidget(self.run_tool, 1, 1)
