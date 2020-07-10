@@ -145,6 +145,14 @@ class HC_IOModule(HC_Instrument):
                 int((load_idx - 1) / num_columns),
                 (load_idx - 1) % num_columns,
             )
+        self.channel_spacer = QSpacerItem(
+            10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
+        )
+        self.channel_panel.addItem(
+            self.channel_spacer,
+            1 + (int((load_idx - 1) / num_columns)),
+            (load_idx - 1) % num_columns,
+        )
 
         # for idx, ic in enumerate(self.in_channels):
         #     if len(ic) != 4:

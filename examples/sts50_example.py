@@ -394,12 +394,16 @@ class STS50Demo(HC_MainWindow):
         # Put instrument(s) in tab
         self.tab3_layout = QGridLayout()
         # self.tab3_layout.addWidget(self.flow_ctrl, 0, 0)
-        self.tab3_layout.addWidget(self.flow_ctrl, 1, 0, 2, 1)
+        self.tab3_layout.addWidget(self.flow_ctrl, 0, 0)
         # self.tab3_layout.addWidget(self.trig2_ctrl, 2, 0)
-        self.tab3_layout.addWidget(self.zmqtool, 3, 0, 1, 1)
-        self.tab3_layout.addWidget(self.iomod_float_wdgt, 4, 0, 1, 1)
-        self.tab3_layout.addWidget(self.iomod_usb_wdgt, 5, 0, 1, 1)
-        self.tab3_layout.addWidget(self.temp_ctrl, 1, 2)
+        self.tab3_layout.addWidget(self.zmqtool, 1, 0)
+        self.tab3_layout.addWidget(self.iomod_float_wdgt, 2, 1)
+        self.tab3_layout.addWidget(self.iomod_usb_wdgt, 0, 1, 2, 1)
+        self.tab3_layout.addWidget(self.temp_ctrl, 2, 0)
+        self.tab3_spacer = QSpacerItem(
+            10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
+        )
+        self.tab3_layout.addItem(self.tab3_spacer, 3, 0, 1, 2)
         # self.tab3_layout.addWidget(self.scantool, 0, 1)
         # self.tab3_layout.addWidget(self.run_tool, 1, 1)
         # self.tab3_layout.addWidget(self.var_tool, 2, 1)
