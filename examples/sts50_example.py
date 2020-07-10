@@ -73,6 +73,7 @@ from hardware_control.PowerSupply.NI_DaX_PowerSupplyController import (
 from hardware_control.base import HC_ConsoleWidget
 from hardware_control.IOModule.HC_IOModule import HC_IOModule, read_channel_file
 from hardware_control.IOModule.NI9000Ctrl import NI9000Ctrl
+from hardware_control.PowerSupply.CAEN14xxETCtrl import CAEN14xxETCtrl
 
 
 logger = logging.getLogger(__name__)
@@ -240,10 +241,16 @@ class STS50Demo(HC_MainWindow):
         self.psu = TDKLGenHCtrl("TCPIP0::192.168.1.19::INSTR")
         self.psu_ctrl = HC_MultiPowerSupply(self.psu, self, [1], "TDK Lambda (RF Vin)",)
 
+        self.psu_caen = CAEN14xxETCtrl("TCPIP0::192.168.0.1::INSTR")
+        self.psu_caen_wdgt = HC_MultiPowerSupply(
+            self.psu_caen, self, [3, 8], "CAEN High Voltage Power Supply"
+        )
+
         # Put instrument(s) in tab
         self.tab2_layout = QGridLayout()
         self.tab2_layout.addWidget(self.awg_ctrl, 0, 0)
         self.tab2_layout.addWidget(self.psu_ctrl, 0, 1)
+        self.tab2_layout.addWidget(self.psu_caen_wdgt, 1, 0, 1, 2)
         self.tab2.setLayout(self.tab2_layout)
 
         #####################################################################
