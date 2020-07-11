@@ -12,7 +12,8 @@ logger = logging.getLogger(__name__)
 
 
 class HC_Read(HC_Instrument):
-    # Convention: __init__(self, backend, window . . . )
+    """ """
+
     def __init__(
         self,
         backend,
@@ -76,7 +77,7 @@ class HC_Read(HC_Instrument):
 
 
 class HC_singleChannelRead(QWidget):
-    """A single Temperature LCD Widget, with a channelnumber and name"""
+    """A single Temperature LCD Widget, with a channelnumber and name."""
 
     def __init__(
         self,
@@ -120,24 +121,16 @@ class HC_singleChannelRead(QWidget):
 
         self.setLayout(self.subLayout)
 
-    # Updates the readout --moved from main class
     def update_readout(self):
-        # Send a command for all the used channels
+        """Send a command for all the used channels."""
         # for i, c in enumerate(self.mainWindow.channels):
-        self.mainWindow.command(
-            "CH" + str(self.channelNumber) + "_TEMP?"
-        )  # send request to backend
-        mess = self.mainWindow.read_values(
-            "CH" + str(self.channelNumber) + "_TEMP"
-        )  # check for awnsers
+        self.mainWindow.command(f"CH{self.channelNumber}_TEMP?")
+        mess = self.mainWindow.read_values(f"CH{self.channelNumber}_TEMP")
         if mess:  # only write to UI if message not None
-            mess = float(
-                mess[0] + mess[2:7]
-            )  # with that 00023.7632 is shown as 23.7 and signs are taken care of
+            # show 00023.7632 as 23.7 and include signs correctly
+            mess = float(mess[0] + mess[2:7])
             if self.mainWindow.showLCD:
-                self.lcd.display(mess)  # write to actual widget/channel
+                # write to actual widget/channel
+                self.lcd.display(mess)
             else:
                 self.name.setText(f"{self.channelName} ({self.unit}) : {mess}")
-
-
-# ToDo Max/min Value alert?

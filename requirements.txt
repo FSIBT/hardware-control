@@ -12,6 +12,7 @@ pytest
 pytest-runner
 pyvisa-py
 qtconsole
+recommonmark
 setuptools
 setuptools-scm
 Sphinx

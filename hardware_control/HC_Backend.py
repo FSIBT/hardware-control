@@ -112,26 +112,45 @@ class HC_Backend(ABC):
 
     # @thread_info
     def update_setting(self, setting: str, value: str):
-        """Overload this function to adjust settings on the device. Must return
-        a string (which HC_CommWorker will send back to the main thread)"""
+        """Overload this function to adjust settings on the device.
+
+
+        Returns
+        -------
+        Must return a string (which HC_CommWorker will send back to
+        the main thread)
+
+        """
         return value
 
     # @thread_info
     def command(self, cmd: str):
-        """Overload this function to send commands to the device. Must return
-        a string (which HC_CommWorker will send back to the main thread)"""
+        """Overload this function to send commands to the device.
+
+        Returns
+        -------
+        Must return a string (which HC_CommWorker will send back to
+        the main thread)
+
+        """
         return cmd
 
     # @thread_info
     def command_listdata(self, cmd: str):
-        """Overload this function to send commands to the device. Must return
-        a tuple with an str, list, and list (which HC_CommWorker will send back
-         to the main thread)"""
+        """Overload this function to send commands to the device.
+
+        Returns
+        -------
+
+        Must return a tuple with an str, list, and list (which
+        HC_CommWorker will send back to the main thread)
+
+        """
         return "", [], []
 
     # @thread_info
     def close(self):
-        """Close connection to instrument"""
+        """Close connection to instrument."""
 
         if self.dummy:
             logger.debug(f"{self.ID}: Dummy connection closed")
@@ -291,8 +310,11 @@ class HC_Backend(ABC):
 
 
 def get_channel_from_command(command: str):
-    """
-    Processes a command from the front end and returns a tuple with:
+    """Processes a command from the front end.
+
+    Returns
+    -------
+    returns a tuple with:
         1.) channel number
         2.) original command with all channel numbers replaced by a single 'X'
     If the channel is not specified, the channel number is returned as 'None'
