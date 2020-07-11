@@ -257,11 +257,14 @@ class HC_Comm(QObject):
         updating the UI."""
 
         # print(f"\n\t\t\t\tBACKEND_RETURN_LOG::HC_COMM\t{param_str}\n")
+        if len(self.instruments) > 0:
+            self.instruments[0].window.app.director.backend_return_log(
+                retval, param_str
+            )
 
-        self.instrument.window.app.director.backend_return_log(retval, param_str)
-        logger.debug(
-            f"Instrument: {self.instrument.name} received return from backend '{self.backend_model}'. Return message: {retval}"
-        )
+            logger.debug(
+                f"Instrument: {self.instruments[0].name} received return from backend '{self.backend_model}'. Return message: {retval}"
+            )
         for instr in self.instruments:
             instr.backend_return(retval)
 
@@ -1620,6 +1623,10 @@ class HC_Instrument(QGroupBox):
 
     def read_state_from_backend(self):
 
+        if self.comm is None:
+            logger.warning("Failed to read state from backend. 'Comm' is None.")
+            return
+
         # Send a query to the backend for every possible value
         for v in self.values:
             self.comm.command(f"{v}?")
@@ -1627,6 +1634,7 @@ class HC_Instrument(QGroupBox):
         # Send a 'sync' command to the backend. It will be returned
         # immediately and used by the backend as an indicator for when all
         # of the previous commands have been processed
+
         self.comm.command("SYNC_BACKEND")
 
     def close(self):
