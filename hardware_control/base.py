@@ -716,6 +716,22 @@ class MeasurementDirector:
                     self.state = "Error"
                     return
 
+            # If requested, add timestamp. (Will be added when first value returns)
+            if self.app.data_sets[components[0]].async_add_timestamp:
+
+                # If time column not yet added, add now
+                if not "time:time" in self.app.data_sets[components[0]].data:
+                    self.app.data_sets[components[0]].data["time:time"] = []
+
+                # If time not added for this set of measurements yet, add now
+                if (
+                    len(self.app.data_sets[components[0]].data["time:time"])
+                    < self.queue[idx].measurement_index + 1
+                ):
+                    self.app.data_sets[components[0]].data["time:time"].append(
+                        str(time.time())
+                    )
+
             # Double check that correct number of points exist - ie. index == len()
             if (
                 len(self.app.data_sets[components[0]].data[data_key])
