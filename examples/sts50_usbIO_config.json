@@ -4,42 +4,42 @@
         "TYPE": "ANALOG",
         "ID_STR": "cDAQ1Mod1/ao0",
         "LABEL": "Floating Rack Voltage (set):",
-        "UNITS": "kV"
+        "UNITS": "V"
     },
     "Grid_voltage_out": {
         "DIR": "OUTPUT",
         "TYPE": "ANALOG",
         "ID_STR": "cDAQ1Mod1/ao1",
         "LABEL": "Grid Voltage (set):",
-        "UNITS": "kV"
+        "UNITS": "V"
     },
     "Floating_rack_imon_in": {
         "DIR": "INPUT",
         "TYPE": "ANALOG",
         "ID_STR": "cDAQ1Mod2/ai0",
         "LABEL": "Floating Rack Current (red):",
-        "UNITS": "kV"
+        "UNITS": "V"
     },
     "Floating_rack_vmon_in": {
         "DIR": "INPUT",
         "TYPE": "ANALOG",
         "ID_STR": "cDAQ1Mod2/ai1",
         "LABEL": "Floating Rack Voltage (red):",
-        "UNITS": "kV"
+        "UNITS": "V"
     },
     "Grid_rack_imon_in": {
         "DIR": "INPUT",
         "TYPE": "ANALOG",
         "ID_STR": "cDAQ1Mod2/ai2",
         "LABEL": "Grid Current (red):",
-        "UNITS": "kV"
+        "UNITS": "V"
     },
     "Grid_vmon_in": {
         "DIR": "INPUT",
         "TYPE": "ANALOG",
         "ID_STR": "cDAQ1Mod2/ai3",
         "LABEL": "Grid Voltage (red):",
-        "UNITS": "kV"
+        "UNITS": "V"
     },
     "Pressure_in": {
         "DIR": "INPUT",
