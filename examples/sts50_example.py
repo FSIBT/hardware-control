@@ -408,6 +408,23 @@ class STS50Demo(HC_MainWindow):
         self.app.data_sets["High Voltage"] = Dataset("High Voltage")
         self.app.data_sets["High Voltage"].start_asynch(3)
         self.app.data_sets["High Voltage"].add_instrument(self.iomod_usb_wdgt)
+        # {'CHcDAQ1Mod2/ai0_analog_read': '', 'CHcDAQ1Mod2/ai1_analog_read': '', 'CHcDAQ1Mod2/ai2_analog_read': '', 'CHcDAQ1Mod2/ai3_analog_read': '', 'CHcDAQ1Mod2/ai4_analog_read': ''}
+
+        self.app.data_sets["High Voltage"].name_channel(
+            "USB NI-DAC:CHcDAQ1Mod2/ai0_analog_read", "V float"
+        )
+        self.app.data_sets["High Voltage"].name_channel(
+            "USB NI-DAC:CHcDAQ1Mod2/ai1_analog_read", "I float"
+        )
+        self.app.data_sets["High Voltage"].name_channel(
+            "USB NI-DAC:CHcDAQ1Mod2/ai2_analog_read", "I grid"
+        )
+        self.app.data_sets["High Voltage"].name_channel(
+            "USB NI-DAC:CHcDAQ1Mod2/ai3_analog_read", "V grid"
+        )
+        self.app.data_sets["High Voltage"].name_channel(
+            "USB NI-DAC:CHcDAQ1Mod2/ai4_analog_read", "Pressure"
+        )
 
         self.logtool.update_groups()
         self.logtool.set_group("High Voltage")
