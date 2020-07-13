@@ -2,7 +2,7 @@ import json
 import zmq
 
 from hardware_control.HC_Backend import HC_Backend, VISA
-from hardware_control.utility import regex_compare
+from hardware_control.HC_Backend import get_channel_from_command
 import logging
 
 logger = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ class ZMQOscilloscopeCtrl(HC_Backend):
 
         # Create context and socket
         self.context = zmq.Context()
-        self.socket = self.context.socket(zmq.REQ)
+        self.socket = None
 
         self.zmq_address = connection_addr
         self.connection_addr = connection_addr  # So widget can read address
@@ -43,12 +43,6 @@ class ZMQOscilloscopeCtrl(HC_Backend):
         self.check()
 
     def update_setting(self, setting: str, value):
-        def get_chan_str():
-            chan_str = ""
-            if chan != 1:
-                chan = setting[2]
-                chan_str = f" {chan}"
-            return chan_str
 
         if not self.online:
             return "Offline"
@@ -57,9 +51,9 @@ class ZMQOscilloscopeCtrl(HC_Backend):
             if self.dummy:
                 return value
             else:
-                if regex_compare("CH._volts_div", setting):
-                    chan_str = get_chan_str()
-                    self.settings[f"Voltage range{chan_str}"] = float(value)
+                channel, setting_X = get_channel_from_command(setting)
+                if "CHX_volts_div" == setting_X:
+                    self.settings[f"Voltage range{channel}"] = float(value)
                     self.send_json_settings()
                     return f"{setting}:{value}"
                 elif setting == "timebase":
@@ -78,62 +72,54 @@ class ZMQOscilloscopeCtrl(HC_Backend):
                     self.settings[f"Ref Position (%)"] = val
                     self.send_json_settings()
                     return f"{setting}:{value}"
-                elif regex_compare("CH._offset", setting):
-                    chan_str = get_chan_str()
-                    self.settings[f"Voltage offset{chan_str}"] = float(value)
+                elif "CHX_offset" == setting_X:
+                    self.settings[f"Voltage offset{channel}"] = float(value)
                     self.send_json_settings()
                     return f"{setting}:{value}"
-                elif regex_compare("CH._BW_lim", setting):
-                    chan_str = get_chan_str()
+                elif "CHX_BW_lim" == setting_X:
                     if bool(value):
-                        self.settings[f"bandwidth filter{chan_str}"] = "20MHz"
+                        self.settings[f"bandwidth filter{channel}"] = "20MHz"
                         # Todo: @Giesbrecht Verify this is the correct code
                     else:
-                        self.settings[f"bandwidth filter{chan_str}"] = "Full"
+                        self.settings[f"bandwidth filter{channel}"] = "Full"
                     self.send_json_settings()
                     return f"{setting}:{value}"
-                elif regex_compare("CH._active", setting):
+                elif "CHX_active" == setting_X:
                     chan_str = get_chan_str()
                     self.settings[f"Ch enable{chan_str}"] = bool(value)
                     self.send_json_settings()
                     return f"{setting}:{value}"
-                elif regex_compare("CH._impedance", setting):
+                elif "CHX_impedance" == setting_X:
                     return f"Warning: Setting 'impedance' not available"
-                elif regex_compare("CH._label", setting):
+                elif "CHX_label" == setting_X:
                     return f"Warning: Setting 'label' not available"
                 elif setting == "labels_enabled":
                     return f"Warning: Setting 'label' not available"
-                elif regex_compare("CH._invert", setting):
+                elif "CHX_invert" == setting_X:
                     return f"Warning: Setting 'label' not available"
-                elif regex_compare("CH._probe_atten", setting):
-                    chan_str = get_chan_str()
-                    self.settings[f"External Gain/Attenuator{chan_str}"] = f"x{value}"
+                elif "CHX_probe_atten" == setting_X:
+                    self.settings[f"External Gain/Attenuator{channel}"] = f"x{value}"
                     # Todo: double check this is formatted correctly @Giesbrecht
                     self.send_json_settings()
                     return f"{setting}:{value}"
-                elif regex_compare("CH._coupling", setting):
-
+                elif "CHX_coupling" == setting_X:
                     # Make sure valid value provided
                     if value != "AC" and value != "DC":
                         value = "DC"
 
-                    chan_str = get_chan_str()
-                    self.settings[f"AC/DC{chan_str}"] = value
+                    self.settings[f"AC/DC{channel}"] = value
                     self.send_json_settings()
                     return f"{setting}:{value}"
 
                 elif setting == "trigger_level":
-                    chan_str = get_chan_str()
                     self.settings[f"Trigger level"] = float(value)
                     self.send_json_settings()
                     return f"{setting}:{value}"
                 elif setting == "trigger_coupling":
-                    chan_str = get_chan_str()
-                    self.settings[f"Ch enable{chan_str}"] = value
+                    self.settings[f"Ch enable{channel}"] = value
                     self.send_json_settings()
                     return f"{setting}:{value}"
                 elif setting == "trigger_edge":
-                    chan_str = get_chan_str()
                     if value == "POS":
                         value = "Rising"  # ToDo: cheeck that this is valid @Giesbrecht
                     elif value == "NEG":
@@ -141,7 +127,7 @@ class ZMQOscilloscopeCtrl(HC_Backend):
                     else:
                         value = "Rising"
                     # Todo: @Giesbrecht check that there aren't any other valid options
-                    self.settings[f"Ch enable{chan_str}"] = value
+                    self.settings[f"Ch enable{channel}"] = value
                     self.send_json_settings()
                     return f"{setting}:{value}"
                 elif setting == "trigger_channel":
@@ -161,7 +147,7 @@ class ZMQOscilloscopeCtrl(HC_Backend):
         except Exception as e:
 
             logger.error(
-                f"An error occured with {self.ID} when sending commands to the instrument.",
+                f"An error occured with {self.ID} when sending commands {setting} = {value} to the instrument.",
                 exc_info=True,
             )
 
@@ -192,24 +178,13 @@ class ZMQOscilloscopeCtrl(HC_Backend):
         # Try to connect - restart socket
         if self.socket is not None:
             self.socket.close()
-        self.socket = self.context.socket(zmq.REP)
+        logger.debug(f"{self.ID}: Trying to connect to {self.zmq_address}")
+        self.socket = self.context.socket(zmq.REQ)
         self.socket.connect(self.zmq_address)
 
         self.online = True
 
         return True
-
-    # def restart_port(self):
-    #
-    #     # Close out old socket
-    #     self.socket.close()
-    #
-    #     # Open new socket
-    #     self.socket = self.context.socket(zmq.REP)
-    #     self.socket.bind(self.settings["port"])
-    #
-    #     pstr = self.settings["port"]
-    #     self.port_label.setText(f"Port: {pstr}")
 
     def default_settings(self):
         dflt = {
@@ -248,10 +223,18 @@ class ZMQOscilloscopeCtrl(HC_Backend):
             "Ch enable 3": True,
             "Ch enable 4": True,
         }
+        return dflt
 
     def send_json_settings(self):
         """Sends the settings dictionary to the Raspberry Pi"""
         self.socket.send_string(
             "set scope settings"
         )  # This tells the Pi to get ready for the settings dict
+        message = self.socket.recv_string()
+        if message != "JSON?":
+            logger.debug(f"{self.ID} wrong response to send json settings")
         self.socket.send_string(json.dumps(self.settings))
+        message = self.socket.recv_string()
+        if message != "ok":
+            logger.debug(f"{self.ID} wrong response to send json settings")
+
