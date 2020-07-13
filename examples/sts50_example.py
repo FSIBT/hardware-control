@@ -311,13 +311,7 @@ class STS50Demo(HC_MainWindow):
         self.trig2_ctrl.settings_to_UI()
         self.trig2_ctrl.set_online_callback(send_state_when_online)
 
-        float_channel_data = read_channel_file(
-            "sts50_floatIO_config.json",
-            {
-                "hook_a4": NIDAQ_voltage_conversion,
-                "hook_ai0": NIDAQ_rev_voltage_conversion,
-            },
-        )
+        float_channel_data = read_channel_file("sts50_floatIO_config.json",)
         usb_channel_data = read_channel_file(
             "sts50_usbIO_config.json",
             {
@@ -328,7 +322,6 @@ class STS50Demo(HC_MainWindow):
                 "grid_Imon_in": lambda v: v * 1e-3,
                 "grid_Vmon_in": lambda v: v * 600,
                 "Pressure_in": lambda v: 10 ** (v - 11),
-                "hook_ai0": NIDAQ_rev_voltage_conversion,
             },
         )
         self.iomod_float = NI9000Ctrl("192.168.0.0")
@@ -343,6 +336,7 @@ class STS50Demo(HC_MainWindow):
         self.iomod_usb_wdgt = HC_IOModule(
             self.iomod_usb, self, usb_channel_data, "USB NI-DAC", num_columns=2,
         )
+        # self.iomod_usb_wdgt.set_online_callback(lambda x: self.iomod_usb_wdgt.command("INIT_CHANNELS"))
 
         self.zmqtool = HC_ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
 
