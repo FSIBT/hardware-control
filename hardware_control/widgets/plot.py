@@ -105,6 +105,8 @@ class HC_PlotBase(QWidget):
 
         self.axes.clear()
         for key in self.app.data_sets[self.plot_set].data:
+            if key[-4:] == "Misc":
+                continue
             if key == "time:time":
                 continue
             try:
