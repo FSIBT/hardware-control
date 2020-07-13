@@ -96,6 +96,7 @@ class AlicatMSeriesCtrl(HC_Backend):
                 r = self.device.read_input_registers(count=2, address=1208, unit=0)
                 a, b = r.registers
                 flow = (a << 16) + b
+                flow = converter_ulong_to_IEEE754(flow)
                 self.error_count = 0
             except Exception as e:
                 logger.error(
@@ -103,7 +104,6 @@ class AlicatMSeriesCtrl(HC_Backend):
                     exc_info=True,
                 )
                 self.error_count += 1
-            flow = converter_ulong_to_IEEE754(value)
         else:
             pressure = random.randint(0, 10)
             flow = random.randint(0, 10)
