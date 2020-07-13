@@ -75,13 +75,16 @@ from hardware_control.IOModule.HC_IOModule import HC_IOModule, read_channel_file
 from hardware_control.IOModule.NI9000Ctrl import NI9000Ctrl
 from hardware_control.PowerSupply.CAEN14xxETCtrl import CAEN14xxETCtrl
 
-
+logging.basicConfig(level=logging.WARNING, filename=logfile_name)
 logger = logging.getLogger(__name__)
 hc_logger = logging.getLogger("hardware_control")
 
 if print_console:
     logger.setLevel(level=loglevel)
     hc_logger.setLevel(level=loglevel)
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setLevel(loglevel)
+    hc_logger.addHandler(ch)
     print(f"Logger configured:\n\tLevel: {loglevelname}\n\tOutput: Console")
 else:
     logger.setLevel(level=loglevel)
@@ -89,6 +92,7 @@ else:
     fh = logging.FileHandler(logfile_name)
     fh.setLevel(loglevel)
     hc_logger.addHandler(fh)
+    print(f"Logger configured:\n\tLevel: {loglevelname}\n\tOutput: File")
 
 logger.info("STS50 Example Starting")
 
