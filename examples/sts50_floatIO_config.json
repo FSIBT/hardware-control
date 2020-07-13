@@ -2,21 +2,21 @@
     "extraction_voltage_out": {
         "DIR": "OUTPUT",
         "TYPE": "Analog",
-        "ID_STR": "cDAQ9188-1AEF742Mod6/ao4",
+        "ID_STR": "cDAQ9188-1AEF742Mod7/ao4",
         "LABEL": "Extraction Voltage (set):",
         "UNITS": "V"
     },
     "extraction_voltage_in": {
         "DIR": "INPUT",
         "TYPE": "Analog",
-        "ID_STR": "cDAQ9188-1AEF742Mod5/ai6",
+        "ID_STR": "cDAQ9188-1AEF742Mod6/ai6",
         "LABEL": "Extraction Voltage:",
         "UNITS": "V"
     },
     "extraction_current_in": {
         "DIR": "INPUT",
         "TYPE": "Analog",
-        "ID_STR": "cDAQ9188-1AEF742Mod5/ai7",
+        "ID_STR": "cDAQ9188-1AEF742Mod6/ai7",
         "LABEL": "Extraction current:",
         "UNITS": "A"
     }
