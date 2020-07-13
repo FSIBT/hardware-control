@@ -52,6 +52,8 @@ class NI9000Ctrl(HC_Backend):
 
         self.term_config_modes = {}
 
+        self.channel_data = None
+
         # # Check if channels are in expected format
         # if not (
         #     regex_compare(".+/ao.+", self.setVoltageChannel)
@@ -91,6 +93,32 @@ class NI9000Ctrl(HC_Backend):
         else:
             self.online = True
         return self.online
+
+    def init_channels(self):
+
+        print(f"IC: {self.online}\t\t{str(self)}")
+
+        if self.channel_data == None:
+            print("RETURRNING NONE")
+            return
+
+        for c in self.channel_data:
+
+            chan = self.channel_data[c]
+
+            if "OPTIONS" in chan and chan["OPTIONS"] is not None:
+                if "DIFF" in chan["OPTIONS"]:
+                    print("\tDIFF")
+                    name = chan["ID_STR"]
+                    self.update_setting(f"CH{name}_terminal_config", "DIFF")
+                elif "NRSE" in chan["OPTIONS"]:
+                    print("\tNRSE")
+                    name = chan["ID_STR"]
+                    self.update_setting(f"CH{name}_terminal_config", "DIFF")
+                elif "RSE" in chan["OPTIONS"]:
+                    print("\tRSE")
+                    name = chan["ID_STR"]
+                    self.update_setting(f"CH{name}_terminal_config", "DIFF")
 
     def update_setting(self, setting: str, value):
 
@@ -138,6 +166,12 @@ class NI9000Ctrl(HC_Backend):
 
                 self.term_config_modes[channel] = config_mode
 
+                print(f"\tSet TC for {channel} to {value}")
+
+                return str(value)
+
+            print(f"Unrecognized command {setting_X}, {channel}, {value}")
+
         except:
             logger.error("Error occured in NI9000 command.", exc_info=True)
 
@@ -156,13 +190,16 @@ class NI9000Ctrl(HC_Backend):
             if "CHX_analog_read?" == setting_X:
 
                 with nidaqmx.Task() as task:
-                    if channel in self.term_config_modes:
-                        config_mode = self.term_config_modes[channel]
-                        task.ai_channels.add_ai_voltage_chan(
-                            channel, terminal_config=config_mode
-                        )
-                    else:
-                        task.ai_channels.add_ai_voltage_chan(channel)
+                    # if channel in self.term_config_modes:
+                    # config_mode = self.term_config_modes[channel]
+                    config_mode = TerminalConfiguration.DIFFERENTIAL
+                    task.ai_channels.add_ai_voltage_chan(
+                        channel, terminal_config=config_mode
+                    )
+                    # print("USING MODE")
+                    # else:
+                    #     task.ai_channels.add_ai_voltage_chan(channel)
+                    #     print("Not using mode")
                     val = str(task.read())
                 return cmd[:-1] + "=" + str(val)
             if "CHX_digital_read?" == setting_X:
@@ -171,6 +208,12 @@ class NI9000Ctrl(HC_Backend):
                     task.ai_channels.add_di_chan(channel)
                     val = str(task.read())
                 return cmd[:-1] + "=" + str(val)
+
+            if "INIT_CHANNELS" == cmd:
+
+                print("IC From COmmand")
+
+                self.init_channels()
 
         except:
             logger.error("Error occured in NI9000 command.", exc_info=True)
