@@ -200,14 +200,6 @@ def countdown_end_fn(macro_runner_tool):
     macro_runner_tool.button_widgets[0].setEnabled(True)
 
 
-def NIDAQ_voltage_conversion(x):
-    return x / 1000
-
-
-def NIDAQ_rev_voltage_conversion(x):
-    return x * 1000
-
-
 class STS50Demo(HC_MainWindow):
     def __init__(self, app):
         super().__init__(app)
