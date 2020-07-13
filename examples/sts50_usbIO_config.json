@@ -21,7 +21,8 @@
         "ID_STR": "cDAQ1Mod2/ai0",
         "LABEL": "Floating Rack Current (red):",
         "UNITS": "V",
-        "HOOK": "float_Imon_in"
+        "HOOK": "float_Imon_in",
+        "OPTIONS": "DIFF"
     },
     "Floating_rack_vmon_in": {
         "DIR": "INPUT",
@@ -29,7 +30,8 @@
         "ID_STR": "cDAQ1Mod2/ai1",
         "LABEL": "Floating Rack Voltage (red):",
         "UNITS": "V",
-        "HOOK": "float_Vmon_in"
+        "HOOK": "float_Vmon_in",
+        "OPTIONS": "DIFF"
     },
     "Grid_rack_imon_in": {
         "DIR": "INPUT",
@@ -37,7 +39,8 @@
         "ID_STR": "cDAQ1Mod2/ai2",
         "LABEL": "Grid Current (red):",
         "UNITS": "V",
-        "HOOK": "grid_Imon_in"
+        "HOOK": "grid_Imon_in",
+        "OPTIONS": "DIFF"
     },
     "Grid_vmon_in": {
         "DIR": "INPUT",
@@ -45,7 +48,8 @@
         "ID_STR": "cDAQ1Mod2/ai3",
         "LABEL": "Grid Voltage (red):",
         "UNITS": "V",
-        "HOOK": "grid_Vmon_in"
+        "HOOK": "grid_Vmon_in",
+        "OPTIONS": "DIFF"
     },
     "Pressure_in": {
         "DIR": "INPUT",
@@ -53,6 +57,7 @@
         "ID_STR": "cDAQ1Mod2/ai4",
         "LABEL": "Pressure:",
         "UNITS": "Torr",
-        "HOOK": "Pressure_in"
+        "HOOK": "Pressure_in",
+        "OPTIONS": "DIFF"
     }
 }
