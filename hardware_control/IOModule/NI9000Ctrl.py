@@ -22,6 +22,7 @@ from colorama import Fore, Style
 
 if os.name == "nt":
     import nidaqmx
+    from nidaqmx.constants import TerminalConfiguration
 
 from hardware_control.HC_Backend import HC_Backend, get_channel_from_command
 from hardware_control.utility import regex_compare
