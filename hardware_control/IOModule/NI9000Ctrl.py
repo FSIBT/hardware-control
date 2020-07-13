@@ -50,6 +50,8 @@ class NI9000Ctrl(HC_Backend):
 
         self.num_channels = 22
 
+        self.term_config_modes = {}
+
         # # Check if channels are in expected format
         # if not (
         #     regex_compare(".+/ao.+", self.setVoltageChannel)
@@ -124,6 +126,18 @@ class NI9000Ctrl(HC_Backend):
                     time.sleep(0.010)
                     done = task.is_task_done()
                 return str(done)
+
+            if setting_X == "CHX_terminal_config":
+
+                if value == "DIFF":
+                    config_mode = TerminalConfiguration.DIFFERENTIAL
+                elif value == "NRSE":
+                    config_mode = TerminalConfiguration.NRSE
+                else:
+                    config_mode = TerminalConfiguration.RSE
+
+                self.term_config_modes[channel] = config_mode
+
         except:
             logger.error("Error occured in NI9000 command.", exc_info=True)
 
@@ -142,7 +156,13 @@ class NI9000Ctrl(HC_Backend):
             if "CHX_analog_read?" == setting_X:
 
                 with nidaqmx.Task() as task:
-                    task.ai_channels.add_ai_voltage_chan(channel)
+                    if channel in self.term_config_modes:
+                        config_mode = self.term_config_modes[channel]
+                        task.ai_channels.add_ai_voltage_chan(
+                            channel, terminal_config=config_mode
+                        )
+                    else:
+                        task.ai_channels.add_ai_voltage_chan(channel)
                     val = str(task.read())
                 return cmd[:-1] + "=" + str(val)
             if "CHX_digital_read?" == setting_X:
