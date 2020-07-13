@@ -329,7 +329,13 @@ class STS50Demo(HC_MainWindow):
         usb_channel_data = read_channel_file(
             "sts50_usbIO_config.json",
             {
-                "hook_a4": NIDAQ_voltage_conversion,
+                "float_volt_out": lambda v: v / 3000,
+                "Grid_volt_out": lambda v: v / 600,
+                "float_Imon_in": lambda v: v * 1e-3,
+                "float_Vmon_in": lambda v: v * 3000,
+                "grid_Imon_in": lambda v: v * 1e-3,
+                "grid_Vmon_in": lambda v: v * 600,
+                "Pressure_in": lambda v: 10 ** (v - 11),
                 "hook_ai0": NIDAQ_rev_voltage_conversion,
             },
         )
