@@ -37,8 +37,7 @@ class AlicatMSeriesCtrl(HC_Backend):
 
         try:
             if setting == "rate":
-                value = float(self.rate_edit.text())
-                i = converter_IEEE754_to_ulong(value)
+                i = converter_IEEE754_to_ulong(float(value))
                 a = i >> 16
                 b = i & ((1 << 16) - 1)
                 r = self.device.write_registers(address=1009, values=[a, b], unit=0)
@@ -46,8 +45,7 @@ class AlicatMSeriesCtrl(HC_Backend):
                 self.error_count = 0
                 return value
             elif setting == "flow":
-                value = float(self.rate_edit.text())
-                i = converter_IEEE754_to_ulong(value)
+                i = converter_IEEE754_to_ulong(float(value))
                 a = i >> 16
                 b = i & ((1 << 16) - 1)
                 r = self.device.write_registers(address=1009, values=[a, b], unit=0)
@@ -56,7 +54,7 @@ class AlicatMSeriesCtrl(HC_Backend):
                 return value
         except Exception as e:
             logger.error(
-                "An error occured in Alicat flowmeter when sending commands to the instrument.",
+                "An error occured in Alicat flowmeter when sending command {setting}={value} to the instrument.",
                 exc_info=True,
             )
             self.error_count += 1
@@ -78,7 +76,7 @@ class AlicatMSeriesCtrl(HC_Backend):
                 return f"pressure={vals['pressure']}"
         except Exception as e:
             logger.error(
-                f"An error occured in {self.ID} when sending commands to the instrument.",
+                f"An error occured in {self.ID} when sending command {cmd} to the instrument.",
                 exc_info=True,
             )
 
