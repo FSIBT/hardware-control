@@ -66,47 +66,33 @@ class AlicatMSeriesCtrl(HC_Backend):
         if not self.online:
             return f"{self.ID}-Offline"
 
+        if self.dummy:
+            if cmd == "rate?":
+                flow = random.randint(0, 10)
+                return f"rate={flow}"
+            elif cmd == "pressure?":
+                pressure = random.randint(0, 10)
+                return f"pressure={pressure}"
+
         try:
             # Note: usually a self.dummy check would be here, but it is taken
             # care of in get_values() for the AlicanMSeriesFlowMeter
-            vals = self.get_values()
             if cmd == "rate?":
-                return f"rate={vals['flow']}"
+                r = self.device.read_input_registers(count=2, address=1208, unit=0)
+                a, b = r.registers
+                flow = (a << 16) + b
+                flow = converter_ulong_to_IEEE754(flow)
+                return f"rate={flow}"
             elif cmd == "pressure?":
-                return f"pressure={vals['pressure']}"
+                r = self.device.read_input_registers(count=2, address=1202, unit=0)
+                a, b = r.registers
+                pressure = (a << 16) + b
+                pressure = converter_ulong_to_IEEE754(pressure)
+                return f"pressure={pressure}"
         except Exception as e:
             logger.error(
                 f"An error occured in {self.ID} when sending command {cmd} to the instrument.",
                 exc_info=True,
             )
-
-    def get_values(self):
-        if not self.online:
-            return {"pressure": -1, "flow": -1}
-
-        if not self.dummy:
-            try:
-                r = self.device.read_input_registers(count=2, address=1202, unit=0)
-                a, b = r.registers
-                pressure = (a << 16) + b
-                pressure = converter_ulong_to_IEEE754(pressure)
-
-                r = self.device.read_input_registers(count=2, address=1208, unit=0)
-                a, b = r.registers
-                flow = (a << 16) + b
-                flow = converter_ulong_to_IEEE754(flow)
-                self.error_count = 0
-            except Exception as e:
-                logger.error(
-                    f"An error occured in {self.ID} when sending commands to the instrument.",
-                    exc_info=True,
-                )
-                self.error_count += 1
-        else:
-            pressure = random.randint(0, 10)
-            flow = random.randint(0, 10)
-
-        if self.error_count > 4:
             self.online = False
 
-        return {"pressure": pressure, "flow": flow}

@@ -17,7 +17,6 @@ class HC_FlowController(HC_Instrument):
     def __init__(
         self, backend, window, name: str = "Flow Controller", lock_until_sync=False,
     ):
-
         super().__init__(window, name, backend, lock_until_sync)
 
         self.settings = {}
@@ -33,21 +32,11 @@ class HC_FlowController(HC_Instrument):
             self.window.app.comms[backend] = HC_Comm(backend, self, 2000)
             self.comm = self.window.app.comms[backend]
 
-        self.filename = ""
-
-        # # Initialize state to correct values
-        # if initialize_with == "DEFAULT":
-        #     self.save_on_close = False
-        #     # Can't save without filename
         self.settings = self.default_state()
-        # else:
-        #     self.load_state(initialize_with)
-        #     self.filename = initialize_with
 
         # *************************Create GUI************************
 
         # ****** DEFINE TEXT BOXES
-        #
         self.rate_edit = QLineEdit()
         self.rate_edit.setValidator(QDoubleValidator())
         self.rate_edit.editingFinished.connect(
@@ -64,41 +53,40 @@ class HC_FlowController(HC_Instrument):
         #
         self.gas_label = QLabel("Gas:")
         self.gas_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        #
+
         self.gas_drop = QComboBox()
         self.gas_drop.addItems(["Argon", "Helium", "Hydrogen", "Air"])
         self.gas_drop.currentIndexChanged.connect(
             lambda: self.comm.update_setting("gas", self.gas_drop.currentText())
         )
         self.gas_drop.setCurrentText(self.settings["gas"])
-        #
+
         self.pressure_label_fix0 = QLabel("Pressure: ")
         self.pressure_label_fix0.setAlignment(
             QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
         )
-        #
+
         self.pressure_label_readout = QLabel("--")
         self.pressure_label_readout.setAlignment(
             QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
         )
-        #
+
         self.pressure_label_fix1 = QLabel(" Torr?")
         self.pressure_label_fix1.setAlignment(
             QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
         )
-        #
-        #
+
         self.flow_label_fix0 = QLabel("Flow: ")
         self.flow_label_fix0.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        #
+
         self.flow_label_readout = QLabel("--")
         self.flow_label_readout.setAlignment(
             QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
         )
-        #
+
         self.flow_label_fix1 = QLabel(" CFM?")
         self.flow_label_fix1.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
-        #
+
         # Add widgets to grid layout
         self.lower_grid.addWidget(self.gas_label, 0, 0, 1, 1)
         self.lower_grid.addWidget(self.gas_drop, 0, 1, 1, 2)
@@ -129,11 +117,8 @@ class HC_FlowController(HC_Instrument):
         self.values["rate"] = "-"
         self.values["pressure"] = "-"
 
-    def close(self):  # Note: this is a complete duplicate of the 'close()' function
-        # in HC_Instrument, except it adds readout_timer.stop()
-
-        if self.comm is not None:
-            self.comm.close()
+    def close(self):
+        super().close()
         self.readout_timer.stop
 
     def update_readout(self):
@@ -145,8 +130,8 @@ class HC_FlowController(HC_Instrument):
         self.comm.command(f"pressure?")
 
         # Get latest inbox entries for readout data...
-        flow_meas = self.read_values(f"rate=")
-        press_meas = self.read_values(f"pressure=")
+        flow_meas = self.read_values(f"rate")
+        press_meas = self.read_values(f"pressure")
 
         # Update self.values
         self.values["rate"] = flow_meas
@@ -156,18 +141,8 @@ class HC_FlowController(HC_Instrument):
         self.pressure_label_readout.setText(press_meas)
         self.flow_label_readout.setText(flow_meas)
 
-    # def get_header(self):
-    #     # Todo: what are the units?
-    #     return "Rate[?] Pressure[?]"
-    #
-    # def get_value_keys(self):
-    #     return [self.values["rate"], self.values["pressure"]]
-
-    #
-    # Create a default state object if can't get state from a file
-    #
     def default_state(self):
-
+        """Create a default state object if can't get state from a file."""
         dflt = {}
 
         dflt["gas"] = "Argon"
