@@ -32,6 +32,7 @@ debug = commands["--debug"]
 print_console = commands["--console"]
 
 logfile_name = "hardware_control.log"
+other_logfile_name = "other_hardware_control.log"
 
 if debug:
     loglevel = logging.DEBUG
@@ -75,24 +76,52 @@ from hardware_control.IOModule.HC_IOModule import HC_IOModule, read_channel_file
 from hardware_control.IOModule.NI9000Ctrl import NI9000Ctrl
 from hardware_control.PowerSupply.CAEN14xxETCtrl import CAEN14xxETCtrl
 
-logging.basicConfig(level=logging.WARNING, filename=logfile_name)
 logger = logging.getLogger(__name__)
-hc_logger = logging.getLogger("hardware_control")
+# hc_logger = logging.getLogger("hardware_control")
 
+# Create file or stream handler
+format_str = "[%(asctime)s] %(name)s - %(levelname)s: %(message)s"
 if print_console:
-    logger.setLevel(level=loglevel)
-    hc_logger.setLevel(level=loglevel)
-    ch = logging.StreamHandler(sys.stdout)
-    ch.setLevel(loglevel)
-    hc_logger.addHandler(ch)
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(logging.Formatter(format_str))
+    handler.setLevel(loglevel)
     print(f"Logger configured:\n\tLevel: {loglevelname}\n\tOutput: Console")
 else:
-    logger.setLevel(level=loglevel)
-    hc_logger.setLevel(level=loglevel)
-    fh = logging.FileHandler(logfile_name)
-    fh.setLevel(loglevel)
-    hc_logger.addHandler(fh)
+    handler = logging.FileHandler(logfile_name)
+    handler.setFormatter(logging.Formatter(format_str))
+    handler.setLevel(loglevel)
     print(f"Logger configured:\n\tLevel: {loglevelname}\n\tOutput: File")
+
+# Clear all other handlers
+loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict]
+for name in logging.root.manager.loggerDict:
+
+    lgr = logging.getLogger(name)
+    lgr.propagate = False
+
+    if "hardware_control" in name:
+        lgr.setLevel(loglevel)
+        lgr.handlers = []
+        lgr.addHandler(handler)
+    else:
+        lgr.setLevel(logging.CRITICAL)
+        lgr.handlers = []
+
+# for lg in loggers:
+#
+#     if lg is logger or lg is hc_logger:
+#         continue
+#
+#     lg.setLevel(logging.CRITICAL)
+#     lg.handlers = []
+
+# Add desired handlers
+# hc_logger.setLevel(loglevel)
+# hc_logger.handlers = []
+# hc_logger.addHandler(handler)
+logger.setLevel(loglevel)
+logger.handlers = []
+logger.addHandler(handler)
 
 logger.info("STS50 Example Starting")
 
