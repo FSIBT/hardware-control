@@ -162,25 +162,25 @@ class RootsDemo(HC_MainWindow):
         self.caen_wdgt_123.set_channel_label(1, "1: NaI")
         self.caen_wdgt_123.set_channel_label(2, "2: LaBr")
         self.caen_wdgt_123.set_channel_label(3, "3: YAP")
-        self.caen_wdgt_456 = HC_MultiPowerSupply(
-            self.caen_be,
-            self,
-            [4, 5, 6],
-            "CAEN Power Supply 4-6",
-            show_VI_limits=True,
-            show_custom_labels=True,
-            show_status_panel=True,
-            lock_until_sync=True,
-        )
-        self.caen_wdgt_456.set_maxV(4, 1705)
-        self.caen_wdgt_456.set_maxV(5, 2e3)
-        self.caen_wdgt_456.set_maxV(6, 500)
-        self.caen_wdgt_456.set_maxI(4, 300e-6)
-        self.caen_wdgt_456.set_maxI(5, 300e-6)
-        self.caen_wdgt_456.set_maxI(6, 800e-6)
-        self.caen_wdgt_456.set_channel_label(4, "4: EJ")
-        self.caen_wdgt_456.set_channel_label(5, "5: UCB")
-        self.caen_wdgt_456.set_channel_label(6, "6: Target")
+        # self.caen_wdgt_456 = HC_MultiPowerSupply(
+        #     self.caen_be,
+        #     self,
+        #     [4, 5, 6],
+        #     "CAEN Power Supply 4-6",
+        #     show_VI_limits=True,
+        #     show_custom_labels=True,
+        #     show_status_panel=True,
+        #     lock_until_sync=True,
+        # )
+        # self.caen_wdgt_456.set_maxV(4, 1705)
+        # self.caen_wdgt_456.set_maxV(5, 2e3)
+        # self.caen_wdgt_456.set_maxV(6, 500)
+        # self.caen_wdgt_456.set_maxI(4, 300e-6)
+        # self.caen_wdgt_456.set_maxI(5, 300e-6)
+        # self.caen_wdgt_456.set_maxI(6, 800e-6)
+        # self.caen_wdgt_456.set_channel_label(4, "4: EJ")
+        # self.caen_wdgt_456.set_channel_label(5, "5: UCB")
+        # self.caen_wdgt_456.set_channel_label(6, "6: Target")
 
         self.keysight_ps_be = Key36300Ctrl("TCPIP::192.168.0.3::5025::SOCKET")
         self.keysight_wdgt = HC_MultiPowerSupply(
@@ -243,7 +243,7 @@ class RootsDemo(HC_MainWindow):
         # self.tab_psu_layout.addWidget(self.keysight_wdgt, 0, 0)
         # self.tab_psu_layout.addWidget(self.adam_wdgt, 1, 0)
         self.tab_psu_layout.addWidget(self.caen_wdgt_123, 0, 1)
-        self.tab_psu_layout.addWidget(self.caen_wdgt_456, 1, 1)
+        # self.tab_psu_layout.addWidget(self.caen_wdgt_456, 1, 1)
         self.tab_psu.setLayout(self.tab_psu_layout)
 
         self.tab_psu2_layout = QGridLayout()
