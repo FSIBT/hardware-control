@@ -1,8 +1,8 @@
 import json
 import zmq
 
-from hardware_control.HC_Backend import HC_Backend, VISA
-from hardware_control.HC_Backend import get_channel_from_command
+from hardware_control.HC_Backend import HC_Backend
+from hardware_control.utility import get_channel_from_command
 import logging
 
 logger = logging.getLogger(__name__)
@@ -112,7 +112,7 @@ class ZMQOscilloscopeCtrl(HC_Backend):
                     return f"{setting}:{value}"
 
                 elif setting == "trigger_level":
-                    self.settings[f"Trigger level"] = float(value)
+                    self.settings["Trigger level"] = float(value)
                     self.send_json_settings()
                     return f"{setting}:{value}"
                 elif setting == "trigger_coupling":
@@ -141,11 +141,10 @@ class ZMQOscilloscopeCtrl(HC_Backend):
                         value = "D"
                     else:
                         value = "A"
-                    self.settings[f"Trigger channel"] = value
+                    self.settings["Trigger channel"] = value
                     self.send_json_settings()
                     return f"{setting}:{value}"
-        except Exception as e:
-
+        except Exception:
             logger.error(
                 f"An error occured with {self.ID} when sending commands {setting} = {value} to the instrument.",
                 exc_info=True,
@@ -154,13 +153,10 @@ class ZMQOscilloscopeCtrl(HC_Backend):
     def command(self, cmd: str):
         if not self.online:
             return "Offline"
-
         # Todo: things probably need to go here
 
     def try_connect(self):
-
         # TODO: Make a common ZMQ backend for ZMQCOnnectionTool and ZMQ scope
-
         if self.dummy:
             if self.online:
                 return True
@@ -227,14 +223,15 @@ class ZMQOscilloscopeCtrl(HC_Backend):
 
     def send_json_settings(self):
         """Sends the settings dictionary to the Raspberry Pi"""
-        self.socket.send_string(
-            "set scope settings"
-        )  # This tells the Pi to get ready for the settings dict
+        # This tells the Pi to get ready for the settings dict
+        self.socket.send_string("set scope settings")
+
         message = self.socket.recv_string()
         if message != "JSON?":
             logger.debug(f"{self.ID} wrong response to send json settings")
+
         self.socket.send_string(json.dumps(self.settings))
+
         message = self.socket.recv_string()
         if message != "ok":
             logger.debug(f"{self.ID} wrong response to send json settings")
-

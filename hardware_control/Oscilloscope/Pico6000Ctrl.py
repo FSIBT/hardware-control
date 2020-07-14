@@ -1,17 +1,12 @@
-from hardware_control.HC_Backend import HC_Backend, VISA, get_channel_from_command
-from hardware_control.utility import returnChannelNumber
+from hardware_control.HC_Backend import HC_Backend
 from hardware_control.utility import (
     regex_compare,
-    to_NR3,
-    str_NR3,
-    str_NR1,
-    boolstr_NR1,
+    ensure_float,
+    get_channel_from_command,
 )
 import numpy as np
 import logging
-import picoscope
 from picoscope.ps6000 import PS6000
-from hardware_control.utility import regex_compare, ensure_float
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +55,7 @@ class Pico6000Ctrl(HC_Backend):
         try:
             self.ps = PS6000()
             self.online = True
-        except Exception as e:
+        except Exception:
             self.online = False
             logger.debug(f"\t({self.ID}) ERROR connecting with visa.", exc_info=True)
             logger.debug(f"{self.ID} is offline")
@@ -68,8 +63,8 @@ class Pico6000Ctrl(HC_Backend):
             self.online = True
 
         # If connection purportedly successful, verify connection
-        if self.online == True:
-            if self.check_connection() == False:
+        if self.online:
+            if not self.check_connection():
                 self.online = False
 
         return self.online
@@ -96,10 +91,9 @@ class Pico6000Ctrl(HC_Backend):
         try:
             # first check for commands that are not channel specific
             if setting == "labels_enabled":  # TODO
-
                 return "Not available"
 
-            elif setting == "timebase":
+            if setting == "timebase":
                 self.timebase = value * 10  # Time/div * #div
 
                 obs_duration = value
@@ -115,57 +109,37 @@ class Pico6000Ctrl(HC_Backend):
                 # could not get normal readout mode to work, so using memory Segments and bulk readout
                 self.ps.memorySegments(1)
                 self.ps.setNoOfCaptures(1)
-
                 return "Success"
-
-            elif setting == "time_offset":
-
+            if setting == "time_offset":
                 self.offset_position = value
-
-            elif setting == "trigger_level":
+            if setting == "trigger_level":
                 if self.trigger_channel != "None":
                     self.ps.setSimpleTrigger(
                         self.trigger_channel, threshold_V=value, enabled=True
                     )
-
                 return "Success"
-
-            elif setting == "trigger_coupling":
-
+            if setting == "trigger_coupling":
                 return "Not available"
-
-            elif setting == "trigger_edge":
-
+            if setting == "trigger_edge":
                 # Make sure valid option given
-                if (
-                    value != "BOTH"
-                    and value != "NEG"
-                    and value != "POS"
-                    and value != "ALT"
-                ):
+                if value not in ["BOTH", "NEG", "POS", "ALT"]:
                     value = "Rising"
-
-                if value == "POS":
+                elif value == "POS":
                     value = "Rising"
-                else:
+                elif value == "NEG":
                     value = "Falling"
-
-                # This model does not support BOTH mode
-                if value == "BOTH":
+                elif value == "BOTH":
+                    # This model does not support BOTH mode
                     value = "Rising"
-
-                # This model does not support alternating trigger
-                if value == "ALT":
+                elif value == "ALT":
+                    # This model does not support alternating trigger
                     value = "Rising"
-
                 if self.trigger_channel != "None":
                     self.ps.setSimpleTrigger(
                         self.trigger_channel, direction=value, enabled=True
                     )
-
                 return "Success"
-
-            elif setting == "trigger_channel":
+            if setting == "trigger_channel":
                 if value_orig == "None":
                     self.trigger_channel = value_orig
                 else:
@@ -174,23 +148,15 @@ class Pico6000Ctrl(HC_Backend):
                     self.ps.setSimpleTrigger(0, enabled=False)
                 else:
                     self.ps.setSimpleTrigger(self.trigger_channel, enabled=True)
-
                 return "Success"
-
-            elif regex_compare("meas_slot.", setting):
-
+            if regex_compare("meas_slot.", setting):
                 return "Not available"
-
-            elif setting == "use_meas_avg":
-
+            if setting == "use_meas_avg":
                 return "Not available"
-
-            elif setting == "meas_stat_enabled":
-
+            if setting == "meas_stat_enabled":
                 return "Not available"
 
             # verify channel and check for all channel related commands
-
             channel, setting_X = get_channel_from_command(setting)
             if channel == 1:
                 chan = "A"
@@ -204,59 +170,35 @@ class Pico6000Ctrl(HC_Backend):
                 return "Bad channel number"
 
             if setting_X == "CHX_volts_div":
-
                 self.ps.setChannel(channel=chan, VRange=value)
-
                 return "Success"
-
-            elif setting_X == "CHX_offset":
-
+            if setting_X == "CHX_offset":
                 self.ps.setChannel(channel=chan, VOffset=value)
-
                 return "Success"
-
-            elif setting_X == "CHX_BW_lim":
-
+            if setting_X == "CHX_BW_lim":
                 self.ps.setChannel(channel=chan, BWLimited=value)
-
                 return "Success"
-
-            elif setting_X == "CHX_active":
-
+            if setting_X == "CHX_active":
                 self.ps.setChannel(channel=chan, enabled=value)
-
                 return "Success"
-
-            elif setting_X == "CHX_impedance":
-
+            if setting_X == "CHX_impedance":
                 return "Not available"
-
-            elif setting_X == "CHX_label":  # TODO
-
+            if setting_X == "CHX_label":  # TODO
                 # Length is capped at 32 characters
                 return "Not available"
-
-            elif setting_X == "CHX_invert":
-
+            if setting_X == "CHX_invert":
                 return "Not availanle"
-
-            elif setting_X == "CHX_probe_atten":
-
+            if setting_X == "CHX_probe_atten":
                 self.ps.setChannel(channel=chan, probeAttenuation=value)
-
                 return "Success"
-
-            elif setting_X == "CHX_coupling":
-
+            if setting_X == "CHX_coupling":
                 # Make sure valid value provided
-                if value != "AC" and value != "DC":
+                if value not in ["AC", "DC"]:
                     value = "DC"
-
                 self.ps.setChannel(channel=chan, coupling=value)
-
                 return "Success"
 
-        except Exception as e:
+        except Exception:
             logger.error(
                 "An error occured in Picoscope6000.", exc_info=True,
             )
@@ -295,7 +237,7 @@ class Pico6000Ctrl(HC_Backend):
 
     def command_listdata(self, cmd: str):
 
-        channel, setting_X = get_channel_from_command(cmd)
+        channel, cmd_X = get_channel_from_command(cmd)
 
         if channel == 1:
             chan = "A"
@@ -309,20 +251,27 @@ class Pico6000Ctrl(HC_Backend):
         if not self.online:
             return "", [], []
 
-        if regex_compare("CH.+_WVFM?", cmd):
-
-            return self.read_waveform(channel)  # Returns a tuple (str, list, list)
-
-        if regex_compare("CH.+_CLEAR", cmd):
+        if cmd_X == "CHX+_WVFM?":
+            # Returns a tuple (str, list, list)
+            return self.read_waveform(channel)
+        if cms_X == "CHX+_CLEAR":
             return f"CH{chan}_WVFM", [], []
         else:
             return "", [], []
 
-    #
-    #
-    # Returns (V, t) as float[]
     def read_waveform(self, channel: str):
-        """Reads a waveform from the oscilloscope."""
+        """Reads a waveform from the oscilloscope.
+
+        Returns
+        -------
+        CHX_WVFM : str
+            Information about the channel number
+        t : list
+            List of the time stamps
+        values : list
+            List of the function values in Volts
+
+        """
 
         channel_orig = channel
         channel = int(channel) - 1

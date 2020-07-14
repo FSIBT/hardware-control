@@ -1,14 +1,13 @@
-import socket
 import random
 from hardware_control.HC_Backend import (
     HC_Backend,
-    SOCKET,
     VISA,
-    get_channel_from_command,
-    thread_info,
 )
 import logging
-from hardware_control.utility import regex_compare, ensure_float
+from hardware_control.utility import (
+    ensure_float,
+    get_channel_from_command,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +45,7 @@ class RigolDP832Ctrl(HC_Backend):
             # Verify actually connected (open_resource won't always throw error w/ disconnected USB)
             try:
                 self.device.query("*IDN?")
-            except visa.errors.VisaIOError as e:  # Not connected - reconnect
+            except visa.errors.VisaIOError:  # Not connected - reconnect
                 logger.warning(
                     "Device connection check failed. Setting online to false.",
                     exc_info=True,
@@ -130,9 +129,7 @@ class RigolDP832Ctrl(HC_Backend):
             return "Offline"
 
         if self.dummy:
-
             num = random.random() * 10
-
             if command_X == "CHX_enable?":
                 if num > 5:
                     return "True"

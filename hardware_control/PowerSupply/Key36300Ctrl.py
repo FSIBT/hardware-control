@@ -1,18 +1,15 @@
 import logging
 import random
 
-from hardware_control.HC_Backend import (
-    HC_Backend,
-    ensure_online,
-    get_channel_from_command,
-)
-from hardware_control.utility import ensure_float
+from hardware_control.HC_Backend import HC_Backend
+from hardware_control.utility import ensure_float, get_channel_from_command
+
 
 logger = logging.getLogger(__name__)
 
 
 class Key36300Ctrl(HC_Backend):
-    """Class to control the KeysightE36300 Series Triple Output Power Supply
+    """Control the KeysightE36300 Series Triple Output Power Supply.
 
     """
 
@@ -93,9 +90,7 @@ class Key36300Ctrl(HC_Backend):
             return "Offline"
 
         if self.dummy:
-
             num = random.random() * 10
-
             if command_X == "CHX_enable?":
                 if num > 5:
                     return "True"

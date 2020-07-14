@@ -24,8 +24,8 @@ if os.name == "nt":
     import nidaqmx
     from nidaqmx.constants import TerminalConfiguration
 
-from hardware_control.HC_Backend import HC_Backend, get_channel_from_command
-from hardware_control.utility import regex_compare
+from hardware_control.HC_Backend import HC_Backend
+from hardware_control.utility import get_channel_from_command
 import logging
 from hardware_control.utility import ensure_float
 
@@ -246,7 +246,7 @@ def nidaxmxTest():
                 if task.name:
                     return True
             return True
-        except Exception as e:
+        except Exception:
             print(
                 Fore.RED
                 + "WARNING: Can not acsess NIDAQMX on this system. NIDAQ will not function"

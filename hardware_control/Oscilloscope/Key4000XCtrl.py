@@ -1,8 +1,6 @@
-import re
-from hardware_control.HC_Backend import HC_Backend, VISA
+from hardware_control.HC_Backend import HC_Backend
 from hardware_control.utility import (
-    returnChannelNumber,
-    regex_compare,
+    get_channel_from_command,
     to_NR3,
     str_NR3,
     str_NR1,
@@ -50,113 +48,73 @@ class Key4000XCtrl(HC_Backend):
             return "Offline"
         if self.dummy:
             return value
-        try:
-            if regex_compare("CH._volts_div", setting):
-                chan = setting[2]
-                self.write(f":CHAN{chan}:SCAL {str_NR3(value)}")
-                return self.query(f":CHAN{chan}:SCAL?")
 
-            elif setting == "timebase":
-                self.write(f":TIM:SCAL {str_NR3(value)}")
-                return self.query(":TIM:SCAL?")
+        if setting == "timebase":
+            self.write(f":TIM:SCAL {str_NR3(value)}")
+            return self.query(":TIM:SCAL?")
+        if setting == "time_offset":
+            self.write(f":TIM:POS {str_NR3(value)}")
+            return self.query(":TIM:POS?")
+        if setting == "labels_enabled":
+            self.write(f"DISP:LAB {boolstr_NR1(value)}")
+            return self.query("DISP:LAB?")
+        if setting == "trigger_level":
+            self.write(f"TRIG:EDGE:LEV {str_NR3(value)}")
+            return self.query("TRIG:EDGE:LEV?")
+        if setting == "trigger_coupling":
+            # Make sure valid option given
+            if value not in ["AC", "DC", "LFReject"]:
+                value = "DC"
+            self.write(f"TRIG:COUP {value}")
+            return self.query("TRIG:COUP?")
+        if setting == "trigger_edge":
+            # Make sure valid option given
+            if value not in ["BOTH", "NEG", "POS", "ALT"]:
+                value = "POS"
+            self.write(f"TRIG:EDGE:SLOP {value}")
+            return self.query("TRIG:EDGE:SLOP?")
+        if setting == "trigger_channel":
+            self.write(f"TRIG:SOUR CHAN{str_NR1(value)}")
+            return self.query("TRIG:SOUR?")
 
-            elif setting == "time_offset":
-                self.write(f":TIM:POS {str_NR3(value)}")
-                return self.query(":TIM:POS?")
+        channel, setting_X = get_channel_from_command(setting)
 
-            elif regex_compare("CH._offset", setting):
-                chan = setting[2]
-                self.write(f"CHAN{chan}:OFFS {to_NR3(-1.0 * float(value))}")
-                return self.query(f"CHAN{chan}:OFFS?")
-
-            elif regex_compare("CH._BW_lim", setting):
-                chan = setting[2]
-                self.write(f"CHAN{chan}:BWL {boolstr_NR1(value)}")
-                return self.query(f"CHAN{chan}:BWL?")
-
-            elif regex_compare("CH._active", setting):
-                chan = setting[2]
-                self.write(f"CHAN{chan}:DISP {boolstr_NR1(value)}")
-                return self.query(f"CHAN{chan}:DISP?")
-
-            elif regex_compare("CH._impedance", setting):
-                chan = setting[2]
-                if value == "50":
-                    self.write(f"CHAN{chan}:IMP FIFT")
-                else:
-                    self.write(f"CHAN{chan}:IMP ONEM")
-                return self.query(f"CHAN{chan}:IMP?")
-
-            elif regex_compare("CH._label", setting):
-
-                # Length is capped at 32 characters
-                if len(value) > 32:
-                    value = value[0:32]
-
-                chan = setting[2]
-                self.write(f"CHAN{chan}:LAB {value}")
-                return self.query(f"CHAN{chan}:LAB?")
-
-            elif setting == "labels_enabled":
-                self.write(f"DISP:LAB {boolstr_NR1(value)}")
-                return self.query(f"DISP:LAB?")
-
-            elif regex_compare("CH._invert", setting):
-                chan = setting[2]
-                self.write(f"CHAN{chan}:INV {boolstr_NR1(value)}")
-                return self.query(f"CHAN{chan}:INV?")
-
-            elif regex_compare("CH._probe_atten", setting):
-                chan = setting[2]
-                self.write(f"CHAN{chan}:PROB {str_NR3(value)}")
-                return self.query(f"CHAN{chan}:PROB?")  # ie. 10 gives x10 or 10:1 probe
-
-            elif regex_compare("CH._coupling", setting):
-                chan = setting[2]
-
-                # Make sure valid value provided
-                if value != "AC" and value != "DC":
-                    value = "DC"
-
-                self.write(f"CHAN{chan}:COUP {value}")
-                return self.query(f"CHAN{chan}:COUP?")
-
-            elif setting == "trigger_level":
-                self.write(f"TRIG:EDGE:LEV {str_NR3(value)}")
-                return self.query(f"TRIG:EDGE:LEV?")
-
-            elif setting == "trigger_coupling":
-
-                # Make sure valid option given
-                if value != "AC" and value != "DC" and value != "LFReject":
-                    value = "DC"
-
-                self.write(f"TRIG:COUP {value}")
-                return self.query(f"TRIG:COUP?")
-
-            elif setting == "trigger_edge":
-
-                # Make sure valid option given
-                if (
-                    value != "BOTH"
-                    and value != "NEG"
-                    and value != "POS"
-                    and value != "ALT"
-                ):
-                    value = "POS"
-
-                self.write(f"TRIG:EDGE:SLOP {value}")
-                return self.query(f"TRIG:EDGE:SLOP?")
-
-            elif setting == "trigger_channel":
-
-                self.write(f"TRIG:SOUR CHAN{str_NR1(value)}")
-                return self.query(f"TRIG:SOUR?")
-        except Exception as e:
-            logger.error(
-                "An error occured in Key4000XCtrl.py sending SCPI commands.",
-                exc_info=True,
-            )
+        if setting_X == "CHX_volts_div":
+            self.write(f":CHAN{channel}:SCAL {str_NR3(value)}")
+            return self.query(f":CHAN{channel}:SCAL?")
+        if setting_X == "CHX_offset":
+            self.write(f"CHAN{channel}:OFFS {to_NR3(-1.0 * float(value))}")
+            return self.query(f"CHAN{channel}:OFFS?")
+        if setting_X == "CHX_BW_lim":
+            self.write(f"CHAN{channel}:BWL {boolstr_NR1(value)}")
+            return self.query(f"CHAN{channel}:BWL?")
+        if setting_X == "CHX_active":
+            self.write(f"CHAN{channel}:DISP {boolstr_NR1(value)}")
+            return self.query(f"CHAN{channel}:DISP?")
+        if setting_X == "CHX_impedance":
+            if value == "50":
+                self.write(f"CHAN{channel}:IMP FIFT")
+            else:
+                self.write(f"CHAN{channel}:IMP ONEM")
+            return self.query(f"CHAN{channel}:IMP?")
+        if setting_X == "CHX_label":
+            # Length is capped at 32 characters
+            if len(value) > 32:
+                value = value[0:32]
+            self.write(f"CHAN{channel}:LAB {value}")
+            return self.query(f"CHAN{channel}:LAB?")
+        if setting_X == "CHX_invert":
+            self.write(f"CHAN{channel}:INV {boolstr_NR1(value)}")
+            return self.query(f"CHAN{channel}:INV?")
+        if setting_X == "CHX_probe_atten":
+            self.write(f"CHAN{channel}:PROB {str_NR3(value)}")
+            return self.query(f"CHAN{channel}:PROB?")  # ie. 10 gives x10 or 10:1 probe
+        if setting_X == "CHX_coupling":
+            # Make sure valid value provided
+            if value not in ["AC", "DC"]:
+                value = "DC"
+            self.write(f"CHAN{channel}:COUP {value}")
+            return self.query(f"CHAN{channel}:COUP?")
 
     def command(self, cmd: str):
         if not self.online:
@@ -176,20 +134,25 @@ class Key4000XCtrl(HC_Backend):
         if not self.online:
             return "", [], []
 
-        if regex_compare("CH.+_WVFM?", cmd):
-            c = returnChannelNumber(cmd)
-            return self.read_waveform(c)  # Returns a tuple (str, list, list)
-        if regex_compare("CH.+_CLEAR", cmd):
-            c = returnChannelNumber(cmd)
-            return f"CH{c}_WVFM", [], []
+        channel, cmd_X = get_channel_from_command(cmd)
+
+        if cmd_X == "CHX+_WVFM?":
+            # Returns a tuple (str, list, list)
+            return self.read_waveform(channel)
+        if cmd_X == "CHX+_CLEAR":
+            return f"CH{channel}_WVFM", [], []
         else:
             return "", [], []
 
     def digitize(self):
-        """Similar to single trigger. Aquires waveform according to :ACQ command
-        subsystem. Stops instrument when aquisition is complete. Acquires
-        channels currently displayed (can change this with arguments to do more
-        or less). """
+        """Similar to single trigger.
+
+        Aquires waveform according to :ACQ command subsystem. Stops
+        instrument when aquisition is complete. Acquires channels
+        currently displayed (can change this with arguments to do more
+        or less).
+
+        """
         if not self.dummy:
             self.write(":DIG")
 
@@ -233,11 +196,19 @@ class Key4000XCtrl(HC_Backend):
         by 'set_measurement()')"""
         pass
 
-    #
-    #
-    # Returns (V, t) as float[]
     def read_waveform(self, channel: int):
-        """Reads a waveform from the oscilloscope."""
+        """Reads a waveform from the oscilloscope.
+
+        Returns
+        -------
+        CHX_WVFM : str
+            Information about the channel number
+        t : list
+            List of the time stamps
+        values : list
+            List of the function values in Volts
+
+        """
 
         if self.dummy or not self.online:
             t = np.linspace(0, 1e-3, 100, False)
@@ -268,63 +239,62 @@ class Key4000XCtrl(HC_Backend):
             raw_data = self.query(":WAV:DATA?")
             # Read waveform data
 
-        x_orig = self.query(":WAV:XOR?")
         # Read X Origin
-        x_ref = self.query(":WAV:XREF?")
+        x_orig = self.query(":WAV:XOR?")
         # Read X Reference
-        x_incr = self.query(":WAV:XINC?")
+        x_ref = self.query(":WAV:XREF?")
         # Read X Increment
+        x_incr = self.query(":WAV:XINC?")
 
         try:
-            # x_orig = float(x_orig[0:len(x_orig)-1]); #Convert X Origin
-            x_orig = float(x_orig[0 : len(x_orig)])
             # Convert X Origin
-        except Exception as e:
+            x_orig = float(x_orig)
+        except ValueError:
             logger.error("Received bad origin from scope.", exc_info=True)
             return "", [], []
         try:
-            # x_ref = float(x_ref[0:len(x_ref)-1]); #Convert X Reference
-            x_ref = float(x_ref[0 : len(x_ref)])
             # Convert X Reference
-        except Exception as e:
+            x_ref = float(x_ref)
+        except ValueError:
             logger.error("Received bad reference from scope.", exc_info=True)
             return "", [], []
         try:
-            # x_incr = float(x_incr[0:len(x_incr)-1]); #Convert X Increment
-            x_incr = float(x_incr[0 : len(x_incr)])
             # Convert X Increment
-        except Exception as e:
+            x_incr = float(x_incr)
+        except ValueError:
             logger.error("Received bad increment from scope.", exc_info=True)
             return "", [], []
 
         try:
-            # Format and convert data into float[]
-            block_header = raw_data[0:10]
-            raw_data = raw_data[
-                11 : len(raw_data) - 1
-            ]  # Trim block header from packet & remove newline character from end
-            fmt = [float(x.strip()) for x in raw_data.split(",")]
+            # Trim block header from packet & remove newline character from end
+            raw_data = raw_data[11:-1]
             # Break at commas, strip whitespace, convert to float, add to array
+            fmt = [float(x.strip()) for x in raw_data.split(",")]
 
-            t = (
-                (np.linspace(0, len(fmt), len(fmt), False) - x_ref) * x_incr + x_orig
-            ).tolist()
             # Calculate time values
-        except Exception as e:
+            t = np.linspace(start=0, stop=len(fmt), num=len(fmt), endpoint=False)
+            t = (t - x_ref) * x_incr + x_orig
+            t = t.tolist()
+        except Exception:
             logger.error("Failed to calculate V & t.", exc_info=True)
             return "", [], []
 
         return f"CH{channel}_WVFM", t, fmt
 
     def configure_read_waveform(self):
-        """Sets the data transfer mode of the oscilloscope. Call this function
-        once before reading waveform data with 'read_waveform()'. """
+        """Sets the data transfer mode of the oscilloscope.
 
-        self.write(":WAV:FORM ASC")
+        Call this function once before reading waveform data with
+        'read_waveform()'.
+
+        """
+
         # Sets data format to ASCII text
+        self.write(":WAV:FORM ASC")
+        # Set the number of points to read to 1000 (OPtions: 1000,
+        # 500, 250, 100, MAX (~4M))
         self.write(":WAV:POIN 1000")
-        # Set the number of points to read to 1000 (OPtions: 1000, 500, 250, 100, MAX (~4M))
-        self.write(":WAV:POIN:MODE NORM")
         # Set data record to transfer to 'measurement record'
-        self.write(":ACQ:TYPE NORM")
+        self.write(":WAV:POIN:MODE NORM")
         # Set aquisition mode to normal
+        self.write(":ACQ:TYPE NORM")

@@ -1,14 +1,12 @@
-import socket
 import random
 from hardware_control.HC_Backend import (
     HC_Backend,
     SOCKET,
     VISA,
-    get_channel_from_command,
-    thread_info,
 )
 import logging
-from hardware_control.utility import regex_compare, ensure_float
+from hardware_control.utility import ensure_float, get_channel_from_command
+
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +42,7 @@ class CAEN14xxETCtrl(HC_Backend):
             # Verify actually connected (open_resource won't always throw error w/ disconnected USB)
             try:
                 self.device.query("$BD:00,CMD:MON,PAR:BDNAME")
-            except visa.errors.VisaIOError as e:  # Not connected - reconnect
+            except visa.errors.VisaIOError:  # Not connected - reconnect
                 logger.warning(
                     "Device connection check failed. Setting online to false.",
                     exc_info=True,
@@ -57,7 +55,7 @@ class CAEN14xxETCtrl(HC_Backend):
 
             try:
                 self.query("$BD:00,CMD:MON,PAR:BDNAME")
-            except Exception as e:
+            except Exception:
                 logger.warning(
                     "Device connection check fail. Setting online to false",
                     exc_info=True,
@@ -80,6 +78,7 @@ class CAEN14xxETCtrl(HC_Backend):
             f"CAEN u_s received {setting}, {value} and interpreted chan={channel}, setting_X={setting_X}, value={value}"
         )
 
+        # TODO: add comment why these need to be before testing for self.online
         if setting_X == "CHX_I_max":
             self.max_I[channel - 1] = float(value)
             return str(value)
@@ -105,13 +104,11 @@ class CAEN14xxETCtrl(HC_Backend):
                 return "None"
             return str(bool(status["on_off"]))
 
-        elif setting_X == "CHX_I_set":
-
+        if setting_X == "CHX_I_set":
             logger.debug(f"Iset called with value {value}")
 
             if self.max_I[channel - 1] is not None:
                 value = min(value, self.max_I[channel - 1])
-
                 logger.debug(f"Iset value changed to {value} because it exceeded limit")
 
             self.write(f"$BD:00,CMD:SET,CH:{channel},PAR:ISET,VAL:{value}")
@@ -120,13 +117,11 @@ class CAEN14xxETCtrl(HC_Backend):
             if result is None:
                 return "None"
             return result[-7:]
-        elif setting_X == "CHX_V_set":
-
+        if setting_X == "CHX_V_set":
             logger.debug(f"Vset called with value {value}")
 
             if self.max_V[channel - 1] is not None:
                 value = min(value, self.max_V[channel - 1])
-
                 logger.debug(f"Vset value changed to {value} because it exceeded limit")
 
             self.write(f"$BD:00,CMD:SET,CH:{channel},PAR:VSET,VAL:{value}")
@@ -137,11 +132,9 @@ class CAEN14xxETCtrl(HC_Backend):
             return result[-6:]
 
     def command(self, cmd: str):
-
         channel, command_X = get_channel_from_command(cmd)
 
         if command_X == "CHX_I_max?":
-
             try:
                 rval = self.max_I[channel - 1]
             except Exception as e:
@@ -149,8 +142,7 @@ class CAEN14xxETCtrl(HC_Backend):
 
             return f"{cmd[:-1]}={rval}"
 
-        elif command_X == "CHX_V_max?":
-
+        if command_X == "CHX_V_max?":
             try:
                 rval = self.max_V[channel - 1]
             except Exception as e:
@@ -178,7 +170,6 @@ class CAEN14xxETCtrl(HC_Backend):
             command = "VSET"
             offset = -6
         elif command_X == "CHX_enable?":
-
             result = self.read_status(channel)
 
             if result is None:
