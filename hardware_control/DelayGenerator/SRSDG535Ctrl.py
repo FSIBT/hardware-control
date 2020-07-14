@@ -42,7 +42,7 @@ class SRSDG535Ctrl(HC_Backend):
     def update_setting(self, setting: str, value):
 
         channel, setting_X = get_channel_from_command(setting)
-        channel = SRSDG535Ctrl.SRS_channel_number_scheme[channel]
+        channel = SRSDG535Ctrl.SRS_channel_number_scheme.get(channel, None)
 
         value_orig = value
         value = ensure_float(value)
@@ -94,7 +94,7 @@ class SRSDG535Ctrl(HC_Backend):
                 ampl_chan = self.channels_ampl[channel]
             else:
                 ampl_chan = "1"
-            channel_number = SRSDG535Ctrl.SRS_trigger_names[value_orig]
+            channel_number = SRSDG535Ctrl.SRS_trigger_names.get(value_orig, None)
             w = f"DT {channel},{channel_number},{ampl_chan}"
         elif setting_X == "CHX_delay":
             self.channels_ampl[channel] = value_orig
@@ -102,7 +102,7 @@ class SRSDG535Ctrl(HC_Backend):
                 rel_chan = self.channels_relative[channel]
             else:
                 rel_chan = "Trig"
-            rel_chan = SRSDG535Ctrl.SRS_trigger_names[rel_chan]
+            rel_chan = SRSDG535Ctrl.SRS_trigger_names(rel_chan, None)
 
             w = f"DT {channel},{rel_chan},{value}"
         elif setting_X == "CHX_output_offset":

@@ -254,7 +254,7 @@ class Pico6000Ctrl(HC_Backend):
         if cmd_X == "CHX+_WVFM?":
             # Returns a tuple (str, list, list)
             return self.read_waveform(channel)
-        if cms_X == "CHX+_CLEAR":
+        if cmd_X == "CHX+_CLEAR":
             return f"CH{chan}_WVFM", [], []
         else:
             return "", [], []
