@@ -8,9 +8,7 @@ import pyvisa
 import socket
 from pymodbus.client.sync import ModbusTcpClient as ModbusClient
 
-from colorama import Fore, Style
 import logging
-from hardware_control.utility import regex_compare
 
 logger = logging.getLogger(__name__)
 
