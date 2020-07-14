@@ -73,7 +73,7 @@ class CAEN14xxETCtrl(HC_Backend):
     def update_setting(self, setting: str, value):
 
         channel, setting_X = get_channel_from_command(setting)
-
+        value_original = value
         value = ensure_float(value)
 
         logger.info(
@@ -95,7 +95,7 @@ class CAEN14xxETCtrl(HC_Backend):
             return str(value)
 
         if setting_X == "CHX_enable":
-            if value == "True":
+            if value_original == "True":
                 self.write(f"$BD:00,CMD:SET,CH:{channel},PAR:ON")
             else:
                 self.write(f"$BD:00,CMD:SET,CH:{channel},PAR:OFF")
@@ -181,6 +181,9 @@ class CAEN14xxETCtrl(HC_Backend):
 
             result = self.read_status(channel)
 
+            if result is None:
+                return "False"
+
             if result["on_off"]:
                 rval = "True"
             else:
@@ -203,6 +206,9 @@ class CAEN14xxETCtrl(HC_Backend):
             if result is None:
                 return None
             result = result.strip(r"\r")
+            print(result, flush=True)
+            if result.endswith("CMD:OK"):
+                return None
             value = int(result[-5:])
 
         status = {

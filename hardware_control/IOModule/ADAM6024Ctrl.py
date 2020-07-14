@@ -6,7 +6,7 @@ import logging
 import random
 import socket
 
-from hardware_control.HC_Backend import HC_Backend, ensure_online
+from hardware_control.HC_Backend import HC_Backend, ensure_online, get_channel_from_command
 from hardware_control.utility import ensure_float
 
 logger = logging.getLogger(__name__)
@@ -79,11 +79,7 @@ class ADAM6024Ctrl(HC_Backend):
         if self.dummy:
             return value
 
-        if len(setting) >= 3:
-            channel = int(setting[2])
-
-        # overwrite channel number for easier comparison
-        setting_X = setting[:2] + "X" + setting[3:]
+        channel, setting_X = get_channel_from_command(setting)
 
         value = ensure_float(value)
 
@@ -119,10 +115,10 @@ class ADAM6024Ctrl(HC_Backend):
             num = random.random() * 10
             return f"{cmd.strip('?')}={num}"
 
-        channel = int(cmd[2])
 
-        # overwrite channel number for easier comparison
-        cmd_X = cmd[:2] + "X" + cmd[3:]
+        channel, cmd_X = get_channel_from_command(cmd)
+        channel = int(channel[1])
+
 
         if cmd_X == "CHX_analog_read?":  # Read a voltage
 
