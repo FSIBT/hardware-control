@@ -57,7 +57,6 @@ from hardware_control.PowerSupply.CAEN14xxETCtrl import CAEN14xxETCtrl
 from hardware_control.PowerSupply.Key36300Ctrl import Key36300Ctrl
 from hardware_control.IOModule.ADAM6024Ctrl import ADAM6024Ctrl
 from hardware_control.IOModule.HC_IOModule import HC_IOModule, read_channel_file
-from hardware_control.base import HC_ConsoleWidget
 from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
 from hardware_control.Oscilloscope.Pico6000Ctrl import Pico6000Ctrl
 from hardware_control.widgets import (
@@ -67,6 +66,7 @@ from hardware_control.widgets import (
     HC_StatusTool,
     HC_ZMQConnectionTool,
     HC_LoggerTool,
+    HC_Qtconsole,
 )
 
 
@@ -127,7 +127,7 @@ class RootsDemo(HC_MainWindow):
         self.tab_aux = QWidget()
         self.tab_plot = QWidget()
         self.tab_data = QWidget()
-        self.python = HC_ConsoleWidget(main_app=app)
+        self.python = HC_Qtconsole(main_app=app)
 
         self.tabs.addTab(self.tab_psu, "Power Supplies 1")
         self.tabs.addTab(self.tab_psu2, "Power Supplies 2")
