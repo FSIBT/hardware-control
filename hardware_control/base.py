@@ -1,9 +1,7 @@
 import datetime
 import hashlib
-import pathlib
 import sys
 import time
-from abc import ABC, abstractmethod
 from collections import OrderedDict
 from colorama import Fore, Style
 import json
@@ -17,7 +15,6 @@ from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot, QObject, QTimer
 from PyQt5.QtWidgets import (
     QApplication,
     QMainWindow,
-    QMessageBox,
     QPushButton,
     QAction,
     QGroupBox,
@@ -123,7 +120,11 @@ class HC_Comm(QObject):
                 flush=True,
             )
             start_time = time.time()
-        self.worker_thread.wait()  # Wait for thread to join (otherwise, if main thread exists first, stdout will be closed while the worker_thread may still be running and try to write to stdout, causing an error to arise)
+        # Wait for thread to join (otherwise, if main thread exists
+        # first, stdout will be closed while the worker_thread may
+        # still be running and try to write to stdout, causing an
+        # error to arise)
+        self.worker_thread.wait()
         if self.instruments[0].window.app.print_close_info:
             print(
                 f"\r\t'{self.instruments[0].name}': Closed    \t\t\t"
@@ -424,13 +425,17 @@ class HC_CommWorker(QObject):
 
 
 class MeasurementRequest:
-    """Describes state information for a single measurement. This state object is
-    passed to HC_Comm's command_log() function to communicate options such as
-    if to repeat measurement and check for stability, how many stable points to find,
-    how to define 'stable', etc etc. HC_Comm keeps a list of these objects so it
-    doesn't need to be passed back and forth between the backend. Instead, a unique
+    """Describes state information for a single measurement. This state
+    object is passed to HC_Comm's command_log() function to
+    communicate options such as if to repeat measurement and check for
+    stability, how many stable points to find, how to define 'stable',
+    etc etc. HC_Comm keeps a list of these objects so it doesn't need
+    to be passed back and forth between the backend. Instead, a unique
     interger called the measurement_id which is used to link a call to
-    backend_return_log() to the corresponding MeasurementState object."""
+    backend_return_log() to the corresponding MeasurementState
+    object.
+
+    """
 
     def __init__(
         self,
@@ -445,32 +450,27 @@ class MeasurementRequest:
     ):
 
         # ******* These parameters tell the director how to query and save the data *******************************
-        #
-        self.dataset_name = (
-            dataset_name  # This is the name of the dataset it is a member of
-        )
-        self.inst_name = (
-            instrument_name  # This is the name of the instrument from which to measure
-        )
-        self.param_name = parameter_name  # This is the name of the parameter to measure
-        self.measurement_index = (
-            -1
-        )  # This is the index in the dataset arrays in which the measurement will be stored
+        self.dataset_name = dataset_name
+        self.inst_name = instrument_name
+        self.param_name = parameter_name
+        # the index in the dataset arrays in which the measurement will be stored
+        self.measurement_index = -1
         self.inst_command = cmd_str  # Command to send to the instrument
 
         # ********* These parameters tell the director how to verify the measurement's stability ******************
         #
-        self.steady_points = steady_points  # Number of points that must be measured and considered 'steady'
-        self.steady_dt = (
-            equip_dt  # change in time between points checked for steady state condition
-        )
-        self.tol = tol  # Tolerance  (in percent/100 ie from 0 to 1) by which points can differ and still be considered 'steady'
-        self.iterations = 0  # Number of iterations, ie measurements, that have occcured
-        self.max_iterations = max_iterations  # Maximum number of iterations before returns failure condition
-
-        self.prev_data = (
-            []
-        )  # Previous data values measured (for comparison for steady state determination)
+        # Number of points that must be measured and considered 'steady'
+        self.steady_points = steady_points
+        # change in time between points checked for steady state condition
+        self.steady_dt = equip_dt
+        # Tolerance  (in percent/100 ie from 0 to 1) by which points can differ and still be considered 'steady'
+        self.tol = tol
+        # Number of iterations, ie measurements, that have occcured
+        self.iterations = 0
+        # Maximum number of iterations before returns failure condition
+        self.max_iterations = max_iterations
+        # Previous data values measured (for comparison for steady state determination)
+        self.prev_data = []
         self.keep_as_string = False  # Instructs MeasurementDirector to keep the returned data as a string instead of a double. Disables all stability checks
         self.launched = False  # Tells the MeasurementDirector if this request has already been handled or if it needs to be sent to a backend
         self.cap_at_1e35 = True  # Tells the MeasurementDirector to count the point as corrupt if convertable to float and > 1e35
@@ -1178,8 +1178,10 @@ class Dataset(QObject):
             logger.warning(f"unrecognized file format '{format}'.")
 
     def log_async(self):
-        """ Periodically called by timer, logs values from included instruments
-        to the datasets. Logs timestamp if requested. """
+        """Periodically called by timer, logs values from included instruments
+        to the datasets. Logs timestamp if requested.
+
+        """
 
         # Return immediately if not in async mode
         if not self.asynchronous_mode:
@@ -1261,13 +1263,15 @@ class Dataset(QObject):
                     self.data[f"{name}:{vk}"] = [ai[0].values[vk]]
 
     def get_corresponding_arrays(self, set_names: list, convert_to_float=False):
-        """ Returns lists for each of the parameters specified in set_names (
-        indicated as <instrument>:<parameter>). If 'None' appears in any of the
-        specified lists, all data points at that index for all returned lists are
-        removed. This guarantees all returned lists have the same length and that
-        the lists indecies correspond with eachother.
+        """Returns lists for each of the parameters specified in set_names (
+        indicated as <instrument>:<parameter>). If 'None' appears in
+        any of the specified lists, all data points at that index for
+        all returned lists are removed. This guarantees all returned
+        lists have the same length and that the lists indecies
+        correspond with eachother.
 
         Returns a dictionary, key = parameter name, value = list
+
         """
 
         # Initialze return dictionary with the valid values in set_names
@@ -2489,28 +2493,26 @@ class HC_MainWindow(QMainWindow):
         self.bar = self.menuBar()  # self.menuBar() is a function in QMainWindow
 
         ###### File menu
-        #
         self.file_menu = self.bar.addMenu("File")
         self.file_menu.triggered[QAction].connect(self.process_file_menu)
-        #
+
         self.save_state_act = QAction("Save Instrument States", self)
         self.save_state_act.setShortcut("Ctrl+Shift+S")
         self.file_menu.addAction(self.save_state_act)
-        #
+
         self.save_data_act = QAction("Save Data", self)
         self.save_data_act.setShortcut("Ctrl+S")
         self.file_menu.addAction(self.save_data_act)
-        #
+
         self.clear_data_act = QAction("Clear Data", self)
         self.clear_data_act.setShortcut("Ctrl+Shift+K")
         self.file_menu.addAction(self.clear_data_act)
-        #
+
         self.new_group_act = QAction("New Dataset", self)
         self.new_group_act.setShortcut("Ctrl+Shift+N")
         self.file_menu.addAction(self.new_group_act)
-        #
+
         self.file_menu.addSeparator()
-        #
 
         if platform == "linux" or platform == "linux2" or platform == "darwin":
             self.close_act = QAction("Close Window", self)
@@ -2521,49 +2523,47 @@ class HC_MainWindow(QMainWindow):
         self.file_menu.addAction(self.close_act)
 
         ####### Instrument Menu
-        #
         self.instr_menu = self.bar.addMenu("Instrument")
         self.instr_menu.triggered[QAction].connect(self.process_instr_menu)
-        #
+
         self.sync_from_ui_act = QAction("Sync from UI", self)
         self.instr_menu.addAction(self.sync_from_ui_act)
-        #
+
         self.sync_from_instr_act = QAction("Sync from Instrument", self)
         self.instr_menu.addAction(self.sync_from_instr_act)
-        #
+
         self.sync_from_file_act = QAction("Sync from File", self)
         self.instr_menu.addAction(self.sync_from_file_act)
-        #
+
         self.sync_from_file_act = QAction("Refresh UI", self)
         self.instr_menu.addAction(self.sync_from_file_act)
-        #
+
         self.instr_menu.addSeparator()
-        #
+
         self.print_addresses_act = QAction("Print Addresses", self)
         self.instr_menu.addAction(self.print_addresses_act)
 
         ####### Scripting Menu
-        #
         self.scripting_menu = self.bar.addMenu("Scripting")
         self.scripting_menu.triggered[QAction].connect(self.process_scripting_menu)
-        #
+
         self.run_command_act = QAction("Run Command", self)
         self.run_command_act.setShortcut("Ctrl+R")
         self.scripting_menu.addAction(self.run_command_act)
-        #
+
         self.run_script_act = QAction("Run Macro")
         self.scripting_menu.addAction(self.run_script_act)
-        #
+
         self.scripting_menu.addSeparator()
-        #
+
         self.add_macro_act = QAction("Add Macro")
         self.scripting_menu.addAction(self.add_macro_act)
-        #
+
         self.add_variable_act = QAction("Add Variable")
         self.scripting_menu.addAction(self.add_variable_act)
-        #
+
         self.scripting_menu.addSeparator()
-        #
+
         self.show_variables_act = QAction("Show Variables")
         self.scripting_menu.addAction(self.show_variables_act)
 
