@@ -1,9 +1,7 @@
 import datetime
 import hashlib
-import pathlib
 import sys
 import time
-from abc import ABC, abstractmethod
 from collections import OrderedDict
 from colorama import Fore, Style
 import json
@@ -17,15 +15,12 @@ from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot, QObject, QTimer
 from PyQt5.QtWidgets import (
     QApplication,
     QMainWindow,
-    QMessageBox,
     QPushButton,
     QAction,
     QGroupBox,
     QInputDialog,
     QFileDialog,
 )
-from qtconsole.rich_jupyter_widget import RichJupyterWidget
-from qtconsole.inprocess import QtInProcessKernelManager
 from hardware_control.utility import convertibleToFloat
 
 logger = logging.getLogger(__name__)
@@ -125,7 +120,11 @@ class HC_Comm(QObject):
                 flush=True,
             )
             start_time = time.time()
-        self.worker_thread.wait()  # Wait for thread to join (otherwise, if main thread exists first, stdout will be closed while the worker_thread may still be running and try to write to stdout, causing an error to arise)
+        # Wait for thread to join (otherwise, if main thread exists
+        # first, stdout will be closed while the worker_thread may
+        # still be running and try to write to stdout, causing an
+        # error to arise)
+        self.worker_thread.wait()
         if self.instruments[0].window.app.print_close_info:
             print(
                 f"\r\t'{self.instruments[0].name}': Closed    \t\t\t"
@@ -426,13 +425,17 @@ class HC_CommWorker(QObject):
 
 
 class MeasurementRequest:
-    """Describes state information for a single measurement. This state object is
-    passed to HC_Comm's command_log() function to communicate options such as
-    if to repeat measurement and check for stability, how many stable points to find,
-    how to define 'stable', etc etc. HC_Comm keeps a list of these objects so it
-    doesn't need to be passed back and forth between the backend. Instead, a unique
+    """Describes state information for a single measurement. This state
+    object is passed to HC_Comm's command_log() function to
+    communicate options such as if to repeat measurement and check for
+    stability, how many stable points to find, how to define 'stable',
+    etc etc. HC_Comm keeps a list of these objects so it doesn't need
+    to be passed back and forth between the backend. Instead, a unique
     interger called the measurement_id which is used to link a call to
-    backend_return_log() to the corresponding MeasurementState object."""
+    backend_return_log() to the corresponding MeasurementState
+    object.
+
+    """
 
     def __init__(
         self,
@@ -447,32 +450,27 @@ class MeasurementRequest:
     ):
 
         # ******* These parameters tell the director how to query and save the data *******************************
-        #
-        self.dataset_name = (
-            dataset_name  # This is the name of the dataset it is a member of
-        )
-        self.inst_name = (
-            instrument_name  # This is the name of the instrument from which to measure
-        )
-        self.param_name = parameter_name  # This is the name of the parameter to measure
-        self.measurement_index = (
-            -1
-        )  # This is the index in the dataset arrays in which the measurement will be stored
+        self.dataset_name = dataset_name
+        self.inst_name = instrument_name
+        self.param_name = parameter_name
+        # the index in the dataset arrays in which the measurement will be stored
+        self.measurement_index = -1
         self.inst_command = cmd_str  # Command to send to the instrument
 
         # ********* These parameters tell the director how to verify the measurement's stability ******************
         #
-        self.steady_points = steady_points  # Number of points that must be measured and considered 'steady'
-        self.steady_dt = (
-            equip_dt  # change in time between points checked for steady state condition
-        )
-        self.tol = tol  # Tolerance  (in percent/100 ie from 0 to 1) by which points can differ and still be considered 'steady'
-        self.iterations = 0  # Number of iterations, ie measurements, that have occcured
-        self.max_iterations = max_iterations  # Maximum number of iterations before returns failure condition
-
-        self.prev_data = (
-            []
-        )  # Previous data values measured (for comparison for steady state determination)
+        # Number of points that must be measured and considered 'steady'
+        self.steady_points = steady_points
+        # change in time between points checked for steady state condition
+        self.steady_dt = equip_dt
+        # Tolerance  (in percent/100 ie from 0 to 1) by which points can differ and still be considered 'steady'
+        self.tol = tol
+        # Number of iterations, ie measurements, that have occcured
+        self.iterations = 0
+        # Maximum number of iterations before returns failure condition
+        self.max_iterations = max_iterations
+        # Previous data values measured (for comparison for steady state determination)
+        self.prev_data = []
         self.keep_as_string = False  # Instructs MeasurementDirector to keep the returned data as a string instead of a double. Disables all stability checks
         self.launched = False  # Tells the MeasurementDirector if this request has already been handled or if it needs to be sent to a backend
         self.cap_at_1e35 = True  # Tells the MeasurementDirector to count the point as corrupt if convertable to float and > 1e35
@@ -1180,8 +1178,10 @@ class Dataset(QObject):
             logger.warning(f"unrecognized file format '{format}'.")
 
     def log_async(self):
-        """ Periodically called by timer, logs values from included instruments
-        to the datasets. Logs timestamp if requested. """
+        """Periodically called by timer, logs values from included instruments
+        to the datasets. Logs timestamp if requested.
+
+        """
 
         # Return immediately if not in async mode
         if not self.asynchronous_mode:
@@ -1263,13 +1263,15 @@ class Dataset(QObject):
                     self.data[f"{name}:{vk}"] = [ai[0].values[vk]]
 
     def get_corresponding_arrays(self, set_names: list, convert_to_float=False):
-        """ Returns lists for each of the parameters specified in set_names (
-        indicated as <instrument>:<parameter>). If 'None' appears in any of the
-        specified lists, all data points at that index for all returned lists are
-        removed. This guarantees all returned lists have the same length and that
-        the lists indecies correspond with eachother.
+        """Returns lists for each of the parameters specified in set_names (
+        indicated as <instrument>:<parameter>). If 'None' appears in
+        any of the specified lists, all data points at that index for
+        all returned lists are removed. This guarantees all returned
+        lists have the same length and that the lists indecies
+        correspond with eachother.
 
         Returns a dictionary, key = parameter name, value = list
+
         """
 
         # Initialze return dictionary with the valid values in set_names
@@ -2491,28 +2493,26 @@ class HC_MainWindow(QMainWindow):
         self.bar = self.menuBar()  # self.menuBar() is a function in QMainWindow
 
         ###### File menu
-        #
         self.file_menu = self.bar.addMenu("File")
         self.file_menu.triggered[QAction].connect(self.process_file_menu)
-        #
+
         self.save_state_act = QAction("Save Instrument States", self)
         self.save_state_act.setShortcut("Ctrl+Shift+S")
         self.file_menu.addAction(self.save_state_act)
-        #
+
         self.save_data_act = QAction("Save Data", self)
         self.save_data_act.setShortcut("Ctrl+S")
         self.file_menu.addAction(self.save_data_act)
-        #
+
         self.clear_data_act = QAction("Clear Data", self)
         self.clear_data_act.setShortcut("Ctrl+Shift+K")
         self.file_menu.addAction(self.clear_data_act)
-        #
+
         self.new_group_act = QAction("New Dataset", self)
         self.new_group_act.setShortcut("Ctrl+Shift+N")
         self.file_menu.addAction(self.new_group_act)
-        #
+
         self.file_menu.addSeparator()
-        #
 
         if platform == "linux" or platform == "linux2" or platform == "darwin":
             self.close_act = QAction("Close Window", self)
@@ -2523,49 +2523,47 @@ class HC_MainWindow(QMainWindow):
         self.file_menu.addAction(self.close_act)
 
         ####### Instrument Menu
-        #
         self.instr_menu = self.bar.addMenu("Instrument")
         self.instr_menu.triggered[QAction].connect(self.process_instr_menu)
-        #
+
         self.sync_from_ui_act = QAction("Sync from UI", self)
         self.instr_menu.addAction(self.sync_from_ui_act)
-        #
+
         self.sync_from_instr_act = QAction("Sync from Instrument", self)
         self.instr_menu.addAction(self.sync_from_instr_act)
-        #
+
         self.sync_from_file_act = QAction("Sync from File", self)
         self.instr_menu.addAction(self.sync_from_file_act)
-        #
+
         self.sync_from_file_act = QAction("Refresh UI", self)
         self.instr_menu.addAction(self.sync_from_file_act)
-        #
+
         self.instr_menu.addSeparator()
-        #
+
         self.print_addresses_act = QAction("Print Addresses", self)
         self.instr_menu.addAction(self.print_addresses_act)
 
         ####### Scripting Menu
-        #
         self.scripting_menu = self.bar.addMenu("Scripting")
         self.scripting_menu.triggered[QAction].connect(self.process_scripting_menu)
-        #
+
         self.run_command_act = QAction("Run Command", self)
         self.run_command_act.setShortcut("Ctrl+R")
         self.scripting_menu.addAction(self.run_command_act)
-        #
+
         self.run_script_act = QAction("Run Macro")
         self.scripting_menu.addAction(self.run_script_act)
-        #
+
         self.scripting_menu.addSeparator()
-        #
+
         self.add_macro_act = QAction("Add Macro")
         self.scripting_menu.addAction(self.add_macro_act)
-        #
+
         self.add_variable_act = QAction("Add Variable")
         self.scripting_menu.addAction(self.add_variable_act)
-        #
+
         self.scripting_menu.addSeparator()
-        #
+
         self.show_variables_act = QAction("Show Variables")
         self.scripting_menu.addAction(self.show_variables_act)
 
@@ -2788,451 +2786,6 @@ class HC_MainWindow(QMainWindow):
             self.app.data_sets[text] = temp_ds
 
 
-class HC_ConsoleWidget(RichJupyterWidget):
-    def __init__(self, main_app, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.kernel_manager = QtInProcessKernelManager()
-        self.kernel_manager.start_kernel()
-        self.kernel = self.kernel_manager.kernel
-
-        self.kernel.shell.banner1 += """
-        Direct python interface
-
-        You can access variables from the app through the main app widget
-
-        app: main app widget
-        np:  numpy
-
-        """
-        self.kernel.gui = "qt"
-        self.kernel.shell.push({"np": np, "app": main_app})
-        self.kernel_client = self.kernel_manager.client()
-        self.kernel_client.start_channels()
-
-
-# ToDo: A lot of unused Classes - Implement or delete
-# class QOnOff(QPushButton):
-#     """An On/Off button with a nice icon for on/off
-#
-#     Takes two functions that will be called when turning on/off
-#     starts in an unkown state if not defined otherwise
-#
-#     if f_off is None: assume that f_on is a signal that can emit a boolian.
-#     """
-#
-#     def __init__(self, f_on, f_off=None):
-#         super().__init__()
-#         self.setCheckable(True)
-#
-#         self.onText = "On"
-#         self.offText = "Off"
-#         self.unkownText = "status unkown"
-#
-#         self.onIcon = QIcon(
-#             pkg_resources.resource_filename(
-#                 "hardware_control", "icons/button-power-on.svg"
-#             )
-#         )
-#         self.offIcon = QIcon(
-#             pkg_resources.resource_filename(
-#                 "hardware_control", "icons/button-power-off.svg"
-#             )
-#         )
-#         self.unkownIcon = QIcon(
-#             pkg_resources.resource_filename(
-#                 "hardware_control", "icons/button-power-unkown.svg"
-#             )
-#         )
-#
-#         self.f_on = f_on
-#         self.f_off = f_off
-#         self.clicked.connect(self.click)
-#
-#         self.setText(self.unkownText)
-#         self.setIcon(self.unkownIcon)
-#         self.setIconSize(QtCore.QSize(30, 30))
-#
-#         self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-#
-#     def click(self):
-#         # we need a 'not' here since the button internally already
-#         # changed state at this point
-#         if not self.isChecked():
-#             if self.f_off:
-#                 self.f_off()
-#             else:
-#                 self.f_on.emit(False)
-#             self.set_icon_off()
-#         else:
-#             if self.f_off:
-#                 self.f_on()
-#             else:
-#                 self.f_on.emit(True)
-#             self.set_icon_on()
-#
-#     def on(self):
-#         if self.f_off:
-#             self.f_on()
-#         else:
-#             self.f_on.emit(True)
-#         self.set_icon_on()
-#
-#     def set_icon_on(self):
-#         """Just set the icon to on. Useful during startup"""
-#         self.setChecked(True)
-#         self.setIcon(self.onIcon)
-#         self.setText(self.onText)
-#
-#     def off(self):
-#         if self.f_off:
-#             self.f_off()
-#         else:
-#             self.f_on.emit(False)
-#         self.set_icon_off()
-#
-#     def set_icon_off(self):
-#         """Just set the icon to off. Useful during startup"""
-#         self.setChecked(False)
-#         self.setIcon(self.offIcon)
-#         self.setText(self.offText)
-#
-#     def isOn(self):
-#         return self.isChecked()
-
-
-# class HC_Control(ABC):
-#     """Create an abstract base class for instruments
-#
-#     This defines the interface that should be present for new instruments.
-#
-#     Functions that _have_to_ be implemented are decorated and functions
-#     that _can_ be implemented raise a NotImplementedError.
-#
-#
-#     Note: the real implementation can have different amount of arguments,
-#     e.g. write could be write(channel, value).
-#
-#     """
-#
-#     @abstractmethod
-#     def read(self):
-#         """Read values from instrument.
-#
-#         If the instrument has multiple values to set, this should
-#         function should take a channel arguments or something similar.
-#         """
-#
-#         pass
-#
-#     @abstractmethod
-#     def write(self, value):
-#         """Write values to instrument.
-#
-#         This function should take a value or channel/value argument.
-#         """
-#
-#         pass
-#
-#     @abstractmethod
-#     def try_connect(self):
-#         """Try to connect to instrument.
-#
-#         This function should check if we are already connected and in
-#         that case do nothing. We should be able to call this function
-#         as often as we want without much overhead.
-#         """
-#
-#         pass
-#
-#     @abstractmethod
-#     def close(self):
-#         """Closes any connection that got opened by try_connect"""
-#
-#         pass
-#
-#     def is_on(self):
-#         """Return True/False, if the instrument is on
-#
-#         This is an optional functions. It is listed here just to give
-#         the recommended name for this function.
-#         """
-#
-#         raise NotImplementedError
-
-
-# class QOnOffIndicator(QSvgWidget):
-#     """An On/Off indicator
-#
-#     Listens to signals for on/off and shows a green or red light with a tooltip for mouse-over events.
-#
-#     starts in an unkown state (both lights off)"""
-#
-#     def __init__(self, name):
-#         self.name = name
-#         self.onIcon = pkg_resources.resource_filename(
-#             "hardware_control", "icons/on-off-indicator-on.svg"
-#         )
-#         self.offIcon = pkg_resources.resource_filename(
-#             "hardware_control", "icons/on-off-indicator-off.svg"
-#         )
-#         self.unkownIcon = pkg_resources.resource_filename(
-#             "hardware_control", "icons/on-off-indicator-unkown.svg"
-#         )
-#
-#         super().__init__(self.unkownIcon)
-#
-#         self.setMouseTracking(True)
-#         self.setToolTip(name)
-#
-#         self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-#
-#     def sizeHint(self):
-#         return QSize(10, 20)
-#
-#     def on(self):
-#         self.renderer().load(self.onIcon)
-#
-#     def off(self):
-#         self.renderer().load(self.offIcon)
-#
-#     def set(self, status):
-#         if status:
-#             self.on()
-#         else:
-#             self.off()
-#
-#
-# class QFixedLabel(QLabel):
-#     """A QLabel that fixes its width to the initial string"""
-#
-#     def __init__(self, label, color=None):
-#         super().__init__(label)
-#
-#         font = QFont()
-#         font.setPointSize(18)
-#         font.setBold(False)
-#         self.setFont(font)
-#
-#         fm = QFontMetrics(self.font())
-#         self.setFixedWidth(fm.width(self.text()))
-#
-#         self.setAlignment(QtCore.Qt.AlignCenter)
-#         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-#         if color is not None:
-#             self.setStyleSheet(
-#                 f"color: white;background-color:{color}; padding: 5px;border: 1px solid black;"
-#             )
-#
-#
-# class FigureTab(QWidget):
-#     """A single matplotlib figure"""
-#
-#     def __init__(self, parent=None, active=True):
-#         super().__init__()
-#
-#         self.normalize = False
-#         self.autoscale = True
-#
-#         self.fig, self.axes = plt.subplots()
-#         self.plot = FigureCanvas(self.fig)
-#         self.plot.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-#         self.nav = NavigationToolbar(self.plot, self)
-#         self.nav.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-#
-#         # custom toolbar
-#         self.controls = QHBoxLayout()
-#         self.normalizebutton = QPushButton("normalize")
-#         self.normalizebutton.clicked.connect(self.toggle_normalize)
-#         self.normalizebutton.setCheckable(True)
-#         self.autoscalebutton = QPushButton("autoscale")
-#         self.autoscalebutton.clicked.connect(self.toggle_autoscale)
-#         self.autoscalebutton.setCheckable(True)
-#         self.autoscalebutton.setChecked(True)
-#         self.controls.addWidget(self.normalizebutton)
-#         self.controls.addWidget(self.autoscalebutton)
-#         self.controls.addStretch(1)
-#
-#         self.vbox = QVBoxLayout()
-#         self.vbox.addLayout(self.controls)
-#         self.vbox.addWidget(self.nav)
-#         self.vbox.addWidget(self.plot)
-#         self.vbox.addSpacing(50)
-#
-#         self.setLayout(self.vbox)
-#
-#         self.elements_and_name = []
-#         self.data = defaultdict(deque)
-#
-#         self.interval = 1000
-#         self.active = active
-#
-#         self.timer = QtCore.QTimer(self)
-#         self.timer.timeout.connect(self.add_data)
-#
-#         # always get data
-#         if self.active:
-#             self.timer.start(self.interval)
-#
-#     def add_element(self, element, name):
-#         self.elements_and_name.append((element, name))
-#
-#     def add_data(self):
-#         t = time.time()
-#         for e, n in self.elements_and_name:
-#             self.data[n].append([t, getattr(e, n)])
-#
-#         # only save the last 10000 data points
-#         for k, v in self.data.items():
-#             while len(v) > 10000:
-#                 v.popleft()
-#
-#     def toggle_autoscale(self):
-#         self.autoscale = not self.autoscale
-#
-#     def toggle_normalize(self):
-#         self.normalize = not self.normalize
-#
-#     def update(self):
-#         xleft, xright = self.axes.get_xlim()
-#         ybottom, ytop = self.axes.get_ylim()
-#         self.axes.clear()
-#         self.axes.set_xlabel("Time")
-#         for k, v in self.data.items():
-#             myX = np.array([x[0] for x in v])
-#             myY = np.array([x[1] for x in v])
-#             if self.normalize and len(myY) and myY.max() > 0:
-#                 myY = myY / myY.max()
-#             self.axes.plot_date(
-#                 epoch2num(myX), myY, "o-", label=k, tz="America/Los_Angeles"
-#             )
-#         self.axes.legend(loc="best")
-#         if not self.autoscale:
-#             self.axes.set_xlim([xleft, xright])
-#             self.axes.set_ylim([ybottom, ytop])
-#         self.plot.draw()
-#
-#
-# class RunFunctionsThread(QThread):
-#     """Call a bunch of function to read data every <timeout> milliseconds"""
-#
-#     def __init__(self, functions):
-#         super().__init__()
-#         self.functions = functions
-#         self.keep_running = True
-#         self.pause = False
-#         self.timeout = 1000  # ms
-#
-#     def __del__(self):
-#         self.wait()
-#
-#     def addfunction(self, f):
-#         self.functions.append(f)
-#
-#     def removefunction(self, f):
-#         self.functions.remove(f)
-#
-#     def mystop(self):
-#         self.keep_running = False
-#
-#     def start_pause(self):
-#         self.pause = True
-#
-#     def stop_pause(self):
-#         self.pause = False
-#
-#     def run(self):
-#         while self.keep_running:
-#             if not self.pause:
-#                 for f in self.functions:
-#                     f()
-#             self.msleep(self.timeout)
-#
-#
-class LoggerThread(QThread):
-    """Write out the data to a log file"""
-
-    def __init__(self, datadir: pathlib.PosixPath = None, dummy: bool = False):
-        """Set up the logfile. Either create it or open for append"""
-
-        super().__init__()
-        self.elements = []
-        self.keep_running = True
-        self.pause = False
-
-        if not datadir or not datadir.is_dir():
-            self.keep_running = False
-            QMessageBox.about(None, "Error", f"Cannot find logfile directory {datadir}")
-
-        self.YYYYMMDD = datetime.datetime.today().strftime("%Y-%m-%d")
-        logdir = datadir / self.YYYYMMDD
-        logdir.mkdir(exist_ok=True, parents=True)
-        self.logdir = logdir
-        if dummy:
-            self.logfilename = logdir / (self.YYYYMMDD + "-dummy.txt")
-        else:
-            self.logfilename = logdir / (self.YYYYMMDD + ".txt")
-
-        # check if we need to write header
-        if self.logfilename.exists() and self.logfilename.is_file():
-            with self.logfilename.open("r") as f:
-                self.oldlength = len(f.readlines())
-        else:
-            self.oldlength = 0
-
-    def __del__(self):
-        self.wait()
-
-    def addelement(self, e):
-        self.elements.append(e)
-
-    def removeelement(self, e):
-        self.elements.remove(e)
-
-    def mystop(self):
-        self.keep_running = False
-
-    def start_pause(self):
-        self.pause = True
-
-    def stop_pause(self):
-        self.pause = False
-
-    def write_header(self):
-        self.logfile.write(f"# {self.YYYYMMDD}\n# Logfile from hardware_control run\n")
-        datastructure = "Time[s] " + " ".join([e.get_header() for e in self.elements])
-        myhash = hashlib.sha256()
-        myhash.update(datastructure.encode("utf-8"))
-        version = myhash.hexdigest()
-        self.logfile.write(f"# Version: {version}\n")
-        self.logfile.write(
-            f"{datastructure}\n"
-        )  # no '#' so that it is easier for pandas to read
-
-    def run(self):
-        # wait a few seconds before starting the log, so that the
-        # elements can start collecting data
-        time.sleep(5)
-
-        # now open file
-        self.logfile = self.logfilename.open("a", buffering=1)
-
-        # add header if file is empty
-        if self.oldlength == 0:
-            self.write_header()
-
-        while self.keep_running:
-            if not self.pause:
-                line = f"{time.time()} "
-                data = []
-                for e in self.elements:
-                    data.extend(e.get_values())
-                line += " ".join([str(d) for d in data])
-                self.logfile.write(line + "\n")
-            self.sleep(1)
-
-        self.logfile.close()
-
-
 def setButtonState(button: QPushButton, value):
     """Sets the state of a QPushButton to checked
     or unchecked, accoridng to 'value'. Only applicable
@@ -3251,13 +2804,3 @@ def setButtonState(button: QPushButton, value):
         else:
             if button.isChecked():
                 button.toggle()
-
-
-def returnChannelNumber(s: str):
-    """Return channel number for a string like 'CH###_TEMP' """
-    if s[:2] == "CH":
-        number = s[2 : s.find("_")]
-        if number.isdigit():
-            return number
-    else:
-        return None

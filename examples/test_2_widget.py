@@ -52,8 +52,8 @@ from hardware_control.widgets import (
     HC_MiniPlotTool,
     HC_LoggerTool,
     HC_StatusTool,
+    HC_Qtconsole,
 )
-from hardware_control.base import HC_ConsoleWidget
 from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
 
 
@@ -124,7 +124,7 @@ class RootsDemo(HC_MainWindow):
         self.tab_aux = QWidget()
         self.tab_plot = QWidget()
         self.tab_data = QWidget()
-        self.python = HC_ConsoleWidget(main_app=app)
+        self.python = HC_Qtconsole(main_app=app)
 
         self.tabs.addTab(self.tab_psu, "Power Supplies")
         self.tabs.addTab(self.tab_aux, "Aux")

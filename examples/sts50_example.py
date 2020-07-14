@@ -67,11 +67,11 @@ from hardware_control.widgets import (
     HC_PlotTool,
     HC_MiniPlotTool,
     HC_StatusTool,
+    HC_Qtconsole,
 )
 from hardware_control.PowerSupply.NI_DaX_PowerSupplyController import (
     NI_DaX_PowerSupplyController,
 )
-from hardware_control.base import HC_ConsoleWidget
 from hardware_control.IOModule.HC_IOModule import HC_IOModule, read_channel_file
 from hardware_control.IOModule.NI9000Ctrl import NI9000Ctrl
 from hardware_control.PowerSupply.CAEN14xxETCtrl import CAEN14xxETCtrl
@@ -215,7 +215,7 @@ class STS50Demo(HC_MainWindow):
         self.tab4 = QWidget()
         self.tab5 = QWidget()
         self.tab6 = QWidget()
-        self.console_tab = HC_ConsoleWidget(main_app=app)
+        self.console_tab = HC_Qtconsole(main_app=app)
 
         self.tabs.addTab(self.tab4, "Plasma Source")
         self.tabs.addTab(self.tab1, "Oscilloscope")

@@ -6,12 +6,11 @@
 
 import pkg_resources
 
-from hardware_control.utility import regex_compare
+from hardware_control.utility import regex_compare, returnChannelNumber
 from hardware_control.base import (
     HC_Instrument,
     HC_Comm,
     setButtonState,
-    returnChannelNumber,
 )
 import pyqtgraph as pg
 from PyQt5 import QtCore

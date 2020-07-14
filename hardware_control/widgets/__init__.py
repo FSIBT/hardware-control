@@ -10,3 +10,4 @@ from .plot import HC_PlotTool, HC_MiniPlotTool
 from .scan import HC_ScanTool
 from .variable_edit import HC_VariableEditTool
 from .zmq_connection import HC_ZMQConnectionTool
+from .qtconsole import HC_Qtconsole
