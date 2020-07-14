@@ -2,6 +2,7 @@ import json
 import logging
 import numpy as np
 import pkg_resources
+import time
 
 import pyqtgraph as pg  # For some reason, without this line QPushButton won't import
 from PyQt5 import QtCore
@@ -18,10 +19,10 @@ from PyQt5.QtWidgets import (
     QCheckBox,
     QFileDialog,
 )
+import zmq
+
 from hardware_control.base import HC_Instrument
 from hardware_control.widgets.zmq_connection import HC_ZMQConnectionTool
-import time
-import zmq
 
 logger = logging.getLogger(__name__)
 
@@ -396,7 +397,7 @@ class HC_ScanTool(HC_Instrument):
                 end = float(self.spacing_end_edit.text())
                 num_points = float(self.num_points_edit.text())
             except:
-                logger.error(f"Invalid values for start, end, or num_points")
+                logger.error("Invalid values for start, end, or num_points")
                 return False
 
             # Generate log/lin spacing
@@ -623,7 +624,7 @@ class HC_ScanTool(HC_Instrument):
 
         try:
             self.settings[setting] = value
-        except Exception as e:
+        except Exception:
             return
 
         if setting == "progress":
@@ -686,8 +687,8 @@ class ScanWorker(QObject):
 
     def is_busy(self):
         req_str = "MEAS:GETSTATE"
-        socket.send(str.encode(req_str))
-        rval = socket.recv()
+        self.socket.send(str.encode(req_str))
+        rval = self.socket.recv()
         return rval == "Busy"
 
     @pyqtSlot()
