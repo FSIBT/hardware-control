@@ -89,8 +89,8 @@ class NI9000Ctrl(HC_Backend):
                     if task.name:
                         self.online = True
             except Exception as e:
+                self.online = False
                 logger.error("Connect failed.", exc_info=True)
-                return False
         else:
             self.online = True
         return self.online
