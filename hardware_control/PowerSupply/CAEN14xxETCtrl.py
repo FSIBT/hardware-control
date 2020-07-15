@@ -95,9 +95,9 @@ class CAEN14xxETCtrl(HC_Backend):
 
         if setting_X == "CHX_enable":
             if value_original == "True":
-                self.write(f"$BD:00,CMD:SET,CH:{channel},PAR:ON")
+                self.query(f"$BD:00,CMD:SET,CH:{channel},PAR:ON")
             else:
-                self.write(f"$BD:00,CMD:SET,CH:{channel},PAR:OFF")
+                self.query(f"$BD:00,CMD:SET,CH:{channel},PAR:OFF")
             status = self.read_status(channel)
 
             if status is None:
@@ -111,7 +111,7 @@ class CAEN14xxETCtrl(HC_Backend):
                 value = min(value, self.max_I[channel - 1])
                 logger.debug(f"Iset value changed to {value} because it exceeded limit")
 
-            self.write(f"$BD:00,CMD:SET,CH:{channel},PAR:ISET,VAL:{value}")
+            self.query(f"$BD:00,CMD:SET,CH:{channel},PAR:ISET,VAL:{value}")
             result = self.query(f"$BD:00,CMD:MON,CH:{channel},PAR:ISET")
 
             if result is None:
@@ -124,7 +124,7 @@ class CAEN14xxETCtrl(HC_Backend):
                 value = min(value, self.max_V[channel - 1])
                 logger.debug(f"Vset value changed to {value} because it exceeded limit")
 
-            self.write(f"$BD:00,CMD:SET,CH:{channel},PAR:VSET,VAL:{value}")
+            self.query(f"$BD:00,CMD:SET,CH:{channel},PAR:VSET,VAL:{value}")
             result = self.query(f"$BD:00,CMD:MON,CH:{channel},PAR:VSET")
 
             if result is None:
@@ -196,7 +196,7 @@ class CAEN14xxETCtrl(HC_Backend):
             print(result, flush=True)
             if result.endswith("CMD:OK"):
                 return None
-            value = int(result[-5:])
+            value = int(result[result.find("VAL:") + 4 :])
 
         status = {
             "on_off": value & 1,
