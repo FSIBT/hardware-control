@@ -38,17 +38,6 @@ class Key33500BCtrl(HC_Backend):
 
         self.parse_connection_addr()
 
-        if self.connection_type == "socket":
-            try:
-                tokens = self.connection_addr.split(":", 1)
-                self.ip_addr = tokens[0]
-                self.port_no = int(tokens[1])
-            except:
-                logger.warning(
-                    f"Failed to get address, port from {self.connection_addr}",
-                    exc_info=True,
-                )
-
         self.check()
 
     def update_setting(self, setting: str, value):
