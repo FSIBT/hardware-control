@@ -27,6 +27,14 @@ waveform_lookup = {
 
 
 class Key33500BCtrl(HC_Backend):
+    """ Backend for Keysight 33500B arbitrary waveform generator
+
+    Parameters
+    ----------
+    connection_addr : str
+        Address of instrument. Can use Visa address or socket and port.
+    """
+
     def __init__(self, connection_addr: str):
         super().__init__()
         self.ID = "KEYSIGHT-33500B"
@@ -41,7 +49,19 @@ class Key33500BCtrl(HC_Backend):
         self.check()
 
     def update_setting(self, setting: str, value):
-        """Update settings.
+        """ Called by HC_Comm object. Updates a setting in the instrument.
+
+        Parameters
+        ----------
+        setting : str
+            Name of setting to modify
+        vale : str
+            New value for setting
+
+        Returns
+        -------
+        str
+            Returns a string suggesting if the operation was successful.
 
         Note
         ----
