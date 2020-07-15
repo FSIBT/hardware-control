@@ -7,11 +7,8 @@
 import pkg_resources
 
 from hardware_control.utility import regex_compare, returnChannelNumber
-from hardware_control.base import (
-    HC_Instrument,
-    HC_Comm,
-    setButtonState,
-)
+from hardware_control.widgets import setButtonState
+from hardware_control.base import HC_Instrument, HC_Comm
 import pyqtgraph as pg
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer, QThread, pyqtSignal, pyqtSlot, QObject

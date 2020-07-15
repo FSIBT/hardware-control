@@ -4,7 +4,9 @@
 # you can easily create GUIs for oscilloscopes.
 #
 
+import logging
 import pkg_resources
+
 from PyQt5 import QtCore
 from PyQt5.QtGui import QDoubleValidator, QPixmap, QIcon
 from PyQt5.QtWidgets import (
@@ -17,8 +19,9 @@ from PyQt5.QtWidgets import (
     QComboBox,
 )
 
-from hardware_control.base import HC_Instrument, HC_Comm, setButtonState
-import logging
+from hardware_control.base import HC_Instrument, HC_Comm
+from hardware_control.widgets import setButtonState
+
 
 logger = logging.getLogger(__name__)
 

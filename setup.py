@@ -17,6 +17,7 @@ setuptools.setup(
     license="modified BSD",
     packages=[
         "hardware_control",
+        "hardware_control.base",
         "hardware_control.icons",
         "hardware_control.widgets",
         "hardware_control.DelayGenerator",

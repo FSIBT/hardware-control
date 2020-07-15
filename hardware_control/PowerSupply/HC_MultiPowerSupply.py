@@ -22,13 +22,17 @@ from PyQt5.QtWidgets import (
 from hardware_control.base import (
     HC_Instrument,
     HC_Comm,
-    setButtonState,
     AUTOMATIC,
     MANUAL,
 )
 import logging
-from hardware_control.utility import remove_end_carriage_return
-from hardware_control.utility import change_units, apply_to_label
+from hardware_control.utility import (
+    remove_end_carriage_return,
+    change_units,
+    apply_to_label,
+)
+from hardware_control.widgets import setButtonState
+
 
 logger = logging.getLogger(__name__)
 
