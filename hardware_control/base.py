@@ -178,35 +178,6 @@ class HC_Comm(QObject):
         )
         self.sigCommandList.emit(cmd, time.time() + self.list_expire_time)
 
-    # def command_log(self, cmd:str, state):
-    #     """Functions the same way as command(), except it: 1.) immediately records
-    #     the returned data 2.) allows for automatically repeated queries to ensure
-    #     the measured value is in a steady-state and that the measurement is not
-    #     fluctuating beyond the specified tolerance."""
-    #
-    #     state.repeat_command = cmd;
-    #     state.iterations += 1
-    #
-    #     #Cancel command if
-    #     if state.iterations > state.max_iterations:
-    #         return
-    #
-    #     #Check if ID is blacklisted if dataset already exists
-    #     if ((state.dataset_name in self.window.app.data_sets) and (self.window.app.data_sets[state.dataset_name].is_blacklisted(state.measurement_id))):
-    #         return
-    #
-    #     add_to_list = True
-    #     for s_idx, s in enumerate(self.dataset_states):
-    #         if s.measurement_id == state.measurement_id: #Ensure there is not already a state with the assigned ID number
-    #             self.dataset_states[s_idx] = state; #Update state
-    #             add_to_list = False
-    #
-    #     #Add state information to HC_Comm's list of states
-    #     if add_to_list:
-    #         self.dataset_states.append(state)
-    #
-    #     self.sigCommandLog.emit(cmd, time.time() + self.expire_time, state.measurement_id)
-
     def command_log(self, cmd: str, param_str: str):
         """Sends a command to the worker in the worker thread"""
 
@@ -266,39 +237,6 @@ class HC_Comm(QObject):
             )
         for instr in self.instruments:
             instr.backend_return(retval)
-
-    # @pyqtSlot(str, int, str)
-    # def backend_return_log(self, retval:str, param_str:str):
-    #     """ """
-    #
-    #     #Find the state objeect with a matching ID
-    #     set_idx = -1;
-    #     for s_idx, s in enumerate(self.dataset_states):
-    #         if s.measurement_id == id:
-    #             set_idx = s_idx;
-    #
-    #     #Ensure a state variable was found
-    #     if set_idx == -1:
-    #         #An error has occured an a dataset_state with a matching ID can not be found
-    #         error_message = f"backend_return_log() was called, but a state object with a matching ID ({id}) cannot be found"
-    #         self.intrument.backend_return(error_message)
-    #
-    #     #Check if req number of steady points is satisfied
-    #     if self.dataset_states[set_idx].steady_points > 0:
-    #
-    #         #Add the last measurement to the state object
-    #         self.dataset_states.add_point(retval)
-    #
-    #
-    #         if self.dataset_states[set_idx].conditions_met():
-    #             self.instrument.backend_return(retval) #If all conditions have been met, send the return value to the UI
-    #         else:
-    #             #All confitions have not been met, request another measurement
-    #             self.command(self.dataset_states[set_idx].repeat_command, self.dataset_states[set_idx]);
-    #
-    #     else:
-    #         #If no steeady state condition is required, immediately return the response
-    #         self.instrument.backend_return(retval)
 
 
 class HC_CommWorker(QObject):
@@ -1697,34 +1635,6 @@ class HC_Instrument(QGroupBox):
         sep_idx = retval.find("=")
         if sep_idx != -1:  # Separator was found...
 
-            # # Check for asterisk at end of key, ie. right before '='. This indicates
-            # # that this command unlocks HC_App's Macro runner and that the parameter
-            # # needs to be logged in HC_App.saved_data immediately by appending the
-            # # received value to the back of the list in HC_App.saved_data with the
-            # # key specified by the returned value.
-            # if sep_idx > 0 and retval[sep_idx - 1] == "*":
-            #
-            #     self.window.app.macro_locked = False
-            #     # Unlock macro
-            #
-            #     sep_idx -= 1
-            #     # Remove asterisk from key
-            #     key = retval[0:sep_idx]  # Get key
-            #     val = retval[sep_idx + 2 :]  # Get value
-            #
-            #     val_f = -1
-            #     try:
-            #         val_f = float(val)
-            #     except:
-            #         logger.error(f"Failed to convert {val} to a float", exc_info=True)
-            #
-            #     try:  # Append data
-            #         self.window.app.saved_data[key].append(val_f)
-            #     except:  # Does not exist, create list and key
-            #         self.window.app.saved_data[key] = [val_f]
-            #
-            # else:
-
             key = retval[0:sep_idx]
             val = retval[sep_idx + 1 :]
 
@@ -2743,35 +2653,6 @@ class HC_MainWindow(QMainWindow):
                 )
         else:
             logger.info("Save canceled")
-
-        # if file_type == "Pickle (*.p)":
-        #     logger.error("Not yet implimented")
-        # elif file_type == "NumPy (*.npy)":
-        #     logger.error("Not yet implimented")
-        # elif file_type == "JSON (*.json)":
-        #
-        #     # Open file...
-        #     with open(name, "w") as f:
-        #
-        #         # Create buffer object
-        #         save_data_obj = {}
-        #
-        #         if len(sets) > 0:  # If groups are specified...
-        #             for grp in sets:  # Save each specified group if it exists
-        #                 try:
-        #                     save_data_obj[
-        #                         self.app.data_sets[grp].name
-        #                     ] = self.app.data_sets[grp].data
-        #                 except:
-        #                     pass
-        #         else:  # Else save all...
-        #
-        #             for ds_key in self.app.data_sets:
-        #                 save_data_obj[
-        #                     self.app.data_sets[ds_key].name
-        #                 ] = self.app.data_sets[ds_key].data
-        #
-        #         json.dump(save_data_obj, f)
 
     def create_new_group(self):
 
