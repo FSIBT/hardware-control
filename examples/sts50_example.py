@@ -266,7 +266,7 @@ class STS50Demo(HC_MainWindow):
         self.psu = TDKLGenHCtrl("TCPIP0::192.168.1.19::INSTR")
         self.psu_ctrl = HC_MultiPowerSupply(self.psu, self, [1], "TDK Lambda (RF Vin)",)
 
-        self.psu_caen = CAEN14xxETCtrl("TCPIP0::192.168.0.1::INSTR")
+        self.psu_caen = CAEN14xxETCtrl("192.168.0.1:1470")
         self.psu_caen_wdgt = HC_MultiPowerSupply(
             self.psu_caen, self, [3, 8], "CAEN High Voltage Power Supply"
         )
