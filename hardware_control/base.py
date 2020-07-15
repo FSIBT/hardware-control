@@ -2240,19 +2240,20 @@ class HC_App(QApplication):
                 # Make sure handle exists
                 if tokens[2] in self.function_handles:
 
+                    if not callable(self.function_handles[tokens[2]]):
+                        func_name = tokens[2]
+                        logger.warning(
+                            f"Non-callable object provided as function handle '{func_name}'"
+                        )
+                        return "False"
+
                     # Run function - note: this can become recursive and get stuck in
                     # an infinite loop if the user runs a function that calls itself
                     if len(tokens) > 3:
                         tokens = command.split(":", 3)
-                        try:
-                            return self.function_handles[tokens[2]](token_handles[3])
-                        except:
-                            return "Error"
+                        return self.function_handles[tokens[2]](token_handles[3])
                     else:
-                        try:
-                            return self.function_handles[tokens[2]]()
-                        except:
-                            return "Error"
+                        return self.function_handles[tokens[2]]()
 
                 else:
                     logger.warning(f"Requested macro to run does not exist.",)
