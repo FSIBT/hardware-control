@@ -31,6 +31,7 @@ class ZMQOscilloscopeCtrl(HC_Backend):
         self.context = zmq.Context()
         self.socket = None
 
+        self.timeout_time_ms = 500
         self.zmq_address = connection_addr
         self.connection_addr = connection_addr  # So widget can read address
         self.online = False
@@ -45,8 +46,11 @@ class ZMQOscilloscopeCtrl(HC_Backend):
     def check_connection(self):
 
         self.socket.send_string("ping")
-        if self.socket.recv_string() == "alive":
-            return True
+        try:
+            if self.socket.recv_string() == "alive":
+                return True
+        except zmq.error.Again:
+            return False  # Receive timed out
         return False
 
     def update_setting(self, setting: str, value):
@@ -185,6 +189,7 @@ class ZMQOscilloscopeCtrl(HC_Backend):
             self.socket.close()
         logger.debug(f"{self.ID}: Trying to connect to {self.zmq_address}")
         self.socket = self.context.socket(zmq.REQ)
+        self.socket.setsockopt(zmq.RCVTIMEO, self.timeout_time_ms)
         self.socket.connect(self.zmq_address)
 
         self.online = True
@@ -239,12 +244,20 @@ class ZMQOscilloscopeCtrl(HC_Backend):
         # This tells the Pi to get ready for the settings dict
         self.socket.send_string("set scope settings")
 
-        message = self.socket.recv_string()
+        try:
+            message = self.socket.recv_string()
+        except zmq.error.Again:
+            self.online = False
+
         if message != "JSON?":
             logger.debug(f"{self.ID} wrong response to send json settings")
 
         self.socket.send_string(json.dumps(self.settings))
 
-        message = self.socket.recv_string()
+        try:
+            message = self.socket.recv_string()
+        except zmq.error.Again:
+            self.online = False
+
         if message != "ok":
             logger.debug(f"{self.ID} wrong response to send json settings")
