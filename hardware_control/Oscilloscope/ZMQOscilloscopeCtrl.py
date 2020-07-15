@@ -42,6 +42,13 @@ class ZMQOscilloscopeCtrl(HC_Backend):
         self.settings = self.default_settings()
         self.check()
 
+    def check_connection(self):
+
+        self.socket.send_string("ping")
+        if self.socket.recv_string() == "alive":
+            return True
+        return False
+
     def update_setting(self, setting: str, value):
 
         if not self.online:
@@ -168,8 +175,10 @@ class ZMQOscilloscopeCtrl(HC_Backend):
                 return True
 
         if self.online:
-            # Todo: check that this will reconnect automatically, if not fix
-            return True
+            check_passed = self.check_connection()
+            if check_passed is not None:
+                self.online = check_passed
+            return self.online
 
         # Try to connect - restart socket
         if self.socket is not None:
@@ -180,7 +189,11 @@ class ZMQOscilloscopeCtrl(HC_Backend):
 
         self.online = True
 
-        return True
+        check_passed = self.check_connection()
+        if check_passed is not None:
+            self.online = check_passed
+
+        return self.online
 
     def default_settings(self):
         dflt = {
