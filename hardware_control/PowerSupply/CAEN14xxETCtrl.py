@@ -159,16 +159,12 @@ class CAEN14xxETCtrl(HC_Backend):
 
         if command_X == "CHX_V_out?":
             command = "VMON"
-            offset = -6
         elif command_X == "CHX_I_out?":
             command = "IMON"
-            offset = -7
         elif command_X == "CHX_I_set?":
             command = "ISET"
-            offset = -6
         elif command_X == "CHX_V_set?":
             command = "VSET"
-            offset = -6
         elif command_X == "CHX_enable?":
             result = self.read_status(channel)
 
@@ -184,7 +180,7 @@ class CAEN14xxETCtrl(HC_Backend):
         result = self.query(f"$BD:00,CMD:MON,CH:{channel},PAR:{command}")
         if result is None:
             return "None"
-        rval = result[offset:]
+        rval = result[result.find("VAL:") + 4 :]
         return f"{cmd[:-1]}={rval}"
 
     def read_status(self, channel):
