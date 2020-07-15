@@ -126,13 +126,13 @@ logger.addHandler(handler)
 logger.info("STS50 Example Starting")
 
 
-def send_state_when_online(obj):
+def init_with_JSON(obj):
     """
     This function is used by multiple instruments to sync the instrument state
     and backend once the instrument comes online.
     """
+
     obj.send_state()
-    print(f"{time.time()}\t\t{obj}")
 
 
 def init_osc_when_online(obj):
@@ -141,7 +141,7 @@ def init_osc_when_online(obj):
     state and configure the oscilloscope when it comes online.
     """
 
-    send_state_when_online(obj)
+    init_with_JSON(obj)
 
     obj.command("CONFIG_READ_WAVE")
 
@@ -237,7 +237,7 @@ class STS50Demo(HC_MainWindow):
         self.scope_ctrl = HC_Oscilloscope(scpi_scope, self, "Keysight")
         self.scope_ctrl.load_state("scope_state.json")
         self.scope_ctrl.settings_to_UI()
-        self.scope_ctrl.set_online_callback(init_osc_when_online)
+        self.scope_ctrl.set_online_callback(init_with_JSON)
 
         # Put instrument(s) in tab
         self.tab1_layout = QGridLayout()
@@ -249,6 +249,9 @@ class STS50Demo(HC_MainWindow):
 
         self.pico = ZMQOscilloscopeCtrl("tcp://192.168.0.30:6000")
         self.pico_ctrl = HC_Oscilloscope(self.pico, self, "PicoScope")
+        self.pico_ctrl.load_state("picoscope_init.json")
+        self.pico_ctrl.settings_to_UI()
+        self.pico_ctrl.set_online_callback(init_with_JSON)
 
         self.tab1_5_layout = QGridLayout()
         self.tab1_5_layout.addWidget(self.pico_ctrl, 0, 0)
@@ -303,13 +306,13 @@ class STS50Demo(HC_MainWindow):
         self.trig1_ctrl = HC_DelayGenerator(self.trig1, self, "Trigger 1")
         self.trig1_ctrl.load_state("Trigger1_state.json")
         self.trig1_ctrl.settings_to_UI()
-        self.trig1_ctrl.set_online_callback(send_state_when_online)
+        self.trig1_ctrl.set_online_callback(init_with_JSON)
 
         self.trig2 = SRSDG535Ctrl("GPIB0::15::INSTR")
         self.trig2_ctrl = HC_DelayGenerator(self.trig2, self, "Trigger 2")
         self.trig2_ctrl.load_state("Trigger2_state.json")
         self.trig2_ctrl.settings_to_UI()
-        self.trig2_ctrl.set_online_callback(send_state_when_online)
+        self.trig2_ctrl.set_online_callback(init_with_JSON)
 
         float_channel_data = read_channel_file("sts50_floatIO_config.json",)
         usb_channel_data = read_channel_file(
