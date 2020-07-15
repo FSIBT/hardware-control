@@ -179,10 +179,7 @@ class ZMQOscilloscopeCtrl(HC_Backend):
                 return True
 
         if self.online:
-            check_passed = self.check_connection()
-            if check_passed is not None:
-                self.online = check_passed
-            return self.online
+            return True
 
         # Try to connect - restart socket
         if self.socket is not None:
