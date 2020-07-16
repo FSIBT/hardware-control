@@ -14,7 +14,13 @@ ipy_logger.setLevel("ERROR")
 
 
 class HC_App(QApplication):
-    """Subclass of QApplication that is aware of what hardware is connected to it and can log data"""
+    """The main app class.
+
+    This class should be used to create the main Qt app in your
+    program. It keeps track of all connected instruments, settings,
+    and current data.
+
+    """
 
     def __init__(self, dummy=False):
         # QApplication can take a list of strings, e.g. from sys.argv
@@ -36,8 +42,8 @@ class HC_App(QApplication):
 
         self.director = MeasurementDirector(self)
 
-        # Dictates if hc_commands are allowed to execute raw python code via calls to the
-        # via teh 'exec' function
+        # Dictates if hc_commands are allowed to execute raw python
+        # code via calls to the via teh 'exec' function
         self.exec_enabled = True
 
         self.macro_lock_end_time = None
@@ -57,9 +63,13 @@ class HC_App(QApplication):
         self.instruments.append(widget)
 
     def save_settings(self, filename: str):
-        """ Copys the settings dictionaries from each instrument into a new dictionary
-        with the instrument's name serving as the key. The dictionary is then saved
-        to a JSON file. """
+        """Save all settings as JSON.
+
+        Copys the settings dictionaries from each instrument into a
+        new dictionary with the instrument's name serving as the
+        key. The dictionary is then saved to a JSON file.
+
+        """
 
         app_settings = {instr.name: instr.settings for instr in self.instruments}
 
@@ -236,7 +246,7 @@ class HC_App(QApplication):
                         float(tokens[8]),
                         int(tokens[9]),
                     )
-                except Exception as e:
+                except Exception:
                     logger.warning(
                         "Invalid HC-Command received. Failed to create MeasurementRequest from given arguments.",
                     )
@@ -545,12 +555,16 @@ class HC_App(QApplication):
             self.process_hc_command(cmd)
 
     def load_state_from_file(self, filename: str):
-        """ Reads a JSON file to overwrite instrument's settings dictionaries.
-        Expectss JSON to be a dictionary of dictionaries. The first-level key in the
-        instrument name, the value for that key is the instrument's settings
-        dictionary. If a parameter in the file does not exist in the instrment's
-        settings dictionary it is ignored. If the file does not specify a parameter
-        held by th instrument's settings dictionary then that parameter is unchanged.
+        """Reads a JSON file to overwrite instrument's settings dictionaries.
+
+        Expectss JSON to be a dictionary of dictionaries. The
+        first-level key in the instrument name, the value for that key
+        is the instrument's settings dictionary. If a parameter in the
+        file does not exist in the instrment's settings dictionary it
+        is ignored. If the file does not specify a parameter held by
+        th instrument's settings dictionary then that parameter is
+        unchanged.
+
         """
 
         # Read file

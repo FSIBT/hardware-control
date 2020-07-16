@@ -80,7 +80,8 @@ class HC_Comm(QObject):
 
         self.instruments.append(new_instrument)
 
-    def close(self):  # TODO: Change logger messages to references address, not instr
+    def close(self):
+        # TODO: Change logger messages to references address, not instr
         logger.debug(
             f"\tInstrument: '{self.instruments[0].name}' closing Comm with backend of type '{self.backend_model}'."
         )

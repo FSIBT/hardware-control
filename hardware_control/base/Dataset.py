@@ -262,8 +262,9 @@ class Dataset(QObject):
 
         logger.debug(f"Dataset {self.name} logging asynchronous data")
 
-        # Check that all requested parameters are available. If they aren't, don't
-        # log anything. This ensures the dataset's columns are all the same length
+        # Check that all requested parameters are available. If they
+        # aren't, don't log anything. This ensures the dataset's
+        # columns are all the same length
         if self.require_all:
             for ai in self.async_instruments:
                 name = ai[0].name
@@ -275,8 +276,9 @@ class Dataset(QObject):
                     )
                     return
 
-            # If all values must be valid (because require_all is true) and all
-            # values must be convertible to float, check that values are valid num
+            # If all values must be valid (because require_all is
+            # true) and all values must be convertible to float, check
+            # that values are valid num
             if self.async_require_float:
                 for ai in self.async_instruments:
                     for vk in vkeys:
