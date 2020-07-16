@@ -141,6 +141,16 @@ def init_with_JSON(obj):
     obj.send_state()
 
 
+def init_with_instrument(obj):
+    """
+    This function is used by multiple instruments to sync the instrument state
+    and backend once the instrument comes online.
+    """
+
+    obj.read_state_from_backend()
+    obj.settings_to_UI()
+
+
 def init_osc_when_online(obj):
     """
     This function is used by the oscilloscope specifically to sync the instrument
@@ -279,6 +289,7 @@ class STS50Demo(HC_MainWindow):
         self.psu_caen_wdgt = HC_MultiPowerSupply(
             self.psu_caen, self, [3, 8], "CAEN High Voltage Power Supply"
         )
+        self.psu_caen_wdgt.set_online_callback(init_with_instrument)
 
         # Put instrument(s) in tab
         self.tab2_layout = QGridLayout()
