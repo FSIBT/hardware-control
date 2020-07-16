@@ -385,7 +385,7 @@ class HC_App(QApplication):
                     # an infinite loop if the user runs a function that calls itself
                     if len(tokens) > 3:
                         tokens = command.split(":", 3)
-                        return self.function_handles[tokens[2]](token_handles[3])
+                        return self.function_handles[tokens[2]](tokens[3])
                     else:
                         return self.function_handles[tokens[2]]()
 
