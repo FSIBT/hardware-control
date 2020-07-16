@@ -14,12 +14,19 @@ Options:
 """
 
 import logging
-
 import sys
-import warnings
-from PyQt5.QtWidgets import QStyleFactory, QTabWidget
-from docopt import docopt
 from time import gmtime, strftime
+import warnings
+
+from PyQt5.QtWidgets import (
+    QStyleFactory,
+    QTabWidget,
+    QGridLayout,
+    QWidget,
+    QSpacerItem,
+    QSizePolicy,
+)
+from docopt import docopt
 
 from hardware_control.base import HC_App, HC_MainWindow, Dataset
 from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
@@ -31,18 +38,16 @@ from hardware_control.DelayGenerator.HC_DelayGenerator import HC_DelayGenerator
 from hardware_control.DelayGenerator.SRSDG535Ctrl import SRSDG535Ctrl
 from hardware_control.FunctionGenerator.HC_FunctionGenerator import HC_FunctionGenerator
 from hardware_control.FunctionGenerator.Key33500BCtrl import Key33500BCtrl
-from hardware_control.PowerSupply.HC_MultiPowerSupply import *
+from hardware_control.PowerSupply.HC_MultiPowerSupply import HC_MultiPowerSupply
 from hardware_control.PowerSupply.TDKLGenHCtrl import TDKLGenHCtrl
 from hardware_control.IOModule.HC_Read import HC_Read, HC_singleChannelRead
 from hardware_control.IOModule.ADAM6015Ctrl import ADAM6015Ctrl
 from hardware_control.widgets import (
     HC_ZMQConnectionTool,
     HC_MacroRunnerTool,
-    HC_VariableEditTool,
     HC_LoggerTool,
     HC_ScanTool,
     HC_PlotTool,
-    HC_MiniPlotTool,
     HC_StatusTool,
     HC_Qtconsole,
 )

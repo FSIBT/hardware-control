@@ -1,14 +1,14 @@
 from abc import ABC
 from functools import wraps
 import inspect
+import logging
+import socket
 import time
 import threading
 
 import pyvisa
-import socket
 from pymodbus.client.sync import ModbusTcpClient as ModbusClient
 
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -205,7 +205,7 @@ class HC_Backend(ABC):
                 logger.debug(
                     f"opened socket connection to {self.ID} at {self.ip_addr}:{self.port_no}"
                 )
-            except Exception as e:
+            except Exception:
                 self.online = False
                 logger.debug(
                     f"\t({self.ID}) ERROR connecting with sockets.", exc_info=True
@@ -221,7 +221,7 @@ class HC_Backend(ABC):
                     logger.debug(
                         f"opened modbus connection to {self.ID} at {self.connection_addr}"
                     )
-            except Exception as e:
+            except Exception:
                 self.online = False
                 logger.debug(
                     f"\t({self.ID}) ERROR connecting with modbus.", exc_info=True
@@ -229,8 +229,8 @@ class HC_Backend(ABC):
                 logger.debug(f"{self.ID} is offline")
 
         # If connection purportedly successful, verify connection
-        if self.online == True:
-            if self.check_connection() == False:
+        if self.online:
+            if not self.check_connection():
                 self.online = False
 
         return self.online

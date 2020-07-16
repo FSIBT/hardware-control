@@ -93,7 +93,7 @@ logger.info("Roots Example Starting")
 def ramp_func(obj, parameter, present, target):
 
     # Mark as complete if within 1 unit of target
-    if present + 1 > target and present - 1 < target:
+    if present - 1 < target < present + 1:
         return None
 
     # Compute ramp speed
