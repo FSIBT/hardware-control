@@ -98,16 +98,6 @@ class HC_App(QApplication):
                 logger.error(f"Instrument  {i} needs a .model")
 
     def close(self):
-        """Closes all instruments"""
-        for instr in self.instruments:
-            try:  # User may not have initialized comm correctly as HC_Comm - error check here
-                instr.comm.close()  # Send close signal to backend - stop connect timer
-            except Exception:
-                logger.error(
-                    f"Failed to close instrument '{instr.name}'.", exc_info=True
-                )
-
-    def close(self):
 
         # Loop through instruments, close each one...
         for instr in self.instruments:
