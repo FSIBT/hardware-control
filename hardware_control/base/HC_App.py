@@ -4,6 +4,7 @@ import logging
 from PyQt5.QtWidgets import QApplication
 
 from .HC_MeasurementDirector import MeasurementDirector
+from .HC_MeasurementRequest import MeasurementRequest
 from .Dataset import Dataset
 
 logger = logging.getLogger(__name__)

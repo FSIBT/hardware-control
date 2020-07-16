@@ -522,7 +522,7 @@ class HC_Instrument(QGroupBox):
         # Otherwise make sure is list
         if type(parameters) != list:
             logger.info(
-                f"get_value_keys() received bad 'parameter' argument. type must be list or None but was '{type(parameter)}'."
+                f"get_value_keys() received bad 'parameters' argument. type must be list or None but was '{type(parameters)}'."
             )
             return None
 

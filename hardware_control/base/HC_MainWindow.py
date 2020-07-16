@@ -11,6 +11,8 @@ from PyQt5.QtWidgets import (
     QFileDialog,
 )
 
+from .Dataset import Dataset
+
 logger = logging.getLogger(__name__)
 
 ipy_logger = logging.getLogger("ipykernel")
