@@ -57,6 +57,8 @@ from hardware_control.PowerSupply.NI_DaX_PowerSupplyController import (
 from hardware_control.IOModule.HC_IOModule import HC_IOModule, read_channel_file
 from hardware_control.IOModule.NI9000Ctrl import NI9000Ctrl
 from hardware_control.PowerSupply.CAEN14xxETCtrl import CAEN14xxETCtrl
+from PyQt5.QtGui import QPixmap, QIcon
+import pkg_resources
 
 
 commands = docopt(__doc__)
@@ -162,13 +164,40 @@ def init_osc_when_online(obj):
     obj.command("CONFIG_READ_WAVE")
 
 
+def power_off(window):
+
+    # Disable CAEN
+    window.psu_caen_wdgt.update_setting("CH3_enable", "False")
+    window.psu_caen_wdgt.update_setting("CH8_enable", "False")
+    window.psu_caen_wdgt.settings_to_UI()
+
+    # Disable RF Generator
+    window.awg_ctrl.update_setting("CH1_enabled", "False")
+    window.awg_ctrl.settings_to_UI()
+
+    # Disable TDK Lambda
+    window.psu_ctrl.update_setting("CH1_enabled", "False")
+    window.psu_ctrl.settings_to_UI()
+
+    # Shut off gas
+    window.flow_ctrl.update_setting("rate", "0")
+    window.flow_ctrl.settings_to_UI()
+
+    # Shut off NI-DAQ Power Supplies
+    window.iomod_usb_wdgt.update_setting("CHcDAQ1Mod1/ao0_analog_write", "0")
+    window.iomod_usb_wdgt.update_setting("CHcDAQ1Mod1/ao1_analog_write", "0")
+    window.iomod_float_wdgt.update_setting(
+        "CHcDAQ9188-1AEF742Mod7/ao4_analog_write", "0"
+    )
+    window.iomod_usb_wdgt.settings_to_UI()
+    window.iomod_float_wdgt.settings_to_UI()
+
+
 def trigger_function(window):
     """
     This function is used by the app to describe the beam triggering sequence. It
     is called when the beam trigger button is pressed or the trigger macro is run.
     """
-
-    print("Trigger!")
 
     # Update shot number and shot number widget
     window.app.variables["SHOT_ID_NUM"] = strftime("%H%M%S", gmtime())
@@ -384,6 +413,7 @@ class STS50Demo(HC_MainWindow):
         # )  # Add a trigger macro
 
         app.add_macro("Trigger", ["FUNC:HANDLE:trigger_function"])
+        app.add_macro("PowerOff", ["FUNC:HANDLE:power_off"])
         # "Trigger", ["FUNC:VAR:SHOT_ID_NUM:10", "FUNC:UPDATE:MACRO_IND",],
         app.add_macro("Safe", ["CMD:PSU:ALL_OFF", "CMD:AWG:ALL_OFF"])
         app.add_macro("Wait_1s", ["FUNC:time:sleep:1"])
@@ -392,15 +422,31 @@ class STS50Demo(HC_MainWindow):
 
         self.run_tool = HC_MacroRunnerTool(
             self,
-            "Beam Trigger",
-            {"Trigger": "Trigger Beam"},
+            "Operations",
+            {"Trigger": "Trigger Beam", "PowerOff": "Power Down"},
             {"SHOT_ID_NUM": "Shot ID Number: "},
             add_countdown=True,
         )
         self.run_tool.update_macros()
         self.run_tool.countdown_end = countdown_end_fn
+        self.power_off_ind = QPixmap(
+            pkg_resources.resource_filename(
+                "hardware_control", f"icons/voltage_off.svg"
+            )
+        )
+        self.run_tool.button_widgets[1].setIcon(QIcon(self.power_off_ind))
+
+        # self.kill_tool = HC_MacroRunnerTool(
+        #     self,
+        #     "Shut",
+        #     {"Trigger": "Trigger Beam"},
+        #     {"SHOT_ID_NUM": "Shot ID Number: "},
+        #     add_countdown=True,
+        # )
+        # self.run_tool.update_macros()
 
         app.function_handles["trigger_function"] = lambda: trigger_function(self)
+        app.function_handles["power_off"] = lambda: power_off(self)
         app.function_handles["print_fil"] = self.print_fil
 
         # self.run_tool = HC_MacroRunnerTool(
