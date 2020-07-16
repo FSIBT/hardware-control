@@ -14,13 +14,13 @@ import sys
 from PyQt5.QtWidgets import QMainWindow, QWidget, QGridLayout
 from docopt import docopt
 
-commands = docopt(__doc__)
-dummy = commands["--dummy"]
-debug = commands["--debug"]
-
 from hardware_control.base import HC_App
 from hardware_control.IOModule.ADAM_6015 import Adam_6015
 from hardware_control.IOModule.HC_Read import HC_Read
+
+commands = docopt(__doc__)
+dummy = commands["--dummy"]
+debug = commands["--debug"]
 
 
 class Read_Demo(QMainWindow):

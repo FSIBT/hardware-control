@@ -15,34 +15,11 @@ Options:
 
 import logging
 
-import sys, warnings
-import time
-from PyQt5.QtWidgets import QDoubleSpinBox, QStyleFactory, QTabWidget, QGroupBox
+import sys
+import warnings
+from PyQt5.QtWidgets import QStyleFactory, QTabWidget
 from docopt import docopt
 from time import gmtime, strftime
-
-commands = docopt(__doc__)
-dummy = commands["--dummy"]
-info = commands["--info"]
-if commands["--socket"]:
-    connection_type = "socket"
-else:
-    connection_type = "visa"
-debug = commands["--debug"]
-print_console = commands["--console"]
-
-logfile_name = "hardware_control.log"
-other_logfile_name = "other_hardware_control.log"
-
-if debug:
-    loglevel = logging.DEBUG
-    loglevelname = "Debug"
-elif info:
-    loglevel = logging.INFO
-    loglevelname = "Info"
-else:
-    loglevel = logging.WARNING
-    loglevelname = "Warning"
 
 from hardware_control.base import HC_App, HC_MainWindow, Dataset
 from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
@@ -75,6 +52,30 @@ from hardware_control.PowerSupply.NI_DaX_PowerSupplyController import (
 from hardware_control.IOModule.HC_IOModule import HC_IOModule, read_channel_file
 from hardware_control.IOModule.NI9000Ctrl import NI9000Ctrl
 from hardware_control.PowerSupply.CAEN14xxETCtrl import CAEN14xxETCtrl
+
+
+commands = docopt(__doc__)
+dummy = commands["--dummy"]
+info = commands["--info"]
+if commands["--socket"]:
+    connection_type = "socket"
+else:
+    connection_type = "visa"
+debug = commands["--debug"]
+print_console = commands["--console"]
+
+logfile_name = "hardware_control.log"
+other_logfile_name = "other_hardware_control.log"
+
+if debug:
+    loglevel = logging.DEBUG
+    loglevelname = "Debug"
+elif info:
+    loglevel = logging.INFO
+    loglevelname = "Info"
+else:
+    loglevel = logging.WARNING
+    loglevelname = "Warning"
 
 logger = logging.getLogger(__name__)
 # hc_logger = logging.getLogger("hardware_control")

@@ -1,9 +1,3 @@
-#
-# This defines the OscilloscopeControl and OscilloscopeComm classes. By passing
-# an instance of a SCPI command wrapper class to an OscilloscpeControl objcet,
-# you can easily create GUIs for oscilloscopes.
-#
-
 import pkg_resources
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
@@ -21,14 +15,12 @@ from PyQt5.QtWidgets import (
 
 from hardware_control.base import (
     HC_Instrument,
-    HC_Comm,
     AUTOMATIC,
     MANUAL,
 )
 import logging
 from hardware_control.utility import (
     remove_end_carriage_return,
-    change_units,
     apply_to_label,
 )
 from hardware_control.widgets import setButtonState
@@ -395,50 +387,46 @@ class PowerSupplyChannel(QWidget):
         #
         self.V_set_label = QLabel("Vset:")
         self.V_set_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        #
+
         self.V_set_label_val = QLabel("-------")
         self.V_set_label_val.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
-        #
+
         self.I_set_label = QLabel("Iset:")
         self.I_set_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        #
+
         self.I_set_label_val = QLabel("-------")
         self.I_set_label_val.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
-        #
-        #
-        #
+
         self.V_out_label = QLabel("Vout:")
         self.V_out_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        #
+
         self.V_out_label_val = QLabel("-------")
         self.V_out_label_val.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
-        #
+
         self.I_out_label = QLabel("Iout:")
         self.I_out_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        #
+
         self.I_out_label_val = QLabel("-------")
         self.I_out_label_val.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
-        #
-        #
-        #
+
         self.P_out_label = QLabel("Pout:")
         self.P_out_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        #
+
         self.P_out_label_val = QLabel("-------")
         self.P_out_label_val.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
 
         if self.show_VI_limits:
             self.V_max_label = QLabel("Vmax:")
             self.V_max_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-            #
+
             self.V_max_label_val = QLabel("-------")
             self.V_max_label_val.setAlignment(
                 QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
             )
-            #
+
             self.I_max_label = QLabel("Imax:")
             self.I_max_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-            #
+
             self.I_max_label_val = QLabel("-------")
             self.I_max_label_val.setAlignment(
                 QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
@@ -450,15 +438,15 @@ class PowerSupplyChannel(QWidget):
         self.readout_grid.addWidget(self.V_set_label_val, 0, 1)
         self.readout_grid.addWidget(self.I_set_label, 1, 0)
         self.readout_grid.addWidget(self.I_set_label_val, 1, 1)
-        #
+
         self.readout_grid.addWidget(self.V_out_label, 0, 2)
         self.readout_grid.addWidget(self.V_out_label_val, 0, 3)
         self.readout_grid.addWidget(self.I_out_label, 1, 2)
         self.readout_grid.addWidget(self.I_out_label_val, 1, 3)
-        #
+
         self.readout_grid.addWidget(self.P_out_label, 2, 2)
         self.readout_grid.addWidget(self.P_out_label_val, 2, 3)
-        #
+
         if self.show_VI_limits:
             self.readout_grid.addWidget(self.V_max_label, 3, 0)
             self.readout_grid.addWidget(self.V_max_label_val, 3, 1)
@@ -469,10 +457,10 @@ class PowerSupplyChannel(QWidget):
         #
         self.V_ctrl_label = QLabel("Voltage (V):")
         self.V_ctrl_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        #
+
         self.I_ctrl_label = QLabel("Current (A): ")
         self.I_ctrl_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
-        #
+
         self.V_edit = QLineEdit()
         self.V_edit.setValidator(QDoubleValidator())
         self.V_edit.editingFinished.connect(
@@ -481,7 +469,7 @@ class PowerSupplyChannel(QWidget):
             )
         )
         self.V_edit.setText(str(main_widget.settings[f"CH{channel}_V_set"]))
-        #
+
         self.I_edit = QLineEdit()
         self.I_edit.setValidator(QDoubleValidator())
         self.I_edit.editingFinished.connect(
@@ -490,7 +478,7 @@ class PowerSupplyChannel(QWidget):
             )
         )
         self.I_edit.setText(str(main_widget.settings[f"CH{channel}_I_set"]))
-        #
+
         self.enabled_but = QPushButton()
         self.enabled_but.setText("On/Off")
         self.enabled_but.setCheckable(True)
@@ -500,7 +488,7 @@ class PowerSupplyChannel(QWidget):
             )
         )
         setButtonState(self.enabled_but, main_widget.settings[f"CH{channel}_enable"])
-        #
+
         self.controls_grid = QGridLayout()
         self.controls_grid.addWidget(self.V_ctrl_label, 0, 0)
         self.controls_grid.addWidget(self.V_edit, 0, 1)

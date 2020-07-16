@@ -16,6 +16,10 @@ import sys
 from PyQt5.QtWidgets import QMainWindow, QWidget, QGridLayout
 from docopt import docopt
 
+from hardware_control.base import HC_App
+from hardware_control.FunctionGenerator.HC_FunctionGenerator import HC_FunctionGenerator
+from hardware_control.FunctionGenerator.Key33500BCtrl import Key33500BCtrl
+
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
 if commands["--socket"]:
@@ -23,10 +27,6 @@ if commands["--socket"]:
 else:
     connection_type = "visa"
 debug = commands["--debug"]
-
-from hardware_control.base import HC_App
-from hardware_control.FunctionGenerator.HC_FunctionGenerator import HC_FunctionGenerator
-from hardware_control.FunctionGenerator.Key33500BCtrl import Key33500BCtrl
 
 
 class WavegenDemo(QMainWindow):

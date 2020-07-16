@@ -14,13 +14,14 @@ import sys
 from PyQt5.QtWidgets import QMainWindow, QWidget, QGridLayout
 from docopt import docopt
 
-commands = docopt(__doc__)
-dummy = commands["--dummy"]
-debug = commands["--debug"]
-
 from hardware_control.base import HC_App
 from hardware_control.TemplateDeviceType.DeviceBackend import DeviceBackend
 from hardware_control.TemplateDeviceType.HC_DeviceType import HC_DeviceType
+
+
+commands = docopt(__doc__)
+dummy = commands["--dummy"]
+debug = commands["--debug"]
 
 
 class Rack_Demo(QMainWindow):

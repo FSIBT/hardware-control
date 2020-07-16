@@ -14,6 +14,10 @@ import sys
 from PyQt5.QtWidgets import QMainWindow, QWidget, QGridLayout
 from docopt import docopt
 
+from hardware_control.base import HC_App
+from hardware_control.TemplateDeviceType.DeviceBackend import DeviceBackend
+from hardware_control.TemplateDeviceType.HC_DeviceType import HC_DeviceType
+
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
 debug = commands["--debug"]
@@ -21,10 +25,6 @@ debug = commands["--debug"]
 # Todo Delete this
 dummy = True
 debug = True
-
-from hardware_control.base import HC_App
-from hardware_control.TemplateDeviceType.DeviceBackend import DeviceBackend
-from hardware_control.TemplateDeviceType.HC_DeviceType import HC_DeviceType
 
 
 class Demo(QMainWindow):

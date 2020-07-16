@@ -17,8 +17,20 @@ import logging
 import sys
 import warnings
 
-from PyQt5.QtWidgets import QDoubleSpinBox, QStyleFactory, QTabWidget, QGroupBox
+from PyQt5.QtWidgets import QStyleFactory, QTabWidget, QWidget, QGridLayout
 from docopt import docopt
+
+from hardware_control.base import HC_App, HC_MainWindow, Dataset
+from hardware_control.PowerSupply.HC_MultiPowerSupply import HC_MultiPowerSupply
+from hardware_control.PowerSupply.CAEN14xxETCtrl import CAEN14xxETCtrl
+from hardware_control.widgets import (
+    HC_ZMQConnectionTool,
+    HC_StatusTool,
+    HC_PlotTool,
+    HC_LoggerTool,
+    HC_Qtconsole,
+)
+
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
@@ -48,24 +60,6 @@ if print_console:
 else:
     logging.basicConfig(filename=logfile_name, level=loglevel)
     print(f"Logger configured:\n\tLevel: {loglevelname}\n\tOutput: {logfile_name}")
-
-
-from hardware_control.base import HC_App, HC_MainWindow, Dataset
-from hardware_control.PowerSupply.HC_MultiPowerSupply import *
-from hardware_control.PowerSupply.CAEN14xxETCtrl import CAEN14xxETCtrl
-from hardware_control.PowerSupply.Key36300Ctrl import Key36300Ctrl
-from hardware_control.widgets import (
-    HC_ZMQConnectionTool,
-    HC_StatusTool,
-    HC_PlotTool,
-    HC_MiniPlotTool,
-    HC_LoggerTool,
-    HC_Qtconsole,
-)
-from hardware_control.IOModule.ADAM6024Ctrl import ADAM6024Ctrl
-from hardware_control.IOModule.HC_IOModule import HC_IOModule
-from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
-from hardware_control.Oscilloscope.Pico5000ACtrl import Pico5000ACtrl
 
 
 logger = logging.getLogger(__name__)

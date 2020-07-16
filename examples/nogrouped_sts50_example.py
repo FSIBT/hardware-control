@@ -17,15 +17,6 @@ import sys
 from PyQt5.QtWidgets import QMainWindow, QWidget, QGridLayout, QStyleFactory, QTabWidget
 from docopt import docopt
 
-commands = docopt(__doc__)
-dummy = commands["--dummy"]
-if commands["--socket"]:
-    connection_type = "socket"
-else:
-    connection_type = "visa"
-debug = commands["--debug"]
-log = commands["--log"]
-
 from hardware_control.base import HC_App
 from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
 from hardware_control.Oscilloscope.Key4000XCtrl import Key4000XCtrl
@@ -44,6 +35,15 @@ from hardware_control.widgets import (
     HC_ScanTool,
     HC_StatusTool,
 )
+
+commands = docopt(__doc__)
+dummy = commands["--dummy"]
+if commands["--socket"]:
+    connection_type = "socket"
+else:
+    connection_type = "visa"
+debug = commands["--debug"]
+log = commands["--log"]
 
 
 class STS50Demo(QMainWindow):

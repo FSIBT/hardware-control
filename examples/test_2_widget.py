@@ -17,8 +17,20 @@ import logging
 import sys
 import warnings
 
-from PyQt5.QtWidgets import QDoubleSpinBox, QStyleFactory, QTabWidget, QGroupBox
+from PyQt5.QtWidgets import QStyleFactory, QTabWidget
 from docopt import docopt
+
+from hardware_control.base import HC_App, HC_MainWindow, Dataset, MANUAL
+from hardware_control.PowerSupply.HC_MultiPowerSupply import HC_MultiPowerSupply
+from hardware_control.PowerSupply.RigolDP832Ctrl import RigolDP832Ctrl
+from hardware_control.widgets import (
+    HC_ZMQConnectionTool,
+    HC_PlotTool,
+    HC_LoggerTool,
+    HC_StatusTool,
+    HC_Qtconsole,
+)
+
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
@@ -41,21 +53,6 @@ elif info:
 else:
     loglevel = logging.WARNING
     loglevelname = "Warning"
-
-
-from hardware_control.base import HC_App, HC_MainWindow, Dataset, AUTOMATIC, MANUAL
-from hardware_control.PowerSupply.HC_MultiPowerSupply import *
-from hardware_control.PowerSupply.RigolDP832Ctrl import RigolDP832Ctrl
-from hardware_control.widgets import (
-    HC_ZMQConnectionTool,
-    HC_PlotTool,
-    HC_MiniPlotTool,
-    HC_LoggerTool,
-    HC_StatusTool,
-    HC_Qtconsole,
-)
-from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
-
 
 logger = logging.getLogger(__name__)
 hc_logger = logging.getLogger("hardware_control")

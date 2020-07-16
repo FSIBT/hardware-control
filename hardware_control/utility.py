@@ -162,7 +162,7 @@ def apply_to_label(
             new_str = change_units(
                 float(value), units, decimals=decimals, min_width=min_width - 3
             )
-        except Exception as e:
+        except Exception:
             new_str = f"----- {units}"
     else:
         new_str = f"----- {units}"

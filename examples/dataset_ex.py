@@ -15,10 +15,12 @@ Options:
 
 import logging
 
-import sys, warnings
-
-from PyQt5.QtWidgets import QDoubleSpinBox, QStyleFactory, QTabWidget, QGroupBox
+import sys
+import warnings
 from docopt import docopt
+
+from hardware_control.base import HC_App, HC_MainWindow, Dataset
+
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
@@ -53,32 +55,6 @@ else:
     else:
         logging.basicConfig(filename=logfile_name, level=logging.WARNING)
         print(f"Logger configured:\n\tLevel: Warning\n\tOutput: {logfile_name}")
-
-from hardware_control.base import HC_App, HC_MainWindow, Dataset
-from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
-from hardware_control.Oscilloscope.Key4000XCtrl import Key4000XCtrl
-from hardware_control.Oscilloscope.ZMQOscilloscopeCtrl import ZMQOscilloscopeCtrl
-from hardware_control.FlowController.HC_FlowController import HC_FlowController
-from hardware_control.FlowController.AlicatMSeriesCtrl import AlicatMSeriesCtrl
-from hardware_control.DelayGenerator.HC_DelayGenerator import HC_DelayGenerator
-from hardware_control.DelayGenerator.SRSDG535Ctrl import SRSDG535Ctrl
-from hardware_control.FunctionGenerator.HC_FunctionGenerator import HC_FunctionGenerator
-from hardware_control.FunctionGenerator.Key33500BCtrl import Key33500BCtrl
-from hardware_control.PowerSupply.HC_MultiPowerSupply import *
-from hardware_control.PowerSupply.TDKLGenHCtrl import TDKLGenHCtrl
-from hardware_control.widgets import (
-    HC_ZMQConnectionTool,
-    HC_LoggerTool,
-    HC_ScanTool,
-    HC_StatusTool,
-    HC_MacroRunnerTool,
-    HC_VariableEditTool,
-)
-from hardware_control.IOModule.HC_Read import HC_Read, HC_singleChannelRead
-from hardware_control.IOModule.ADAM_6015 import Adam_6015
-from hardware_control.PowerSupply.NI_DaX_PowerSupplyController import (
-    NI_DaX_PowerSupplyController,
-)
 
 
 logger = logging.getLogger(__name__)

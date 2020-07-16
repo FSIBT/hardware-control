@@ -16,17 +16,33 @@ Options:
 import logging
 import sys
 import warnings
-import time
 
+from docopt import docopt
 from PyQt5.QtWidgets import (
-    QDoubleSpinBox,
     QStyleFactory,
     QTabWidget,
-    QGroupBox,
     QWidget,
     QGridLayout,
 )
-from docopt import docopt
+
+from hardware_control.base import HC_App, HC_MainWindow, Dataset, AUTOMATIC
+from hardware_control.PowerSupply.HC_MultiPowerSupply import HC_MultiPowerSupply, ONLY
+from hardware_control.PowerSupply.CAEN14xxETCtrl import CAEN14xxETCtrl
+from hardware_control.PowerSupply.Key36300Ctrl import Key36300Ctrl
+from hardware_control.IOModule.ADAM6024Ctrl import ADAM6024Ctrl
+from hardware_control.IOModule.HC_IOModule import HC_IOModule, read_channel_file
+from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
+from hardware_control.Oscilloscope.Pico6000Ctrl import Pico6000Ctrl
+from hardware_control.widgets import (
+    HC_PlotTool,
+    HC_MiniPlotTool,
+    HC_MonitorTool,
+    HC_StatusTool,
+    HC_ZMQConnectionTool,
+    HC_LoggerTool,
+    HC_Qtconsole,
+)
+
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
@@ -49,25 +65,6 @@ elif info:
 else:
     loglevel = logging.WARNING
     loglevelname = "Warning"
-
-
-from hardware_control.base import HC_App, HC_MainWindow, Dataset, AUTOMATIC
-from hardware_control.PowerSupply.HC_MultiPowerSupply import HC_MultiPowerSupply, ONLY
-from hardware_control.PowerSupply.CAEN14xxETCtrl import CAEN14xxETCtrl
-from hardware_control.PowerSupply.Key36300Ctrl import Key36300Ctrl
-from hardware_control.IOModule.ADAM6024Ctrl import ADAM6024Ctrl
-from hardware_control.IOModule.HC_IOModule import HC_IOModule, read_channel_file
-from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
-from hardware_control.Oscilloscope.Pico6000Ctrl import Pico6000Ctrl
-from hardware_control.widgets import (
-    HC_PlotTool,
-    HC_MiniPlotTool,
-    HC_MonitorTool,
-    HC_StatusTool,
-    HC_ZMQConnectionTool,
-    HC_LoggerTool,
-    HC_Qtconsole,
-)
 
 
 logger = logging.getLogger(__name__)

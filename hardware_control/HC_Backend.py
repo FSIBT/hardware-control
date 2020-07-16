@@ -20,7 +20,6 @@ MODBUS = "modbus"
 def thread_info(f):
     @wraps(f)
     def wrapped(*args, **kwargs):
-        self = args[0]
         start = time.time()
 
         frame = inspect.currentframe()
@@ -87,7 +86,7 @@ class HC_Backend(ABC):
             try:
                 self.ip_addr, self.port_no = self.connection_addr.rsplit(":", 1)
                 self.port_no = int(self.port_no)
-            except ValueError as e:
+            except ValueError:
                 logger.error(
                     f"{self.ID} cannot parse connection address {self.connection_addr}"
                 )
@@ -190,7 +189,7 @@ class HC_Backend(ABC):
                 logger.debug(
                     f"opened pyvisa connection to {self.ID} at {self.connection_addr}"
                 )
-            except Exception as e:
+            except Exception:
                 self.online = False
                 logger.debug(
                     f"\t({self.ID}) ERROR connecting with visa.", exc_info=True
