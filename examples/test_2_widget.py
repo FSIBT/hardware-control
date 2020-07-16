@@ -17,11 +17,11 @@ import logging
 import sys
 import warnings
 
-from PyQt5.QtWidgets import QStyleFactory, QTabWidget
+from PyQt5.QtWidgets import QStyleFactory, QTabWidget, QWidget, QGridLayout
 from docopt import docopt
 
 from hardware_control.base import HC_App, HC_MainWindow, Dataset, MANUAL
-from hardware_control.PowerSupply.HC_MultiPowerSupply import HC_MultiPowerSupply
+from hardware_control.PowerSupply.HC_MultiPowerSupply import HC_MultiPowerSupply, ADD
 from hardware_control.PowerSupply.RigolDP832Ctrl import RigolDP832Ctrl
 from hardware_control.widgets import (
     HC_ZMQConnectionTool,
@@ -104,8 +104,8 @@ def ramp_func(obj, parameter, present, target):
     # Compute new value
     if target > present:
         return min(present + dVal, target)
-    else:
-        return max(present - dVal, target)
+
+    return max(present - dVal, target)
 
 
 class RootsDemo(HC_MainWindow):

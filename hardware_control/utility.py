@@ -62,8 +62,7 @@ def remove_end_carriage_return(text: str):
     try:
         if text.endswith(r"\r"):
             return text[:-2]
-        else:
-            return text
+        return text
     except:
         return text
 
@@ -98,8 +97,7 @@ def to_NR1(x: int):
 def bool_NR1(x: bool):
     if x:
         return "1"
-    else:
-        return "0"
+    return "0"
 
 
 def str_NR1(x: str):
@@ -110,15 +108,13 @@ def str_NR1(x: str):
 def boolstr_NR1(x: str):
     if x == "True":
         return "1"
-    else:
-        return "0"
+    return "0"
 
 
 def str_to_bool(x: str):
     if x == "True":
         return True
-    else:
-        return False
+    return False
 
 
 def ensure_float(x):
