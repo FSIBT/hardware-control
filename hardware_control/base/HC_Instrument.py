@@ -335,7 +335,7 @@ class HC_Instrument(QGroupBox):
             with open(filename, "w") as file:
                 json.dump(self.settings, file)
                 logger.info(f"settings for {self.name} saved to file '{filename}'")
-        except Exception as e:
+        except Exception:
             logger.error(
                 f"Failed to write file '{filename}'. settings not saved.", exc_info=True
             )
@@ -345,7 +345,6 @@ class HC_Instrument(QGroupBox):
         for key in self.settings:
             if self.comm is not None:
                 self.comm.update_setting(key, str(self.settings[key]))
-                x = str(self.settings[key])
 
     def read_state_from_backend(self):
 

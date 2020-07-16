@@ -183,7 +183,7 @@ class HC_MainWindow(QMainWindow):
 
                 try:
                     addr = inst.address
-                except Exception as e:
+                except Exception:
                     addr = "---"
 
                 if addr == "" or addr is None:

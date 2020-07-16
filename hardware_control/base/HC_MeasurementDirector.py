@@ -90,7 +90,7 @@ class MeasurementDirector:
             m_idx = int(components[3])
         except:
             midx_str = components[3]
-            self.err_str = "Failed to read measurement index '{midx_str}'."
+            self.err_str = f"Failed to read measurement index '{midx_str}'."
             self.state = "Error"
             return
 
@@ -375,7 +375,7 @@ class MeasurementDirector:
                 m_idx = int(components[3])
             except:
                 midx_str = components[3]
-                self.err_str = "Failed to read measurement index '{midx_str}'."
+                self.err_str = f"Failed to read measurement index '{midx_str}'."
                 self.state = "Error"
                 return
 

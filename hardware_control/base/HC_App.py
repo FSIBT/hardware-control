@@ -70,7 +70,7 @@ class HC_App(QApplication):
                 logger.info(
                     f"settings for {self.comm.instr.ID} saved to file '{filename}'"
                 )
-        except Exception as e:
+        except Exception:
             logger.error(
                 f"Failed to write file '{filename}'. State not saved.", exc_info=True
             )
@@ -102,7 +102,7 @@ class HC_App(QApplication):
         for instr in self.instruments:
             try:  # User may not have initialized comm correctly as HC_Comm - error check here
                 instr.comm.close()  # Send close signal to backend - stop connect timer
-            except Exception as e:
+            except Exception:
                 logger.error(
                     f"Failed to close instrument '{instr.name}'.", exc_info=True
                 )
@@ -607,7 +607,7 @@ class HC_App(QApplication):
             with open(filename, "w") as file:
                 json.dump(all_states, file)
                 logger.info(f"Settings for all instruments saved to file '{filename}'")
-        except Exception as e:
+        except Exception:
             logger.error(
                 f"Failed to write file '{filename}'. settings not saved.",
                 exc_info=True,
