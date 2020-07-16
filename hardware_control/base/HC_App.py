@@ -248,7 +248,7 @@ class HC_App(QApplication):
                     )
                 except Exception as e:
                     logger.warning(
-                        f"Invalid HC-Command received. Failed to create MeasurementRequest from given arguments.",
+                        "Invalid HC-Command received. Failed to create MeasurementRequest from given arguments.",
                     )
                     return "False"
 
@@ -261,7 +261,7 @@ class HC_App(QApplication):
                         instr_idx = idx
 
                 if not self.director.measure(meas_req):
-                    logger.warning(f"Failed to add MeasurementRequest to director'")
+                    logger.warning("Failed to add MeasurementRequest to director'")
                     return "False"
 
                 logger.debug(
@@ -308,9 +308,7 @@ class HC_App(QApplication):
 
             # Ensure more tokens exist
             if len(tokens) < 2:
-                logger.warning(
-                    f"Invalid HC-Command received. FUNC requires arguments.",
-                )
+                logger.warning("Invalid HC-Command received. FUNC requires arguments.",)
                 return "False"
 
             if uptokens[1] == "LEVEL":  # Turn debug mode on or off
@@ -318,7 +316,7 @@ class HC_App(QApplication):
                 # Ensure more tokens exist
                 if len(tokens) < 3:
                     logger.warning(
-                        f"Invalid HC-Command received. FUNC:LEVEL requires arguments.",
+                        "Invalid HC-Command received. FUNC:LEVEL requires arguments.",
                     )
                     return "False"
 
@@ -345,7 +343,7 @@ class HC_App(QApplication):
                         lgr.setLevel(logging.CRITICAL)
                 else:
                     logger.warning(
-                        f"Invalid HC-Command received. Invalid logging level provided."
+                        "Invalid HC-Command received. Invalid logging level provided."
                     )
 
             elif uptokens[1] == "UPDATE":
@@ -353,7 +351,7 @@ class HC_App(QApplication):
                 # Ensure more tokens exist
                 if len(tokens) < 3:
                     logger.warning(
-                        f"Invalid HC-Command received. FUNC:UPDATE requires arguments.",
+                        "Invalid HC-Command received. FUNC:UPDATE requires arguments.",
                     )
                     return "False"
 
@@ -366,7 +364,7 @@ class HC_App(QApplication):
                             inst.update_indicators()
                 else:
                     logger.warning(
-                        f"Invalid HC-Command received. Invalid update option provided."
+                        "Invalid HC-Command received. Invalid update option provided."
                     )
 
             elif uptokens[1] == "SYNC":
@@ -379,7 +377,7 @@ class HC_App(QApplication):
                 # Ensure more tokens exist
                 if len(tokens) < 3:
                     logger.warning(
-                        f"Invalid HC-Command received. FUNC:handle requires arguments.",
+                        "Invalid HC-Command received. FUNC:handle requires arguments.",
                     )
                     return "False"
 
@@ -402,7 +400,7 @@ class HC_App(QApplication):
                         return self.function_handles[tokens[2]]()
 
                 else:
-                    logger.warning(f"Requested macro to run does not exist.",)
+                    logger.warning("Requested macro to run does not exist.",)
                     return "False"
 
             elif uptokens[1] == "SVSTATE":
@@ -456,7 +454,7 @@ class HC_App(QApplication):
                 # Ensure more tokens exist
                 if len(tokens) < 3:
                     logger.warning(
-                        f"Invalid HC-Command received. FUNC:run requires arguments.",
+                        "Invalid HC-Command received. FUNC:run requires arguments.",
                     )
                     return "False"
 
@@ -468,7 +466,7 @@ class HC_App(QApplication):
                     return self.run_macro(self.macros[tokens[2]])
 
                 else:
-                    logger.warning(f"Requested macro to run does not exist.",)
+                    logger.warning("Requested macro to run does not exist.",)
                     return "False"
 
             elif uptokens[1] == "VAR":  # Change or create variable
@@ -476,7 +474,7 @@ class HC_App(QApplication):
                 # Ensure more tokens exist
                 if len(tokens) < 4:
                     logger.warning(
-                        f"Invalid HC-Command received. FUNC:var requires arguments.",
+                        "Invalid HC-Command received. FUNC:var requires arguments.",
                     )
                     return "False"
 
@@ -488,7 +486,7 @@ class HC_App(QApplication):
                 # Ensure more tokens exist
                 if len(tokens) < 3:
                     logger.warning(
-                        f"Invalid HC-Command received. FUNC:disp requires arguments.",
+                        "Invalid HC-Command received. FUNC:disp requires arguments.",
                     )
                     return "False"
 
@@ -517,7 +515,7 @@ class HC_App(QApplication):
                         print(tokens[3])
 
                 else:
-                    logger.warning(f"Invalid HC-Command received.")
+                    logger.warning("Invalid HC-Command received.")
                     return "False"
 
             elif uptokens[1] == "LSDATA":
@@ -533,7 +531,7 @@ class HC_App(QApplication):
 
             # Ensure more tokens exist
             if len(tokens) < 2:
-                logger.warning(f"Invalid HC-Command received. DEV requires arguments.")
+                logger.warning("Invalid HC-Command received. DEV requires arguments.")
                 return "False"
 
             # Set MeasurementDirector state to ready. Don't use this unless you know what you're doing. It can get measurement batches out of sync if used at the wrong time
