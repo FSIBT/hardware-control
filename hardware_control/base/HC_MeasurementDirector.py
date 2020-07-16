@@ -246,9 +246,12 @@ class MeasurementDirector:
 
             # Batch canceled - remove all requests that haven't been launched
             midx = 0
-            while midx < len(self.queue):  # For each request...
-                if not self.queue[midx].launched:  # If request hasn't been launched...
-                    self.queue.pop(midx)  # Remove request
+            # For each request...
+            while midx < len(self.queue):
+                # If request hasn't been launched...
+                if not self.queue[midx].launched:
+                    # Remove request
+                    self.queue.pop(midx)
                 else:
                     midx += 1
 
@@ -312,7 +315,7 @@ class MeasurementDirector:
         for mr_idx, mr in enumerate(
             self.queue
         ):  # For every MeasurementRequest in queue...
-            if (mr.launched == False) and (
+            if (not mr.launched) and (
                 mr.inst_name not in self.occ_instruments
             ):  # IF the request has NOT been launched and its instrument is NOT occupied...
                 self.queue[mr_idx].launched = True  # Mark launched as true

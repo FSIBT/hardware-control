@@ -359,7 +359,8 @@ class Dataset(QObject):
 
             # Check that no elements are 'None' at this index
             for sn in ret_dic:
-                if self.data[sn][idx] == None:  # If 'None' present, skip to next index
+                # If 'None' present, skip to next index
+                if self.data[sn][idx] is None:
                     skip_idx = True
                     break
 

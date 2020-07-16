@@ -147,8 +147,8 @@ class HC_Instrument(QGroupBox):
                                 exc_info=True,
                             )
 
-                # If curr == None, that indicates ramp is complete. Delete value from targets
-                if curr == None:
+                # If curr is None, that indicates ramp is complete. Delete value from targets
+                if curr is None:
                     pop_list.append(key)
                 else:
                     self.ramp_val[key] = curr
@@ -205,7 +205,7 @@ class HC_Instrument(QGroupBox):
 
                 logger.debug(f"New value for parameter {key} will be {curr}")
 
-                # If curr == None, that indicates ramp is complete. Delete value from targets
+                # If curr is None, that indicates ramp is complete. Delete value from targets
                 if curr == self.ramp_target[key]:
                     pop_list.append(key)
 

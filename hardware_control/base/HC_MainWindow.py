@@ -184,7 +184,7 @@ class HC_MainWindow(QMainWindow):
                 except Exception as e:
                     addr = "---"
 
-                if addr == "" or addr == None:
+                if addr == "" or addr is None:
                     addr = "---"
 
                 print(f"\t{inst.name}:\t {addr}")
