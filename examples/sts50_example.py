@@ -360,16 +360,23 @@ class STS50Demo(HC_MainWindow):
         self.trig2_ctrl.settings_to_UI()
         self.trig2_ctrl.set_online_callback(init_with_JSON)
 
-        float_channel_data = read_channel_file("sts50_floatIO_config.json",)
+        float_channel_data = read_channel_file(
+            "sts50_floatIO_config.json",
+            {
+                "extraction_voltage_out": lambda v: v / 1000,
+                "extraction_voltage_in": lambda v: v * 1000,
+                "extraction_current_in": lambda v: v * 1e-3,
+            },
+        )
         usb_channel_data = read_channel_file(
             "sts50_usbIO_config.json",
             {
                 "float_volt_out": lambda v: v / 3000,
-                "Grid_volt_out": lambda v: v / 600,
-                "float_Imon_in": lambda v: v * 1e-3,
+                "Grid_volt_out": lambda v: v / 3000,
                 "float_Vmon_in": lambda v: v * 3000,
+                "float_Imon_in": lambda v: v * 1e-3,
                 "grid_Imon_in": lambda v: v * 1e-3,
-                "grid_Vmon_in": lambda v: v * 600,
+                "grid_Vmon_in": lambda v: v * 3000,
                 "Pressure_in": lambda v: 10 ** (v - 11),
             },
         )
