@@ -102,7 +102,7 @@ class SRSDG535Ctrl(HC_Backend):
                 rel_chan = self.channels_relative[channel]
             else:
                 rel_chan = "Trig"
-            rel_chan = SRSDG535Ctrl.SRS_trigger_names(rel_chan, None)
+            rel_chan = SRSDG535Ctrl.SRS_trigger_names.get(rel_chan, None)
 
             w = f"DT {channel},{rel_chan},{value}"
         elif setting_X == "CHX_output_offset":
