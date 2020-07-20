@@ -245,6 +245,35 @@ def countdown_end_fn(macro_runner_tool):
     macro_runner_tool.button_widgets[0].setEnabled(True)
 
 
+def save_shot_format(dataset, filename: str):
+    """
+    Saves data in the format expected by STS-50 data processing scripts.
+    """
+
+    # Write file data
+    with open(filename, "a") as outfile:
+
+        outfile.write("# ALPHA experiment\n")
+        outfile.write("# setting hash: \n")
+        outfile.write("# date: \n")
+
+        # length = self.len_min()
+        # while self.autosave_next_row < length:
+        #
+        #     # Write line
+        #     line = " ".join(
+        #         [
+        #             str(self.data[key][self.autosave_next_row])
+        #             for key in self.data
+        #         ]
+        #     )
+        #     outfile.write(line + "\n")
+        #
+        #     # Move pointer to next line
+        #     self.autosave_next_row += 1
+    # if "Keysight:" dataset.data
+
+
 class STS50Demo(HC_MainWindow):
     def __init__(self, app):
         super().__init__(app)
@@ -427,10 +456,19 @@ class STS50Demo(HC_MainWindow):
         app.add_macro("print_fil_ampl", ["FUNC:HANDLE:print_fil"])
         app.add_macro("MeasurementRequest", ["FUNC:DISP:str:MEAS:REQ"])
 
+        app.function_handles["trigger_function"] = lambda: trigger_function(self)
+        app.function_handles["power_off"] = lambda: power_off(self)
+        app.function_handles["print_fil"] = self.print_fil
+
+        buttons = {}
+        buttons["Trigger"] = "Trigger Beam"
+        buttons["PowerOff"] = "Power Down"
         self.run_tool = HC_MacroRunnerTool(
             self,
             "Operations",
-            {"Trigger": "Trigger Beam", "PowerOff": "Power Down"},
+            ["Trigger", "PowerOff"],
+            ["Trigger Beam", "Power Down"],
+            # {"Trigger": "Trigger Beam", "PowerOff": "Power Down"},
             {"SHOT_ID_NUM": "Shot ID Number: "},
             add_countdown=True,
         )
@@ -452,10 +490,6 @@ class STS50Demo(HC_MainWindow):
         # )
         # self.run_tool.update_macros()
 
-        app.function_handles["trigger_function"] = lambda: trigger_function(self)
-        app.function_handles["power_off"] = lambda: power_off(self)
-        app.function_handles["print_fil"] = self.print_fil
-
         # self.run_tool = HC_MacroRunnerTool(
         #     self,
         #     "Trigger Beam",
@@ -464,7 +498,7 @@ class STS50Demo(HC_MainWindow):
         # )
 
         # Create Datasets
-        self.app.data_sets["High Voltage"] = Dataset("High Voltage")
+        self.app.data_sets["High Voltage"] = Dataset("High Voltage", self.app)
         self.app.data_sets["High Voltage"].start_asynch(3)
         self.app.data_sets["High Voltage"].add_instrument(self.iomod_usb_wdgt)
         # {'CHcDAQ1Mod2/ai0_analog_read': '', 'CHcDAQ1Mod2/ai1_analog_read': '', 'CHcDAQ1Mod2/ai2_analog_read': '', 'CHcDAQ1Mod2/ai3_analog_read': '', 'CHcDAQ1Mod2/ai4_analog_read': ''}
@@ -593,6 +627,8 @@ def main():
     )  # ToDo Not a solution
     app = HC_App(dummy=dummy)
     app.print_close_info = True
+
+    app.add_save_format("SHOT", save_shot_format)
 
     ex = STS50Demo(app)
     app.aboutToQuit.connect(ex.close)
