@@ -34,7 +34,8 @@ class HC_MacroRunnerTool(HC_Instrument):
         self,
         window,
         name: str = "Macro Runner",
-        buttons={"Dynamic": "Run Macro"},
+        buttons=["Dynamic"],
+        button_labels=["Run Macro"],
         indicators={},
         add_countdown=False,
     ):
@@ -42,6 +43,7 @@ class HC_MacroRunnerTool(HC_Instrument):
         super().__init__(window, name)
         self.buttons = buttons
         self.indicators = indicators
+        self.button_labels = button_labels
 
         self.settings = {}
         self.name = name
@@ -58,6 +60,7 @@ class HC_MacroRunnerTool(HC_Instrument):
         self.button_panel = QGridLayout()
         allow_dynamic = True
         self.button_widgets = []
+
         for idx, but in enumerate(self.buttons):  # Requests dynamic...
 
             if but == "Dynamic":
@@ -81,7 +84,7 @@ class HC_MacroRunnerTool(HC_Instrument):
                 )
 
                 run_button = QPushButton()
-                run_button.setText(self.buttons[but])
+                run_button.setText(self.button_labels[idx])
                 # run_button.setIcon(QIcon((QPixmap(pkg_resources.resource_filename("hardware_control", "ScanTool/icons/scan.png")))))
                 run_button.setCheckable(False)
                 run_button.clicked.connect(
@@ -96,14 +99,14 @@ class HC_MacroRunnerTool(HC_Instrument):
             # But is a valid macro name....
             elif but in [x for x in self.window.app.macros]:
 
-                run_button = QPushButton()
-                run_button.setText(self.buttons[but])
-                # run_button.setIcon(QIcon((QPixmap(pkg_resources.resource_filename("hardware_control", "ScanTool/icons/scan.png")))))
-                run_button.setCheckable(False)
-                run_button.clicked.connect(lambda: self.run_macro(but))
-                self.button_widgets.append(run_button)
+                self.button_widgets.append(QPushButton())
+                self.button_widgets[-1].setText(self.button_labels[idx])
+                self.button_widgets[-1].setCheckable(False)
+                self.button_widgets[idx].clicked.connect(
+                    lambda a, v=self.buttons[idx]: self.run_macro(v)
+                )
 
-                self.button_panel.addWidget(run_button, idx, 0)
+                self.button_panel.addWidget(self.button_widgets[-1], idx, 0)
 
             else:
 
@@ -179,8 +182,6 @@ class HC_MacroRunnerTool(HC_Instrument):
 
     def start_countdown(self, t_start: float):
 
-        print("Start timer")
-
         self.set_timer_readout(t_start)
 
         self.countdown_val = t_start
@@ -188,6 +189,7 @@ class HC_MacroRunnerTool(HC_Instrument):
         self.countdown_timer.start(100)
 
     def run_macro(self, macro: str):
+
         try:
             cmds = self.app.macros[macro]
             logger.info(f"Running macro: {macro}\n\tCommands: {cmds}")
