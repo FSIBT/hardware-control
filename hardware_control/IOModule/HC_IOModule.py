@@ -32,7 +32,7 @@ LABEL_MIN_WIDTH = -15
 DISP_DECIMAL_PLACES = 1
 
 
-def read_channel_file(filename: str, functions_handles: dict = {}):
+def read_channel_file(filename: str, functions_handles: dict = None):
     """
     Reads channel parameters from a JSON file. Returns a dictionary for
     initializing an HC_IOModule class.
@@ -41,6 +41,9 @@ def read_channel_file(filename: str, functions_handles: dict = {}):
     a string. That string must then be used as a key in functioN_handles with the
     handle as the value or else the hook for that channel will be ignored.
     """
+
+    if functions_handles is None:
+        functions_handles = {}
 
     # Read data from file
     with open(filename) as file:
