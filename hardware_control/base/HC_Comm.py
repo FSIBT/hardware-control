@@ -252,7 +252,7 @@ class HC_CommWorker(QObject):
     def command(self, cmd: str, expire_time: float):
         """Transfers a command to the backend"""
 
-        if cmd == "SYNC_BACKEND":
+        if cmd in ["SYNC_BACKEND", "Misc?"]:
             self.sigReturnValues.emit(cmd)
             return
 
