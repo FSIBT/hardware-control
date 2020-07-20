@@ -176,11 +176,13 @@ class CAEN14xxETCtrl(HC_Backend):
             else:
                 rval = "False"
             return f"{cmd[:-1]}={rval}"
+        else:
+            logging.debug(f"Unkown CAEN command {cmd}")
 
         result = self.query(f"$BD:00,CMD:MON,CH:{channel},PAR:{command}")
         if result is None:
             return "None"
-        rval = result[result.find("VAL:") + 4 :]
+        rval = result[result.find("VAL:") + 4 :].strip()
         return f"{cmd[:-1]}={rval}"
 
     def read_status(self, channel):
