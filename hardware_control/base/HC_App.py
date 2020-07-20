@@ -35,6 +35,7 @@ class HC_App(QApplication):
         self.dummy = dummy
         self.print_close_info = False
         self.comms = {}  # Dictionary of HC_Comm objects
+        self.additional_save_formats = {}
 
         self.data_sets = {}  # Dict of datasets
         untitled_set = Dataset("Untitled")
@@ -61,6 +62,28 @@ class HC_App(QApplication):
             raise KeyError(f"Intrument name '{widget.name}' is already present")
 
         self.instruments.append(widget)
+
+    def add_save_format(self, name: str, format):
+        """
+        The callback function must accept two parameters:
+            1st: Dataset object
+            2nd: Filename
+        """
+
+        dummy_set = Dataset("Dummy")
+
+        if name in dummy_set.built_in_save_formats:
+            logger.warning(
+                f"Cannot add save format '{name}' because it is already included by default."
+            )
+            return
+
+        if not callable(format):
+            logger.warning(
+                f"Cannot add save format '{name}' because the callback function argument is not callable."
+            )
+
+        self.additional_save_formats[name] = format
 
     def save_settings(self, filename: str):
         """Save all settings as JSON.

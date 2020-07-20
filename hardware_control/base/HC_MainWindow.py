@@ -264,7 +264,10 @@ class HC_MainWindow(QMainWindow):
             return
 
         # Use input dialog to get save file type
-        save_types = ("JSON", "Pickle", "NPY", "TXT")
+        save_types = ["JSON", "Pickle", "NPY", "TXT"]
+        if self.app is not None:
+            for format in self.app.additional_save_formats:
+                save_types.append(format)
         file_type, okay = QInputDialog.getItem(
             self, "Select File Type", "File Type:", save_types, 0, False
         )

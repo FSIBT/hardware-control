@@ -20,9 +20,11 @@ class Dataset(QObject):
     """Represents a complete dataset (ie. a collection of datapoints, which are
     collections of individual measurements)."""
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, app=None):
 
         super().__init__()
+
+        self.app = app
 
         # Name of dataset
         self.name = name
@@ -32,6 +34,7 @@ class Dataset(QObject):
         self.autosave_format = "JSON"  # Save format
         self.autosave_filename = f"autosave_{self.name}"
         self.autosave_next_row = 0
+        self.built_in_save_formats = ["JSON", "Pickle", "NPY", "TXT"]
         # Next row to save (prev. already saved)
 
         self.asynchronous_mode = False  # Synchronous vs asynchronous logging
@@ -246,8 +249,11 @@ class Dataset(QObject):
 
                     # Move pointer to next line
                     self.autosave_next_row += 1
-
         else:
+
+            if self.app is not None and format in self.app.additional_save_formats:
+                self.app.additional_save_formats[format](self, filename)
+
             logger.warning(f"unrecognized file format '{format}'.")
 
     def log_async(self):

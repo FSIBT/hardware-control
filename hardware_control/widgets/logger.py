@@ -129,7 +129,10 @@ class HC_LoggerTool(HC_Instrument):
         )
 
         self.save_format_drop = QComboBox()
-        self.save_format_drop.addItems(["NPY", "CSV", "JSON", "TXT", "Pickle", "HDF"])
+        self.save_format_drop.addItems(["NPY", "CSV", "JSON", "TXT", "Pickle"])
+        if self.app is not None:
+            for format in self.app.additional_save_formats:
+                self.save_format_drop.addItems([format])
         self.save_format_drop.setCurrentText("JSON")
         self.save_format_drop.currentIndexChanged.connect(
             lambda: self.set_autosave_format(self.save_format_drop.currentText())
