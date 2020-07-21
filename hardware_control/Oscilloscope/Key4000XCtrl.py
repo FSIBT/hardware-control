@@ -106,7 +106,13 @@ class Key4000XCtrl(HC_Backend):
             return self.query(f"CHAN{channel}:COUP?")
 
     def check_connection(self):
+        """
+        Verifies that the backend is able to communicate with the instrument by
+        querying the instruments name and checking for a valid return value.
 
+        Returns true if online, false if offline, and None if unknown connection
+        type.
+        """
         if self.connection_type in [SOCKET, VISA]:
 
             try:
