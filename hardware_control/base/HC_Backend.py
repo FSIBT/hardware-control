@@ -1,4 +1,4 @@
-from abc import ABC
+import abc
 from functools import wraps
 import inspect
 import logging
@@ -51,7 +51,7 @@ def ensure_online(f):
     return wrapped
 
 
-class HC_Backend(ABC):
+class HC_Backend(abc.ABC):
     """Base class for all instruments"""
 
     def __init__(self):
@@ -104,6 +104,18 @@ class HC_Backend(ABC):
             )
         if self.ID is None:
             logger.error(f"Need to set the instrument ID")
+
+    @abc.abstractmethod
+    def check_connection(self):
+        """
+        This function should be overwritten by each backend. It will verify
+        that the instrument is actually connected by querying something from the
+        instrument such as the instrument's model number or ID.
+
+        Return True if connected, False if not connected, None if not implimented
+        """
+
+        pass
 
     @abc.abstractmethod
     def update_setting(self, setting: str, value: str) -> str:
@@ -229,18 +241,6 @@ class HC_Backend(ABC):
                 self.online = False
 
         return self.online
-
-    @abc.abstractmethod
-    def check_connection(self):
-        """
-        This function should be overwritten by each backend. It will verify
-        that the instrument is actually connected by querying something from the
-        instrument such as the instrument's model number or ID.
-
-        Return True if connected, False if not connected, None if not implimented
-        """
-
-        pass
 
     # @thread_info
     @ensure_online
