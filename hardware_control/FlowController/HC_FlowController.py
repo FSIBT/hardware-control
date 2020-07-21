@@ -141,12 +141,17 @@ class HC_FlowController(HC_Instrument):
         self.pressure_label_readout.setText(press_meas)
         self.flow_label_readout.setText(flow_meas)
 
+    def init_values(self):
+
+        self.values["gas"] = ""
+        self.values["rate"] = ""
+
     def default_state(self):
         """Create a default state object if can't get state from a file."""
         dflt = {}
 
         dflt["gas"] = "Argon"
-        dflt["rate"] = 0.0
+        dflt["rate"] = "0.0"
 
         return dflt
 
