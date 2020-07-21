@@ -182,7 +182,14 @@ class CAEN14xxETCtrl(HC_Backend):
         result = self.query(f"$BD:00,CMD:MON,CH:{channel},PAR:{command}")
         if result is None:
             return "None"
-        rval = result[result.find("VAL:") + 4 :].strip()
+        logger.debug(f"Full received value='{result}' (len={len(result)})")
+        rval = result[result.find("VAL:") + 4 :]
+        logger.debug(f"Trimmed to number + ending ='{rval}' (len={len(rval)})")
+        rval = rval.strip()
+        logger.debug(f"Ending stripped CR & LF ='{rval}' (len={len(rval)})")
+        rval = rval.strip("\\nr")
+        logger.debug(f"Ending stripped \\, n, r ='{rval}' (len={len(rval)})")
+
         return f"{cmd[:-1]}={rval}"
 
     def read_status(self, channel):
