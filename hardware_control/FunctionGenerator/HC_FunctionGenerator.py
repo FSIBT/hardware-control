@@ -40,6 +40,7 @@ class HC_FunctionGenerator(HC_Instrument):
 
         self.settings = {}
         self.address = backend.connection_addr
+        self.num_channels = num_channels
 
         backend.dummy = self.window.app.dummy
 
@@ -71,7 +72,7 @@ class HC_FunctionGenerator(HC_Instrument):
         self.channel_panel = QGridLayout()
         self.channel_panel.addWidget(self.channel_widgets[0], 0, 0)
 
-        if num_channels == 2:
+        if self.num_channels == 2:
             self.channel_widgets.append(FunctionGeneratorChannelWidget(2, self))
             self.channel_panel.addWidget(self.channel_widgets[-1], 0, 1)
 
@@ -86,6 +87,31 @@ class HC_FunctionGenerator(HC_Instrument):
 
     def initialize_gui_instrument(self):
         return self.default_state()
+
+    def init_values(self):
+
+        self.values["CH1_amplitude"] = ""
+        self.values["CH1_frequency"] = ""
+        self.values["CH1_offset"] = ""
+        self.values["CH1_waveform"] = ""
+        self.values["CH1_modulate"] = ""
+        self.values["CH1_burst_en"] = ""
+        self.values["CH1_impedance"] = ""
+        self.values["CH1_enabled"] = ""
+        self.values["CH1_num_pulse"] = ""
+        self.values["CH1_burst_freq"] = ""
+
+        if self.num_channels > 1:
+            self.values["CH2_amplitude"] = ""
+            self.values["CH2_frequency"] = ""
+            self.values["CH2_offset"] = ""
+            self.values["CH2_waveform"] = ""
+            self.values["CH2_modulate"] = ""
+            self.values["CH2_burst_en"] = ""
+            self.values["CH2_impedance"] = ""
+            self.values["CH2_enabled"] = ""
+            self.values["CH2_num_pulse"] = ""
+            self.values["CH2_burst_freq"] = ""
 
     #
     # Create a default settings object if can't get settings from a file
@@ -105,16 +131,17 @@ class HC_FunctionGenerator(HC_Instrument):
         dflt["CH1_num_pulse"] = "300"
         dflt["CH1_burst_freq"] = "1"
 
-        dflt["CH2_amplitude"] = "1"
-        dflt["CH2_frequency"] = "1e3"
-        dflt["CH2_offset"] = "0"
-        dflt["CH2_waveform"] = "Sine"
-        dflt["CH2_modulate"] = "False"
-        dflt["CH2_burst_en"] = "False"
-        dflt["CH2_impedance"] = "1e6"
-        dflt["CH2_enabled"] = "False"
-        dflt["CH2_num_pulse"] = "300"
-        dflt["CH2_burst_freq"] = "1"
+        if self.num_channels > 1:
+            dflt["CH2_amplitude"] = "1"
+            dflt["CH2_frequency"] = "1e3"
+            dflt["CH2_offset"] = "0"
+            dflt["CH2_waveform"] = "Sine"
+            dflt["CH2_modulate"] = "False"
+            dflt["CH2_burst_en"] = "False"
+            dflt["CH2_impedance"] = "1e6"
+            dflt["CH2_enabled"] = "False"
+            dflt["CH2_num_pulse"] = "300"
+            dflt["CH2_burst_freq"] = "1"
 
         return dflt
 
