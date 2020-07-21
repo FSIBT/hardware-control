@@ -22,6 +22,31 @@ class TDKLGenHCtrl(HC_Backend):
         self.num_channels = 1
         # This specifies the max number of channels the user can request
 
+    def check_connection(self):
+        """
+        Verifies that the backend is able to communicate with the instrument by
+        querying the instruments name and checking for a valid return value.
+
+        Returns true if online, false if offline, and None if unknown connection
+        type.
+        """
+        if self.connection_type in [SOCKET, VISA]:
+
+            try:
+                self.device.query("*IDN?")
+            except Exception:  # Not connected - reconnect
+                logger.warning(
+                    "Device connection check failed. Setting online to false.",
+                    exc_info=True,
+                )
+                return False
+            else:  # Connection stable - return True
+                return True
+
+        else:
+
+            return None
+
     def update_setting(self, setting: str, value):
 
         if not self.online:
