@@ -75,6 +75,14 @@ class HC_Read(HC_Instrument):
         # this sends all settings, which are stored in the settings dictionary to the backend
         self.send_state()
 
+    def init_values(self):
+
+        logger.info("Init values not implimented in HC_Read")
+
+    def settings_to_UI(self):
+
+        pass
+
 
 class HC_singleChannelRead(QWidget):
     """A single Temperature LCD Widget, with a channelnumber and name."""
