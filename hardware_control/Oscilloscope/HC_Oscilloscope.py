@@ -127,11 +127,82 @@ class HC_Oscilloscope(HC_Instrument):
                 c = 1
             self.disp.update_display(int(c), data1, data2)
 
-    # def get_header(self):
-    #     return "CH1 Voltage Range[V]"
-    #
-    # def get_value_keys(self):
-    #     return ["CH1_volts_div"]
+    def init_values(self):
+
+        self.values["timebase"] = ""
+
+        self.values["time_offset"] = ""
+
+        self.values["CH1_volts_div"] = ""
+        self.values["CH2_volts_div"] = ""
+        self.values["CH3_volts_div"] = ""
+        self.values["CH4_volts_div"] = ""
+
+        self.values["CH1_volts_div"] = ""
+        self.values["CH2_volts_div"] = ""
+        self.values["CH3_volts_div"] = ""
+        self.values["CH4_volts_div"] = ""
+
+        self.values["CH1_volts_div"] = ""
+        self.values["CH2_volts_div"] = ""
+        self.values["CH3_volts_div"] = ""
+        self.values["CH4_volts_div"] = ""
+
+        self.values["CH1_offset"] = ""
+        self.values["CH2_offset"] = ""
+        self.values["CH3_offset"] = ""
+        self.values["CH4_offset"] = ""
+
+        self.values["CH1_BW_lim"] = ""
+        self.values["CH2_BW_lim"] = ""
+        self.values["CH3_BW_lim"] = ""
+        self.values["CH4_BW_lim"] = ""
+
+        self.values["CH1_active"] = ""
+        self.values["CH2_active"] = ""
+        self.values["CH3_active"] = ""
+        self.values["CH4_active"] = ""
+
+        self.values["CH1_impedance"] = ""
+        self.values["CH2_impedance"] = ""
+        self.values["CH3_impedance"] = ""
+        self.values["CH4_impedance"] = ""
+
+        self.values["CH1_label"] = ""
+        self.values["CH2_label"] = ""
+        self.values["CH3_label"] = ""
+        self.values["CH4_label"] = ""
+
+        self.values["labels_enabled"] = ""
+
+        self.values["CH1_invert"] = ""
+        self.values["CH2_invert"] = ""
+        self.values["CH3_invert"] = ""
+        self.values["CH4_invert"] = ""
+
+        self.values["CH1_probe_atten"] = ""
+        self.values["CH2_probe_atten"] = ""
+        self.values["CH3_probe_atten"] = ""
+        self.values["CH4_probe_atten"] = ""
+
+        self.values["CH1_coupling"] = ""
+        self.values["CH2_coupling"] = ""
+        self.values["CH3_coupling"] = ""
+        self.values["CH4_coupling"] = ""
+
+        self.values["trigger_level"] = ""
+
+        self.values["trigger_coupling"] = ""
+
+        self.values["trigger_edge"] = ""
+
+        self.values["trigger_channel"] = ""
+
+        self.values["meas_slot1"] = ""
+        self.values["meas_slot2"] = ""
+        self.values["meas_slot3"] = ""
+        self.values["meas_slot4"] = ""
+        self.values["meas_slot5"] = ""
 
     def default_state(self):
         """Create a default settings object if can't get settings from a file"""
