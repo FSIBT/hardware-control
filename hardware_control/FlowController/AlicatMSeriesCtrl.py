@@ -62,6 +62,33 @@ class AlicatMSeriesCtrl(HC_Backend):
         if self.error_count > 4:
             self.online = False
 
+    def check_connection(self):
+        """
+        Verifies that the backend is able to communicate with the instrument by
+        querying the instruments name and checking for a valid return value.
+
+        Returns true if online, false if offline, and None if unknown connection
+        type.
+        """
+        if self.connection_type == MODBUS:
+
+            try:
+                r = self.device.read_input_registers(count=2, address=1208, unit=0)
+                a, b = r.registers
+                flow = (a << 16) + b
+                flow = converter_ulong_to_IEEE754(flow)
+                self.online = True
+            except Exception:  # Not connected - reconnect
+                logger.warning(
+                    "Device connection check failed. Setting online to false.",
+                    exc_info=True,
+                )
+                self.online = False
+            return self.online
+        else:
+
+            return None
+
     def command(self, cmd: str):
         if not self.online:
             return f"{self.ID}-Offline"
