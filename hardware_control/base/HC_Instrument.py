@@ -2,6 +2,7 @@ from collections import OrderedDict
 import json
 import logging
 import abc
+import sip
 
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QGroupBox
@@ -19,7 +20,16 @@ AUTOMATIC = "automatic"
 OFF = "off"
 
 
-class HC_Instrument(QGroupBox, abc.ABC):
+class CombinedMetaclass(sip.wrappertype, abc.ABCMeta):
+    """
+    This class inherits from the metaclasses used in both QGroupBox and ABC. This
+    enables HC_Instrument to subclass both QGroupBox and ABC.
+    """
+
+    pass
+
+
+class HC_Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
     def __init__(self, window, name: str, backend=None, lock_until_sync=False):
         super().__init__(name)
         # ToDo Why ordered dict??
