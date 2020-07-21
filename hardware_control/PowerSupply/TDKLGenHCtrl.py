@@ -34,15 +34,14 @@ class TDKLGenHCtrl(HC_Backend):
 
             try:
                 self.device.query("*IDN?")
+                self.online = True
             except Exception:  # Not connected - reconnect
                 logger.warning(
                     "Device connection check failed. Setting online to false.",
                     exc_info=True,
                 )
-                return False
-            else:  # Connection stable - return True
-                return True
-
+                self.online = False
+            return self.online
         else:
 
             return None
