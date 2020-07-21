@@ -48,6 +48,25 @@ class Key33500BCtrl(HC_Backend):
 
         self.check()
 
+    def check_connection(self):
+
+        if self.connection_type in [SOCKET, VISA]:
+
+            try:
+                self.device.query("*IDN?")
+            except Exception:  # Not connected - reconnect
+                logger.warning(
+                    "Device connection check failed. Setting online to false.",
+                    exc_info=True,
+                )
+                return False
+            else:  # Connection stable - return True
+                return True
+
+        else:
+
+            return None
+
     def update_setting(self, setting: str, value):
         """ Called by HC_Comm object. Updates a setting in the instrument.
 
