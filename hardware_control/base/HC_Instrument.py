@@ -1,6 +1,7 @@
 from collections import OrderedDict
 import json
 import logging
+import abc
 
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QGroupBox
@@ -18,7 +19,7 @@ AUTOMATIC = "automatic"
 OFF = "off"
 
 
-class HC_Instrument(QGroupBox):
+class HC_Instrument(QGroupBox, abc.ABC):
     def __init__(self, window, name: str, backend=None, lock_until_sync=False):
         super().__init__(name)
         # ToDo Why ordered dict??
@@ -84,6 +85,18 @@ class HC_Instrument(QGroupBox):
         # return f"{self.manufacturer} {self.model}"
         return f"{self.name}"
 
+    def backend_return_listdata(self, descr: str, data1: list, data2: list):
+        """Is called by self.comm when the backend returns from command_listdata,
+        which returns a string and two lists. The author of the UI can overwrite
+        this function to process the return data."""
+        pass
+
+    def enableDisableWidgets(self, setting: str, value: str):
+        """User can overwrite this to enable/disable widgets when conditions/settings
+        are changed"""
+        pass
+
+    @abc.abstractmethod
     def init_values(self):
         """
         This function should be overwritten by child classes to initialize the
@@ -95,6 +108,12 @@ class HC_Instrument(QGroupBox):
         by the read_state_from_backend() function to initialize the settings
         dictionary and/or UI.
         """
+        pass
+
+    @abc.abstractmethod
+    def settings_to_UI(self):
+        """ Overwrites the values in the UI with the values in self.settings """
+
         pass
 
     def set_online_callback(self, callback_function):
@@ -219,11 +238,6 @@ class HC_Instrument(QGroupBox):
         if len(self.ramp_target) < 1:
             logger.debug("Killing ramp timer")
             self.ramp_timer.stop()
-
-    def enableDisableWidgets(self, setting: str, value: str):
-        """User can overwrite this to enable/disable widgets when conditions/settings
-        are changed"""
-        pass
 
     def update_setting(self, setting: str, value: str):
         """Update a setting in settings and values dictionary for the instrument"""
@@ -428,12 +442,6 @@ class HC_Instrument(QGroupBox):
         self.online_callback(self)
         self.online_callback = None
 
-    def backend_return_listdata(self, descr: str, data1: list, data2: list):
-        """Is called by self.comm when the backend returns from command_listdata,
-        which returns a string and two lists. The author of the UI can overwrite
-        this function to procses the return data."""
-        pass
-
     def backend_return_log(self, retval: str, point_data):
         """Performs the logging action before backend_return() updates the UI.
 
@@ -540,7 +548,3 @@ class HC_Instrument(QGroupBox):
                 )
                 return None
         return rval
-
-    def settings_to_UI(self):
-        """ Overwrites the values in the UI with the values in self.settings """
-        logger.warning(f"settings_to_UI not implimented for instrument {self.name}")
