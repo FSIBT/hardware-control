@@ -105,6 +105,25 @@ class Key4000XCtrl(HC_Backend):
             self.write(f"CHAN{channel}:COUP {value}")
             return self.query(f"CHAN{channel}:COUP?")
 
+    def check_connection(self):
+
+        if self.connection_type in [SOCKET, VISA]:
+
+            try:
+                self.device.query("*IDN?")
+            except Exception:  # Not connected - reconnect
+                logger.warning(
+                    "Device connection check failed. Setting online to false.",
+                    exc_info=True,
+                )
+                return False
+            else:  # Connection stable - return True
+                return True
+
+        else:
+
+            return None
+
     def command(self, cmd: str):
         if not self.online:
             return "Offline"
