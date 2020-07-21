@@ -6,7 +6,7 @@ The manual for this instrument can be found at
 """
 import pyvisa
 
-from hardware_control.HC_Backend import HC_Backend
+from hardware_control.base.HC_Backend import HC_Backend
 from hardware_control.utility import ensure_float, get_channel_from_command
 import logging
 

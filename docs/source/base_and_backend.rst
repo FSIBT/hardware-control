@@ -42,8 +42,7 @@ hardware_control.base module
 hardware_control.HC_Backend module
 ----------------------------------
 
-.. automodule:: hardware_control.HC_Backend
+.. automodule:: hardware_control.base.HC_Backend
    :members:
    :undoc-members:
    :show-inheritance:
-

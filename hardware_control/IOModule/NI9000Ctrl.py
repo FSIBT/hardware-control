@@ -24,7 +24,7 @@ if os.name == "nt":
     import nidaqmx
     from nidaqmx.constants import TerminalConfiguration
 
-from hardware_control.HC_Backend import HC_Backend
+from hardware_control.base.HC_Backend import HC_Backend
 from hardware_control.utility import get_channel_from_command
 import logging
 from hardware_control.utility import ensure_float

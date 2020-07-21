@@ -6,7 +6,7 @@ import logging
 import random
 import socket
 
-from hardware_control.HC_Backend import HC_Backend, ensure_online
+from hardware_control.base.HC_Backend import HC_Backend, ensure_online
 from hardware_control.utility import ensure_float, get_channel_from_command
 
 logger = logging.getLogger(__name__)

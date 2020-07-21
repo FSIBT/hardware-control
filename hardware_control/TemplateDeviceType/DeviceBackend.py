@@ -1,6 +1,6 @@
 import random
 
-from hardware_control.HC_Backend import HC_Backend, VISA
+from hardware_control.base.HC_Backend import HC_Backend, VISA
 import logging
 
 logger = logging.getLogger(__name__)

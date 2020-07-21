@@ -1,7 +1,7 @@
 import json
 import zmq
 
-from hardware_control.HC_Backend import HC_Backend
+from hardware_control.base.HC_Backend import HC_Backend
 from hardware_control.utility import get_channel_from_command
 import logging
 

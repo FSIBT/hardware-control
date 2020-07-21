@@ -1,6 +1,6 @@
 import random
 
-from hardware_control.HC_Backend import HC_Backend, MODBUS
+from hardware_control.base.HC_Backend import HC_Backend, MODBUS
 from hardware_control.utility import (
     converter_ulong_to_IEEE754,
     converter_IEEE754_to_ulong,
@@ -95,4 +95,3 @@ class AlicatMSeriesCtrl(HC_Backend):
                 exc_info=True,
             )
             self.online = False
-

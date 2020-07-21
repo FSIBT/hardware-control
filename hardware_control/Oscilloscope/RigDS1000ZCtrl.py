@@ -1,6 +1,6 @@
 # >>> scope.write("MEAS:STAT:ITEM VRMS,CHAN2")
 # >>> scope.query("MEAS:ITEM? VRMS,CHAN2")
-from hardware_control.HC_Backend import HC_Backend, VISA
+from hardware_control.base.HC_Backend import HC_Backend, VISA
 from hardware_control.utility import returnChannelNumber
 from hardware_control.utility import (
     regex_compare,

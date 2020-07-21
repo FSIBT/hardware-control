@@ -54,7 +54,6 @@ def ensure_online(f):
 class HC_Backend(ABC):
     """Base class for all instruments"""
 
-    # @thread_info
     def __init__(self):
 
         self.ID = None  # this should be a string with instrument name
@@ -93,7 +92,6 @@ class HC_Backend(ABC):
                 self.ip_addr = self.connection_addr
                 self.port_no = None
 
-    # @thread_info
     def check(self):
         """Some error checking
 
@@ -107,8 +105,8 @@ class HC_Backend(ABC):
         if self.ID is None:
             logger.error(f"Need to set the instrument ID")
 
-    # @thread_info
-    def update_setting(self, setting: str, value: str):
+    @abc.abstractmethod
+    def update_setting(self, setting: str, value: str) -> str:
         """Overload this function to adjust settings on the device.
 
 
@@ -118,10 +116,10 @@ class HC_Backend(ABC):
         the main thread)
 
         """
-        return value
+        pass
 
-    # @thread_info
-    def command(self, cmd: str):
+    @abc.abstractmethod
+    def command(self, cmd: str) -> str:
         """Overload this function to send commands to the device.
 
         Returns
@@ -130,9 +128,8 @@ class HC_Backend(ABC):
         the main thread)
 
         """
-        return cmd
+        pass
 
-    # @thread_info
     def command_listdata(self, cmd: str):
         """Overload this function to send commands to the device.
 
@@ -145,7 +142,6 @@ class HC_Backend(ABC):
         """
         return "", [], []
 
-    # @thread_info
     def close(self):
         """Close connection to instrument."""
 
@@ -159,7 +155,6 @@ class HC_Backend(ABC):
 
         self.device.close()
 
-    # @thread_info
     def try_connect(self):
         """Checks if the backend is in communication with the object, if it is
         not, it tries to re-establish communication."""
@@ -235,7 +230,7 @@ class HC_Backend(ABC):
 
         return self.online
 
-    # @thread_info
+    @abc.abstractmethod
     def check_connection(self):
         """
         This function should be overwritten by each backend. It will verify
@@ -245,7 +240,7 @@ class HC_Backend(ABC):
         Return True if connected, False if not connected, None if not implimented
         """
 
-        return None
+        pass
 
     # @thread_info
     @ensure_online
