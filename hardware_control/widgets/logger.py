@@ -522,3 +522,10 @@ class HC_LoggerTool(HC_Instrument):
         # dflt["macro"] = "None"
 
         return dflt
+
+    def init_values(self):
+        self.values["display_group"] = ""
+
+    def settings_to_UI(self):
+        self.dispgroup_drop.setCurrentText(self.settings["display_group"])
+        self.set_group(self.dispgroup_drop.currentText())
