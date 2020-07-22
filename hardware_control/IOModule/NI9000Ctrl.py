@@ -81,6 +81,34 @@ class NI9000Ctrl(HC_Backend):
     # https://nidaqmx-python.readthedocs.io/en/latest/index.html for further info
     # and check the Gdocs manual!
 
+    def check_connection(self):
+        """
+        Verifies that the backend is able to communicate with the instrument by
+        querying the instruments name and checking for a valid return value.
+
+        Returns true if online, false if offline, and None if unknown connection
+        type.
+        """
+
+        if not self.online:
+            return False
+
+        if self.connection_type in [SOCKET, VISA]:
+
+            try:
+                with nidaqmx.Task() as task:
+                    if task.name:
+                        self.online = True
+                    else:
+                        self.online = False
+            except Exception as e:
+                self.online = False
+                logger.error("Connect failed.", exc_info=True)
+        else:
+            return None
+
+        return self.online
+
     # TODO: Rework this
     def try_connect(self):
         if not self.dummy and os.name == "nt":
