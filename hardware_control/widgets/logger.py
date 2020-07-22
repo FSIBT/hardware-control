@@ -524,7 +524,7 @@ class HC_LoggerTool(HC_Instrument):
         return dflt
 
     def init_values(self):
-        self.values["display_group"] = ""
+        self.values = {}
 
     def settings_to_UI(self):
         self.dispgroup_drop.setCurrentText(self.settings["display_group"])

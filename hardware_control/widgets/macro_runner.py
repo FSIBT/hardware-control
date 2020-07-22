@@ -239,3 +239,11 @@ class HC_MacroRunnerTool(HC_Instrument):
         dflt["progress"] = 0
 
         return dflt
+
+    def init_values(self):
+
+        self.values = {}
+
+    def settings_to_UI(self):
+
+        pass

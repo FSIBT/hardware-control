@@ -658,9 +658,7 @@ class HC_ScanTool(HC_Instrument):
 
     def init_values(self):
 
-        self.values = default_state()
-        for key in self.values:
-            self.values[key] = ""
+        self.values = {}
 
 
 class ScanWorker(QObject):
