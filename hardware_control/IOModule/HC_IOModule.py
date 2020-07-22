@@ -6,6 +6,7 @@ import pkg_resources
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QLabel, QWidget, QGridLayout, QLCDNumber, QSpacerItem
 
+from hardware_control.widgets import setButtonState
 from hardware_control.base import HC_Instrument, HC_Comm
 import logging
 from PyQt5.QtGui import QDoubleValidator, QPixmap, QIcon
@@ -209,6 +210,13 @@ class HC_IOModule(HC_Instrument):
         for ic in self.dig_in_channels:
             ic.update_readout()
 
+    def settings_to_UI(self):
+
+        for c in self.an_out_channels:
+            c.settings_to_UI()
+        for c in self.dig_out_channels:
+            c.settings_to_UI()
+
     def init_values(self):
 
         self.values = {}
@@ -366,6 +374,10 @@ class AnalogOutputChannel(QGroupBox):
         self.editbox.setText("0")
         self.control.update_setting(f"CH{self.channel}_analog_write", str(voltage))
 
+    def settings_to_UI(self):
+
+        self.editbox.setText(self.control.settings[f"CH{self.channel}_analog_write"])
+
 
 class DigitalInputChannel(QGroupBox):
     def __init__(
@@ -510,3 +522,13 @@ class DigitalOutputChannel(QGroupBox):
         self.control.update_setting(
             f"CH{self.channel}_digital_write", str(self.ctrl_but.isChecked())
         )
+
+    def settings_to_UI(self):
+        setButtonState(
+            self.ctrl_but, self.control.settings[f"CH{self.channel}_digital_write"]
+        )
+
+        if self.ctrl_but.isChecked():
+            self.ind_label.setPixmap(self.high_indicator)
+        else:
+            self.ind_label.setPixmap(self.low_indicator)
