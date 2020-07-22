@@ -247,6 +247,15 @@ class HC_DelayGenerator(HC_Instrument):
             dflt[f"CH12_output_amplitude"] = "5"
         return dflt
 
+    def init_values(self):
+        """
+        Initializes the values dictionary
+        """
+
+        self.values = self.default_state()
+        for key in self.values:
+            self.values[key] = ""
+
     def settings_to_UI(self):
 
         self.trig_mode_drop.setCurrentText(str(self.settings[f"trigger_mode"]))
