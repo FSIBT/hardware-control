@@ -113,6 +113,10 @@ class Key4000XCtrl(HC_Backend):
         Returns true if online, false if offline, and None if unknown connection
         type.
         """
+
+        if not self.online:
+            return False
+
         if self.connection_type in [SOCKET, VISA]:
 
             try:
