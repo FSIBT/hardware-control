@@ -240,6 +240,9 @@ class HC_ZMQConnectionTool(HC_Instrument):
         dflt["port"] = "tcp://*:5555"
         return dflt
 
+    def init_values(self):
+        self.values["port"] = ""
+
     def settings_to_UI(self):
 
         self.port_edit.setText(self.settings["port"])
