@@ -650,6 +650,12 @@ class HC_ScanTool(HC_Instrument):
 
         return dflt
 
+    def init_values(self):
+
+        self.values = default_state()
+        for key in self.values:
+            self.values[key] = ""
+
 
 class ScanWorker(QObject):
 
