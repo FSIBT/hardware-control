@@ -256,6 +256,14 @@ class HC_ScanTool(HC_Instrument):
         self.master_layout.addWidget(self.scan_button, 3, 0)
         self.setLayout(self.master_layout)
 
+    def settings_to_UI(self):
+
+        self.values_edit.setText(str(self.settings["values"]))
+        self.instrument_drop.setCurrentText(self.settings["instrument"])
+        self.parameter_drop.setCurrentText(self.settings["parameter"])
+        self.progress_bar.setValue(float(self.settings["progress"]))
+        self.macro_drop.setCurrentText(self.settings["macro"])
+
     # def space_rule_set(self, rule):
     #     pass
     #
@@ -643,8 +651,6 @@ class HC_ScanTool(HC_Instrument):
         dflt["values"] = ""
         dflt["instrument"] = "----------"
         dflt["parameter"] = "----------"
-        dflt["action_instrument"] = "----------"
-        dflt["action_parameter"] = "----------"
         dflt["progress"] = "0"
         dflt["macro"] = "None"
 
