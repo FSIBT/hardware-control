@@ -41,6 +41,19 @@ class ADAM6024Ctrl(HC_Backend):
         self.termination = "\r"
         self.try_connect()
 
+    def check_connection(self):
+
+        if not self.online:
+            return False
+
+        try:
+            self.device.send(b"#01\r")
+            indata = self.device.recv(self.buf)
+            self.online = True
+        except:
+            self.online = False
+        return self.online
+
     def try_connect(self):
         """Force the use of sockets with different option (DGRAM instead of STREAM)."""
         if self.dummy:
@@ -64,14 +77,7 @@ class ADAM6024Ctrl(HC_Backend):
                 return self.online
 
         # Independent of the state, try to receive data, if nothing is returned, then the device is offline
-        try:
-            self.device.send(b"#01\r")
-            indata = self.device.recv(self.buf)
-            self.online = True
-            return self.online
-        except:
-            self.online = False
-            return self.online
+        self.online = self.check_connection()
 
     @ensure_online
     def update_setting(self, setting: str, value):
