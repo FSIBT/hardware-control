@@ -39,6 +39,31 @@ class SRSDG535Ctrl(HC_Backend):
         self.channels_relative = {}
         self.channels_ampl = {}
 
+    def check_connection(self):
+        """
+        Verifies that the backend is able to communicate with the instrument by
+        querying the instruments name and checking for a valid return value.
+
+        Returns true if online, false if offline, and None if unknown connection
+        type.
+        """
+
+        if not self.online:
+            return False
+
+        try:
+            instrstat = self.device.query("IS")
+            es = self.device.query("ES")
+            self.online = True
+        except Exception:
+            logger.warning(
+                "Device connection check failed. Setting online to false.",
+                exc_info=True,
+            )
+            self.online = False
+
+        return False
+
     def update_setting(self, setting: str, value):
 
         channel, setting_X = get_channel_from_command(setting)
@@ -155,36 +180,23 @@ class SRSDG535Ctrl(HC_Backend):
         except Exception:
             logger.error(f"{self.ID} - An exception occurred in write", exc_info=True)
 
-    def try_connect(self):
-        if self.dummy:
-            self.online = True
-            return self.online
-
-        if not self.online:
-            try:
-                rm = pyvisa.ResourceManager()
-                # Open connection
-                self.device = rm.open_resource(self.connection_addr)
-                logger.debug(f"Recource list pyvisa: {rm.list_resources()}")
-                self.online = True
-            except ValueError:
-                logger.warning("Can not open this resource type.", exc_info=True)
-            except Exception:
-                # logger.error("An error occured while connecting with Pyvisa", exc_info=True)
-                self.online = False
-
-        if self.online:
-            try:
-                instrstat = self.device.query("IS")
-                es = self.device.query("ES")
-                logger.debug(
-                    f"{self.ID}: Instrument status: {instrstat} \tError status: {es}"
-                )
-            except Exception:
-                # logger.error("An error occured while checking online status", exc_info=True)
-                self.online = False
-
-        return self.online
+    # def try_connect(self):
+    #     if self.dummy:
+    #         self.online = True
+    #         return self.online
+    #
+    #     if not self.online:
+    #         try:
+    #             rm = pyvisa.ResourceManager()
+    #             # Open connection
+    #             self.device = rm.open_resource(self.connection_addr)
+    #             logger.debug(f"Recource list pyvisa: {rm.list_resources()}")
+    #             self.online = True
+    #         except ValueError:
+    #             logger.warning("Can not open this resource type.", exc_info=True)
+    #         except Exception:
+    #             # logger.error("An error occured while connecting with Pyvisa", exc_info=True)
+    #             self.online = False
 
 
 #
