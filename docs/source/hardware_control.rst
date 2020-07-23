@@ -1,5 +1,5 @@
-Hardware control package
-========================
+Hardware control reference
+==========================
 
 The hardware control package consists of several classes that define
 the main functionality, e.g. a Qt-app and main window, classes to
@@ -15,7 +15,7 @@ hardware share the same Qt-frontend.
    base_and_backend
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Instruments:
 
 
