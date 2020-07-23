@@ -1,4 +1,3 @@
-import json
 import logging
 import pkg_resources
 
@@ -10,124 +9,75 @@ from PyQt5.QtWidgets import QGroupBox, QLabel, QGridLayout
 logger = logging.getLogger(__name__)
 
 
+def load_icon(name: str):
+    return QPixmap(pkg_resources.resource_filename("hardware_control", f"icons/{name}"))
+
+
 class HC_StatusTool(QGroupBox):
+    """A widget to display if instruments are online or offline.
+
+    It gets the list of instruments from the app class, so it should
+    be created after all instrumensts are defined already.
+
+    """
+
     def __init__(self, window, name: str = "Connection Status", short_indicators=False):
 
         super().__init__(name)
 
-        self.settings = {}
+        self.settings = self.default_state()
         self.name = name
         self.app = window.app
         self.ignore = True
+        self.instrument_names = {}
 
         if short_indicators:
-            self.green_indicator = QPixmap(
-                pkg_resources.resource_filename(
-                    "hardware_control", "icons/green_ind.svg"
-                )
-            )
-            self.grey_indicator = QPixmap(
-                pkg_resources.resource_filename(
-                    "hardware_control", "icons/grey_ind.svg"
-                )
-            )
-            self.darkgrey_indicator = QPixmap(
-                pkg_resources.resource_filename(
-                    "hardware_control", "icons/ind_darkgrey.png"
-                )
-            )
-            self.red_indicator = QPixmap(
-                pkg_resources.resource_filename("hardware_control", "icons/red_ind.svg")
-            )
-            self.blue_indicator = QPixmap(
-                pkg_resources.resource_filename(
-                    "hardware_control", "icons/blue_ind.svg"
-                )
-            )
+            self.green_indicator = load_icon("green_ind.svg")
+            self.grey_indicator = load_icon("grey_ind.svg")
+            self.darkgrey_indicator = load_icon("ind_darkgrey.png")
+            self.red_indicator = load_icon("red_ind.svg")
+            self.blue_indicator = load_icon("blue_ind.svg")
         else:
-            self.green_indicator = QPixmap(
-                pkg_resources.resource_filename(
-                    "hardware_control", "icons/online_label.svg"
-                )
-            )
-            self.grey_indicator = QPixmap(
-                pkg_resources.resource_filename(
-                    "hardware_control", "icons/na_label.svg"
-                )
-            )
-            self.darkgrey_indicator = QPixmap(
-                pkg_resources.resource_filename(
-                    "hardware_control", "icons/disabled_label.svg"
-                )
-            )
-            self.red_indicator = QPixmap(
-                pkg_resources.resource_filename(
-                    "hardware_control", "icons/offline_label.svg"
-                )
-            )
-            self.blue_indicator = QPixmap(
-                pkg_resources.resource_filename(
-                    "hardware_control", "icons/enabled_label.svg"
-                )
-            )
+            self.green_indicator = load_icon("online_label.svg")
+            self.grey_indicator = load_icon("na_label.svg")
+            self.darkgrey_indicator = load_icon("disabled_label.svg")
+            self.red_indicator = load_icon("offline_label.svg")
+            self.blue_indicator = load_icon("enabled_label.svg")
 
-        # # Initialize state to correct values
-        # if initialize_with == "INSTRUMENT":
-        #     self.save_on_close = False
-        #     # Can't save without filename
-        #     self.settings = self.initialize_gui_instrument()
-        # elif initialize_with == "DEFAULT":
-        #     self.save_on_close = False
-        #     # Can't save without filename
-        self.settings = self.default_state()
-        # else:
-        #     self.load_state(initialize_with)
-        #     self.filename = initialize_with
-
-        # *************************Create GUI************************
-
-        #        self.arrow_symbol = QLabel();
-        #        self.arrow_symbol.setPixmap(QPixmap(pkg_resources.resource_filename('hardware_control', 'ScanTool/icons/arrow.png')));
-        #        self.arrow_symbol.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
-        #
         self.instruments_label = QLabel()
-        self.instruments_label.setPixmap(
-            QPixmap(
-                pkg_resources.resource_filename(
-                    "hardware_control", "ConnectionStatusTool/icons/status_label.png"
-                )
-            )
-        )
+        self.instruments_label.setPixmap(load_icon("status_label.png"))
         self.instruments_label.setAlignment(
             QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
         )
-        #
         self.instrument_grid = QGridLayout()
 
-        # Add widgets to grid layout
+        # Add a grid layout that will hold all the connection status information
         #
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.instruments_label, 0, 0, 1, 1)
         self.master_layout.addLayout(self.instrument_grid, 1, 0, 1, 1)
         self.setLayout(self.master_layout)
 
-        # Connect timer
         self.update_timer = QTimer(self)
         self.update_timer.timeout.connect(self.update_status)
         self.update_timer.start(1000)
-        # 1s period
+
+        self.update_instruments()
 
     def update_instruments(self):
+        """Adds all currently known instruments."""
 
         # Clear layout
         for i in reversed(range(self.instrument_grid.count())):
             self.instrument_grid.itemAt(i).widget().setParent(None)
+        self.instrument_names = {}
 
-        row = 0
-        for inst in self.app.instruments:
-
+        for row, inst in enumerate(self.app.instruments):
             if inst.ignore:
                 continue
+
+            # save the row to make updating the instrument later easier
+            self.instrument_names[inst.name] = row
 
             label = QLabel(inst.name)
             indicator = QLabel()
@@ -136,86 +86,41 @@ class HC_StatusTool(QGroupBox):
 
             self.instrument_grid.addWidget(label, row, 0)
             self.instrument_grid.addWidget(indicator, row, 1)
-            row += 1
 
     def update_status(self):
+        """Check if instrument is online/offline.
 
-        for i in range(self.instrument_grid.count()):
-            if i % 2 == 0:  # Only want even indecies - these are instrument names
+        This updates the icons to represent the online/offline
+        state. The function is normally called every second by a
+        QtTimer.
 
-                for instr in self.app.instruments:
-                    if (
-                        instr.name == self.instrument_grid.itemAt(i).widget().text()
-                    ):  # Found instrument....
-                        if instr.online:
-                            if instr.online_color == "Blue":
-                                self.instrument_grid.itemAt(i + 1).widget().setPixmap(
-                                    self.blue_indicator
-                                )
-                            else:
-                                self.instrument_grid.itemAt(i + 1).widget().setPixmap(
-                                    self.green_indicator
-                                )
-                        else:
-                            if instr.online_color == "Blue":
-                                self.instrument_grid.itemAt(i + 1).widget().setPixmap(
-                                    self.darkgrey_indicator
-                                )
-                            else:
-                                self.instrument_grid.itemAt(i + 1).widget().setPixmap(
-                                    self.red_indicator
-                                )
+        """
+        for instrument in self.app.instruments:
+            row = self.instrument_names.get(instrument.name, None)
+            if row is None:
+                continue
 
-    def load_state(self, filename: str):
-        # Get default state - this identifies all required fields
-        dflt = self.default_state()
-
-        # Read a state from file
-        try:
-            with open(filename) as file:
-                self.settings = json.load(file)
-                logger.info(
-                    f"State for {self.comm.instr.ID} read from file '{filename}'"
+            if instrument.online:
+                self.instrument_grid.itemAt(2 * row + 1).widget().setPixmap(
+                    self.blue_indicator
+                    if instrument.online_color == "Blue"
+                    else self.green_indicator
                 )
-        except:
-            logger.info(f"ERROR: Failed to read file '{filename}'. Using defualt case.")
-            self.settings = self.default_state()
-
-        # Ensure all fields in default_state are present in the loaded state
-        for key in dflt:
-            if not (key in self.settings):
-                self.settings[key] = dflt[key]
-
-    def save_state(self, filename: str):
-        try:
-            with open(filename, "w") as file:
-                json.dump(self.settings, file)
-                logger.info(
-                    f"State for {self.comm.instr.ID} saved to file '{filename}'"
+            else:
+                self.instrument_grid.itemAt(2 * row + 1).widget().setPixmap(
+                    self.darkgrey_indicator
+                    if instrument.online_color == "Blue"
+                    else self.red_indicator
                 )
-        except Exception as e:
-            logger.error(
-                f"Failed to write file '{filename}'. State not saved.", exc_info=True
-            )
-
-    def close(self, filename: str = ""):
-        """Close connection."""
-        # Save state if asked
-        if self.save_on_close:
-            self.save_state(self.filename)
-
-        # Tell scope to close
-        self.comm.close()
 
     def default_state(self):
         """ Create a default state object if can't get state from a file."""
-        dflt = {}
 
-        dflt["values"] = ""
-        dflt["instrument"] = "----------"
-        dflt["parameter"] = "----------"
-        dflt["action_instrument"] = "----------"
-        dflt["action_parameter"] = "----------"
-        dflt["progress"] = 0
-
-        return dflt
+        return {
+            "values": "",
+            "instrument": "----------",
+            "parameter": "----------",
+            "action_instrument": "----------",
+            "action_parameter": "----------",
+            "progress": 0,
+        }
