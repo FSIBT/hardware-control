@@ -44,7 +44,7 @@ class ADAM6015Ctrl(HC_Backend):
         if self.connection_type in [SOCKET, VISA]:
             try:
                 self.s.send(b"#01\r")
-                indata = self.s.recv(self.buf)
+                self.s.recv(self.buf)
                 self.online = True
             except Exception:  # Not connected - reconnect
                 logger.warning(
@@ -131,7 +131,7 @@ class ADAM6015Ctrl(HC_Backend):
                     return "CH" + str(n) + "_TEMP=" + data
                 else:
                     return "Unexpected Command"
-            except Exception as e:
+            except Exception:
                 logger.error(
                     self.ID + " online status : " + str(self.try_connect()),
                     exc_info=True,

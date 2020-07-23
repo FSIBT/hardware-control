@@ -295,7 +295,7 @@ class AnalogInputChannel(QGroupBox):
                 LABEL_MIN_WIDTH,
             )
 
-        except Exception as e:
+        except Exception:
             self.measurement_label.setText(f"---- {self.units}")
 
 
@@ -451,7 +451,7 @@ class DigitalInputChannel(QGroupBox):
             else:
                 self.measurement_label.setPixmap(self.low_indicator)
 
-        except Exception as e:
+        except Exception:
             logger.debug("Failed to read digital input from IOModule")
             self.measurement_label.setPixmap(self.error_indicator)
             # self.measurement_label.setText(f"---- {self.units}")

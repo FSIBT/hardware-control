@@ -18,9 +18,8 @@ class AlicatMSeriesCtrl(HC_Backend):
         self.ID = "AlicatMSeries"
 
         self.connection_addr = ip_addr
-        self.connection_type = (
-            MODBUS  # TODO: Add modbus as option to 'self.parse_connection_addr()'
-        )
+        # TODO: Add modbus as option to 'self.parse_connection_addr()'
+        self.connection_type = MODBUS
         self.dummy = False
 
         self.error_count = 0
@@ -52,7 +51,7 @@ class AlicatMSeriesCtrl(HC_Backend):
 
                 self.error_count = 0
                 return value
-        except Exception as e:
+        except Exception:
             logger.error(
                 "An error occured in Alicat flowmeter when sending command {setting}={value} to the instrument.",
                 exc_info=True,
@@ -97,7 +96,7 @@ class AlicatMSeriesCtrl(HC_Backend):
             if cmd == "rate?":
                 flow = random.randint(0, 10)
                 return f"rate={flow}"
-            elif cmd == "pressure?":
+            if cmd == "pressure?":
                 pressure = random.randint(0, 10)
                 return f"pressure={pressure}"
 
@@ -110,13 +109,13 @@ class AlicatMSeriesCtrl(HC_Backend):
                 flow = (a << 16) + b
                 flow = converter_ulong_to_IEEE754(flow)
                 return f"rate={flow}"
-            elif cmd == "pressure?":
+            if cmd == "pressure?":
                 r = self.device.read_input_registers(count=2, address=1202, unit=0)
                 a, b = r.registers
                 pressure = (a << 16) + b
                 pressure = converter_ulong_to_IEEE754(pressure)
                 return f"pressure={pressure}"
-        except Exception as e:
+        except Exception:
             logger.error(
                 f"An error occured in {self.ID} when sending command {cmd} to the instrument.",
                 exc_info=True,

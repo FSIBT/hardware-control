@@ -51,9 +51,6 @@ from hardware_control.widgets import (
     HC_StatusTool,
     HC_Qtconsole,
 )
-from hardware_control.PowerSupply.NI_DaX_PowerSupplyController import (
-    NI_DaX_PowerSupplyController,
-)
 from hardware_control.IOModule.HC_IOModule import HC_IOModule, read_channel_file
 from hardware_control.IOModule.NI9000Ctrl import NI9000Ctrl
 from hardware_control.PowerSupply.CAEN14xxETCtrl import CAEN14xxETCtrl
@@ -433,7 +430,6 @@ class STS50Demo(HC_MainWindow):
         # self.logtool.update_instruments()
 
         self.statustool = HC_StatusTool(self, "Connection Status")
-        self.statustool.update_instruments()
 
         app.add_variable("FIL_AMPL_V", "5.0")  # Add a filament amplitude variable
         app.add_variable("DELAY_TIME_S", "7.5")  # Add a delay time variable

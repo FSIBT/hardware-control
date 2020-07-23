@@ -1,6 +1,6 @@
 import random
 
-from hardware_control.base.HC_Backend import HC_Backend, VISA
+from hardware_control.base.HC_Backend import HC_Backend, VISA, SOCKET
 from hardware_control.utility import regex_compare, str_to_bool
 
 
@@ -73,7 +73,7 @@ class TDKLGenHCtrl(HC_Backend):
                     self.write(f":SOUR:VOLT:LEV:IMM:AMPL {value}")
                     rval = self.query(":SOUR:VOLT:LEV:IMM:AMPL?")
                     return rval
-        except Exception as e:
+        except Exception:
             logger.error(
                 f"An error occured in {self.ID} when sending SCPI commands to the instrument.",
                 exc_info=True,
@@ -108,7 +108,7 @@ class TDKLGenHCtrl(HC_Backend):
                     chstr = cmd[0:3]
                     rval = self.query(":SOUR:VOLT:LEV:IMM:AMPL?")
                     return f"{cmd}={rval}"
-        except Exception as e:
+        except Exception:
             logger.error(
                 "An error occured in CAEN14xxETCtrl.py when sending SCPI commands to the instrument.",
                 exc_info=True,

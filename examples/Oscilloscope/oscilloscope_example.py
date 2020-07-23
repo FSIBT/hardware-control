@@ -14,115 +14,45 @@ Options:
 """
 
 import logging
+import sys
 
-import sys, warnings
-import time
-from PyQt5.QtWidgets import QDoubleSpinBox, QStyleFactory, QTabWidget, QGroupBox
 from docopt import docopt
+
+from PyQt5.QtWidgets import QGridLayout, QWidget
+from hardware_control.base import HC_App, HC_MainWindow
+from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
+from hardware_control.Oscilloscope.Key4000XCtrl import Key4000XCtrl
+
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
 info = commands["--info"]
 if commands["--socket"]:
-    connection_type = "socket"
+    scope_address = "192.168.0.14:5025"
 else:
-    connection_type = "visa"
+    scope_address = "TCPIP0::192.168.0.14::INSTR"
 debug = commands["--debug"]
 print_console = commands["--console"]
 
 logfile_name = "hardware_control.log"
 
 if debug:
-    if print_console:
-        logging.basicConfig(level=logging.DEBUG)
-        print("Logger configured:\n\tLevel: Debug\n\tOutput: Console")
-    else:
-        logging.basicConfig(filename=logfile_name, level=logging.DEBUG)
-        print(f"Logger configured:\n\tLevel: Debug\n\tOutput: {logfile_name}")
+    log_level = logging.DEBUG
 elif info:
-    if print_console:
-        logging.basicConfig(level=logging.INFO)
-        print("Logger configured:\n\tLevel: Info\n\tOutput: Console")
-    else:
-        logging.basicConfig(filename=logfile_name, level=logging.INFO)
-        print(f"Logger configured:\n\tLevel: Info\n\tOutput: {logfile_name}")
+    log_level = logging.INFO
 else:
-    if print_console:
-        logging.basicConfig(level=logging.WARNING)
-        print("Logger configured:\n\tLevel: Warning\n\tOutput: Console")
-    else:
-        logging.basicConfig(filename=logfile_name, level=logging.WARNING)
-        print(f"Logger configured:\n\tLevel: Warning\n\tOutput: {logfile_name}")
+    log_level = logging.WARNING
 
-from hardware_control.base import HC_App, HC_MainWindow, Dataset
-from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
-from hardware_control.Oscilloscope.Key4000XCtrl import Key4000XCtrl
-from hardware_control.Oscilloscope.ZMQOscilloscopeCtrl import ZMQOscilloscopeCtrl
-from hardware_control.FlowController.HC_FlowController import HC_FlowController
-from hardware_control.FlowController.AlicatMSeriesCtrl import AlicatMSeriesCtrl
-from hardware_control.DelayGenerator.HC_DelayGenerator import HC_DelayGenerator
-from hardware_control.DelayGenerator.SRSDG535Ctrl import SRSDG535Ctrl
-
-# from hardware_control.widgets.scan import HC_ScanTool
-from hardware_control.FunctionGenerator.HC_FunctionGenerator import HC_FunctionGenerator
-from hardware_control.FunctionGenerator.Key33500BCtrl import Key33500BCtrl
-from hardware_control.PowerSupply.HC_MultiPowerSupply import *
-from hardware_control.PowerSupply.TDKLGenHCtrl import TDKLGenHCtrl
-from hardware_control.widgets import (
-    HC_StatusTool,
-    HC_ZMQConnectionTool,
-    HC_LoggerTool,
-    HC_MacroRunnerTool,
-    HC_VariableEditTool,
-)
-from hardware_control.IOModule.HC_Read import HC_Read, HC_singleChannelRead
-from hardware_control.IOModule.ADAM_6015 import Adam_6015
-from hardware_control.PowerSupply.NI_DaX_PowerSupplyController import (
-    NI_DaX_PowerSupplyController,
-)
+if print_console:
+    logging.basicConfig(level=log_level)
+    print("Logger configured:\n\tLevel: Debug\n\tOutput: Console")
+else:
+    logging.basicConfig(filename=logfile_name, level=log_level)
+    print(f"Logger configured:\n\tLevel: Debug\n\tOutput: {logfile_name}")
 
 
 logger = logging.getLogger(__name__)
-
-# handler = logging.FileHandler('sts50_example.log')
-# handler.setLevel(logging.DEBUG)
-
-# formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-# handler.setFormatter(formatter)
-
-# logger.addHandler(handler)
-
-logger.info("STS50 Example Starting")
-
-# #!/usr/bin/env python3
-# # -*- coding: utf-8 -*-
-# """oscilloscope_example to control the hardware_control test stand
-#
-# Usage:
-#   oscilloscope_example [--dummy]
-#   oscilloscope_example [--socket]
-#
-# Options:
-#   --dummy    use dummy connection for instruments that return semi-random data
-#              so that one run the program away from the test stand
-#   --socket   use sockets instead of visa
-# """
-#
-# import sys
-#
-# from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QGridLayout
-# from docopt import docopt
-#
-# commands = docopt(__doc__)
-# dummy = commands["--dummy"]
-# if commands["--socket"]:
-#     connection_type = "socket"
-# else:
-#     connection_type = "visa"
-#
-# from hardware_control.base import HC_App, HC_MainWindow, Dataset
-# from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
-# from hardware_control.Oscilloscope.Key4000XCtrl import Key4000XCtrl
+logger.info("Scope Example Starting")
 
 
 class ScopeDemo(HC_MainWindow):
@@ -134,7 +64,7 @@ class ScopeDemo(HC_MainWindow):
 
         self.main_widget = QWidget(self)
 
-        scpi_scope = Key4000XCtrl("TCPIP0::192.168.0.14::INSTR", connection_type,)
+        scpi_scope = Key4000XCtrl(scope_address)
         self.scope_ctrl = HC_Oscilloscope(scpi_scope, self, "Keysight")
 
         self.grid = QGridLayout()
@@ -148,11 +78,11 @@ class ScopeDemo(HC_MainWindow):
         self.scope_ctrl.close()
 
 
-def main(argv):
+def main():
     app = HC_App(dummy=dummy)
     ex = ScopeDemo(app)
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())
 
 
-main(sys.argv[1:])
+main()

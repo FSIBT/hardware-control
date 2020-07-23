@@ -41,11 +41,3 @@ hardware_control.PowerSupply.TDKLGenHCtrl module
    :members:
    :undoc-members:
    :show-inheritance:
-
-hardware_control.PowerSupply.NI_DaX_PowerSupplyController module
-----------------------------------------------------------------
-
-.. automodule:: hardware_control.PowerSupply.NI_DaX_PowerSupplyController
-   :members:
-   :undoc-members:
-   :show-inheritance:

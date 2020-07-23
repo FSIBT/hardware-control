@@ -102,7 +102,7 @@ class SigSDGCtrl(HC_Backend):
                     rval = self.query(f"C{chan}:OUTP?")
                     return rval[:-1]
 
-        except Exception as e:
+        except Exception:
             logger.error(
                 "An error occured in SigSDGCtrl.py when sending SCPI commands to the instrument.",
                 exc_info=True,

@@ -1,24 +1,23 @@
 """
-This is a special device regarding how it handels the communication
-therefore additional commentary is written.
-Of this kind multiple Backends can be spawned for the same module
+Control class to handle NI Daq modules for analog voltage input and outputs.
 
-This specific device is an analog input module with 32 channels
+Has been tested with models NI 9264 and NI 9205
+connection works over proprietary driver, with "tasks"
+https://nidaqmx-python.readthedocs.io/en/latest/index.html for further info
+and check the Gdocs manual!
 
-There were some problems with the import of nidaqmx an try_connect,
-therefore it is written with reliability in mind. But it is only
-partially tested. Some statements might be unnecessary.
-NI-DaQ's will not work on Unix based OS.
+NI-DaQ's will curently not work on Unix based OS.
+
 """
 
+import logging
+import os
 import random
 import time
+
 from colorama import Fore, Style
-import os
 
 # import nidaqmx happens in a method below, which reports the status
-
-from colorama import Fore, Style
 
 if os.name == "nt":
     import nidaqmx
@@ -26,12 +25,9 @@ if os.name == "nt":
 
 from hardware_control.base.HC_Backend import HC_Backend
 from hardware_control.utility import get_channel_from_command
-import logging
 from hardware_control.utility import ensure_float
 
 logger = logging.getLogger(__name__)
-
-"""This class behaves like it would read from a Powersupply"""
 
 
 class NI9000Ctrl(HC_Backend):
@@ -55,31 +51,10 @@ class NI9000Ctrl(HC_Backend):
 
         self.channel_data = None
 
-        # # Check if channels are in expected format
-        # if not (
-        #     regex_compare(".+/ao.+", self.setVoltageChannel)
-        #     and regex_compare(".+/ai.+", self.readCurrentChannel)
-        #     and regex_compare(".+/ai.+", self.readVoltageChannel)
-        # ):
-        #     raise Exception(self.ID + " : Unexpected Channel name")
-
-        # these are the conversion Factors for the Voltage settings / readouts
-        # self.convSetVoltage = 1
-        # self.convReadVoltage = 1
-        # self.convReadCurrent = 1
-        #
-        # self.lastVset = 0
-
         # Check import
         if not nidaxmxTest():
             self.dummy = True
             logger.error(f"{self.ID}: import of nidaqmx failed, changing to dummy mode")
-
-    ###About this device:
-    # Has been tested with models NI 9264 and NI 9205
-    # connection works over proprietary driver, with "tasks"
-    # https://nidaqmx-python.readthedocs.io/en/latest/index.html for further info
-    # and check the Gdocs manual!
 
     def check_connection(self):
         """
@@ -258,21 +233,23 @@ class NI9000Ctrl(HC_Backend):
                 with nidaqmx.Task() as task:
                     if not task.is_task_done():
                         time.sleep(0.500)
-                        if not ask.is_task_done():
+                        if not task.is_task_done():
                             return True
             except Exception as e:
                 logger.error(f"An error occured while trying to close.", exc_info=True)
         return False
 
 
-"""
-This method checks that the import goes smooth and
-reports that so that all functionality can ether be disabled or
-further checks can happen.
-"""
-
-
 def nidaxmxTest():
+    """This method checks that the import goes smooth and reports that so
+    that all functionality can ether be disabled or further checks can
+    happen.
+
+    """
+
+    # We check which OS is calling because nidaqmx only works on Windows. Importing
+    # nidaqmx on macOS or linux will cause pyvisa and sockets to break.
+
     if os.name == "nt":
         try:
             with nidaqmx.Task() as task:
@@ -286,8 +263,6 @@ def nidaxmxTest():
                 + Style.RESET_ALL
             )
             return False
-        # We check which OS is calling because nidaqmx only works on Windows. Importing
-        # nidaqmx on macOS or linux will cause pyvisa and sockets to break.
     else:
         print(
             Fore.RED

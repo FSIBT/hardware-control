@@ -1,6 +1,4 @@
-# >>> scope.write("MEAS:STAT:ITEM VRMS,CHAN2")
-# >>> scope.query("MEAS:ITEM? VRMS,CHAN2")
-from hardware_control.base.HC_Backend import HC_Backend, VISA
+from hardware_control.base.HC_Backend import HC_Backend
 from hardware_control.utility import returnChannelNumber
 from hardware_control.utility import (
     regex_compare,
@@ -188,7 +186,7 @@ class RigDS1000ZCtrl(HC_Backend):
                     self.write(f":MEAS:STAT:DISP {boolstr_NR1(value)}")
                     return self.query(":MEAS:STAT:DISP?")
 
-        except Exception as e:
+        except Exception:
             logger.error(
                 "An error occured in RigDS1000ZCtrl.py sending SCPI commands.",
                 exc_info=True,
