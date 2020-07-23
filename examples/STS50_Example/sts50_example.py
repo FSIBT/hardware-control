@@ -306,7 +306,7 @@ class STS50Demo(HC_MainWindow):
             "TCPIP0::192.168.0.14::INSTR",  # Enter socket address as ip:port, ex: 192.168.0.14:5025
         )
         self.scope_ctrl = HC_Oscilloscope(scpi_scope, self, "Keysight")
-        self.scope_ctrl.load_state("scope_state.json")
+        self.scope_ctrl.load_state("Key4000_init.json")
         self.scope_ctrl.settings_to_UI()
         self.scope_ctrl.set_online_callback(init_with_JSON)
 
@@ -376,18 +376,18 @@ class STS50Demo(HC_MainWindow):
         # Todo: linux-gpib is a dependency on some systems
         self.trig1 = SRSDG535Ctrl("GPIB0::10::INSTR")
         self.trig1_ctrl = HC_DelayGenerator(self.trig1, self, "Trigger 1")
-        self.trig1_ctrl.load_state("Trigger1_state.json")
+        self.trig1_ctrl.load_state("delaygen_filament_init.json")
         self.trig1_ctrl.settings_to_UI()
         self.trig1_ctrl.set_online_callback(init_with_JSON)
 
         self.trig2 = SRSDG535Ctrl("GPIB0::15::INSTR")
         self.trig2_ctrl = HC_DelayGenerator(self.trig2, self, "Trigger 2")
-        self.trig2_ctrl.load_state("Trigger2_state.json")
+        self.trig2_ctrl.load_state("delaygen_arc_init.json")
         self.trig2_ctrl.settings_to_UI()
         self.trig2_ctrl.set_online_callback(init_with_JSON)
 
         float_channel_data = read_channel_file(
-            "sts50_floatIO_config.json",
+            "nidaq_extraction_conf.json",
             {
                 "extraction_voltage_out": lambda v: v / 1000,
                 "extraction_voltage_in": lambda v: v * 1000,
@@ -395,7 +395,7 @@ class STS50Demo(HC_MainWindow):
             },
         )
         usb_channel_data = read_channel_file(
-            "sts50_usbIO_config.json",
+            "nidaq_grid_conf.json",
             {
                 "float_volt_out": lambda v: v / 3000,
                 "Grid_volt_out": lambda v: v / 3000,

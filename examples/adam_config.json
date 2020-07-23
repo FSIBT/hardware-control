@@ -1,6 +1,0 @@
-{"pres_in": {"DIR": "INPUT", "TYPE": "ANALOG", "ID_STR": "I1", "LABEL": "Pressure", "UNITS":"Torr", "HOOK":"hook_ai1"},
-"volt_out": {"DIR": "OUTPUT", "TYPE": "ANALOG", "ID_STR": "O0", "LABEL": "Voltage", "UNITS":"kV"},
-"curr_in": {"DIR": "INPUT", "TYPE": "ANALOG", "ID_STR": "I2", "LABEL": "Current", "UNITS":"A", "HOOK":"hook_ai2"},
-"SPACE_1":"NONE",
-"volt_in": {"DIR": "INPUT", "TYPE": "ANALOG", "ID_STR": "I3", "LABEL": "Voltage", "UNITS":"V", "HOOK":"hook_ai3"}}
-

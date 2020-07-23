@@ -86,6 +86,8 @@ logger.info("Roots Example Starting")
 
 def example_function(tool, hook_name):
 
+    return
+
     print(f"{tool.name} called hook {hook_name}")
 
     try:
@@ -217,7 +219,7 @@ class RootsDemo(HC_MainWindow):
         # )
 
         adam_config = read_channel_file(
-            "adam_config.json",
+            "ADAM_init.json",
             {
                 "hook_ai1": lambda p: p * 100,
                 "hook_ai2": lambda i: i / 10 * 3e-3 + 8.1e-6,

@@ -47,7 +47,7 @@ log = commands["--log"]
 
 
 class STS50Demo(QMainWindow):
-    def __init__(self, app, connection_type: str):
+    def __init__(self, app):
         super().__init__()
         self.app = app
 
@@ -68,14 +68,9 @@ class STS50Demo(QMainWindow):
         ######## Tab 1
 
         scpi_scope = Key4000XCtrl(
-            "TCPIP0::192.168.1.14::INSTR",
-            dummy,
-            True,
-            connection_type,
-            "192.168.1.14",
-            5025,
+            "TCPIP0::192.168.0.14::INSTR",  # Enter socket address as ip:port, ex: 192.168.0.14:5025
         )
-        self.scope_ctrl = HC_Oscilloscope(scpi_scope, self, "Keysight", "DEFAULT", True)
+        self.scope_ctrl = HC_Oscilloscope(scpi_scope, self, "Keysight")
 
         # Put instrument(s) in tab
         self.tab1_layout = QGridLayout()
@@ -88,17 +83,10 @@ class STS50Demo(QMainWindow):
         # awg = Key33500BCtrl("Some-address-goes-here", dummy, True, connection_type, "192.168.0.18", 5025)
         awg = Key33500BCtrl(
             "TCPIP0::192.168.1.18::INSTR",
-            dummy,
-            True,
-            connection_type,
-            "192.168.1.18",
-            5025,
         )  # "USB0::0x0957::0x2907::MY52500624::INSTR"
-        self.awg_ctrl = HC_FunctionGenerator(
-            awg, self, "RF Generator", "DEFAULT", True, 1
-        )
+        self.awg_ctrl = HC_FunctionGenerator(awg, self, "RF Generator")
 
-        self.psu = TDKLGenHCtrl("TCPIP0::192.168.1.19::INSTR", dummy)
+        self.psu = TDKLGenHCtrl("TCPIP0::192.168.1.19::INSTR")
         awg.psu = debug
         self.psu_ctrl = HC_MultiPowerSupply(
             self.psu, self, [1], "TDK Lambda (RF Vin)", "DEFAULT"
@@ -113,16 +101,16 @@ class STS50Demo(QMainWindow):
         #####################################################################
         ######## Tab 3
 
-        self.flow = AlicatMSeriesCtrl("192.168.1.15", dummy, True)
+        self.flow = AlicatMSeriesCtrl("192.168.1.15")
         self.flow_ctrl = HC_FlowController(
-            self.flow, self, "Flow Controller", "flowcontroller_state.json", True
+            self.flow, self, "Flow Controller", "flowcontroller_state.json"
         )
 
         # Todo: linux-gpib is a dependency on some systems
-        self.trig1 = SRSDG535Ctrl("GPIB0::10::INSTR", dummy, True)
+        self.trig1 = SRSDG535Ctrl("GPIB0::10::INSTR")
         self.trig1_ctrl = HC_DelayGenerator(self.trig1, self, "Trigger 1", "DEFAULT")
 
-        self.trig2 = SRSDG535Ctrl("GPIB0::15::INSTR", dummy, True)
+        self.trig2 = SRSDG535Ctrl("GPIB0::15::INSTR")
         self.trig2_ctrl = HC_DelayGenerator(self.trig2, self, "Trigger 2", "DEFAULT")
         try:
             self.zmqtool = HC_ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
@@ -130,10 +118,10 @@ class STS50Demo(QMainWindow):
             print("ZMQConnection failed! ")
             print(e)
 
-        self.scantool = HC_ScanTool(self, "Scan Control", "DEFAULT", True)
+        self.scantool = HC_ScanTool(self, "Scan Control", True)
         self.scantool.update_instruments()
 
-        self.statustool = HC_StatusTool(self, "Connection Status", "DEFAULT", True)
+        self.statustool = HC_StatusTool(self, "Connection Status")
         self.statustool.update_instruments()
 
         app.add_variable("FIL_AMPL_V", "5.0")  # Add a filament amplitude variable
@@ -151,23 +139,9 @@ class STS50Demo(QMainWindow):
         app.add_macro("Wait_1s", ["FUNC:time:sleep:1"])
 
         self.run_tool = HC_MacroRunnerTool(
-            window=self,
-            name="Macro Runner",
-            buttons={"Dynamic": "Run Macro", "Trigger": "Trigger Beam"},
-            indicators={},
+            self, "Macro Runner", ["Dynamic", "Trigger"], ["Run Macro", "Trigger Beam"],
         )
         self.run_tool.update_macros()
-
-        self.var_tool = HC_VariableEditTool(
-            self,
-            "Application Variable Editor",
-            {
-                "Dynamic": "Value:",
-                "FIL_AMPL_V": "Filament Amplitude:",
-                "DELAY_TIME_S": "Filament Heating Time:",
-            },
-        )
-        self.var_tool.update_variables()
 
         self.scantool.update_macros()
 
@@ -179,7 +153,6 @@ class STS50Demo(QMainWindow):
         self.tab3_layout.addWidget(self.zmqtool, 3, 0)
         self.tab3_layout.addWidget(self.scantool, 0, 1)
         self.tab3_layout.addWidget(self.run_tool, 1, 1)
-        self.tab3_layout.addWidget(self.var_tool, 2, 1)
         self.tab3_layout.addWidget(self.statustool, 3, 1)
         self.tab3.setLayout(self.tab3_layout)
 
@@ -220,7 +193,7 @@ class STS50Demo(QMainWindow):
 
 def main():
     app = HC_App(dummy=dummy)
-    ex = STS50Demo(app, connection_type)
+    ex = STS50Demo(app)
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())
 
