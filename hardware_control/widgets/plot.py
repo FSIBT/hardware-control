@@ -1,17 +1,8 @@
-from collections import defaultdict, deque
-import json
 import logging
-import pkg_resources
-import time
 
-from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
-from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import (
     QWidget,
-    QGroupBox,
-    QLabel,
-    QGridLayout,
     QSizePolicy,
     QHBoxLayout,
     QPushButton,
