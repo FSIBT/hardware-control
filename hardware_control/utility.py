@@ -90,12 +90,6 @@ def to_NR1(x: int):
     return f"{x:d}"
 
 
-def bool_NR1(x: bool):
-    if x:
-        return "1"
-    return "0"
-
-
 def str_NR1(x: str):
     x_int = int(x)
     return f"{x_int:d}"
