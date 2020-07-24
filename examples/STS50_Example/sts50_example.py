@@ -25,10 +25,15 @@ from PyQt5.QtWidgets import (
     QWidget,
     QSpacerItem,
     QSizePolicy,
+    QGroupBox,
+    QLabel,
+    QLineEdit,
 )
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QDoubleValidator
 from docopt import docopt
 
+from PyQt5 import QtCore
+from hardware_control.widgets.utility import load_icon
 from hardware_control.base import HC_App, HC_MainWindow, Dataset
 from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
 from hardware_control.Oscilloscope.Key4000XCtrl import Key4000XCtrl
@@ -271,6 +276,65 @@ def save_shot_format(dataset, filename: str):
     # if "Keysight:" dataset.data
 
 
+class CustomControlWidget(QGroupBox):
+    def __init__(self, window, filament_dg, arc_dg, name="Timing Control"):
+
+        super().__init__()
+
+        self.filament_dg = filament_dg
+        self.arc_dg = arc_dg
+
+        self.plasma_timing_label = QLabel()
+        self.plasma_timing_label.setPixmap(
+            load_icon("plasma_source_timing_settings_label.svg")
+        )
+        self.plasma_timing_label.setAlignment(
+            QtCore.Qt.AlignVCenter | QtCore.Qt.AlignHCenter
+        )
+
+        self.filament_label = QLabel("Filament duration (sec): ")
+
+        self.filament_edit = QLineEdit()
+        self.filament_edit.setValidator(QDoubleValidator())
+        # self.arc_edit.editingFinished.connect(
+        # lambda: self.delay_changed(self.time_edit.text())
+        # )
+        self.filament_edit.setText(filament_dg.settings["CH2_delay"])
+
+        self.filament_amp_label = QLabel("Filament amplitude (a.u.): ")
+
+        self.filament_amp_edit = QLineEdit()
+        self.filament_amp_edit.setValidator(QDoubleValidator())
+        self.filament_amp_edit.setText(
+            self.filament_dg.settings["CH12_output_amplitude"]
+        )
+
+        self.spark_delay_label = QLabel("Spark delay (sec): ")
+
+        self.spark_delay_edit = QLineEdit()
+        self.spark_delay_edit.setValidator(QDoubleValidator())
+        self.spark_delay_edit.setText(filament_dg.settings["CH3_delay"])
+
+        self.spark_duration_label = QLabel("Spark duration (sec): ")
+
+        self.spark_duration_edit = QLineEdit()
+        self.spark_duration_edit.setValidator(QDoubleValidator())
+        self.spark_duration_edit.setText(arc_dg.settings["CH4_delay"])
+
+        self.master_layout = QGridLayout()
+        self.master_layout.addWidget(self.plasma_timing_label, 0, 0, 1, 4)
+        self.master_layout.addWidget(self.filament_label, 1, 0)
+        self.master_layout.addWidget(self.filament_edit, 1, 1)
+        self.master_layout.addWidget(self.filament_amp_label, 1, 2)
+        self.master_layout.addWidget(self.filament_amp_edit, 1, 3)
+        self.master_layout.addWidget(self.spark_delay_label, 2, 0)
+        self.master_layout.addWidget(self.spark_delay_edit, 2, 1)
+        self.master_layout.addWidget(self.spark_duration_label, 2, 2)
+        self.master_layout.addWidget(self.spark_duration_edit, 2, 3)
+
+        self.setLayout(self.master_layout)
+
+
 class STS50Demo(HC_MainWindow):
     def __init__(self, app):
         super().__init__(app)
@@ -279,6 +343,7 @@ class STS50Demo(HC_MainWindow):
         self.setWindowTitle("STS-50 Control Panel")
 
         self.tabs = QTabWidget()
+        self.tab0 = QWidget()
         self.tab1 = QWidget()
         self.tab1_5 = QWidget()
         self.tab2 = QWidget()
@@ -288,6 +353,7 @@ class STS50Demo(HC_MainWindow):
         self.tab6 = QWidget()
         self.console_tab = HC_Qtconsole(main_app=app)
 
+        self.tabs.addTab(self.tab0, "Main")
         self.tabs.addTab(self.tab4, "Plasma Source")
         self.tabs.addTab(self.tab1, "Oscilloscope")
         self.tabs.addTab(self.tab1_5, "Picoscope")
@@ -535,11 +601,11 @@ class STS50Demo(HC_MainWindow):
         # Put instrument(s) in tab
         self.tab3_layout = QGridLayout()
         # self.tab3_layout.addWidget(self.flow_ctrl, 0, 0)
-        self.tab3_layout.addWidget(self.flow_ctrl, 0, 0)
+        # self.tab3_layout.addWidget(self.flow_ctrl, 0, 0)
         # self.tab3_layout.addWidget(self.trig2_ctrl, 2, 0)
         self.tab3_layout.addWidget(self.zmqtool, 1, 0)
-        self.tab3_layout.addWidget(self.iomod_float_wdgt, 2, 1)
-        self.tab3_layout.addWidget(self.iomod_usb_wdgt, 0, 1, 2, 1)
+        # self.tab3_layout.addWidget(self.iomod_float_wdgt, 2, 1)
+        # self.tab3_layout.addWidget(self.iomod_usb_wdgt, 0, 1, 2, 1)
         self.tab3_layout.addWidget(self.temp_ctrl, 2, 0)
         self.tab3_spacer = QSpacerItem(
             10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
@@ -580,7 +646,38 @@ class STS50Demo(HC_MainWindow):
         self.tab6.setLayout(self.tab6_layout)
 
         #####################################################################
+        ######## Tab 0
+
+        self.custom_wdgt = CustomControlWidget(
+            self, self.trig1_ctrl, self.trig2_ctrl, "Main Control"
+        )
+
+        self.grid_ps_label_spacer = QSpacerItem(
+            10, 25, QSizePolicy.Minimum, QSizePolicy.Fixed
+        )
+
+        self.grid_ps_label = QLabel()
+        self.grid_ps_label.setPixmap(load_icon("grid_power_supplies_label.svg"))
+        self.grid_ps_label.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
+
+        self.main_bottom_spacer = QSpacerItem(
+            10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
+        )
+
+        self.tab0_layout = QGridLayout()
+        self.tab0_layout.addWidget(self.custom_wdgt, 0, 0, 1, 2)
+        self.tab0_layout.addItem(self.grid_ps_label_spacer, 1, 0, 1, 2)
+        self.tab0_layout.addWidget(self.grid_ps_label, 2, 0, 1, 2)
+        self.tab0_layout.addWidget(self.iomod_float_wdgt, 3, 0)
+        self.tab0_layout.addWidget(self.iomod_usb_wdgt, 3, 1)
+        self.tab0_layout.addWidget(self.flow_ctrl, 5, 0)
+        self.tab0_layout.addItem(self.main_bottom_spacer, 10, 0, 1, 2)
+        self.tab0.setLayout(self.tab0_layout)
+
+        #####################################################################
         ######## Set master window layout
+
+        self.statustool.update_instruments()
 
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.tabs, 0, 0, 3, 1)
