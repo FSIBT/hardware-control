@@ -516,7 +516,7 @@ class HC_ScanTool(HC_Instrument):
         else:
 
             # Make sure variable exists
-            if not (p in self.app.variables):
+            if p not in self.app.variables:
                 logger.error("Failed to find app variable.")
                 print(self.app.variables)
                 return
@@ -552,7 +552,7 @@ class HC_ScanTool(HC_Instrument):
             if inst.ignore:
                 continue
             names.append(inst.name)
-        if self.include_variables and not ("App Variables" in names):
+        if self.include_variables and ("App Variables" not in names):
             names.append("App Variables")
         self.instrument_drop.addItems(names)
 
@@ -577,7 +577,7 @@ class HC_ScanTool(HC_Instrument):
 
         # Ensure all fields in default_state are present in the loaded state
         for key in dflt:
-            if not (key in self.settings):
+            if key not in self.settings:
                 self.settings[key] = dflt[key]
 
     def save_state(self, filename: str):

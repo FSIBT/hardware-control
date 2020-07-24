@@ -64,7 +64,7 @@ class ZMQOscilloscopeCtrl(HC_Backend):
                 return value
             else:
                 channel, setting_X = get_channel_from_command(setting)
-                if "CHX_volts_div" == setting_X:
+                if setting_X == "CHX_volts_div":
                     self.settings[f"Voltage range{channel}"] = float(value)
                     self.send_json_settings()
                     return f"{setting}:{value}"
@@ -84,11 +84,11 @@ class ZMQOscilloscopeCtrl(HC_Backend):
                     self.settings["Ref Position (%)"] = val
                     self.send_json_settings()
                     return f"{setting}:{value}"
-                elif "CHX_offset" == setting_X:
+                elif setting_X == "CHX_offset":
                     self.settings[f"Voltage offset{channel}"] = float(value)
                     self.send_json_settings()
                     return f"{setting}:{value}"
-                elif "CHX_BW_lim" == setting_X:
+                elif setting_X == "CHX_BW_lim":
                     if bool(value):
                         self.settings[f"bandwidth filter{channel}"] = "20MHz"
                         # Todo: @Giesbrecht Verify this is the correct code
@@ -96,25 +96,25 @@ class ZMQOscilloscopeCtrl(HC_Backend):
                         self.settings[f"bandwidth filter{channel}"] = "Full"
                     self.send_json_settings()
                     return f"{setting}:{value}"
-                elif "CHX_active" == setting_X:
+                elif setting_X == "CHX_active":
                     chan_str = get_chan_str()
                     self.settings[f"Ch enable{chan_str}"] = bool(value)
                     self.send_json_settings()
                     return f"{setting}:{value}"
-                elif "CHX_impedance" == setting_X:
+                elif setting_X == "CHX_impedance":
                     return "Warning: Setting 'impedance' not available"
-                elif "CHX_label" == setting_X:
+                elif setting_X == "CHX_label":
                     return "Warning: Setting 'label' not available"
                 elif setting == "labels_enabled":
                     return "Warning: Setting 'label' not available"
-                elif "CHX_invert" == setting_X:
+                elif setting_X == "CHX_invert":
                     return "Warning: Setting 'label' not available"
-                elif "CHX_probe_atten" == setting_X:
+                elif setting_X == "CHX_probe_atten":
                     self.settings[f"External Gain/Attenuator{channel}"] = f"x{value}"
                     # Todo: double check this is formatted correctly @Giesbrecht
                     self.send_json_settings()
                     return f"{setting}:{value}"
-                elif "CHX_coupling" == setting_X:
+                elif setting_X == "CHX_coupling":
                     # Make sure valid value provided
                     if value != "AC" and value != "DC":
                         value = "DC"

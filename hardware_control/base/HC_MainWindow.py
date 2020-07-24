@@ -54,7 +54,7 @@ class HC_MainWindow(QMainWindow):
 
         self.file_menu.addSeparator()
 
-        if platform == "linux" or platform == "linux2" or platform == "darwin":
+        if platform in ["linux", "linux2", "darwin"]:
             self.close_act = QAction("Close Window", self)
             self.close_act.setShortcut("Ctrl+W")
         elif platform == "win32":
@@ -266,8 +266,8 @@ class HC_MainWindow(QMainWindow):
         # Use input dialog to get save file type
         save_types = ["JSON", "Pickle", "NPY", "TXT"]
         if self.app is not None:
-            for format in self.app.additional_save_formats:
-                save_types.append(format)
+            for data_format in self.app.additional_save_formats:
+                save_types.append(data_format)
         file_type, okay = QInputDialog.getItem(
             self, "Select File Type", "File Type:", save_types, 0, False
         )

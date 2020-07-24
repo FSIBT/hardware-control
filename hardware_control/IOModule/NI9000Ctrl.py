@@ -76,7 +76,7 @@ class NI9000Ctrl(HC_Backend):
                         self.online = True
                     else:
                         self.online = False
-            except Exception as e:
+            except Exception:
                 self.online = False
                 logger.error("Connect failed.", exc_info=True)
         else:
@@ -91,12 +91,12 @@ class NI9000Ctrl(HC_Backend):
                 with nidaqmx.Task() as task:
                     if task.name:
                         self.online = True
-            except nidaqmx.errors.DaqError as e:
+            except nidaqmx.errors.DaqError:
                 self.online = False
                 logger.error(
                     "Connection failed due to DaqError. This could mean the NIDAQ must be reserved in NI-Max Application."
                 )
-            except Exception as e:
+            except Exception:
                 self.online = False
                 logger.error("Connect failed.", exc_info=True)
         else:
@@ -107,7 +107,7 @@ class NI9000Ctrl(HC_Backend):
 
         print(f"IC: {self.online}\t\t{str(self)}")
 
-        if self.channel_data == None:
+        if self.channel_data is None:
             print("RETURRNING NONE")
             return
 
