@@ -6,7 +6,6 @@ from hardware_control.base.HC_Backend import HC_Backend
 from hardware_control.utility import returnChannelNumber
 from hardware_control.utility import (
     regex_compare,
-    to_NR3,
     str_NR3,
     str_NR1,
     boolstr_NR1,
@@ -61,7 +60,7 @@ class RigDS1000ZCtrl(HC_Backend):
 
                 elif regex_compare("CH._offset", setting):
                     chan = setting[2]
-                    self.write(f"CHAN{chan}:OFFS {to_NR3(-1.0 * float(value))}")
+                    self.write(f"CHAN{chan}:OFFS {-float(value):.6E}")
                     return self.query(f"CHAN{chan}:OFFS?")
 
                 elif regex_compare("CH._BW_lim", setting):

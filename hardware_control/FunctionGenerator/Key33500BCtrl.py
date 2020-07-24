@@ -3,7 +3,6 @@ import logging
 from hardware_control.base.HC_Backend import HC_Backend, VISA, SOCKET
 from hardware_control.utility import (
     get_channel_from_command,
-    to_NR3,
     str_NR3,
     str_NR1,
     boolstr_NR1,
@@ -131,7 +130,7 @@ class Key33500BCtrl(HC_Backend):
             self.write(f":TIM:POS {str_NR3(value)}")
             return self.query(":TIM:POS?")
         if setting_X == "CHX_offset":
-            self.write(f"CHAN{channel}:OFFS {to_NR3(-1.0 * float(value))}")
+            self.write(f"CHAN{channel}:OFFS {-float(value):.6E}")
             return self.query(f"CHAN{channel}:OFFS?")
         if setting_X == "CHX_BW_lim":
             self.write(f"CHAN{channel}:BWL {boolstr_NR1(value)}")
