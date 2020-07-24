@@ -7,7 +7,6 @@ from hardware_control.utility import (
     get_channel_from_command,
     str_NR3,
     str_NR1,
-    boolstr_NR1,
 )
 
 
@@ -47,7 +46,7 @@ class Key4000XCtrl(HC_Backend):
             self.write(f":TIM:POS {str_NR3(value)}")
             return self.query(":TIM:POS?")
         if setting == "labels_enabled":
-            self.write(f"DISP:LAB {boolstr_NR1(value)}")
+            self.write(f"DISP:LAB {int(value=='True')}")
             return self.query("DISP:LAB?")
         if setting == "trigger_level":
             self.write(f"TRIG:EDGE:LEV {str_NR3(value)}")
@@ -77,10 +76,10 @@ class Key4000XCtrl(HC_Backend):
             self.write(f"CHAN{channel}:OFFS {-float(value):.6E}")
             return self.query(f"CHAN{channel}:OFFS?")
         if setting_X == "CHX_BW_lim":
-            self.write(f"CHAN{channel}:BWL {boolstr_NR1(value)}")
+            self.write(f"CHAN{channel}:BWL {int(value=='True')}")
             return self.query(f"CHAN{channel}:BWL?")
         if setting_X == "CHX_active":
-            self.write(f"CHAN{channel}:DISP {boolstr_NR1(value)}")
+            self.write(f"CHAN{channel}:DISP {int(value=='True')}")
             return self.query(f"CHAN{channel}:DISP?")
         if setting_X == "CHX_impedance":
             if value == "50":
@@ -95,7 +94,7 @@ class Key4000XCtrl(HC_Backend):
             self.write(f"CHAN{channel}:LAB {value}")
             return self.query(f"CHAN{channel}:LAB?")
         if setting_X == "CHX_invert":
-            self.write(f"CHAN{channel}:INV {boolstr_NR1(value)}")
+            self.write(f"CHAN{channel}:INV {int(value=='True')}")
             return self.query(f"CHAN{channel}:INV?")
         if setting_X == "CHX_probe_atten":
             self.write(f"CHAN{channel}:PROB {str_NR3(value)}")

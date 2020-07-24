@@ -8,7 +8,6 @@ from hardware_control.utility import (
     regex_compare,
     str_NR3,
     str_NR1,
-    boolstr_NR1,
 )
 
 logger = logging.getLogger(__name__)
@@ -73,7 +72,7 @@ class RigDS1000ZCtrl(HC_Backend):
 
                 elif regex_compare("CH._active", setting):
                     chan = setting[2]
-                    self.write(f"CHAN{chan}:DISP {boolstr_NR1(value)}")
+                    self.write(f"CHAN{chan}:DISP {int(value=='True')}")
                     return self.query(f"CHAN{chan}:DISP?")
 
                 elif regex_compare("CH._impedance", setting):
@@ -92,12 +91,12 @@ class RigDS1000ZCtrl(HC_Backend):
                     return self.query(f"CHAN{chan}:LAB?")
 
                 elif setting == "labels_enabled":  # TODO
-                    self.write(f"DISP:LAB {boolstr_NR1(value)}")
+                    self.write(f"DISP:LAB {int(value=='True')}")
                     return self.query("DISP:LAB?")
 
                 elif regex_compare("CH._invert", setting):
                     chan = setting[2]
-                    self.write(f"CHAN{chan}:INV {boolstr_NR1(value)}")
+                    self.write(f"CHAN{chan}:INV {int(value=='True')}")
                     return self.query(f"CHAN{chan}:INV?")
 
                 elif regex_compare("CH._probe_atten", setting):
@@ -179,12 +178,12 @@ class RigDS1000ZCtrl(HC_Backend):
                             self.write(f":MEAS:STAT:ITEM {meas}")
                 elif regex_compare("use_meas_avg", setting):
 
-                    self.use_avg = boolstr_NR1(value)
+                    self.use_avg = value == "True"
                     return f"Use avg.: {value}"
 
                 elif setting == "meas_stat_enabled":
 
-                    self.write(f":MEAS:STAT:DISP {boolstr_NR1(value)}")
+                    self.write(f":MEAS:STAT:DISP {int(value=='True')}")
                     return self.query(":MEAS:STAT:DISP?")
 
         except Exception:

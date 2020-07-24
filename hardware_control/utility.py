@@ -101,12 +101,6 @@ def str_NR1(x: str):
     return f"{x_int:d}"
 
 
-def boolstr_NR1(x: str):
-    if x == "True":
-        return "1"
-    return "0"
-
-
 def ensure_float(x):
     try:
         return float(x)
