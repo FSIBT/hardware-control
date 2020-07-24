@@ -2,7 +2,7 @@ import logging
 
 import numpy as np
 
-from hardware_control.base.HC_Backend import HC_Backend
+from hardware_control.base.HC_Backend import HC_Backend, VISA, SOCKET
 from hardware_control.utility import (
     get_channel_from_command,
     to_NR3,

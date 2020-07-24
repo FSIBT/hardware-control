@@ -1,6 +1,6 @@
 import logging
 
-from hardware_control.base.HC_Backend import HC_Backend
+from hardware_control.base.HC_Backend import HC_Backend, VISA, SOCKET
 from hardware_control.utility import (
     get_channel_from_command,
     to_NR3,
@@ -58,20 +58,17 @@ class Key33500BCtrl(HC_Backend):
         type.
         """
         if self.connection_type in [SOCKET, VISA]:
-
             try:
                 self.device.query("*IDN?")
                 self.online = True
-            except Exception:  # Not connected - reconnect
+            except Exception:
                 logger.warning(
                     "Device connection check failed. Setting online to false.",
                     exc_info=True,
                 )
                 self.online = False
             return self.online
-        else:
-
-            return None
+        return None
 
     def update_setting(self, setting: str, value):
         """ Called by HC_Comm object. Updates a setting in the instrument.

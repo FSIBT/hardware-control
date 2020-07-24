@@ -41,13 +41,12 @@ class Pico6000Ctrl(HC_Backend):
         if self.dummy:
             if self.online:
                 return True
-            else:
-                logger.debug(
-                    f"{self.ID}: creating dummy connection"
-                    + f" to {self.connection_addr}"
-                )
-                self.online = True
-                return True
+
+            logger.debug(
+                f"{self.ID}: creating dummy connection to {self.connection_addr}"
+            )
+            self.online = True
+            return True
 
         if self.online:
             return True  # Todo: Add check_connection() here?

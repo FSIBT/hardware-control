@@ -196,8 +196,7 @@ class NI9000Ctrl(HC_Backend):
             return f"{cmd.strip('?')}={num}"
 
         try:
-            if "CHX_analog_read?" == setting_X:
-
+            if setting_X == "CHX_analog_read?":
                 with nidaqmx.Task() as task:
                     # if channel in self.term_config_modes:
                     # config_mode = self.term_config_modes[channel]
@@ -211,19 +210,14 @@ class NI9000Ctrl(HC_Backend):
                     #     print("Not using mode")
                     val = str(task.read())
                 return cmd[:-1] + "=" + str(val)
-            if "CHX_digital_read?" == setting_X:
-
+            if setting_X == "CHX_digital_read?":
                 with nidaqmx.Task() as task:
                     task.ai_channels.add_di_chan(channel)
                     val = str(task.read())
                 return cmd[:-1] + "=" + str(val)
-
-            if "INIT_CHANNELS" == cmd:
-
+            if cmd == "INIT_CHANNELS":
                 print("IC From COmmand")
-
                 self.init_channels()
-
         except:
             logger.error("Error occured in NI9000 command.", exc_info=True)
 
@@ -235,7 +229,7 @@ class NI9000Ctrl(HC_Backend):
                         time.sleep(0.500)
                         if not task.is_task_done():
                             return True
-            except Exception as e:
+            except Exception:
                 logger.error("An error occured while trying to close.", exc_info=True)
         return False
 

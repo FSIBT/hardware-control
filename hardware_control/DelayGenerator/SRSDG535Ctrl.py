@@ -152,7 +152,7 @@ class SRSDG535Ctrl(HC_Backend):
             self.write(w)
             return "True"
         except Exception:
-            self.error(
+            logging.error(
                 f"{self.ID} - An exception occurred in update_setting()", exc_info=True,
             )
             return "False"
@@ -161,7 +161,7 @@ class SRSDG535Ctrl(HC_Backend):
         if self.online:
             try:
                 if cmd == "single_trigger":
-                    """Tells DG535 to trigger"""
+                    # Tells DG535 to do a single trigger
                     self.write("SS")
                 else:
                     logger.warning(f"{self.ID} : unknown command")

@@ -1,5 +1,6 @@
 import logging
 
+from PyQt5.QtCore.Qt import AlignRight, AlignVCenter
 from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtWidgets import QLineEdit, QLabel, QFormLayout, QGridLayout, QComboBox
@@ -46,7 +47,7 @@ class HC_FlowController(HC_Instrument):
 
         # ******* DEFINE DROPDOWNS + READOUT
         self.gas_label = QLabel("Gas:")
-        self.gas_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.gas_label.setAlignment(AlignRight | AlignVCenter)
 
         self.gas_drop = QComboBox()
         self.gas_drop.addItems(["Argon", "Helium", "Hydrogen", "Air"])
@@ -56,30 +57,22 @@ class HC_FlowController(HC_Instrument):
         self.gas_drop.setCurrentText(self.settings["gas"])
 
         self.pressure_label_fix0 = QLabel("Pressure: ")
-        self.pressure_label_fix0.setAlignment(
-            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
-        )
+        self.pressure_label_fix0.setAlignment(AlignRight | AlignVCenter)
 
         self.pressure_label_readout = QLabel("--")
-        self.pressure_label_readout.setAlignment(
-            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
-        )
+        self.pressure_label_readout.setAlignment(AlignRight | AlignVCenter)
 
         self.pressure_label_fix1 = QLabel(" Torr?")
-        self.pressure_label_fix1.setAlignment(
-            QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
-        )
+        self.pressure_label_fix1.setAlignment(AlignLeft | AlignVCenter)
 
         self.flow_label_fix0 = QLabel("Flow: ")
-        self.flow_label_fix0.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.flow_label_fix0.setAlignment(AlignRight | AlignVCenter)
 
         self.flow_label_readout = QLabel("--")
-        self.flow_label_readout.setAlignment(
-            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
-        )
+        self.flow_label_readout.setAlignment(AlignRight | AlignVCenter)
 
         self.flow_label_fix1 = QLabel(" CFM?")
-        self.flow_label_fix1.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        self.flow_label_fix1.setAlignment(AlignLeft | AlignVCenter)
 
         # Add widgets to grid layout
         self.lower_grid.addWidget(self.gas_label, 0, 0, 1, 1)

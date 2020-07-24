@@ -8,7 +8,7 @@ import logging
 import random
 import socket
 
-from hardware_control.base.HC_Backend import HC_Backend
+from hardware_control.base.HC_Backend import HC_Backend, VISA, SOCKET
 from hardware_control.utility import regex_compare
 
 logger = logging.getLogger(__name__)
