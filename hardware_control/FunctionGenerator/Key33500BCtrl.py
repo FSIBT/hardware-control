@@ -6,7 +6,6 @@ from hardware_control.utility import (
     str_NR3,
     str_NR1,
     boolstr_NR1,
-    str_to_bool,
 )
 
 logger = logging.getLogger(__name__)
@@ -97,7 +96,7 @@ class Key33500BCtrl(HC_Backend):
         channel, setting_X = get_channel_from_command(setting)
 
         if setting_X == "CHX_enable":
-            if str_to_bool(value):
+            if value == "True":
                 self.write(":OUTP ON")
             else:
                 self.write(":OUTP OFF")

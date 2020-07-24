@@ -2,7 +2,7 @@ import logger
 import random
 
 from hardware_control.base.HC_Backend import HC_Backend, VISA, SOCKET
-from hardware_control.utility import regex_compare, str_to_bool
+from hardware_control.utility import regex_compare
 
 
 logger = logging.getLogger(__name__)
@@ -63,7 +63,7 @@ class TDKLGenHCtrl(HC_Backend):
                 # Note: We ignore channel number because there is only
                 # one channel on this model of PSU
                 if regex_compare("CH._enable", setting):
-                    if str_to_bool(value):
+                    if value == "True":
                         self.write(":OUTP:STAT ON")
                     else:
                         self.write(":OUTP:STAT OFF")

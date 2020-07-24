@@ -1,7 +1,7 @@
 import logging
 
 from hardware_control.base.HC_Backend import HC_Backend
-from hardware_control.utility import regex_compare, str_NR3, str_to_bool
+from hardware_control.utility import regex_compare, str_NR3
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,7 @@ class SigSDGCtrl(HC_Backend):
 
                     chan = setting[2]
 
-                    if str_to_bool(value):
+                    if value == "True":
                         self.write(f"C{chan}:OUTP ON")
                     else:
                         self.write(f"C{chan}:OUTP OFF")

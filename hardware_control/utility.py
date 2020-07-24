@@ -107,12 +107,6 @@ def boolstr_NR1(x: str):
     return "0"
 
 
-def str_to_bool(x: str):
-    if x == "True":
-        return True
-    return False
-
-
 def ensure_float(x):
     try:
         return float(x)
