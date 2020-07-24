@@ -15,7 +15,7 @@ from PyQt5.QtWidgets import (
 )
 
 from hardware_control.base import HC_Instrument
-from hardware_control.widget import load_icon
+from hardware_control.widgets import load_icon
 
 logger = logging.getLogger(__name__)
 
