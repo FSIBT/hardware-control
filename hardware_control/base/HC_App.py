@@ -1,5 +1,6 @@
 import json
 import logging
+from typing import Callable
 
 from PyQt5.QtWidgets import QApplication
 

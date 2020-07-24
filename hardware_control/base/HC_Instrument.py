@@ -304,7 +304,7 @@ class HC_Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
                 exc_info=True,
             )
 
-        if type(current_val) == str:
+        if isinstance(current_val, str):
             try:
                 self.settings[parameter] = value
             except:
@@ -313,7 +313,7 @@ class HC_Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
                     exc_info=True,
                 )
                 return False
-        elif type(current_val) == int or type(current_val) == float:
+        elif isinstance(current_val, (int, float)):
             try:
                 self.settings[parameter] = float(value)
             except:
@@ -494,7 +494,7 @@ class HC_Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
                 return 'HV-Voltage[V] HV-Current[A] Pressure[mTorr]' """
 
         # Make sure parameters is list or None
-        if type(parameters) != list and parameters is not None:
+        if parameters is not None and not isinstance(parameter, list):
             return None
 
         #
@@ -532,7 +532,7 @@ class HC_Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
             return [str(v) for v in self.values]
 
         # Otherwise make sure is list
-        if type(parameters) != list:
+        if not isinstance(parameters, list):
             logger.info(
                 f"get_value_keys() received bad 'parameters' argument. type must be list or None but was '{type(parameters)}'."
             )

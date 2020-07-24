@@ -95,7 +95,7 @@ class HC_IOModule(HC_Instrument):
             load_idx += 1
 
             c_dict = self.channel_data[c_name]
-            if type(c_dict) != dict:
+            if not isinstance(c_dict, dict):
                 continue
 
             c_dict = self.ensure_all_fields(c_dict)

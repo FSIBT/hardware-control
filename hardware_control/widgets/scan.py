@@ -649,7 +649,7 @@ class ScanWorker(QObject):
         self.socket.connect(self.socket_addr)
 
         # Make sure vals is a list
-        if type(vals) != list:
+        if not isinstance(vals, list):
             logger.error("Scan thread received single value instead of list")
             self.vals = [self.vals]
 

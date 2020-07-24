@@ -210,9 +210,9 @@ class HC_ZMQConnectionTool(HC_Instrument):
             logger.info("Processing command '{mess_str}'")
             rval = self.window.app.process_hc_command(mess_str)
 
-            if type(rval) == str:
+            if isinstance(rval, str):
                 message = rval
-            elif type(rval) == bool:
+            elif isinstance(rval, bool):
                 message = str(rval)
 
             self.socket.send(bytes(message, "utf-8"))  # Send reply
