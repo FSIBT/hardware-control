@@ -17,13 +17,13 @@ import sys
 from PyQt5.QtWidgets import QMainWindow, QWidget, QGridLayout, QStyleFactory
 from docopt import docopt
 
-from hardware_control.base import HC_App
+from hardware_control.base import HC_App, HC_MainWindow
 from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
 from hardware_control.Oscilloscope.Key4000XCtrl import Key4000XCtrl
 from hardware_control.FlowController.HC_FlowController import HC_FlowController
 from hardware_control.FlowController.AlicatMSeriesCtrl import AlicatMSeriesCtrl
-from hardware_control.PulseGenerator.HC_PulseGen import HC_PulseGen
-from hardware_control.PulseGenerator.SRSDG535Ctrl import SRSDG535Ctrl
+from hardware_control.DelayGenerator.HC_DelayGenerator import HC_DelayGenerator
+from hardware_control.DelayGenerator.SRSDG535Ctrl import SRSDG535Ctrl
 from hardware_control.FunctionGenerator.HC_FunctionGenerator import HC_FunctionGenerator
 from hardware_control.FunctionGenerator.Key33500BCtrl import Key33500BCtrl
 from hardware_control.PowerSupply.HC_MultiPowerSupply import HC_MultiPowerSupply
@@ -46,60 +46,42 @@ debug = commands["--debug"]
 log = commands["--log"]
 
 
-class STS50Demo(QMainWindow):
+class STS50Demo(HC_MainWindow):
     def __init__(self, app, connection_type: str):
-        super().__init__()
+        super().__init__(app)
         self.app = app
 
         self.setWindowTitle("Oscilloscope Demo")
 
         self.main_widget = QWidget(self)
 
-        scpi_scope = Key4000XCtrl(
-            "TCPIP0::192.168.0.14::INSTR",
-            dummy,
-            True,
-            connection_type,
-            "192.168.0.14",
-            5025,
-        )
-        self.scope_ctrl = HC_Oscilloscope(scpi_scope, self, "Keysight", "DEFAULT", True)
+        scpi_scope = Key4000XCtrl("TCPIP0::192.168.0.14::INSTR",)
+        self.scope_ctrl = HC_Oscilloscope(scpi_scope, self, "Keysight")
 
         # awg = Key33500BCtrl("Some-address-goes-here", dummy, True, connection_type, "192.168.0.18", 5025)
-        awg = Key33500BCtrl(
-            "USB0::0x0957::0x2907::MY52500624::INSTR",
-            dummy,
-            True,
-            connection_type,
-            "192.168.0.18",
-            5025,
-        )
-        self.awg_ctrl = HC_FunctionGenerator(
-            awg, self, "RF Generator", "DEFAULT", True, 1
-        )
+        awg = Key33500BCtrl("USB0::0x0957::0x2907::MY52500624::INSTR",)
+        self.awg_ctrl = HC_FunctionGenerator(awg, self, "RF Generator", 1)
 
-        self.psu = TDKLGenHCtrl("TCPIP0::192.168.1.19::INSTR", dummy)
-        self.psu_ctrl = HC_MultiPowerSupply(
-            self.psu, self, [1], "TDK Lambda (RF Vin)", "DEFAULT"
-        )
+        self.psu = TDKLGenHCtrl("TCPIP0::192.168.1.19::INSTR")
+        self.psu_ctrl = HC_MultiPowerSupply(self.psu, self, [1], "TDK Lambda (RF Vin)")
 
-        self.flow = AlicatMSeriesCtrl("192.168.0.15", True, True)
+        self.flow = AlicatMSeriesCtrl("192.168.0.15")
         self.flow_ctrl = HC_FlowController(
-            self.flow, self, "Flow Controller", "flowcontroller_state.json", True
+            self.flow, self, "Flow Controller", "flowcontroller_state.json"
         )
 
-        self.trig1 = SRSDG535Ctrl("GPIB0::10::INSTR", True, True)
-        self.trig1_ctrl = HC_PulseGen(self.trig1, self, "Trigger 1", "DEFAULT", True)
+        self.trig1 = SRSDG535Ctrl("GPIB0::10::INSTR")
+        self.trig1_ctrl = HC_DelayGenerator(self.trig1, self, "Trigger 1")
 
-        self.trig2 = SRSDG535Ctrl("GPIB0::15::INSTR", True, True)
-        self.trig2_ctr = HC_PulseGen(self.trig2, self, "Trigger 2", "DEFAULT", True)
+        self.trig2 = SRSDG535Ctrl("GPIB0::15::INSTR")
+        self.trig2_ctr = HC_DelayGenerator(self.trig2, self, "Trigger 2")
 
         self.zmqtool = HC_ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
 
-        self.scantool = HC_ScanTool(self, "Scan Control", "DEFAULT", True)
+        self.scantool = HC_ScanTool(self, "Scan Control")
         self.scantool.update_instruments()
 
-        self.statustool = HC_StatusTool(self, "Connection Status", "DEFAULT", True)
+        self.statustool = HC_StatusTool(self, "Connection Status")
         self.statustool.update_instruments()
 
         app.add_variable("FIL_AMPL_V", "5.0")  # Add a filament amplitude variable
@@ -116,23 +98,10 @@ class STS50Demo(QMainWindow):
         app.add_macro("Safe", ["CMD:PSU:ALL_OFF", "CMD:AWG:ALL_OFF"])
 
         self.run_tool = HC_MacroRunnerTool(
-            self,
-            "Macro Runner",
-            {"Dynamic": "Run Macro", "Trigger": "Trigger Beam"},
-            {},
+            self, "Macro Runner", ["Dynamic", "Trigger"], ["Run Macro", "Trigger Beam"]
         )
-        self.run_tool.update_macros()
 
-        self.var_tool = HC_VariableEditTool(
-            self,
-            "Application Variable Editor",
-            {
-                "Dynamic": "Value:",
-                "FIL_AMPL_V": "Filament Amplitude:",
-                "DELAY_TIME_S": "Filament Heating Time:",
-            },
-        )
-        self.var_tool.update_variables()
+        self.run_tool.update_macros()
 
         self.grid = QGridLayout()
         self.grid.addWidget(self.scope_ctrl, 0, 0, 3, 3)
@@ -145,7 +114,6 @@ class STS50Demo(QMainWindow):
         self.grid.addWidget(self.psu_ctrl, 3, 1, 1, 1)
         self.grid.addWidget(self.zmqtool, 3, 3, 1, 1)
         self.grid.addWidget(self.run_tool, 1, 4)
-        self.grid.addWidget(self.var_tool, 3, 4)
         self.main_widget.setLayout(self.grid)
 
         self.setCentralWidget(self.main_widget)
