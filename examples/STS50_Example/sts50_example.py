@@ -347,7 +347,7 @@ class STS50Demo(HC_MainWindow):
         self.tab1 = QWidget()
         self.tab1_5 = QWidget()
         self.tab2 = QWidget()
-        self.tab3 = QWidget()
+        # self.tab3 = QWidget()
         self.tab4 = QWidget()
         self.tab5 = QWidget()
         self.tab6 = QWidget()
@@ -358,7 +358,7 @@ class STS50Demo(HC_MainWindow):
         self.tabs.addTab(self.tab1, "Oscilloscope")
         self.tabs.addTab(self.tab1_5, "Picoscope")
         self.tabs.addTab(self.tab2, "Power Supplies")
-        self.tabs.addTab(self.tab3, "Aux 1")
+        # self.tabs.addTab(self.tab3, "Aux 1")
         self.tabs.addTab(self.tab5, "Plots")
         self.tabs.addTab(self.tab6, "Datasets")
         self.tabs.addTab(self.console_tab, "Console")
@@ -421,20 +421,6 @@ class STS50Demo(HC_MainWindow):
 
         #####################################################################
         ######## Tab 3
-
-        self.temp = ADAM6015Ctrl("192.168.1.25")
-        self.temp_ctrl = HC_Read(
-            self.temp,
-            self,
-            [0, 3, 5],
-            ["Chamber", "Source", "Cabinet"],
-            "TEMP",
-            "K",
-            "Temperature Instrument",
-        )
-        self.randomReadout = HC_singleChannelRead(
-            self.temp_ctrl, 0, "Random Readout", "TEMP", "Unit"
-        )
 
         self.flow = AlicatMSeriesCtrl("192.168.0.15")  # todo "192.168.1.15"
         self.flow_ctrl = HC_FlowController(self.flow, self, "Flow Controller")
@@ -576,6 +562,12 @@ class STS50Demo(HC_MainWindow):
         self.app.data_sets["High Voltage"].name_channel(
             "USB NI-DAC:CHcDAQ1Mod2/ai4_analog_read", "Pressure"
         )
+        self.app.data_sets["High Voltage"].name_channel(
+            "USB NI-DAC:CHcDAQ9188-1AEF742Mod6/ai7_analog_read", "V extract"
+        )
+        self.app.data_sets["High Voltage"].name_channel(
+            "USB NI-DAC:CHcDAQ9188-1AEF742Mod6/ai6_analog_read", "I extract"
+        )
 
         self.logtool.update_groups()
         self.logtool.set_group("High Voltage")
@@ -599,24 +591,24 @@ class STS50Demo(HC_MainWindow):
         # self.source_frame = QFrame(self.)
 
         # Put instrument(s) in tab
-        self.tab3_layout = QGridLayout()
-        # self.tab3_layout.addWidget(self.flow_ctrl, 0, 0)
-        # self.tab3_layout.addWidget(self.flow_ctrl, 0, 0)
-        # self.tab3_layout.addWidget(self.trig2_ctrl, 2, 0)
-        self.tab3_layout.addWidget(self.zmqtool, 1, 0)
-        # self.tab3_layout.addWidget(self.iomod_float_wdgt, 2, 1)
-        # self.tab3_layout.addWidget(self.iomod_usb_wdgt, 0, 1, 2, 1)
-        self.tab3_layout.addWidget(self.temp_ctrl, 2, 0)
-        self.tab3_spacer = QSpacerItem(
-            10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
-        )
-        self.tab3_layout.addItem(self.tab3_spacer, 3, 0, 1, 2)
-        # self.tab3_layout.addWidget(self.scantool, 0, 1)
-        # self.tab3_layout.addWidget(self.run_tool, 1, 1)
-        # self.tab3_layout.addWidget(self.var_tool, 2, 1)
-
-        # self.tab3_layout.addWidget(self.statustool, 3, 1)
-        self.tab3.setLayout(self.tab3_layout)
+        # self.tab3_layout = QGridLayout()
+        # # self.tab3_layout.addWidget(self.flow_ctrl, 0, 0)
+        # # self.tab3_layout.addWidget(self.flow_ctrl, 0, 0)
+        # # self.tab3_layout.addWidget(self.trig2_ctrl, 2, 0)
+        # # self.tab3_layout.addWidget(self.zmqtool, 1, 0)
+        # # self.tab3_layout.addWidget(self.iomod_float_wdgt, 2, 1)
+        # # self.tab3_layout.addWidget(self.iomod_usb_wdgt, 0, 1, 2, 1)
+        # # self.tab3_layout.addWidget(self.temp_ctrl, 2, 0)
+        # self.tab3_spacer = QSpacerItem(
+        #     10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
+        # )
+        # self.tab3_layout.addItem(self.tab3_spacer, 3, 0, 1, 2)
+        # # self.tab3_layout.addWidget(self.scantool, 0, 1)
+        # # self.tab3_layout.addWidget(self.run_tool, 1, 1)
+        # # self.tab3_layout.addWidget(self.var_tool, 2, 1)
+        #
+        # # self.tab3_layout.addWidget(self.statustool, 3, 1)
+        # self.tab3.setLayout(self.tab3_layout)
 
         # #####################################################################
         # ######## Custom Tab
@@ -652,13 +644,26 @@ class STS50Demo(HC_MainWindow):
             self, self.trig1_ctrl, self.trig2_ctrl, "Main Control"
         )
 
-        self.grid_ps_label_spacer = QSpacerItem(
-            10, 25, QSizePolicy.Minimum, QSizePolicy.Fixed
-        )
+        # self.grid_ps_label_spacer = QSpacerItem(
+        #     10, 25, QSizePolicy.Minimum, QSizePolicy.Fixed
+        # )
 
         self.grid_ps_label = QLabel()
         self.grid_ps_label.setPixmap(load_icon("grid_power_supplies_label.svg"))
         self.grid_ps_label.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
+
+        self.grid_plot_label = QLabel()
+        self.grid_plot_label.setPixmap(load_icon("grid_monitor_label.svg"))
+        self.grid_plot_label.setAlignment(
+            QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter
+        )
+
+        self.gas_flow_label = QLabel()
+        self.gas_flow_label.setPixmap(load_icon("gas_flow_label.svg"))
+        self.gas_flow_label.setAlignment(QtCore.Qt.AlignHCenter)
+
+        self.plot_wdgt_custom = HC_PlotTool(self, "Voltage Monitor")
+        self.plot_wdgt_custom.set_dataset("High Voltage")
 
         self.main_bottom_spacer = QSpacerItem(
             10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
@@ -666,12 +671,22 @@ class STS50Demo(HC_MainWindow):
 
         self.tab0_layout = QGridLayout()
         self.tab0_layout.addWidget(self.custom_wdgt, 0, 0, 1, 2)
-        self.tab0_layout.addItem(self.grid_ps_label_spacer, 1, 0, 1, 2)
-        self.tab0_layout.addWidget(self.grid_ps_label, 2, 0, 1, 2)
-        self.tab0_layout.addWidget(self.iomod_float_wdgt, 3, 0)
-        self.tab0_layout.addWidget(self.iomod_usb_wdgt, 3, 1)
-        self.tab0_layout.addWidget(self.flow_ctrl, 5, 0)
+        # self.tab0_layout.addItem(self.grid_ps_label_spacer, 1, 0)
+        self.tab0_layout.addWidget(self.grid_ps_label, 2, 0)
+
+        self.tab0_layout.addWidget(self.iomod_float_wdgt, 3, 0, 1, 1)
+        self.tab0_layout.addWidget(self.iomod_usb_wdgt, 4, 0, 2, 1)
+        self.tab0_layout.addWidget(self.gas_flow_label, 2, 1)
+        self.tab0_layout.addWidget(self.flow_ctrl, 3, 1)
+        self.tab0_layout.addWidget(self.grid_plot_label, 4, 1)
+        self.tab0_layout.addWidget(self.plot_wdgt_custom, 5, 1)
         self.tab0_layout.addItem(self.main_bottom_spacer, 10, 0, 1, 2)
+
+        # self.tab0_layout.addWidget(self.iomod_float_wdgt, 3, 0)
+        # self.tab0_layout.addWidget(self.iomod_usb_wdgt, 3, 1)
+        # self.tab0_layout.addWidget(self.flow_ctrl, 5, 0)
+        # self.tab0_layout.addWidget(self.plot_wdgt_custom, 5, 1)
+        # self.tab0_layout.addItem(self.main_bottom_spacer, 10, 0, 1, 2)
         self.tab0.setLayout(self.tab0_layout)
 
         #####################################################################
