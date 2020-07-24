@@ -51,10 +51,10 @@ class HC_DelayGenerator(HC_Instrument):
         self.trig_mode_drop.addItems(["Internal", "External", "Single", "Burst"])
         self.trig_mode_drop.currentIndexChanged.connect(
             lambda: self.update_setting(
-                f"trigger_mode", self.trig_mode_drop.currentText()
+                "trigger_mode", self.trig_mode_drop.currentText()
             )
         )
-        self.trig_mode_drop.setCurrentText(str(self.settings[f"trigger_mode"]))
+        self.trig_mode_drop.setCurrentText(str(self.settings["trigger_mode"]))
         #
         self.trig_edge_label = QLabel("Trigger Edge:")
         self.trig_edge_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
@@ -63,10 +63,10 @@ class HC_DelayGenerator(HC_Instrument):
         self.trig_edge_drop.addItems(["Positive", "Negative"])
         self.trig_edge_drop.currentIndexChanged.connect(
             lambda: self.update_setting(
-                f"trigger_edge", self.trig_edge_drop.currentText()
+                "trigger_edge", self.trig_edge_drop.currentText()
             )
         )
-        self.trig_edge_drop.setCurrentText(str(self.settings[f"trigger_edge"]))
+        self.trig_edge_drop.setCurrentText(str(self.settings["trigger_edge"]))
         #
         self.trig_z_label = QLabel("Ext. Trigger Zin:")
         self.trig_z_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
@@ -74,9 +74,9 @@ class HC_DelayGenerator(HC_Instrument):
         self.trig_z_drop = QComboBox()
         self.trig_z_drop.addItems(["50 Ohms", "Hi-Z"])
         self.trig_z_drop.currentIndexChanged.connect(
-            lambda: self.update_setting(f"ext_trig_Zin", self.trig_z_drop.currentText())
+            lambda: self.update_setting("ext_trig_Zin", self.trig_z_drop.currentText())
         )
-        self.trig_z_drop.setCurrentText(str(self.settings[f"ext_trig_Zin"]))
+        self.trig_z_drop.setCurrentText(str(self.settings["ext_trig_Zin"]))
         #
         self.trig_lev_label = QLabel("Ext Trig Level (V):")
         self.trig_lev_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
@@ -230,13 +230,13 @@ class HC_DelayGenerator(HC_Instrument):
             dflt[f"CH{c}_output_mode"] = "TTL"
             dflt[f"CH{c}_output_amplitude"] = "5"
         if self.channels == 4:
-            dflt[f"CH12_output_mode"] = "TTL"
-            dflt[f"CH12_output_amplitude"] = "5"
-            dflt[f"CH34_output_mode"] = "TTL"
-            dflt[f"CH34_output_amplitude"] = "5"
+            dflt["CH12_output_mode"] = "TTL"
+            dflt["CH12_output_amplitude"] = "5"
+            dflt["CH34_output_mode"] = "TTL"
+            dflt["CH34_output_amplitude"] = "5"
         if self.channels == 2:
-            dflt[f"CH12_output_mode"] = "TTL"
-            dflt[f"CH12_output_amplitude"] = "5"
+            dflt["CH12_output_mode"] = "TTL"
+            dflt["CH12_output_amplitude"] = "5"
         return dflt
 
     def init_values(self):
@@ -250,9 +250,9 @@ class HC_DelayGenerator(HC_Instrument):
 
     def settings_to_UI(self):
 
-        self.trig_mode_drop.setCurrentText(str(self.settings[f"trigger_mode"]))
-        self.trig_edge_drop.setCurrentText(str(self.settings[f"trigger_edge"]))
-        self.trig_z_drop.setCurrentText(str(self.settings[f"ext_trig_Zin"]))
+        self.trig_mode_drop.setCurrentText(str(self.settings["trigger_mode"]))
+        self.trig_edge_drop.setCurrentText(str(self.settings["trigger_edge"]))
+        self.trig_z_drop.setCurrentText(str(self.settings["ext_trig_Zin"]))
         self.trig_lev_edit.setValue(float(self.settings["trigger_level"]))
         self.pulse_edit.setValue(int(self.settings["pulses_per_burst"]))
         self.period_edit.setValue(int(self.settings["trigger_period"]))

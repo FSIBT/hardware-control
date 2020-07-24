@@ -126,7 +126,7 @@ class HC_PlotBase(QWidget):
                     linewidth=self.linewidth,
                 )
             except:
-                logger.debug(f"Failed to plot Y-data", exc_info=True)
+                logger.debug("Failed to plot Y-data", exc_info=True)
 
         if not self.autoscale:
             self.axes.set_xlim([xleft, xright])

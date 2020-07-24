@@ -92,7 +92,7 @@ class RigDS1000ZCtrl(HC_Backend):
 
                 elif setting == "labels_enabled":  # TODO
                     self.write(f"DISP:LAB {boolstr_NR1(value)}")
-                    return self.query(f"DISP:LAB?")
+                    return self.query("DISP:LAB?")
 
                 elif regex_compare("CH._invert", setting):
                     chan = setting[2]
@@ -118,7 +118,7 @@ class RigDS1000ZCtrl(HC_Backend):
 
                 elif setting == "trigger_level":
                     self.write(f"TRIG:EDGE:LEV {str_NR3(value)}")
-                    return self.query(f"TRIG:EDGE:LEV?")
+                    return self.query("TRIG:EDGE:LEV?")
 
                 elif setting == "trigger_coupling":
 
@@ -132,7 +132,7 @@ class RigDS1000ZCtrl(HC_Backend):
                         value = "DC"
 
                     self.write(f"TRIG:COUP {value}")
-                    return self.query(f"TRIG:COUP?")
+                    return self.query("TRIG:COUP?")
 
                 elif setting == "trigger_edge":
 
@@ -154,12 +154,12 @@ class RigDS1000ZCtrl(HC_Backend):
                         value = "RFALI"
 
                     self.write(f"TRIG:EDGE:SLOP {value}")
-                    return self.query(f"TRIG:EDGE:SLOP?")
+                    return self.query("TRIG:EDGE:SLOP?")
 
                 elif setting == "trigger_channel":
 
                     self.write(f"TRIG:EDG:SOUR CHAN{str_NR1(value)}")
-                    return self.query(f"TRIG:EDG:SOUR?")
+                    return self.query("TRIG:EDG:SOUR?")
                 elif regex_compare(
                     "meas_slot.", setting
                 ):  # Value must follow pattern 'meas_parameter','source_channel'
@@ -262,8 +262,8 @@ class RigDS1000ZCtrl(HC_Backend):
             logger.debug(f"Returning slot read w/ '{ret_str}'")
         elif cmd == "RESET_MEAS_STAT":
 
-            self.write(f":MEAS:STAT:DISP OFF")
-            self.write(f":MEAS:STAT:DISP ON")
+            self.write(":MEAS:STAT:DISP OFF")
+            self.write(":MEAS:STAT:DISP ON")
 
             ret_str = cmd
 

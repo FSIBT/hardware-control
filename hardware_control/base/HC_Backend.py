@@ -103,7 +103,7 @@ class HC_Backend(abc.ABC):
                 f"The connection type {self.connection_type}" + " is not supported"
             )
         if self.ID is None:
-            logger.error(f"Need to set the instrument ID")
+            logger.error("Need to set the instrument ID")
 
     @abc.abstractmethod
     def check_connection(self):

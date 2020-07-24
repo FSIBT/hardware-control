@@ -383,7 +383,7 @@ class HC_LoggerTool(HC_Instrument):
             else:
                 self.autolog_button.setEnabled(True)
         except:
-            logger.error(f"Exception occured while updating table", exc_info=True)
+            logger.error("Exception occured while updating table", exc_info=True)
 
         if self.prevent_overwrite_fields:
             return
@@ -455,7 +455,7 @@ class HC_LoggerTool(HC_Instrument):
             self.autolog_interval_edit.setText(str(group.async_log_interval))
 
         except Exception as e:
-            logger.error(f"Exception occured while updating table", exc_info=True)
+            logger.error("Exception occured while updating table", exc_info=True)
 
     def update_groups(self):
         self.dispgroup_drop.clear()

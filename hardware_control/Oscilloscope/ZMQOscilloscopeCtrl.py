@@ -68,7 +68,7 @@ class ZMQOscilloscopeCtrl(HC_Backend):
                     self.send_json_settings()
                     return f"{setting}:{value}"
                 elif setting == "timebase":
-                    self.settings[f"Timebase"] = float(value)
+                    self.settings["Timebase"] = float(value)
                     self.send_json_settings()
                     return f"{setting}:{value}"
                 elif setting == "time_offset":
@@ -80,7 +80,7 @@ class ZMQOscilloscopeCtrl(HC_Backend):
                             f"{self.ID} - Failed to calculate valid time_offset value",
                             exc_info=True,
                         )
-                    self.settings[f"Ref Position (%)"] = val
+                    self.settings["Ref Position (%)"] = val
                     self.send_json_settings()
                     return f"{setting}:{value}"
                 elif "CHX_offset" == setting_X:
@@ -101,13 +101,13 @@ class ZMQOscilloscopeCtrl(HC_Backend):
                     self.send_json_settings()
                     return f"{setting}:{value}"
                 elif "CHX_impedance" == setting_X:
-                    return f"Warning: Setting 'impedance' not available"
+                    return "Warning: Setting 'impedance' not available"
                 elif "CHX_label" == setting_X:
-                    return f"Warning: Setting 'label' not available"
+                    return "Warning: Setting 'label' not available"
                 elif setting == "labels_enabled":
-                    return f"Warning: Setting 'label' not available"
+                    return "Warning: Setting 'label' not available"
                 elif "CHX_invert" == setting_X:
-                    return f"Warning: Setting 'label' not available"
+                    return "Warning: Setting 'label' not available"
                 elif "CHX_probe_atten" == setting_X:
                     self.settings[f"External Gain/Attenuator{channel}"] = f"x{value}"
                     # Todo: double check this is formatted correctly @Giesbrecht

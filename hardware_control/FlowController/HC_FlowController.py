@@ -123,7 +123,7 @@ class HC_FlowController(HC_Instrument):
         self.comm.command("pressure?")
 
         # Update labels
-        self.pressure_label_readout.setText(self.read_values(f"pressure"))
+        self.pressure_label_readout.setText(self.read_values("pressure"))
         self.flow_label_readout.setText(self.read_values("rate"))
 
     def init_values(self):

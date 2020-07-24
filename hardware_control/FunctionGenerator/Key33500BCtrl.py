@@ -170,7 +170,7 @@ class Key33500BCtrl(HC_Backend):
             return self.query(f"CHAN{channel}:COUP?")
         if setting == "trigger_level":
             self.write(f"TRIG:EDGE:LEV {str_NR3(value)}")
-            return self.query(f"TRIG:EDGE:LEV?")
+            return self.query("TRIG:EDGE:LEV?")
         if setting == "trigger_coupling":
             # Make sure valid option given
             if value not in ["AC", "DC", "LFReject"]:

@@ -72,7 +72,7 @@ class ADAM6024Ctrl(HC_Backend):
                     f"opened socket connection to {self.ID} at {self.ip_addr}:{self.port_no}"
                 )
             except:
-                logger.debug(f"exception during try connect", exc_info=True)
+                logger.debug("exception during try connect", exc_info=True)
                 self.online = False
                 return self.online
 

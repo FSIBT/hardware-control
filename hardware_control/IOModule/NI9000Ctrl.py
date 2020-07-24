@@ -236,7 +236,7 @@ class NI9000Ctrl(HC_Backend):
                         if not task.is_task_done():
                             return True
             except Exception as e:
-                logger.error(f"An error occured while trying to close.", exc_info=True)
+                logger.error("An error occured while trying to close.", exc_info=True)
         return False
 
 
