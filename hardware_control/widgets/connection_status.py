@@ -96,6 +96,9 @@ class HC_StatusTool(QGroupBox):
             if row is None:
                 continue
 
+            if self.instrument_grid.itemAt(2 * row + 1) is None:
+                continue
+
             if instrument.online:
                 self.instrument_grid.itemAt(2 * row + 1).widget().setPixmap(
                     self.blue_indicator
