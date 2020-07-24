@@ -4,10 +4,7 @@ import numpy as np
 
 from hardware_control.base.HC_Backend import HC_Backend
 from hardware_control.utility import returnChannelNumber
-from hardware_control.utility import (
-    regex_compare,
-    str_NR1,
-)
+from hardware_control.utility import regex_compare
 
 logger = logging.getLogger(__name__)
 
@@ -157,7 +154,7 @@ class RigDS1000ZCtrl(HC_Backend):
 
                 elif setting == "trigger_channel":
 
-                    self.write(f"TRIG:EDG:SOUR CHAN{str_NR1(value)}")
+                    self.write(f"TRIG:EDG:SOUR CHAN{int(value)}")
                     return self.query("TRIG:EDG:SOUR?")
                 elif regex_compare(
                     "meas_slot.", setting

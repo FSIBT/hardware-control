@@ -77,19 +77,6 @@ def convertibleToFloat(input: str):
         return False
 
 
-# These functions are helpful for converting numbers to
-# specific number formats for strings
-
-
-def to_NR1(x: int):
-    return f"{x:d}"
-
-
-def str_NR1(x: str):
-    x_int = int(x)
-    return f"{x_int:d}"
-
-
 def ensure_float(x):
     try:
         return float(x)

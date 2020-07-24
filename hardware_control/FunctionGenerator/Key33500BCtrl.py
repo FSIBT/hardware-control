@@ -1,10 +1,7 @@
 import logging
 
 from hardware_control.base.HC_Backend import HC_Backend, VISA, SOCKET
-from hardware_control.utility import (
-    get_channel_from_command,
-    str_NR1,
-)
+from hardware_control.utility import get_channel_from_command
 
 logger = logging.getLogger(__name__)
 
@@ -178,7 +175,7 @@ class Key33500BCtrl(HC_Backend):
             self.write(f"TRIG:EDGE:SLOP {value}")
             return self.query("TRIG:EDGE:SLOP?")
         if setting == "trigger_channel":
-            self.write(f"TRIG:SOUR CHAN{str_NR1(value)}")
+            self.write(f"TRIG:SOUR CHAN{int(value)}")
             return self.query("TRIG:SOUR?")
 
     def command(self, cmd: str):
