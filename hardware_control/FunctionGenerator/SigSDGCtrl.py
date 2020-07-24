@@ -1,7 +1,7 @@
 import logging
 
 from hardware_control.base.HC_Backend import HC_Backend
-from hardware_control.utility import regex_compare, str_NR3
+from hardware_control.utility import regex_compare
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +72,7 @@ class SigSDGCtrl(HC_Backend):
 
                     chan = setting[2]
 
-                    self.write(f"C{chan}:BSWV FRQ,{str_NR3(value.upper())}")
+                    self.write(f"C{chan}:BSWV FRQ,{float(value):.6E}")
                     rval = self.query(f"C{chan}:BSWV?")
                     return rval[:-1]
 
@@ -80,7 +80,7 @@ class SigSDGCtrl(HC_Backend):
 
                     chan = setting[2]
 
-                    self.write(f"C{chan}:BSWV AMP,{str_NR3(value)}")
+                    self.write(f"C{chan}:BSWV AMP,{float(value):.6E}")
                     rval = self.query(f"C{chan}:BSWV?")
                     return rval[:-1]
 
@@ -88,7 +88,7 @@ class SigSDGCtrl(HC_Backend):
 
                     chan = setting[2]
 
-                    self.write(f"C{chan}:BSWV OFST,{str_NR3(value)}")
+                    self.write(f"C{chan}:BSWV OFST,{float(value):.6E}")
                     rval = self.query(f"C{chan}:BSWV?")
                     return rval[:-1]
 

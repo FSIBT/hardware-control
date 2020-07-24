@@ -81,11 +81,6 @@ def convertibleToFloat(input: str):
 # specific number formats for strings
 
 
-def str_NR3(x: str):
-    x_float = float(x)
-    return f" {x_float:.6E}"
-
-
 def to_NR1(x: int):
     return f"{x:d}"
 

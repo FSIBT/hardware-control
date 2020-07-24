@@ -6,7 +6,6 @@ from hardware_control.base.HC_Backend import HC_Backend
 from hardware_control.utility import returnChannelNumber
 from hardware_control.utility import (
     regex_compare,
-    str_NR3,
     str_NR1,
 )
 
@@ -46,15 +45,15 @@ class RigDS1000ZCtrl(HC_Backend):
             else:
                 if regex_compare("CH._volts_div", setting):
                     chan = setting[2]
-                    self.write(f":CHAN{chan}:SCAL {str_NR3(value)}")
+                    self.write(f":CHAN{chan}:SCAL {float(value):.6E}")
                     return self.query(f":CHAN{chan}:SCAL?")
 
                 elif setting == "timebase":
-                    self.write(f":TIM:MAIN:SCAL {str_NR3(value)}")
+                    self.write(f":TIM:MAIN:SCAL {float(value):.6E}")
                     return self.query(":TIM:MAIN:SCAL?")
 
                 elif setting == "time_offset":
-                    self.write(f":TIM:MAIN:OFFS {str_NR3(value)}")
+                    self.write(f":TIM:MAIN:OFFS {float(value):.6E}")
                     return self.query(":TIM:MAIN:OFFS?")
 
                 elif regex_compare("CH._offset", setting):
@@ -101,7 +100,7 @@ class RigDS1000ZCtrl(HC_Backend):
 
                 elif regex_compare("CH._probe_atten", setting):
                     chan = setting[2]
-                    self.write(f"CHAN{chan}:PROB {str_NR3(value)}")
+                    self.write(f"CHAN{chan}:PROB {float(value):.6E}")
                     return self.query(
                         f"CHAN{chan}:PROB?"
                     )  # ie. 10 gives x10 or 10:1 probe
@@ -117,7 +116,7 @@ class RigDS1000ZCtrl(HC_Backend):
                     return self.query(f"CHAN{chan}:COUP?")
 
                 elif setting == "trigger_level":
-                    self.write(f"TRIG:EDGE:LEV {str_NR3(value)}")
+                    self.write(f"TRIG:EDGE:LEV {float(value):.6E}")
                     return self.query("TRIG:EDGE:LEV?")
 
                 elif setting == "trigger_coupling":

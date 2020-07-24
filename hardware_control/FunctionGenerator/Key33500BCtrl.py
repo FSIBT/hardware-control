@@ -3,7 +3,6 @@ import logging
 from hardware_control.base.HC_Backend import HC_Backend, VISA, SOCKET
 from hardware_control.utility import (
     get_channel_from_command,
-    str_NR3,
     str_NR1,
 )
 
@@ -107,25 +106,25 @@ class Key33500BCtrl(HC_Backend):
             rval = self.query(":SOUR:FUNC?")
             return rval[:-1]  # Trim newline character
         if setting_X == "CHX_frequency":
-            self.write(f":FREQ {str_NR3(value)}")
+            self.write(f":FREQ {float(value):.6E}")
             rval = self.query(":FREQ?")
             return rval[:-1]
         if setting_X == "CHX_amplitude":
-            self.write(f":VOLT {str_NR3(value)}")
+            self.write(f":VOLT {float(value):.6E}")
             rval = self.query(":VOLT?")
             return rval[:-1]
         if setting_X == "CHX_offset":
-            self.write(f":VOLT:OFFS {str_NR3(value)}")
+            self.write(f":VOLT:OFFS {float(value):.6E}")
             rval = self.query(":VOLT:OFFS?")
             return rval[:-1]
         if setting_X == "CHX_volts_div":
-            self.write(f":CHAN{channel}:SCAL {str_NR3(value)}")
+            self.write(f":CHAN{channel}:SCAL {float(value):.6E}")
             return self.query(f":CHAN{channel}:SCAL?")
         if setting == "timebase":
-            self.write(f":TIM:SCAL {str_NR3(value)}")
+            self.write(f":TIM:SCAL {float(value):.6E}")
             return self.query(":TIM:SCAL?")
         if setting == "time_offset":
-            self.write(f":TIM:POS {str_NR3(value)}")
+            self.write(f":TIM:POS {float(value):.6E}")
             return self.query(":TIM:POS?")
         if setting_X == "CHX_offset":
             self.write(f"CHAN{channel}:OFFS {-float(value):.6E}")
@@ -155,7 +154,7 @@ class Key33500BCtrl(HC_Backend):
             self.write(f"CHAN{channel}:INV {int(value=='True')}")
             return self.query(f"CHAN{channel}:INV?")
         if setting_X == "CHX_probe_atten":
-            self.write(f"CHAN{channel}:PROB {str_NR3(value)}")
+            self.write(f"CHAN{channel}:PROB {float(value):.6E}")
             return self.query(f"CHAN{channel}:PROB?")  # ie. 10 gives x10 or 10:1 probe
         if setting_X == "CHX_coupling":
             # Make sure valid value provided
@@ -164,7 +163,7 @@ class Key33500BCtrl(HC_Backend):
             self.write(f"CHAN{channel}:COUP {value}")
             return self.query(f"CHAN{channel}:COUP?")
         if setting == "trigger_level":
-            self.write(f"TRIG:EDGE:LEV {str_NR3(value)}")
+            self.write(f"TRIG:EDGE:LEV {float(value):.6E}")
             return self.query("TRIG:EDGE:LEV?")
         if setting == "trigger_coupling":
             # Make sure valid option given

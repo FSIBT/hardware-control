@@ -5,7 +5,6 @@ import numpy as np
 from hardware_control.base.HC_Backend import HC_Backend, VISA, SOCKET
 from hardware_control.utility import (
     get_channel_from_command,
-    str_NR3,
     str_NR1,
 )
 
@@ -40,16 +39,16 @@ class Key4000XCtrl(HC_Backend):
             return value
 
         if setting == "timebase":
-            self.write(f":TIM:SCAL {str_NR3(value)}")
+            self.write(f":TIM:SCAL {float(value):.6E}")
             return self.query(":TIM:SCAL?")
         if setting == "time_offset":
-            self.write(f":TIM:POS {str_NR3(value)}")
+            self.write(f":TIM:POS {float(value):.6E}")
             return self.query(":TIM:POS?")
         if setting == "labels_enabled":
             self.write(f"DISP:LAB {int(value=='True')}")
             return self.query("DISP:LAB?")
         if setting == "trigger_level":
-            self.write(f"TRIG:EDGE:LEV {str_NR3(value)}")
+            self.write(f"TRIG:EDGE:LEV {float(value):.6E}")
             return self.query("TRIG:EDGE:LEV?")
         if setting == "trigger_coupling":
             # Make sure valid option given
@@ -70,7 +69,7 @@ class Key4000XCtrl(HC_Backend):
         channel, setting_X = get_channel_from_command(setting)
 
         if setting_X == "CHX_volts_div":
-            self.write(f":CHAN{channel}:SCAL {str_NR3(value)}")
+            self.write(f":CHAN{channel}:SCAL {float(value):.6E}")
             return self.query(f":CHAN{channel}:SCAL?")
         if setting_X == "CHX_offset":
             self.write(f"CHAN{channel}:OFFS {-float(value):.6E}")
@@ -97,7 +96,7 @@ class Key4000XCtrl(HC_Backend):
             self.write(f"CHAN{channel}:INV {int(value=='True')}")
             return self.query(f"CHAN{channel}:INV?")
         if setting_X == "CHX_probe_atten":
-            self.write(f"CHAN{channel}:PROB {str_NR3(value)}")
+            self.write(f"CHAN{channel}:PROB {float(value):.6E}")
             return self.query(f"CHAN{channel}:PROB?")  # ie. 10 gives x10 or 10:1 probe
         if setting_X == "CHX_coupling":
             # Make sure valid value provided
