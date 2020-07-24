@@ -1,7 +1,8 @@
-import pkg_resources
+import logging
+
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
-from PyQt5.QtGui import QDoubleValidator, QPixmap, QFont
+from PyQt5.QtGui import QDoubleValidator, QFont
 from PyQt5.QtWidgets import (
     QLineEdit,
     QPushButton,
@@ -18,12 +19,11 @@ from hardware_control.base import (
     AUTOMATIC,
     MANUAL,
 )
-import logging
 from hardware_control.utility import (
     remove_end_carriage_return,
     apply_to_label,
 )
-from hardware_control.widgets import setButtonState
+from hardware_control.widgets import setButtonState, load_icon
 
 
 logger = logging.getLogger(__name__)
@@ -363,13 +363,7 @@ class PowerSupplyChannel(QWidget):
         #
         self.channel_label = QLabel()
         if self.channel <= 20 and not self.show_custom_labels:
-            self.channel_label.setPixmap(
-                QPixmap(
-                    pkg_resources.resource_filename(
-                        "hardware_control", f"icons/channel_{self.channel}.png",
-                    )
-                )
-            )
+            self.channel_label.setPixmap(load_icon(f"channel_{self.channel}.png"))
         else:
             if self.custom_labels_colorcoded:
                 colors = ["yellow", "green", "blue", "red", "violet", "orange"]
@@ -498,44 +492,14 @@ class PowerSupplyChannel(QWidget):
             self.controls_grid.addWidget(self.enabled_but, 2, 1)
 
         # Load pix maps
-        self.steady_ind = QPixmap(
-            pkg_resources.resource_filename(
-                "hardware_control", f"icons/steady_label.svg"
-            )
-        )
-        self.rampdn_ind = QPixmap(
-            pkg_resources.resource_filename(
-                "hardware_control", f"icons/rampdn_label.svg"
-            )
-        )
-        self.rampup_ind = QPixmap(
-            pkg_resources.resource_filename(
-                "hardware_control", f"icons/rampup_label.svg"
-            )
-        )
-        self.disabled_ind = QPixmap(
-            pkg_resources.resource_filename(
-                "hardware_control", f"icons/disabled_label.svg"
-            )
-        )
-        self.enabled_ind = QPixmap(
-            pkg_resources.resource_filename(
-                "hardware_control", f"icons/enabled_label.svg"
-            )
-        )
-        self.ccurr_ind = QPixmap(
-            pkg_resources.resource_filename(
-                "hardware_control", f"icons/ccurrent_label.svg"
-            )
-        )
-        self.cvolt_ind = QPixmap(
-            pkg_resources.resource_filename(
-                "hardware_control", f"icons/cvoltage_label.svg"
-            )
-        )
-        self.na_ind = QPixmap(
-            pkg_resources.resource_filename("hardware_control", f"icons/na_label.svg")
-        )
+        self.steady_ind = load_icon("steady_label.svg")
+        self.rampdn_ind = load_icon("rampdn_label.svg")
+        self.rampup_ind = load_icon("rampup_label.svg")
+        self.disabled_ind = load_icon("disabled_label.svg")
+        self.enabled_ind = load_icon("enabled_label.svg")
+        self.ccurr_ind = load_icon("ccurrent_label.svg")
+        self.cvolt_ind = load_icon("cvoltage_label.svg")
+        self.na_ind = load_icon("na_label.svg")
 
         self.CC_ind_label = QLabel("CC:")
         self.CC_ind_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)

@@ -1,6 +1,5 @@
-import pkg_resources
 from PyQt5 import QtCore
-from PyQt5.QtGui import QIntValidator, QPixmap, QIcon, QFont, QDoubleValidator
+from PyQt5.QtGui import QIcon, QFont, QDoubleValidator
 from PyQt5.QtWidgets import (
     QGroupBox,
     QLineEdit,
@@ -17,6 +16,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from hardware_control.base import HC_Instrument, HC_Comm
+from hardware_control.widget import load_icon
 
 
 class HC_DelayGenerator(HC_Instrument):
@@ -95,15 +95,7 @@ class HC_DelayGenerator(HC_Instrument):
         #
         self.single_trig_but = QPushButton()
         self.single_trig_but.setText("Single Trigger")
-        self.single_trig_but.setIcon(
-            QIcon(
-                QPixmap(
-                    pkg_resources.resource_filename(
-                        "hardware_control", "/icons/pulse.png"
-                    )
-                )
-            )
-        )
+        self.single_trig_but.setIcon(QIcon(load_icon("pulse.png")))
         self.single_trig_but.setCheckable(False)
         self.single_trig_but.clicked.connect(lambda: self.command("single_trigger"))
         self.single_trig_but.setEnabled(self.trig_mode_drop.currentText() == "Single")

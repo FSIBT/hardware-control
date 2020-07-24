@@ -2,30 +2,25 @@
 This is the Base class for reading modules
 it provides a simple UI.
 """
-import pkg_resources
-from PyQt5.QtCore import QTimer
-from PyQt5.QtWidgets import QLabel, QWidget, QGridLayout, QLCDNumber, QSpacerItem
-
-from hardware_control.widgets import setButtonState
-from hardware_control.base import HC_Instrument, HC_Comm
+import json
 import logging
+
+from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QDoubleValidator, QPixmap, QIcon
 from PyQt5.QtWidgets import (
+    QLabel,
+    QGridLayout,
+    QSpacerItem,
     QGroupBox,
-    QVBoxLayout,
     QLineEdit,
     QPushButton,
-    QHBoxLayout,
-    QLabel,
-    QWidget,
-    QFormLayout,
-    QGridLayout,
-    QComboBox,
-    QDoubleSpinBox,
     QSizePolicy,
 )
+
 from hardware_control.utility import remove_end_carriage_return, apply_to_label
-import json
+from hardware_control.widgets import load_icon, setButtonState
+from hardware_control.base import HC_Instrument
+
 
 logger = logging.getLogger(__name__)
 
@@ -395,18 +390,10 @@ class DigitalInputChannel(QGroupBox):
         else:
             super().__init__()
 
-        self.high_indicator = QPixmap(
-            pkg_resources.resource_filename("hardware_control", "icons/high_label.svg")
-        )
-        self.low_indicator = QPixmap(
-            pkg_resources.resource_filename("hardware_control", "icons/low_label.svg")
-        )
-        self.error_indicator = QPixmap(
-            pkg_resources.resource_filename("hardware_control", "icons/error_label.svg")
-        )
-        self.na_indicator = QPixmap(
-            pkg_resources.resource_filename("hardware_control", "icons/na_label.svg")
-        )
+        self.high_indicator = load_icon("high_label.svg")
+        self.low_indicator = load_icon("low_label.svg")
+        self.error_indicator = load_icon("error_label.svg")
+        self.na_indicator = load_icon("na_label.svg")
 
         self.control = control
         self.channel = channel
@@ -473,12 +460,8 @@ class DigitalOutputChannel(QGroupBox):
         else:
             super().__init__()
 
-        self.high_indicator = QPixmap(
-            pkg_resources.resource_filename("hardware_control", "icons/high_label.svg")
-        )
-        self.low_indicator = QPixmap(
-            pkg_resources.resource_filename("hardware_control", "icons/low_label.svg")
-        )
+        self.high_indicator = load_icon("high_label.svg")
+        self.low_indicator = load_icon("low_label.svg")
 
         self.control = control
         self.channel = channel

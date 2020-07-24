@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 class HC_MacroRunnerTool(HC_Instrument):
     """A tool which allows the user to run macros from the main UI.
+
     'Buttons' specifies which buttons to add. value for dictionary is button label.
      Options include:
      1.) name of any macro, 2.) 'Dynamic', which gives one button with a dropdown
@@ -56,15 +57,12 @@ class HC_MacroRunnerTool(HC_Instrument):
         self.countdown_val = 0
 
         # *************************Create GUI************************
-
         self.button_panel = QGridLayout()
         allow_dynamic = True
         self.button_widgets = []
 
         for idx, but in enumerate(self.buttons):  # Requests dynamic...
-
             if but == "Dynamic":
-
                 # Prevent duplicate dynamic boxes
                 allow_dynamic = False
 
@@ -144,7 +142,6 @@ class HC_MacroRunnerTool(HC_Instrument):
             self.countdown_wdgt.display(0)
 
         # ******* DEFINE OVERALL LAYOUT
-        #
         self.master_layout = QGridLayout()
         self.master_layout.addLayout(self.button_panel, 0, 0)
         if add_countdown:
@@ -172,7 +169,6 @@ class HC_MacroRunnerTool(HC_Instrument):
         self.set_timer_readout(self.countdown_val)
 
     def set_timer_readout(self, val: float):
-
         if self.add_countdown:
             try:
                 self.countdown_wdgt.display(val)
@@ -181,15 +177,11 @@ class HC_MacroRunnerTool(HC_Instrument):
                 self.countdown_wdgt.display(-1)
 
     def start_countdown(self, t_start: float):
-
         self.set_timer_readout(t_start)
-
         self.countdown_val = t_start
-
         self.countdown_timer.start(100)
 
     def run_macro(self, macro: str):
-
         try:
             cmds = self.app.macros[macro]
             logger.info(f"Running macro: {macro}\n\tCommands: {cmds}")
@@ -202,48 +194,33 @@ class HC_MacroRunnerTool(HC_Instrument):
         self.settings["macro"] = m
 
     def update_macros(self):
-
         try:
-
             self.macro_drop.clear()
             names = []
             for m in self.app.macros:
                 names.append(m)
                 logger.debug(f"Adding macro {m}")
             self.macro_drop.addItems(names)
-
         except:
             pass  # no macros to update
 
     def update_indicators(self):
-
         for idx, ind in enumerate(self.indicators):  # Requests dynamic...
-
             if ind in [x for x in self.window.app.variables]:
-
                 # Create macro selection dropdown label
                 self.label_widgets[ind].setText(self.window.app.variables[ind])
-
             else:
-
                 logger.error(f"Macro {but} does not exist. Ignoring indicator.")
 
-    #
     # Create a default state object if can't get state from a file
-    #
     def default_state(self):
-
-        dflt = {}
-
-        dflt["macro"] = "----------"
-        dflt["progress"] = 0
-
-        return dflt
+        return {
+            "macro": "----------",
+            "progress": 0,
+        }
 
     def init_values(self):
-
         self.values = {}
 
     def settings_to_UI(self):
-
         pass

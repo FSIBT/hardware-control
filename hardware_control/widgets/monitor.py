@@ -1,11 +1,10 @@
-import json
+import logging
 
-import pkg_resources
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
-from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QGroupBox, QLabel, QGridLayout, QSpacerItem, QSizePolicy
-import logging
+
+from .utility import load_icon
 
 logger = logging.getLogger(__name__)
 
@@ -23,23 +22,11 @@ class HC_MonitorTool(QGroupBox):
         self.hooks = {}
 
         # Load indicators
-        self.green_indicator = QPixmap(
-            pkg_resources.resource_filename("hardware_control", "icons/green_ind.svg")
-        )
-        self.grey_indicator = QPixmap(
-            pkg_resources.resource_filename("hardware_control", "icons/grey_ind.svg")
-        )
-        self.darkgrey_indicator = QPixmap(
-            pkg_resources.resource_filename(
-                "hardware_control", "icons/ind_darkgrey.png"
-            )
-        )
-        self.red_indicator = QPixmap(
-            pkg_resources.resource_filename("hardware_control", "icons/red_ind.svg")
-        )
-        self.blue_indicator = QPixmap(
-            pkg_resources.resource_filename("hardware_control", "icons/blue_ind.svg")
-        )
+        self.green_indicator = load_icon("green_ind.svg")
+        self.grey_indicator = load_icon("grey_ind.svg")
+        self.darkgrey_indicator = load_icon("ind_darkgrey.png")
+        self.red_indicator = load_icon("red_ind.svg")
+        self.blue_indicator = load_icon("blue_ind.svg")
 
         self.widgets = []
 

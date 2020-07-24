@@ -5,10 +5,9 @@
 #
 
 import logging
-import pkg_resources
 
 from PyQt5 import QtCore
-from PyQt5.QtGui import QDoubleValidator, QPixmap, QIcon
+from PyQt5.QtGui import QDoubleValidator, QIcon
 from PyQt5.QtWidgets import (
     QLineEdit,
     QPushButton,
@@ -20,7 +19,7 @@ from PyQt5.QtWidgets import (
 )
 
 from hardware_control.base import HC_Instrument, HC_Comm
-from hardware_control.widgets import setButtonState
+from hardware_control.widgets import setButtonState, load_icon
 
 
 logger = logging.getLogger(__name__)
@@ -165,21 +164,9 @@ class FunctionGeneratorChannelWidget(QWidget):
 
         self.channel_label = QLabel()
         if self.channel == 1:
-            self.channel_label.setPixmap(
-                QPixmap(
-                    pkg_resources.resource_filename(
-                        "hardware_control", "icons/channel1_yellow.png",
-                    )
-                )
-            )
+            self.channel_label.setPixmap(load_icon("channel1_yellow.png"))
         else:
-            self.channel_label.setPixmap(
-                QPixmap(
-                    pkg_resources.resource_filename(
-                        "hardware_control", "icons/channel2_green.png",
-                    )
-                )
-            )
+            self.channel_label.setPixmap(load_icon("channel2_green.png"))
 
         # ****** DEFINE TEXT BOXES
         #
@@ -255,15 +242,7 @@ class FunctionGeneratorChannelWidget(QWidget):
         #
         self.mod_but = QPushButton()
         self.mod_but.setText("Modulation")
-        self.mod_but.setIcon(
-            QIcon(
-                QPixmap(
-                    pkg_resources.resource_filename(
-                        "hardware_control", "icons/modulation.png",
-                    )
-                )
-            )
-        )
+        self.mod_but.setIcon(QIcon(load_icon("modulation.png")))
         self.mod_but.setCheckable(True)
         self.mod_but.clicked.connect(
             lambda: control.update_setting(
@@ -275,15 +254,7 @@ class FunctionGeneratorChannelWidget(QWidget):
         self.burst_but = QPushButton()
         self.burst_but.setText("Burst")
         self.burst_but.setCheckable(True)
-        self.burst_but.setIcon(
-            QIcon(
-                QPixmap(
-                    pkg_resources.resource_filename(
-                        "hardware_control", "icons/burst.png"
-                    )
-                )
-            )
-        )
+        self.burst_but.setIcon(QIcon(load_icon("burst.png")))
         self.burst_but.clicked.connect(
             lambda: control.update_setting(
                 f"CH{channel}_burst_en", str(self.burst_but.isChecked())

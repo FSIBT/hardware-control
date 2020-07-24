@@ -1,12 +1,9 @@
-import json
 import logging
-import pkg_resources
 
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
 import pyqtgraph as pg  # For some reason, without this line QPushButton won't import
 from PyQt5.QtGui import (
-    QPixmap,
     QSpacerItem,
     QSizePolicy,
     QDoubleValidator,
@@ -25,6 +22,7 @@ from PyQt5.QtWidgets import (
     QMessageBox,
 )
 from hardware_control.base import HC_Instrument
+from .utility import load_icon
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +45,7 @@ class HC_LoggerTool(HC_Instrument):
         # *************************Create GUI************************
 
         # self.arrow_symbol = QLabel()
-        # self.arrow_symbol.setPixmap(QPixmap(pkg_resources.resource_filename("hardware_control", "ScanTool/icons/arrow.png")))
+        # self.arrow_symbol.setPixmap(load_icon("arrow.png"))
         # self.arrow_symbol.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
         # # ****** DEFINE TEXT BOXES
         # #
@@ -91,13 +89,7 @@ class HC_LoggerTool(HC_Instrument):
         self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         self.autosave_label = QLabel()
-        self.autosave_label.setPixmap(
-            QPixmap(
-                pkg_resources.resource_filename(
-                    "hardware_control", "icons/autosave_label.png"
-                )
-            )
-        )
+        self.autosave_label.setPixmap(load_icon("autosave_label.png"))
 
         self.resume_updates_button = QPushButton()
         self.resume_updates_button.setText("Enable Editing")
@@ -131,8 +123,8 @@ class HC_LoggerTool(HC_Instrument):
         self.save_format_drop = QComboBox()
         self.save_format_drop.addItems(["NPY", "CSV", "JSON", "TXT", "Pickle"])
         if self.app is not None:
-            for format in self.app.additional_save_formats:
-                self.save_format_drop.addItems([format])
+            for data_format in self.app.additional_save_formats:
+                self.save_format_drop.addItems([data_format])
         self.save_format_drop.setCurrentText("JSON")
         self.save_format_drop.currentIndexChanged.connect(
             lambda: self.set_autosave_format(self.save_format_drop.currentText())
@@ -163,13 +155,7 @@ class HC_LoggerTool(HC_Instrument):
         )
 
         self.autolog_label = QLabel()
-        self.autolog_label.setPixmap(
-            QPixmap(
-                pkg_resources.resource_filename(
-                    "hardware_control", "icons/async_label.png"
-                )
-            )
-        )
+        self.autolog_label.setPixmap(load_icon("async_label.png"))
 
         self.autolog_button = QPushButton("Change to Async")
         # self.save_button.setText("Save")
@@ -198,13 +184,7 @@ class HC_LoggerTool(HC_Instrument):
         self.autolog_enabled_label.setText("Asynchronous Mode: OFF")
 
         self.autolog_ind_label = QLabel()
-        self.autolog_ind_label.setPixmap(
-            QPixmap(
-                pkg_resources.resource_filename(
-                    "hardware_control", "icons/ind_darkgrey.png"
-                )
-            )
-        )
+        self.autolog_ind_label.setPixmap(load_icon("ind_darkgrey.png"))
 
         self.disp_frame_layout = QGridLayout()
         self.table_layout = QGridLayout()
@@ -466,22 +446,10 @@ class HC_LoggerTool(HC_Instrument):
             #     3.) enable/disable interval edit
             if group.asynchronous_mode:
                 self.autolog_enabled_label.setText("Asynchronous Mode: ON ")
-                self.autolog_ind_label.setPixmap(
-                    QPixmap(
-                        pkg_resources.resource_filename(
-                            "hardware_control", "icons/ind_blue.png"
-                        )
-                    )
-                )
+                self.autolog_ind_label.setPixmap(load_icon("ind_blue.png"))
             else:
                 self.autolog_enabled_label.setText("Asynchronous Mode: OFF")
-                self.autolog_ind_label.setPixmap(
-                    QPixmap(
-                        pkg_resources.resource_filename(
-                            "hardware_control", "icons/ind_darkgrey.png"
-                        )
-                    )
-                )
+                self.autolog_ind_label.setPixmap(load_icon("ind_darkgrey.png"))
 
             # Set log interval time
             self.autolog_interval_edit.setText(str(group.async_log_interval))

@@ -1,13 +1,14 @@
 import json
 import logging
-import numpy as np
-import pkg_resources
 import time
+
+import numpy as np
+import zmq
 
 import pyqtgraph as pg  # For some reason, without this line QPushButton won't import
 from PyQt5 import QtCore
 from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
-from PyQt5.QtGui import QPixmap, QProgressBar, QIcon, QApplication
+from PyQt5.QtGui import QProgressBar, QIcon, QApplication
 from PyQt5.QtWidgets import (
     QGroupBox,
     QLineEdit,
@@ -19,10 +20,10 @@ from PyQt5.QtWidgets import (
     QCheckBox,
     QFileDialog,
 )
-import zmq
 
 from hardware_control.base import HC_Instrument
-from hardware_control.widgets.zmq_connection import HC_ZMQConnectionTool
+from .zmq_connection import HC_ZMQConnectionTool
+from .utility import load_icon
 
 logger = logging.getLogger(__name__)
 
@@ -66,30 +67,24 @@ class HC_ScanTool(HC_Instrument):
         self.zmq_receiver.connectionOnOff(FakeButton("Disable Incoming Commands"))
 
         # *************************Create GUI************************
-
         self.arrow_symbol = QLabel()
-        self.arrow_symbol.setPixmap(
-            QPixmap(
-                pkg_resources.resource_filename("hardware_control", "icons/arrow.png")
-            )
-        )
+        self.arrow_symbol.setPixmap(load_icon("arrow.png"))
         self.arrow_symbol.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
 
         # ****** DEFINE TEXT BOXES
-        #
         self.instrument_label = QLabel("Instrument:")
         self.instrument_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
-        #
+
         self.instrument_drop = QComboBox()
         self.instrument_drop.addItems(["----------"])
         self.instrument_drop.setCurrentText(self.settings["instrument"])
         self.instrument_drop.currentIndexChanged.connect(
             lambda: self.set_instrument(self.instrument_drop.currentText())
         )
-        #
+
         self.parameter_label = QLabel("Parameter:")
         self.parameter_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
-        #
+
         self.parameter_drop = QComboBox()
         self.parameter_drop.addItems(["----------"])
         self.parameter_drop.setCurrentText(self.settings["parameter"])
@@ -104,7 +99,7 @@ class HC_ScanTool(HC_Instrument):
         self.use_list = QRadioButton("List")
         self.use_list.setChecked(True)
         # self.use_list.toggled.connect(lambda: self.values_src_set(self.use_list))
-        #
+
         self.use_space = QRadioButton("Spacing")
         # self.use_space.toggled.connect(lambda: self.values_src_set(self.use_space))
 
@@ -114,24 +109,24 @@ class HC_ScanTool(HC_Instrument):
         # self.lin_rb = QRadioButton("Linear")
         # self.lin_rb.setChecked(True)
         # self.lin_rb.toggled.connect(lambda: self.space_rule_set(self.lin_rb))
-        #
+
         # self.log_rb = QRadioButton("Logarithmic")
         # self.log_rb.toggled.connect(lambda: self.space_rule_set(self.log_rb))
-        #
+
         self.values_label = QLabel("Values:")
         self.values_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        #
+
         self.values_edit = QLineEdit()
         # self.values_edit.editingFinished.connect(
         #     lambda: self.set_values(self.values_edit.text())
         # )
         self.values_edit.setText(str(self.settings["values"]))
-        #
+
         self.spacing_start_label = QLabel("Start: ")
         self.spacing_start_label.setAlignment(
             QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
         )
-        #
+
         self.spacing_start_edit = QLineEdit()
         # self.spacing_start_edit.editingFinished.connect(lambda: self.set_start_value)
 
@@ -139,7 +134,7 @@ class HC_ScanTool(HC_Instrument):
         self.spacing_end_label.setAlignment(
             QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
         )
-        #
+
         self.spacing_end_edit = QLineEdit()
         # self.spacing_end_edit.editingFinished.connect(lambda: self.set_end_value)
 
@@ -147,20 +142,19 @@ class HC_ScanTool(HC_Instrument):
         self.num_points_label.setAlignment(
             QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
         )
-        #
+
         self.num_points_edit = QLineEdit()
         # self.num_points_edit.editingFinished.connect(lambda: self.set_num_points)
 
-        #
         self.spacing_log_check = QCheckBox("Log Spacing")
-        #
+
         self.values_file_label = QLabel("File:")
         self.values_file_label.setAlignment(
             QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
         )
-        #
+
         self.values_file_edit = QLineEdit()
-        #
+
         self.values_file_select_button = QPushButton("Browse")
         self.values_file_select_button.clicked.connect(self.browse_values_files)
 
@@ -170,7 +164,7 @@ class HC_ScanTool(HC_Instrument):
         self.values_select_frame.addWidget(self.use_list, 0, 0, 1, 1)
         self.values_select_frame.addWidget(self.values_label, 0, 1, 1, 1)
         self.values_select_frame.addWidget(self.values_edit, 0, 2, 1, 6)
-        #
+
         self.values_select_frame.addWidget(self.use_space, 1, 0, 1, 1)
         self.values_select_frame.addWidget(self.spacing_start_label, 1, 1, 1, 1)
         self.values_select_frame.addWidget(self.spacing_start_edit, 1, 2, 1, 2)
@@ -179,7 +173,7 @@ class HC_ScanTool(HC_Instrument):
         self.values_select_frame.addWidget(self.num_points_label, 2, 1, 1, 1)
         self.values_select_frame.addWidget(self.num_points_edit, 2, 2, 1, 2)
         self.values_select_frame.addWidget(self.spacing_log_check, 2, 6, 1, 2)
-        #
+
         self.values_select_frame.addWidget(self.use_file, 3, 0, 1, 1)
         self.values_select_frame.addWidget(self.values_file_label, 3, 1, 1, 1)
         self.values_select_frame.addWidget(self.values_file_edit, 3, 2, 1, 2)
@@ -187,20 +181,18 @@ class HC_ScanTool(HC_Instrument):
 
         self.values_select_box.setLayout(self.values_select_frame)
 
-        #
         self.macro_label = QLabel("Scan Macro:")
         self.macro_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        #
+
         self.macro_drop = QComboBox()
         self.macro_drop.addItems(["None"])
         self.macro_drop.setCurrentText(self.settings["macro"])
         self.macro_drop.currentIndexChanged.connect(
             lambda: self.macro_changed(self.macro_drop.currentText())
         )
-        #
-        #
+
         self.sync_measdir_check = QCheckBox("Sync Measurements")
-        #
+
         self.upper_grid = QGridLayout()
         self.middle_grid = QGridLayout()
 
@@ -222,33 +214,24 @@ class HC_ScanTool(HC_Instrument):
 
         self.scan_button = QPushButton()
         self.scan_button.setText("Scan")
-        self.scan_button.setIcon(
-            QIcon(
-                QPixmap(
-                    pkg_resources.resource_filename(
-                        "hardware_control", "icons/scan.png"
-                    )
-                )
-            )
-        )
+        self.scan_button.setIcon(QIcon(load_icon("scan.png")))
         self.scan_button.setCheckable(False)
         self.scan_button.clicked.connect(self.start_scan_thread)
 
         self.progress_grid = QGridLayout()
-        #
+
         self.progress_label = QLabel("Scan Progress")
         self.progress_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        #
+
         self.progress_bar = QProgressBar()
-        #
+
         self.progress_grid.addWidget(self.progress_label, 0, 0)
         self.progress_grid.addWidget(self.progress_bar, 0, 1)
         #        self.progress_bar.setGeometry(200, 80, 250, 20);
-        #
+
         self.progress_bar.setValue(float(self.settings["progress"]))
 
         # ******* DEFINE OVERALL LAYOUT
-        #
         self.master_layout = QGridLayout()
         self.master_layout.addLayout(self.upper_grid, 0, 0, 1, 2)
         # self.master_layout.addLayout(self.middle_grid, 1, 0, 1, 2)
@@ -257,19 +240,12 @@ class HC_ScanTool(HC_Instrument):
         self.setLayout(self.master_layout)
 
     def settings_to_UI(self):
-
         self.values_edit.setText(str(self.settings["values"]))
         self.instrument_drop.setCurrentText(self.settings["instrument"])
         self.parameter_drop.setCurrentText(self.settings["parameter"])
         self.progress_bar.setValue(float(self.settings["progress"]))
         self.macro_drop.setCurrentText(self.settings["macro"])
 
-    # def space_rule_set(self, rule):
-    #     pass
-    #
-    # def values_src_set(self, rule):
-    #     pass
-    #
     def browse_values_files(self):
 
         filename = ""
@@ -282,16 +258,6 @@ class HC_ScanTool(HC_Instrument):
             return
 
         self.values_file_edit.setText(filename)
-
-    #
-    # def set_end_value(self):
-    #     pass
-    #
-    # def set_start_value(self):
-    #     pass
-    #
-    # def set_num_points(self):
-    #     pass
 
     def set_instrument(self, inst: str):
 

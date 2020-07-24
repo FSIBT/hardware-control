@@ -26,6 +26,7 @@ from PyQt5.QtWidgets import (
     QSpacerItem,
     QSizePolicy,
 )
+from PyQt5.QtGui import QIcon
 from docopt import docopt
 
 from hardware_control.base import HC_App, HC_MainWindow, Dataset
@@ -50,12 +51,11 @@ from hardware_control.widgets import (
     HC_PlotTool,
     HC_StatusTool,
     HC_Qtconsole,
+    load_icon,
 )
 from hardware_control.IOModule.HC_IOModule import HC_IOModule, read_channel_file
 from hardware_control.IOModule.NI9000Ctrl import NI9000Ctrl
 from hardware_control.PowerSupply.CAEN14xxETCtrl import CAEN14xxETCtrl
-from PyQt5.QtGui import QPixmap, QIcon
-import pkg_resources
 
 
 commands = docopt(__doc__)
@@ -470,11 +470,7 @@ class STS50Demo(HC_MainWindow):
         )
         self.run_tool.update_macros()
         self.run_tool.countdown_end = countdown_end_fn
-        self.power_off_ind = QPixmap(
-            pkg_resources.resource_filename(
-                "hardware_control", f"icons/voltage_off.svg"
-            )
-        )
+        self.power_off_ind = load_icon("voltage_off.svg")
         self.run_tool.button_widgets[1].setIcon(QIcon(self.power_off_ind))
 
         # self.kill_tool = HC_MacroRunnerTool(

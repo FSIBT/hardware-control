@@ -4,15 +4,16 @@
 # you can easily create GUIs for oscilloscopes.
 #
 
-import pkg_resources
+import logging
 
 from hardware_control.utility import regex_compare, returnChannelNumber
-from hardware_control.widgets import setButtonState
+from hardware_control.widgets import setButtonState, load_icon
 from hardware_control.base import HC_Instrument, HC_Comm
+
 import pyqtgraph as pg
 from PyQt5 import QtCore
-from PyQt5.QtCore import QTimer, QThread, pyqtSignal, pyqtSlot, QObject
-from PyQt5.QtGui import QDoubleValidator, QPixmap, QIcon
+from PyQt5.QtCore import QTimer
+from PyQt5.QtGui import QDoubleValidator, QIcon
 from PyQt5.QtWidgets import (
     QGroupBox,
     QVBoxLayout,
@@ -26,7 +27,7 @@ from PyQt5.QtWidgets import (
     QComboBox,
     QDoubleSpinBox,
 )
-import logging
+
 
 logger = logging.getLogger(__name__)
 
@@ -311,37 +312,13 @@ class OscillscopeChannelWidget(QWidget):
 
         self.channel_label = QLabel()
         if channel == 1:
-            self.channel_label.setPixmap(
-                QPixmap(
-                    pkg_resources.resource_filename(
-                        "hardware_control", "icons/channel1_yellow.png"
-                    )
-                )
-            )
+            self.channel_label.setPixmap(load_icon("channel1_yellow.png"))
         elif channel == 2:
-            self.channel_label.setPixmap(
-                QPixmap(
-                    pkg_resources.resource_filename(
-                        "hardware_control", "icons/channel2_green.png"
-                    )
-                )
-            )
+            self.channel_label.setPixmap(load_icon("channel2_green.png"))
         elif channel == 3:
-            self.channel_label.setPixmap(
-                QPixmap(
-                    pkg_resources.resource_filename(
-                        "hardware_control", "icons/channel3_blue.png"
-                    )
-                )
-            )
+            self.channel_label.setPixmap(load_icon("channel3_blue.png"))
         elif channel == 4:
-            self.channel_label.setPixmap(
-                QPixmap(
-                    pkg_resources.resource_filename(
-                        "hardware_control", "icons/channel4_red.png"
-                    )
-                )
-            )
+            self.channel_label.setPixmap(load_icon("channel4_red.png"))
         else:
             self.channel_label.setText(f"Channel {channel}")
 
@@ -400,15 +377,7 @@ class OscillscopeChannelWidget(QWidget):
 
         self.BW_but = QPushButton()
         self.BW_but.setText("BW Limit")
-        self.BW_but.setIcon(
-            QIcon(
-                QPixmap(
-                    pkg_resources.resource_filename(
-                        "hardware_control", "icons/BWlim.png"
-                    )
-                )
-            )
-        )
+        self.BW_but.setIcon(QIcon(load_icon("BWlim.png")))
         self.BW_but.setCheckable(True)
         self.BW_but.clicked.connect(
             lambda: control.update_setting(
@@ -420,15 +389,7 @@ class OscillscopeChannelWidget(QWidget):
         self.Inv_but = QPushButton()
         self.Inv_but.setText("Invert")
         self.Inv_but.setCheckable(True)
-        self.Inv_but.setIcon(
-            QIcon(
-                QPixmap(
-                    pkg_resources.resource_filename(
-                        "hardware_control", "icons/invert.png"
-                    )
-                )
-            )
-        )
+        self.Inv_but.setIcon(QIcon(load_icon("invert.png")))
         self.Inv_but.clicked.connect(
             lambda: control.update_setting(
                 f"CH{channel}_invert", str(self.Inv_but.isChecked())
@@ -536,13 +497,7 @@ class OscilloscopeTriggerWidget(QWidget):
         # ************** DEFINE UI *********************#
         self.trigger_label_box = QHBoxLayout()
         self.trigger_label = QLabel()
-        self.trigger_label.setPixmap(
-            QPixmap(
-                pkg_resources.resource_filename(
-                    "hardware_control", "icons/trigger_label.png"
-                )
-            )
-        )
+        self.trigger_label.setPixmap(load_icon("trigger_label.png"))
         self.trigger_label_box.addWidget(self.trigger_label)
 
         # ****** DEFINE TEXT BOXES
@@ -647,13 +602,7 @@ class OscilloscopeHorizontalWidget(QWidget):
         # ************** DEFINE UI *********************#
         self.horizontal_label_box = QHBoxLayout()
         self.horizontal_label = QLabel()
-        self.horizontal_label.setPixmap(
-            QPixmap(
-                pkg_resources.resource_filename(
-                    "hardware_control", "icons/horizontal_label.png"
-                )
-            )
-        )
+        self.horizontal_label.setPixmap(load_icon("horizontal_label.png"))
         self.horizontal_label_box.addWidget(self.horizontal_label)
 
         # ****** DEFINE TEXT BOXES
@@ -867,13 +816,7 @@ class OscilloscopeMeasurementWidget(QWidget):
 
         # ******************** DEFINE UI ***************************
         self.measurement_label = QLabel()
-        self.measurement_label.setPixmap(
-            QPixmap(
-                pkg_resources.resource_filename(
-                    "hardware_control", "icons/measurement_label.png"
-                )
-            )
-        )
+        self.measurement_label.setPixmap(load_icon("measurement_label.png"))
 
         self.channel_label = QLabel("Source: ")
 

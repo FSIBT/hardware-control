@@ -1,14 +1,8 @@
-#
-# This defines the OscilloscopeControl and OscilloscopeComm classes. By passing
-# an instance of a SCPI command wrapper class to an OscilloscpeControl objcet,
-# you can easily create GUIs for oscilloscopes.
-#
-
-import pkg_resources
+import logging
 import zmq
+
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
-from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import (
     QGroupBox,
     QLineEdit,
@@ -19,7 +13,7 @@ from PyQt5.QtWidgets import (
 )
 
 from hardware_control.base import HC_Instrument
-import logging
+from .utility import load_icon
 
 logger = logging.getLogger(__name__)
 
@@ -66,17 +60,9 @@ class HC_ZMQConnectionTool(HC_Instrument):
         self.online_color = "Blue"
         self.accept_commands = False
 
-        self.darkgrey_ind = QPixmap(
-            pkg_resources.resource_filename(
-                "hardware_control", "icons/ind_darkgrey.png"
-            )
-        )
-        self.blue_ind = QPixmap(
-            pkg_resources.resource_filename("hardware_control", "icons/ind_blue.png")
-        )
-        self.grey_ind = QPixmap(
-            pkg_resources.resource_filename("hardware_control", "icons/ind_grey.png")
-        )
+        self.darkgrey_ind = load_icon("ind_darkgrey.png")
+        self.blue_ind = load_icon("ind_blue.png")
+        self.grey_ind = load_icon("ind_grey.png")
 
         # Create GUI
         #

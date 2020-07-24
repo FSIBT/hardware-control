@@ -1,16 +1,12 @@
 import logging
-import pkg_resources
 
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
-from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QGroupBox, QLabel, QGridLayout
 
+from .utility import load_icon
+
 logger = logging.getLogger(__name__)
-
-
-def load_icon(name: str):
-    return QPixmap(pkg_resources.resource_filename("hardware_control", f"icons/{name}"))
 
 
 class HC_StatusTool(QGroupBox):
