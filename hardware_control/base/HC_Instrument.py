@@ -394,12 +394,7 @@ class HC_Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
         """Looks for an entry in self.values with the key 'prefix'. If found, the
         key's value is returned, else it returns None."""
 
-        if prefix in self.values:  # If prefix exists as key, return vale
-            rval = self.values[prefix]
-        else:  # Else return None
-            rval = None
-
-        return rval
+        return self.values.get(prefix, None)
 
     def sync_backend_called(self):
         """

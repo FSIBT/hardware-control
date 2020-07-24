@@ -1,25 +1,20 @@
-#
-#
+import logging
 
-from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtWidgets import QLineEdit, QLabel, QFormLayout, QGridLayout, QComboBox
 
 from hardware_control.base import HC_Instrument, HC_Comm
-import logging
 
 logger = logging.getLogger(__name__)
 
-#
-#
+
 class HC_FlowController(HC_Instrument):
     def __init__(
         self, backend, window, name: str = "Flow Controller", lock_until_sync=False,
     ):
         super().__init__(window, name, backend, lock_until_sync)
 
-        self.settings = {}
         self.name = name
         self.address = backend.connection_addr
 
@@ -43,14 +38,13 @@ class HC_FlowController(HC_Instrument):
             lambda: self.comm.update_setting("rate", self.rate_edit.text())
         )
         self.rate_edit.setText(str(self.settings["rate"]))
-        #
+
         self.form = QFormLayout()
         self.form.addRow("Flow rate (CFM?):", self.rate_edit)
 
         self.lower_grid = QGridLayout()
-        #
+
         # ******* DEFINE DROPDOWNS + READOUT
-        #
         self.gas_label = QLabel("Gas:")
         self.gas_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
@@ -98,7 +92,6 @@ class HC_FlowController(HC_Instrument):
         self.lower_grid.addWidget(self.flow_label_fix1, 2, 2, 1, 1)
 
         # ******* DEFINE OVERALL LAYOUT
-        #
         self.master_layout = QGridLayout()
         self.master_layout.addLayout(self.form, 0, 0)
         self.master_layout.addLayout(self.lower_grid, 1, 0)
@@ -126,36 +119,24 @@ class HC_FlowController(HC_Instrument):
         recent readout data from the inbox and pushes it to the GUI"""
 
         # Request updated readout data
-        self.comm.command(f"rate?")
-        self.comm.command(f"pressure?")
-
-        # Get latest inbox entries for readout data...
-        flow_meas = self.read_values(f"rate")
-        press_meas = self.read_values(f"pressure")
-
-        # Update self.values
-        self.values["rate"] = flow_meas
-        self.values["pressure"] = press_meas
+        self.comm.command("rate?")
+        self.comm.command("pressure?")
 
         # Update labels
-        self.pressure_label_readout.setText(press_meas)
-        self.flow_label_readout.setText(flow_meas)
+        self.pressure_label_readout.setText(self.read_values(f"pressure"))
+        self.flow_label_readout.setText(self.read_values("rate"))
 
     def init_values(self):
-
         self.values["gas"] = ""
         self.values["rate"] = ""
 
     def default_state(self):
         """Create a default state object if can't get state from a file."""
-        dflt = {}
-
-        dflt["gas"] = "Argon"
-        dflt["rate"] = "0.0"
-
-        return dflt
+        return {
+            "gas": "Argon",
+            "rate": "0.0",
+        }
 
     def settings_to_UI(self):
-
         self.rate_edit.setText(str(self.settings["rate"]))
         self.gas_drop.setCurrentText(self.settings["gas"])

@@ -1,3 +1,4 @@
+import logging
 import random
 
 from hardware_control.base.HC_Backend import HC_Backend, MODBUS
@@ -5,7 +6,6 @@ from hardware_control.utility import (
     converter_ulong_to_IEEE754,
     converter_IEEE754_to_ulong,
 )
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +43,7 @@ class AlicatMSeriesCtrl(HC_Backend):
 
                 self.error_count = 0
                 return value
-            elif setting == "flow":
+            if setting == "flow":
                 i = converter_IEEE754_to_ulong(float(value))
                 a = i >> 16
                 b = i & ((1 << 16) - 1)
@@ -70,7 +70,6 @@ class AlicatMSeriesCtrl(HC_Backend):
         type.
         """
         if self.connection_type == MODBUS:
-
             try:
                 r = self.device.read_input_registers(count=2, address=1208, unit=0)
                 a, b = r.registers
@@ -84,9 +83,7 @@ class AlicatMSeriesCtrl(HC_Backend):
                 )
                 self.online = False
             return self.online
-        else:
-
-            return None
+        return None
 
     def command(self, cmd: str):
         if not self.online:
