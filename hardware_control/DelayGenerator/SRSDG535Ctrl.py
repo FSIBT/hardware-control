@@ -4,11 +4,10 @@ The manual for this instrument can be found at
  https://www.thinksrs.com/downloads/pdfs/manuals/DG535m.pdf page 9ff
 
 """
-import pyvisa
+import logging
 
 from hardware_control.base.HC_Backend import HC_Backend
 from hardware_control.utility import ensure_float, get_channel_from_command
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -179,31 +178,3 @@ class SRSDG535Ctrl(HC_Backend):
                 logger.debug(f'\tSRSDG535< "{cmd}"')
         except Exception:
             logger.error(f"{self.ID} - An exception occurred in write", exc_info=True)
-
-    # def try_connect(self):
-    #     if self.dummy:
-    #         self.online = True
-    #         return self.online
-    #
-    #     if not self.online:
-    #         try:
-    #             rm = pyvisa.ResourceManager()
-    #             # Open connection
-    #             self.device = rm.open_resource(self.connection_addr)
-    #             logger.debug(f"Recource list pyvisa: {rm.list_resources()}")
-    #             self.online = True
-    #         except ValueError:
-    #             logger.warning("Can not open this resource type.", exc_info=True)
-    #         except Exception:
-    #             # logger.error("An error occured while connecting with Pyvisa", exc_info=True)
-    #             self.online = False
-
-
-#
-# >>> import pyvisa
-# >>> rm = pyvisa.ResourceManager()
-# >>> rm.list_resources()
-# ('GPIB0::10::INSTR', 'GPIB0::1::INSTR', 'TCPIP0::a-dx4054a-00879.local::hislip0::INSTR', 'TCPIP0::a-dx4054a-00879.local::inst0::INSTR', 'ASRL1::INSTR')
-# >>> inst = rm.open_resource('GPIB0::10::INSTR')
-# >>> inst.query("ES")
-# '0\r\n'

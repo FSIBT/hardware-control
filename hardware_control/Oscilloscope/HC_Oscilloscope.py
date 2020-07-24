@@ -15,17 +15,16 @@ from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QDoubleValidator, QIcon
 from PyQt5.QtWidgets import (
-    QGroupBox,
-    QVBoxLayout,
-    QLineEdit,
-    QPushButton,
-    QHBoxLayout,
-    QLabel,
-    QWidget,
-    QFormLayout,
-    QGridLayout,
     QComboBox,
     QDoubleSpinBox,
+    QFormLayout,
+    QGridLayout,
+    QGroupBox,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QPushButton,
+    QWidget,
 )
 
 

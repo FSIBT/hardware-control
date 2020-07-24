@@ -6,7 +6,7 @@ import json
 import logging
 
 from PyQt5.QtCore import QTimer
-from PyQt5.QtGui import QDoubleValidator, QPixmap, QIcon
+from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtWidgets import (
     QLabel,
     QGridLayout,

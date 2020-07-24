@@ -15,7 +15,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-from hardware_control.base import HC_Instrument, HC_Comm
+from hardware_control.base import HC_Instrument
 from hardware_control.widget import load_icon
 
 
