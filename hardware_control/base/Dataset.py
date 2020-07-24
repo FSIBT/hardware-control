@@ -1,13 +1,15 @@
 import datetime
 import hashlib
-import time
 import json
 import logging
-import numpy as np
 import os
 import pickle
+import time
+
+import numpy as np
 
 from PyQt5.QtCore import QObject, QTimer
+
 from hardware_control.utility import convertibleToFloat
 
 logger = logging.getLogger(__name__)

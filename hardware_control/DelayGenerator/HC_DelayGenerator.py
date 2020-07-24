@@ -1,3 +1,5 @@
+import logging
+
 from PyQt5 import QtCore
 from PyQt5.QtGui import QIcon, QFont, QDoubleValidator
 from PyQt5.QtWidgets import (
@@ -11,12 +13,11 @@ from PyQt5.QtWidgets import (
     QDoubleSpinBox,
     QWidget,
 )
-import logging
-
-logger = logging.getLogger(__name__)
 
 from hardware_control.base import HC_Instrument
 from hardware_control.widget import load_icon
+
+logger = logging.getLogger(__name__)
 
 
 class HC_DelayGenerator(HC_Instrument):

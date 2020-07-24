@@ -1,10 +1,11 @@
+import logging
 import random
+
 from hardware_control.base.HC_Backend import (
     HC_Backend,
     SOCKET,
     VISA,
 )
-import logging
 from hardware_control.utility import ensure_float, get_channel_from_command
 
 

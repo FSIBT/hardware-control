@@ -2,11 +2,12 @@
 This is the Base class for reading modules
 it provides a simple UI.
 """
+import logging
+
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QLabel, QWidget, QGridLayout, QLCDNumber
 
 from hardware_control.base import HC_Instrument, HC_Comm
-import logging
 
 logger = logging.getLogger(__name__)
 

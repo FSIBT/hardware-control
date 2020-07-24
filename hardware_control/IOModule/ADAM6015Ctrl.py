@@ -4,12 +4,12 @@ It receives a string "CH#_TEMP?"
 There are no settings to be set
 """
 
+import logging
 import random
 import socket
 
 from hardware_control.base.HC_Backend import HC_Backend
 from hardware_control.utility import regex_compare
-import logging
 
 logger = logging.getLogger(__name__)
 

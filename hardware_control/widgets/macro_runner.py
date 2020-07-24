@@ -1,9 +1,10 @@
+import logging
+
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QPushButton, QLabel, QGridLayout, QComboBox, QLCDNumber
 
 from hardware_control.base import HC_Instrument
-import logging
 
 logger = logging.getLogger(__name__)
 

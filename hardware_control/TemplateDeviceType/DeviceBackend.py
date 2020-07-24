@@ -1,7 +1,7 @@
+import logging
 import random
 
 from hardware_control.base.HC_Backend import HC_Backend
-import logging
 
 logger = logging.getLogger(__name__)
 

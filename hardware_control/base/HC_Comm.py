@@ -1,6 +1,7 @@
-import time
-from colorama import Fore, Style
 import logging
+import time
+
+from colorama import Fore, Style
 
 from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot, QObject, QTimer
 

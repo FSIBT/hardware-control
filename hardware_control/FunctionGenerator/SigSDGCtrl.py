@@ -1,6 +1,7 @@
+import logging
+
 from hardware_control.base.HC_Backend import HC_Backend
 from hardware_control.utility import regex_compare, str_NR3, str_to_bool
-import logging
 
 logger = logging.getLogger(__name__)
 

@@ -1,12 +1,14 @@
+import logging
+import numpy as np
+
+from picoscope.ps6000 import PS6000
+
 from hardware_control.base.HC_Backend import HC_Backend
 from hardware_control.utility import (
     regex_compare,
     ensure_float,
     get_channel_from_command,
 )
-import numpy as np
-import logging
-from picoscope.ps6000 import PS6000
 
 logger = logging.getLogger(__name__)
 

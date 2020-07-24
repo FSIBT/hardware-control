@@ -1,3 +1,7 @@
+import logging
+
+import numpy as np
+
 from hardware_control.base.HC_Backend import HC_Backend
 from hardware_control.utility import (
     get_channel_from_command,
@@ -6,8 +10,7 @@ from hardware_control.utility import (
     str_NR1,
     boolstr_NR1,
 )
-import numpy as np
-import logging
+
 
 logger = logging.getLogger(__name__)
 

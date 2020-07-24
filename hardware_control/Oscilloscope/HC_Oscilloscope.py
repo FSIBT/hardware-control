@@ -1,14 +1,4 @@
-#
-# This defines the OscilloscopeControl and OscilloscopeComm classes. By passing
-# an instance of a SCPI command wrapper class to an OscilloscpeControl objcet,
-# you can easily create GUIs for oscilloscopes.
-#
-
 import logging
-
-from hardware_control.utility import regex_compare, returnChannelNumber
-from hardware_control.widgets import setButtonState, load_icon
-from hardware_control.base import HC_Instrument, HC_Comm
 
 import pyqtgraph as pg
 from PyQt5 import QtCore
@@ -26,6 +16,10 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QWidget,
 )
+
+from hardware_control.utility import regex_compare, returnChannelNumber
+from hardware_control.widgets import setButtonState, load_icon
+from hardware_control.base import HC_Instrument, HC_Comm
 
 
 logger = logging.getLogger(__name__)
