@@ -211,7 +211,7 @@ class HC_MacroRunnerTool(HC_Instrument):
                 # Create macro selection dropdown label
                 self.label_widgets[ind].setText(self.window.app.variables[ind])
             else:
-                logger.error(f"Macro {but} does not exist. Ignoring indicator.")
+                logger.error(f"Macro {ind} does not exist. Ignoring indicator.")
 
     # Create a default state object if can't get state from a file
     def default_state(self):

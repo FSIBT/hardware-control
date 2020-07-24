@@ -1,6 +1,8 @@
 import logging
 import random
 
+import pyvisa
+
 from hardware_control.base.HC_Backend import (
     HC_Backend,
     VISA,
@@ -46,7 +48,7 @@ class RigolDP832Ctrl(HC_Backend):
             # Verify actually connected (open_resource won't always throw error w/ disconnected USB)
             try:
                 self.device.query("*IDN?")
-            except visa.errors.VisaIOError:  # Not connected - reconnect
+            except pyvisa.errors.VisaIOError:  # Not connected - reconnect
                 logger.warning(
                     "Device connection check failed. Setting online to false.",
                     exc_info=True,

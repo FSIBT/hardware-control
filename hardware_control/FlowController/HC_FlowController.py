@@ -1,6 +1,6 @@
 import logging
 
-from PyQt5.QtCore.Qt import AlignRight, AlignVCenter
+from PyQt5.QtCore.Qt import AlignRight, AlignVCenter, AlignLeft
 from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtWidgets import QLineEdit, QLabel, QFormLayout, QGridLayout, QComboBox

@@ -23,7 +23,7 @@ if os.name == "nt":
     import nidaqmx
     from nidaqmx.constants import TerminalConfiguration
 
-from hardware_control.base.HC_Backend import HC_Backend
+from hardware_control.base.HC_Backend import HC_Backend, VISA, SOCKET
 from hardware_control.utility import get_channel_from_command
 from hardware_control.utility import ensure_float
 

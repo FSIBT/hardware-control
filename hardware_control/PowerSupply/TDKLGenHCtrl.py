@@ -1,7 +1,11 @@
+import logger
 import random
 
 from hardware_control.base.HC_Backend import HC_Backend, VISA, SOCKET
 from hardware_control.utility import regex_compare, str_to_bool
+
+
+logger = logging.getLogger(__name__)
 
 
 class TDKLGenHCtrl(HC_Backend):
