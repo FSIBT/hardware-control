@@ -1,4 +1,4 @@
-import logger
+import logging
 import random
 
 from hardware_control.base.HC_Backend import HC_Backend, VISA, SOCKET
