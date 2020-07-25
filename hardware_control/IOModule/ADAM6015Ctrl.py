@@ -42,8 +42,8 @@ class ADAM6015Ctrl(HC_Backend):
         """
         if self.connection_type in [SOCKET, VISA]:
             try:
-                self.s.send(b"#01\r")
-                self.s.recv(self.buf)
+                self.socket.send(b"#01\r")
+                self.socket.recv(self.buf)
                 self.online = True
             except Exception:  # Not connected - reconnect
                 logger.warning(
@@ -83,7 +83,7 @@ class ADAM6015Ctrl(HC_Backend):
     def close(self):
         """this is a override - sockets are used"""
         if not self.dummy:
-            self.s.close()
+            self.socket.close()
         else:
             logger.debug("Adam: close dummy connection")
         return False
@@ -92,8 +92,8 @@ class ADAM6015Ctrl(HC_Backend):
         """this is a override - sockets are used"""
         if not self.dummy:
             msg = msg + "\r"
-            self.s.send(msg.encode("ascii"))
-            indata = self.s.recv(self.buf)
+            self.socket.send(msg.encode("ascii"))
+            indata = self.socket.recv(self.buf)
             data = indata.decode("ascii")[1:-1]
             return data
 
@@ -101,8 +101,8 @@ class ADAM6015Ctrl(HC_Backend):
         """Read values from Adam"""
         """this is a override - sockets are used"""
         if not self.dummy:
-            self.s.send(b"#01\r")
-            indata = self.s.recv(self.buf)
+            self.socket.send(b"#01\r")
+            indata = self.socket.recv(self.buf)
             data = indata.decode("ascii")
         else:
             # Just a random answer it once received
@@ -119,8 +119,8 @@ class ADAM6015Ctrl(HC_Backend):
                 if regex_compare("CH._TEMP?", cmd) and int(cmd[2]) in range(0, 7):
                     # cmd[2] equals the channel#
                     out = "#01\r"  # simply asks for all channels
-                    self.s.send(out.encode("ascii"))
-                    indata = self.s.recv(self.buf)
+                    self.socket.send(out.encode("ascii"))
+                    indata = self.socket.recv(self.buf)
                     data = indata.decode("ascii")[1:]  # cut off ">"
                     n = int(cmd[2])
                     data = data[n * 10 : n * 10 + 10]
