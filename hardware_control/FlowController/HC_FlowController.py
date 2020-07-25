@@ -21,13 +21,6 @@ class HC_FlowController(HC_Instrument):
 
         backend.dummy = self.window.app.dummy
 
-        if backend in self.window.app.comms:
-            self.comm = self.window.app.comms[backend]
-            self.comm.addWidget(self)
-        else:
-            self.window.app.comms[backend] = HC_Comm(backend, self, 2000)
-            self.comm = self.window.app.comms[backend]
-
         self.settings = self.default_state()
 
         # *************************Create GUI************************
@@ -113,7 +106,7 @@ class HC_FlowController(HC_Instrument):
 
     def close(self):
         super().close()
-        self.readout_timer.stop
+        self.readout_timer.stop()
 
     def update_readout(self):
         """Queries the instrument for current readout data, then reads the most
