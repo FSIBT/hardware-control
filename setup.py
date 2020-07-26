@@ -12,7 +12,7 @@ setuptools.setup(
     description="A package to write QT programs to control hardware",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    license="modified BSD",
+    license="BSD-3-Clause-LBNL",
     packages=[
         "hardware_control",
         "hardware_control.base",
@@ -38,7 +38,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
         "Development Status :: 3 - Alpha",
-        "License :: OSI Approved :: BSD License",
+        "License :: OSI Approved :: BSD-3-Clause-LBNL",
         "Intended Audience :: Science/Research",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",

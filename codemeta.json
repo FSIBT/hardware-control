@@ -1,0 +1,38 @@
+{
+    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+    "@type": "SoftwareSourceCode",
+    "license": "https://spdx.org/licenses/BSD-3-Clause-LBNL",
+    "codeRepository": "https://bitbucket.org/berkeleylab/hardware-control",
+    "issueTracker": "https://bitbucket.org/berkeleylab/hardware-control/issues",
+    "name": "hardware-control",
+    "description": "Hardware-control is a python based package to create user interfaces that can control an read-out different instruments such as oscilloscopes and power supplies.",
+    "funding": "The information, data, or work presented herein was funded by the Advanced Research Projects Agency-Energy (ARPA-E), U.S. Department of Energy, under Contract No. DE-AC02- 05CH11231",
+    "funder": {
+        "@type": "Organization",
+        "name": "ARPA-e"
+    },
+    "keywords": [
+        "physiscs",
+        "control",
+        "hardware"
+    ],
+    "programmingLanguage": [
+        "Python 3"
+    ],
+    "operatingSystem": [
+        "OS independent"
+    ],
+    "author": [
+        {
+            "@type": "Person",
+            "@id": "https://orcid.org/0000-0003-3186-8358",
+            "givenName": "Arun",
+            "familyName": "Persaud",
+            "email": "apersaud@lbl.gov",
+            "affiliation": {
+                "@type": "Organization",
+                "name": "E.O. Lawrence Berkeley National Laboratory: Berkeley, Ca 94720, US"
+            }
+        }
+    ]
+}
