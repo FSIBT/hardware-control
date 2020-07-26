@@ -1,6 +1,6 @@
 import logging
 
-from hardware_control.base.HC_Backend import HC_Backend, VISA, SOCKET
+from hardware_control.base.HC_Backend import HC_Backend
 from hardware_control.utility import get_channel_from_command
 
 logger = logging.getLogger(__name__)
@@ -50,7 +50,7 @@ class Key33500BCtrl(HC_Backend):
         Returns true if online, false if offline, and None if unknown connection
         type.
         """
-        if self.connection_type in [SOCKET, VISA]:
+        if self.connection_type in [HC_Backend.SOCKET, HC_Backend.VISA]:
             try:
                 self.device.query("*IDN?")
                 self.online = True

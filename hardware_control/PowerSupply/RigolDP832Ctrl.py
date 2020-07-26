@@ -3,10 +3,7 @@ import random
 
 import pyvisa
 
-from hardware_control.base.HC_Backend import (
-    HC_Backend,
-    VISA,
-)
+from hardware_control.base.HC_Backend import HC_Backend
 from hardware_control.utility import (
     ensure_float,
     get_channel_from_command,
@@ -42,7 +39,7 @@ class RigolDP832Ctrl(HC_Backend):
     ##@thread_info
     def check_connection(self):
 
-        if self.connection_type == VISA:
+        if self.connection_type == HC_Backend.VISA:
 
             # Check if connected by asking for instrument ID
             # Verify actually connected (open_resource won't always throw error w/ disconnected USB)

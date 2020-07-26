@@ -1,7 +1,7 @@
 import logging
 import random
 
-from hardware_control.base.HC_Backend import HC_Backend, VISA, SOCKET
+from hardware_control.base.HC_Backend import HC_Backend
 from hardware_control.utility import regex_compare
 
 
@@ -34,7 +34,7 @@ class TDKLGenHCtrl(HC_Backend):
         Returns true if online, false if offline, and None if unknown connection
         type.
         """
-        if self.connection_type in [SOCKET, VISA]:
+        if self.connection_type in [HC_Backend.SOCKET, HC_Backend.VISA]:
 
             try:
                 self.device.query("*IDN?")

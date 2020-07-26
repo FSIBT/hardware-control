@@ -26,10 +26,6 @@ from pymodbus.client.sync import ModbusTcpClient as ModbusClient
 
 logger = logging.getLogger(__name__)
 
-VISA = "visa"
-SOCKET = "socket"
-MODBUS = "modbus"
-
 
 def thread_info(f):
     @wraps(f)
@@ -82,6 +78,13 @@ class HC_Backend(abc.ABC):
 
     """
 
+    # class variables for the different supported connection types
+    VISA = "visa"
+    SOCKET = "socket"
+    MODBUS = "modbus"
+
+    SUPPORTED_CONNECTION_TYPES = [VISA, SOCKET, MODBUS]
+
     def __init__(self):
 
         self.ID = None  # this should be a string with instrument name
@@ -107,9 +110,9 @@ class HC_Backend(abc.ABC):
             or self.connection_addr.startswith("USB")
             or self.connection_addr.startswith("VXI")
         ):
-            self.connection_type = VISA
+            self.connection_type = HC_Backend.VISA
         else:
-            self.connection_type = SOCKET
+            self.connection_type = HC_Backend.SOCKET
             try:
                 self.ip_addr, self.port_no = self.connection_addr.rsplit(":", 1)
                 self.port_no = int(self.port_no)
@@ -126,7 +129,7 @@ class HC_Backend(abc.ABC):
         to be called at the end of __init__ in the instrument
 
         """
-        if self.connection_type not in [VISA, SOCKET, MODBUS]:
+        if self.connection_type not in HC_Backend.SUPPORTED_CONNECTION_TYPES:
             logger.error(
                 f"The connection type {self.connection_type}" + " is not supported"
             )
@@ -217,7 +220,7 @@ class HC_Backend(abc.ABC):
         logger.debug(f"{self.ID}: trying to connect")
 
         # Try to connect to instrument
-        if self.connection_type == VISA:
+        if self.connection_type == HC_Backend.VISA:
             try:
                 rm = pyvisa.ResourceManager("@py")
                 self.device = rm.open_resource(self.connection_addr)
@@ -233,7 +236,7 @@ class HC_Backend(abc.ABC):
                 logger.debug(f"{self.ID} is offline")
             else:
                 self.online = True
-        elif self.connection_type == SOCKET:
+        elif self.connection_type == HC_Backebd.SOCKET:
             try:
                 self.device = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.device.settimeout(2)
@@ -251,7 +254,7 @@ class HC_Backend(abc.ABC):
                 logger.debug(f"{self.ID} is offline")
             else:
                 self.online = True
-        elif self.connection_type == MODBUS:
+        elif self.connection_type == HC_Backend.MODBUS:
             try:
                 self.device = ModbusClient(host=self.connection_addr)
                 if self.device.connect():
@@ -282,10 +285,10 @@ class HC_Backend(abc.ABC):
 
         try:
             logger.debug(f'\t{self.ID} < "{command}"')
-            if self.connection_type == VISA:
+            if self.connection_type == HC_Backend.VISA:
                 self.device.write(command)
                 return command
-            elif self.connection_type == SOCKET:
+            elif self.connection_type == HC_Backend.SOCKET:
                 self.device.sendall(bytes(command + "\n", "utf-8"))
                 return command
         except Exception:
@@ -315,9 +318,9 @@ class HC_Backend(abc.ABC):
 
         try:
             logger.debug(f"INFO: Sending query {command} in {self.ID}")
-            if self.connection_type == VISA:
+            if self.connection_type == HC_Backend.VISA:
                 reply = self.device.query(command)
-            elif self.connection_type == SOCKET:
+            elif self.connection_type == HC_Backend.SOCKET:
                 self.device.sendall(bytes(command + self.termination, "utf-8"))
                 reply_bytes = HC_Backend.recvall(self.device)
                 reply = str(reply_bytes)

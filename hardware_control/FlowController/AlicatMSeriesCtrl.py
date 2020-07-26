@@ -1,7 +1,7 @@
 import logging
 import random
 
-from hardware_control.base.HC_Backend import HC_Backend, MODBUS
+from hardware_control.base.HC_Backend import HC_Backend
 from hardware_control.utility import (
     converter_ulong_to_IEEE754,
     converter_IEEE754_to_ulong,
@@ -19,7 +19,7 @@ class AlicatMSeriesCtrl(HC_Backend):
 
         self.connection_addr = ip_addr
         # TODO: Add modbus as option to 'self.parse_connection_addr()'
-        self.connection_type = MODBUS
+        self.connection_type = HC_Backend.MODBUS
         self.dummy = False
 
         self.error_count = 0
@@ -69,7 +69,7 @@ class AlicatMSeriesCtrl(HC_Backend):
         Returns true if online, false if offline, and None if unknown connection
         type.
         """
-        if self.connection_type == MODBUS:
+        if self.connection_type == HC_Backend.MODBUS:
             try:
                 r = self.device.read_input_registers(count=2, address=1208, unit=0)
                 a, b = r.registers

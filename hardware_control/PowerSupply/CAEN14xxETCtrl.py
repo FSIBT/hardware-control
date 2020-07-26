@@ -3,11 +3,7 @@ import random
 
 import pyvisa
 
-from hardware_control.base.HC_Backend import (
-    HC_Backend,
-    SOCKET,
-    VISA,
-)
+from hardware_control.base.HC_Backend import HC_Backend
 from hardware_control.utility import ensure_float, get_channel_from_command
 
 
@@ -39,7 +35,7 @@ class CAEN14xxETCtrl(HC_Backend):
 
     def check_connection(self):
 
-        if self.connection_type == VISA:
+        if self.connection_type == HC_Backend.VISA:
 
             # Check if connected by asking for instrument ID
             # Verify actually connected (open_resource won't always throw error w/ disconnected USB)
@@ -54,7 +50,7 @@ class CAEN14xxETCtrl(HC_Backend):
             else:  # Connection stable - return True
                 return True
 
-        elif self.connection_type == SOCKET:
+        elif self.connection_type == HC_Backend.SOCKET:
 
             try:
                 self.query("$BD:00,CMD:MON,PAR:BDNAME")

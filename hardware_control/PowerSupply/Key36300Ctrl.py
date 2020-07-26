@@ -1,7 +1,7 @@
 import logging
 import random
 
-from hardware_control.base.HC_Backend import HC_Backend, VISA, SOCKET
+from hardware_control.base.HC_Backend import HC_Backend
 from hardware_control.utility import ensure_float, get_channel_from_command
 
 
@@ -39,7 +39,7 @@ class Key36300Ctrl(HC_Backend):
         if not self.online:
             return False
 
-        if self.connection_type in [SOCKET, VISA]:
+        if self.connection_type in [HC_Backend.SOCKET, HC_Backend.VISA]:
 
             try:
                 self.device.query("*IDN?")

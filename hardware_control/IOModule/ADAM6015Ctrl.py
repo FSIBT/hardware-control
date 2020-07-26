@@ -8,7 +8,7 @@ import logging
 import random
 import socket
 
-from hardware_control.base.HC_Backend import HC_Backend, VISA, SOCKET
+from hardware_control.base.HC_Backend import HC_Backend
 from hardware_control.utility import regex_compare
 
 logger = logging.getLogger(__name__)
@@ -40,7 +40,7 @@ class ADAM6015Ctrl(HC_Backend):
         Returns true if online, false if offline, and None if unknown connection
         type.
         """
-        if self.connection_type in [SOCKET, VISA]:
+        if self.connection_type in [HC_Backend.SOCKET, HC_Backend.VISA]:
             try:
                 self.socket.send(b"#01\r")
                 self.socket.recv(self.buf)
