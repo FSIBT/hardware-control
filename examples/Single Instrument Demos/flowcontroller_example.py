@@ -10,11 +10,11 @@ Options:
 """
 import sys
 
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QGridLayout
 from docopt import docopt
 
-from hardware_control.FlowController.AlicatMSeriesCtrl import AlicatMSeriesCtrl
-from hardware_control.FlowController.HC_FlowController import HC_FlowController
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QGridLayout
+
+from hardware_control.FlowController import AlicatMSeriesCtrl, HC_FlowController
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]

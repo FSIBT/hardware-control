@@ -24,8 +24,7 @@ else:
     connection_type = "visa"
 
 from hardware_control.base import HC_App
-from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
-from hardware_control.Oscilloscope.Key4000XCtrl import Key4000XCtrl
+from hardware_control.Oscilloscope import HC_Oscilloscope, Key4000XCtrl
 
 
 class ScopeWindow(QMainWindow):

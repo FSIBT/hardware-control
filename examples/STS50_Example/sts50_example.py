@@ -33,21 +33,28 @@ from PyQt5.QtGui import QIcon, QDoubleValidator
 from docopt import docopt
 
 from PyQt5 import QtCore
-from hardware_control.widgets.utility import load_icon
 from hardware_control.base import HC_App, HC_MainWindow, Dataset
-from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
-from hardware_control.Oscilloscope.Key4000XCtrl import Key4000XCtrl
-from hardware_control.Oscilloscope.ZMQOscilloscopeCtrl import ZMQOscilloscopeCtrl
-from hardware_control.FlowController.HC_FlowController import HC_FlowController
-from hardware_control.FlowController.AlicatMSeriesCtrl import AlicatMSeriesCtrl
-from hardware_control.DelayGenerator.HC_DelayGenerator import HC_DelayGenerator
-from hardware_control.DelayGenerator.SRSDG535Ctrl import SRSDG535Ctrl
-from hardware_control.FunctionGenerator.HC_FunctionGenerator import HC_FunctionGenerator
-from hardware_control.FunctionGenerator.Key33500BCtrl import Key33500BCtrl
-from hardware_control.PowerSupply.HC_MultiPowerSupply import HC_MultiPowerSupply
-from hardware_control.PowerSupply.TDKLGenHCtrl import TDKLGenHCtrl
-from hardware_control.IOModule.HC_Read import HC_Read, HC_singleChannelRead
-from hardware_control.IOModule.ADAM6015Ctrl import ADAM6015Ctrl
+from hardware_control.Oscilloscope import (
+    HC_Oscilloscope,
+    Key4000XCtrl,
+    ZMQOscilloscopeCtrl,
+)
+from hardware_control.FlowController import HC_FlowController, AlicatMSeriesCtrl
+from hardware_control.DelayGenerator import HC_DelayGenerator, SRSDG535Ctrl
+from hardware_control.FunctionGenerator import HC_FunctionGenerator, Key33500BCtrl
+from hardware_control.PowerSupply import (
+    HC_MultiPowerSupply,
+    TDKLGenHCtrl,
+    CAEN14xxETCtrl,
+)
+from hardware_control.IOModule import (
+    HC_IOModule,
+    read_channel_file,
+    NI9000Ctrl,
+    HC_Read,
+    HC_singleChannelRead,
+    ADAM6015Ctrl,
+)
 from hardware_control.widgets import (
     HC_ZMQConnectionTool,
     HC_MacroRunnerTool,
@@ -58,9 +65,6 @@ from hardware_control.widgets import (
     HC_Qtconsole,
     load_icon,
 )
-from hardware_control.IOModule.HC_IOModule import HC_IOModule, read_channel_file
-from hardware_control.IOModule.NI9000Ctrl import NI9000Ctrl
-from hardware_control.PowerSupply.CAEN14xxETCtrl import CAEN14xxETCtrl
 
 
 commands = docopt(__doc__)

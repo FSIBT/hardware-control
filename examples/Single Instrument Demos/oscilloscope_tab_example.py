@@ -14,14 +14,13 @@ Options:
 
 import faulthandler
 import sys
-
-# standardlib
 from pathlib import Path
 
 import appdirs
+from docopt import docopt
 import pyvisa
-from PyQt5 import QtCore
-from PyQt5 import QtWidgets
+
+from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import (
@@ -34,10 +33,9 @@ from PyQt5.QtWidgets import (
     QAction,
 )
 
-# third party
-from docopt import docopt
+
 from hardware_control.Logfile.plot_logfile import LogPlot
-from hardware_control.Oscilloscopes.OscilloscopeControl import OscilloscopeControl
+from hardware_control.Oscilloscopes import OscilloscopeControl
 from hardware_control.Oscilloscopes.comm_DSOX4054A import comm_DSOX4054A
 
 # our own module

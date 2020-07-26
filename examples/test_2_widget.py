@@ -17,12 +17,12 @@ import logging
 import sys
 import warnings
 
-from PyQt5.QtWidgets import QStyleFactory, QTabWidget, QWidget, QGridLayout
 from docopt import docopt
 
+from PyQt5.QtWidgets import QStyleFactory, QTabWidget, QWidget, QGridLayout
+
 from hardware_control.base import HC_App, HC_MainWindow, Dataset, MANUAL
-from hardware_control.PowerSupply.HC_MultiPowerSupply import HC_MultiPowerSupply, ADD
-from hardware_control.PowerSupply.RigolDP832Ctrl import RigolDP832Ctrl
+from hardware_control.PowerSupply import HC_MultiPowerSupply, ADD, RigolDP832Ctrl
 from hardware_control.widgets import (
     HC_ZMQConnectionTool,
     HC_PlotTool,

@@ -19,9 +19,9 @@ import sys
 from docopt import docopt
 
 from PyQt5.QtWidgets import QGridLayout, QWidget
+
 from hardware_control.base import HC_App, HC_MainWindow
-from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
-from hardware_control.Oscilloscope.Key4000XCtrl import Key4000XCtrl
+from hardware_control.Oscilloscope import HC_Oscilloscope, Key4000XCtrl
 
 
 commands = docopt(__doc__)

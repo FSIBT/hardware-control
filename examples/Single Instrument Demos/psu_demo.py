@@ -12,11 +12,12 @@ Options:
 
 import sys
 
-from PyQt5.QtWidgets import QMainWindow, QWidget, QGridLayout
 from docopt import docopt
+
+from PyQt5.QtWidgets import QMainWindow, QWidget, QGridLayout
+
 from hardware_control.base import HC_App
-from hardware_control.PowerSupply.CAEN14xxETCtrl import CAEN14xxETCtrl
-from hardware_control.PowerSupply.HC_MultiPowerSupply import HC_MultiPowerSupply
+from hardware_control.PowerSupply import CAEN14xxETCtrl, HC_MultiPowerSupply
 
 
 commands = docopt(__doc__)

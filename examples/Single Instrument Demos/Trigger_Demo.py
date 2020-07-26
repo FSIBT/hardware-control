@@ -15,10 +15,7 @@ from PyQt5.QtWidgets import QMainWindow, QWidget, QGridLayout
 from docopt import docopt
 
 from hardware_control.base import HC_App
-
-# from hardware_control.DelayGenerator.SRSDG535Ctrl import SRSDG535Ctrl
-from hardware_control.DelayGenerator.SRSDG535Ctrl import SRSDG535Ctrl
-from hardware_control.DelayGenerator.HC_DelayGenerator import HC_DelayGenerator
+from hardware_control.DelayGenerator import SRSDG535Ctrl, HC_DelayGenerator
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]

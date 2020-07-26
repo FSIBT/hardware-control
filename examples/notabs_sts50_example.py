@@ -18,16 +18,11 @@ from PyQt5.QtWidgets import QMainWindow, QWidget, QGridLayout, QStyleFactory
 from docopt import docopt
 
 from hardware_control.base import HC_App, HC_MainWindow
-from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
-from hardware_control.Oscilloscope.Key4000XCtrl import Key4000XCtrl
-from hardware_control.FlowController.HC_FlowController import HC_FlowController
-from hardware_control.FlowController.AlicatMSeriesCtrl import AlicatMSeriesCtrl
-from hardware_control.DelayGenerator.HC_DelayGenerator import HC_DelayGenerator
-from hardware_control.DelayGenerator.SRSDG535Ctrl import SRSDG535Ctrl
-from hardware_control.FunctionGenerator.HC_FunctionGenerator import HC_FunctionGenerator
-from hardware_control.FunctionGenerator.Key33500BCtrl import Key33500BCtrl
-from hardware_control.PowerSupply.HC_MultiPowerSupply import HC_MultiPowerSupply
-from hardware_control.PowerSupply.TDKLGenHCtrl import TDKLGenHCtrl
+from hardware_control.Oscilloscope import HC_Oscilloscope, Key4000XCtrl
+from hardware_control.FlowController import HC_FlowController, AlicatMSeriesCtrl
+from hardware_control.DelayGenerator import HC_DelayGenerator, SRSDG535Ctrl
+from hardware_control.FunctionGenerator import HC_FunctionGenerator, Key33500BCtrl
+from hardware_control.PowerSupply import HC_MultiPowerSupply, TDKLGenHCtrl
 from hardware_control.widgets import (
     HC_ZMQConnectionTool,
     HC_MacroRunnerTool,

@@ -26,13 +26,14 @@ from PyQt5.QtWidgets import (
 )
 
 from hardware_control.base import HC_App, HC_MainWindow, Dataset, AUTOMATIC
-from hardware_control.PowerSupply.HC_MultiPowerSupply import HC_MultiPowerSupply, ONLY
-from hardware_control.PowerSupply.CAEN14xxETCtrl import CAEN14xxETCtrl
-from hardware_control.PowerSupply.Key36300Ctrl import Key36300Ctrl
-from hardware_control.IOModule.ADAM6024Ctrl import ADAM6024Ctrl
-from hardware_control.IOModule.HC_IOModule import HC_IOModule, read_channel_file
-from hardware_control.Oscilloscope.HC_Oscilloscope import HC_Oscilloscope
-from hardware_control.Oscilloscope.Pico6000Ctrl import Pico6000Ctrl
+from hardware_control.IOModule import ADAM6024Ctrl, HC_IOModule, read_channel_file
+from hardware_control.Oscilloscope import HC_Oscilloscope, Pico6000Ctrl
+from hardware_control.PowerSupply import (
+    HC_MultiPowerSupply,
+    ONLY,
+    CAEN14xxETCtrl,
+    Key36300Ctrl,
+)
 from hardware_control.widgets import (
     HC_PlotTool,
     HC_MiniPlotTool,
