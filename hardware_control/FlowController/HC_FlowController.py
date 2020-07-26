@@ -5,7 +5,7 @@ from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtWidgets import QLineEdit, QLabel, QFormLayout, QGridLayout, QComboBox
 
-from hardware_control.base import HC_Instrument, HC_Comm
+from hardware_control.base import HC_Instrument
 
 logger = logging.getLogger(__name__)
 

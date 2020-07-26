@@ -116,7 +116,7 @@ class ZMQOscilloscopeCtrl(HC_Backend):
                     return f"{setting}:{value}"
                 elif setting_X == "CHX_coupling":
                     # Make sure valid value provided
-                    if value != "AC" and value != "DC":
+                    if value not in ["AC", "DC"]:
                         value = "DC"
 
                     self.settings[f"AC/DC{channel}"] = value

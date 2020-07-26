@@ -3,6 +3,7 @@ import logging
 import numpy as np
 
 from hardware_control.base.HC_Backend import HC_Backend
+from hardware_control.utility import get_channel_from_command
 from hardware_control.utility import returnChannelNumber
 from hardware_control.utility import regex_compare
 
@@ -36,161 +37,130 @@ class RigDS1000ZCtrl(HC_Backend):
         if not self.online:
             return "Offline"
 
-        try:
-            if self.dummy:
-                return value
+        if self.dummy:
+            return value
+
+        if setting == "timebase":
+            self.write(f":TIM:MAIN:SCAL {float(value):.6E}")
+            return self.query(":TIM:MAIN:SCAL?")
+
+        if setting == "time_offset":
+            self.write(f":TIM:MAIN:OFFS {float(value):.6E}")
+            return self.query(":TIM:MAIN:OFFS?")
+
+        if setting == "labels_enabled":
+            self.write(f"DISP:LAB {int(value=='True')}")
+            return self.query("DISP:LAB?")
+
+        if setting == "trigger_level":
+            self.write(f"TRIG:EDGE:LEV {float(value):.6E}")
+            return self.query("TRIG:EDGE:LEV?")
+
+        if setting == "trigger_coupling":
+            # Make sure valid option given
+            if value not in ["AC", "DC", "LFReject", "HFReject"]:
+                value = "DC"
+
+            self.write(f"TRIG:COUP {value}")
+            return self.query("TRIG:COUP?")
+
+        if setting == "trigger_edge":
+
+            # Make sure valid option given
+            if value not in ["BOTH", "NEG", "POS", "ALT"]:
+                value = "POS"
+
+            # This model does not support BOTH mode
+            if value == "BOTH":
+                value = "POS"
+
+            # This model calls altermating mode 'RFALI'
+            if value == "ALT":
+                value = "RFALI"
+
+            self.write(f"TRIG:EDGE:SLOP {value}")
+            return self.query("TRIG:EDGE:SLOP?")
+
+        if setting == "trigger_channel":
+
+            self.write(f"TRIG:EDG:SOUR CHAN{int(value)}")
+            return self.query("TRIG:EDG:SOUR?")
+
+        if setting == "use_meas_avg":
+
+            self.use_avg = value == "True"
+            return f"Use avg.: {value}"
+
+        if setting == "meas_stat_enabled":
+
+            self.write(f":MEAS:STAT:DISP {int(value=='True')}")
+            return self.query(":MEAS:STAT:DISP?")
+
+        channel, setting_X = get_channel_from_command(setting)
+
+        if setting_X == "CHX_volts_div":
+            self.write(f":CHAN{channel}:SCAL {float(value):.6E}")
+            return self.query(f":CHAN{channel}:SCAL?")
+
+        if setting_X == "CHX_offset":
+            self.write(f"CHAN{channel}:OFFS {-float(value):.6E}")
+            return self.query(f"CHAN{channel}:OFFS?")
+
+        if setting_X == "CHX_BW_lim":
+            if value == "True":
+                self.write(f"CHAN{channel}:BWL 20M")
             else:
-                if regex_compare("CH._volts_div", setting):
-                    chan = setting[2]
-                    self.write(f":CHAN{chan}:SCAL {float(value):.6E}")
-                    return self.query(f":CHAN{chan}:SCAL?")
+                self.write(f"CHAN{channel}:BWL OFF")
+            return self.query(f"CHAN{channel}:BWL?")
 
-                elif setting == "timebase":
-                    self.write(f":TIM:MAIN:SCAL {float(value):.6E}")
-                    return self.query(":TIM:MAIN:SCAL?")
+        if setting_X == "CHX_active":
+            self.write(f"CHAN{channel}:DISP {int(value=='True')}")
+            return self.query(f"CHAN{channel}:DISP?")
 
-                elif setting == "time_offset":
-                    self.write(f":TIM:MAIN:OFFS {float(value):.6E}")
-                    return self.query(":TIM:MAIN:OFFS?")
+        if setting_X == "CHX_impedance":
+            # This feature is not available on this model
+            pass
 
-                elif regex_compare("CH._offset", setting):
-                    chan = setting[2]
-                    self.write(f"CHAN{chan}:OFFS {-float(value):.6E}")
-                    return self.query(f"CHAN{chan}:OFFS?")
+        if setting_X == "CHX_label":
+            # Length is capped at 32 characters
+            if len(value) > 32:
+                value = value[0:32]
 
-                elif regex_compare("CH._BW_lim", setting):
-                    chan = setting[2]
-                    if value == "True":
-                        self.write(f"CHAN{chan}:BWL 20M")
-                    else:
-                        self.write(f"CHAN{chan}:BWL OFF")
-                    return self.query(f"CHAN{chan}:BWL?")
+            self.write(f"CHAN{channel}:LAB {value}")
+            return self.query(f"CHAN{channel}:LAB?")
 
-                elif regex_compare("CH._active", setting):
-                    chan = setting[2]
-                    self.write(f"CHAN{chan}:DISP {int(value=='True')}")
-                    return self.query(f"CHAN{chan}:DISP?")
+        if setting_X == "CHX_invert":
+            self.write(f"CHAN{channel}:INV {int(value=='True')}")
+            return self.query(f"CHAN{channel}:INV?")
 
-                elif regex_compare("CH._impedance", setting):
+        if setting_X == "CHX_probe_atten":
+            self.write(f"CHAN{channel}:PROB {float(value):.6E}")
+            return self.query(f"CHAN{channel}:PROB?")  # ie. 10 gives x10 or 10:1 probe
 
-                    # This feature is not available on this model
-                    pass
+        if setting_X == "CHX_coupling":
+            # Make sure valid value provided
+            if value not in ["AC", "DC"]:
+                value = "DC"
+            self.write(f"CHAN{channel}:COUP {value}")
+            return self.query(f"CHAN{channel}:COUP?")
 
-                elif regex_compare("CH._label", setting):  # TODO
+        # Value must follow pattern 'meas_parameter','source_channel'
+        if regex_compare("meas_slot.", setting):
 
-                    # Length is capped at 32 characters
-                    if len(value) > 32:
-                        value = value[0:32]
+            # Get slot number
+            slot = int(setting[9])
+            if slot > 5 or slot < 0:
+                return "Bad setting"
 
-                    chan = setting[2]
-                    self.write(f"CHAN{chan}:LAB {value}")
-                    return self.query(f"CHAN{chan}:LAB?")
+            # Update slot value
+            self.measurements[slot - 1] = value
 
-                elif setting == "labels_enabled":  # TODO
-                    self.write(f"DISP:LAB {int(value=='True')}")
-                    return self.query("DISP:LAB?")
-
-                elif regex_compare("CH._invert", setting):
-                    chan = setting[2]
-                    self.write(f"CHAN{chan}:INV {int(value=='True')}")
-                    return self.query(f"CHAN{chan}:INV?")
-
-                elif regex_compare("CH._probe_atten", setting):
-                    chan = setting[2]
-                    self.write(f"CHAN{chan}:PROB {float(value):.6E}")
-                    return self.query(
-                        f"CHAN{chan}:PROB?"
-                    )  # ie. 10 gives x10 or 10:1 probe
-
-                elif regex_compare("CH._coupling", setting):
-                    chan = setting[2]
-
-                    # Make sure valid value provided
-                    if value != "AC" and value != "DC":
-                        value = "DC"
-
-                    self.write(f"CHAN{chan}:COUP {value}")
-                    return self.query(f"CHAN{chan}:COUP?")
-
-                elif setting == "trigger_level":
-                    self.write(f"TRIG:EDGE:LEV {float(value):.6E}")
-                    return self.query("TRIG:EDGE:LEV?")
-
-                elif setting == "trigger_coupling":
-
-                    # Make sure valid option given
-                    if (
-                        value != "AC"
-                        and value != "DC"
-                        and value != "LFReject"
-                        and value != "HFReject"
-                    ):
-                        value = "DC"
-
-                    self.write(f"TRIG:COUP {value}")
-                    return self.query("TRIG:COUP?")
-
-                elif setting == "trigger_edge":
-
-                    # Make sure valid option given
-                    if (
-                        value != "BOTH"
-                        and value != "NEG"
-                        and value != "POS"
-                        and value != "ALT"
-                    ):
-                        value = "POS"
-
-                    # This model does not support BOTH mode
-                    if value == "BOTH":
-                        value = "POS"
-
-                    # This model calls altermating mode 'RFALI'
-                    if value == "ALT":
-                        value = "RFALI"
-
-                    self.write(f"TRIG:EDGE:SLOP {value}")
-                    return self.query("TRIG:EDGE:SLOP?")
-
-                elif setting == "trigger_channel":
-
-                    self.write(f"TRIG:EDG:SOUR CHAN{int(value)}")
-                    return self.query("TRIG:EDG:SOUR?")
-                elif regex_compare(
-                    "meas_slot.", setting
-                ):  # Value must follow pattern 'meas_parameter','source_channel'
-
-                    # Get slot number
-                    slot = int(setting[9])
-                    if slot > 5 or slot < 0:
-                        return "Bad setting"
-
-                    # Update slot value
-                    self.measurements[slot - 1] = value
-
-                    # Write all slots
-                    for slot, meas in enumerate(self.measurements):
-                        if meas != "":
-                            self.write(f":MEAS:STAT:ITEM {meas}")
-                elif regex_compare("use_meas_avg", setting):
-
-                    self.use_avg = value == "True"
-                    return f"Use avg.: {value}"
-
-                elif setting == "meas_stat_enabled":
-
-                    self.write(f":MEAS:STAT:DISP {int(value=='True')}")
-                    return self.query(":MEAS:STAT:DISP?")
-
-        except Exception:
-            logger.error(
-                "An error occured in RigDS1000ZCtrl.py sending SCPI commands.",
-                exc_info=True,
-            )
+            # Write all slots
+            for slot, meas in enumerate(self.measurements):
+                if meas != "":
+                    self.write(f":MEAS:STAT:ITEM {meas}")
 
     def command(self, cmd: str):
-
-        ret_str = ""
 
         add_asterisk = False
         if cmd[-1] == "*":
@@ -202,22 +172,22 @@ class RigDS1000ZCtrl(HC_Backend):
 
         if cmd == "SINGLE_TRIGGER":
             self.write(":SING")
-            ret_str = "SINGLE_TRIGGER"
+            return "SINGLE_TRIGGER"
         elif cmd == "RUN":
             self.write(":RUN")
-            ret_str = "RUN"
+            return "RUN"
         elif cmd == "STOP":
             self.write(":STOP")
-            ret_str = "STOP"
+            return "STOP"
         elif cmd == "CLEAR_MEAS":
             self.write("MEAS:CLEAR ALL")
-            ret_str = "CLEAR_MEAS"
+            return "CLEAR_MEAS"
         elif regex_compare("meas_slot.", cmd):
-
             logger.debug(f"Reading slot w/ '{cmd}'")
 
             # Get slot number
             slot = int(cmd[9])
+            ret_str = ""
             if slot > 5 or slot < 0:
                 ret_str = "Bad command. Slot index out of range"
                 if add_asterisk:  # Don't let Macro get locked indefinitely add asterisk
@@ -237,7 +207,6 @@ class RigDS1000ZCtrl(HC_Backend):
             # Read measurement
             if meas != "":
                 try:
-
                     meas_mode = "CURR"
                     if self.use_avg:
                         meas_mode = "AVG"
@@ -256,26 +225,22 @@ class RigDS1000ZCtrl(HC_Backend):
             else:
                 ret_str = cmd + "=" + ret_str
             logger.debug(f"Returning slot read w/ '{ret_str}'")
+            return ret_str
         elif cmd == "RESET_MEAS_STAT":
-
             self.write(":MEAS:STAT:DISP OFF")
             self.write(":MEAS:STAT:DISP ON")
-
-            ret_str = cmd
-
-        return ret_str
+            return cmd
 
     def command_listdata(self, cmd: str):
-
         if not self.online:
             return "", [], []
 
-        if regex_compare("CH.+_WVFM?", cmd):
-            c = returnChannelNumber(cmd)
-            return self.read_waveform(c)  # Returns a tuple (str, list, list)
-        if regex_compare("CH.+_CLEAR", cmd):
-            c = returnChannelNumber(cmd)
-            return f"CH{c}_WVFM", [], []
+        channel, cmd_X = get_channel_from_command(cmd)
+
+        if cmd_X == "CHX+_WVFM?":
+            return self.read_waveform(channel)
+        if cmd_X == "CHX+_CLEAR":
+            return f"CH{channel}_WVFM", [], []
         else:
             return "", [], []
 
@@ -298,11 +263,13 @@ class RigDS1000ZCtrl(HC_Backend):
         by 'set_measurement()')"""
         pass
 
-    #
-    #
-    # Returns (V, t) as float[]
     def read_waveform(self, channel: int):  # TODO
-        """Reads a waveform from the oscilloscope."""
+        """Reads a waveform from the oscilloscope.
+
+        Returns
+        -------
+           (V, t) as float[]
+        """
 
         if self.dummy or not self.online:
             t = np.linspace(0, 1e-3, 100, False)
@@ -341,9 +308,7 @@ class RigDS1000ZCtrl(HC_Backend):
             xincr = float(self.query("WAV:XINC?"))
 
             # Get time values
-            t = list(
-                np.linspace(xorigin, xorigin + xincr * (len(volts) - 1), len(volts))
-            )
+            t = list(xorigin + np.linspace(0, xincr * (len(volts) - 1), len(volts)))
 
         except:
             logger.error(

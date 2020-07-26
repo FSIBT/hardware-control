@@ -125,7 +125,7 @@ class HC_MultiPowerSupply(HC_Instrument):
 
         self.master_layout = QGridLayout()
         self.master_layout.addLayout(self.channel_panel, 0, 0, 1, 3)
-        if all_enable_button == ADD or all_enable_button == ONLY:
+        if all_enable_button in [ADD, ONLY]:
             self.enable_all_spacer = QSpacerItem(
                 10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
             )
