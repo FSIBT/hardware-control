@@ -14,11 +14,6 @@ logger = logging.getLogger(__name__)
 ipy_logger = logging.getLogger("ipykernel")
 ipy_logger.setLevel("ERROR")
 
-# ramp_mode options
-MANUAL = "manual"
-AUTOMATIC = "automatic"
-OFF = "off"
-
 
 class CombinedMetaclass(sip.wrappertype, abc.ABCMeta):
     """
@@ -30,6 +25,12 @@ class CombinedMetaclass(sip.wrappertype, abc.ABCMeta):
 
 
 class HC_Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
+
+    # ramp_mode options
+    MANUAL = "manual"
+    AUTOMATIC = "automatic"
+    OFF = "off"
+
     def __init__(self, window, name: str, backend=None, lock_until_sync=False):
         super().__init__(name)
         # ToDo Why ordered dict??
@@ -62,7 +63,7 @@ class HC_Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
 
         self.us_hooks = []  # Run every time update settings is called
         self.ramp_hooks = []  # Run every time update_ramp is called
-        self.ramp_mode = OFF
+        self.ramp_mode = HC_Instrument.OFF
         self.ramp_val = OrderedDict()
         self.ramp_target = OrderedDict()
         self.default_ramp_speed = 100  # Units/sec
@@ -147,7 +148,7 @@ class HC_Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
         # hence why 'pop_list' is neccesary
         pop_list = []
 
-        if self.ramp_mode == MANUAL:
+        if self.ramp_mode == HC_Instrument.MANUAL:
 
             # For each parameter being ramped
             for key in self.ramp_target:
@@ -186,7 +187,7 @@ class HC_Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
             for pkey in pop_list:
                 self.ramp_target.pop(pkey, None)
 
-        if self.ramp_mode == AUTOMATIC:
+        if self.ramp_mode == HC_Instrument.AUTOMATIC:
 
             logger.debug("Callback Automatic ramp")
 
@@ -220,7 +221,7 @@ class HC_Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
                     logger.error(
                         "Ramp speeds must be floats. Cannot ramp. Changing ramp_mode to OFF."
                     )
-                    self.ramp_mode = OFF
+                    self.ramp_mode = HC_Instrument.OFF
                     self.ramp_timer.stop()
                     return
 
@@ -265,7 +266,7 @@ class HC_Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
         if self.comm is not None:
 
             # If ramp mode is on, set the target value and activate the timer
-            if self.ramp_mode in [AUTOMATIC, MANUAL]:
+            if self.ramp_mode in [HC_Instrument.AUTOMATIC, HC_Instrument.MANUAL]:
                 try:
                     self.ramp_target[setting] = float(value)
                 except:

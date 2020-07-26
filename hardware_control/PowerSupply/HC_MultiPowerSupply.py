@@ -14,11 +14,7 @@ from PyQt5.QtWidgets import (
     QSizePolicy,
 )
 
-from hardware_control.base import (
-    HC_Instrument,
-    AUTOMATIC,
-    MANUAL,
-)
+from hardware_control.base import HC_Instrument
 from hardware_control.utility import (
     remove_end_carriage_return,
     apply_to_label,
@@ -28,15 +24,16 @@ from hardware_control.widgets import setButtonState, load_icon
 
 logger = logging.getLogger(__name__)
 
-ADD = "Add"
-ONLY = "Only"
-HIDE = "Hide"
-
 LABEL_MIN_WIDTH = 15
 DISP_DECIMAL_PLACES = 1
 
 
 class HC_MultiPowerSupply(HC_Instrument):
+
+    ADD = "Add"
+    ONLY = "Only"
+    HIDE = "Hide"
+
     def __init__(
         self,
         backend,
@@ -46,9 +43,11 @@ class HC_MultiPowerSupply(HC_Instrument):
         show_VI_limits=False,
         show_custom_labels=False,
         show_status_panel=False,
-        all_enable_button=HIDE,
+        all_enable_button=None,
         lock_until_sync=False,
     ):
+        if all_enable_button is None:
+            all_enable_button = HC_MultiPowerSupply.HIDE
 
         super().__init__(window, name, backend, lock_until_sync)
 
@@ -109,14 +108,14 @@ class HC_MultiPowerSupply(HC_Instrument):
                     show_VI_limits,
                     show_custom_labels,
                     show_status_panel,
-                    (all_enable_button == ONLY),
+                    (all_enable_button == HC_MultiPowerSupply.ONLY),
                 )
             )
             self.channel_panel.addWidget(self.channel_widgets[-1], 0, idx)
         #
 
         self.all_enable_but = QPushButton("All On/Off")
-        if self.all_enable_button == ONLY:
+        if self.all_enable_button == HC_MultiPowerSupply.ONLY:
             self.all_enable_but.setCheckable(True)
         else:
             self.all_enable_but.setCheckable(False)
@@ -125,7 +124,7 @@ class HC_MultiPowerSupply(HC_Instrument):
 
         self.master_layout = QGridLayout()
         self.master_layout.addLayout(self.channel_panel, 0, 0, 1, 3)
-        if all_enable_button in [ADD, ONLY]:
+        if all_enable_button in [HC_MultiPowerSupply.ADD, HC_MultiPowerSupply.ONLY]:
             self.enable_all_spacer = QSpacerItem(
                 10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
             )
@@ -160,7 +159,7 @@ class HC_MultiPowerSupply(HC_Instrument):
 
         # IF channel buttons are displayed, check their status to determine if
         # all need to be turned on vs off.
-        if self.all_enable_button != ONLY:
+        if self.all_enable_button != HC_MultiPowerSupply.ONLY:
 
             logger.debug(
                 "All channels on/off button pressed. Will check other channels' button states"
@@ -597,7 +596,8 @@ class PowerSupplyChannel(QWidget):
                     self.enabled_but.setChecked(False)
 
             if (
-                self.main_widget.ramp_mode in [AUTOMATIC, MANUAL]
+                self.main_widget.ramp_mode
+                in [HC_Instrument.AUTOMATIC, HC_Instrument.MANUAL]
                 and self.main_widget.ramp_timer.isActive()
                 and f"CH{self.channel}_V_set" in self.main_widget.ramp_target
             ):

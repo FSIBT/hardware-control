@@ -21,8 +21,8 @@ from docopt import docopt
 
 from PyQt5.QtWidgets import QStyleFactory, QTabWidget, QWidget, QGridLayout
 
-from hardware_control.base import HC_App, HC_MainWindow, Dataset, MANUAL
-from hardware_control.PowerSupply import HC_MultiPowerSupply, ADD, RigolDP832Ctrl
+from hardware_control.base import HC_App, HC_MainWindow, Dataset
+from hardware_control.PowerSupply import HC_MultiPowerSupply, RigolDP832Ctrl
 from hardware_control.widgets import (
     HC_ZMQConnectionTool,
     HC_PlotTool,
@@ -143,7 +143,7 @@ class RootsDemo(HC_MainWindow):
             show_VI_limits=True,
             show_custom_labels=True,
             show_status_panel=True,
-            all_enable_button=ADD,
+            all_enable_button=HC_MultiPowerSupply.ADD,
         )
         self.psu_wdgt1.set_maxV(1, 29)
         self.psu_wdgt1.set_maxV(2, 29)
@@ -151,9 +151,9 @@ class RootsDemo(HC_MainWindow):
         self.psu_wdgt1.set_maxI(2, 3)
         self.psu_wdgt1.set_channel_label(1, "1: NaI")
         self.psu_wdgt1.set_channel_label(2, "2: LaBr")
-        # self.psu_wdgt1.ramp_mode = AUTOMATIC
+        # self.psu_wdgt1.ramp_mode = HC_Instrument.AUTOMATIC
         # self.psu_wdgt1.default_ramp_speed = 1
-        self.psu_wdgt1.ramp_mode = MANUAL
+        self.psu_wdgt1.ramp_mode = HC_Instrument.MANUAL
         self.psu_wdgt1.ramp_hooks.append(ramp_func)
         self.psu_wdgt1.default_ramp_speed = 1
         self.psu_wdgt1.comm.try_connect()
@@ -165,7 +165,7 @@ class RootsDemo(HC_MainWindow):
             show_VI_limits=True,
             show_custom_labels=True,
             show_status_panel=True,
-            all_enable_button=ADD,
+            all_enable_button=HC_MultiPowerSupply.ADD,
         )
         self.psu_wdgt2.set_maxV(3, 4)
         self.psu_wdgt2.set_maxI(3, 3)

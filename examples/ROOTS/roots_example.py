@@ -25,12 +25,11 @@ from PyQt5.QtWidgets import (
     QGridLayout,
 )
 
-from hardware_control.base import HC_App, HC_MainWindow, Dataset, AUTOMATIC
+from hardware_control.base import HC_App, HC_MainWindow, Dataset
 from hardware_control.IOModule import ADAM6024Ctrl, HC_IOModule, read_channel_file
 from hardware_control.Oscilloscope import HC_Oscilloscope, Pico6000Ctrl
 from hardware_control.PowerSupply import (
     HC_MultiPowerSupply,
-    ONLY,
     CAEN14xxETCtrl,
     Key36300Ctrl,
 )
@@ -190,7 +189,7 @@ class RootsDemo(HC_MainWindow):
             "Keysight Power Supply",
             show_VI_limits=True,
             show_custom_labels=True,
-            all_enable_button=ONLY,
+            all_enable_button=HC_MultiPowerSupply.ONLY,
             lock_until_sync=True,
         )
         self.keysight_wdgt.set_maxV(1, 5)
@@ -202,7 +201,7 @@ class RootsDemo(HC_MainWindow):
         self.keysight_wdgt.set_channel_label(1, "1: Heater")
         self.keysight_wdgt.set_channel_label(2, "Channel 2")
         self.keysight_wdgt.set_channel_label(3, "Channel 3")
-        self.keysight_wdgt.ramp_mode = AUTOMATIC
+        self.keysight_wdgt.ramp_mode = HC_MultiPowerSupply.AUTOMATIC
         self.keysight_wdgt.default_ramp_speed = 1
 
         # self.adam_be = ADAM6024Ctrl("192.168.0.5:1025")
