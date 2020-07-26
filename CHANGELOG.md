@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - documentation on RTD: https://hardware-control.readthedocs.io/en/latest/index.html
+- simplify import by importing items in __init__.py of the subpackages
+  and moving some variables into classes
 - this changelog file
 
 ## [0.0.2] 2020-07-08
