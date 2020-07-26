@@ -1,3 +1,17 @@
+"""Base class and helper function for implementing an instrument backend.
+
+A backend for an instrument will run in its own thread. It should have
+no Qt references, so that it can also be used in command line apps.
+
+Several default connections modes are supported out of the box:
+pyvisa, sockets, and modbus.
+
+For other communications protocles, the user needs to overwrite the
+connect function.
+
+"""
+
+
 import abc
 from functools import wraps
 import inspect
@@ -52,7 +66,21 @@ def ensure_online(f):
 
 
 class HC_Backend(abc.ABC):
-    """Base class for all instruments"""
+    """Base class for all instruments.
+
+    This class should be inherited for every instrument backend.
+
+    The backend implements the actual communications between python and the instrument.
+
+    The class supports several connections modes out of the box:
+    pyvisa, sockets, and modbus
+
+    For other type of communictioan the try_connect function needs to be overwritten.
+
+    When implementing a backend the abstracmethods need to be
+    implemented: update_setting, command, and check_connection.
+
+    """
 
     def __init__(self):
 
@@ -112,7 +140,10 @@ class HC_Backend(abc.ABC):
         that the instrument is actually connected by querying something from the
         instrument such as the instrument's model number or ID.
 
-        Return True if connected, False if not connected, None if not implimented
+        Returns
+        -------
+        True if connected, False if not connected, None if not implimented
+
         """
 
         pass
