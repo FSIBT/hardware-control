@@ -144,7 +144,6 @@ class HC_MultiPowerSupply(HC_Instrument):
         self.read_state_from_backend()
 
     def init_values(self):
-
         self.values = {}
         for c in self.channels:
             self.values[f"CH{c}_V_out"] = ""
@@ -180,7 +179,6 @@ class HC_MultiPowerSupply(HC_Instrument):
                     setButtonState(c.enabled_but, True)
 
         else:
-
             logger.debug(
                 "All channels on/off button pressed. Will set based on button.isChecked()"
             )
@@ -190,12 +188,8 @@ class HC_MultiPowerSupply(HC_Instrument):
                     f"CH{c.channel}_enable", str(self.all_enable_but.isChecked())
                 )
 
-    def close(self):  # Note: this is a complete duplicate of the 'close()' function
-        # in HC_Instrument, except it adds readout_timer.stop()
-
-        if self.comm is not None:
-            if self.comm.try_connect_timer.isActive():
-                self.comm.close()
+    def close(self):
+        super().close()
         self.readout_timer.stop()
 
     def update_readout(self):
@@ -317,22 +311,18 @@ class HC_MultiPowerSupply(HC_Instrument):
         except:
             logger.error(f"Failed to set channel {channel} label to {label}")
 
-    #
-    # Create a default state object if can't get state from a file
-    #
     def default_state(self):
+        """Create a default state object if can't get state from a file."""
 
-        dflt = {}
-
+        default = {}
         for c in self.channels:
-            dflt[f"CH{c}_enable"] = False
-            dflt[f"CH{c}_V_set"] = 0
-            dflt[f"CH{c}_I_set"] = 0.5
+            default[f"CH{c}_enable"] = False
+            default[f"CH{c}_V_set"] = 0
+            default[f"CH{c}_I_set"] = 0.5
 
-        return dflt
+        return default
 
     def settings_to_UI(self):
-
         for c in self.channel_widgets:
             c.settings_to_UI()
 
@@ -528,7 +518,6 @@ class PowerSupplyChannel(QWidget):
         self.status_panel.setLayout(self.status_grid)
 
         # ******* DEFINE OVERALL LAYOUT
-        #
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.channel_label, 0, 0)
         self.master_layout.addLayout(self.readout_grid, 1, 0)
