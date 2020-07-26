@@ -33,17 +33,6 @@ master_doc = "index"
 # ones.
 extensions = ["sphinx.ext.autodoc", "sphinx.ext.napoleon"]
 
-if on_rtd:
-    autodoc_mock_imports = [
-        "ctypes",
-        "numpy",
-        "scipy",
-        "pandas",
-        "pyqtgraph",
-        "sip",
-    ]
-
-
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 

@@ -4,14 +4,8 @@ import setuptools
 with open("README.md") as f:
     long_description = f.read()
 
-on_rtd = os.environ.get("READTHEDOCS") == "True"
 with open("requirements.txt") as f:
     required = f.read().splitlines()
-    # fix install list for readthedocs
-    if on_rtd:
-        for package in ["ctypes", "numpy", "scipy", "pandas", "pyqtgraph", "sip"]:
-            if package in required:
-                required.remove(package)
 
 setuptools.setup(
     name="hardware-control",
