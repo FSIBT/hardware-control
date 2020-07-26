@@ -1,3 +1,9 @@
+"""Alicat M-Series gas flow meters.
+
+See class definition for details.
+
+"""
+
 import logging
 import random
 
@@ -11,6 +17,14 @@ logger = logging.getLogger(__name__)
 
 
 class AlicatMSeriesCtrl(HC_Backend):
+    """A driver for Alicat M-Series flow controllers.
+
+    Instrument home page: https://www.alicat.com/product/mass-flow-meters
+
+    The instrument is controlled via modbus over ethernet.
+
+    """
+
     def __init__(self, ip_addr):
 
         super().__init__()

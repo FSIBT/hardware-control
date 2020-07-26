@@ -1,3 +1,9 @@
+""" Siglent SDG Series.
+
+See class definition for details.
+
+"""
+
 import logging
 
 from hardware_control.base.HC_Backend import HC_Backend
@@ -7,6 +13,12 @@ logger = logging.getLogger(__name__)
 
 
 class SigSDGCtrl(HC_Backend):
+    """A driver for the Siglent SDG Series.
+
+    Instrument home page: https://www.siglent.eu/waveform-generators
+
+    """
+
     def __init__(self, connection_addr: str):
 
         super().__init__()

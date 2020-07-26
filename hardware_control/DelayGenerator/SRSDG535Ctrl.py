@@ -1,9 +1,9 @@
-"""
-The manual for this instrument can be found at
+"""Stanford Research Systems DG535.
 
- https://www.thinksrs.com/downloads/pdfs/manuals/DG535m.pdf page 9ff
+See class definition for details.
 
 """
+
 import logging
 
 from hardware_control.base.HC_Backend import HC_Backend
@@ -13,6 +13,15 @@ logger = logging.getLogger(__name__)
 
 
 class SRSDG535Ctrl(HC_Backend):
+    """A driver for the Stanford Research Systems DG535.
+
+    Instrument home page: https://www.thinksrs.com/products/DG535.htm
+    Manual: https://www.thinksrs.com/downloads/pdfs/manuals/DG535m.pdf
+
+    The instrument uses GPIB (tested with a NI-GPIB-usb adapter) and
+    is controlled using the pyvisa library.
+
+    """
 
     # 12: combined output for ch1 and ch2
     # 34: combined output for ch3 and ch4

@@ -1,4 +1,6 @@
-"""
+"""Advantac ADAM 6024
+
+See class definition for details.
 
 """
 
@@ -13,7 +15,11 @@ logger = logging.getLogger(__name__)
 
 
 class ADAM6024Ctrl(HC_Backend):
-    """Control of Adam input/output module"""
+    """A driver for the Adam 6024 input/output module.
+
+    Instrument home page: https://www.advantech.com/products/a67f7853-013a-4b50-9b20-01798c56b090/adam-6024/mod_99d243cd-2f38-48a3-a82c-eeb5e0f4e278
+
+    """
 
     def __init__(self, connection_addr):
 

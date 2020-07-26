@@ -1,7 +1,7 @@
-"""
-This is a device for reading Temperatures
-It receives a string "CH#_TEMP?"
-There are no settings to be set
+"""Advantac ADAM 6015 (4 thermo couple readouts)
+
+See class definition for details.
+
 """
 
 import logging
@@ -15,7 +15,11 @@ logger = logging.getLogger(__name__)
 
 
 class ADAM6015Ctrl(HC_Backend):
-    """Control of Adam input/output module"""
+    """A driver for the Adam 6015.
+
+    Instrument home page: https://www.advantech.com/products/a67f7853-013a-4b50-9b20-01798c56b090/adam-6015/mod_9c835a28-5c91-49fc-9de1-ec7f1dd3a82d
+
+    """
 
     def __init__(self, connection_addr="192.168.1.25:1025"):
 

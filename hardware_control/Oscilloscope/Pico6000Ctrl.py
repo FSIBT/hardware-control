@@ -1,3 +1,9 @@
+"""Picoscpe 6000 series.
+
+See class definition for details.
+
+"""
+
 import logging
 import numpy as np
 
@@ -14,6 +20,11 @@ logger = logging.getLogger(__name__)
 
 
 class Pico6000Ctrl(HC_Backend):
+    """A driver for the Picotech Picoscpe 6000 series
+
+    Instrument home page: https://www.picotech.com/oscilloscope/picoscope-6000-series
+    """
+
     def __init__(
         self, connection_addr,
     ):

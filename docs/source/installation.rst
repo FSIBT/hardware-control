@@ -19,3 +19,8 @@ If you want to also work on the code, e.g. add new instruments or supply bug fix
 
   git clone https://bitbucket.org/berkeleylab/hardware-control.git
 
+and then cd into the repository and use::
+
+  pip install -e .
+
+In case you create new files in the repo, you will need to rerun the last command.

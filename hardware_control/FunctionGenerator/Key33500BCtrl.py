@@ -1,3 +1,9 @@
+"""Keysight 33500 waveform and function generator.
+
+See class definition for deails.
+
+"""
+
 import logging
 
 from hardware_control.base.HC_Backend import HC_Backend
@@ -21,7 +27,10 @@ waveform_lookup = {
 
 
 class Key33500BCtrl(HC_Backend):
-    """ Backend for Keysight 33500B arbitrary waveform generator
+    """ Backend for Keysight 33500B arbitrary waveform generator.
+
+    Instrument home page: https://www.keysight.com/us/en/products/waveform-and-function-generators/trueform-series-waveform-and-function-generators.html
+
 
     Parameters
     ----------
