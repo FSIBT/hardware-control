@@ -15,6 +15,7 @@ qtconsole
 recommonmark
 setuptools
 setuptools-scm
+sip
 Sphinx
 tqdm
 visa
