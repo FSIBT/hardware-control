@@ -12,7 +12,7 @@ hardware_control.IOModule.HC_Read
 hardware_control.IOModule.HC_IOModule
 -------------------------------------
 
-.. automodule:: hardware_control.IOModule.HC_Read
+.. automodule:: hardware_control.IOModule.HC_IOModule
    :members:
    :undoc-members:
    :show-inheritance:

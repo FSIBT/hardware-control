@@ -3,23 +3,21 @@ import logging
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
 import pyqtgraph as pg  # For some reason, without this line QPushButton won't import
-from PyQt5.QtGui import (
-    QSpacerItem,
-    QSizePolicy,
-    QDoubleValidator,
-)
+from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtWidgets import (
-    QGroupBox,
-    QLineEdit,
-    QPushButton,
-    QLabel,
-    QGridLayout,
+    QCheckBox,
     QComboBox,
+    QGridLayout,
+    QGroupBox,
+    QLabel,
+    QLineEdit,
+    QMessageBox,
+    QPushButton,
+    QSizePolicy,
+    QSpacerItem,
     QTableWidget,
     QTableWidgetItem,
     QWidget,
-    QCheckBox,
-    QMessageBox,
 )
 from hardware_control.base import HC_Instrument
 from .utility import load_icon

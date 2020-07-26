@@ -1,4 +1,4 @@
-"""A submodule that contains several QT5 widgets.
+"""A submodule that contains several Qt widgets.
 
 """
 

@@ -13,7 +13,9 @@ logger = logging.getLogger(__name__)
 
 
 class HC_Read(HC_Instrument):
-    """ """
+    """A simple UI for read-only modules
+
+    """
 
     def __init__(
         self,
@@ -29,9 +31,7 @@ class HC_Read(HC_Instrument):
         # initalizing
         super().__init__(window, name)
 
-        self.settings = (
-            {}
-        )  # A dict to store all possible settings-Not used here,bc there are no settings
+        self.settings = {}
         self.backend = backend
         self.address = backend.connection_addr
 
