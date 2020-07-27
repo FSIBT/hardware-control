@@ -298,17 +298,28 @@ class CustomControlWidget(QGroupBox):
 
         self.filament_label = QLabel("Filament duration (sec): ")
 
+        instr_idx = window.app.get_instrument_idx("Trigger 1")
+        print(f"Instrument index: {instr_idx}")
         self.filament_edit = QLineEdit()
         self.filament_edit.setValidator(QDoubleValidator())
-        # self.arc_edit.editingFinished.connect(
-        # lambda: self.delay_changed(self.time_edit.text())
-        # )
+        if instr_idx != -1:
+            self.filament_edit.editingFinished.connect(
+                lambda idx=instr_idx: window.app.instruments[idx].remote_update_setting(
+                    "CH2_delay", self.filament_edit.text()
+                )
+            )
         self.filament_edit.setText(filament_dg.settings["CH2_delay"])
 
         self.filament_amp_label = QLabel("Filament amplitude (a.u.): ")
 
         self.filament_amp_edit = QLineEdit()
         self.filament_amp_edit.setValidator(QDoubleValidator())
+        if instr_idx != -1:
+            self.filament_amp_edit.editingFinished.connect(
+                lambda idx=instr_idx: window.app.instruments[idx].remote_update_setting(
+                    "CH12_output_amplitude", self.filament_amp_edit.text()
+                )
+            )
         self.filament_amp_edit.setText(
             self.filament_dg.settings["CH12_output_amplitude"]
         )
@@ -317,12 +328,26 @@ class CustomControlWidget(QGroupBox):
 
         self.spark_delay_edit = QLineEdit()
         self.spark_delay_edit.setValidator(QDoubleValidator())
+        if instr_idx != -1:
+            self.spark_delay_edit.editingFinished.connect(
+                lambda idx=instr_idx: window.app.instruments[idx].remote_update_setting(
+                    "CH3_delay", self.spark_delay_edit.text()
+                )
+            )
         self.spark_delay_edit.setText(filament_dg.settings["CH3_delay"])
 
         self.spark_duration_label = QLabel("Spark duration (sec): ")
 
+        instr_idx = window.app.get_instrument_idx("Trigger 2")
+
         self.spark_duration_edit = QLineEdit()
         self.spark_duration_edit.setValidator(QDoubleValidator())
+        if instr_idx != -1:
+            self.spark_duration_edit.editingFinished.connect(
+                lambda idx=instr_idx: window.app.instruments[idx].remote_update_setting(
+                    "CH4_delay", self.spark_duration_edit.text()
+                )
+            )
         self.spark_duration_edit.setText(arc_dg.settings["CH4_delay"])
 
         self.master_layout = QGridLayout()
