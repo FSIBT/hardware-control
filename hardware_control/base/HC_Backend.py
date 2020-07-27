@@ -236,7 +236,7 @@ class HC_Backend(abc.ABC):
                 logger.debug(f"{self.ID} is offline")
             else:
                 self.online = True
-        elif self.connection_type == HC_Backebd.SOCKET:
+        elif self.connection_type == HC_Backend.SOCKET:
             try:
                 self.device = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.device.settimeout(2)
