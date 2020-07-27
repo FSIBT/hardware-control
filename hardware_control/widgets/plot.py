@@ -64,14 +64,33 @@ class HC_PlotBase(QWidget):
             self.update_timer.start(self.interval)
 
     def set_dataset(self, set_name: str):
+        """ Specifies which dataset the widget should display
+
+        Parameters
+        ----------
+        set_name : str
+            Name of dataset in HC_App to display
+        """
         self.plot_set = set_name
 
         self.axes.clear()
 
     def toggle_autoscale(self):
+        """ Toggles the autoscale function.
+
+        The autoscale function will automatically adjust the axes to fit the
+        data. This function toggles the autoscale function on and off.
+        """
         self.autoscale = not self.autoscale
 
     def toggle_normalize(self):
+        """ Toggles the normalize function.
+
+        The normalize function will automatically normalize the displayed data to
+        have a maximum value of 1. This allows parameters of greatly different
+        magnitudes to be viewed easily on the same chart. This function toggles
+        the normalize function on and off.
+        """
         self.normalize = not self.normalize
 
     def update(self):
@@ -185,6 +204,11 @@ class HC_PlotTool(HC_PlotBase):
         self.setLayout(self.vbox)
 
     def selector_changed(self):
+        """ Is automatically called when the dataset dropdown is changed.
+
+        This function updates the dataset to plot using the current value of the
+        dropdown widget.
+        """
 
         current_text = self.select_set_drop.currentText()
 
@@ -192,6 +216,13 @@ class HC_PlotTool(HC_PlotBase):
             super().set_dataset(current_text)
 
     def set_dataset(self, set_name: str):
+        """ Sets the dataset in HC_App to plot.
+
+        Parameters
+        ----------
+        set_name : str
+            Name of set in HC_App to plot
+        """
 
         super().set_dataset(set_name)
 
@@ -200,6 +231,9 @@ class HC_PlotTool(HC_PlotBase):
         self.select_set_drop.setCurrentText(set_name)
 
     def update(self):
+        """ Updates the plot widget with the most recent data.
+        """
+
         super().update()
 
         self.axes.set_xlabel("Time (s)")
@@ -232,6 +266,8 @@ class HC_MiniPlotTool(HC_PlotBase):
         self.setLayout(self.vbox)
 
     def update(self):
+        """ Updates the plot widget with the most recent data.
+        """
         super().update()
 
         self.axes.axis("off")
