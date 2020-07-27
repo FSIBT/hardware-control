@@ -80,6 +80,13 @@ class HC_App(QApplication):
         return instr_idx
 
     def add_instrument(self, widget):
+        """ Adds an HC_Instrument to self.instruments list
+
+        Parameters
+        ----------
+        widget
+            HC_Instrument to add to self.instruments list
+        """
         # check if name is already present
         if widget.name in [x.name for x in self.instruments]:
             raise KeyError(f"Intrument name '{widget.name}' is already present")
@@ -115,6 +122,11 @@ class HC_App(QApplication):
         new dictionary with the instrument's name serving as the
         key. The dictionary is then saved to a JSON file.
 
+        Parameters
+        ----------
+        filename : str
+            Name of file to save parameters to
+
         """
 
         app_settings = {instr.name: instr.settings for instr in self.instruments}
@@ -132,6 +144,8 @@ class HC_App(QApplication):
             )
 
     def list_instruments(self):
+        """ Prints a list of all instruments in self.instruments
+        """
 
         if not self.instruments:
             print("No known instruments")
@@ -142,7 +156,8 @@ class HC_App(QApplication):
             print(f"  {i}")
 
     def check_instruments(self):
-        """Make sure all instruments conform to specifications"""
+        """ Ensures all instruments conform to specifications
+        """
         for i in self.instruments:
             try:
                 i.name
@@ -154,6 +169,11 @@ class HC_App(QApplication):
                 logger.error(f"Instrument  {i} needs a .model")
 
     def close(self):
+        """ Closes the application
+
+        Safely closes the application by disconnecting all instruments and saving
+        any data specified to save automatically before close.
+        """
 
         # Loop through instruments, close each one...
         for instr in self.instruments:
@@ -611,6 +631,11 @@ class HC_App(QApplication):
         th instrument's settings dictionary then that parameter is
         unchanged.
 
+        Parameters
+        ----------
+        filename : str
+            Name of JSON file to read settings from
+
         """
 
         # Read file
@@ -645,6 +670,13 @@ class HC_App(QApplication):
                 instr.settings[param] = instr_settings[param]
 
     def save_all_states(self, filename: str):
+        """ Saves the state of every instrument in 'self.instruments' to a file
+
+        Parameters
+        ----------
+        filename : str
+            Name of the JSON file to save the instrument states to
+        """
 
         all_states = {}
 
@@ -664,11 +696,23 @@ class HC_App(QApplication):
             )
 
     def settings_to_backends(self):
+        """ Sends the front end's state to all backends
+
+        Calls 'send_state' for each instrument in self.instruments, thus sending
+        their settings dictionaries to their backends.
+
+        """
 
         for instr in self.instruments:
             instr.send_state()
 
     def backends_to_settings(self):
+        """ Overwrites all settings with the current values measured in the physical instrument.
+
+        Calls 'read_state_from_backend' for each instrument, thus updating the
+        'settings' dictionary by querying each value from the backend.
+
+        """
 
         for instr in self.instruments:
             instr.read_state_from_backend()
