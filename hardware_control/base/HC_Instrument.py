@@ -250,6 +250,27 @@ class HC_Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
             logger.debug("Killing ramp timer")
             self.ramp_timer.stop()
 
+    def remote_update_setting(self, setting: str, value: str):
+        """ Calls update_setting to update backend, then uses setting_to_UI.
+
+        A function to be called from outside the widget which both updates the
+        widget and backend.
+
+        Parameters
+        ----------
+        setting : str
+            Setting to update
+        calue : str
+            New value for setting
+
+        Returns
+        -------
+        None
+        """
+
+        self.update_setting(setting, value)
+        self.settings_to_UI()
+
     def update_setting(self, setting: str, value: str):
         """Update a setting in settings and values dictionary for the instrument"""
 
