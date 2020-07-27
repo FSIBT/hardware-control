@@ -7,6 +7,8 @@ from PyQt5.QtWidgets import (
     QHBoxLayout,
     QPushButton,
     QVBoxLayout,
+    QLabel,
+    QComboBox,
 )
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
@@ -63,6 +65,8 @@ class HC_PlotBase(QWidget):
 
     def set_dataset(self, set_name: str):
         self.plot_set = set_name
+
+        self.axes.clear()
 
     def toggle_autoscale(self):
         self.autoscale = not self.autoscale
@@ -144,6 +148,8 @@ class HC_PlotTool(HC_PlotBase):
 
         self.axes = self.fig.add_subplot()
 
+        self.window = window
+
         self.linewidth = 1
 
         self.plot.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -159,8 +165,15 @@ class HC_PlotTool(HC_PlotBase):
         self.autoscalebutton.clicked.connect(self.toggle_autoscale)
         self.autoscalebutton.setCheckable(True)
         self.autoscalebutton.setChecked(True)
+        self.select_set_label = QLabel("Dataset:")
+        self.select_set_drop = QComboBox()
+        self.select_set_drop.addItems([x for x in window.app.data_sets])
+        self.select_set_drop.currentIndexChanged.connect(self.selector_changed)
+
         self.controls.addWidget(self.normalizebutton)
         self.controls.addWidget(self.autoscalebutton)
+        self.controls.addWidget(self.select_set_label)
+        self.controls.addWidget(self.select_set_drop)
         self.controls.addStretch(1)
 
         self.vbox = QVBoxLayout()
@@ -170,6 +183,21 @@ class HC_PlotTool(HC_PlotBase):
         self.vbox.addSpacing(50)
 
         self.setLayout(self.vbox)
+
+    def selector_changed(self):
+
+        current_text = self.select_set_drop.currentText()
+
+        if current_text is not None:
+            super().set_dataset(current_text)
+
+    def set_dataset(self, set_name: str):
+
+        super().set_dataset(set_name)
+
+        self.select_set_drop.clear()
+        self.select_set_drop.addItems([x for x in self.window.app.data_sets])
+        self.select_set_drop.setCurrentText(set_name)
 
     def update(self):
         super().update()
