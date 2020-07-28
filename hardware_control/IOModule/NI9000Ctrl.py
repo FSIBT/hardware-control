@@ -33,7 +33,10 @@ logger = logging.getLogger(__name__)
 class NI9000Ctrl(HC_Backend):
     def __init__(self, connection_addr: str = ""):
 
-        super().__init__(instrument_name="NI-9000", connection_addr=connection_addr)
+        # need to set a default port for this instrument
+        super().__init__(
+            instrument_name="NI-9000", connection_addr=connection_addr, default_port=0
+        )
 
         self.num_channels = 1
         self.max_V = [5] * 22

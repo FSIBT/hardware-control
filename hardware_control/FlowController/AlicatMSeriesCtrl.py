@@ -28,7 +28,9 @@ class AlicatMSeriesCtrl(HC_Backend):
     def __init__(self, connection_addr):
 
         super().__init__(
-            instrument_name="AlicatMSeries", connection_addr=connection_addr
+            instrument_name="AlicatMSeries",
+            connection_addr=connection_addr,
+            default_port=0,  # modbus instrument need to set a default_port to an integer
         )
         self.connection_type = HC_Backend.MODBUS
         self.error_count = 0
