@@ -10,6 +10,8 @@ logger = logging.getLogger(__name__)
 
 
 class Key4000XCtrl(HC_Backend):
+    """ A backend to control the Keysight 4000X Series oscilloscopes
+    """
 
     # sigReturnWaves = pyqtSignal(int, list, list)
 
@@ -25,6 +27,34 @@ class Key4000XCtrl(HC_Backend):
         self.check_connection_commands = "*IDN?"
 
     def update_setting(self, setting: str, value):
+        """ Changes a specified setting to the specied value
+
+        Parameters
+        ----------
+        setting : str
+            Setting to change
+
+        Notes
+        --------
+        Available settings (<X> indicates a number, values in parethesis show acceptable values):
+
+        * timebase: horizontal resolution in time per division (float)
+        * time_offset: time offset from trigger (float)
+        * labels_enabled: enables or disables channel labels on the instrument (bool)
+        * trigger_level: Set trigger level (float)
+        * trigger_coupling: Set the trigger coupling (AC, DC, LFReject)
+        * trigger_edge: Set which edge of waveform oscilloscope triggers on (BOTH, NEG, POS, ALT)
+        * trigger_channel: Which channel to trigger on (1,2,3,4)
+        * CH<X>_volts_div: Sets the voltage per division for channel 'X' (float)
+        * CH<X>_offset: Sets the voltage offset for channel 'X' (float)
+        * CH<X>_BW_lim: Enables or disables the 20MHz bandwidth limit for channel 'X' (bool)
+        * CH<X>_active: Enables or disables channel 'X' (bool)
+        * CH<X>_impedance: Sets the imedance for the channnel (50, 1e6)
+        * CH<X>_label: Label for the channel (str)
+        * CH<X>_invert: Enables or disables inverting for channel 'X' (bool)
+        * CH<X>_probe_atten: Sets the probe attenuation for channel 'X'. For example, providing the value '10' would indicate a 10x or 10:1 probe. (float)
+        * CH<X>_coupling: Sets the coupling mode for the speicied channel (AC, DC)
+        """
 
         if not self.online:
             return "Offline"
