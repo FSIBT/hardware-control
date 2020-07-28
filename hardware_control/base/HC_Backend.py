@@ -85,7 +85,9 @@ class HC_Backend(abc.ABC):
 
     SUPPORTED_CONNECTION_TYPES = [VISA, SOCKET, MODBUS]
 
-    def __init__(self, instrument_name, connection_addr, default_port=None):
+    def __init__(
+        self, instrument_name: str, connection_addr: str, default_port: int = None
+    ):
 
         self.ID = instrument_name
         self.online = False  # does a connection to the instrument exist?
@@ -231,12 +233,10 @@ class HC_Backend(abc.ABC):
         if self.online:
             if self.check_connection():
                 return True
-            else:
-                self.online = False
+            self.online = False
 
         logger.debug(f"{self.ID}: trying to connect")
 
-        # Try to connect to instrument
         if self.connection_type == HC_Backend.VISA:
             try:
                 rm = pyvisa.ResourceManager("@py")
@@ -305,7 +305,7 @@ class HC_Backend(abc.ABC):
             if self.connection_type == HC_Backend.VISA:
                 self.device.write(command)
                 return command
-            elif self.connection_type == HC_Backend.SOCKET:
+            if self.connection_type == HC_Backend.SOCKET:
                 self.device.sendall(bytes(command + "\n", "utf-8"))
                 return command
         except Exception:
