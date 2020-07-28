@@ -43,7 +43,7 @@ class CAEN14xxETCtrl(HC_Backend):
 
         if not self.online:
             logger.info("CAEN")
-            return "Offline"
+            return f"{self.ID}-Offline"
 
         if self.dummy:
             return str(value)
@@ -106,7 +106,7 @@ class CAEN14xxETCtrl(HC_Backend):
             return f"{cmd[:-1]}={rval}"
 
         if not self.online:
-            return "Offline"
+            return f"{self.ID}-Offline"
 
         if self.dummy:
             num = random.random() * 10

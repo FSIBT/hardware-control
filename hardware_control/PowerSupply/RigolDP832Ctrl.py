@@ -13,10 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class RigolDP832Ctrl(HC_Backend):
-    # @thread_info
-    def __init__(
-        self, connection_addr,
-    ):
+    def __init__(self, connection_addr):
         super().__init__(instrument_name="RigolDP832", connection_addr=connection_addr)
 
         # This specifies the max number of channels the user can request
@@ -25,7 +22,6 @@ class RigolDP832Ctrl(HC_Backend):
         self.max_V = [None] * self.num_channels
         self.max_I = [None] * self.num_channels
 
-    ##@thread_info
     def update_setting(self, setting: str, value):
 
         channel, setting_X = get_channel_from_command(setting)
@@ -40,7 +36,7 @@ class RigolDP832Ctrl(HC_Backend):
             return str(value)
 
         if not self.online:
-            return "Offline"
+            return f"{self.ID}-Offline"
 
         if self.dummy:
             return str(value)
@@ -55,7 +51,6 @@ class RigolDP832Ctrl(HC_Backend):
 
         value = ensure_float(value)
         if setting_X == "CHX_I_set":
-
             logger.debug(f"Iset called with value {value}")
 
             if self.max_I[channel - 1] is not None:
@@ -66,8 +61,8 @@ class RigolDP832Ctrl(HC_Backend):
             self.write(f"SOUR{channel}:CURR {value}")
 
             return str(value)
-        elif setting_X == "CHX_V_set":
 
+        if setting_X == "CHX_V_set":
             logger.debug(f"Vset called with value {value}")
 
             if self.max_V[channel - 1] is not None:
@@ -79,8 +74,6 @@ class RigolDP832Ctrl(HC_Backend):
 
             return str(value)
 
-    # @ensure_online
-    ##@thread_info
     def command(self, cmd: str):
 
         # overwrite channel number for easier comparison
@@ -94,7 +87,7 @@ class RigolDP832Ctrl(HC_Backend):
             return f"{cmd[:-1]}={rval}"
 
         if not self.online:
-            return "Offline"
+            return f"{self.ID}-Offline"
 
         if self.dummy:
             num = random.random() * 10

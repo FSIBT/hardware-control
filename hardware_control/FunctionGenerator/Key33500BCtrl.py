@@ -6,7 +6,7 @@ See class definition for deails.
 
 import logging
 
-from hardware_control.base.HC_Backend import HC_Backend
+from hardware_control.base.HC_Backend import HC_Backend, ensure_online
 from hardware_control.utility import get_channel_from_command
 
 logger = logging.getLogger(__name__)
@@ -48,6 +48,7 @@ class Key33500BCtrl(HC_Backend):
 
         self.check_connection_commands = "*IDN?"
 
+    @ensure_online
     def update_setting(self, setting: str, value):
         """ Called by HC_Comm object. Updates a setting in the instrument.
 
@@ -163,5 +164,6 @@ class Key33500BCtrl(HC_Backend):
             self.write(f"TRIG:SOUR CHAN{int(value)}")
             return self.query("TRIG:SOUR?")
 
+    @ensure_online
     def command(self, cmd: str):
         pass

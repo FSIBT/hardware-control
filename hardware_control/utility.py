@@ -1,5 +1,5 @@
-import re
 import ctypes
+import re
 
 
 def regex_compare(pattern: str, comp: str):

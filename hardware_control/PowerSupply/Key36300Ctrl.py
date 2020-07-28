@@ -22,7 +22,6 @@ class Key36300Ctrl(HC_Backend):
         self.max_V = [None] * self.num_channels
         self.max_I = [None] * self.num_channels
 
-    # @ensure_online
     def update_setting(self, setting: str, value):
 
         channel, setting_X = get_channel_from_command(setting)
@@ -39,7 +38,7 @@ class Key36300Ctrl(HC_Backend):
             return str(value)
 
         if not self.online:
-            return "Offline"
+            return f"{self.ID}-Offline"
 
         if self.dummy:
             return str(value)
@@ -68,7 +67,6 @@ class Key36300Ctrl(HC_Backend):
             self.write(f"SOURCE:VOLT {value}, (@{channel})")
             return self.query(f":SOURCE:VOLT? (@{channel})")
 
-    # @ensure_online
     def command(self, cmd: str):
 
         # overwrite channel number for easier comparison
@@ -82,7 +80,7 @@ class Key36300Ctrl(HC_Backend):
             return f"{cmd[:-1]}={rval}"
 
         if not self.online:
-            return "Offline"
+            return f"{self.ID}-Offline"
 
         if self.dummy:
             num = random.random() * 10
