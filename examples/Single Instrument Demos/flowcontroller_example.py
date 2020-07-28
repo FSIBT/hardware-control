@@ -14,6 +14,7 @@ from docopt import docopt
 
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QGridLayout
 
+from hardware_control.base import HC_App
 from hardware_control.FlowController import AlicatMSeriesCtrl, HC_FlowController
 
 commands = docopt(__doc__)
@@ -45,7 +46,7 @@ class FlowControllerDemo(QMainWindow):
         self.instr_ctrl.close()
 
 
-app = QApplication([])
+app = HC_App(dummy=dummy)
 ex = FlowControllerDemo(app)
 app.aboutToQuit.connect(ex.close)
 sys.exit(app.exec_())

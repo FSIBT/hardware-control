@@ -1,12 +1,11 @@
 """Device demo
 
 Usage:
-  device_demo [--dummy] [--socket] [--debug]
+  device_demo [--dummy] [--socket]
 
 Options:
   --dummy    use dummy connection for instruments that return semi-random data
              so that one run the program away from the test stand
-  --debug    allow debug print statements
 """
 
 import sys
@@ -19,7 +18,6 @@ from hardware_control.DelayGenerator import SRSDG535Ctrl, HC_DelayGenerator
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
-debug = commands["--debug"]
 
 
 class Demo(QMainWindow):
@@ -32,7 +30,7 @@ class Demo(QMainWindow):
         self.main_widget = QWidget(self)
 
         ##### Add Device(s)
-        self.trig1 = SRSDG535Ctrl("GPIB0::15::INSTR", dummy, debug)
+        self.trig1 = SRSDG535Ctrl("GPIB0::15::INSTR")
         self.trig1_ctrl = HC_DelayGenerator(self.trig1, self, "Trigger 1", "DEFAULT")
 
         ##### Add above HC to the main Widget
@@ -43,7 +41,6 @@ class Demo(QMainWindow):
         self.setCentralWidget(self.main_widget)
         self.show()
 
-    #
     def close(self):
         self.trig1_ctrl.close()
 
@@ -51,7 +48,7 @@ class Demo(QMainWindow):
 def main():
     app = HC_App(dummy=dummy)
     app.print_close_info = True
-    ex = Demo(app)  # Change accordingly
+    ex = Demo(app)
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())
 

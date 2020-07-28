@@ -10,10 +10,11 @@ Options:
 """
 import sys
 
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QGridLayout
 from docopt import docopt
-from hardware_control.DelayGenerator.SRSDG535Ctrl import SRSDG535Ctrl
-from hardware_control.DelayGenerator.HC_DelayGenerator import HC_DelayGenerator
+
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QGridLayout
+
+from hardware_control.DelayGenerator import SRSDG535Ctrl, HC_DelayGenerator
 from hardware_control.base import HC_App, HC_MainWindow, Dataset
 
 commands = docopt(__doc__)
@@ -32,7 +33,7 @@ class PuslseGenDemo(HC_MainWindow):
         self.instr = SRSDG535Ctrl("GPIB0::10::INSTR")
         self.instr_ctrl = HC_DelayGenerator(self.instr, self)
 
-        self.trig1 = SRSDG535Ctrl("GPIB0::10::INSTR")
+        self.trig1 = SRSDG535Ctrl("GPIB0::15::INSTR")
         self.trig1_ctrl = HC_DelayGenerator(self.trig1, self, "Trigger 1", "DEFAULT")
 
         self.grid = QGridLayout()

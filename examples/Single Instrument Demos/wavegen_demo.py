@@ -2,13 +2,12 @@
 """wavegen demo
 
 Usage:
-  wavegen_demo [--dummy] [--socket] [--debug]
+  wavegen_demo [--dummy] [--socket]
 
 Options:
   --dummy    use dummy connection for instruments that return semi-random data
              so that one run the program away from the test stand
   --socket   use sockets instead of visa
-  --debug    allow debug print statements
 """
 
 import sys
@@ -23,9 +22,10 @@ commands = docopt(__doc__)
 dummy = commands["--dummy"]
 if commands["--socket"]:
     connection_type = "socket"
+    address = "192.168.0.15"
 else:
     connection_type = "visa"
-debug = commands["--debug"]
+    address = "USB0::0x0957::0x2907::MY52500624::INSTR"
 
 
 class WavegenDemo(QMainWindow):
@@ -37,17 +37,9 @@ class WavegenDemo(QMainWindow):
 
         self.main_widget = QWidget(self)
 
-        awg = Key33500BCtrl(
-            "USB0::0x0957::0x2907::MY52500624::INSTR",
-            dummy,
-            True,
-            connection_type,
-            "192.168.0.18",
-            5025,
-        )
-        self.awg_ctrl = HC_FunctionGenerator(
-            awg, self, "RF Generator", "DEFAULT", True, 1, debug
-        )
+        awg = Key33500BCtrl(address)
+
+        self.awg_ctrl = HC_FunctionGenerator(awg, self, "RF Generator")
 
         self.grid = QGridLayout()
         self.grid.addWidget(self.awg_ctrl, 1, 1)

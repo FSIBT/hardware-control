@@ -75,7 +75,6 @@ class STS50Demo(QMainWindow):
         #####################################################################
         ######## Tab 2
 
-        # awg = Key33500BCtrl("Some-address-goes-here", dummy, True, connection_type, "192.168.0.18", 5025)
         awg = Key33500BCtrl(
             "TCPIP0::192.168.1.18::INSTR",
         )  # "USB0::0x0957::0x2907::MY52500624::INSTR"

@@ -20,8 +20,11 @@ commands = docopt(__doc__)
 dummy = commands["--dummy"]
 if commands["--socket"]:
     connection_type = "socket"
+    address = "192.168.0.14"
+
 else:
     connection_type = "visa"
+    address = "TCPIP0::192.168.0.14::INSTR"
 
 from hardware_control.base import HC_App
 from hardware_control.Oscilloscope import HC_Oscilloscope, Key4000XCtrl
@@ -36,17 +39,8 @@ class ScopeWindow(QMainWindow):
 
         self.main_widget = QWidget(self)
 
-        scpi_scope = Key4000XCtrl(
-            "TCPIP0::192.168.0.14::INSTR",
-            dummy,
-            True,
-            connection_type,
-            "192.168.0.14",
-            5025,
-        )
-        self.scope_ctrl = HC_Oscilloscope(
-            scpi_scope, self, "Oscilloscope Control", "DEFAULT", True
-        )
+        scpi_scope = Key4000XCtrl(address)
+        self.scope_ctrl = HC_Oscilloscope(scpi_scope, self, "Oscilloscope Control")
 
         self.grid = QGridLayout()
         self.grid.addWidget(self.scope_ctrl, 0, 0)

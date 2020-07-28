@@ -2,12 +2,12 @@
 """PSU demo
 
 Usage:
-  psu_demo [--dummy] [--socket] [--debug]
+  psu_demo [--dummy]
 
 Options:
   --dummy    use dummy connection for instruments that return semi-random data
              so that one run the program away from the test stand
-  --debug    allow debug print statements
+
 """
 
 import sys
@@ -22,7 +22,6 @@ from hardware_control.PowerSupply import CAEN14xxETCtrl, HC_MultiPowerSupply
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
-debug = commands["--debug"]
 
 
 class PSUDemo(QMainWindow):
@@ -34,12 +33,7 @@ class PSUDemo(QMainWindow):
 
         self.main_widget = QWidget(self)
 
-        # psu = TDKLGenHCtrl("TCPIP0::192.168.1.19::INSTR", dummy)
-        # self.psu_ctrl = HC_MultiPowerSupply(
-        #     psu, self, [1], "Power Supply Unit", "DEFAULT"
-        # )
-
-        psu = CAEN14xxETCtrl("TCPIP::192.168.1.20::1470::SOCKET", dummy)
+        psu = CAEN14xxETCtrl("TCPIP::192.168.1.20::1470::SOCKET")
         self.psu_ctrl = HC_MultiPowerSupply(
             psu, self, [1, 2, 3], "Power Supply Unit", "DEFAULT"
         )
