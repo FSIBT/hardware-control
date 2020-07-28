@@ -20,17 +20,7 @@ class SigSDGCtrl(HC_Backend):
     """
 
     def __init__(self, connection_addr: str):
-
-        super().__init__()
-        self.ID = "SIGLENT-SDG"
-
-        self.connection_addr = connection_addr
-        self.online = False
-        self.dummy = False
-
-        self.parse_connection_addr()
-
-        self.check()
+        super().__init__(instrument_name="SIGLENT-SDG", connection_addr=connection_addr)
 
     def update_setting(self, setting: str, value):
 

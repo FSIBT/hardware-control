@@ -85,21 +85,34 @@ class HC_Backend(abc.ABC):
 
     SUPPORTED_CONNECTION_TYPES = [VISA, SOCKET, MODBUS]
 
-    def __init__(self):
+    def __init__(self, instrument_name, connection_addr, default_port=None):
 
-        self.ID = None  # this should be a string with instrument name
+        self.ID = instrument_name
         self.online = False  # does a connection to the instrument exist?
 
         self.device = None  # This is the physical instrument to write to
         self.dummy = False
 
-        self.connection_addr = None
+        self.connection_addr = connection_addr
         self.connection_type = None
-        self.port_no = None
+
         self.ip_addr = None
+        self.port_no = default_port
         self.termination = "\n"
 
+        self.parse_connection_addr()
+
     def parse_connection_addr(self):
+        """Figures out if pyvisa or other methods should be used.
+
+        Currently pyvisa addresses are automatically recognised,
+        everything else is assumed to be in the form of either just an
+        IP address or an IP address and a port number seperated by a
+        ":".  For this case sockets are automatically assumed. If
+        modbus should be used, the user needs to overwrite this in the
+        init function of the backend.
+
+        """
 
         if (
             self.connection_addr.startswith("ASRL")
@@ -113,28 +126,12 @@ class HC_Backend(abc.ABC):
             self.connection_type = HC_Backend.VISA
         else:
             self.connection_type = HC_Backend.SOCKET
-            try:
-                self.ip_addr, self.port_no = self.connection_addr.rsplit(":", 1)
-                self.port_no = int(self.port_no)
-            except ValueError:
-                logger.error(
-                    f"{self.ID} cannot parse connection address {self.connection_addr}"
-                )
-                self.ip_addr = self.connection_addr
-                self.port_no = None
-
-    def check(self):
-        """Some error checking
-
-        to be called at the end of __init__ in the instrument
-
-        """
-        if self.connection_type not in HC_Backend.SUPPORTED_CONNECTION_TYPES:
-            logger.error(
-                f"The connection type {self.connection_type}" + " is not supported"
-            )
-        if self.ID is None:
-            logger.error("Need to set the instrument ID")
+            values = self.connection_addr.rsplit(":", 1)
+            if len(values) == 1:
+                self.ip_addr = values[0]
+            elif len(values) == 2:
+                self.ip_addr, self.port_no = values
+            self.port_no = int(self.port_no)
 
     @abc.abstractmethod
     def check_connection(self):

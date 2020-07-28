@@ -24,25 +24,17 @@ class ZMQOscilloscopeCtrl(HC_Backend):
     def __init__(
         self, connection_addr: str,
     ):
-
-        super().__init__()
-        self.ID = "ZMQ-Oscilloscope"
+        super().__init__(
+            instrument_name="ZMQ-Oscilloscope", connection_addr=connection_addr
+        )
 
         # Create context and socket
         self.context = zmq.Context()
         self.socket = None
-
         self.timeout_time_ms = 500
         self.zmq_address = connection_addr
-        self.connection_addr = connection_addr  # So widget can read address
-        self.online = False
-        self.dummy = False
         self.num_vert_divisions = 8  # Todo: remove this from all files
-
-        self.parse_connection_addr()
-
         self.settings = self.default_settings()
-        self.check()
 
     def check_connection(self):
 

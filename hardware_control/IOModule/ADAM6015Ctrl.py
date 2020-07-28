@@ -21,17 +21,15 @@ class ADAM6015Ctrl(HC_Backend):
 
     """
 
-    def __init__(self, connection_addr="192.168.1.25:1025"):
+    def __init__(self, connection_addr):
 
-        super().__init__()
+        super().__init__(
+            instrument_name="Advantac_ADAM-6015",
+            connection_addr=connection_addr,
+            default_port=1025,
+        )
 
-        self.online = False
-        self.ID = "Advantac_ADAM-6015"
         self.buf = 200
-        self.connection_addr = connection_addr
-
-        self.parse_connection_addr()
-
         self.addr = (self.ip_addr, self.port_no)
 
         self.try_connect()

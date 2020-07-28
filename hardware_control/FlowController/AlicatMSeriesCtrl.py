@@ -25,20 +25,13 @@ class AlicatMSeriesCtrl(HC_Backend):
 
     """
 
-    def __init__(self, ip_addr):
+    def __init__(self, connection_addr):
 
-        super().__init__()
-
-        self.ID = "AlicatMSeries"
-
-        self.connection_addr = ip_addr
-        # TODO: Add modbus as option to 'self.parse_connection_addr()'
+        super().__init__(
+            instrument_name="AlicatMSeries", connection_addr=connection_addr
+        )
         self.connection_type = HC_Backend.MODBUS
-        self.dummy = False
-
         self.error_count = 0
-
-        self.check()
 
     def update_setting(self, setting: str, value):
 

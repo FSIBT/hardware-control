@@ -15,23 +15,13 @@ class CAEN14xxETCtrl(HC_Backend):
         self, connection_addr,
     ):
 
-        super().__init__()
-
-        self.ID = "CAEN14xxET"
-
-        self.connection_addr = connection_addr
-        self.online = False
-        self.dummy = False
-
-        self.parse_connection_addr()
+        super().__init__(instrument_name="CAEN14xxET", connection_addr=connection_addr)
 
         # This specifies the max number of channels the user can request
         self.num_channels = 8
 
         self.max_V = [None] * self.num_channels
         self.max_I = [None] * self.num_channels
-
-        self.check()
 
     def check_connection(self):
 

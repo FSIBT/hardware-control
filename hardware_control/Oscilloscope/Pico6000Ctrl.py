@@ -28,22 +28,15 @@ class Pico6000Ctrl(HC_Backend):
     def __init__(
         self, connection_addr,
     ):
-        super().__init__()
-        self.ID = "Pico-6000"
+        super().__init__(instrument_name="Pico-6000", connection_addr=connection_addr)
 
-        self.connection_addr = connection_addr
-
-        self.online = False
-        self.dummy = False
         self.num_vert_divisions = 8
-
         self.record_length = 1e6  # Maximum 64 MS
         self.trigger_channel = 0
         self.offset_position = 0
         self.timebase = 10e-3  # time/div * number of divisions
 
         self.measurements = ["", "", "", "", ""]
-        self.check()
 
     def try_connect(self):
         """Checks if the backend is in communication with the object, if it is

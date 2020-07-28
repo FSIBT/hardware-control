@@ -39,17 +39,10 @@ class Key33500BCtrl(HC_Backend):
     """
 
     def __init__(self, connection_addr: str):
-        super().__init__()
-        self.ID = "KEYSIGHT-33500B"
-
-        self.connection_addr = connection_addr
-        self.online = False
-        self.dummy = False
+        super().__init__(
+            instrument_name="KEYSIGHT-33500B", connection_addr=connection_addr
+        )
         self.num_vert_divisions = 8
-
-        self.parse_connection_addr()
-
-        self.check()
 
     def check_connection(self):
         """

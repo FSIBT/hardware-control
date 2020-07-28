@@ -16,17 +16,12 @@ class Key4000XCtrl(HC_Backend):
     def __init__(
         self, connection_addr: str,
     ):
-        super().__init__()
-        self.ID = "KEYSIGHT-4000X"
-
-        self.connection_addr = connection_addr
-        self.online = False
-        self.dummy = False
+        super().__init__(
+            instrument_name="KEYSIGHT-4000X",
+            connection_addr=connection_addr,
+            default_port=5025,
+        )
         self.num_vert_divisions = 8
-
-        self.parse_connection_addr()
-
-        self.check()
 
     def update_setting(self, setting: str, value):
 

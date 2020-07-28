@@ -31,20 +31,12 @@ logger = logging.getLogger(__name__)
 
 
 class NI9000Ctrl(HC_Backend):
-    def __init__(self, connection_addr: str):
+    def __init__(self, connection_addr: str = ""):
 
-        super().__init__()
+        super().__init__(instrument_name="NI-9000", connection_addr=connection_addr)
+
         self.num_channels = 1
-
-        self.ID = "NI-9000"
         self.max_V = [5] * 22
-
-        self.connection_addr = connection_addr
-        self.parse_connection_addr()
-
-        self.online = False
-        self.dummy = False
-
         self.num_channels = 22
 
         self.term_config_modes = {}

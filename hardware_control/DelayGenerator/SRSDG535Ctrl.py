@@ -30,13 +30,8 @@ class SRSDG535Ctrl(HC_Backend):
 
     def __init__(self, connection_addr):
 
-        super().__init__()
+        super().__init__(instrument_name="SRS-DG535", connection_addr=connection_addr)
 
-        self.ID = "SRS-DG535"
-
-        self.connection_addr = connection_addr
-        self.parse_connection_addr()
-        self.online = False
         self.num_vert_divisions = 8
         self.termination = "\r\n"
 

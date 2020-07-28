@@ -14,12 +14,7 @@ class Key36300Ctrl(HC_Backend):
     """
 
     def __init__(self, connection_addr: str):
-
-        super().__init__()
-
-        self.ID = "Key36300"
-        self.connection_addr = connection_addr
-        self.parse_connection_addr()
+        super().__init__(instrument_name="Key36300", connection_addr=connection_addr)
 
         # This specifies the max number of channels the user can request
         self.num_channels = 3

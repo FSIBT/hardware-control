@@ -11,26 +11,16 @@ logger = logging.getLogger(__name__)
 
 
 class RigDS1000ZCtrl(HC_Backend):
-
-    # sigReturnWaves = pyqtSignal(int, list, list)
-
     def __init__(
         self, connection_addr,
     ):
-        super().__init__()
-        self.ID = "RIGOL-DS1000Z"
+        super().__init__(
+            instrument_name="RIGOL-DS1000Z", connection_addr=connection_addr
+        )
 
-        self.connection_addr = connection_addr
-        self.parse_connection_addr()
-
-        self.online = False
-        self.dummy = False
         self.num_vert_divisions = 8
-
         self.use_avg = False
-
         self.measurements = ["", "", "", "", ""]
-        self.check()
 
     def update_setting(self, setting: str, value):
 

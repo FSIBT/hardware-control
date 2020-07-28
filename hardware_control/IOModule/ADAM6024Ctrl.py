@@ -22,15 +22,13 @@ class ADAM6024Ctrl(HC_Backend):
     """
 
     def __init__(self, connection_addr):
+        super().__init__(
+            instrument_name="Advantac_ADAM-6025",
+            connection_addr=connection_addr,
+            default_port=1025,
+        )
 
-        super().__init__()
-
-        self.online = False
-        self.ID = "Advantac_ADAM-6025"
         self.buf = 200
-        self.connection_addr = connection_addr
-
-        self.parse_connection_addr()
 
         # This specifies the max number of channels the user can request
         self.num_ichannels = 8

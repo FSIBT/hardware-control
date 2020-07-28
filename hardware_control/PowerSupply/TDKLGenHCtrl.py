@@ -13,15 +13,7 @@ class TDKLGenHCtrl(HC_Backend):
         self, connection_addr: str,
     ):
 
-        super().__init__()
-
-        self.ID = "TDKL-GenH"
-
-        self.connection_addr = connection_addr
-        self.online = False
-        self.dummy = False
-
-        self.parse_connection_addr()
+        super().__init__(instrument_name="TDKL-GenH", connection_addr=connection_addr)
 
         self.num_channels = 1
         # This specifies the max number of channels the user can request

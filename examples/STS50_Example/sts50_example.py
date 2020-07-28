@@ -487,7 +487,7 @@ class STS50Demo(HC_MainWindow):
                 "Pressure_in": lambda v: 10 ** (v - 11),
             },
         )
-        self.iomod_float = NI9000Ctrl("192.168.0.0")
+        self.iomod_float = NI9000Ctrl()
         self.iomod_float_wdgt = HC_IOModule(
             self.iomod_float,
             self,
@@ -495,7 +495,7 @@ class STS50Demo(HC_MainWindow):
             "Floating Rack Power Supplies",
             num_columns=2,
         )
-        self.iomod_usb = NI9000Ctrl("192.168.0.0")
+        self.iomod_usb = NI9000Ctrl()
         self.iomod_usb_wdgt = HC_IOModule(
             self.iomod_usb, self, usb_channel_data, "USB NI-DAC", num_columns=2,
         )
