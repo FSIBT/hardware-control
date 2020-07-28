@@ -40,7 +40,9 @@ class Key33500BCtrl(HC_Backend):
 
     def __init__(self, connection_addr: str):
         super().__init__(
-            instrument_name="KEYSIGHT-33500B", connection_addr=connection_addr
+            instrument_name="KEYSIGHT-33500B",
+            connection_addr=connection_addr,
+            default_port=5025,
         )
         self.num_vert_divisions = 8
 
