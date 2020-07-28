@@ -44,26 +44,7 @@ class Key33500BCtrl(HC_Backend):
         )
         self.num_vert_divisions = 8
 
-    def check_connection(self):
-        """
-        Verifies that the backend is able to communicate with the instrument by
-        querying the instruments name and checking for a valid return value.
-
-        Returns true if online, false if offline, and None if unknown connection
-        type.
-        """
-        if self.connection_type in [HC_Backend.SOCKET, HC_Backend.VISA]:
-            try:
-                self.device.query("*IDN?")
-                self.online = True
-            except Exception:
-                logger.warning(
-                    "Device connection check failed. Setting online to false.",
-                    exc_info=True,
-                )
-                self.online = False
-            return self.online
-        return None
+        self.check_connection_commands = "*IDN?"
 
     def update_setting(self, setting: str, value):
         """ Called by HC_Comm object. Updates a setting in the instrument.

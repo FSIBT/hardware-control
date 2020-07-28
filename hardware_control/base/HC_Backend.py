@@ -100,6 +100,12 @@ class HC_Backend(abc.ABC):
         self.port_no = default_port
         self.termination = "\n"
 
+        # This can be set to a single command or list of commands
+        # which will enable automatic checks using these commands to
+        # see if the instrument is still online. For more complicated
+        # checks, the user can also overwite check_connections()
+        self.check_connection_commands = None
+
         self.parse_connection_addr()
 
     def parse_connection_addr(self):
@@ -133,20 +139,31 @@ class HC_Backend(abc.ABC):
                 self.ip_addr, self.port_no = values
             self.port_no = int(self.port_no)
 
-    @abc.abstractmethod
     def check_connection(self):
-        """
-        This function should be overwritten by each backend. It will verify
-        that the instrument is actually connected by querying something from the
-        instrument such as the instrument's model number or ID.
+        """Test if the instrument is reachable.
+
+        The functions checks `self.check_connection_commands` and runs
+        those commands or if `None it will skip any tests.`
 
         Returns
         -------
-        True if connected, False if not connected, None if not implimented
+        bool
+           True if the instrument is reachable or no test have been done, False if not.
 
         """
 
-        pass
+        if not self.online:
+            return False
+
+        if self.check_connection_commands is None:
+            return True
+        if isinstance(self.check_connection_commands, str):
+            self.query(self.check_connection_commands)
+            return self.online
+        if isinstance(self.check_connection_commands, [list, tuple]):
+            for cmd in self.check_connection_commands:
+                self.query(self.check_connection_commands)
+            return self.online
 
     @abc.abstractmethod
     def update_setting(self, setting: str, value: str) -> str:
@@ -212,7 +229,10 @@ class HC_Backend(abc.ABC):
             return True
 
         if self.online:
-            return True  # Todo: Add check_connection() here?
+            if self.check_connection():
+                return True
+            else:
+                self.online = False
 
         logger.debug(f"{self.ID}: trying to connect")
 

@@ -22,34 +22,6 @@ class Key36300Ctrl(HC_Backend):
         self.max_V = [None] * self.num_channels
         self.max_I = [None] * self.num_channels
 
-    def check_connection(self):
-        """
-        Verifies that the backend is able to communicate with the instrument by
-        querying the instruments name and checking for a valid return value.
-
-        Returns true if online, false if offline, and None if unknown connection
-        type.
-        """
-
-        if not self.online:
-            return False
-
-        if self.connection_type in [HC_Backend.SOCKET, HC_Backend.VISA]:
-
-            try:
-                self.device.query("*IDN?")
-                self.online = True
-            except Exception:  # Not connected - reconnect
-                logger.warning(
-                    "Device connection check failed. Setting online to false.",
-                    exc_info=True,
-                )
-                self.online = False
-            return self.online
-        else:
-
-            return None
-
     # @ensure_online
     def update_setting(self, setting: str, value):
 

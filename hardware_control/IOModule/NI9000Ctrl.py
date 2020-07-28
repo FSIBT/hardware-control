@@ -48,34 +48,6 @@ class NI9000Ctrl(HC_Backend):
             self.dummy = True
             logger.error(f"{self.ID}: import of nidaqmx failed, changing to dummy mode")
 
-    def check_connection(self):
-        """
-        Verifies that the backend is able to communicate with the instrument by
-        querying the instruments name and checking for a valid return value.
-
-        Returns true if online, false if offline, and None if unknown connection
-        type.
-        """
-
-        if not self.online:
-            return False
-
-        if self.connection_type in [HC_Backend.SOCKET, HC_Backend.VISA]:
-
-            try:
-                with nidaqmx.Task() as task:
-                    if task.name:
-                        self.online = True
-                    else:
-                        self.online = False
-            except Exception:
-                self.online = False
-                logger.error("Connect failed.", exc_info=True)
-        else:
-            return None
-
-        return self.online
-
     # TODO: Rework this
     def try_connect(self):
         if not self.dummy and os.name == "nt":

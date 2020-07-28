@@ -44,30 +44,7 @@ class SRSDG535Ctrl(HC_Backend):
         self.channels_relative = {}
         self.channels_ampl = {}
 
-    def check_connection(self):
-        """
-        Verifies that the backend is able to communicate with the instrument by
-        querying the instruments name and checking for a valid return value.
-
-        Returns true if online, false if offline, and None if unknown connection
-        type.
-        """
-        if not self.online:
-            return False
-
-        try:
-            instrstat = self.device.query("IS")
-            es = self.device.query("ES")
-            self.online = True
-            return True
-        except Exception:
-            logger.warning(
-                "Device connection check failed. Setting online to false.",
-                exc_info=True,
-            )
-            self.online = False
-
-        return False
+        self.check_connection_commands = ["IS", "ES"]
 
     def update_setting(self, setting: str, value):
 

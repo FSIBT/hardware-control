@@ -26,27 +26,6 @@ class RigolDP832Ctrl(HC_Backend):
         self.max_I = [None] * self.num_channels
 
     ##@thread_info
-    def check_connection(self):
-
-        if self.connection_type == HC_Backend.VISA:
-
-            # Check if connected by asking for instrument ID
-            # Verify actually connected (open_resource won't always throw error w/ disconnected USB)
-            try:
-                self.device.query("*IDN?")
-            except pyvisa.errors.VisaIOError:  # Not connected - reconnect
-                logger.warning(
-                    "Device connection check failed. Setting online to false.",
-                    exc_info=True,
-                )
-                return False
-            else:  # Connection stable - return True
-                return True
-        else:
-
-            return None
-
-    ##@thread_info
     def update_setting(self, setting: str, value):
 
         channel, setting_X = get_channel_from_command(setting)

@@ -34,29 +34,6 @@ class ADAM6015Ctrl(HC_Backend):
 
         self.try_connect()
 
-    def check_connection(self):
-        """
-        Verifies that the backend is able to communicate with the instrument by
-        querying the instruments name and checking for a valid return value.
-
-        Returns true if online, false if offline, and None if unknown connection
-        type.
-        """
-        if self.connection_type in [HC_Backend.SOCKET, HC_Backend.VISA]:
-            try:
-                self.socket.send(b"#01\r")
-                self.socket.recv(self.buf)
-                self.online = True
-            except Exception:  # Not connected - reconnect
-                logger.warning(
-                    "Device connection check failed. Setting online to false.",
-                    exc_info=True,
-                )
-                self.online = False
-            return self.online
-        else:
-            return None
-
     def try_connect(self):
         """Force the use of sockets with different option (DGRAM instead of STREAM)."""
         if self.dummy:

@@ -15,32 +15,8 @@ class TDKLGenHCtrl(HC_Backend):
 
         super().__init__(instrument_name="TDKL-GenH", connection_addr=connection_addr)
 
-        self.num_channels = 1
         # This specifies the max number of channels the user can request
-
-    def check_connection(self):
-        """
-        Verifies that the backend is able to communicate with the instrument by
-        querying the instruments name and checking for a valid return value.
-
-        Returns true if online, false if offline, and None if unknown connection
-        type.
-        """
-        if self.connection_type in [HC_Backend.SOCKET, HC_Backend.VISA]:
-
-            try:
-                self.device.query("*IDN?")
-                self.online = True
-            except Exception:  # Not connected - reconnect
-                logger.warning(
-                    "Device connection check failed. Setting online to false.",
-                    exc_info=True,
-                )
-                self.online = False
-            return self.online
-        else:
-
-            return None
+        self.num_channels = 1
 
     def update_setting(self, setting: str, value):
 

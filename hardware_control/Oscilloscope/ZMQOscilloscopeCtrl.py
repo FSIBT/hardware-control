@@ -37,6 +37,8 @@ class ZMQOscilloscopeCtrl(HC_Backend):
         self.settings = self.default_settings()
 
     def check_connection(self):
+        if not self.online:
+            return False
 
         self.socket.send_string("ping")
         try:

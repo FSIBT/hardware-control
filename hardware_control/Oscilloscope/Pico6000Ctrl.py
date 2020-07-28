@@ -75,10 +75,8 @@ class Pico6000Ctrl(HC_Backend):
         return self.online
 
     def check_connection(self):
-        return True
-        try:
-            self.ps.ping()
-        except:
+        """TODO: could use ps.ping() to test"""
+        if not self.online:
             return False
 
         return True

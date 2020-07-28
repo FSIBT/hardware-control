@@ -23,40 +23,6 @@ class CAEN14xxETCtrl(HC_Backend):
         self.max_V = [None] * self.num_channels
         self.max_I = [None] * self.num_channels
 
-    def check_connection(self):
-
-        if self.connection_type == HC_Backend.VISA:
-
-            # Check if connected by asking for instrument ID
-            # Verify actually connected (open_resource won't always throw error w/ disconnected USB)
-            try:
-                self.device.query("$BD:00,CMD:MON,PAR:BDNAME")
-            except pyvisa.errors.VisaIOError:  # Not connected - reconnect
-                logger.warning(
-                    "Device connection check failed. Setting online to false.",
-                    exc_info=True,
-                )
-                return False
-            else:  # Connection stable - return True
-                return True
-
-        elif self.connection_type == HC_Backend.SOCKET:
-
-            try:
-                self.query("$BD:00,CMD:MON,PAR:BDNAME")
-            except Exception:
-                logger.warning(
-                    "Device connection check fail. Setting online to false",
-                    exc_info=True,
-                )
-                return False
-            else:
-                return True
-
-        else:
-
-            return None
-
     def update_setting(self, setting: str, value):
 
         channel, setting_X = get_channel_from_command(setting)

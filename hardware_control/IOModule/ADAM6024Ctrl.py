@@ -45,19 +45,6 @@ class ADAM6024Ctrl(HC_Backend):
         self.termination = "\r"
         self.try_connect()
 
-    def check_connection(self):
-
-        if not self.online:
-            return False
-
-        try:
-            self.device.send(b"#01\r")
-            indata = self.device.recv(self.buf)
-            self.online = True
-        except:
-            self.online = False
-        return self.online
-
     def try_connect(self):
         """Force the use of sockets with different option (DGRAM instead of STREAM)."""
         if self.dummy:
