@@ -35,8 +35,10 @@ class SRSDG535Ctrl(HC_Backend):
         self.ID = "SRS-DG535"
 
         self.connection_addr = connection_addr
+        self.parse_connection_addr()
         self.online = False
         self.num_vert_divisions = 8
+        self.termination = "\r\n"
 
         self.command_str = ""  # string used to trigger
         #   Device Specific Values
@@ -55,7 +57,6 @@ class SRSDG535Ctrl(HC_Backend):
         Returns true if online, false if offline, and None if unknown connection
         type.
         """
-
         if not self.online:
             return False
 
@@ -63,6 +64,7 @@ class SRSDG535Ctrl(HC_Backend):
             instrstat = self.device.query("IS")
             es = self.device.query("ES")
             self.online = True
+            return True
         except Exception:
             logger.warning(
                 "Device connection check failed. Setting online to false.",
