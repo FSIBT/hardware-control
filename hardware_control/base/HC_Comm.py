@@ -12,9 +12,29 @@ ipy_logger.setLevel("ERROR")
 
 
 class HC_Comm(QObject):
-    """This object is used to automate creating threads and communication objects.
+    """ Class to manage communication between two threads.
+
+    This object is used to automate creating threads and communication objects.
     By calling this object's functions, data can be safely transfered between the
-    main thread and communication threads."""
+    main thread and communication threads. The intended usage is for an HC_Comm
+    object to be created by each HC_Instrument class and use the HC_Comm to
+    communicate with a backend in a separate thread.
+
+    Parameters
+    ----------
+    backend
+        Instrument backend. The commands passed through HC_Comm will be forwarded
+        to this object. 'backend' should be a child of HC_Backend
+    instrument
+        The frontend/widget using this HC_Comm object for communication
+    try_connect_period
+        The time in milliseconds between attempts to connect to the instrument
+    lock_until_sync
+        If true, will block all calls to self.update_setting until the string
+        'SYNC_BACKEND' is returned from the backend. This can be used by the widget
+        to determine when the backend first comes online and when to initialize
+        the backend and widget states.
+    """
 
     sigUpdateSettings = pyqtSignal(str, str, float)
     sigCommand = pyqtSignal(str, float)
@@ -76,12 +96,25 @@ class HC_Comm(QObject):
         return f"{self.backend.connection_addr}"
 
     def addWidget(self, new_instrument):
-        """Adds a new instrument to HC_Comm. When HC_Comm gets a reply, it will
-        go to all listed instruments"""
+        """Adds a new instrument to HC_Comm 'instruments' list.
+
+        When HC_Comm gets a reply, it will send reply to all listed instruments.
+        This function adds an instrument to that list.
+
+        Parameters
+        ----------
+        new_instrument
+            Intrument to add to HC_Comm instrument list"""
 
         self.instruments.append(new_instrument)
 
     def close(self):
+        """ Safely closes the backend and thread.
+
+        Sends the close signal to the backend's close function, stops attempting
+        to connect to the instrument, closes any open connections, then kills
+        the worker thread.
+        """
         # TODO: Change logger messages to references address, not instr
         logger.debug(
             f"\tInstrument: '{self.instruments[0].name}' closing Comm with backend of type '{self.backend_model}'."
@@ -111,7 +144,15 @@ class HC_Comm(QObject):
             )
 
     def update_setting(self, setting: str, value: str):
-        """Transfers the setting and value information to the worker thread"""
+        """ Transfers a new value for a specific setting to the worker thread
+
+        Parameters
+        ----------
+        setting : str
+            Name of setting to change
+        value : str
+            New value for setting
+        """
 
         if self.lock_until_sync:
             logger.debug(
@@ -124,32 +165,51 @@ class HC_Comm(QObject):
         self.sigUpdateSettings.emit(setting, value, time.time() + self.expire_time)
 
     def command(self, cmd: str):
-        """Sends a command to the worker in the worker thread"""
+        """ Sends a command to the backend in the worker thread
+
+        Parameters
+        ----------
+        cmd
+            Command string to send to backend"""
         logger.debug(
             f"Instrument: {self.instruments[0].name} called 'command()' and sent command: '{cmd}'."
         )
         self.sigCommand.emit(cmd, time.time() + self.expire_time)
 
     def write(self, msg: str):
-        """Sends a command to be sent to the instrument by the worker in the worker thead"""
+        """ Directly writes a message to the instrument
+
+        Sends a message to the instrument. The string is not processed by the
+        backend and is immediately sent to the instrument. This function should
+        not be needed unless the user needs to use a command or feature in the
+        instrument that is not implimented in the widget or backend.
+        """
         logger.debug(
             f"Instrument: {self.instruments[0].name} called 'write()' and sent message: '{msg}'."
         )
         self.sigWrite.emit(msg, time.time() + self.expire_time)
 
     def query(self, msg: str):
-        """Sends a query statement to be sent to the instrument by the worker in the worker thead"""
+        """ Directly queries the instrument
+
+        Sends a message to the instrument. The string is not processed by the
+        backend and is immediately sent to the instrument. This function should
+        not be needed unless the user needs to use a command or feature in the
+        instrument that is not implimented in the widget or backend."""
         logger.debug(
             f"Instrument: {self.instruments[0].name} called 'query()' and sent message: '{msg}'."
         )
         self.sigQuery.emit(msg, time.time() + self.expire_time)
 
     def try_connect(self):
-        """Tells the worker to tell the backend to try to connect to the instrument"""
+        """ Called on a timer, this function tells the backend to connect to the instrument.
+        """
         self.sigTryConnect.emit(time.time() + self.expire_time)
 
     def command_listdata(self, cmd: str):
-        """Sends a command to the worker in the worker thread just like command(),
+        """ Send a command to the backend which expects two lists to be returned.
+
+        Sends a command to the worker in the worker thread just like command(),
         but returns two lists instead of a string."""
         logger.debug(
             f"Instrument: {self.instruments[0].name} called 'command_listdata()' and sent command: '{cmd}'."
@@ -157,7 +217,8 @@ class HC_Comm(QObject):
         self.sigCommandList.emit(cmd, time.time() + self.list_expire_time)
 
     def command_log(self, cmd: str, param_str: str):
-        """Sends a command to the worker in the worker thread"""
+        """ Sends a command to the worker in the worker thread with details to help data acquisition.
+        """
 
         # print(f"\n\t\tCOMMAND_LOG::HC_COMM\t{param_str}\n")
 
