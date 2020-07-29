@@ -6,7 +6,7 @@ See class definition for details.
 
 import logging
 
-from hardware_control.base.HC_Backend import HC_Backend
+from hardware_control.base.HC_Backend import HC_Backend, ensure_online
 from hardware_control.utility import ensure_float, get_channel_from_command
 
 logger = logging.getLogger(__name__)
@@ -46,18 +46,17 @@ class SRSDG535Ctrl(HC_Backend):
 
         self.check_connection_commands = ["IS", "ES"]
 
+    @ensure_online
     def update_setting(self, setting: str, value):
+
+        if self.dummy:
+            return value
 
         channel, setting_X = get_channel_from_command(setting)
         channel = SRSDG535Ctrl.SRS_channel_number_scheme.get(channel, None)
 
         value_orig = value
         value = ensure_float(value)
-
-        if self.dummy:
-            return value_orig
-        elif not self.online:
-            return "offline"
 
         if setting == "trigger_mode":
             mode = 0
@@ -140,18 +139,12 @@ class SRSDG535Ctrl(HC_Backend):
             )
             return "False"
 
+    @ensure_online
     def command(self, cmd: str):
-        if self.online:
-            try:
-                if cmd == "single_trigger":
-                    # Tells DG535 to do a single trigger
-                    self.write("SS")
-                else:
-                    logger.warning(f"{self.ID} : unknown command")
-            except Exception:
-                logger.error(
-                    f"{self.ID} - An exception occurred in command()", exc_info=True
-                )
+        if cmd == "single_trigger":
+            self.write("SS")
+        else:
+            logger.warning(f"{self.ID} : unknown command")
         return cmd
 
     def write(self, cmd: str):

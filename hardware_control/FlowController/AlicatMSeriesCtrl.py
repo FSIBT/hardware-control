@@ -7,7 +7,7 @@ See class definition for details.
 import logging
 import random
 
-from hardware_control.base.HC_Backend import HC_Backend
+from hardware_control.base.HC_Backend import HC_Backend, ensure_online
 from hardware_control.utility import (
     converter_ulong_to_IEEE754,
     converter_IEEE754_to_ulong,
@@ -35,24 +35,14 @@ class AlicatMSeriesCtrl(HC_Backend):
         self.connection_type = HC_Backend.MODBUS
         self.error_count = 0
 
+    @ensure_online
     def update_setting(self, setting: str, value):
-
-        if not self.online:
-            return f"{self.ID}-Offline"
 
         if self.dummy:
             return value
 
         try:
-            if setting == "rate":
-                i = converter_IEEE754_to_ulong(float(value))
-                a = i >> 16
-                b = i & ((1 << 16) - 1)
-                r = self.device.write_registers(address=1009, values=[a, b], unit=0)
-
-                self.error_count = 0
-                return value
-            if setting == "flow":
+            if setting in ["rate", "flow"]:
                 i = converter_IEEE754_to_ulong(float(value))
                 a = i >> 16
                 b = i & ((1 << 16) - 1)
@@ -71,35 +61,27 @@ class AlicatMSeriesCtrl(HC_Backend):
             self.online = False
 
     def command(self, cmd: str):
-        if not self.online:
-            return f"{self.ID}-Offline"
+        if cmd == "rate?":
+            flow = self.query(address=1208)
+            return f"rate={flow}"
+        if cmd == "pressure?":
+            pressure = self.query(address=1202)
+            return f"pressure={pressure}"
 
+    @ensure_online
+    def query(self, address: int):
         if self.dummy:
-            if cmd == "rate?":
-                flow = random.randint(0, 10)
-                return f"rate={flow}"
-            if cmd == "pressure?":
-                pressure = random.randint(0, 10)
-                return f"pressure={pressure}"
+            return random.randint(0, 10)
 
         try:
-            # Note: usually a self.dummy check would be here, but it is taken
-            # care of in get_values() for the AlicanMSeriesFlowMeter
-            if cmd == "rate?":
-                r = self.device.read_input_registers(count=2, address=1208, unit=0)
-                a, b = r.registers
-                flow = (a << 16) + b
-                flow = converter_ulong_to_IEEE754(flow)
-                return f"rate={flow}"
-            if cmd == "pressure?":
-                r = self.device.read_input_registers(count=2, address=1202, unit=0)
-                a, b = r.registers
-                pressure = (a << 16) + b
-                pressure = converter_ulong_to_IEEE754(pressure)
-                return f"pressure={pressure}"
+            r = self.device.read_input_registers(count=2, address=address, unit=0)
+            a, b = r.registers
+            value = (a << 16) + b
+            value = converter_ulong_to_IEEE754(value)
+            return value
         except Exception:
             logger.error(
-                f"An error occured in {self.ID} when sending command {cmd} to the instrument.",
+                f"An error occured in {self.ID} when querying the modbus addres {address}.",
                 exc_info=True,
             )
             self.online = False
