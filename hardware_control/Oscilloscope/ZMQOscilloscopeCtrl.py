@@ -3,7 +3,7 @@ import logging
 
 import zmq
 
-from hardware_control.base.HC_Backend import HC_Backend
+from hardware_control.base.HC_Backend import HC_Backend, ensure_online
 from hardware_control.utility import get_channel_from_command
 
 logger = logging.getLogger(__name__)
@@ -48,115 +48,109 @@ class ZMQOscilloscopeCtrl(HC_Backend):
             return False  # Receive timed out
         return False
 
+    @ensure_online
     def update_setting(self, setting: str, value):
 
-        if not self.online:
-            return "Offline"
-
+        if self.dummy:
+            return value
         try:
-            if self.dummy:
-                return value
-            else:
-                channel, setting_X = get_channel_from_command(setting)
-                if setting_X == "CHX_volts_div":
-                    self.settings[f"Voltage range{channel}"] = float(value)
-                    self.send_json_settings()
-                    return f"{setting}:{value}"
-                elif setting == "timebase":
-                    self.settings["Timebase"] = float(value)
-                    self.send_json_settings()
-                    return f"{setting}:{value}"
-                elif setting == "time_offset":
-                    try:
-                        val = float(value) / float(self.settings["Timebase"]) * 100
-                    except:
-                        val = 50
-                        logger.error(
-                            f"{self.ID} - Failed to calculate valid time_offset value",
-                            exc_info=True,
-                        )
-                    self.settings["Ref Position (%)"] = val
-                    self.send_json_settings()
-                    return f"{setting}:{value}"
-                elif setting_X == "CHX_offset":
-                    self.settings[f"Voltage offset{channel}"] = float(value)
-                    self.send_json_settings()
-                    return f"{setting}:{value}"
-                elif setting_X == "CHX_BW_lim":
-                    if bool(value):
-                        self.settings[f"bandwidth filter{channel}"] = "20MHz"
-                    else:
-                        self.settings[f"bandwidth filter{channel}"] = "Full"
-                    self.send_json_settings()
-                    return f"{setting}:{value}"
-                elif setting_X == "CHX_active":
-                    chan_str = get_chan_str()
-                    self.settings[f"Ch enable{chan_str}"] = bool(value)
-                    self.send_json_settings()
-                    return f"{setting}:{value}"
-                elif setting_X == "CHX_impedance":
-                    return "Warning: Setting 'impedance' not available"
-                elif setting_X == "CHX_label":
-                    return "Warning: Setting 'label' not available"
-                elif setting == "labels_enabled":
-                    return "Warning: Setting 'label' not available"
-                elif setting_X == "CHX_invert":
-                    return "Warning: Setting 'label' not available"
-                elif setting_X == "CHX_probe_atten":
-                    self.settings[f"External Gain/Attenuator{channel}"] = f"x{value}"
-                    self.send_json_settings()
-                    return f"{setting}:{value}"
-                elif setting_X == "CHX_coupling":
-                    # Make sure valid value provided
-                    if value not in ["AC", "DC"]:
-                        value = "DC"
+            channel, setting_X = get_channel_from_command(setting)
+            if setting_X == "CHX_volts_div":
+                self.settings[f"Voltage range{channel}"] = float(value)
+                self.send_json_settings()
+                return f"{setting}:{value}"
+            if setting == "timebase":
+                self.settings["Timebase"] = float(value)
+                self.send_json_settings()
+                return f"{setting}:{value}"
+            if setting == "time_offset":
+                try:
+                    val = float(value) / float(self.settings["Timebase"]) * 100
+                except:
+                    val = 50
+                    logger.error(
+                        f"{self.ID} - Failed to calculate valid time_offset value",
+                        exc_info=True,
+                    )
+                self.settings["Ref Position (%)"] = val
+                self.send_json_settings()
+                return f"{setting}:{value}"
+            if setting_X == "CHX_offset":
+                self.settings[f"Voltage offset{channel}"] = float(value)
+                self.send_json_settings()
+                return f"{setting}:{value}"
+            if setting_X == "CHX_BW_lim":
+                if bool(value):
+                    self.settings[f"bandwidth filter{channel}"] = "20MHz"
+                else:
+                    self.settings[f"bandwidth filter{channel}"] = "Full"
+                self.send_json_settings()
+                return f"{setting}:{value}"
+            if setting_X == "CHX_active":
+                chan_str = get_chan_str()
+                self.settings[f"Ch enable{chan_str}"] = bool(value)
+                self.send_json_settings()
+                return f"{setting}:{value}"
+            if setting_X == "CHX_impedance":
+                return "Warning: Setting 'impedance' not available"
+            if setting_X == "CHX_label":
+                return "Warning: Setting 'label' not available"
+            if setting == "labels_enabled":
+                return "Warning: Setting 'label' not available"
+            if setting_X == "CHX_invert":
+                return "Warning: Setting 'label' not available"
+            if setting_X == "CHX_probe_atten":
+                self.settings[f"External Gain/Attenuator{channel}"] = f"x{value}"
+                self.send_json_settings()
+                return f"{setting}:{value}"
+            if setting_X == "CHX_coupling":
+                # Make sure valid value provided
+                if value not in ["AC", "DC"]:
+                    value = "DC"
 
-                    self.settings[f"AC/DC{channel}"] = value
-                    self.send_json_settings()
-                    return f"{setting}:{value}"
-
-                elif setting == "trigger_level":
-                    self.settings["Trigger level"] = float(value)
-                    self.send_json_settings()
-                    return f"{setting}:{value}"
-                elif setting == "trigger_coupling":
-                    self.settings[f"Ch enable{channel}"] = value
-                    self.send_json_settings()
-                    return f"{setting}:{value}"
-                elif setting == "trigger_edge":
-                    if value == "POS":
-                        value = "Rising"
-                    elif value == "NEG":
-                        value = "Falling"
-                    else:
-                        value = "Rising"
-                    self.settings[f"Ch enable{channel}"] = value
-                    self.send_json_settings()
-                    return f"{setting}:{value}"
-                elif setting == "trigger_channel":
-                    if value == "1":
-                        value = "A"
-                    elif value == "2":
-                        value = "B"
-                    elif value == "3":
-                        value = "C"
-                    elif value == "4":
-                        value = "D"
-                    else:
-                        value = "A"
-                    self.settings["Trigger channel"] = value
-                    self.send_json_settings()
-                    return f"{setting}:{value}"
+                self.settings[f"AC/DC{channel}"] = value
+                self.send_json_settings()
+                return f"{setting}:{value}"
+            if setting == "trigger_level":
+                self.settings["Trigger level"] = float(value)
+                self.send_json_settings()
+                return f"{setting}:{value}"
+            if setting == "trigger_coupling":
+                self.settings[f"Ch enable{channel}"] = value
+                self.send_json_settings()
+                return f"{setting}:{value}"
+            if setting == "trigger_edge":
+                if value == "POS":
+                    value = "Rising"
+                elif value == "NEG":
+                    value = "Falling"
+                else:
+                    value = "Rising"
+                self.settings[f"Ch enable{channel}"] = value
+                self.send_json_settings()
+                return f"{setting}:{value}"
+            if setting == "trigger_channel":
+                if value == "1":
+                    value = "A"
+                elif value == "2":
+                    value = "B"
+                elif value == "3":
+                    value = "C"
+                elif value == "4":
+                    value = "D"
+                else:
+                    value = "A"
+                self.settings["Trigger channel"] = value
+                self.send_json_settings()
+                return f"{setting}:{value}"
         except Exception:
             logger.error(
                 f"An error occured with {self.ID} when sending commands {setting} = {value} to the instrument.",
                 exc_info=True,
             )
 
+    @ensure_online
     def command(self, cmd: str):
-        if not self.online:
-            return "Offline"
-
         pass
 
     def try_connect(self):
@@ -191,7 +185,7 @@ class ZMQOscilloscopeCtrl(HC_Backend):
         return self.online
 
     def default_settings(self):
-        dflt = {
+        return {
             "Timebase": 0.001,
             "Record Length": 1000.0,
             "Bit resolution": "12",
@@ -227,7 +221,6 @@ class ZMQOscilloscopeCtrl(HC_Backend):
             "Ch enable 3": True,
             "Ch enable 4": True,
         }
-        return dflt
 
     def send_json_settings(self):
         """Sends the settings dictionary to the Raspberry Pi"""

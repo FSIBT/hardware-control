@@ -9,7 +9,7 @@ import numpy as np
 
 from picoscope.ps6000 import PS6000
 
-from hardware_control.base.HC_Backend import HC_Backend
+from hardware_control.base.HC_Backend import HC_Backend, ensure_online
 from hardware_control.utility import (
     regex_compare,
     ensure_float,
@@ -81,12 +81,10 @@ class Pico6000Ctrl(HC_Backend):
 
         return True
 
+    @ensure_online
     def update_setting(self, setting: str, value):
         value_orig = value
         value = ensure_float(value)
-
-        if not self.online:
-            return "Offline"
 
         if self.dummy:
             return value
@@ -205,6 +203,7 @@ class Pico6000Ctrl(HC_Backend):
                 "An error occured in Picoscope6000.", exc_info=True,
             )
 
+    @ensure_online
     def command(self, cmd: str):
 
         ret_str = ""
@@ -213,9 +212,6 @@ class Pico6000Ctrl(HC_Backend):
         if cmd[-1] == "*":
             add_asterisk = True
             cmd = cmd[0:-1]
-
-        if not self.online:
-            return "Offline"
 
         if cmd == "SINGLE_TRIGGER":
             self.ps.runBlock(pretrig=self.offset_position / self.timebase)

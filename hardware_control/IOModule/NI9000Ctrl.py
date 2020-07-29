@@ -23,7 +23,7 @@ if os.name == "nt":
     import nidaqmx
     from nidaqmx.constants import TerminalConfiguration
 
-from hardware_control.base.HC_Backend import HC_Backend
+from hardware_control.base.HC_Backend import HC_Backend, ensure_online
 from hardware_control.utility import get_channel_from_command
 from hardware_control.utility import ensure_float
 
@@ -107,7 +107,7 @@ class NI9000Ctrl(HC_Backend):
             return str(value)
 
         if not self.online:
-            return "Offline"
+            return f"{self.ID}-Offline"
 
         if self.dummy:
             return str(value)
@@ -150,12 +150,10 @@ class NI9000Ctrl(HC_Backend):
         except:
             logger.error("Error occured in NI9000 command.", exc_info=True)
 
+    @ensure_online
     def command(self, cmd: str):
 
         channel, setting_X = get_channel_from_command(cmd)
-
-        if not self.online:
-            return "Offline"
 
         if self.dummy:
             num = random.random() * 10

@@ -56,8 +56,6 @@ class Key4000XCtrl(HC_Backend):
         * CH<X>_coupling: Sets the coupling mode for the speicied channel (AC, DC)
         """
 
-        if not self.online:
-            return "Offline"
         if self.dummy:
             return value
 
@@ -145,8 +143,6 @@ class Key4000XCtrl(HC_Backend):
         * CONFIG_READ_WAVE: Configure oscilloscope settings to prepare for reading waveforms
         * STOP: Prevent the instrument from triggering
         """
-        if not self.online:
-            return "Offline"
 
         if cmd == "SINGLE_TRIGGER":
             self.write(":SING")

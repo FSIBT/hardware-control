@@ -2,7 +2,7 @@ import logging
 
 import numpy as np
 
-from hardware_control.base.HC_Backend import HC_Backend
+from hardware_control.base.HC_Backend import HC_Backend, ensure_online
 from hardware_control.utility import get_channel_from_command
 from hardware_control.utility import returnChannelNumber
 from hardware_control.utility import regex_compare
@@ -22,10 +22,8 @@ class RigDS1000ZCtrl(HC_Backend):
         self.use_avg = False
         self.measurements = ["", "", "", "", ""]
 
+    @ensure_online
     def update_setting(self, setting: str, value):
-
-        if not self.online:
-            return "Offline"
 
         if self.dummy:
             return value
@@ -150,15 +148,13 @@ class RigDS1000ZCtrl(HC_Backend):
                 if meas != "":
                     self.write(f":MEAS:STAT:ITEM {meas}")
 
+    @ensure_online
     def command(self, cmd: str):
 
         add_asterisk = False
         if cmd[-1] == "*":
             add_asterisk = True
             cmd = cmd[0:-1]
-
-        if not self.online:
-            return "Offline"
 
         if cmd == "SINGLE_TRIGGER":
             self.write(":SING")
