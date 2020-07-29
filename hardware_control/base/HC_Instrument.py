@@ -33,7 +33,6 @@ class HC_Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
 
     def __init__(self, window, name: str, backend=None, lock_until_sync=False):
         super().__init__(name)
-        # ToDo Why ordered dict??
         self.settings = OrderedDict()
         self.values = OrderedDict()
         self.values_unit = OrderedDict()

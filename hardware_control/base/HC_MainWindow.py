@@ -91,22 +91,6 @@ class HC_MainWindow(QMainWindow):
         self.run_command_act.setShortcut("Ctrl+R")
         self.scripting_menu.addAction(self.run_command_act)
 
-        self.run_script_act = QAction("Run Macro")
-        self.scripting_menu.addAction(self.run_script_act)
-
-        self.scripting_menu.addSeparator()
-
-        self.add_macro_act = QAction("Add Macro")
-        self.scripting_menu.addAction(self.add_macro_act)
-
-        self.add_variable_act = QAction("Add Variable")
-        self.scripting_menu.addAction(self.add_variable_act)
-
-        self.scripting_menu.addSeparator()
-
-        self.show_variables_act = QAction("Show Variables")
-        self.scripting_menu.addAction(self.show_variables_act)
-
     def process_file_menu(self, q):
 
         if q.text() == "Save Instrument States":
@@ -149,7 +133,7 @@ class HC_MainWindow(QMainWindow):
 
     def process_instr_menu(self, q):
 
-        if q.text() == "Sync from Instrument":  # TODO: impliment
+        if q.text() == "Sync from Instrument":
 
             self.app.backends_to_settings()
             self.app.settings_to_UI()
@@ -195,7 +179,7 @@ class HC_MainWindow(QMainWindow):
             logger.error("function not supported")
 
     def process_scripting_menu(self, q):
-        if q.text() == "Run Command":  # TODO: impliment
+        if q.text() == "Run Command":
 
             dlg = QInputDialog(self)
             dlg.setInputMode(QInputDialog.TextInput)
@@ -207,17 +191,6 @@ class HC_MainWindow(QMainWindow):
             # text, okPressed = QInputDialog.getText(self, "Where am I??", "Command", QLineEdit.Normal)
             if okPressed and text != "":
                 self.app.process_hc_command(text)
-
-        elif q.text() == "Run Macro":  # TODO: impliment
-            logger.error("Not implimented")
-        elif q.text() == "Add Variable":  # TODO: impliment
-            logger.error("Not implimented")
-        elif q.text() == "Add Macro":  # TODO: impliment
-            logger.error("Not implimented")
-        elif q.text() == "Show Variables":  # TODO: impliment
-            logger.error("Not implimented")
-        elif q.text() == "Show Macros":  # TODO: impliment
-            logger.error("Not implimented")
         else:
             logger.error("function not supported")
 
