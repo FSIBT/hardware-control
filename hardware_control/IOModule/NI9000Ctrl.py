@@ -21,7 +21,7 @@ from colorama import Fore, Style
 
 if os.name == "nt":
     import nidaqmx
-    from nidaqmx.constants import TerminalConfiguration
+from nidaqmx.constants import TerminalConfiguration
 
 from hardware_control.base.HC_Backend import HC_Backend, ensure_online
 from hardware_control.utility import get_channel_from_command
@@ -39,10 +39,11 @@ class NI9000Ctrl(HC_Backend):
         )
 
         self.num_channels = 1
-        self.max_V = [5] * 22
         self.num_channels = 22
 
         self.term_config_modes = {}
+        self.term_mins = {}
+        self.term_maxes = {}
 
         self.channel_data = None
 
@@ -69,32 +70,6 @@ class NI9000Ctrl(HC_Backend):
             self.online = True
         return self.online
 
-    def init_channels(self):
-
-        print(f"IC: {self.online}\t\t{str(self)}")
-
-        if self.channel_data is None:
-            print("RETURRNING NONE")
-            return
-
-        for c in self.channel_data:
-
-            chan = self.channel_data[c]
-
-            if "OPTIONS" in chan and chan["OPTIONS"] is not None:
-                if "DIFF" in chan["OPTIONS"]:
-                    print("\tDIFF")
-                    name = chan["ID_STR"]
-                    self.update_setting(f"CH{name}_terminal_config", "DIFF")
-                elif "NRSE" in chan["OPTIONS"]:
-                    print("\tNRSE")
-                    name = chan["ID_STR"]
-                    self.update_setting(f"CH{name}_terminal_config", "DIFF")
-                elif "RSE" in chan["OPTIONS"]:
-                    print("\tRSE")
-                    name = chan["ID_STR"]
-                    self.update_setting(f"CH{name}_terminal_config", "DIFF")
-
     def update_setting(self, setting: str, value):
 
         channel, setting_X = get_channel_from_command(setting)
@@ -103,7 +78,40 @@ class NI9000Ctrl(HC_Backend):
         value = ensure_float(value)
 
         if setting_X == "CHX_V_max":
-            self.max_V[channel - 1] = value
+            try:
+                val = float(val)
+                self.term_maxes[channel] = val
+                return value
+            except:
+                logger.error(
+                    f"Failed to set CH{channel} V max to '{value}'. Cannot convert to float."
+                )
+                return "Failed_to_set_value"
+
+        elif setting_X == "CHX_V_min":
+            try:
+                val = float(val)
+                self.term_mins[channel] = val
+                return value
+            except:
+                logger.error(
+                    f"Failed to set CH{channel} V min to '{value}'. Cannot convert to float."
+                )
+                return "Failed_to_set_value"
+
+        elif setting_X == "CHX_terminal_config":
+
+            if value_orig == "DIFF":
+                config_mode = TerminalConfiguration.DIFFERENTIAL
+            elif value_orig == "NRSE":
+                config_mode = TerminalConfiguration.NRSE
+            else:
+                config_mode = TerminalConfiguration.RSE
+
+            self.term_config_modes[channel] = config_mode
+
+            print(f"\tSet TC for {channel} to {value_orig}")
+
             return str(value)
 
         if not self.online:
@@ -116,7 +124,24 @@ class NI9000Ctrl(HC_Backend):
             if setting_X == "CHX_analog_write":
 
                 with nidaqmx.Task() as task:
-                    task.ao_channels.add_ao_voltage_chan(channel)
+                    if (
+                        channel in self.term_mins
+                        and type(self.term_mins[channel]) == float
+                    ):
+                        min = self.term_mins[channel]
+                    else:
+                        min = -10
+                    if (
+                        channel in self.term_maxes
+                        and type(self.term_maxes[channel]) == float
+                    ):
+                        max = self.term_mins[channel]
+                    else:
+                        max = 10
+                    print(f"USING MAX: {max} and min: {min}")
+                    task.ao_channels.add_ao_voltage_chan(
+                        channel, min_val=min, max_val=max
+                    )
                     task.write(value)
                     time.sleep(0.010)
                     done = task.is_task_done()
@@ -129,21 +154,6 @@ class NI9000Ctrl(HC_Backend):
                     time.sleep(0.010)
                     done = task.is_task_done()
                 return str(done)
-
-            if setting_X == "CHX_terminal_config":
-
-                if value == "DIFF":
-                    config_mode = TerminalConfiguration.DIFFERENTIAL
-                elif value == "NRSE":
-                    config_mode = TerminalConfiguration.NRSE
-                else:
-                    config_mode = TerminalConfiguration.RSE
-
-                self.term_config_modes[channel] = config_mode
-
-                print(f"\tSet TC for {channel} to {value}")
-
-                return str(value)
 
             print(f"Unrecognized command {setting_X}, {channel}, {value}")
 
@@ -162,16 +172,13 @@ class NI9000Ctrl(HC_Backend):
         try:
             if setting_X == "CHX_analog_read?":
                 with nidaqmx.Task() as task:
-                    # if channel in self.term_config_modes:
-                    # config_mode = self.term_config_modes[channel]
-                    config_mode = TerminalConfiguration.DIFFERENTIAL
-                    task.ai_channels.add_ai_voltage_chan(
-                        channel, terminal_config=config_mode
-                    )
-                    # print("USING MODE")
-                    # else:
-                    #     task.ai_channels.add_ai_voltage_chan(channel)
-                    #     print("Not using mode")
+                    if channel in self.term_config_modes:
+                        config_mode = self.term_config_modes[channel]
+                        task.ai_channels.add_ai_voltage_chan(
+                            channel, terminal_config=config_mode
+                        )
+                    else:
+                        task.ai_channels.add_ai_voltage_chan(channel)
                     val = str(task.read())
                 return cmd[:-1] + "=" + str(val)
             if setting_X == "CHX_digital_read?":
@@ -179,9 +186,6 @@ class NI9000Ctrl(HC_Backend):
                     task.ai_channels.add_di_chan(channel)
                     val = str(task.read())
                 return cmd[:-1] + "=" + str(val)
-            if cmd == "INIT_CHANNELS":
-                print("IC From COmmand")
-                self.init_channels()
         except:
             logger.error("Error occured in NI9000 command.", exc_info=True)
 

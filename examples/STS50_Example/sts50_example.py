@@ -493,11 +493,17 @@ class STS50Demo(HC_MainWindow):
             "Floating Rack Power Supplies",
             num_columns=2,
         )
+        self.iomod_float_wdgt.update_setting("CHcDAQ9188-1AEF742Mod7/ao4_V_max", "5")
+        self.iomod_float_wdgt.update_setting("CHcDAQ9188-1AEF742Mod7/ao4_V_min", "0")
         self.iomod_usb = NI9000Ctrl()
         self.iomod_usb_wdgt = HC_IOModule(
             self.iomod_usb, self, usb_channel_data, "USB NI-DAC", num_columns=2,
         )
-        # self.iomod_usb_wdgt.set_online_callback(lambda x: self.iomod_usb_wdgt.command("INIT_CHANNELS"))
+        self.iomod_usb_wdgt.update_setting("CHcDAQ1Mod2/ai0_terminal_config", "DIFF")
+        self.iomod_usb_wdgt.update_setting("CHcDAQ1Mod2/ai1_terminal_config", "DIFF")
+        self.iomod_usb_wdgt.update_setting("CHcDAQ1Mod2/ai2_terminal_config", "DIFF")
+        self.iomod_usb_wdgt.update_setting("CHcDAQ1Mod2/ai3_terminal_config", "DIFF")
+        self.iomod_usb_wdgt.update_setting("CHcDAQ1Mod2/ai4_terminal_config", "DIFF")
 
         self.zmqtool = HC_ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
 
