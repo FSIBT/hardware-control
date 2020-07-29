@@ -129,6 +129,22 @@ class Key4000XCtrl(HC_Backend):
             return self.query(f"CHAN{channel}:COUP?")
 
     def command(self, cmd: str):
+        """ Executes an action specified by 'cmd'.
+
+        Parameters
+        ----------
+        cmd
+            Name of command to execute
+
+        Notes
+        -----
+        Available commands:
+
+        * SINGLE_TRIGGER: Set the instrument to trigger once and retain the data
+        * RUN: Set the instrument to continuously trigger
+        * CONFIG_READ_WAVE: Configure oscilloscope settings to prepare for reading waveforms
+        * STOP: Prevent the instrument from triggering
+        """
         if not self.online:
             return "Offline"
 
@@ -142,16 +158,33 @@ class Key4000XCtrl(HC_Backend):
             self.write(":STOP")
 
     def command_listdata(self, cmd: str):
+        """ Executes an action specified by 'cmd', returns a tuple with a string and two lists
+
+        Parameters
+        ----------
+        cmd
+            Name of command to execute
+
+        Notes
+        -----
+        Available commands (<X> indicates a number):
+
+        * CH<X>_WVFM?: Reads the waveform for channel 'X'
+        * CH<X>_CLEAR: Clears the waveform for channel 'X' and returns two empty lists
+        * RUN: Set the instrument to continuously trigger
+        * CONFIG_READ_WAVE: Configure oscilloscope settings to prepare for reading waveforms
+        * STOP: Prevent the instrument from triggering
+        """
 
         if not self.online:
             return "", [], []
 
         channel, cmd_X = get_channel_from_command(cmd)
 
-        if cmd_X == "CHX+_WVFM?":
+        if cmd_X == "CHX_WVFM?":
             # Returns a tuple (str, list, list)
             return self.read_waveform(channel)
-        if cmd_X == "CHX+_CLEAR":
+        if cmd_X == "CHX_CLEAR":
             return f"CH{channel}_WVFM", [], []
         else:
             return "", [], []
@@ -168,48 +201,13 @@ class Key4000XCtrl(HC_Backend):
         if not self.dummy:
             self.write(":DIG")
 
-    # def read_all_waveforms(self, ch1, ch2, ch3, ch4):
-    #
-    #     wave = {}
-    #
-    #
-    #     if not self.dummy:
-    #         if ch1:
-    #             wave["CH1"] = self.read_waveform(1)
-    #         if ch2:
-    #             wave["CH2"] = self.read_waveform(2)
-    #         if ch3:
-    #             wave["CH3"] = self.read_waveform(3)
-    #         if ch4:
-    #             wave["CH4"] = self.read_waveform(4)
-    #
-    #     return wave
-
-    def single_trigger(self):
-        """Tells oscilloscope to run with trigger mode set to single trigger"""
-        if not self.dummy:
-            self.write(":SING")
-
-    def norm_trigger(self):
-        """Tell oscilloscope to run with trigger mode set to normal"""
-        if not self.dummy:
-            self.write(":RUN")
-
-    def auto_trigger(self):
-        """Tells oscilloscope to run with trigger mode set to auto"""
-        pass
-
-    def set_measurement(self, parameter: str, avg: str):
-        """Tells oscilloscope to enable a given measurement (eg. freq, Vpp_avg)"""
-        pass
-
-    def read_measurement(self, parameter: str, avg: str):
-        """Reads measurement value from oscilloscope (if measurement first set
-        by 'set_measurement()')"""
-        pass
-
     def read_waveform(self, channel: int):
         """Reads a waveform from the oscilloscope.
+
+        Parameters
+        ----------
+        channel : int
+            Channel number to read
 
         Returns
         -------
