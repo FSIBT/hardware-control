@@ -146,11 +146,3 @@ class SRSDG535Ctrl(HC_Backend):
         else:
             logger.warning(f"{self.ID} : unknown command")
         return cmd
-
-    def write(self, cmd: str):
-        try:
-            if self.online and not self.dummy:
-                self.device.write(cmd)
-                logger.debug(f'\tSRSDG535< "{cmd}"')
-        except Exception:
-            logger.error(f"{self.ID} - An exception occurred in write", exc_info=True)
