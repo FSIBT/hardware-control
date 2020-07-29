@@ -45,7 +45,6 @@ class HC_Comm(QObject):
     sigCommandLog = pyqtSignal(str, float, str)
     sigClose = pyqtSignal()
 
-    # TODO: @TImo Bauer Add 'try_connect' frequency
     def __init__(
         self, backend, instrument, try_connect_period=5000, lock_until_sync=False
     ):
@@ -115,9 +114,8 @@ class HC_Comm(QObject):
         to connect to the instrument, closes any open connections, then kills
         the worker thread.
         """
-        # TODO: Change logger messages to references address, not instr
         logger.debug(
-            f"\tInstrument: '{self.instruments[0].name}' closing Comm with backend of type '{self.backend_model}'."
+            f"Closing HC_Comm with backend of class '{self.backend_model}' connected via {self.backend.connection_type} at address '{self.backend.connection_addr}'."
         )
         self.try_connect_timer.stop()  # Stop
         self.sigClose.emit()
