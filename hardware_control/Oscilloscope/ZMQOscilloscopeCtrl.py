@@ -85,7 +85,6 @@ class ZMQOscilloscopeCtrl(HC_Backend):
                 elif setting_X == "CHX_BW_lim":
                     if bool(value):
                         self.settings[f"bandwidth filter{channel}"] = "20MHz"
-                        # Todo: @Giesbrecht Verify this is the correct code
                     else:
                         self.settings[f"bandwidth filter{channel}"] = "Full"
                     self.send_json_settings()
@@ -105,7 +104,6 @@ class ZMQOscilloscopeCtrl(HC_Backend):
                     return "Warning: Setting 'label' not available"
                 elif setting_X == "CHX_probe_atten":
                     self.settings[f"External Gain/Attenuator{channel}"] = f"x{value}"
-                    # Todo: double check this is formatted correctly @Giesbrecht
                     self.send_json_settings()
                     return f"{setting}:{value}"
                 elif setting_X == "CHX_coupling":
@@ -127,12 +125,11 @@ class ZMQOscilloscopeCtrl(HC_Backend):
                     return f"{setting}:{value}"
                 elif setting == "trigger_edge":
                     if value == "POS":
-                        value = "Rising"  # ToDo: cheeck that this is valid @Giesbrecht
+                        value = "Rising"
                     elif value == "NEG":
                         value = "Falling"
                     else:
                         value = "Rising"
-                    # Todo: @Giesbrecht check that there aren't any other valid options
                     self.settings[f"Ch enable{channel}"] = value
                     self.send_json_settings()
                     return f"{setting}:{value}"
@@ -159,10 +156,11 @@ class ZMQOscilloscopeCtrl(HC_Backend):
     def command(self, cmd: str):
         if not self.online:
             return "Offline"
-        # Todo: things probably need to go here
+
+        pass
 
     def try_connect(self):
-        # TODO: Make a common ZMQ backend for ZMQCOnnectionTool and ZMQ scope
+
         if self.dummy:
             if self.online:
                 return True

@@ -599,8 +599,6 @@ class OscilloscopeHorizontalWidget(QWidget):
         self.horizontal_label_box.addWidget(self.horizontal_label)
 
         # ****** DEFINE TEXT BOXES
-        # ToDo: change Units to a more useful dimension than s - eg ms or mu
-        #
         self.timebase_edit = QDoubleSpinBox()
         try:
             self.timebase_edit.setValue(float(control.settings["timebase"]))
@@ -732,10 +730,7 @@ class OscilloscopeDisplayWidget(QGroupBox):
             self.refresh_mode_label = QLabel("Refresh Mode: ")
 
             self.refresh_mode_drop = QComboBox()
-            # self.refresh_mode_drop.addItems(["Timer", "Single Trig", "Manual"]) #TODO: Impliment single trigger
-            self.refresh_mode_drop.addItems(
-                ["Timer", "Manual"]
-            )  # TODO: Impliment single trigger
+            self.refresh_mode_drop.addItems(["Timer", "Manual"])
             self.refresh_mode_drop.currentIndexChanged.connect(
                 lambda: self.set_refresh_mode(self.refresh_mode_drop.currentText())
             )

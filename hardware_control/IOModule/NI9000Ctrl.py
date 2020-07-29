@@ -51,7 +51,6 @@ class NI9000Ctrl(HC_Backend):
             self.dummy = True
             logger.error(f"{self.ID}: import of nidaqmx failed, changing to dummy mode")
 
-    # TODO: Rework this
     def try_connect(self):
         if not self.dummy and os.name == "nt":
             try:

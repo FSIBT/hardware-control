@@ -33,7 +33,8 @@ class CAEN14xxETCtrl(HC_Backend):
             f"CAEN u_s received {setting}, {value} and interpreted chan={channel}, setting_X={setting_X}, value={value}"
         )
 
-        # TODO: add comment why these need to be before testing for self.online
+        # These settings return valid values even in dummy mode or while offline.
+        # That's why we check for self.online after these if-statements
         if setting_X == "CHX_I_max":
             self.max_I[channel - 1] = float(value)
             return str(value)

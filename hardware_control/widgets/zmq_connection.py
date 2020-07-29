@@ -137,7 +137,7 @@ class HC_ZMQConnectionTool(HC_Instrument):
 
         self.try_connect()
 
-    def try_connect(self):  # TODO: Make sure this fucntion is working correctly
+    def try_connect(self):
 
         if self.dummy:
             if self.socket_online:
@@ -149,7 +149,6 @@ class HC_ZMQConnectionTool(HC_Instrument):
                 return True
 
         if self.socket_online:
-            # Todo: check that this will reconnect automatically, if not fix
             return True
 
         # Try to connect - restart socket

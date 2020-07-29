@@ -53,7 +53,7 @@ class Pico6000Ctrl(HC_Backend):
             return True
 
         if self.online:
-            return True  # Todo: Add check_connection() here?
+            return True
 
         logger.debug(f"{self.ID}: trying to connect")
 
@@ -93,7 +93,7 @@ class Pico6000Ctrl(HC_Backend):
 
         try:
             # first check for commands that are not channel specific
-            if setting == "labels_enabled":  # TODO
+            if setting == "labels_enabled":
                 return "Not available"
 
             if setting == "timebase":
@@ -186,8 +186,7 @@ class Pico6000Ctrl(HC_Backend):
                 return "Success"
             if setting_X == "CHX_impedance":
                 return "Not available"
-            if setting_X == "CHX_label":  # TODO
-                # Length is capped at 32 characters
+            if setting_X == "CHX_label":
                 return "Not available"
             if setting_X == "CHX_invert":
                 return "Not availanle"
