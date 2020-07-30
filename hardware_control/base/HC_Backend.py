@@ -165,9 +165,9 @@ class HC_Backend(abc.ABC):
         if isinstance(self.check_connection_commands, str):
             self.query(self.check_connection_commands)
             return self.online
-        if isinstance(self.check_connection_commands, [list, tuple]):
+        if isinstance(self.check_connection_commands, (list, tuple)):
             for cmd in self.check_connection_commands:
-                self.query(self.check_connection_commands)
+                self.query(cmd)
             return self.online
 
     @abc.abstractmethod
