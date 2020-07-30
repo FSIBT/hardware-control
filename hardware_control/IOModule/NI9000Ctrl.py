@@ -153,10 +153,24 @@ class NI9000Ctrl(HC_Backend):
         except:
             logger.error("Error occured in NI9000 command.", exc_info=True)
 
-    @ensure_online
     def command(self, cmd: str):
 
         channel, setting_X = get_channel_from_command(cmd)
+
+        if setting_X == "DISPLAY_CONFIGURATION":
+            print(f"--------- Configuration for {self.ID} ---------")
+            print("Terminal Configurations:")
+            for key in self.term_config_modes:
+                val = self.term_config_modes[key]
+                print(f"\t{key}:{val}")
+            print("Minima:")
+            for key in self.term_mins:
+                val = self.term_mins[key]
+                print(f"\t{key}:{val}")
+            print("Maxima:")
+            for key in self.term_maxes:
+                val = self.term_maxes[key]
+                print(f"\t{key}:{val}")
 
         if self.dummy:
             num = random.random() * 10
