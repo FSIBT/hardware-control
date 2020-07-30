@@ -153,6 +153,83 @@ class ZMQOscilloscopeCtrl(HC_Backend):
     def command(self, cmd: str):
         pass
 
+    @ensure_online
+    def command_listdata(self, cmd: str):
+        """ Executes an action specified by 'cmd', returns a tuple with a string and two lists
+
+        Parameters
+        ----------
+        cmd
+            Name of command to execute
+
+        Notes
+        -----
+        Available commands (<X> indicates a number):
+
+        * CH<X>_WVFM?: Reads the waveform for channel 'X'
+        * CH<X>_CLEAR: Clears the waveform for channel 'X' and returns two empty lists
+        * RUN: Set the instrument to continuously trigger
+        * CONFIG_READ_WAVE: Configure oscilloscope settings to prepare for reading waveforms
+        * STOP: Prevent the instrument from triggering
+        """
+
+        if not self.online:
+            return "", [], []
+
+        channel, cmd_X = get_channel_from_command(cmd)
+
+        if cmd_X == "CHX_WVFM?":
+            # Returns a tuple (str, list, list)
+            return self.read_waveform(channel)
+        if cmd_X == "CHX_CLEAR":
+            return f"CH{channel}_WVFM", [], []
+        else:
+            return "", [], []
+
+    @ensure_online
+    def read_waveform(self, channel: int):
+
+        if self.socket is None:
+            return "", [], []
+
+        self.socket.send_string("get graph")
+
+        try:
+            message = self.socket.recv_string()
+        except zmq.error.Again:
+            self.online = False
+            return "", [], []
+
+        # NOTE: Returned dictionary comes back in format:
+        #
+        # j = [{'t(0)': T0,
+        #   'delta t': dt,
+        #   'data': A},
+        #  {'t(0)': T0,
+        #   'delta t': dt,
+        #   'data': B},
+        #  {'t(0)': T0,
+        #   'delta t': dt,
+        #   'data': C},
+        #  {'t(0)': T0,
+        #   'delta t': dt,
+        #   'data': D}]
+
+        T0 = message[0]["t(0)"]
+        delta_t = message[0]["delta t"]
+        try:
+            data = message[channel - 1]["data"]
+        except:
+            logger.error(
+                "Failed to read channel {channel}. Channel number out of bounds."
+            )
+            return
+        num_pts = len(data)
+
+        time = np.linspace(T0, T0 + delta_t * (num_pts - 1), num_pts)
+
+        return "CH{channel}_WVFM", time, data
+
     def try_connect(self):
 
         if self.dummy:
