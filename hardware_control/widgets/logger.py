@@ -466,8 +466,6 @@ class HC_LoggerTool(HC_Instrument):
 
         # Select one group and display it if none currently displayed
         if len(names) > 0 and self.settings["display_group"] == "":
-            print("sets")
-            print(names)
             self.set_group(names[-1])
 
         # if self.settings['display_group'] == "" and len(self.window.app.data_sets) > 0:

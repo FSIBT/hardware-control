@@ -99,7 +99,6 @@ class HC_IOModule(HC_Instrument):
                 continue
 
             c_dict = self.ensure_all_fields(c_dict)
-            print(c_dict)
             if c_dict["DIR"] == "OUTPUT":
                 if c_dict["TYPE"] == "DIGITAL":
                     last_wdgt = DigitalOutputChannel(
@@ -220,9 +219,6 @@ class HC_IOModule(HC_Instrument):
             self.values[f"CH{c.channel}_analog_read"] = ""
         for c in self.dig_in_channels:
             self.values[f"CH{c.channel}_digital_read"] = ""
-
-        print("\n\nvalues")
-        print(self.values)
 
 
 class AnalogInputChannel(QGroupBox):

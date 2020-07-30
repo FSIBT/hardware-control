@@ -299,7 +299,6 @@ class CustomControlWidget(QGroupBox):
         self.filament_label = QLabel("Filament duration (sec): ")
 
         instr_idx = window.app.get_instrument_idx("Trigger 1")
-        print(f"Instrument index: {instr_idx}")
         self.filament_edit = QLineEdit()
         self.filament_edit.setValidator(QDoubleValidator())
         if instr_idx != -1:

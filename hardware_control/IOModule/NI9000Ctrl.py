@@ -110,8 +110,6 @@ class NI9000Ctrl(HC_Backend):
 
             self.term_config_modes[channel] = config_mode
 
-            print(f"\tSet TC for {channel} to {value_orig}")
-
             return str(value)
 
         if not self.online:
@@ -138,7 +136,6 @@ class NI9000Ctrl(HC_Backend):
                         max = self.term_mins[channel]
                     else:
                         max = 10
-                    print(f"USING MAX: {max} and min: {min}")
                     task.ao_channels.add_ao_voltage_chan(
                         channel, min_val=min, max_val=max
                     )
@@ -154,8 +151,6 @@ class NI9000Ctrl(HC_Backend):
                     time.sleep(0.010)
                     done = task.is_task_done()
                 return str(done)
-
-            print(f"Unrecognized command {setting_X}, {channel}, {value}")
 
         except:
             logger.error("Error occured in NI9000 command.", exc_info=True)
@@ -219,16 +214,13 @@ def nidaxmxTest():
                     return True
             return True
         except Exception:
-            print(
-                Fore.RED
-                + "WARNING: Can not acsess NIDAQMX on this system. NIDAQ will not function"
-                + Style.RESET_ALL
+            logger.error(
+                "WARNING: Can not acsess NIDAQMX on this system. NIDAQ will not function"
             )
             return False
     else:
-        print(
-            Fore.RED
-            + "WARNING: Can not acsess NIDAQMX on this system. NIDAQ will not function"
-            + Style.RESET_ALL
+        logger.error(
+            "WARNING: Can not acsess NIDAQMX on this system. NIDAQ will not function"
         )
+
     return False
