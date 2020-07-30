@@ -246,7 +246,9 @@ class HC_PlotTool(HC_PlotBase):
 class HC_MiniPlotTool(HC_PlotBase):
     """A minimized matplotlib figure.
 
-    No axes, no lables, just the data in a small window that can be included in a status bar for example.
+    No axes, no lables, just the data in a small window that can be
+    included in a status bar for example.
+
     """
 
     def __init__(self, window, name="Mini Plot", width=100, height=100, **kwargs):

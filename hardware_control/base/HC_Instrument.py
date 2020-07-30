@@ -89,7 +89,10 @@ class HC_Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
         self.ramp_timer.timeout.connect(self.update_ramp)
 
     def __repr__(self):
-        return f"HC_Instrument {self.name} {self.manufacturer} @ {self.address} online:{self.online}"
+        return (
+            f"HC_Instrument {self.name} {self.manufacturer} @ {self.address}"
+            f" online:{self.online}"
+        )
 
     def __str__(self):
         # return f"{self.manufacturer} {self.model}"
@@ -134,7 +137,8 @@ class HC_Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
 
         if not callable(callback_function):
             logger.warning(
-                f"Specified a non-callable object ({callback_function}) for a callback function. "
+                f"Specified a non-callable object ({callback_function}) for"
+                f" a callback function. "
             )
             return
 
@@ -176,7 +180,8 @@ class HC_Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
                                 exc_info=True,
                             )
 
-                # If curr is None, that indicates ramp is complete. Delete value from targets
+                # If curr is None, that indicates ramp is
+                # complete. Delete value from targets
                 if curr is None:
                     pop_list.append(key)
                 else:
@@ -218,7 +223,8 @@ class HC_Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
                     dVal = float(dVal)
                 except:
                     logger.error(
-                        "Ramp speeds must be floats. Cannot ramp. Changing ramp_mode to OFF."
+                        "Ramp speeds must be floats. Cannot ramp."
+                        " Changing ramp_mode to OFF."
                     )
                     self.ramp_mode = HC_Instrument.OFF
                     self.ramp_timer.stop()
@@ -234,7 +240,8 @@ class HC_Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
 
                 logger.debug(f"New value for parameter {key} will be {curr}")
 
-                # If curr is None, that indicates ramp is complete. Delete value from targets
+                # If curr is None, that indicates ramp is
+                # complete. Delete value from targets
                 if curr == self.ramp_target[key]:
                     pop_list.append(key)
 
@@ -279,7 +286,8 @@ class HC_Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
             self.settings[setting] = value
         except KeyError:
             logger.error(
-                f"Key '{setting}' does not exist for instrument '{self.name}' in settings dictionary.",
+                f"Key '{setting}' does not exist for instrument '{self.name}'"
+                f" in settings dictionary.",
                 exc_info=True,
             )
 
@@ -291,7 +299,9 @@ class HC_Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
                     self.ramp_target[setting] = float(value)
                 except:
                     logger.warning(
-                        f"Cannot set received value '{value}' as ramp target value because it cannot be converted to a float. Setting '{setting}' directly to '{value}'."
+                        f"Cannot set received value '{value}' as ramp target"
+                        f" value because it cannot be converted to a float."
+                        f" Setting '{setting}' directly to '{value}'."
                     )
                     self.values[setting] = self.comm.update_setting(setting, value)
                     return
@@ -346,7 +356,9 @@ class HC_Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
 
         else:
             logger.error(
-                "Settings must have string, float, or int datatype.\n\tInstrument '{self.name}' setting {parameter} has type: {type(current_val)}"
+                f"Settings must have string, float, or int datatype.\n"
+                f"\tInstrument '{self.name}' setting {parameter} has"
+                f" type: {type(current_val)}"
             )
             return False
 
@@ -555,7 +567,8 @@ class HC_Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
         # Otherwise make sure is list
         if not isinstance(parameters, list):
             logger.info(
-                f"get_value_keys() received bad 'parameters' argument. type must be list or None but was '{type(parameters)}'."
+                f"get_value_keys() received bad 'parameters' argument."
+                f" type must be list or None but was '{type(parameters)}'."
             )
             return None
 
@@ -570,7 +583,8 @@ class HC_Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
                 rval.append(p)
             else:
                 logger.warning(
-                    f"get_value_keys() skipped parameter '{p}' because it was not listed in values ({self.values})"
+                    f"get_value_keys() skipped parameter '{p}' because it"
+                    f" was not listed in values ({self.values})"
                 )
                 return None
         return rval

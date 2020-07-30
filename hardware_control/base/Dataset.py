@@ -80,12 +80,12 @@ class Dataset(QObject):
         self.autosave_next_row = 0
 
     def name_channel(self, channel: str, name: str):
-        """
-        Channel must be a string listing the instrument and parameter of the channel
-        to rename. THe instrument:parameter pair must be listed in self.data.
+        """Channel must be a string listing the instrument and parameter of
+        the channel to rename. THe instrument:parameter pair must be
+        listed in self.data.
+
         """
 
-        # Set name
         self.channel_names[channel] = name
 
     def start_autosave(
@@ -101,7 +101,8 @@ class Dataset(QObject):
         self.autosave_timer.start(1e3 * self.autosave_interval)
 
         logger.info(
-            f"Dataset {self.name} activated autosave. Interval: {self.autosave_interval} s"
+            f"Dataset {self.name} activated autosave."
+            f" Interval: {self.autosave_interval} s"
         )
 
     def start_asynch(self, interval: float = 10, add_timestamp: bool = True):
@@ -114,7 +115,8 @@ class Dataset(QObject):
         self.async_log_timer.start(1e3 * self.async_log_interval)
 
         logger.info(
-            f"Dataset {self.name} activated asynchronous mode. Interval: {self.async_log_interval} s"
+            f"Dataset {self.name} activated asynchronous mode."
+            f" Interval: {self.async_log_interval} s"
         )
 
     def set_save_interval(self, interval: float):
@@ -155,7 +157,9 @@ class Dataset(QObject):
     def exec_autosave(self):
         """ Called by the autosave timer. Triggers a call to self.save() """
 
-        logger.info(f"Dataset {self.name} autosaveing to file {self.autosave_filename}")
+        logger.info(
+            f"Dataset {self.name} autosaveing to" f" file {self.autosave_filename}"
+        )
 
         if self.autosave:  # Check if autosave enabled
             self.save(self.autosave_filename, self.autosave_format)
@@ -217,7 +221,8 @@ class Dataset(QObject):
                 with open(filename, "w") as outfile:
 
                     outfile.write(
-                        f"# {datetime.datetime.today().strftime('%Y-%m-%d')}\n# Logfile from hardware_control run\n"
+                        f"# {datetime.datetime.today().strftime('%Y-%m-%d')}\n"
+                        f"# Logfile from hardware_control run\n"
                     )
 
                     datastructure = ""
@@ -280,7 +285,8 @@ class Dataset(QObject):
 
                 if vkeys is None:
                     logger.info(
-                        f"Async log for dataset {self.name} aborted because not all values present"
+                        f"Async log for dataset {self.name} aborted because"
+                        f" not all values present"
                     )
                     return
 
@@ -295,7 +301,9 @@ class Dataset(QObject):
                         except:
                             v = ai[0].values[vk]
                             logger.info(
-                                f"Async log for dataset {self.name} aborted because value '{v}' for parameter '{vk}' cannot be converted to a float."
+                                f"Async log for dataset {self.name} aborted"
+                                f" because value '{v}' for parameter '{vk}'"
+                                f" cannot be converted to a float."
                             )
                             return
 

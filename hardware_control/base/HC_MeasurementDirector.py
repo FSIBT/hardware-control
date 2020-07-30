@@ -15,14 +15,20 @@ class MeasurementDirector:
         # List of MeasurementRequest objects to measure in this datapoint
         self.queue = []
 
-        # Describes state of director and if new scan is possible. Options: Ready - can add requests or start scan, Busy - scanning, can not take new measurements or start again, Error - an error occured. Details in err_str, Failed - Last measurement failed. Details in err_str
+        # Describes state of director and if new scan is
+        # possible. Options: Ready - can add requests or start scan,
+        # Busy - scanning, can not take new measurements or start
+        # again, Error - an error occured. Details in err_str, Failed
+        # - Last measurement failed. Details in err_str
         self.state = "Ready"
         self.err_str = ""
 
         # List of all instruments currently processing a MeasurementRequest
         self.occ_instruments = []
 
-        # List of parameter_strings of MeasurementRequests in the queue that need to be relaunched once enough time has elapsed
+        # List of parameter_strings of MeasurementRequests in the
+        # queue that need to be relaunched once enough time has
+        # elapsed
         self.relaunch_list = []
 
         self.cancel_batch = False
@@ -39,7 +45,8 @@ class MeasurementDirector:
         # MAke sure director is ready to take new commands
         if self.state != "Ready":
             self.error(
-                f"Director cannot add measurements because it is in state '{self.state}'. Error code: {self.err_str}"
+                f"Director cannot add measurements because it is in"
+                f" state '{self.state}'. Error code: {self.err_str}"
             )
             return False
 
@@ -47,7 +54,8 @@ class MeasurementDirector:
         next_idx = self.app.data_sets[meas_req.dataset_name].len()
         if next_idx == -1:
             logger.error(
-                f"Dataset {meas_req.dataset_name} corrupted. Tracked parameters have unequal number of datapoints.",
+                f"Dataset {meas_req.dataset_name} corrupted."
+                f" Tracked parameters have unequal number of datapoints.",
                 True,
             )
             return False
@@ -106,7 +114,10 @@ class MeasurementDirector:
                 idx = midx
                 # The request was found, record its index
         if idx == -1:
-            self.err_str = f"Failed to find MeasurementRequest specified by parameteter string '{param_str}'."
+            self.err_str = (
+                f"Failed to find MeasurementRequest specified by"
+                f" parameteter string '{param_str}'."
+            )
             self.state = "Error"
             return
 
@@ -122,7 +133,8 @@ class MeasurementDirector:
             self.queue.pop(idx)
 
             logger.debug(
-                f"MeasurementRequest with param_str {param_str} deleted itself due to batch cancelation"
+                f"MeasurementRequest with param_str {param_str} deleted itself"
+                f" due to batch cancelation"
             )
 
             # Remove instrument from occupied_instruments list
@@ -175,7 +187,10 @@ class MeasurementDirector:
 
                 except Exception as e:
                     logger.error(f"bad float {val}\n\t{str(e)}")
-                    self.err_str = "Failed to add point. Return value could not be converted to a float."
+                    self.err_str = (
+                        "Failed to add point. Return value could"
+                        " not be converted to a float."
+                    )
                     self.state = "Error"
                     return
 
@@ -210,7 +225,8 @@ class MeasurementDirector:
             # erase from queue
             mes_str = self.queue[idx].param_name
             logger.debug(
-                f"Removing index {idx} with parameter {mes_str}. My parameter string is {param_str}"
+                f"Removing index {idx} with parameter {mes_str}. My parameter"
+                f" string is {param_str}"
             )
             self.queue.pop(idx)
 
@@ -233,7 +249,8 @@ class MeasurementDirector:
         elif self.queue[idx].meas_failed():
 
             logger.info(
-                f"MeasurementRequest with parameter string {param_str} failed. Canceling batch."
+                f"MeasurementRequest with parameter string {param_str} failed."
+                f" Canceling batch."
             )
 
             # Mark as failed
@@ -299,7 +316,8 @@ class MeasurementDirector:
             )
         else:
             logger.warning(
-                f"Invalid Instrument in MeasurementRequest. Instrument: '{meas_req.inst_name}'"
+                f"Invalid Instrument in MeasurementRequest."
+                f" Instrument: '{meas_req.inst_name}'"
             )
             return False
 
@@ -347,7 +365,8 @@ class MeasurementDirector:
             )
         else:
             logger.warning(
-                f"Invalid Instrument in MeasurementRequest. Instrument: '{meas_req.inst_name}'"
+                f"Invalid Instrument in MeasurementRequest."
+                f" Instrument: '{meas_req.inst_name}'"
             )
             return False
 
@@ -392,7 +411,10 @@ class MeasurementDirector:
                     idx = midx
                     # The request was found, record its index
             if idx == -1:
-                self.err_str = f"Failed to find MeasurementRequest specified by parameteter string '{rmr}'."
+                self.err_str = (
+                    f"Failed to find MeasurementRequest specified"
+                    f" by parameteter string '{rmr}'."
+                )
                 self.state = "Error"
                 return
 

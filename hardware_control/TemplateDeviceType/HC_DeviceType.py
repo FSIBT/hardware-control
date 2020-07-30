@@ -1,8 +1,9 @@
+import logging
+
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QLineEdit, QLabel, QGridLayout, QDoubleSpinBox
 
 from hardware_control.base import HC_Instrument, HC_Comm
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -32,9 +33,7 @@ class HC_DeviceType(HC_Instrument):
             self.window.app.comms[scpi_instr] = HC_Comm(scpi_instr, self)
             self.comm = self.window.app.comms[scpi_instr]
 
-        # self.filename = ""  # currently not in use
-
-        ### Create UI - example
+        # Create UI - example
         self.lineEdit = QLineEdit()
         self.lineEdit.setText("10")
         self.lineEdit.editingFinished.connect(
@@ -56,9 +55,8 @@ class HC_DeviceType(HC_Instrument):
         self.layout.addWidget(self.text, 0, 1)
         self.layout.addWidget(self.spinbox, 1, 0)
         self.setLayout(self.layout)
-        ###
 
-        ### add your specific settings
+        # add your specific settings
         self.settings["Volt_Channel1"] = 123
         self.settings["Volt_Channel2"] = 456
 
@@ -67,16 +65,16 @@ class HC_DeviceType(HC_Instrument):
         self.readout_timer.timeout.connect(self.update_readout)
         self.readout_timer.start(self.globalRefreshRate)
 
-        # Write state to Backend
-        # this sends all settings, which are stored in the settings dictionary to the backend
+        # Write state to Backend this sends all settings, which are
+        # stored in the settings dictionary to the backend
         self.send_state()
 
     # Updates the readout
     def update_readout(self):
         self.command("RND")  # Sends readout command (for example)
-        mess = self.read_values(
-            "RND"
-        )  # recived messige will be stored, once available this will read it out, that way the UI wont freeze
+        # recived messige will be stored, once available this will
+        # read it out, that way the UI wont freeze
+        mess = self.read_values("RND")
         if mess:
             self.text.setText(mess)
 

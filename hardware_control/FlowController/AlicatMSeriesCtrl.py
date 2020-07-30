@@ -52,7 +52,8 @@ class AlicatMSeriesCtrl(HC_Backend):
                 return value
         except Exception:
             logger.error(
-                "An error occured in Alicat flowmeter when sending command {setting}={value} to the instrument.",
+                f"An error occured in Alicat flowmeter when sending command"
+                f" {setting}={value} to the instrument.",
                 exc_info=True,
             )
             self.error_count += 1

@@ -61,7 +61,9 @@ class NI9000Ctrl(HC_Backend):
             except nidaqmx.errors.DaqError:
                 self.online = False
                 logger.error(
-                    "Connection failed due to DaqError. This could mean the NIDAQ must be reserved in NI-Max Application."
+                    "Connection failed due to DaqError."
+                    " This could mean the NIDAQ must be reserved"
+                    " in NI-Max Application."
                 )
             except Exception:
                 self.online = False
@@ -84,7 +86,8 @@ class NI9000Ctrl(HC_Backend):
                 return value
             except:
                 logger.error(
-                    f"Failed to set CH{channel} V max to '{value}'. Cannot convert to float."
+                    f"Failed to set CH{channel} V max to '{value}'."
+                    f" Cannot convert to float."
                 )
                 return "Failed_to_set_value"
 
@@ -95,7 +98,8 @@ class NI9000Ctrl(HC_Backend):
                 return value
             except:
                 logger.error(
-                    f"Failed to set CH{channel} V min to '{value}'. Cannot convert to float."
+                    f"Failed to set CH{channel} V min to '{value}'."
+                    f" Cannot convert to float."
                 )
                 return "Failed_to_set_value"
 
@@ -209,8 +213,9 @@ def nidaxmxTest():
 
     """
 
-    # We check which OS is calling because nidaqmx only works on Windows. Importing
-    # nidaqmx on macOS or linux will cause pyvisa and sockets to break.
+    # We check which OS is calling because nidaqmx only works on
+    # Windows. Importing nidaqmx on macOS or linux will cause pyvisa
+    # and sockets to break.
 
     if os.name == "nt":
         try:
@@ -221,14 +226,16 @@ def nidaxmxTest():
         except Exception:
             print(
                 Fore.RED
-                + "WARNING: Can not acsess NIDAQMX on this system. NIDAQ will not function"
+                + "WARNING: Can not acsess NIDAQMX on this system."
+                + " NIDAQ will not function"
                 + Style.RESET_ALL
             )
             return False
     else:
         print(
             Fore.RED
-            + "WARNING: Can not acsess NIDAQMX on this system. NIDAQ will not function"
+            + "WARNING: Can not acsess NIDAQMX on this system."
+            + " NIDAQ will not function"
             + Style.RESET_ALL
         )
     return False

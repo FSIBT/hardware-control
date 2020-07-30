@@ -66,7 +66,8 @@ class HC_MultiPowerSupply(HC_Instrument):
             max(channels) > self.backend.num_channels
         ):
             logger.warning(
-                "WARNING: Requested channel not available on instrument. Ignoring extra channels."
+                "WARNING: Requested channel not available on instrument."
+                " Ignoring extra channels."
             )
 
         # Add channels that are within range and not repeats
@@ -161,7 +162,8 @@ class HC_MultiPowerSupply(HC_Instrument):
         if self.all_enable_button != HC_MultiPowerSupply.ONLY:
 
             logger.debug(
-                "All channels on/off button pressed. Will check other channels' button states"
+                "All channels on/off button pressed."
+                " Will check other channels' button states"
             )
 
             any_on = False
@@ -602,7 +604,8 @@ class PowerSupplyChannel(QWidget):
                 except:
                     curr = 0
                     logger.warning(
-                        "Invalid value for 'curr'. Updating indicator with assumption of ramping from 0."
+                        "Invalid value for 'curr'. Updating indicator with"
+                        " assumption of ramping from 0."
                     )
 
                 if self.main_widget.ramp_target[f"CH{self.channel}_V_set"] > curr:

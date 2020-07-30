@@ -12,28 +12,30 @@ ipy_logger.setLevel("ERROR")
 
 
 class HC_Comm(QObject):
-    """ Class to manage communication between two threads.
+    """Class to manage communication between two threads.
 
-    This object is used to automate creating threads and communication objects.
-    By calling this object's functions, data can be safely transfered between the
-    main thread and communication threads. The intended usage is for an HC_Comm
-    object to be created by each HC_Instrument class and use the HC_Comm to
-    communicate with a backend in a separate thread.
+    This object is used to automate creating threads and communication
+    objects.  By calling this object's functions, data can be safely
+    transfered between the main thread and communication threads. The
+    intended usage is for an HC_Comm object to be created by each
+    HC_Instrument class and use the HC_Comm to communicate with a
+    backend in a separate thread.
 
     Parameters
     ----------
     backend
-        Instrument backend. The commands passed through HC_Comm will be forwarded
-        to this object. 'backend' should be a child of HC_Backend
+        Instrument backend. The commands passed through HC_Comm will be
+        forwarded to this object. 'backend' should be a child of HC_Backend
     instrument
         The frontend/widget using this HC_Comm object for communication
     try_connect_period
         The time in milliseconds between attempts to connect to the instrument
     lock_until_sync
         If true, will block all calls to self.update_setting until the string
-        'SYNC_BACKEND' is returned from the backend. This can be used by the widget
-        to determine when the backend first comes online and when to initialize
-        the backend and widget states.
+        'SYNC_BACKEND' is returned from the backend. This can be used by the
+        widget to determine when the backend first comes online and when to
+        initialize the backend and widget states.
+
     """
 
     sigUpdateSettings = pyqtSignal(str, str, float)
@@ -88,7 +90,10 @@ class HC_Comm(QObject):
         self.dataset_states = []
 
     def __repr__(self):
-        return f"HC_Comm {self.backend_model} @ {self.backend.connection_addr}  {hex(id(self))}"
+        return (
+            f"HC_Comm {self.backend_model} @ {self.backend.connection_addr}"
+            + f"  {hex(id(self))}"
+        )
 
     def __str__(self):
         # return f"{self.manufacturer} {self.model}"
@@ -115,7 +120,9 @@ class HC_Comm(QObject):
         the worker thread.
         """
         logger.debug(
-            f"Closing HC_Comm with backend of class '{self.backend_model}' connected via {self.backend.connection_type} at address '{self.backend.connection_addr}'."
+            f"Closing HC_Comm with backend of class '{self.backend_model}' "
+            + f"connected via {self.backend.connection_type} "
+            + f"at address '{self.backend.connection_addr}'."
         )
         self.try_connect_timer.stop()  # Stop
         self.sigClose.emit()
@@ -154,11 +161,13 @@ class HC_Comm(QObject):
 
         if self.lock_until_sync:
             logger.debug(
-                f"Instrument {self.instruments[0].name} block update_setting because UI has not yet synced with instrument"
+                f"Instrument {self.instruments[0].name} block update_setting"
+                f" because UI has not yet synced with instrument"
             )
 
         logger.debug(
-            f"Instrument: {self.instruments[0].name} called 'update_setting()' for setting '{setting}' and sent message '{value}'."
+            f"Instrument: {self.instruments[0].name} called 'update_setting()'"
+            f" for setting '{setting}' and sent message '{value}'."
         )
         self.sigUpdateSettings.emit(setting, value, time.time() + self.expire_time)
 
@@ -170,7 +179,8 @@ class HC_Comm(QObject):
         cmd
             Command string to send to backend"""
         logger.debug(
-            f"Instrument: {self.instruments[0].name} called 'command()' and sent command: '{cmd}'."
+            f"Instrument: {self.instruments[0].name} called 'command()'"
+            f" and sent command: '{cmd}'."
         )
         self.sigCommand.emit(cmd, time.time() + self.expire_time)
 
@@ -183,7 +193,8 @@ class HC_Comm(QObject):
         instrument that is not implimented in the widget or backend.
         """
         logger.debug(
-            f"Instrument: {self.instruments[0].name} called 'write()' and sent message: '{msg}'."
+            f"Instrument: {self.instruments[0].name} called 'write()'"
+            f" and sent message: '{msg}'."
         )
         self.sigWrite.emit(msg, time.time() + self.expire_time)
 
@@ -195,12 +206,15 @@ class HC_Comm(QObject):
         not be needed unless the user needs to use a command or feature in the
         instrument that is not implimented in the widget or backend."""
         logger.debug(
-            f"Instrument: {self.instruments[0].name} called 'query()' and sent message: '{msg}'."
+            f"Instrument: {self.instruments[0].name} called 'query()'"
+            f" and sent message: '{msg}'."
         )
         self.sigQuery.emit(msg, time.time() + self.expire_time)
 
     def try_connect(self):
-        """ Called on a timer, this function tells the backend to connect to the instrument.
+        """Called on a timer, this function tells the backend to connect to
+        the instrument.
+
         """
         self.sigTryConnect.emit(time.time() + self.expire_time)
 
@@ -210,18 +224,22 @@ class HC_Comm(QObject):
         Sends a command to the worker in the worker thread just like command(),
         but returns two lists instead of a string."""
         logger.debug(
-            f"Instrument: {self.instruments[0].name} called 'command_listdata()' and sent command: '{cmd}'."
+            f"Instrument: {self.instruments[0].name} called 'command_listdata()'"
+            f" and sent command: '{cmd}'."
         )
         self.sigCommandList.emit(cmd, time.time() + self.list_expire_time)
 
     def command_log(self, cmd: str, param_str: str):
-        """ Sends a command to the worker in the worker thread with details to help data acquisition.
+        """Sends a command to the worker in the worker thread with details to
+        help data acquisition.
+
         """
 
         # print(f"\n\t\tCOMMAND_LOG::HC_COMM\t{param_str}\n")
 
         logger.debug(
-            f"Instrument: {self.instruments[0].name} called 'command()' and sent command: '{cmd}'."
+            f"Instrument: {self.instruments[0].name} called 'command()'"
+            f" and sent command: '{cmd}'."
         )
         self.sigCommandLog.emit(cmd, time.time() + self.expire_time, param_str)
 
@@ -236,15 +254,19 @@ class HC_Comm(QObject):
             self.lock_until_sync = False
 
         logger.debug(
-            f"Instrument: {self.instruments[0].name} received return from backend '{self.backend_model}'. Return message: {retval}"
+            f"Instrument: {self.instruments[0].name} received return"
+            f" from backend '{self.backend_model}'. Return message: {retval}"
         )
         for instr in self.instruments:
             instr.backend_return(retval)
 
     @pyqtSlot(bool)
     def backend_return_online(self, connected: bool):
-        """ Gets called by the worker after the worker hears from the instrument if it successfully connected.
-        Updates the state of the instrument - ie. if it is or is not online"""
+        """Gets called by the worker after the worker hears from the
+        instrument if it successfully connected.  Updates the state of
+        the instrument - ie. if it is or is not online
+
+        """
         for instr in self.instruments:
             instr.backend_return_online(connected)
 
@@ -270,16 +292,20 @@ class HC_Comm(QObject):
             )
 
             logger.debug(
-                f"Instrument: {self.instruments[0].name} received return from backend '{self.backend_model}'. Return message: {retval}"
+                f"Instrument: {self.instruments[0].name} received return"
+                f" from backend '{self.backend_model}'. Return message: {retval}"
             )
         for instr in self.instruments:
             instr.backend_return(retval)
 
 
 class HC_CommWorker(QObject):
-    """Uses signals + slots to receive data from HC_Comm and relays the information
-    to the backend object. Then sends the return value back to HC_Comm via signals +
-    slots, when HC_Comm then pushes onto the back of the isntrument's values dict"""
+    """Uses signals + slots to receive data from HC_Comm and relays the
+    information to the backend object. Then sends the return value
+    back to HC_Comm via signals + slots, when HC_Comm then pushes onto
+    the back of the isntrument's values dict
+
+    """
 
     sigReturnValues = pyqtSignal(str)
     sigReturnOnline = pyqtSignal(bool)
@@ -292,7 +318,10 @@ class HC_CommWorker(QObject):
         self.backend = backend
 
     def __repr__(self):
-        return f"HC_CommWorker {self.backend.ID} @ {self.backend.connection_addr} {hex(id(self))}"
+        return (
+            f"HC_CommWorker {self.backend.ID}"
+            f" @ {self.backend.connection_addr} {hex(id(self))}"
+        )
 
     def __str__(self):
         # return f"{self.manufacturer} {self.model}"
@@ -303,7 +332,10 @@ class HC_CommWorker(QObject):
         """Transfers a setting and value to the backend"""
 
         if time.time() > expire_time:  # Skip command if too old
-            ret_val = f'EXPIRED=SET: "{setting}" "{value}" \t[Exec: {time.time()}, Exp: {expire_time}] [{self.backend.ID}]'
+            ret_val = (
+                f'EXPIRED=SET: "{setting}" "{value}" \t'
+                f"[Exec: {time.time()}, Exp: {expire_time}] [{self.backend.ID}]"
+            )
         else:
             ret_val = self.backend.update_setting(setting, value)
         self.sigReturnValues.emit(ret_val)
@@ -317,7 +349,10 @@ class HC_CommWorker(QObject):
             return
 
         if time.time() > expire_time:  # Skip command if too old
-            ret_val = f'EXPIRED=CMD:"{cmd}" \t[Exec: {time.time()}, Exp: {expire_time}] [{self.backend.ID}]'
+            ret_val = (
+                f'EXPIRED=CMD:"{cmd}" \t[Exec: {time.time()},'
+                f" Exp: {expire_time}] [{self.backend.ID}]"
+            )
         else:
             ret_val = self.backend.command(cmd)
 
@@ -331,7 +366,10 @@ class HC_CommWorker(QObject):
     def write(self, msg: str, expire_time: float):
         """Transfers a command to be sent directly to the instrument to the backend"""
         if time.time() > expire_time:  # Skip command if too old
-            ret_val = f'EXPIRED=WRT:"{msg}" \t[Exec: {time.time()}, Exp: {expire_time}] [{self.backend.ID}]'
+            ret_val = (
+                f'EXPIRED=WRT:"{msg}" \t[Exec: {time.time()},'
+                f" Exp: {expire_time}] [{self.backend.ID}]"
+            )
         else:
             ret_val = self.backend.write(msg)
 
@@ -345,7 +383,10 @@ class HC_CommWorker(QObject):
     def query(self, msg: str, expire_time: float):
         """Transfers a query statement to be sent directly to the instrument to the backend"""
         if time.time() > expire_time:  # Skip command if too old
-            ret_val = f'EXPIRED=QRY:"{msg}" \t[Exec: {time.time()}, Exp: {expire_time}] [{self.backend.ID}]'
+            ret_val = (
+                f'EXPIRED=QRY:"{msg}" \t[Exec: {time.time()},'
+                f" Exp: {expire_time}] [{self.backend.ID}]"
+            )
         else:
             ret_val = self.backend.query(msg)
 
@@ -370,7 +411,8 @@ class HC_CommWorker(QObject):
         """Transfers a command to the backend"""
         if time.time() > expire_time:  # Skip command if too old
             ret_val = (
-                f'EXPIRED=CMD:"{cmd}" \t[Exec: {time.time()}, Exp: {expire_time}] [{self.backend.ID}]',
+                f'EXPIRED=CMD:"{cmd}" \t[Exec: {time.time()},'
+                f" Exp: {expire_time}] [{self.backend.ID}]",
                 [],
                 [],
             )
@@ -385,7 +427,10 @@ class HC_CommWorker(QObject):
         # print(f"\n\t\t\tCOMMAND_LOG::HC_COMMWORKER\t{param_str}\n")
 
         if time.time() > expire_time:  # Skip command if too old
-            ret_val = f'EXPIRED=CMDLG:"{cmd}" \t[Exec: {time.time()}, Exp: {expire_time}] [{self.backend.ID}]'
+            ret_val = (
+                f'EXPIRED=CMDLG:"{cmd}" \t[Exec: {time.time()},'
+                f" Exp: {expire_time}] [{self.backend.ID}]"
+            )
         else:
             ret_val = self.backend.command(cmd)
 
