@@ -473,7 +473,7 @@ class STS50Demo(HC_MainWindow):
             num_columns=2,
             channel_file="nidaq_extraction_conf.json",
             hooks={
-                "cDAQ9188-1AEF742Mod7/ao4": lambda v: v / 1000,
+                "cDAQ9188-1AEF742Mod7/ao4": lambda v: -v / 1000,
                 "cDAQ9188-1AEF742Mod6/ai6": lambda v: v * 1e-3,
                 "cDAQ9188-1AEF742Mod6/ai7": lambda v: v * 1000,
             },
