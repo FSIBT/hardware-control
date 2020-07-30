@@ -4,11 +4,10 @@
         "TYPE": "Analog",
         "ID_STR": "cDAQ9188-1AEF742Mod7/ao4",
         "LABEL": "Extraction Voltage (set):",
-        "HOOK": "extraction_voltage_out",
         "UNITS": "V",
         "OPTIONS": {
-            "CHX_V_max": "5",
-            "CHX_V_min": "0"
+            "CHX_V_max": "10",
+            "CHX_V_min": "-10"
         }
     },
     "extraction_current_in": {
@@ -16,15 +15,19 @@
         "TYPE": "Analog",
         "ID_STR": "cDAQ9188-1AEF742Mod6/ai6",
         "LABEL": "Extraction Current:",
-        "HOOK": "extraction_current_in",
-        "UNITS": "A"
+        "UNITS": "A",
+        "OPTIONS": {
+            "CHX_terminal_config": "DIFF"
+        }
     },
     "extraction_voltage_in": {
         "DIR": "INPUT",
         "TYPE": "Analog",
         "ID_STR": "cDAQ9188-1AEF742Mod6/ai7",
         "LABEL": "Extraction Voltage:",
-        "HOOK": "extraction_voltage_in",
-        "UNITS": "V"
+        "UNITS": "V",
+        "OPTIONS": {
+            "CHX_terminal_config": "DIFF"
+        }
     }
 }

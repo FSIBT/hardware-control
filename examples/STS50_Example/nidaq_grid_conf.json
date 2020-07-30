@@ -4,16 +4,14 @@
         "TYPE": "ANALOG",
         "ID_STR": "cDAQ1Mod1/ao0",
         "LABEL": "Floating Rack Voltage (set):",
-        "UNITS": "V",
-        "HOOK": "float_volt_out"
+        "UNITS": "V"
     },
     "Grid_voltage_out": {
         "DIR": "OUTPUT",
         "TYPE": "ANALOG",
         "ID_STR": "cDAQ1Mod1/ao1",
         "LABEL": "Grid Voltage (set):",
-        "UNITS": "V",
-        "HOOK": "Grid_volt_out"
+        "UNITS": "V"
     },
     "Floating_rack_vmon_in": {
         "DIR": "INPUT",
@@ -21,7 +19,6 @@
         "ID_STR": "cDAQ1Mod2/ai0",
         "LABEL": "Floating Rack Current (red):",
         "UNITS": "V",
-        "HOOK": "float_Vmon_in",
         "OPTIONS": {
             "CHX_terminal_config": "DIFF"
         }
@@ -32,7 +29,6 @@
         "ID_STR": "cDAQ1Mod2/ai1",
         "LABEL": "Floating Rack Voltage (red):",
         "UNITS": "A",
-        "HOOK": "float_Imon_in",
         "OPTIONS": {
             "CHX_terminal_config": "DIFF"
         }
@@ -43,7 +39,6 @@
         "ID_STR": "cDAQ1Mod2/ai2",
         "LABEL": "Grid Current (red):",
         "UNITS": "A",
-        "HOOK": "grid_Imon_in",
         "OPTIONS": {
             "CHX_terminal_config": "DIFF"
         }
@@ -54,7 +49,6 @@
         "ID_STR": "cDAQ1Mod2/ai3",
         "LABEL": "Grid Voltage (red):",
         "UNITS": "V",
-        "HOOK": "grid_Vmon_in",
         "OPTIONS": {
             "CHX_terminal_config": "DIFF"
         }
@@ -65,7 +59,6 @@
         "ID_STR": "cDAQ1Mod2/ai4",
         "LABEL": "Pressure:",
         "UNITS": "Torr",
-        "HOOK": "Pressure_in",
         "OPTIONS": {
             "CHX_terminal_config": "DIFF"
         }

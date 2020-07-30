@@ -120,22 +120,20 @@ class NI9000Ctrl(HC_Backend):
             if setting_X == "CHX_analog_write":
 
                 with nidaqmx.Task() as task:
-                    if (
-                        channel in self.term_mins
-                        and type(self.term_mins[channel]) == float
+                    if channel in self.term_mins and isinstance(
+                        self.term_mins[channel], float
                     ):
-                        min = self.term_mins[channel]
+                        channel_min = self.term_mins[channel]
                     else:
-                        min = -10
-                    if (
-                        channel in self.term_maxes
-                        and type(self.term_maxes[channel]) == float
+                        channel_min = -10.0
+                    if channel in self.term_maxes and isinstance(
+                        self.term_maxes[channel], float
                     ):
-                        max = self.term_mins[channel]
+                        channel_max = self.term_maxes[channel]
                     else:
-                        max = 10
+                        channel_max = 10.0
                     task.ao_channels.add_ao_voltage_chan(
-                        channel, min_val=min, max_val=max
+                        channel, min_val=channel_min, max_val=channel_max
                     )
                     task.write(value)
                     time.sleep(0.010)
