@@ -78,27 +78,23 @@ class NI9000Ctrl(HC_Backend):
         value = ensure_float(value)
 
         if setting_X == "CHX_V_max":
-            try:
-                val = float(val)
-                self.term_maxes[channel] = val
-                return value
-            except:
-                logger.error(
-                    f"Failed to set CH{channel} V max to '{value}'. Cannot convert to float."
-                )
-                return "Failed_to_set_value"
 
+            if type(value) != float:
+                logger.warning(
+                    f"Failed to set CH{channel} V Max to '{value_orig}'. Failed to convert to float"
+                )
+
+            self.term_maxes[channel] = value
+            return value_orig
         elif setting_X == "CHX_V_min":
-            try:
-                val = float(val)
-                self.term_mins[channel] = val
-                return value
-            except:
-                logger.error(
-                    f"Failed to set CH{channel} V min to '{value}'. Cannot convert to float."
-                )
-                return "Failed_to_set_value"
 
+            if type(value) != float:
+                logger.warning(
+                    f"Failed to set CH{channel} V Min to '{value_orig}'. Failed to convert to float"
+                )
+
+            self.term_mins[channel] = value
+            return value_orig
         elif setting_X == "CHX_terminal_config":
 
             if value_orig == "DIFF":
