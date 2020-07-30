@@ -2,3 +2,10 @@
 requires = ["setuptools>=42", "wheel", "setuptools_scm[toml]>=3.4"]
 
 [tool.setuptools_scm]
+
+[tool.pylint.FORMAT]
+max-line-length="88"
+
+[tool.pylint."MESSAGES CONTROL"]
+# bad-continuation: Black does the job, no need to check.
+disable = "bad-continuation"
