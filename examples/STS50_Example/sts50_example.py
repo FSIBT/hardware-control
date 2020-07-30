@@ -396,10 +396,10 @@ class STS50Demo(HC_MainWindow):
         #####################################################################
         ######## Tab 1
 
-        scpi_scope = Key4000XCtrl(
-            "TCPIP0::192.168.0.14::INSTR",  # Enter socket address as ip:port, ex: 192.168.0.14:5025
-        )
-        self.scope_ctrl = HC_Oscilloscope(scpi_scope, self, "Keysight")
+        # Enter socket address as ip:port, ex: 192.168.0.14:5025
+        # scpi_scope = Key4000XCtrl("TCPIP0::192.168.0.14::INSTR")
+        scpi_scope = Key4000XCtrl("192.168.0.14")
+        self.scope_ctrl = HC_Oscilloscope(scpi_scope, self, "Keysight Scope")
         self.scope_ctrl.load_state("Key4000_init.json")
         self.scope_ctrl.settings_to_UI()
         self.scope_ctrl.set_online_callback(init_with_JSON)
