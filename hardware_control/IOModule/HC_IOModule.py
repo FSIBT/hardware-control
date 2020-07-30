@@ -155,7 +155,6 @@ class HC_IOModule(HC_Instrument):
                     if opt_name.startswith("CHX_"):
                         chan_name = c_dict["ID_STR"]
                         opt_name = f"CH{chan_name}" + opt_name[3:]
-                        print(f"\tReplacing {opt} with {opt_name}")
 
                     self.update_setting(opt_name, c_dict["OPTIONS"][opt])
 
