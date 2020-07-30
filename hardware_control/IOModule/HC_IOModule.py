@@ -71,6 +71,7 @@ class HC_IOModule(HC_Instrument):
         lock_until_sync=False,
         num_columns: int = 1,
         channel_file: str = "",
+        hooks: dict = None,
     ):
 
         super().__init__(window, name, backend, lock_until_sync)
@@ -103,12 +104,18 @@ class HC_IOModule(HC_Instrument):
                 continue
 
             c_dict = self.ensure_all_fields(c_dict)
+
+            chan_hook = None
+            if hooks is not None and c_dict["ID_STR"] in hooks:
+                chan_hook = hooks[c_dict["ID_STR"]]
+
             if c_dict["DIR"] == "OUTPUT":
                 if c_dict["TYPE"] == "DIGITAL":
+
                     last_wdgt = DigitalOutputChannel(
                         self,
                         c_dict["ID_STR"],
-                        c_dict["HOOK"],
+                        chan_hook,
                         c_dict["UNITS"],
                         c_dict["LABEL"],
                     )
@@ -117,7 +124,7 @@ class HC_IOModule(HC_Instrument):
                     last_wdgt = AnalogOutputChannel(
                         self,
                         c_dict["ID_STR"],
-                        c_dict["HOOK"],
+                        chan_hook,
                         c_dict["UNITS"],
                         c_dict["LABEL"],
                     )
@@ -127,7 +134,7 @@ class HC_IOModule(HC_Instrument):
                     last_wdgt = DigitalInputChannel(
                         self,
                         c_dict["ID_STR"],
-                        c_dict["HOOK"],
+                        chan_hook,
                         c_dict["UNITS"],
                         c_dict["LABEL"],
                     )
@@ -136,7 +143,7 @@ class HC_IOModule(HC_Instrument):
                     last_wdgt = AnalogInputChannel(
                         self,
                         c_dict["ID_STR"],
-                        c_dict["HOOK"],
+                        chan_hook,
                         c_dict["UNITS"],
                         c_dict["LABEL"],
                     )
@@ -155,7 +162,8 @@ class HC_IOModule(HC_Instrument):
                     if opt_name.startswith("CHX_"):
                         chan_name = c_dict["ID_STR"]
                         opt_name = f"CH{chan_name}" + opt_name[3:]
-
+                        valstr = c_dict["OPTIONS"][opt]
+                        print(f"Calling update setting with {opt_name} = {valstr}")
                     self.update_setting(opt_name, c_dict["OPTIONS"][opt])
 
         self.channel_spacer = QSpacerItem(
