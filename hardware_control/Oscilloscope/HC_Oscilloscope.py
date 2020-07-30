@@ -503,6 +503,7 @@ class OscilloscopeTriggerWidget(QWidget):
         self.level_edit.setValue(float(control.settings["trigger_level"]))
         self.level_edit.setSingleStep(0.01)
         self.level_edit.setDecimals(2)
+        self.level_edit.setMinimum(-50.0)
         self.form = QFormLayout()
         self.form.addRow("Trigger Level (V):", self.level_edit)
 
