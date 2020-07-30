@@ -1,6 +1,7 @@
 import json
 import logging
 
+import numpy as np
 import zmq
 
 from hardware_control.base.HC_Backend import HC_Backend, ensure_online
@@ -200,7 +201,6 @@ class ZMQOscilloscopeCtrl(HC_Backend):
         except zmq.error.Again:
             self.online = False
             return "", [], []
-
         # NOTE: Returned dictionary comes back in format:
         #
         # j = [{'t(0)': T0,
@@ -229,7 +229,7 @@ class ZMQOscilloscopeCtrl(HC_Backend):
 
         time = np.linspace(T0, T0 + delta_t * (num_pts - 1), num_pts)
 
-        return "CH{channel}_WVFM", time, data
+        return f"CH{channel}_WVFM", time.tolist(), data
 
     def try_connect(self):
 

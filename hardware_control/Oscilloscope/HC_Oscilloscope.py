@@ -17,7 +17,7 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-from hardware_control.utility import regex_compare, returnChannelNumber
+from hardware_control.utility import regex_compare, get_channel_from_command
 from hardware_control.widgets import setButtonState, load_icon
 from hardware_control.base import HC_Instrument, HC_Comm
 
@@ -115,11 +115,10 @@ class HC_Oscilloscope(HC_Instrument):
 
     def backend_return_listdata(self, descr: str, data1: list, data2: list):
 
-        if regex_compare("CH.+_WVFM", descr):
-            c = returnChannelNumber(descr)
-            if not c:
-                c = 1
-            self.disp.update_display(int(c), data1, data2)
+        channel, cmd_X = get_channel_from_command(descr)
+
+        if cmd_X == "CHX_WVFM":
+            self.disp.update_display(channel, data1, data2)
 
     def init_values(self):
 
