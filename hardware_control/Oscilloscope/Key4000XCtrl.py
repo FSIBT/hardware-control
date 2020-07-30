@@ -40,6 +40,7 @@ class Key4000XCtrl(HC_Backend):
 
         * timebase: horizontal resolution in time per division (float)
         * time_offset: time offset from trigger (float)
+        * NUM_POINTS: number of points on the time axis
         * labels_enabled: enables or disables channel labels on the instrument (bool)
         * trigger_level: Set trigger level (float)
         * trigger_coupling: Set the trigger coupling (AC, DC, LFReject)
@@ -65,6 +66,10 @@ class Key4000XCtrl(HC_Backend):
         if setting == "time_offset":
             self.write(f":TIM:POS {float(value):.6E}")
             return self.query(":TIM:POS?")
+        if setting == "NUM_POINTS":
+            self.write(f":WAV:POIN {int(value):}")
+            num_points = self.query(":WAV:POIN?")
+            return f"NUM_POINTS={num_points}"
         if setting == "labels_enabled":
             self.write(f"DISP:LAB {int(value=='True')}")
             return self.query("DISP:LAB?")
@@ -275,7 +280,7 @@ class Key4000XCtrl(HC_Backend):
             # Trim block header from packet & remove newline character from end
             raw_data = raw_data[11:-1]
             # Break at commas, strip whitespace, convert to float, add to array
-            fmt = [float(x.strip()) for x in raw_data.split(",")]
+            fmt = [float(x.strip()) for x in raw_data.split(",")][:-1]
 
             # Calculate time values
             t = np.linspace(start=0, stop=len(fmt), num=len(fmt), endpoint=False)
@@ -297,9 +302,6 @@ class Key4000XCtrl(HC_Backend):
 
         # Sets data format to ASCII text
         self.write(":WAV:FORM ASC")
-        # Set the number of points to read to 1000 (OPtions: 1000,
-        # 500, 250, 100, MAX (~4M))
-        self.write(":WAV:POIN 1000")
         # Set data record to transfer to 'measurement record'
         self.write(":WAV:POIN:MODE NORM")
         # Set aquisition mode to normal

@@ -125,6 +125,7 @@ class HC_Oscilloscope(HC_Instrument):
         self.values["timebase"] = ""
 
         self.values["time_offset"] = ""
+        self.values["NUM_POINTS"] = ""
 
         self.values["CH1_volts_div"] = ""
         self.values["CH2_volts_div"] = ""
@@ -202,8 +203,8 @@ class HC_Oscilloscope(HC_Instrument):
         dflt = {}
 
         dflt["timebase"] = "1e-3"
-
         dflt["time_offset"] = "0"
+        dflt["NUM_POINTS"] = "1000"
 
         dflt["CH1_volts_div"] = "1"
         dflt["CH2_volts_div"] = "1"
@@ -659,9 +660,20 @@ class OscilloscopeHorizontalWidget(QWidget):
         self.time_offset_edit_layout.addWidget(self.time_offset_edit, 0, 0)
         self.time_offset_edit_layout.addWidget(self.time_offset_edit_units, 0, 1)
 
+        self.number_points_edit = QDoubleSpinBox()
+        self.number_points_edit.setSingleStep(1)
+        self.number_points_edit.setDecimals(0)
+        self.number_points_edit.setMaximum(4e6)
+        self.number_points_edit.setValue(float(control.settings["NUM_POINTS"]))
+        self.number_points_edit.editingFinished.connect(
+            lambda: control.update_setting(
+                "NUM_POINTS", str(float(self.number_points_edit.text())),
+            )
+        )
         self.form = QFormLayout()
         self.form.addRow("Time/Div (s):", self.timebase_edit_layout)
         self.form.addRow("Offset (s): ", self.time_offset_edit_layout)
+        self.form.addRow("Number of Points: ", self.number_points_edit)
 
         # ******* DEFINE OVERALL LAYOUT
         self.master_layout = QGridLayout()

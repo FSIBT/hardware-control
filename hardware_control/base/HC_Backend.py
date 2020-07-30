@@ -245,6 +245,7 @@ class HC_Backend(abc.ABC):
                 rm = pyvisa.ResourceManager("@py")
                 self.device = rm.open_resource(self.connection_addr)
                 self.device.read_termination = self.termination
+                self.device.write_termination = self.termination
                 logger.debug(
                     f"opened pyvisa connection to {self.ID} at {self.connection_addr}"
                 )
