@@ -104,13 +104,15 @@ class HC_App(QApplication):
 
         if name in dummy_set.built_in_save_formats:
             logger.warning(
-                f"Cannot add save format '{name}' because it is already included by default."
+                f"Cannot add save format '{name}'"
+                f" because it is already included by default."
             )
             return
 
         if not callable(format):
             logger.warning(
-                f"Cannot add save format '{name}' because the callback function argument is not callable."
+                f"Cannot add save format '{name}' because"
+                f" the callback function argument is not callable."
             )
 
         self.additional_save_formats[name] = format
@@ -227,7 +229,8 @@ class HC_App(QApplication):
             # Make sure the correct number of arguments are given
             if len(tokens) < 4:  # Requires: MODE:INSTRUMENT:PARAMETER:VALUE
                 logger.warning(
-                    f"Invalid HC-Command received. Wrong number of tokens. Command: '{command}'"
+                    f"Invalid HC-Command received. Wrong number of tokens."
+                    f" Command: '{command}'"
                 )
                 return "ERROR: Invalid command"
 
@@ -248,7 +251,8 @@ class HC_App(QApplication):
                 return "ERROR: Instrument not found"
 
             logger.debug(
-                f"Executed Setting Update:\n\tInstrument: {instr_str}\n\tSetting: {setting_str}\n\tValue: {value_str}"
+                f"Executed Setting Update:\n\tInstrument: {instr_str}\n"
+                f"\tSetting: {setting_str}\n\tValue: {value_str}"
             )
 
         elif uptokens[0] == "CMD":
@@ -259,7 +263,8 @@ class HC_App(QApplication):
             # Make sure the correct number of arguments are given
             if len(tokens) != 3:  # Requires: MODE:INSTRUMENT:PARAMETER:VALUE
                 logger.warning(
-                    f"Invalid HC-Command received. Wrong number of tokens. Command'{command}'"
+                    f"Invalid HC-Command received. Wrong number of tokens."
+                    f" Command'{command}'"
                 )
                 return "ERROR: Invalid command"
 
@@ -276,12 +281,14 @@ class HC_App(QApplication):
                 self.instruments[instr_idx].command(command_str)
             else:
                 logger.warning(
-                    f"Invalid HC-Command received. Wrong number of tokens. Command: '{command}'"
+                    f"Invalid HC-Command received. Wrong number of tokens."
+                    f" Command: '{command}'"
                 )
                 return "ERROR: Invalid command"
 
             logger.debug(
-                f"Executed Command:\n\tInstrument: {instr_str}\n\tCommand: {command_str}"
+                f"Executed Command:\n\tInstrument: {instr_str}\n"
+                f"\tCommand: {command_str}"
             )
 
         elif uptokens[0] == "MEAS":
@@ -289,7 +296,8 @@ class HC_App(QApplication):
 
                 # print("\n\tIN CMDLG\n")
 
-                # Recalculate tokens, with max of 2 splits. This allows colons to appear in the command
+                # Recalculate tokens, with max of 2 splits. This
+                # allows colons to appear in the command
                 tokens = command.split(":", 9)
 
                 # Format: CMDLG:group:instrument:parameter:cmd_str:steady_num:dt:tol:iterations
@@ -297,7 +305,8 @@ class HC_App(QApplication):
                 # Make sure the correct number of arguments are given
                 if len(tokens) != 10:  # Requires: MODE:INSTRUMENT:PARAMETER:VALUE
                     logger.warning(
-                        f"Invalid HC-Command received. Wrong number of tokens. Command'{command}'"
+                        f"Invalid HC-Command received. Wrong number of tokens."
+                        f" Command'{command}'"
                     )
                     return "False"
 
@@ -314,7 +323,8 @@ class HC_App(QApplication):
                     )
                 except Exception:
                     logger.warning(
-                        "Invalid HC-Command received. Failed to create MeasurementRequest from given arguments.",
+                        "Invalid HC-Command received. Failed to create "
+                        "MeasurementRequest from given arguments.",
                     )
                     return "False"
 
@@ -331,7 +341,8 @@ class HC_App(QApplication):
                     return "False"
 
                 logger.debug(
-                    f"Executed Command:\n\tInstrument: {instr_str}\n\tCommand: {command_str}"
+                    f"Executed Command:\n\tInstrument: {instr_str}\n"
+                    f"\tCommand: {command_str}"
                 )
 
             elif uptokens[1] == "START":
@@ -366,7 +377,8 @@ class HC_App(QApplication):
                     )
             else:
                 logger.warning(
-                    "Failed to execute code. Executing python code from HC-Commands has been disabled."
+                    "Failed to execute code. Executing python code from"
+                    " HC-Commands has been disabled."
                 )
 
         elif uptokens[0] == "FUNC":
@@ -474,7 +486,8 @@ class HC_App(QApplication):
                 # Make sure the correct number of arguments are given
                 if len(tokens) != 4:  # Requires: FUNC:SVSTATE:INSTRUMENT:filename
                     logger.warning(
-                        f"Invalid HC-Command received. Wrong number of tokens. Command: '{command}'"
+                        f"Invalid HC-Command received. Wrong number of tokens."
+                        f" Command: '{command}'"
                     )
                     return "ERROR: Invalid command"
 
@@ -497,7 +510,8 @@ class HC_App(QApplication):
                 # Make sure the correct number of arguments are given
                 if len(tokens) != 4:  # Requires: FUNC:LDSTATE:INSTRUMENT:filename
                     logger.warning(
-                        f"Invalid HC-Command received. Wrong number of tokens. Command: '{command}'"
+                        f"Invalid HC-Command received. Wrong number of tokens."
+                        f" Command: '{command}'"
                     )
                     return "ERROR: Invalid command"
 
@@ -600,7 +614,10 @@ class HC_App(QApplication):
                 logger.warning("Invalid HC-Command received. DEV requires arguments.")
                 return "False"
 
-            # Set MeasurementDirector state to ready. Don't use this unless you know what you're doing. It can get measurement batches out of sync if used at the wrong time
+            # Set MeasurementDirector state to ready. Don't use this
+            # unless you know what you're doing. It can get
+            # measurement batches out of sync if used at the wrong
+            # time
             elif uptokens[1] == "MEAS-SET-READY":
 
                 self.director.state = "Ready"

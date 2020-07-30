@@ -49,14 +49,16 @@ class ADAM6015Ctrl(HC_Backend):
                 self.device.settimeout(0.950)
                 self.device.connect(self.addr)
                 logger.debug(
-                    f"opened socket connection to {self.ID} at {self.ip_addr}:{self.port_no}"
+                    f"opened socket connection to {self.ID} at"
+                    f" {self.ip_addr}:{self.port_no}"
                 )
             except:
                 logger.debug("exception during try connect", exc_info=True)
                 self.online = False
                 return self.online
 
-        # Independent of the state, try to receive data, if nothing is returned, then the device is offline
+        # Independent of the state, try to receive data, if nothing is
+        # returned, then the device is offline
         self.online = self.check_connection()
 
     def close(self):

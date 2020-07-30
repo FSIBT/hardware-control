@@ -30,9 +30,10 @@ class HC_MainWindow(QMainWindow):
 
     def add_menu(self):
 
-        self.bar = self.menuBar()  # self.menuBar() is a function in QMainWindow
+        # self.menuBar() is a function in QMainWindow
+        self.bar = self.menuBar()
 
-        ###### File menu
+        # File menu
         self.file_menu = self.bar.addMenu("File")
         self.file_menu.triggered[QAction].connect(self.process_file_menu)
 
@@ -62,7 +63,7 @@ class HC_MainWindow(QMainWindow):
             self.close_act.setShortcut("Ctrl+Q")
         self.file_menu.addAction(self.close_act)
 
-        ####### Instrument Menu
+        # Instrument Menu
         self.instr_menu = self.bar.addMenu("Instrument")
         self.instr_menu.triggered[QAction].connect(self.process_instr_menu)
 
@@ -83,7 +84,7 @@ class HC_MainWindow(QMainWindow):
         self.print_addresses_act = QAction("Print Addresses", self)
         self.instr_menu.addAction(self.print_addresses_act)
 
-        ####### Scripting Menu
+        # Scripting Menu
         self.scripting_menu = self.bar.addMenu("Scripting")
         self.scripting_menu.triggered[QAction].connect(self.process_scripting_menu)
 

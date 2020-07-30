@@ -61,7 +61,9 @@ class NI9000Ctrl(HC_Backend):
             except nidaqmx.errors.DaqError:
                 self.online = False
                 logger.error(
-                    "Connection failed due to DaqError. This could mean the NIDAQ must be reserved in NI-Max Application."
+                    "Connection failed due to DaqError."
+                    " This could mean the NIDAQ must be reserved"
+                    " in NI-Max Application."
                 )
             except Exception:
                 self.online = False
@@ -200,8 +202,9 @@ def nidaxmxTest():
 
     """
 
-    # We check which OS is calling because nidaqmx only works on Windows. Importing
-    # nidaqmx on macOS or linux will cause pyvisa and sockets to break.
+    # We check which OS is calling because nidaqmx only works on
+    # Windows. Importing nidaqmx on macOS or linux will cause pyvisa
+    # and sockets to break.
 
     if os.name == "nt":
         try:

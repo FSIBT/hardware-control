@@ -36,7 +36,8 @@ def thread_info(f):
         retval = f(*args, **kwargs)
         end = time.time()
         print(
-            f"Function: {inspect.getframeinfo(frame).function}, start: {start}, end: {end}, thread: {threading.get_ident()} dt: {start-end}"
+            f"Function: {inspect.getframeinfo(frame).function},"
+            f" start: {start}, end: {end}, thread: {threading.get_ident()} dt: {start-end}"
         )
         inspect.getframeinfo(frame).function
         print(
@@ -66,12 +67,14 @@ class HC_Backend(abc.ABC):
 
     This class should be inherited for every instrument backend.
 
-    The backend implements the actual communications between python and the instrument.
+    The backend implements the actual communications between python
+    and the instrument.
 
     The class supports several connections modes out of the box:
     pyvisa, sockets, and modbus
 
-    For other type of communictioan the try_connect function needs to be overwritten.
+    For other type of communictioan the try_connect function needs to
+    be overwritten.
 
     When implementing a backend the abstracmethods need to be
     implemented: update_setting, command, and check_connection.
@@ -225,7 +228,7 @@ class HC_Backend(abc.ABC):
             if self.online:
                 return True
             logger.debug(
-                f"{self.ID}: creating dummy connection" + f" to {self.connection_addr}"
+                f"{self.ID}: creating dummy connection to {self.connection_addr}"
             )
             self.online = True
             return True
