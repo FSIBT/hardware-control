@@ -22,7 +22,9 @@
         "LABEL": "Floating Rack Current (red):",
         "UNITS": "V",
         "HOOK": "float_Vmon_in",
-        "OPTIONS": "DIFF"
+        "OPTIONS": {
+            "CHX_terminal_config": "DIFF"
+        }
     },
     "Floating_rack_imon_in": {
         "DIR": "INPUT",
@@ -31,7 +33,9 @@
         "LABEL": "Floating Rack Voltage (red):",
         "UNITS": "A",
         "HOOK": "float_Imon_in",
-        "OPTIONS": "DIFF"
+        "OPTIONS": {
+            "CHX_terminal_config": "DIFF"
+        }
     },
     "Grid_rack_imon_in": {
         "DIR": "INPUT",
@@ -40,7 +44,9 @@
         "LABEL": "Grid Current (red):",
         "UNITS": "A",
         "HOOK": "grid_Imon_in",
-        "OPTIONS": "DIFF"
+        "OPTIONS": {
+            "CHX_terminal_config": "DIFF"
+        }
     },
     "Grid_vmon_in": {
         "DIR": "INPUT",
@@ -49,7 +55,9 @@
         "LABEL": "Grid Voltage (red):",
         "UNITS": "V",
         "HOOK": "grid_Vmon_in",
-        "OPTIONS": "DIFF"
+        "OPTIONS": {
+            "CHX_terminal_config": "DIFF"
+        }
     },
     "Pressure_in": {
         "DIR": "INPUT",
@@ -58,6 +66,8 @@
         "LABEL": "Pressure:",
         "UNITS": "Torr",
         "HOOK": "Pressure_in",
-        "OPTIONS": "DIFF"
+        "OPTIONS": {
+            "CHX_terminal_config": "DIFF"
+        }
     }
 }

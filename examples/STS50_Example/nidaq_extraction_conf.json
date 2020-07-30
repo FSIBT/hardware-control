@@ -5,7 +5,11 @@
         "ID_STR": "cDAQ9188-1AEF742Mod7/ao4",
         "LABEL": "Extraction Voltage (set):",
         "HOOK": "extraction_voltage_out",
-        "UNITS": "V"
+        "UNITS": "V",
+        "OPTIONS": {
+            "CHX_V_max": "5",
+            "CHX_V_min": "0"
+        }
     },
     "extraction_current_in": {
         "DIR": "INPUT",
