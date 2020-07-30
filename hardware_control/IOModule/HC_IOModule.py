@@ -70,6 +70,7 @@ class HC_IOModule(HC_Instrument):
         name: str = "IO Module",
         lock_until_sync=False,
         num_columns: int = 1,
+        channel_file: str = "",
     ):
 
         super().__init__(window, name, backend, lock_until_sync)
@@ -77,7 +78,10 @@ class HC_IOModule(HC_Instrument):
         self.settings = {}
         self.backend = backend
 
-        self.channel_data = channel_data
+        if channel_data == None:
+            self.channel_data = read_channel_file(channel_file)
+        else:
+            self.channel_data = channel_data
 
         backend.dummy = self.window.app.dummy
         self.address = backend.connection_addr
@@ -143,6 +147,18 @@ class HC_IOModule(HC_Instrument):
                 int((load_idx - 1) / num_columns),
                 (load_idx - 1) % num_columns,
             )
+
+            if "OPTIONS" in c_dict and c_dict["OPTIONS"] is not None:
+                for opt in c_dict["OPTIONS"]:
+
+                    opt_name = opt
+                    if opt_name.startswith("CHX_"):
+                        chan_name = c_dict["ID_STR"]
+                        opt_name = f"CH{chan_name}" + opt_name[3:]
+                        print(f"\tReplacing {opt} with {opt_name}")
+
+                    self.update_setting(opt_name, c_dict["OPTIONS"][opt])
+
         self.channel_spacer = QSpacerItem(
             10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
         )
