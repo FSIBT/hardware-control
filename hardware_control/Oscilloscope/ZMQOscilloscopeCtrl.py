@@ -196,6 +196,7 @@ class ZMQOscilloscopeCtrl(HC_Backend):
 
         try:
             message = self.socket.recv_string()
+            message = json.loads(message)
         except zmq.error.Again:
             self.online = False
             return "", [], []
