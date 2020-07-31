@@ -18,6 +18,7 @@ from PyQt5.QtWidgets import (
     QTableWidget,
     QTableWidgetItem,
     QWidget,
+    QAbstractScrollArea,
 )
 from hardware_control.base import HC_Instrument
 from .utility import load_icon
@@ -80,6 +81,7 @@ class HC_DataWidget(HC_Instrument):
         self.data_disp_frame = QGroupBox("Data")
 
         self.table = QTableWidget()
+        self.table.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
         self.table.setRowCount(15)
         self.table.setColumnCount(4)
         self.table.cellChanged.connect(self.data_changed_from_cell)
@@ -363,6 +365,8 @@ class HC_DataWidget(HC_Instrument):
         self.dispgroup_drop.setCurrentText(self.settings["display_group"])
         self.update_table()
 
+        self.table.resizeColumnsToContents()
+
     def update_table(self):
 
         # Update which widgets are enabled
@@ -430,11 +434,9 @@ class HC_DataWidget(HC_Instrument):
                 temp_item = QTableWidgetItem()
 
                 # If value can be converted to a string, do so
-                if (
-                    isinstance(val, float)
-                    or isinstance(val, int)
-                    or isinstance(val, bool)
-                ):
+                if isinstance(val, float) or isinstance(val, int):
+                    temp_item.setText(f"{val:g}")
+                elif isinstance(val, bool):
                     temp_item.setText(str(val))
                 elif isinstance(val, str):
                     temp_item.setText(val)
