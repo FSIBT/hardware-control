@@ -99,6 +99,8 @@ class Dataset(QObject):
                 float(x)
             except ValueError:
                 return False
+            except TypeError:
+                return False
             return True
 
         # Ensure key exists
