@@ -364,6 +364,7 @@ class HC_DataWidget(HC_Instrument):
         self.update_table()
 
     def update_table(self):
+
         # Update which widgets are enabled
         try:
             group = self.window.app.data_sets[self.settings["display_group"]]
@@ -386,74 +387,96 @@ class HC_DataWidget(HC_Instrument):
         if self.prevent_overwrite_fields:
             return
 
-        # Update values in table and control panel
-        try:
-            group = self.window.app.data_sets[self.settings["display_group"]]
+        # ********** Update values in table and control panel ****************
 
-            # Set correct number of columns
-            self.table.setColumnCount(len(group.data))
+        # Get correct group
+        group = self.window.app.data_sets[self.settings["display_group"]]
 
-            # Set correct number of rows
-            num_rows = group.len()
-            if num_rows != -1:
-                self.table.setRowCount(num_rows + 1)
+        # Set correct number of columns
+        self.table.setColumnCount(len(group.data))
+
+        # Set correct number of rows
+        num_rows = group.len_max()
+        self.table.setRowCount(num_rows + 1)
+
+        # Title columns
+        header_names = []
+        for field in group.data:
+
+            # Use custom name if available, otherwise use field name
+            if field in group.channel_names:
+                header_names.append(group.channel_names[field])
             else:
-                return  # TODO: Change this so it shows the fragmented data
 
-            # Title columns
-            header_names = []
-            for field in group.data:
+                # Apply readable name for time column if not specified
+                if field == "time:time":
+                    header_names.append("Time")
+                    continue
+
                 header_names.append(field)
-            self.table.setHorizontalHeaderLabels(header_names)
 
-            # Write indeces along vertical
-            indeces = list(range(num_rows))
-            indeces_str = []
-            for i in indeces:
-                indeces_str.append(str(i))
+        self.table.setHorizontalHeaderLabels(header_names)
 
-            self.table.setVerticalHeaderLabels(indeces_str)
+        # Write indeces along vertical
+        indeces_str = [str(x) for x in list(range(num_rows))]
 
-            # Update data in table
-            col = 0
-            for field in group.data:
+        self.table.setVerticalHeaderLabels(indeces_str)
 
-                for ridx, val in enumerate(group.data[field]):
-                    temp_item = QTableWidgetItem()
+        # Update data in table
+        col = 0
+        for field in group.data:
+
+            for ridx, val in enumerate(group.data[field]):
+                temp_item = QTableWidgetItem()
+
+                # If value can be converted to a string, do so
+                if (
+                    isinstance(val, float)
+                    or isinstance(val, int)
+                    or isinstance(val, bool)
+                ):
                     temp_item.setText(str(val))
-                    self.table.setItem(ridx, col, temp_item)
+                elif isinstance(val, str):
+                    temp_item.setText(val)
+                elif isinstance(val, list):
+                    if len(val) > 0:
+                        temp_item.setText(f"[{type(val[0])}*{len(val)}]")
+                    else:
+                        temp_item.setText("List")
+                elif isinstance(val, dict):
+                    temp_item.setText(f"Dict * {len(val)}")
+                else:
+                    temp_item.setText(f"Type={type(val)}")
+                self.table.setItem(ridx, col, temp_item)
 
-                col += 1
+            col += 1
 
-            # Set if autosave is on
-            self.autosave_check.setChecked(group.autosave)
+        # Set if autosave is on
+        self.autosave_check.setChecked(group.autosave)
 
-            # Set autosave format
-            self.save_format_drop.setCurrentText(group.autosave_format)
+        # Set autosave format
+        self.save_format_drop.setCurrentText(group.autosave_format)
 
-            # Set autosave interval
-            self.save_interval_edit.setText(str(group.autosave_interval))
+        # Set autosave interval
+        self.save_interval_edit.setText(str(group.autosave_interval))
 
-            # Set autosave filename
-            self.save_filename_edit.setText(str(group.autosave_filename))
+        # Set autosave filename
+        self.save_filename_edit.setText(str(group.autosave_filename))
 
-            # Set if async is on
-            # this will:
-            #     1.) enable/disable convert to async button
-            #     2.) set indicator to blue/grey and write ON/OFF next to it
-            #     3.) enable/disable interval edit
-            if group.asynchronous_mode:
-                self.autolog_enabled_label.setText("Asynchronous Mode: ON ")
-                self.autolog_ind_label.setPixmap(load_icon("ind_blue.png"))
-            else:
-                self.autolog_enabled_label.setText("Asynchronous Mode: OFF")
-                self.autolog_ind_label.setPixmap(load_icon("ind_darkgrey.png"))
+        # Set if async is on
+        # this will:
+        #     1.) enable/disable convert to async button
+        #     2.) set indicator to blue/grey and write ON/OFF next to it
+        #     3.) enable/disable interval edit
+        if group.asynchronous_mode:
+            self.autolog_enabled_label.setText("Asynchronous Mode: ON ")
+            self.autolog_ind_label.setPixmap(load_icon("ind_blue.png"))
+        else:
+            self.autolog_enabled_label.setText("Asynchronous Mode: OFF")
+            self.autolog_ind_label.setPixmap(load_icon("ind_darkgrey.png"))
 
-            # Set log interval time
-            self.autolog_interval_edit.setText(str(group.async_log_interval))
-
-        except Exception as e:
-            logger.error("Exception occured while updating table", exc_info=True)
+        # Set log interval time
+        self.autolog_interval_edit.setText(str(group.async_log_interval))
 
     def update_groups(self):
         self.dispgroup_drop.clear()
