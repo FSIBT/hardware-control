@@ -243,6 +243,14 @@ class HC_IOModule(HC_Instrument):
         for c in self.dig_in_channels:
             self.values[f"CH{c.channel}_digital_read"] = ""
 
+    def default_state(self):
+        default = {}
+        for c in self.an_in_channels:
+            default[f"CH{c.channel}_analog_read"] = "0"
+        for c in self.dig_in_channels:
+            default[f"CH{c.channel}_digital_read"] = "0"
+        return default
+
 
 class AnalogInputChannel(QGroupBox):
     def __init__(
