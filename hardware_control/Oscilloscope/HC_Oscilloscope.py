@@ -89,7 +89,7 @@ class HC_Oscilloscope(HC_Instrument):
         self.meas = OscilloscopeMeasurementWidget(self)
 
         self.top_panel = QGridLayout()
-        self.trig = OscilloscopeTriggerWidget(self)
+        self.trig = OscilloscopeTriggerWidget(self, self.disp)
         self.top_panel.addWidget(self.trig, 0, 0)
 
         self.ch1 = OscillscopeChannelWidget(1, self)
@@ -356,10 +356,12 @@ class OscillscopeChannelWidget(QWidget):
 
 
 class OscilloscopeTriggerWidget(QWidget):
-    def __init__(self, control):
+    def __init__(self, control, display_widget=None):
         super().__init__()
 
         self.control = control
+        self.display_widget = display_widget
+        self.refresh_delay_time_ms = 1500
 
         # ************** DEFINE UI *********************#
         self.trigger_label_box = QHBoxLayout()
@@ -420,7 +422,7 @@ class OscilloscopeTriggerWidget(QWidget):
 
         self.single_but = QPushButton()
         self.single_but.setText("Single")
-        self.single_but.clicked.connect(lambda: control.comm.command("SINGLE_TRIGGER"))
+        self.single_but.clicked.connect(self.single_trigger)
 
         self.run_but = QPushButton()
         self.run_but.setText("Run")
@@ -447,6 +449,28 @@ class OscilloscopeTriggerWidget(QWidget):
         self.master_layout.addLayout(self.form, 1, 0)
         self.master_layout.addLayout(self.lower_grid, 2, 0)
         self.setLayout(self.master_layout)
+
+    def single_trigger(self):
+        self.control.comm.command("SINGLE_TRIGGER")
+
+        QTimer.singleShot(self.refresh_delay_time_ms, self.display_refresh)
+
+    def display_refresh(self):
+
+        print("Display refresh....")
+
+        # Continue if display widget is present
+        if self.display_widget is None:
+            return
+
+        # Continue if display widget is in single trigger mode
+        if not self.display_widget.single_trig_mode:
+            return
+
+        print("\tTriggering!")
+
+        # Refresh display
+        self.display_widget.query_waveforms()
 
     def settings_to_UI(self):
 
@@ -615,12 +639,16 @@ class OscilloscopeDisplayWidget(QGroupBox):
 
             self.refresh_mode_label = QLabel("Refresh Mode: ")
 
+            self.update_timer = QTimer(self)
+            self.update_timer.timeout.connect(self.query_waveforms)
+            self.update_timer.start(1000 / refresh)
+
             self.refresh_mode_drop = QComboBox()
-            self.refresh_mode_drop.addItems(["Timer", "Manual"])
+            self.refresh_mode_drop.addItems(["Timer", "Manual", "Single Trig"])
             self.refresh_mode_drop.currentIndexChanged.connect(
                 lambda: self.set_refresh_mode(self.refresh_mode_drop.currentText())
             )
-            self.refresh_mode_drop.setCurrentText("Timer")
+            self.refresh_mode_drop.setCurrentText("Single Trig")
 
             self.master_layout.addWidget(self.refresh_mode_label, 1, 0)
             self.master_layout.addWidget(self.refresh_mode_drop, 1, 1)
@@ -629,10 +657,6 @@ class OscilloscopeDisplayWidget(QGroupBox):
             self.master_layout.addWidget(self.refresh_but, 1, 4)
 
         self.setLayout(self.master_layout)
-
-        self.update_timer = QTimer(self)
-        self.update_timer.timeout.connect(self.query_waveforms)
-        self.update_timer.start(1000 / refresh)
 
     # Set refresh rate (in Hz)
     def refresh_rate(self, rate: float):
@@ -646,7 +670,7 @@ class OscilloscopeDisplayWidget(QGroupBox):
         if mode == "Timer":
             if not self.update_timer.isActive():
                 self.update_timer.start()
-            single_trig_mode = False
+            self.single_trig_mode = False
         elif mode == "Single Trig":
             if self.update_timer.isActive():
                 self.update_timer.stop()
@@ -654,7 +678,7 @@ class OscilloscopeDisplayWidget(QGroupBox):
         else:
             if self.update_timer.isActive():
                 self.update_timer.stop()
-            single_trig_mode = False
+            self.single_trig_mode = False
 
     def update_display(self, channel: int, t: list, wave: list):
         # def update_display(self, wvfms: dict):
