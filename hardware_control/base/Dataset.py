@@ -131,26 +131,33 @@ class Dataset(QObject):
 
         self.async_log_timer.setInterval(1e3 * self.async_log_interval)
 
-    def len(self):
+    def len_same(self):
         """Returns the length of all of the values in self.data. If they aren't
         all the same length (they should be), returns -1."""
 
-        datalen = -2
-        for key in self.data:  # For each instrument/parameter pair...
+        # Get maximum and minium length
+        val_min = self.len_min()
+        val_max = self.len_max()
 
-            if datalen == -2:  # For first time through loop, record length as benchmark
-                datalen = len(self.data[key])
-            else:  # For everyother time, compare length against benchmark, see if all the same
-                if datalen != len(self.data[key]):  # If any don't match, return -1
-                    return -1
+        # If not same, some values have different lengths
+        if val_min != val_max:
+            return -1
+
+        # Otherwise return length
+        return val_min
+
+    def len_max(self):
 
         if len(self.data) == 0:
             return 0
 
-        return datalen  # Otherwise return current length (which is the next index)
+        return max([len(self.data[key]) for key in self.data])
 
     def len_min(self):
         """Returns the length of the shortest list in self.data."""
+
+        if len(self.data) == 0:
+            return 0
 
         return min([len(self.data[key]) for key in self.data])
 
