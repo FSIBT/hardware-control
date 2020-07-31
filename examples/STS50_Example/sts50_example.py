@@ -58,7 +58,7 @@ from hardware_control.IOModule import (
 from hardware_control.widgets import (
     HC_ZMQConnectionTool,
     HC_MacroRunnerTool,
-    HC_LoggerTool,
+    HC_DataWidget,
     HC_ScanTool,
     HC_PlotTool,
     HC_StatusTool,
@@ -505,7 +505,7 @@ class STS50Demo(HC_MainWindow):
         self.scantool = HC_ScanTool(self, "Scan Control", True)
         self.scantool.update_instruments()
 
-        self.logtool = HC_LoggerTool(self, "Data Logger")
+        self.logtool = HC_DataWidget(self, "Data Logger")
         self.logtool.update_groups()
         # self.logtool.update_instruments()
 

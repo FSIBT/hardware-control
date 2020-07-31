@@ -26,7 +26,7 @@ from hardware_control.PowerSupply import HC_MultiPowerSupply, RigolDP832Ctrl
 from hardware_control.widgets import (
     HC_ZMQConnectionTool,
     HC_PlotTool,
-    HC_LoggerTool,
+    HC_DataWidget,
     HC_StatusTool,
     HC_Qtconsole,
 )
@@ -200,7 +200,7 @@ class RootsDemo(HC_MainWindow):
         #####################################################################
         ######## Tab 3
 
-        self.logtool = HC_LoggerTool(self, "Data Logger")
+        self.logtool = HC_DataWidget(self, "Data Logger")
         self.logtool.update_groups()
 
         self.app.data_sets["Autolog"] = Dataset("Autolog")
