@@ -357,6 +357,19 @@ class OscillscopeChannelWidget(QWidget):
 
 class OscilloscopeTriggerWidget(QWidget):
     def __init__(self, control, display_widget=None):
+        """ Initializes the OscilloscopeTriggerWidget
+
+        Parameters
+        ----------
+        control
+            HC_Oscilloscope instance to connect widget to
+        display_widget
+            Optional OscilloscopeDisplayWidget to connect widget with. Every time
+            a single trigger is called, this display widget will be told to refresh
+            its display if it is in 'single trigger' refresh mode. The refresh will
+            occur self.refresh_delay_time_ms milliseconds after the single trigger.
+            Default delay time is 1.5 seconds.
+        """
         super().__init__()
 
         self.control = control
@@ -595,7 +608,30 @@ class OscilloscopeHorizontalWidget(QWidget):
 
 
 class OscilloscopeDisplayWidget(QGroupBox):
-    def __init__(self, control, show_controls: bool = False, refresh: float = 0.2):
+    """ Creates a widget that displays a plot that can automatically refresh
+    from oscilloscope data.
+
+    Has three display refresh modes: Timer, Manual, and Single Trigger. Timer mode
+    automatically refreshes every few seconds (specified in refresh rate text edit).
+    Single Trigger mode refreshes every time a single trigger is sent to the
+    oscilloscope (to make this work, the OscilloscopeDisplayWidget instance must
+    be passed to the OscilloscopeTriggerWidget instance it should be connected to).
+    Manual mode never refreshes automatically, it depends on the refresh button
+    to update. The refresh button will immediately refresh the display, regardless
+    of display mode.
+
+    Parameters
+    ----------
+    control
+        HC_Oscilloscope instance to connect display to.
+    show_controls : bool
+        Allows user to show or hide display refresh controls
+    refresh : float
+        Refresh period in seconds
+
+    """
+
+    def __init__(self, control, show_controls: bool = True, refresh: float = 5):
 
         super().__init__("Oscilloscope Display")
 
@@ -624,7 +660,7 @@ class OscilloscopeDisplayWidget(QGroupBox):
         self.CH4 = self.display.plot(pen=self.lineCH4, symbol=None)
 
         if show_controls:
-            self.refresh_rate_label = QLabel("Refresh Rate (Hz): ")
+            self.refresh_rate_label = QLabel("Refresh Period (s): ")
 
             self.refresh_rate_edit = QLineEdit()
             self.refresh_rate_edit.setValidator(QDoubleValidator())
@@ -641,7 +677,7 @@ class OscilloscopeDisplayWidget(QGroupBox):
 
             self.update_timer = QTimer(self)
             self.update_timer.timeout.connect(self.query_waveforms)
-            self.update_timer.start(1000 / refresh)
+            self.update_timer.start(1000 * refresh)
 
             self.refresh_mode_drop = QComboBox()
             self.refresh_mode_drop.addItems(["Timer", "Manual", "Single Trig"])
@@ -660,7 +696,7 @@ class OscilloscopeDisplayWidget(QGroupBox):
 
     # Set refresh rate (in Hz)
     def refresh_rate(self, rate: float):
-        self.update_timer.setInterval(1000 / rate)
+        self.update_timer.setInterval(rate * 1000)
 
     # Set refresh rate (in ms)
     def refresh_period(self, period: float):
@@ -693,6 +729,8 @@ class OscilloscopeDisplayWidget(QGroupBox):
             self.CH4.setData(t, wave)
 
     def query_waveforms(self):
+
+        print("Test!")
 
         for c in range(1, 5):
             if self.control.settings[f"CH{c}_active"] == "True":
