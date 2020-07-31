@@ -79,6 +79,67 @@ class Dataset(QObject):
         self.data = {}
         self.autosave_next_row = 0
 
+    def values_are_numeric(self, key: str):
+        """ Looks at the value in self.data specified by 'key' and returns if it is numeric
+
+        Parameters
+        ----------
+        key : str
+            Key in self.data specifing a list of data to analyze.
+
+        Returns
+        -------
+        bool
+            True if key in self.data and all values in list specified by 'key' can
+            be converted to numeric type.
+        """
+
+        def is_number(x):
+            try:
+                float(x)
+            except ValueError:
+                return False
+            return True
+
+        # Ensure key exists
+        if key not in self.data:
+            return False
+
+        # If not a list, check one number
+        if not isinstance(self.data[key], list):
+            return is_number(self.data[key])
+
+        # Else, for each item in list, check if number
+        for val in self.data[key]:
+            if not is_number(val):
+                return False
+
+        return True
+
+    def values_are_list(self, key: str):
+        """ Looks at the value in self.data specified by 'key' and returns if it is a list
+
+        Parameters
+        ----------
+        key : str
+            Key in self.data specifing value to check if is list
+
+        Returns
+        -------
+        bool
+            True if key in self.data and points to a list
+        """
+
+        # Ensure key exists
+        if key not in self.data:
+            return False
+
+        # If not a list, check one number
+        if isinstance(self.data[key], list):
+            return True
+
+        return False
+
     def name_channel(self, channel: str, name: str):
         """Channel must be a string listing the instrument and parameter of
         the channel to rename. THe instrument:parameter pair must be
