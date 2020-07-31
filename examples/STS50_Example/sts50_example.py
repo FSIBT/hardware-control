@@ -367,6 +367,7 @@ class STS50Demo(HC_MainWindow):
     def __init__(self, app):
         super().__init__(app)
         self.app = app
+        self.app.main_window = self
 
         self.setWindowTitle("STS-50 Control Panel")
 
