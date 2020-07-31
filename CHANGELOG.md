@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## [Unreleased]
+### Changed
+- Renamed HC_LoggerTool to HC_DataWidget
 ### Added
 - documentation on RTD: https://hardware-control.readthedocs.io/en/latest/index.html
 - simplify import by importing items in __init__.py of the subpackages
