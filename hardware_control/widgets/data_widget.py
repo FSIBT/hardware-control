@@ -25,7 +25,7 @@ from .utility import load_icon
 logger = logging.getLogger(__name__)
 
 
-class HC_LoggerTool(HC_Instrument):
+class HC_DataWidget(HC_Instrument):
     def __init__(self, window, name: str = "Data Logger"):
 
         super().__init__(window, name)
@@ -51,7 +51,7 @@ class HC_LoggerTool(HC_Instrument):
         self.data_select_frame = QWidget()
         self.data_select_layout = QGridLayout()
 
-        self.dispgroup_label = QLabel("Logging Group:")
+        self.dispgroup_label = QLabel("Dataset:")
         self.dispgroup_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
 
         self.dispgroup_drop = QComboBox()

@@ -3,7 +3,7 @@
 """
 
 from .connection_status import HC_StatusTool
-from .logger import HC_LoggerTool
+from .logger import HC_DataWidget
 from .macro_runner import HC_MacroRunnerTool
 from .monitor import HC_MonitorTool
 from .plot import HC_PlotTool, HC_MiniPlotTool
