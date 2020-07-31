@@ -67,6 +67,8 @@ class CAEN14xxETCtrl(HC_Backend):
                 value = min(value, self.max_I[channel - 1])
                 logger.debug(f"Iset value changed to {value} because it exceeded limit")
 
+            # the CAEN uses values in uA
+            value = float(value) * 1e6
             self.query(f"$BD:00,CMD:SET,CH:{channel},PAR:ISET,VAL:{value}")
             result = self.query(f"$BD:00,CMD:MON,CH:{channel},PAR:ISET")
 
@@ -145,6 +147,10 @@ class CAEN14xxETCtrl(HC_Backend):
         logger.debug(f"Ending stripped CR & LF ='{rval}' (len={len(rval)})")
         rval = rval.strip("\\nr")
         logger.debug(f"Ending stripped \\, n, r ='{rval}' (len={len(rval)})")
+
+        if command_X in ["CHX_I_out?", "CHX_I_set?"]:
+            # Current is read in uA
+            rval = float(rval) * 1e-6
 
         return f"{cmd[:-1]}={rval}"
 
