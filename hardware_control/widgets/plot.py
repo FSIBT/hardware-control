@@ -119,37 +119,44 @@ class HC_PlotBase(QWidget):
 
         self.axes.clear()
         for key in self.app.data_sets[self.plot_set].data:
+
+            # Skip non-lists
+            if not self.app.data_sets[self.plot_set].values_are_list(key):
+                continue
+
+            # Skip non-numeric types
+            if not self.app.data_sets[self.plot_set].values_are_numeric(key):
+                continue
+
             if key[-4:] == "Misc":
                 continue
+
             if key == "time:time":
                 continue
-            try:
 
-                arrs = self.app.data_sets[self.plot_set].get_corresponding_arrays(
-                    ["time:time", key], True
-                )
-                y_values = np.array(arrs[key])
-                if self.normalize:
-                    mymax = np.abs(y_values).max()
-                    if mymax > 0:
-                        y_values /= mymax
+            arrs = self.app.data_sets[self.plot_set].get_corresponding_arrays(
+                ["time:time", key], True
+            )
+            y_values = np.array(arrs[key])
+            if self.normalize:
+                mymax = np.abs(y_values).max()
+                if mymax > 0:
+                    y_values /= mymax
 
-                # Get channel name
-                if key in self.app.data_sets[self.plot_set].channel_names:
-                    label_name = self.app.data_sets[self.plot_set].channel_names[key]
-                else:
-                    label_name = key
+            # Get channel name
+            if key in self.app.data_sets[self.plot_set].channel_names:
+                label_name = self.app.data_sets[self.plot_set].channel_names[key]
+            else:
+                label_name = key
 
-                self.axes.plot_date(
-                    epoch2num(np.array(arrs["time:time"])),
-                    y_values,
-                    self.fmt,
-                    label=label_name,
-                    tz=self.tz,
-                    linewidth=self.linewidth,
-                )
-            except:
-                logger.debug("Failed to plot Y-data", exc_info=True)
+            self.axes.plot_date(
+                epoch2num(np.array(arrs["time:time"])),
+                y_values,
+                self.fmt,
+                label=label_name,
+                tz=self.tz,
+                linewidth=self.linewidth,
+            )
 
         if not self.autoscale:
             self.axes.set_xlim([xleft, xright])
