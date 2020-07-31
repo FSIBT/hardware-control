@@ -132,13 +132,5 @@ class HC_VariableEditTool(HC_Instrument):
             logger.debug(f"Adding variable: {m}")
         self.variable_drop.addItems(names)
 
-    #
-    # Create a default state object if can't get state from a file
-    #
     def default_state(self):
-
-        dflt = {}
-
-        dflt["variable"] = "----------"
-
-        return dflt
+        return {"variable": "----------"}

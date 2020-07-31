@@ -144,17 +144,6 @@ class HC_MultiPowerSupply(HC_Instrument):
 
         self.read_state_from_backend()
 
-    def init_values(self):
-        self.values = {}
-        for c in self.channels:
-            self.values[f"CH{c}_V_out"] = ""
-            self.values[f"CH{c}_I_out"] = ""
-            self.values[f"CH{c}_V_max"] = ""
-            self.values[f"CH{c}_I_max"] = ""
-            self.values[f"CH{c}_V_set"] = ""
-            self.values[f"CH{c}_I_set"] = ""
-            self.values[f"CH{c}_enable"] = ""
-
     def all_on_off(self):
 
         # IF channel buttons are displayed, check their status to determine if
@@ -312,6 +301,17 @@ class HC_MultiPowerSupply(HC_Instrument):
             # self.channel_widgets[channel].set_label(label)
         except:
             logger.error(f"Failed to set channel {channel} label to {label}")
+
+    def init_values(self):
+        self.values = {}
+        for c in self.channels:
+            self.values[f"CH{c}_V_out"] = ""
+            self.values[f"CH{c}_I_out"] = ""
+            self.values[f"CH{c}_V_max"] = ""
+            self.values[f"CH{c}_I_max"] = ""
+            self.values[f"CH{c}_V_set"] = ""
+            self.values[f"CH{c}_I_set"] = ""
+            self.values[f"CH{c}_enable"] = ""
 
     def default_state(self):
         """Create a default state object if can't get state from a file."""

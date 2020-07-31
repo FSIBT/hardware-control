@@ -214,40 +214,31 @@ class HC_DelayGenerator(HC_Instrument):
     def default_state(self):
         """Create the defualt state variable"""
 
-        dflt = {}
+        default = {}
 
-        dflt["trigger_mode"] = "INT"
-        dflt["trigger_edge"] = "POS"
-        dflt["ext_trig_Zin"] = "HiZ"
-        dflt["burst_count"] = "2"
-        dflt["burst_period"] = "4"
-        dflt["direct_command"] = ""
-        dflt["pulses_per_burst"] = "2"
-        dflt["trigger_period"] = "4"
-        dflt["trigger_level"] = "0"
+        default["trigger_mode"] = "INT"
+        default["trigger_edge"] = "POS"
+        default["ext_trig_Zin"] = "HiZ"
+        default["burst_count"] = "2"
+        default["burst_period"] = "4"
+        default["direct_command"] = ""
+        default["pulses_per_burst"] = "2"
+        default["trigger_period"] = "4"
+        default["trigger_level"] = "0"
         for c in range(1, self.channels + 1):
-            dflt[f"CH{c}_delay"] = "1"
-            dflt[f"CH{c}_relative"] = "Trig"
-            dflt[f"CH{c}_output_mode"] = "TTL"
-            dflt[f"CH{c}_output_amplitude"] = "5"
+            default[f"CH{c}_delay"] = "1"
+            default[f"CH{c}_relative"] = "Trig"
+            default[f"CH{c}_output_mode"] = "TTL"
+            default[f"CH{c}_output_amplitude"] = "5"
         if self.channels == 4:
-            dflt["CH12_output_mode"] = "TTL"
-            dflt["CH12_output_amplitude"] = "5"
-            dflt["CH34_output_mode"] = "TTL"
-            dflt["CH34_output_amplitude"] = "5"
+            default["CH12_output_mode"] = "TTL"
+            default["CH12_output_amplitude"] = "5"
+            default["CH34_output_mode"] = "TTL"
+            default["CH34_output_amplitude"] = "5"
         if self.channels == 2:
-            dflt["CH12_output_mode"] = "TTL"
-            dflt["CH12_output_amplitude"] = "5"
-        return dflt
-
-    def init_values(self):
-        """
-        Initializes the values dictionary
-        """
-
-        self.values = self.default_state()
-        for key in self.values:
-            self.values[key] = ""
+            default["CH12_output_mode"] = "TTL"
+            default["CH12_output_amplitude"] = "5"
+        return default
 
     def settings_to_UI(self):
 

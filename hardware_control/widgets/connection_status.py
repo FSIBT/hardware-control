@@ -113,8 +113,6 @@ class HC_StatusTool(QGroupBox):
                 )
 
     def default_state(self):
-        """ Create a default state object if can't get state from a file."""
-
         return {
             "values": "",
             "instrument": "----------",

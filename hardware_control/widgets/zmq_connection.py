@@ -221,12 +221,7 @@ class HC_ZMQConnectionTool(HC_Instrument):
             logger.debug("ZMQConnectionTool found no message on port")
 
     def default_state(self):
-        dflt = {}
-        dflt["port"] = "tcp://*:5555"
-        return dflt
-
-    def init_values(self):
-        self.values["port"] = ""
+        return {"port": "tcp://*:5555"}
 
     def settings_to_UI(self):
 

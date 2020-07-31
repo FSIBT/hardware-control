@@ -220,8 +220,5 @@ class HC_MacroRunnerTool(HC_Instrument):
             "progress": 0,
         }
 
-    def init_values(self):
-        self.values = {}
-
     def settings_to_UI(self):
         pass

@@ -474,21 +474,7 @@ class HC_LoggerTool(HC_Instrument):
         #     self.set_group([*self.window.app.data_sets][-1])
 
     def default_state(self):
-        """Create a default state object if can't get state from a file."""
-        dflt = {}
-
-        dflt["display_group"] = ""
-        # dflt["instrument"] = "----------"
-        # dflt["parameter"] = "----------"
-        # dflt["action_instrument"] = "----------"
-        # dflt["action_parameter"] = "----------"
-        # dflt["progress"] = "0"
-        # dflt["macro"] = "None"
-
-        return dflt
-
-    def init_values(self):
-        self.values = {}
+        return {"display_group": ""}
 
     def settings_to_UI(self):
         self.dispgroup_drop.setCurrentText(self.settings["display_group"])

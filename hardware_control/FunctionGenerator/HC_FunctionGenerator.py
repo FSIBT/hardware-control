@@ -87,62 +87,34 @@ class HC_FunctionGenerator(HC_Instrument):
     def initialize_gui_instrument(self):
         return self.default_state()
 
-    def init_values(self):
-
-        self.values["CH1_amplitude"] = ""
-        self.values["CH1_frequency"] = ""
-        self.values["CH1_offset"] = ""
-        self.values["CH1_waveform"] = ""
-        self.values["CH1_modulate"] = ""
-        self.values["CH1_burst_en"] = ""
-        self.values["CH1_impedance"] = ""
-        self.values["CH1_enabled"] = ""
-        self.values["CH1_num_pulse"] = ""
-        self.values["CH1_burst_freq"] = ""
-
-        if self.num_channels > 1:
-            self.values["CH2_amplitude"] = ""
-            self.values["CH2_frequency"] = ""
-            self.values["CH2_offset"] = ""
-            self.values["CH2_waveform"] = ""
-            self.values["CH2_modulate"] = ""
-            self.values["CH2_burst_en"] = ""
-            self.values["CH2_impedance"] = ""
-            self.values["CH2_enabled"] = ""
-            self.values["CH2_num_pulse"] = ""
-            self.values["CH2_burst_freq"] = ""
-
-    #
-    # Create a default settings object if can't get settings from a file
-    #
     def default_state(self):
 
-        dflt = {}
+        default = {}
 
-        dflt["CH1_amplitude"] = "1"
-        dflt["CH1_frequency"] = "1e3"
-        dflt["CH1_offset"] = "0"
-        dflt["CH1_waveform"] = "Sine"
-        dflt["CH1_modulate"] = "False"
-        dflt["CH1_burst_en"] = "False"
-        dflt["CH1_impedance"] = "1e6"
-        dflt["CH1_enabled"] = "False"
-        dflt["CH1_num_pulse"] = "300"
-        dflt["CH1_burst_freq"] = "1"
+        default["CH1_amplitude"] = "1"
+        default["CH1_frequency"] = "1e3"
+        default["CH1_offset"] = "0"
+        default["CH1_waveform"] = "Sine"
+        default["CH1_modulate"] = "False"
+        default["CH1_burst_en"] = "False"
+        default["CH1_impedance"] = "1e6"
+        default["CH1_enabled"] = "False"
+        default["CH1_num_pulse"] = "300"
+        default["CH1_burst_freq"] = "1"
 
         if self.num_channels > 1:
-            dflt["CH2_amplitude"] = "1"
-            dflt["CH2_frequency"] = "1e3"
-            dflt["CH2_offset"] = "0"
-            dflt["CH2_waveform"] = "Sine"
-            dflt["CH2_modulate"] = "False"
-            dflt["CH2_burst_en"] = "False"
-            dflt["CH2_impedance"] = "1e6"
-            dflt["CH2_enabled"] = "False"
-            dflt["CH2_num_pulse"] = "300"
-            dflt["CH2_burst_freq"] = "1"
+            default["CH2_amplitude"] = "1"
+            default["CH2_frequency"] = "1e3"
+            default["CH2_offset"] = "0"
+            default["CH2_waveform"] = "Sine"
+            default["CH2_modulate"] = "False"
+            default["CH2_burst_en"] = "False"
+            default["CH2_impedance"] = "1e6"
+            default["CH2_enabled"] = "False"
+            default["CH2_num_pulse"] = "300"
+            default["CH2_burst_freq"] = "1"
 
-        return dflt
+        return default
 
     def settings_to_UI(self):
 

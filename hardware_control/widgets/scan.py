@@ -607,24 +607,14 @@ class HC_ScanTool(HC_Instrument):
             except:
                 logger.error(f"Can't convert {value} to float.", exc_info=True)
 
-    #
-    # Create a default state object if can't get state from a file
-    #
     def default_state(self):
-
-        dflt = {}
-
-        dflt["values"] = ""
-        dflt["instrument"] = "----------"
-        dflt["parameter"] = "----------"
-        dflt["progress"] = "0"
-        dflt["macro"] = "None"
-
-        return dflt
-
-    def init_values(self):
-
-        self.values = {}
+        return {
+            "values": "",
+            "instrument": "----------",
+            "parameter": "----------",
+            "progress": "0",
+            "macro": "None",
+        }
 
 
 class ScanWorker(QObject):

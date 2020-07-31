@@ -109,17 +109,26 @@ class HC_Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
         are changed"""
         pass
 
-    @abc.abstractmethod
     def init_values(self):
-        """
-        This function should be overwritten by child classes to initialize the
-        values dictionary. The child class (such as HC_MultiPowerSupply) can
-        then initialize its values dict such that all queryable values are
-        listed.
+        """Initializes the values dictionary.
 
-        The values loaded into the values dict by this function will also be used
-        by the read_state_from_backend() function to initialize the settings
-        dictionary and/or UI.
+        The values dictionary should consist of empty strings at the
+        beginning of the program whereas the default_state should
+        contain strings of the default values.
+
+        The values loaded into the values dict by this function will
+        also be used by the read_state_from_backend() function to
+        initialize the settings dictionary and/or UI.
+
+        """
+
+        self.values = {key: "" for key in self.default_state()}
+
+    @abc.abstractmethod
+    def default_state(self):
+        """Sets the default values for all known settings of the instrument.
+
+        Needs to be defined in each Instrument.
         """
         pass
 

@@ -54,6 +54,7 @@ class HC_Oscilloscope(HC_Instrument):
         super().__init__(window, name, backend, lock_until_sync)
 
         self.settings = {}
+        self.channels = 4
 
         # backend.sigReturnWaves.connect(self.backend_return_waveform)
         backend.dummy = self.window.app.dummy
@@ -120,164 +121,37 @@ class HC_Oscilloscope(HC_Instrument):
         if cmd_X == "CHX_WVFM":
             self.disp.update_display(channel, data1, data2)
 
-    def init_values(self):
-
-        self.values["timebase"] = ""
-
-        self.values["time_offset"] = ""
-        self.values["NUM_POINTS"] = ""
-
-        self.values["CH1_volts_div"] = ""
-        self.values["CH2_volts_div"] = ""
-        self.values["CH3_volts_div"] = ""
-        self.values["CH4_volts_div"] = ""
-
-        self.values["CH1_volts_div"] = ""
-        self.values["CH2_volts_div"] = ""
-        self.values["CH3_volts_div"] = ""
-        self.values["CH4_volts_div"] = ""
-
-        self.values["CH1_volts_div"] = ""
-        self.values["CH2_volts_div"] = ""
-        self.values["CH3_volts_div"] = ""
-        self.values["CH4_volts_div"] = ""
-
-        self.values["CH1_offset"] = ""
-        self.values["CH2_offset"] = ""
-        self.values["CH3_offset"] = ""
-        self.values["CH4_offset"] = ""
-
-        self.values["CH1_BW_lim"] = ""
-        self.values["CH2_BW_lim"] = ""
-        self.values["CH3_BW_lim"] = ""
-        self.values["CH4_BW_lim"] = ""
-
-        self.values["CH1_active"] = ""
-        self.values["CH2_active"] = ""
-        self.values["CH3_active"] = ""
-        self.values["CH4_active"] = ""
-
-        self.values["CH1_impedance"] = ""
-        self.values["CH2_impedance"] = ""
-        self.values["CH3_impedance"] = ""
-        self.values["CH4_impedance"] = ""
-
-        self.values["CH1_label"] = ""
-        self.values["CH2_label"] = ""
-        self.values["CH3_label"] = ""
-        self.values["CH4_label"] = ""
-
-        self.values["labels_enabled"] = ""
-
-        self.values["CH1_invert"] = ""
-        self.values["CH2_invert"] = ""
-        self.values["CH3_invert"] = ""
-        self.values["CH4_invert"] = ""
-
-        self.values["CH1_probe_atten"] = ""
-        self.values["CH2_probe_atten"] = ""
-        self.values["CH3_probe_atten"] = ""
-        self.values["CH4_probe_atten"] = ""
-
-        self.values["CH1_coupling"] = ""
-        self.values["CH2_coupling"] = ""
-        self.values["CH3_coupling"] = ""
-        self.values["CH4_coupling"] = ""
-
-        self.values["trigger_level"] = ""
-
-        self.values["trigger_coupling"] = ""
-
-        self.values["trigger_edge"] = ""
-
-        self.values["trigger_channel"] = ""
-
-        self.values["meas_slot1"] = ""
-        self.values["meas_slot2"] = ""
-        self.values["meas_slot3"] = ""
-        self.values["meas_slot4"] = ""
-        self.values["meas_slot5"] = ""
-
     def default_state(self):
-        """Create a default settings object if can't get settings from a file"""
-        dflt = {}
+        default = {}
 
-        dflt["timebase"] = "1e-3"
-        dflt["time_offset"] = "0"
-        dflt["NUM_POINTS"] = "1000"
+        default["timebase"] = "1e-3"
+        default["time_offset"] = "0"
+        default["NUM_POINTS"] = "1000"
+        default["labels_enabled"] = "False"
 
-        dflt["CH1_volts_div"] = "1"
-        dflt["CH2_volts_div"] = "1"
-        dflt["CH3_volts_div"] = "1"
-        dflt["CH4_volts_div"] = "1"
+        for channel in range(1, self.channels + 1):
+            default[f"CH{channel}_volts_div"] = "1"
+            default[f"CH{channel}_offset"] = "0"
+            default[f"CH{channel}_BW_lim"] = "False"
+            default[f"CH{channel}_active"] = "True"
+            default[f"CH{channel}_impedance"] = "1e6"
+            default[f"CH{channel}_label"] = f"Channel {channel}"
+            default[f"CH{channel}_invert"] = "False"
+            default[f"CH{channel}_probe_atten"] = "1"
+            default[f"CH{channel}_coupling"] = "DC"
 
-        dflt["CH1_volts_div"] = "1"
-        dflt["CH2_volts_div"] = "1"
-        dflt["CH3_volts_div"] = "1"
-        dflt["CH4_volts_div"] = "1"
+        default["trigger_level"] = "1"
+        default["trigger_coupling"] = "DC"
+        default["trigger_edge"] = "POS"
+        default["trigger_channel"] = "1"
 
-        dflt["CH1_volts_div"] = "1"
-        dflt["CH2_volts_div"] = "1"
-        dflt["CH3_volts_div"] = "1"
-        dflt["CH4_volts_div"] = "1"
+        default["meas_slot1"] = ""
+        default["meas_slot2"] = ""
+        default["meas_slot3"] = ""
+        default["meas_slot4"] = ""
+        default["meas_slot5"] = ""
 
-        dflt["CH1_offset"] = "0"
-        dflt["CH2_offset"] = "0"
-        dflt["CH3_offset"] = "0"
-        dflt["CH4_offset"] = "0"
-
-        dflt["CH1_BW_lim"] = "False"
-        dflt["CH2_BW_lim"] = "False"
-        dflt["CH3_BW_lim"] = "False"
-        dflt["CH4_BW_lim"] = "False"
-
-        dflt["CH1_active"] = "True"
-        dflt["CH2_active"] = "False"
-        dflt["CH3_active"] = "False"
-        dflt["CH4_active"] = "False"
-
-        dflt["CH1_impedance"] = "1e6"
-        dflt["CH2_impedance"] = "1e6"
-        dflt["CH3_impedance"] = "1e6"
-        dflt["CH4_impedance"] = "1e6"
-
-        dflt["CH1_label"] = "Channel 1"
-        dflt["CH2_label"] = "Channel 2"
-        dflt["CH3_label"] = "Channel 3"
-        dflt["CH4_label"] = "Channel 4"
-
-        dflt["labels_enabled"] = "False"
-
-        dflt["CH1_invert"] = "False"
-        dflt["CH2_invert"] = "False"
-        dflt["CH3_invert"] = "False"
-        dflt["CH4_invert"] = "False"
-
-        dflt["CH1_probe_atten"] = "10"
-        dflt["CH2_probe_atten"] = "10"
-        dflt["CH3_probe_atten"] = "10"
-        dflt["CH4_probe_atten"] = "10"
-
-        dflt["CH1_coupling"] = "DC"
-        dflt["CH2_coupling"] = "DC"
-        dflt["CH3_coupling"] = "DC"
-        dflt["CH4_coupling"] = "DC"
-
-        dflt["trigger_level"] = "1"
-
-        dflt["trigger_coupling"] = "DC"
-
-        dflt["trigger_edge"] = "POS"
-
-        dflt["trigger_channel"] = "1"
-
-        dflt["meas_slot1"] = ""
-        dflt["meas_slot2"] = ""
-        dflt["meas_slot3"] = ""
-        dflt["meas_slot4"] = ""
-        dflt["meas_slot5"] = ""
-
-        return dflt
+        return default
 
     def settings_to_UI(self):
 
