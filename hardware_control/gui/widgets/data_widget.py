@@ -360,6 +360,8 @@ class DataWidget(Instrument):
 
         self.resume_updates()
 
+        self.table.setRowCount(0)
+
         logger.debug(f"LoggerTool display group set to '{group}'")
         self.settings["display_group"] = group
         self.dispgroup_drop.setCurrentText(self.settings["display_group"])
@@ -395,23 +397,31 @@ class DataWidget(Instrument):
 
         # Get correct group
         group = self.window.app.data_sets[self.settings["display_group"]]
+        print("Displaying group: ", self.settings["display_group"])
 
         # Set correct number of columns
         self.table.setColumnCount(len(group.data))
+        print(f"\tCols: {len(group.data)}")
 
         # Set correct number of rows
         num_rows = group.len_max()
-        self.table.setRowCount(num_rows + 1)
+        self.table.setRowCount(num_rows)
+        print(f"\tRows: {num_rows}")
+        print(f"\tTitles:")
 
         # Title columns
         header_names = []
         for field in group.data:
 
+            print(f"\t\t{field}", end="")
+
             # Use custom name if available, otherwise use field name
             if field in group.channel_names:
                 header_names.append(group.channel_names[field])
+                p = group.channel_names[field]
+                print(f" ({p})")
             else:
-
+                print(f"")
                 # Apply readable name for time column if not specified
                 if field == "time:time":
                     header_names.append("Time")
@@ -423,6 +433,7 @@ class DataWidget(Instrument):
 
         # Write indeces along vertical
         indeces_str = [str(x) for x in list(range(num_rows))]
+        print(f"\tIndeces: {indeces_str}")
 
         self.table.setVerticalHeaderLabels(indeces_str)
 
@@ -430,24 +441,35 @@ class DataWidget(Instrument):
         col = 0
         for field in group.data:
 
+            print(f"\tData for '{field}':")
+
             for ridx, val in enumerate(group.data[field]):
+
+                print(f"\t\t{val}", end="")
+
                 temp_item = QTableWidgetItem()
 
                 # If value can be converted to a string, do so
                 if isinstance(val, float) or isinstance(val, int):
                     temp_item.setText(f"{val:g}")
+                    print(" NUM")
                 elif isinstance(val, bool):
                     temp_item.setText(str(val))
+                    print(" BOOl")
                 elif isinstance(val, str):
                     temp_item.setText(val)
+                    print(" STR")
                 elif isinstance(val, list):
+                    print(" LIST")
                     if len(val) > 0:
                         temp_item.setText(f"[{type(val[0])}*{len(val)}]")
                     else:
                         temp_item.setText("List")
                 elif isinstance(val, dict):
+                    print(" DICT")
                     temp_item.setText(f"Dict * {len(val)}")
                 else:
+                    print(" ?")
                     temp_item.setText(f"Type={type(val)}")
                 self.table.setItem(ridx, col, temp_item)
 
