@@ -114,6 +114,15 @@ class Oscilloscope(Instrument):
         # Write state to scope - synch scope with GUI
         self.send_state()
 
+    def get_last_waveform(self):
+
+        return (
+            self.disp.CH1_data,
+            self.disp.CH2_data,
+            self.disp.CH3_data,
+            self.disp.CH4_data,
+        )
+
     def backend_return_listdata(self, descr: str, data1: list, data2: list):
 
         channel, cmd_X = get_channel_from_command(descr)
@@ -470,8 +479,6 @@ class OscilloscopeTriggerWidget(QWidget):
 
     def display_refresh(self):
 
-        print("Display refresh....")
-
         # Continue if display widget is present
         if self.display_widget is None:
             return
@@ -479,8 +486,6 @@ class OscilloscopeTriggerWidget(QWidget):
         # Continue if display widget is in single trigger mode
         if not self.display_widget.single_trig_mode:
             return
-
-        print("\tTriggering!")
 
         # Refresh display
         self.display_widget.query_waveforms()
@@ -659,6 +664,11 @@ class OscilloscopeDisplayWidget(QGroupBox):
         self.CH3 = self.display.plot(pen=self.lineCH3, symbol=None)
         self.CH4 = self.display.plot(pen=self.lineCH4, symbol=None)
 
+        self.CH1_data = ([], [])
+        self.CH2_data = ([], [])
+        self.CH3_data = ([], [])
+        self.CH4_data = ([], [])
+
         if show_controls:
             self.refresh_rate_label = QLabel("Refresh Period (s): ")
 
@@ -721,16 +731,18 @@ class OscilloscopeDisplayWidget(QGroupBox):
 
         if channel == 1:
             self.CH1.setData(t, wave)
+            self.CH1_data = (t, wave)
         elif channel == 2:
             self.CH2.setData(t, wave)
+            self.CH2_data = (t, wave)
         elif channel == 3:
             self.CH3.setData(t, wave)
+            self.CH3_data = (t, wave)
         elif channel == 4:
             self.CH4.setData(t, wave)
+            self.CH4_data = (t, wave)
 
     def query_waveforms(self):
-
-        print("Test!")
 
         for c in range(1, 5):
             if self.control.settings[f"CH{c}_active"] == "True":
