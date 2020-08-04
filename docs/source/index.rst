@@ -23,10 +23,9 @@ applications:
    :caption: Contents:
 
    installation
-   supported_instruments
    overview.md
-   getting_started.md
-   adding_instruments.md
+   supported_instruments
+   howtos
    hardware_control
    how_to_contribute
    CHANGELOG.md

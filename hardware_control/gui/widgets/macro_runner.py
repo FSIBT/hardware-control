@@ -12,24 +12,29 @@ logger = logging.getLogger(__name__)
 class MacroRunnerTool(Instrument):
     """A tool which allows the user to run macros from the main UI.
 
-    'Buttons' specifies which buttons to add. value for dictionary is button label.
-     Options include:
-     1.) name of any macro, 2.) 'Dynamic', which gives one button with a dropdown
-    letting the user pick whihc macro the button triggers.
+    Parameters
+    ----------
 
-    'Indicators' specifies which indicators are available to add to the widget.
-    Options must be in dictionary, s.t. option is the key name, and it specifies
-    a string value for the option. Options include:
-    1.) name of any application variable (value is populates a label describing
-    the application variable's value)
-
-     1.) 'Label' adds a plain text label, 2.) 'Light', which adds
-    a tri-color light with values 'green', 'grey', 'red', and 3.) 'ProgBar' which
-    adds a progress bar and takes a value between 0 and 100 for a value.
-
-    Add countdown lets the user add an optional countdown timer which can be
-    started with the start_countdown() function and calls the callback
-    countdown_end when it reaches zero.
+    buttons : list
+        specifies which buttons to add. value for dictionary is button label.
+        Options include: 1.) name of any macro, 2.) 'Dynamic', which gives
+        one button with a dropdown letting the user pick whihc macro the
+        button triggers.
+    indicators : list
+        specifies which indicators are available to add to the widget.
+        Options must be in dictionary, s.t. option is the key name, and it
+        specifies a string value for the option. Options include:
+        1.) name of any application variable (value is populates a label
+        describing the application variable's value)
+    button_labels : list
+        1.) 'Label' adds a plain text label, 2.) 'Light', which adds
+        a tri-color light with values 'green', 'grey', 'red',
+        and 3.) 'ProgBar' which adds a progress bar and takes a value
+        between 0 and 100 for a value.
+    add_countdown : bool
+        Add countdown lets the user add an optional countdown timer which can be
+        started with the start_countdown() function and calls the callback
+        countdown_end when it reaches zero.
     """
 
     def __init__(

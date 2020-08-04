@@ -8,20 +8,12 @@ Qt-widgets that come in handy, for example, for plotting data and then
 backend drivers for different hardware and their Qt-frontends. Some
 hardware share the same Qt-frontend.
 
+The package is split into two parts:
+
 .. toctree::
    :maxdepth: 1
-   :caption: Basics:
+   :caption: Main elements:
 
-   base_and_backend
+   gui_index
+   backends_index
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Instruments:
-
-
-   instruments/DelayGenerator
-   instruments/FlowController
-   instruments/FunctionGenerator
-   instruments/IOModule
-   instruments/Oscilloscope
-   instruments/PowerSupply
