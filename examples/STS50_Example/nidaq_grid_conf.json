@@ -17,7 +17,7 @@
         "DIR": "INPUT",
         "TYPE": "ANALOG",
         "ID_STR": "cDAQ1Mod2/ai0",
-        "LABEL": "Floating Rack Current (red):",
+        "LABEL": "Floating Rack Current (read):",
         "UNITS": "V",
         "OPTIONS": {
             "CHX_terminal_config": "DIFF"
@@ -27,7 +27,7 @@
         "DIR": "INPUT",
         "TYPE": "ANALOG",
         "ID_STR": "cDAQ1Mod2/ai1",
-        "LABEL": "Floating Rack Voltage (red):",
+        "LABEL": "Floating Rack Voltage (read):",
         "UNITS": "A",
         "OPTIONS": {
             "CHX_terminal_config": "DIFF"
@@ -37,7 +37,7 @@
         "DIR": "INPUT",
         "TYPE": "ANALOG",
         "ID_STR": "cDAQ1Mod2/ai2",
-        "LABEL": "Grid Current (red):",
+        "LABEL": "Grid Current (read):",
         "UNITS": "A",
         "OPTIONS": {
             "CHX_terminal_config": "DIFF"
@@ -47,7 +47,7 @@
         "DIR": "INPUT",
         "TYPE": "ANALOG",
         "ID_STR": "cDAQ1Mod2/ai3",
-        "LABEL": "Grid Voltage (red):",
+        "LABEL": "Grid Voltage (read):",
         "UNITS": "V",
         "OPTIONS": {
             "CHX_terminal_config": "DIFF"

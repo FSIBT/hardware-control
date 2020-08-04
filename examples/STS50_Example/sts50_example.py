@@ -15,7 +15,7 @@ Options:
 
 import logging
 import sys
-from time import gmtime, strftime
+from time import localtime, strftime
 import warnings
 
 from PyQt5.QtWidgets import (
@@ -31,7 +31,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtGui import QIcon, QDoubleValidator
 from docopt import docopt
-
+from PyQt5.QtCore import QTimer
 from PyQt5 import QtCore
 
 import hardware_control.backends as hc_back
@@ -177,7 +177,8 @@ def trigger_function(window):
     """
 
     # Update shot number and shot number widget
-    window.app.variables["SHOT_ID_NUM"] = strftime("%H%M%S", gmtime())
+    timestamp = strftime("%H%M%S", localtime())
+    window.app.variables["SHOT_ID_NUM"] = timestamp
     window.run_tool.update_indicators()
 
     # Check all time delay fields from trigger 1, get max delay time
@@ -211,6 +212,26 @@ def trigger_function(window):
     # Trigger the delay generator
     window.trig1_ctrl.command("single_trigger")
 
+    # Add timestamp to dataset
+    window.app.data_sets["Shots"].data["Timestamp"].append(timestamp)
+
+    print(max_t * 1e3)
+    QTimer.singleShot((max_t + 2) * 1e3, lambda: save_waveforms_to_set(window))
+
+
+def save_waveforms_to_set(window):
+
+    pico_idx = window.app.get_instrument_idx("PicoScope")
+    key_idx = window.app.get_instrument_idx("Keysight Scope")
+
+    picoscope_data = window.app.instruments[pico_idx].get_last_waveform()
+    keysight_data = window.app.instruments[key_idx].get_last_waveform()
+
+    window.app.data_sets["Shots"].data["Picoscope_waveform"].append(picoscope_data)
+    window.app.data_sets["Shots"].data["Keysight_waveform"].append(keysight_data)
+
+    window.app.data_sets["Shots"].save(f"beam_data.txt", "SHOT")
+
 
 def countdown_end_fn(macro_runner_tool):
     """
@@ -227,28 +248,132 @@ def save_shot_format(dataset, filename: str):
     Saves data in the format expected by STS-50 data processing scripts.
     """
 
-    # Write file data
-    with open(filename, "a") as outfile:
+    loc_time = localtime()
+    header_datestamp = strftime("%Y-%m-%d %H:%M:%S", loc_time)
+    datestamp = strftime("%Y-%m-%d-%H%M%S", loc_time)
+
+    # Ensure minimum length
+    if dataset.len_min() < 1:
+        logger.warning(
+            f"Failed to save data for dataset {dataset.name} because it contains no data."
+        )
+        return
+
+    def save_scope_file(scope_key, scope_filename):
+
+        # Write oscilloscope data
+
+        with open(scope_filename, "a") as outfile:
+
+            outfile.write("# ALPHA experiment\n")
+            outfile.write("# setting hash: \n")
+            outfile.write("# date: {header_datestamp}\n")
+            outfile.write("# columns: time, ch1, ch2, ch3, ch4\n\n")
+
+            t = dataset.data[scope_key][-1][0][0]
+            ch1 = dataset.data[scope_key][-1][0][1]
+            ch2 = dataset.data[scope_key][-1][1][1]
+            ch3 = dataset.data[scope_key][-1][2][1]
+            ch4 = dataset.data[scope_key][-1][3][1]
+
+            arr_len = min([len(x) for x in [t, ch1, ch2, ch3, ch4]])
+
+            print(f"Array length: {arr_len}")
+            print(t[0:10])
+            print(ch1[0:10])
+
+            for i in range(arr_len):
+
+                t_i = t[i]
+                ch1_i = ch1[i]
+                ch2_i = ch2[i]
+                ch3_i = ch3[i]
+                ch4_i = ch4[i]
+
+                outfile.write(f"{t_i}\t\t{ch1_i}\t\t{ch2_i}\t\t{ch3_i}\t\t{ch4_i}")
+
+    save_scope_file("Keysight_waveform", f"scope-data-{datestamp}.txt")
+    print("\n\n\nFIX WRONG LINE 320 STS%)_EXAMPEL\n\n\n")
+    save_scope_file("Keysight_waveform", f"picoscope-data-{datestamp}.txt")
+
+    misc_fn = f"misc-data-{datestamp}.txt"
+
+    with open(misc_fn, "a") as outfile:
 
         outfile.write("# ALPHA experiment\n")
         outfile.write("# setting hash: \n")
-        outfile.write("# date: \n")
+        outfile.write(f"# date: {header_datestamp}\n\n")
+        col_titles = [
+            "time",
+            "Floating-rack-current",
+            "Floating-rack-voltage",
+            "Grid-current",
+            "Grid-voltage",
+            "Pressure",
+            "Extraction-current",
+            "Extraction-voltage",
+        ]
+        for ct in col_titles:
+            outfile.write(f"{ct}\t\t")
+        outfile.write("\n")
 
-        # length = self.len_min()
-        # while self.autosave_next_row < length:
-        #
-        #     # Write line
-        #     line = " ".join(
-        #         [
-        #             str(self.data[key][self.autosave_next_row])
-        #             for key in self.data
-        #         ]
-        #     )
-        #     outfile.write(line + "\n")
-        #
-        #     # Move pointer to next line
-        #     self.autosave_next_row += 1
-    # if "Keysight:" dataset.data
+        # Grid -> USB NI-DAC
+        # ext -> Floating Rack Power Supplies
+
+        col_vals = []
+        col_vals.append(header_datestamp)
+        col_vals.append(dataset.app.get_instrument_value("USB NI-DAC", "cDAQ1Mod2/ai0"))
+        col_vals.append(dataset.app.get_instrument_value("USB NI-DAC", "cDAQ1Mod2/ai1"))
+        col_vals.append(dataset.app.get_instrument_value("USB NI-DAC", "cDAQ1Mod2/ai2"))
+        col_vals.append(dataset.app.get_instrument_value("USB NI-DAC", "cDAQ1Mod2/ai3"))
+        col_vals.append(dataset.app.get_instrument_value("USB NI-DAC", "cDAQ1Mod2/ai4"))
+        col_vals.append(
+            dataset.app.get_instrument_value(
+                "Floating Rack Power Supplies", "cDAQ9188-1AEF742Mod6/ai6"
+            )
+        )
+        col_vals.append(
+            dataset.app.get_instrument_value(
+                "Floating Rack Power Supplies", "cDAQ9188-1AEF742Mod6/ai7"
+            )
+        )
+
+        print(col_vals)
+        for cv in col_vals:
+            print(f"\t{cv}")
+            outfile.write(f"{cv}\t\t")
+        outfile.write("\n")
+
+    # ALPHA experiment
+
+
+# setting hash: 3e5ded4e5772d2e9806092557606462c
+# date: 2016-12-20 10:03:55
+
+# time	Grid3 Imon	Grid3 Vmon	Grid2 Imon	Grid2 Vmon	Grid3 Pulser Imon	Grid3 Pulser Vmon	Vacuum main chamber	HV Grid I mon	HV Grid V mon	HV Floating V mon	HV Floating I mon
+
+# ALPHA experiment
+# setting hash: 3e5ded4e5772d2e9806092557606462c
+# date: 2016-12-20 10:03:55
+# columns: time, ch1, ch2, ch3, ch4
+
+# -2.000000E-4	-4.015625E-2	-4.031250E-2	-3.125000E-4	1.593750E-1
+
+# length = self.len_min()
+# while self.autosave_next_row < length:
+#
+#     # Write line
+#     line = " ".join(
+#         [
+#             str(self.data[key][self.autosave_next_row])
+#             for key in self.data
+#         ]
+#     )
+#     outfile.write(line + "\n")
+#
+#     # Move pointer to next line
+#     self.autosave_next_row += 1
+# if "Keysight:" dataset.data
 
 
 class CustomControlWidget(QGroupBox):
@@ -544,6 +669,26 @@ class STS50Demo(hc.MainWindow):
         self.app.data_sets["High Voltage"] = hc.Dataset("High Voltage", self.app)
         self.app.data_sets["High Voltage"].start_asynch(3)
         self.app.data_sets["High Voltage"].add_instrument(self.iomod_usb_wdgt)
+
+        self.app.data_sets["Shots"] = Dataset("Shots", self.app)
+        self.app.data_sets["Shots"].data["Timestamp"] = []
+        self.app.data_sets["Shots"].data["Picoscope_waveform"] = []
+        self.app.data_sets["Shots"].data["Keysight_waveform"] = []
+
+        self.app.data_sets["Demo"] = Dataset("Demo", self.app)
+        self.app.data_sets["Demo"].data["time:time"] = [1, 2, 3]
+        self.app.data_sets["Demo"].data[":Voltage"] = [10, 11, 12]
+        self.app.data_sets["Demo"].data[":Current"] = [0.1, 0.09, 0.13]
+        self.app.data_sets["Demo"].data[":Waveforms"] = [
+            [1, 2, 3],
+            [4, 5, 6],
+            [7, 8, 9],
+        ]
+        self.app.data_sets["Demo"].data[":On"] = [None, True, False]
+        self.app.data_sets["Demo"].channel_names["time:time"] = "Time (s)"
+        self.app.data_sets["Demo"].channel_names[":Voltage"] = "Vtest"
+        self.app.data_sets["Demo"].channel_names[":Current"] = "Itest"
+
         # {'CHcDAQ1Mod2/ai0_analog_read': '', 'CHcDAQ1Mod2/ai1_analog_read': '', 'CHcDAQ1Mod2/ai2_analog_read': '', 'CHcDAQ1Mod2/ai3_analog_read': '', 'CHcDAQ1Mod2/ai4_analog_read': ''}
 
         self.app.data_sets["High Voltage"].name_channel(
