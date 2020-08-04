@@ -14,8 +14,8 @@ from docopt import docopt
 
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QGridLayout
 
-from hardware_control.base import HC_App
-from hardware_control.FlowController import AlicatMSeriesCtrl, HC_FlowController
+import hardware_control.backends as hc_back
+import hardware_control.gui as hc
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
@@ -30,8 +30,8 @@ class FlowControllerDemo(QMainWindow):
 
         self.main_widget = QWidget(self)
 
-        self.instr = AlicatMSeriesCtrl("192.168.0.15", dummy, True)
-        self.instr_ctrl = HC_FlowController(
+        self.instr = hc_back.Alicat_M_Series("192.168.0.15", dummy, True)
+        self.instr_ctrl = hc.FlowController(
             self.instr, "flowcontroller_state.json", True
         )
 
@@ -46,7 +46,7 @@ class FlowControllerDemo(QMainWindow):
         self.instr_ctrl.close()
 
 
-app = HC_App(dummy=dummy)
+app = hc.App(dummy=dummy)
 ex = FlowControllerDemo(app)
 app.aboutToQuit.connect(ex.close)
 sys.exit(app.exec_())

@@ -17,19 +17,9 @@ import sys
 from PyQt5.QtWidgets import QMainWindow, QWidget, QGridLayout, QStyleFactory, QTabWidget
 from docopt import docopt
 
-from hardware_control.base import HC_App
-from hardware_control.Oscilloscope import HC_Oscilloscope, Key4000XCtrl
-from hardware_control.FlowController import HC_FlowController, AlicatMSeriesCtrl
-from hardware_control.DelayGenerator import HC_DelayGenerator, SRSDG535Ctrl
-from hardware_control.FunctionGenerator import HC_FunctionGenerator, Key33500BCtrl
-from hardware_control.PowerSupply import HC_MultiPowerSupply, TDKLGenHCtrl
-from hardware_control.widgets import (
-    HC_ZMQConnectionTool,
-    HC_MacroRunnerTool,
-    HC_VariableEditTool,
-    HC_ScanTool,
-    HC_StatusTool,
-)
+import hardware_control.backends as hc_back
+import hardware_control.gui as hc
+
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
@@ -62,10 +52,10 @@ class STS50Demo(QMainWindow):
         #####################################################################
         ######## Tab 1
 
-        scpi_scope = Key4000XCtrl(
+        scpi_scope = hc_back.Keysight_4000X(
             "TCPIP0::192.168.0.14::INSTR",  # Enter socket address as ip:port, ex: 192.168.0.14:5025
         )
-        self.scope_ctrl = HC_Oscilloscope(scpi_scope, self, "Keysight")
+        self.scope_ctrl = hc.Oscilloscope(scpi_scope, self, "Keysight")
 
         # Put instrument(s) in tab
         self.tab1_layout = QGridLayout()
@@ -75,14 +65,14 @@ class STS50Demo(QMainWindow):
         #####################################################################
         ######## Tab 2
 
-        awg = Key33500BCtrl(
+        awg = hc_back.Keysight_33500B(
             "TCPIP0::192.168.1.18::INSTR",
         )  # "USB0::0x0957::0x2907::MY52500624::INSTR"
-        self.awg_ctrl = HC_FunctionGenerator(awg, self, "RF Generator")
+        self.awg_ctrl = hc.FunctionGenerator(awg, self, "RF Generator")
 
-        self.psu = TDKLGenHCtrl("TCPIP0::192.168.1.19::INSTR")
+        self.psu = hc_back.TDKL_GenH("TCPIP0::192.168.1.19::INSTR")
         awg.psu = debug
-        self.psu_ctrl = HC_MultiPowerSupply(
+        self.psu_ctrl = hc.MultiPowerSupply(
             self.psu, self, [1], "TDK Lambda (RF Vin)", "DEFAULT"
         )
 
@@ -95,27 +85,27 @@ class STS50Demo(QMainWindow):
         #####################################################################
         ######## Tab 3
 
-        self.flow = AlicatMSeriesCtrl("192.168.1.15")
-        self.flow_ctrl = HC_FlowController(
+        self.flow = hc_back.Alicat_M_Series("192.168.1.15")
+        self.flow_ctrl = hc.FlowController(
             self.flow, self, "Flow Controller", "flowcontroller_state.json"
         )
 
         # Todo: linux-gpib is a dependency on some systems
-        self.trig1 = SRSDG535Ctrl("GPIB0::10::INSTR")
-        self.trig1_ctrl = HC_DelayGenerator(self.trig1, self, "Trigger 1", "DEFAULT")
+        self.trig1 = hc_back.SRS_DG535("GPIB0::10::INSTR")
+        self.trig1_ctrl = hc.DelayGenerator(self.trig1, self, "Trigger 1", "DEFAULT")
 
-        self.trig2 = SRSDG535Ctrl("GPIB0::15::INSTR")
-        self.trig2_ctrl = HC_DelayGenerator(self.trig2, self, "Trigger 2", "DEFAULT")
+        self.trig2 = hc_back.SRS_DG535("GPIB0::15::INSTR")
+        self.trig2_ctrl = hc.DelayGenerator(self.trig2, self, "Trigger 2", "DEFAULT")
         try:
-            self.zmqtool = HC_ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
+            self.zmqtool = hc.ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
         except Exception as e:
             print("ZMQConnection failed! ")
             print(e)
 
-        self.scantool = HC_ScanTool(self, "Scan Control", True)
+        self.scantool = hc.ScanTool(self, "Scan Control", True)
         self.scantool.update_instruments()
 
-        self.statustool = HC_StatusTool(self, "Connection Status")
+        self.statustool = hc.StatusTool(self, "Connection Status")
         self.statustool.update_instruments()
 
         app.add_variable("FIL_AMPL_V", "5.0")  # Add a filament amplitude variable
@@ -132,7 +122,7 @@ class STS50Demo(QMainWindow):
         app.add_macro("Safe", ["CMD:PSU:ALL_OFF", "CMD:AWG:ALL_OFF"])
         app.add_macro("Wait_1s", ["FUNC:time:sleep:1"])
 
-        self.run_tool = HC_MacroRunnerTool(
+        self.run_tool = hc.MacroRunnerTool(
             self, "Macro Runner", ["Dynamic", "Trigger"], ["Run Macro", "Trigger Beam"],
         )
         self.run_tool.update_macros()
@@ -186,7 +176,7 @@ class STS50Demo(QMainWindow):
 
 
 def main():
-    app = HC_App(dummy=dummy)
+    app = hc.App(dummy=dummy)
     ex = STS50Demo(app)
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())

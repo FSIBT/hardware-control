@@ -3,12 +3,12 @@ import logging
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QLineEdit, QLabel, QGridLayout, QDoubleSpinBox
 
-from hardware_control.base import HC_Instrument, HC_Comm
+from ..base import Instrument, Comm
 
 logger = logging.getLogger(__name__)
 
 
-class HC_DeviceType(HC_Instrument):
+class DeviceType(Instrument):
     # Convention: __init__(self, backend, window . . . )
     def __init__(
         self,
@@ -30,7 +30,7 @@ class HC_DeviceType(HC_Instrument):
             self.comm = self.window.app.comms[scpi_instr]
             self.comm.addWidget(self)
         else:
-            self.window.app.comms[scpi_instr] = HC_Comm(scpi_instr, self)
+            self.window.app.comms[scpi_instr] = Comm(scpi_instr, self)
             self.comm = self.window.app.comms[scpi_instr]
 
         # Create UI - example

@@ -16,8 +16,8 @@ from docopt import docopt
 
 from PyQt5.QtWidgets import QMainWindow, QWidget, QGridLayout
 
-from hardware_control.base import HC_App
-from hardware_control.PowerSupply import CAEN14xxETCtrl, HC_MultiPowerSupply
+import hardware_control.backends as hc_back
+import hardware_control.gui as hc
 
 
 commands = docopt(__doc__)
@@ -33,8 +33,8 @@ class PSUDemo(QMainWindow):
 
         self.main_widget = QWidget(self)
 
-        psu = CAEN14xxETCtrl("TCPIP::192.168.1.20::1470::SOCKET")
-        self.psu_ctrl = HC_MultiPowerSupply(
+        psu = hc_back.Caen_14xxET("TCPIP::192.168.1.20::1470::SOCKET")
+        self.psu_ctrl = hc.MultiPowerSupply(
             psu, self, [1, 2, 3], "Power Supply Unit", "DEFAULT"
         )
 
@@ -50,7 +50,7 @@ class PSUDemo(QMainWindow):
 
 
 def main():
-    app = HC_App(dummy=dummy)
+    app = hc.App(dummy=dummy)
     ex = PSUDemo(app)
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())

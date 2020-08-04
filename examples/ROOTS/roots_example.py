@@ -25,23 +25,8 @@ from PyQt5.QtWidgets import (
     QGridLayout,
 )
 
-from hardware_control.base import HC_App, HC_MainWindow, Dataset
-from hardware_control.IOModule import ADAM6024Ctrl, HC_IOModule, read_channel_file
-from hardware_control.Oscilloscope import HC_Oscilloscope, Pico6000Ctrl
-from hardware_control.PowerSupply import (
-    HC_MultiPowerSupply,
-    CAEN14xxETCtrl,
-    Key36300Ctrl,
-)
-from hardware_control.widgets import (
-    HC_PlotTool,
-    HC_MiniPlotTool,
-    HC_MonitorTool,
-    HC_StatusTool,
-    HC_ZMQConnectionTool,
-    HC_DataWidget,
-    HC_Qtconsole,
-)
+import hardware_control.backends as hc_back
+import hardware_control.gui as hc
 
 
 commands = docopt(__doc__)
@@ -113,7 +98,7 @@ def example_function(tool, hook_name):
     print(f"\t{tool.counter}")
 
 
-class RootsDemo(HC_MainWindow):
+class RootsDemo(hc.MainWindow):
     def __init__(self, app):
         super().__init__(app)
 
@@ -126,7 +111,7 @@ class RootsDemo(HC_MainWindow):
         self.tab_aux = QWidget()
         self.tab_plot = QWidget()
         self.tab_data = QWidget()
-        self.python = HC_Qtconsole(main_app=app)
+        self.python = hc.Qtconsole(main_app=app)
 
         self.tabs.addTab(self.tab_psu, "Power Supplies 1")
         self.tabs.addTab(self.tab_psu2, "Power Supplies 2")
@@ -141,8 +126,8 @@ class RootsDemo(HC_MainWindow):
         #####################################################################
         ######## Tab 1
 
-        self.caen_be = CAEN14xxETCtrl("192.168.0.1:1470")
-        self.caen_wdgt_123 = HC_MultiPowerSupply(
+        self.caen_be = hc_back.Caen_14xxET("192.168.0.1:1470")
+        self.caen_wdgt_123 = hc.MultiPowerSupply(
             self.caen_be,
             self,
             [1, 2, 3],
@@ -161,7 +146,7 @@ class RootsDemo(HC_MainWindow):
         self.caen_wdgt_123.set_channel_label(1, "1: NaI")
         self.caen_wdgt_123.set_channel_label(2, "2: LaBr")
         self.caen_wdgt_123.set_channel_label(3, "3: YAP")
-        self.caen_wdgt_456 = HC_MultiPowerSupply(
+        self.caen_wdgt_456 = hc.MultiPowerSupply(
             self.caen_be,
             self,
             [4, 5, 6],
@@ -181,15 +166,15 @@ class RootsDemo(HC_MainWindow):
         self.caen_wdgt_456.set_channel_label(5, "5: UCB")
         self.caen_wdgt_456.set_channel_label(6, "6: Target")
 
-        self.keysight_ps_be = Key36300Ctrl("TCPIP::192.168.0.3::5025::SOCKET")
-        self.keysight_wdgt = HC_MultiPowerSupply(
+        self.keysight_ps_be = hc_back.Keysight_36300("TCPIP::192.168.0.3::5025::SOCKET")
+        self.keysight_wdgt = hc.MultiPowerSupply(
             self.keysight_ps_be,
             self,
             [1, 2, 3],
             "Keysight Power Supply",
             show_VI_limits=True,
             show_custom_labels=True,
-            all_enable_button=HC_MultiPowerSupply.ONLY,
+            all_enable_button=hc.MultiPowerSupply.ONLY,
             lock_until_sync=True,
         )
         self.keysight_wdgt.set_maxV(1, 5)
@@ -201,11 +186,11 @@ class RootsDemo(HC_MainWindow):
         self.keysight_wdgt.set_channel_label(1, "1: Heater")
         self.keysight_wdgt.set_channel_label(2, "Channel 2")
         self.keysight_wdgt.set_channel_label(3, "Channel 3")
-        self.keysight_wdgt.ramp_mode = HC_MultiPowerSupply.AUTOMATIC
+        self.keysight_wdgt.ramp_mode = hc.MultiPowerSupply.AUTOMATIC
         self.keysight_wdgt.default_ramp_speed = 1
 
         # self.adam_be = ADAM6024Ctrl("192.168.0.5:1025")
-        # self.adam_wdgt = HC_IOModule(
+        # self.adam_wdgt = hc.IOModule(
         #     self.adam_be,
         #     self,
         #     [
@@ -218,7 +203,7 @@ class RootsDemo(HC_MainWindow):
         #     lock_until_sync=True,
         # )
 
-        adam_config = read_channel_file(
+        adam_config = hc.read_channel_file(
             "ADAM_init.json",
             {
                 "hook_ai1": lambda p: p * 100,
@@ -227,8 +212,8 @@ class RootsDemo(HC_MainWindow):
                 "hook_a01": lambda v: v / 10,
             },
         )
-        self.adam_be = ADAM6024Ctrl("192.168.0.5:1025")
-        self.adam_wdgt = HC_IOModule(
+        self.adam_be = hc_back.Adam_6015("192.168.0.5:1025")
+        self.adam_wdgt = hc.IOModule(
             self.adam_be,
             self,
             adam_config,
@@ -253,9 +238,9 @@ class RootsDemo(HC_MainWindow):
         #####################################################################
         ######### Pico Tab
 
-        self.pico1_be = Pico6000Ctrl("?")
+        self.pico1_be = hc_back.Picotech_6000("USB::")
         self.pico1_be.record_length = 70e3
-        self.pico1_wdgt = HC_Oscilloscope(self.pico1_be, self, "Pico1")
+        self.pico1_wdgt = hc.Oscilloscope(self.pico1_be, self, "Pico1")
         self.pico1_wdgt.load_state("./picoscope_init.json")
         self.pico1_wdgt.settings_to_UI()
         self.pico1_wdgt.send_state()
@@ -267,7 +252,7 @@ class RootsDemo(HC_MainWindow):
         #####################################################################
         ######### Aux Tab
 
-        self.zmqtool = HC_ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
+        self.zmqtool = hc.ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
 
         self.tab_aux_layout = QGridLayout()
         self.tab_aux_layout.addWidget(self.zmqtool, 0, 0)
@@ -276,8 +261,8 @@ class RootsDemo(HC_MainWindow):
         #####################################################################
         ######### Plot Tab
 
-        self.plot_wdgt1 = HC_PlotTool(self, "Heater Current")
-        self.plot_wdgt2 = HC_PlotTool(self, "High Voltage")
+        self.plot_wdgt1 = hc.PlotTool(self, "Heater Current")
+        self.plot_wdgt2 = hc.PlotTool(self, "High Voltage")
 
         self.tab_plot_layout = QGridLayout()
         self.tab_plot_layout.addWidget(self.plot_wdgt1, 0, 0)
@@ -287,18 +272,18 @@ class RootsDemo(HC_MainWindow):
         #####################################################################
         ######## Tab 3
 
-        self.logtool = HC_DataWidget(self, "Data Logger")
+        self.logtool = hc.DataWidget(self, "Data Logger")
         self.logtool.update_groups()
 
-        self.app.data_sets["Autolog"] = Dataset("Autolog")
+        self.app.data_sets["Autolog"] = hc.Dataset("Autolog")
         self.app.data_sets["Autolog"].start_asynch(3)
         self.app.data_sets["Autolog"].add_instrument(self.keysight_wdgt)
 
-        self.app.data_sets["Keysight"] = Dataset("Keysight")
+        self.app.data_sets["Keysight"] = hc.Dataset("Keysight")
         self.app.data_sets["Keysight"].start_asynch(1)
         self.app.data_sets["Keysight"].add_instrument(self.keysight_wdgt)
 
-        self.app.data_sets["ADAM"] = Dataset("ADAM")
+        self.app.data_sets["ADAM"] = hc.Dataset("ADAM")
         self.app.data_sets["ADAM"].start_asynch(1)
         self.app.data_sets["ADAM"].add_instrument(
             self.adam_wdgt, ["CH2_V_meas", "CH3_V_meas"]
@@ -306,7 +291,7 @@ class RootsDemo(HC_MainWindow):
         self.app.data_sets["ADAM"].name_channel("ADAM:CH2_V_meas", "HV Current")
         self.app.data_sets["ADAM"].name_channel("ADAM:CH3_V_meas", "High Voltage")
 
-        self.app.data_sets["HEATER"] = Dataset("HEATER")
+        self.app.data_sets["HEATER"] = hc.Dataset("HEATER")
         self.app.data_sets["HEATER"].start_asynch(1)
         self.app.data_sets["HEATER"].add_instrument(self.keysight_wdgt, ["CH1_I_out"])
         self.app.data_sets["HEATER"].add_instrument(self.adam_wdgt, ["CH1_V_meas"])
@@ -327,13 +312,13 @@ class RootsDemo(HC_MainWindow):
         #####################################################################
         ######## Set master window layout
 
-        self.statustool = HC_StatusTool(self, "Connection Status")
+        self.statustool = hc.StatusTool(self, "Connection Status")
         self.statustool.update_instruments()
 
-        self.miniplot = HC_MiniPlotTool(self, "Plot", 220, 220)
+        self.miniplot = hc.MiniPlotTool(self, "Plot", 220, 220)
         self.miniplot.set_dataset("ADAM")
 
-        self.monitor = HC_MonitorTool(self, "Error Monitor")
+        self.monitor = hc.MonitorTool(self, "Error Monitor")
         self.monitor.add_hook("Hook 1", example_function)
         self.monitor.add_hook("Hook 2", example_function)
         self.monitor.add_spacer()
@@ -363,7 +348,7 @@ def main():
     warnings.filterwarnings(
         action="ignore", message="unclosed", category=ResourceWarning
     )  # ToDo Not a solution
-    app = HC_App(dummy=dummy)
+    app = hc.App(dummy=dummy)
     app.print_close_info = True
 
     ex = RootsDemo(app)

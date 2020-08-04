@@ -13,8 +13,8 @@ import sys
 from PyQt5.QtWidgets import QMainWindow, QWidget, QGridLayout
 from docopt import docopt
 
-from hardware_control.base import HC_App
-from hardware_control.DelayGenerator import SRSDG535Ctrl, HC_DelayGenerator
+import hardware_control.backends as hc_back
+import hardware_control.gui as hc
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
@@ -30,8 +30,8 @@ class Demo(QMainWindow):
         self.main_widget = QWidget(self)
 
         ##### Add Device(s)
-        self.trig1 = SRSDG535Ctrl("GPIB0::15::INSTR")
-        self.trig1_ctrl = HC_DelayGenerator(self.trig1, self, "Trigger 1", "DEFAULT")
+        self.trig1 = hc_back.SRS_DG535("GPIB0::15::INSTR")
+        self.trig1_ctrl = hc.DelayGenerator(self.trig1, self, "Trigger 1", "DEFAULT")
 
         ##### Add above HC to the main Widget
         self.grid = QGridLayout()
@@ -46,7 +46,7 @@ class Demo(QMainWindow):
 
 
 def main():
-    app = HC_App(dummy=dummy)
+    app = hc.App(dummy=dummy)
     app.print_close_info = True
     ex = Demo(app)
     app.aboutToQuit.connect(ex.close)

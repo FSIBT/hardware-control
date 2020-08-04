@@ -21,15 +21,9 @@ from docopt import docopt
 
 from PyQt5.QtWidgets import QStyleFactory, QTabWidget, QWidget, QGridLayout
 
-from hardware_control.base import HC_App, HC_MainWindow, Dataset
-from hardware_control.PowerSupply import HC_MultiPowerSupply, RigolDP832Ctrl
-from hardware_control.widgets import (
-    HC_ZMQConnectionTool,
-    HC_PlotTool,
-    HC_DataWidget,
-    HC_StatusTool,
-    HC_Qtconsole,
-)
+
+import hardware_control.backends as hc_back
+import hardware_control.gui as hc
 
 
 commands = docopt(__doc__)
@@ -55,16 +49,17 @@ else:
     loglevelname = "Warning"
 
 logger = logging.getLogger(__name__)
-hc_logger = logging.getLogger("hardware_control")
 
 if print_console:
     # logging.basicConfig(level=loglevel)
     logger.setLevel(level=loglevel)
+    hc_logger = logging.StreamHandler(sys.stdout)
     hc_logger.setLevel(level=loglevel)
     print(f"Logger configured:\n\tLevel: {loglevelname}\n\tOutput: Console")
 else:
     logger.setLevel(level=loglevel)
-    hc_logger.setLevel(level=loglevel, filename=logfile_name)
+    hc_logger = logging.FileHandler(logfile_name)
+    hc_logger.setLevel(level=loglevel)
     # logging.basicConfig(filename=logfile_name, level=loglevel)
     print(f"Logger configured:\n\tLevel: {loglevelname}\n\tOutput: {logfile_name}")
 
@@ -108,7 +103,7 @@ def ramp_func(obj, parameter, present, target):
     return max(present - dVal, target)
 
 
-class RootsDemo(HC_MainWindow):
+class RootsDemo(hc.MainWindow):
     def __init__(self, app):
         super().__init__(app)
 
@@ -121,7 +116,7 @@ class RootsDemo(HC_MainWindow):
         self.tab_aux = QWidget()
         self.tab_plot = QWidget()
         self.tab_data = QWidget()
-        self.python = HC_Qtconsole(main_app=app)
+        self.python = hc.Qtconsole(main_app=app)
 
         self.tabs.addTab(self.tab_psu, "Power Supplies")
         self.tabs.addTab(self.tab_aux, "Aux")
@@ -134,8 +129,8 @@ class RootsDemo(HC_MainWindow):
         #####################################################################
         ######## Tab 1
 
-        self.psu_be = RigolDP832Ctrl("TCPIP0::192.168.1.83::INSTR")
-        self.psu_wdgt1 = HC_MultiPowerSupply(
+        self.psu_be = hc_back.Rigol_DP832("TCPIP0::192.168.1.83::INSTR")
+        self.psu_wdgt1 = hc.MultiPowerSupply(
             self.psu_be,
             self,
             [1, 2],
@@ -143,7 +138,7 @@ class RootsDemo(HC_MainWindow):
             show_VI_limits=True,
             show_custom_labels=True,
             show_status_panel=True,
-            all_enable_button=HC_MultiPowerSupply.ADD,
+            all_enable_button=hc.MultiPowerSupply.ADD,
         )
         self.psu_wdgt1.set_maxV(1, 29)
         self.psu_wdgt1.set_maxV(2, 29)
@@ -153,11 +148,11 @@ class RootsDemo(HC_MainWindow):
         self.psu_wdgt1.set_channel_label(2, "2: LaBr")
         # self.psu_wdgt1.ramp_mode = HC_Instrument.AUTOMATIC
         # self.psu_wdgt1.default_ramp_speed = 1
-        self.psu_wdgt1.ramp_mode = HC_Instrument.MANUAL
+        self.psu_wdgt1.ramp_mode = hc.Instrument.MANUAL
         self.psu_wdgt1.ramp_hooks.append(ramp_func)
         self.psu_wdgt1.default_ramp_speed = 1
         self.psu_wdgt1.comm.try_connect()
-        self.psu_wdgt2 = HC_MultiPowerSupply(
+        self.psu_wdgt2 = hc.MultiPowerSupply(
             self.psu_be,
             self,
             [3],
@@ -165,7 +160,7 @@ class RootsDemo(HC_MainWindow):
             show_VI_limits=True,
             show_custom_labels=True,
             show_status_panel=True,
-            all_enable_button=HC_MultiPowerSupply.ADD,
+            all_enable_button=hc.MultiPowerSupply.ADD,
         )
         self.psu_wdgt2.set_maxV(3, 4)
         self.psu_wdgt2.set_maxI(3, 3)
@@ -182,7 +177,7 @@ class RootsDemo(HC_MainWindow):
         #####################################################################
         ######### Aux Tab
 
-        self.zmqtool = HC_ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
+        self.zmqtool = hc.ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
 
         self.tab_aux_layout = QGridLayout()
         self.tab_aux_layout.addWidget(self.zmqtool, 0, 0)
@@ -191,7 +186,7 @@ class RootsDemo(HC_MainWindow):
         #####################################################################
         ######### Plot Tab
 
-        self.plot_wdgt = HC_PlotTool(self, "Plot")
+        self.plot_wdgt = hc.PlotTool(self, "Plot")
 
         self.tab_plot_layout = QGridLayout()
         self.tab_plot_layout.addWidget(self.plot_wdgt, 0, 0)
@@ -200,14 +195,14 @@ class RootsDemo(HC_MainWindow):
         #####################################################################
         ######## Tab 3
 
-        self.logtool = HC_DataWidget(self, "Data Logger")
+        self.logtool = hc.DataWidget(self, "Data Logger")
         self.logtool.update_groups()
 
-        self.app.data_sets["Autolog"] = Dataset("Autolog")
+        self.app.data_sets["Autolog"] = hc.Dataset("Autolog")
         self.app.data_sets["Autolog"].start_asynch(3)
         self.app.data_sets["Autolog"].add_instrument(self.psu_wdgt1)
         # self.app.data_sets["Autolog"].add_instrument(self.psu_wdgt2)
-        self.app.data_sets["Output"] = Dataset("Output")
+        self.app.data_sets["Output"] = hc.Dataset("Output")
         self.app.data_sets["Output"].start_asynch(1)
         self.app.data_sets["Output"].add_instrument(
             self.psu_wdgt1, ["CH1_V_out", "CH2_V_out"]
@@ -229,10 +224,10 @@ class RootsDemo(HC_MainWindow):
         #####################################################################
         ######## Set master window layout
 
-        self.statustool = HC_StatusTool(self, "Connection Status")
+        self.statustool = hc.StatusTool(self, "Connection Status")
         self.statustool.update_instruments()
 
-        # self.miniplot = HC_MiniPlotTool(self, "Plot", 220, 220)
+        # self.miniplot = hc.MiniPlotTool(self, "Plot", 220, 220)
         # self.miniplot.set_dataset("Output")
 
         self.master_layout = QGridLayout()
@@ -259,7 +254,7 @@ def main():
     warnings.filterwarnings(
         action="ignore", message="unclosed", category=ResourceWarning
     )  # ToDo Not a solution
-    app = HC_App(dummy=dummy)
+    app = hc.App(dummy=dummy)
     app.print_close_info = True
 
     ex = RootsDemo(app)

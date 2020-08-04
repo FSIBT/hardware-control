@@ -20,9 +20,9 @@ from docopt import docopt
 
 from PyQt5.QtWidgets import QGridLayout, QWidget
 
-from hardware_control.base import HC_App, HC_MainWindow
-from hardware_control.Oscilloscope import HC_Oscilloscope, Key4000XCtrl
 
+import hardware_control.backends as hc_back
+import hardware_control.gui as hc
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
@@ -55,7 +55,7 @@ logger = logging.getLogger(__name__)
 logger.info("Scope Example Starting")
 
 
-class ScopeDemo(HC_MainWindow):
+class ScopeDemo(hc.MainWindow):
     def __init__(self, app):
         super().__init__(app)
         self.app = app
@@ -64,8 +64,8 @@ class ScopeDemo(HC_MainWindow):
 
         self.main_widget = QWidget(self)
 
-        scpi_scope = Key4000XCtrl(scope_address)
-        self.scope_ctrl = HC_Oscilloscope(scpi_scope, self, "Keysight")
+        scpi_scope = hc_back.Keysight_4000X(scope_address)
+        self.scope_ctrl = hc.Oscilloscope(scpi_scope, self, "Keysight")
 
         self.grid = QGridLayout()
         self.grid.addWidget(self.scope_ctrl, 0, 0)
@@ -79,7 +79,7 @@ class ScopeDemo(HC_MainWindow):
 
 
 def main():
-    app = HC_App(dummy=dummy)
+    app = hc.App(dummy=dummy)
     ex = ScopeDemo(app)
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())

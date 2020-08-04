@@ -14,14 +14,15 @@ from docopt import docopt
 
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QGridLayout
 
-from hardware_control.DelayGenerator import SRSDG535Ctrl, HC_DelayGenerator
-from hardware_control.base import HC_App, HC_MainWindow, Dataset
+import hardware_control.backends as hc_back
+import hardware_control.gui as hc
+
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
 
 
-class PuslseGenDemo(HC_MainWindow):
+class PuslseGenDemo(hc.MainWindow):
     def __init__(self, app):
         super().__init__(app)
         self.app = app
@@ -30,11 +31,11 @@ class PuslseGenDemo(HC_MainWindow):
 
         self.main_widget = QWidget(self)
 
-        self.instr = SRSDG535Ctrl("GPIB0::10::INSTR")
-        self.instr_ctrl = HC_DelayGenerator(self.instr, self)
+        self.instr = hc_back.SRS_DG535("GPIB0::10::INSTR")
+        self.instr_ctrl = hc.DelayGenerator(self.instr, self)
 
-        self.trig1 = SRSDG535Ctrl("GPIB0::15::INSTR")
-        self.trig1_ctrl = HC_DelayGenerator(self.trig1, self, "Trigger 1", "DEFAULT")
+        self.trig1 = hc_back.SRS_DG535("GPIB0::15::INSTR")
+        self.trig1_ctrl = hc.DelayGenerator(self.trig1, self, "Trigger 1", "DEFAULT")
 
         self.grid = QGridLayout()
         self.grid.addWidget(self.instr_ctrl, 0, 0)
@@ -47,7 +48,7 @@ class PuslseGenDemo(HC_MainWindow):
         self.instr_ctrl.close()
 
 
-app = HC_App(dummy=dummy)
+app = hc.App(dummy=dummy)
 app.print_close_info = True
 ex = PuslseGenDemo(app)
 app.aboutToQuit.connect(ex.close)

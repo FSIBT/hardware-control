@@ -88,7 +88,7 @@ class MeasurementDirector:
         components = param_str.split(":")  # Split the command up into tokens
         if len(components) != 4:
             self.err_str = (
-                "Wrong number of components returned in param_str by HC_Comm."
+                "Wrong number of components returned in param_str by hc.Comm."
             )
             self.state = "Error"
             return
@@ -384,7 +384,7 @@ class MeasurementDirector:
             components = rmr.split(":")  # Split the command up into tokens
             if len(components) != 4:
                 self.err_str = (
-                    "Wrong number of components returned in param_str by HC_Comm."
+                    "Wrong number of components returned in param_str by hc.Comm."
                 )
                 self.state = "Error"
                 return

@@ -33,14 +33,8 @@ from PyQt5.QtWidgets import (
     QAction,
 )
 
-
-from hardware_control.Logfile.plot_logfile import LogPlot
-from hardware_control.Oscilloscopes import OscilloscopeControl
-from hardware_control.Oscilloscopes.comm_DSOX4054A import comm_DSOX4054A
-
-# our own module
-import hardware_control
-from hardware_control.base import FigureTab
+import hardware_control.backends as hc_back
+import hardware_control.gui as hc
 
 faulthandler.enable()
 
@@ -87,8 +81,8 @@ class App(QMainWindow):
         QIcon.setThemeName("Adwaita")
 
         # QGroupBox;
-        scope_com = comm_DSOX4054A("192.168.0.14")
-        self.scope = OscilloscopeControl(scope_com, self.dummy)
+        scope_com = hc_back.Keysight_4000X("192.168.0.14")
+        self.scope = hc.Oscilloscope(scope_com, self.dummy)
 
         quitButton = QAction(QIcon.fromTheme("application-exit"), "Exit", self)
         quitButton.setShortcut("Ctrl+Q")
@@ -113,13 +107,13 @@ class App(QMainWindow):
 
         self.rm = pyvisa.ResourceManager()
 
-        self.plot = FigureTab()
+        self.plot = hc.FigureTab()
 
-        self.plotHV = FigureTab()
+        self.plotHV = hc.FigureTab()
 
         self.controller = QWidget()
 
-        self.logfiler = LogPlot()
+        self.logfiler = hc.LogPlot()
 
         self.tabs.addTab(self.logfiler, "Logfile")
 
@@ -168,7 +162,7 @@ class App(QMainWindow):
 
 if __name__ == "__main__":
     app = QApplication([])
-    ex = App(dummy, app)
+    ex = hc.App(dummy, app)
     app.aboutToQuit.connect(ex.close_connections)
     sys.exit(app.exec_())
 

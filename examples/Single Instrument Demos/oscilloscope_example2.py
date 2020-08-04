@@ -26,8 +26,8 @@ else:
     connection_type = "visa"
     address = "TCPIP0::192.168.0.14::INSTR"
 
-from hardware_control.base import HC_App
-from hardware_control.Oscilloscope import HC_Oscilloscope, Key4000XCtrl
+import hardware_control.backends as hc_back
+import hardware_control.gui as hc
 
 
 class ScopeWindow(QMainWindow):
@@ -39,8 +39,8 @@ class ScopeWindow(QMainWindow):
 
         self.main_widget = QWidget(self)
 
-        scpi_scope = Key4000XCtrl(address)
-        self.scope_ctrl = HC_Oscilloscope(scpi_scope, self, "Oscilloscope Control")
+        scpi_scope = hc_back.Keysight_4000X(address)
+        self.scope_ctrl = hc.Oscilloscope(scpi_scope, self, "Oscilloscope Control")
 
         self.grid = QGridLayout()
         self.grid.addWidget(self.scope_ctrl, 0, 0)
@@ -54,7 +54,7 @@ class ScopeWindow(QMainWindow):
 
 
 def main():
-    app = HC_App(dummy=dummy)
+    app = hc.App(dummy=dummy)
     ex = ScopeWindow(app, connection_type)
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())

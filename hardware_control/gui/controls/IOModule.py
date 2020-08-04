@@ -31,7 +31,7 @@ DISP_DECIMAL_PLACES = 1
 def read_channel_file(filename: str, functions_handles: dict = None):
     """
     Reads channel parameters from a JSON file. Returns a dictionary for
-    initializing an HC_IOModule class.
+    initializing an hc.IOModule class.
 
     fucntion_handles allows function handles to be specified in the JSON file as
     a string. That string must then be used as a key in functioN_handles with the

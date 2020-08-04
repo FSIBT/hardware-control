@@ -15,8 +15,8 @@ import sys
 from PyQt5.QtWidgets import QMainWindow, QWidget, QGridLayout
 from docopt import docopt
 
-from hardware_control.base import HC_App
-from hardware_control.FunctionGenerator import HC_FunctionGenerator, Key33500BCtrl
+import hardware_control.backends as hc_back
+import hardware_control.gui as hc
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
@@ -37,9 +37,9 @@ class WavegenDemo(QMainWindow):
 
         self.main_widget = QWidget(self)
 
-        awg = Key33500BCtrl(address)
+        awg = hc_back.Keysight_33500B(address)
 
-        self.awg_ctrl = HC_FunctionGenerator(awg, self, "RF Generator")
+        self.awg_ctrl = hc.FunctionGenerator(awg, self, "RF Generator")
 
         self.grid = QGridLayout()
         self.grid.addWidget(self.awg_ctrl, 1, 1)
@@ -53,7 +53,7 @@ class WavegenDemo(QMainWindow):
 
 
 def main():
-    app = HC_App(dummy=dummy)
+    app = hc.App(dummy=dummy)
     ex = WavegenDemo(app, connection_type)
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())

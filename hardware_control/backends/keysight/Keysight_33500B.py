@@ -50,7 +50,7 @@ class Keysight_33500B(Backend):
 
     @ensure_online
     def update_setting(self, setting: str, value):
-        """ Called by HC_Comm object. Updates a setting in the instrument.
+        """ Called by hc.Comm object. Updates a setting in the instrument.
 
         Parameters
         ----------

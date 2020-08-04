@@ -11,10 +11,10 @@ ipy_logger.setLevel("ERROR")
 
 class MeasurementRequest:
     """Describes state information for a single measurement. This state
-    object is passed to HC_Comm's command_log() function to
+    object is passed to hc.Comm's command_log() function to
     communicate options such as if to repeat measurement and check for
     stability, how many stable points to find, how to define 'stable',
-    etc etc. HC_Comm keeps a list of these objects so it doesn't need
+    etc etc. hc.Comm keeps a list of these objects so it doesn't need
     to be passed back and forth between the backend. Instead, a unique
     interger called the measurement_id which is used to link a call to
     backend_return_log() to the corresponding MeasurementState

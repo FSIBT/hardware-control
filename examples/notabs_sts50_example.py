@@ -17,19 +17,9 @@ import sys
 from PyQt5.QtWidgets import QMainWindow, QWidget, QGridLayout, QStyleFactory
 from docopt import docopt
 
-from hardware_control.base import HC_App, HC_MainWindow
-from hardware_control.Oscilloscope import HC_Oscilloscope, Key4000XCtrl
-from hardware_control.FlowController import HC_FlowController, AlicatMSeriesCtrl
-from hardware_control.DelayGenerator import HC_DelayGenerator, SRSDG535Ctrl
-from hardware_control.FunctionGenerator import HC_FunctionGenerator, Key33500BCtrl
-from hardware_control.PowerSupply import HC_MultiPowerSupply, TDKLGenHCtrl
-from hardware_control.widgets import (
-    HC_ZMQConnectionTool,
-    HC_MacroRunnerTool,
-    HC_VariableEditTool,
-    HC_ScanTool,
-    HC_StatusTool,
-)
+
+import hardware_control.backends as hc_back
+import hardware_control.gui as hc
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
@@ -41,7 +31,7 @@ debug = commands["--debug"]
 log = commands["--log"]
 
 
-class STS50Demo(HC_MainWindow):
+class STS50Demo(hc.MainWindow):
     def __init__(self, app, connection_type: str):
         super().__init__(app)
         self.app = app
@@ -50,33 +40,33 @@ class STS50Demo(HC_MainWindow):
 
         self.main_widget = QWidget(self)
 
-        scpi_scope = Key4000XCtrl("TCPIP0::192.168.0.14::INSTR",)
-        self.scope_ctrl = HC_Oscilloscope(scpi_scope, self, "Keysight")
+        scpi_scope = hc_back.Keysight_4000X("TCPIP0::192.168.0.14::INSTR",)
+        self.scope_ctrl = hc.Oscilloscope(scpi_scope, self, "Keysight")
 
         # awg = Key33500BCtrl("Some-address-goes-here", dummy, True, connection_type, "192.168.0.18", 5025)
-        awg = Key33500BCtrl("USB0::0x0957::0x2907::MY52500624::INSTR",)
-        self.awg_ctrl = HC_FunctionGenerator(awg, self, "RF Generator", 1)
+        awg = hc_back.Keysight_33500B("USB0::0x0957::0x2907::MY52500624::INSTR",)
+        self.awg_ctrl = hc.FunctionGenerator(awg, self, "RF Generator", 1)
 
-        self.psu = TDKLGenHCtrl("TCPIP0::192.168.1.19::INSTR")
-        self.psu_ctrl = HC_MultiPowerSupply(self.psu, self, [1], "TDK Lambda (RF Vin)")
+        self.psu = hc_back.TDKL_GenH("TCPIP0::192.168.1.19::INSTR")
+        self.psu_ctrl = hc.MultiPowerSupply(self.psu, self, [1], "TDK Lambda (RF Vin)")
 
-        self.flow = AlicatMSeriesCtrl("192.168.0.15")
-        self.flow_ctrl = HC_FlowController(
+        self.flow = hc_back.Alicat_M_Series("192.168.0.15")
+        self.flow_ctrl = hc.FlowController(
             self.flow, self, "Flow Controller", "flowcontroller_state.json"
         )
 
-        self.trig1 = SRSDG535Ctrl("GPIB0::10::INSTR")
-        self.trig1_ctrl = HC_DelayGenerator(self.trig1, self, "Trigger 1")
+        self.trig1 = hc_back.SRS_DG535("GPIB0::10::INSTR")
+        self.trig1_ctrl = hc.DelayGenerator(self.trig1, self, "Trigger 1")
 
-        self.trig2 = SRSDG535Ctrl("GPIB0::15::INSTR")
-        self.trig2_ctr = HC_DelayGenerator(self.trig2, self, "Trigger 2")
+        self.trig2 = hc_back.SRS_DG535("GPIB0::15::INSTR")
+        self.trig2_ctr = hc.DelayGenerator(self.trig2, self, "Trigger 2")
 
-        self.zmqtool = HC_ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
+        self.zmqtool = hc.ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
 
-        self.scantool = HC_ScanTool(self, "Scan Control")
+        self.scantool = hc.ScanTool(self, "Scan Control")
         self.scantool.update_instruments()
 
-        self.statustool = HC_StatusTool(self, "Connection Status")
+        self.statustool = hc.StatusTool(self, "Connection Status")
         self.statustool.update_instruments()
 
         app.add_variable("FIL_AMPL_V", "5.0")  # Add a filament amplitude variable
@@ -92,7 +82,7 @@ class STS50Demo(HC_MainWindow):
         )  # Add a trigger macro
         app.add_macro("Safe", ["CMD:PSU:ALL_OFF", "CMD:AWG:ALL_OFF"])
 
-        self.run_tool = HC_MacroRunnerTool(
+        self.run_tool = hc.MacroRunnerTool(
             self, "Macro Runner", ["Dynamic", "Trigger"], ["Run Macro", "Trigger Beam"]
         )
 
@@ -129,7 +119,7 @@ class STS50Demo(HC_MainWindow):
 
 
 def main():
-    app = HC_App(dummy=dummy)
+    app = hc.App(dummy=dummy)
     ex = STS50Demo(app, connection_type)
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())
