@@ -87,7 +87,7 @@ class App(QApplication):
             return None
 
         if value in self.instruments[inst_idx].values:
-            return self.instrument[inst_idx].values[value]
+            return self.instruments[inst_idx].values[value]
         else:
             return None
 
