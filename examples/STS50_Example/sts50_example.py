@@ -28,6 +28,7 @@ from PyQt5.QtWidgets import (
     QGroupBox,
     QLabel,
     QLineEdit,
+    QPushButton,
 )
 from PyQt5.QtGui import QIcon, QDoubleValidator
 from docopt import docopt
@@ -376,6 +377,59 @@ def save_shot_format(dataset, filename: str):
 #     # Move pointer to next line
 #     self.autosave_next_row += 1
 # if "Keysight:" dataset.data
+
+
+class CustomPowerSupplyWidget(QGroupBox):
+    def __init__(self, caen, window, name="Power Supply Control"):
+
+        super().__init__()
+
+        self.main_label = QLabel()
+        self.main_label.setPixmap(hc.load_icon("power_supply_controls_label.svg"))
+        self.main_label.setAlignment(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignHCenter)
+
+        self.caen_label = QLabel("CAEN CH 6 & 8 Voltage (V): ")
+
+        instr_idx = window.app.get_instrument_idx("Trigger 1")
+        self.caen_edit = QLineEdit()
+        self.caen_edit.setValidator(QDoubleValidator())
+        # if instr_idx != -1:
+        # self.caen_edit.editingFinished.connect(
+        #     lambda idx=instr_idx: window.app.instruments[idx].remote_update_setting(
+        #         "CH2_delay", self.caen_edit.text()
+        #     )
+        # )
+        # self.caen_edit.setText(caen.settings["CH2_delay"])
+
+        self.horiz_spacer = QSpacerItem(
+            200, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
+        )
+
+        self.power_button = QPushButton()
+        self.power_button.setText("All Off")
+        self.power_button.setIcon(QIcon(hc.load_icon("voltage_off.svg")))
+        self.power_button.setCheckable(False)
+        self.power_button.clicked.connect(lambda: trigger_function(window))
+
+        self.vert_spacer = QSpacerItem(
+            10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
+        )
+
+        self.master_layout = QGridLayout()
+        self.master_layout.addWidget(self.main_label, 0, 0, 1, 4)
+        self.master_layout.addWidget(self.caen_label, 1, 0)
+        self.master_layout.addWidget(self.caen_edit, 1, 1)
+        self.master_layout.addItem(self.horiz_spacer, 1, 2)
+        self.master_layout.addWidget(self.power_button, 1, 3)
+        self.master_layout.addItem(self.vert_spacer, 2, 0, 1, 4)
+        # self.master_layout.addWidget(self.filament_amp_label, 1, 2)
+        # self.master_layout.addWidget(self.filament_amp_edit, 1, 3)
+        # self.master_layout.addWidget(self.spark_delay_label, 2, 0)
+        # self.master_layout.addWidget(self.spark_delay_edit, 2, 1)
+        # self.master_layout.addWidget(self.spark_duration_label, 2, 2)
+        # self.master_layout.addWidget(self.spark_duration_edit, 2, 3)
+
+        self.setLayout(self.master_layout)
 
 
 class CustomControlWidget(QGroupBox):
@@ -787,7 +841,11 @@ class STS50Demo(hc.MainWindow):
         ######## Tab 0
 
         self.custom_wdgt = CustomControlWidget(
-            self, self.trig1_ctrl, self.trig2_ctrl, "Main Control"
+            self, self.trig1_ctrl, self.trig2_ctrl, "Timing Control"
+        )
+
+        self.custom_wdgt2 = CustomPowerSupplyWidget(
+            self.psu_caen_wdgt, self, "Power Supply Control"
         )
 
         # self.grid_ps_label_spacer = QSpacerItem(
@@ -810,23 +868,32 @@ class STS50Demo(hc.MainWindow):
 
         self.plot_wdgt_custom = hc.PlotTool(self, "Voltage Monitor")
         self.plot_wdgt_custom.set_dataset("High Voltage")
-
-        self.main_bottom_spacer = QSpacerItem(
-            10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
+        self.plot_wdgt_custom.setSizePolicy(
+            QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         )
+        self.grid_plot_label.setSizePolicy(
+            QSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
+        )
+
+        # self.main_bottom_spacer = QSpacerItem(
+        #     10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
+        # )
 
         self.tab0_layout = QGridLayout()
         self.tab0_layout.addWidget(self.custom_wdgt, 0, 0, 1, 2)
         # self.tab0_layout.addItem(self.grid_ps_label_spacer, 1, 0)
-        self.tab0_layout.addWidget(self.grid_ps_label, 2, 0)
 
+        self.tab0_layout.addWidget(self.grid_ps_label, 2, 0)
         self.tab0_layout.addWidget(self.iomod_float_wdgt, 3, 0, 1, 1)
         self.tab0_layout.addWidget(self.iomod_usb_wdgt, 4, 0, 2, 1)
+        self.tab0_layout.addWidget(self.custom_wdgt2, 6, 0)
+
         self.tab0_layout.addWidget(self.gas_flow_label, 2, 1)
         self.tab0_layout.addWidget(self.flow_ctrl, 3, 1)
+        self.tab0_layout.addWidget(self.plot_wdgt_custom, 5, 1, 2, 1)
         self.tab0_layout.addWidget(self.grid_plot_label, 4, 1)
-        self.tab0_layout.addWidget(self.plot_wdgt_custom, 5, 1)
-        self.tab0_layout.addItem(self.main_bottom_spacer, 10, 0, 1, 2)
+
+        # self.tab0_layout.addItem(self.main_bottom_spacer, 10, 0, 1, 2)
 
         # self.tab0_layout.addWidget(self.iomod_float_wdgt, 3, 0)
         # self.tab0_layout.addWidget(self.iomod_usb_wdgt, 3, 1)
