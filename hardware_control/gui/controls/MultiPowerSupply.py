@@ -318,9 +318,9 @@ class MultiPowerSupply(Instrument):
 
         default = {}
         for c in self.channels:
-            default[f"CH{c}_enable"] = False
-            default[f"CH{c}_V_set"] = 0
-            default[f"CH{c}_I_set"] = 0.5
+            default[f"CH{c}_enable"] = "False"
+            default[f"CH{c}_V_set"] = "0"
+            default[f"CH{c}_I_set"] = "0.5"
 
         return default
 
