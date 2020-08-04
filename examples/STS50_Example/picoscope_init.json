@@ -38,7 +38,7 @@
     "CH2_coupling": "DC",
     "CH3_coupling": "DC",
     "CH4_coupling": "DC",
-    "trigger_level": "-0.2",
+    "trigger_level": "-2",
     "trigger_coupling": "DC",
     "trigger_edge": "NEG",
     "trigger_channel": "2",
