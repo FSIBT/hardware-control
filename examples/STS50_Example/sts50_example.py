@@ -384,22 +384,22 @@ class CustomPowerSupplyWidget(QGroupBox):
 
         super().__init__()
 
+        self.window = window
+
         self.main_label = QLabel()
         self.main_label.setPixmap(hc.load_icon("power_supply_controls_label.svg"))
         self.main_label.setAlignment(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignHCenter)
 
-        self.caen_label = QLabel("CAEN CH 6 & 8 Voltage (V): ")
+        self.caen_label = QLabel("CAEN CH 3 & 8 Voltage (V): ")
 
-        instr_idx = window.app.get_instrument_idx("Trigger 1")
+        instr_idx = window.app.get_instrument_idx("CAEN High Voltage Power Supply")
         self.caen_edit = QLineEdit()
         self.caen_edit.setValidator(QDoubleValidator())
-        # if instr_idx != -1:
-        # self.caen_edit.editingFinished.connect(
-        #     lambda idx=instr_idx: window.app.instruments[idx].remote_update_setting(
-        #         "CH2_delay", self.caen_edit.text()
-        #     )
-        # )
-        # self.caen_edit.setText(caen.settings["CH2_delay"])
+        if instr_idx != -1:
+            self.caen_edit.editingFinished.connect(
+                lambda idx=instr_idx: self.update_caen(idx)
+            )
+        self.caen_edit.setText(str(caen.settings["CH3_V_set"]))
 
         self.horiz_spacer = QSpacerItem(
             200, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
@@ -409,7 +409,7 @@ class CustomPowerSupplyWidget(QGroupBox):
         self.power_button.setText("All Off")
         self.power_button.setIcon(QIcon(hc.load_icon("voltage_off.svg")))
         self.power_button.setCheckable(False)
-        self.power_button.clicked.connect(lambda: trigger_function(window))
+        self.power_button.clicked.connect(lambda: power_off(window))
 
         self.vert_spacer = QSpacerItem(
             10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
@@ -430,6 +430,20 @@ class CustomPowerSupplyWidget(QGroupBox):
         # self.master_layout.addWidget(self.spark_duration_edit, 2, 3)
 
         self.setLayout(self.master_layout)
+
+    def update_caen(self, idx):
+
+        print(idx)
+        print(self.caen_edit.text())
+
+        self.window.app.instruments[idx].remote_update_setting(
+            "CH3_V_set", self.caen_edit.text()
+        )
+        self.window.app.instruments[idx].remote_update_setting(
+            "CH8_V_set", self.caen_edit.text()
+        )
+
+        print(self.window.app.instruments[idx].settings)
 
 
 class CustomControlWidget(QGroupBox):
