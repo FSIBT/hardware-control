@@ -292,11 +292,11 @@ def save_shot_format(dataset, filename: str):
 
                 outfile.write(f"{t_i}\t\t{ch1_i}\t\t{ch2_i}\t\t{ch3_i}\t\t{ch4_i}")
 
-    save_scope_file("Keysight_waveform", f"scope-data-{datestamp}.txt")
+    save_scope_file("Keysight_waveform", f"./Outputs/scope-data-{datestamp}.txt")
     print("\n\n\nFIX WRONG LINE 320 STS%)_EXAMPEL\n\n\n")
-    save_scope_file("Keysight_waveform", f"picoscope-data-{datestamp}.txt")
+    save_scope_file("Keysight_waveform", f"Outputs/picoscope-data-{datestamp}.txt")
 
-    misc_fn = f"misc-data-{datestamp}.txt"
+    misc_fn = f"Outputs/misc-data-{datestamp}.txt"
 
     with open(misc_fn, "a") as outfile:
 
@@ -322,19 +322,39 @@ def save_shot_format(dataset, filename: str):
 
         col_vals = []
         col_vals.append(header_datestamp)
-        col_vals.append(dataset.app.get_instrument_value("USB NI-DAC", "cDAQ1Mod2/ai0"))
-        col_vals.append(dataset.app.get_instrument_value("USB NI-DAC", "cDAQ1Mod2/ai1"))
-        col_vals.append(dataset.app.get_instrument_value("USB NI-DAC", "cDAQ1Mod2/ai2"))
-        col_vals.append(dataset.app.get_instrument_value("USB NI-DAC", "cDAQ1Mod2/ai3"))
-        col_vals.append(dataset.app.get_instrument_value("USB NI-DAC", "cDAQ1Mod2/ai4"))
         col_vals.append(
             dataset.app.get_instrument_value(
-                "Floating Rack Power Supplies", "cDAQ9188-1AEF742Mod6/ai6"
+                "USB NI-DAC", "CHcDAQ1Mod2/ai0_analog_read"
             )
         )
         col_vals.append(
             dataset.app.get_instrument_value(
-                "Floating Rack Power Supplies", "cDAQ9188-1AEF742Mod6/ai7"
+                "USB NI-DAC", "CHcDAQ1Mod2/ai1_analog_read"
+            )
+        )
+        col_vals.append(
+            dataset.app.get_instrument_value(
+                "USB NI-DAC", "CHcDAQ1Mod2/ai2_analog_read"
+            )
+        )
+        col_vals.append(
+            dataset.app.get_instrument_value(
+                "USB NI-DAC", "CHcDAQ1Mod2/ai3_analog_read"
+            )
+        )
+        col_vals.append(
+            dataset.app.get_instrument_value(
+                "USB NI-DAC", "CHcDAQ1Mod2/ai4_analog_read"
+            )
+        )
+        col_vals.append(
+            dataset.app.get_instrument_value(
+                "Floating Rack Power Supplies", "CHcDAQ9188-1AEF742Mod6/ai6_analog_read"
+            )
+        )
+        col_vals.append(
+            dataset.app.get_instrument_value(
+                "Floating Rack Power Supplies", "CHcDAQ9188-1AEF742Mod6/ai7_analog_read"
             )
         )
 
@@ -670,12 +690,12 @@ class STS50Demo(hc.MainWindow):
         self.app.data_sets["High Voltage"].start_asynch(3)
         self.app.data_sets["High Voltage"].add_instrument(self.iomod_usb_wdgt)
 
-        self.app.data_sets["Shots"] = Dataset("Shots", self.app)
+        self.app.data_sets["Shots"] = hc.Dataset("Shots", self.app)
         self.app.data_sets["Shots"].data["Timestamp"] = []
         self.app.data_sets["Shots"].data["Picoscope_waveform"] = []
         self.app.data_sets["Shots"].data["Keysight_waveform"] = []
 
-        self.app.data_sets["Demo"] = Dataset("Demo", self.app)
+        self.app.data_sets["Demo"] = hc.Dataset("Demo", self.app)
         self.app.data_sets["Demo"].data["time:time"] = [1, 2, 3]
         self.app.data_sets["Demo"].data[":Voltage"] = [10, 11, 12]
         self.app.data_sets["Demo"].data[":Current"] = [0.1, 0.09, 0.13]
