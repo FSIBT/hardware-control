@@ -326,11 +326,14 @@ class Dataset(QObject):
 
                     # Move pointer to next line
                     self.autosave_next_row += 1
-        else:
-
-            if self.app is not None and format in self.app.additional_save_formats:
+        elif self.app is not None and format in self.app.additional_save_formats:
+            try:
                 self.app.additional_save_formats[format](self, filename)
-
+            except:
+                logger.error(
+                    f"Invalid save function provided for '{format}'.", exc_info=True
+                )
+        else:
             logger.warning(f"unrecognized file format '{format}'.")
 
     def log_async(self):
