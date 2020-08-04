@@ -116,7 +116,6 @@ def init_with_JSON(obj):
     This function is used by multiple instruments to sync the instrument state
     and backend once the instrument comes online.
     """
-
     obj.send_state()
 
 
@@ -270,31 +269,17 @@ def save_shot_format(dataset, filename: str):
             outfile.write("# date: {header_datestamp}\n")
             outfile.write("# columns: time, ch1, ch2, ch3, ch4\n\n")
 
-            t = dataset.data[scope_key][-1][0][0]
+            T = dataset.data[scope_key][-1][0][0]
             ch1 = dataset.data[scope_key][-1][0][1]
             ch2 = dataset.data[scope_key][-1][1][1]
             ch3 = dataset.data[scope_key][-1][2][1]
             ch4 = dataset.data[scope_key][-1][3][1]
 
-            arr_len = min([len(x) for x in [t, ch1, ch2, ch3, ch4]])
-
-            print(f"Array length: {arr_len}")
-            print(t[0:10])
-            print(ch1[0:10])
-
-            for i in range(arr_len):
-
-                t_i = t[i]
-                ch1_i = ch1[i]
-                ch2_i = ch2[i]
-                ch3_i = ch3[i]
-                ch4_i = ch4[i]
-
-                outfile.write(f"{t_i}\t\t{ch1_i}\t\t{ch2_i}\t\t{ch3_i}\t\t{ch4_i}")
+            for t, a, b, c, d in zip(T, ch1, ch2, ch3, ch4):
+                outfile.write(f"{t} {a} {b} {c} {d}\n")
 
     save_scope_file("Keysight_waveform", f"./Outputs/scope-data-{datestamp}.txt")
-    print("\n\n\nFIX WRONG LINE 320 STS%)_EXAMPEL\n\n\n")
-    save_scope_file("Keysight_waveform", f"Outputs/picoscope-data-{datestamp}.txt")
+    save_scope_file("Picoscope_waveform", f"Outputs/picoscope-data-{datestamp}.txt")
 
     misc_fn = f"Outputs/misc-data-{datestamp}.txt"
 
@@ -314,7 +299,7 @@ def save_shot_format(dataset, filename: str):
             "Extraction-voltage",
         ]
         for ct in col_titles:
-            outfile.write(f"{ct}\t\t")
+            outfile.write(f"{ct} ")
         outfile.write("\n")
 
         # Grid -> USB NI-DAC
@@ -358,10 +343,7 @@ def save_shot_format(dataset, filename: str):
             )
         )
 
-        print(col_vals)
-        for cv in col_vals:
-            print(f"\t{cv}")
-            outfile.write(f"{cv}\t\t")
+        outfile.write(" ".join([str(cv) for cv in col_vals]))
         outfile.write("\n")
 
     # ALPHA experiment
@@ -519,7 +501,7 @@ class STS50Demo(hc.MainWindow):
         self.scope_ctrl = hc.Oscilloscope(scpi_scope, self, "Keysight Scope")
         self.scope_ctrl.load_state("Key4000_init.json")
         self.scope_ctrl.settings_to_UI()
-        self.scope_ctrl.set_online_callback(init_with_JSON)
+        self.scope_ctrl.set_online_callback(init_osc_when_online)
 
         # Put instrument(s) in tab
         self.tab1_layout = QGridLayout()
