@@ -79,6 +79,18 @@ class App(QApplication):
 
         return instr_idx
 
+    def get_instrument_value(self, instrument_name: str, value: str):
+
+        inst_idx = self.get_instrument_idx(instrument_name)
+
+        if inst_idx == -1:
+            return None
+
+        if value in self.instruments[inst_idx].values:
+            return self.instrument[inst_idx].values[value]
+        else:
+            return None
+
     def add_instrument(self, widget):
         """ Adds an hc.Instrument to self.instruments list
 
