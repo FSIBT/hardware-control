@@ -140,13 +140,8 @@ class Caen_14xxET(Backend):
         result = self.query(f"$BD:00,CMD:MON,CH:{channel},PAR:{command}")
         if result is None:
             return "None"
-        logger.debug(f"Full received value='{result}' (len={len(result)})")
         rval = result[result.find("VAL:") + 4 :]
-        logger.debug(f"Trimmed to number + ending ='{rval}' (len={len(rval)})")
-        rval = rval.strip()
-        logger.debug(f"Ending stripped CR & LF ='{rval}' (len={len(rval)})")
         rval = rval.strip("\\nr")
-        logger.debug(f"Ending stripped \\, n, r ='{rval}' (len={len(rval)})")
 
         if command_X in ["CHX_I_out?", "CHX_I_set?"]:
             # Current is read in uA
