@@ -89,9 +89,11 @@ class ScanWidget(Instrument):
         self.parameter_drop = QComboBox()
         self.parameter_drop.addItems(["----------"])
         self.parameter_drop.setCurrentText(self.settings["parameter"])
-        # self.parameter_drop.currentIndexChanged.connect(
-        #     lambda: self.set_parameter(self.parameter_drop.currentText())
-        # )
+        self.parameter_drop.currentIndexChanged.connect(
+            lambda: self.update_local_setting(
+                "parameter", self.parameter_drop.currentText()
+            )
+        )
 
         self.values_select_frame = QGridLayout()
         #
@@ -118,9 +120,9 @@ class ScanWidget(Instrument):
         self.values_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
         self.values_edit = QLineEdit()
-        # self.values_edit.editingFinished.connect(
-        #     lambda: self.set_values(self.values_edit.text())
-        # )
+        self.values_edit.textChanged.connect(
+            lambda: self.update_local_setting("values", self.values_edit.text())
+        )
         self.values_edit.setText(str(self.settings["values"]))
 
         self.spacing_start_label = QLabel("Start: ")
@@ -272,6 +274,10 @@ class ScanWidget(Instrument):
             self.stop_button, 3, 1, alignment=QtCore.Qt.AlignRight
         )
         self.setLayout(self.master_layout)
+
+    def update_local_setting(self, setting: str, value: str):
+
+        self.settings[setting] = value
 
     def settings_to_UI(self):
         self.values_edit.setText(str(self.settings["values"]))
