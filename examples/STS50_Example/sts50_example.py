@@ -399,6 +399,8 @@ class CustomPowerSupplyWidget(hc.Instrument):
 
         self.window = window
 
+        self.settings = self.default_state()
+
         self.main_label = QLabel()
         self.main_label.setPixmap(hc.load_icon("power_supply_controls_label.svg"))
         self.main_label.setAlignment(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignHCenter)
@@ -460,6 +462,8 @@ class CustomPowerSupplyWidget(hc.Instrument):
 
     def settings_to_UI(self):
 
+        print(f"Settings; {self.settings}")
+
         volt_set = self.window.app.get_instrument_value(
             "CAEN High Voltage Power Supply", "CH3_V_set"
         )
@@ -470,10 +474,13 @@ class CustomPowerSupplyWidget(hc.Instrument):
             "CAEN High Voltage Power Supply", "CH8_V_out"
         )
 
-        if volt_set is not None:
+        # if volt_set is not None:
+        #
+        #     if QApplication.focusWidget() is not self.caen_edit:
+        #         self.caen_edit.setText(volt_set)
+        self.caen_edit.setText(self.settings["CAEN_V_set"])
 
-            if QApplication.focusWidget() is not self.caen_edit:
-                self.caen_edit.setText(volt_set)
+        self.settings["CAEN_V_set"]
 
         if volt_read3 is not None:
             self.ch3_readout.setText(volt_read3)
@@ -483,12 +490,11 @@ class CustomPowerSupplyWidget(hc.Instrument):
 
     def default_state(self):
 
-        return {}
+        return {"CAEN_V_set": ""}
 
     def update_caen(self, idx):
 
-        print(idx)
-        print(self.caen_edit.text())
+        self.settings["CAEN_V_set"] = self.caen_edit.text()
 
         self.window.app.instruments[idx].remote_update_setting(
             "CH3_V_set", self.caen_edit.text()
@@ -723,7 +729,6 @@ class STS50Demo(hc.MainWindow):
         self.zmqtool = hc.ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
 
         self.ScanWidget = hc.ScanWidget(self, "Scan Control", True)
-        self.ScanWidget.update_instruments()
 
         self.logtool = hc.DataWidget(self, "Data Logger")
         self.logtool.update_groups()
@@ -909,7 +914,7 @@ class STS50Demo(hc.MainWindow):
         )
 
         self.custom_wdgt2 = CustomPowerSupplyWidget(
-            self.psu_caen_wdgt, self, "Power Supply Control"
+            self.psu_caen_wdgt, self, "Main Tab PS Widget"
         )
 
         # self.grid_ps_label_spacer = QSpacerItem(
@@ -970,6 +975,7 @@ class STS50Demo(hc.MainWindow):
         ######## Set master window layout
 
         self.statustool.update_instruments()
+        self.ScanWidget.update_instruments()
 
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.tabs, 0, 0, 3, 1)

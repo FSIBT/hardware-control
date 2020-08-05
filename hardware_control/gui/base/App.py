@@ -257,8 +257,8 @@ class App(QApplication):
                 # Find instrument....
                 for inst in self.instruments:
                     if instr_str == inst.name:
+                        inst.settings[setting_str] = value_str
                         inst.update_setting(setting_str, value_str)
-
                         if uptokens[0] == "SET_UI":
                             inst.settings_to_UI()
             else:

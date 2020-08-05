@@ -737,7 +737,7 @@ class ScanWorker(QObject):
             logger.debug(f"Using value {val}")
 
             # First set parameter to value
-            if not self.send_hc(f"SET:{self.instr}:{self.param}:{str(val)}"):
+            if not self.send_hc(f"SET_UI:{self.instr}:{self.param}:{str(val)}"):
                 scan_cancelled = True
                 break
 
