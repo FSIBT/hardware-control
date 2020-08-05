@@ -37,7 +37,7 @@ class FakeButton:
         return self.str
 
 
-class ScanTool(Instrument):
+class ScanWidget(Instrument):
 
     sigStartScan = pyqtSignal()
 

@@ -78,7 +78,7 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
             "Green"  # Color of online light for status tool. Can be Green or Blue
         )
 
-        # ConnectionTool and ScanTool widgets
+        # ConnectionTool and ScanWidget widgets
 
         self.window = window  # parent needs to have a field called 'app' which
         # is an instance of 'hc.App'

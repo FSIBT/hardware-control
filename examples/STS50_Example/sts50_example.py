@@ -668,8 +668,8 @@ class STS50Demo(hc.MainWindow):
 
         self.zmqtool = hc.ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
 
-        self.scantool = hc.ScanTool(self, "Scan Control", True)
-        self.scantool.update_instruments()
+        self.ScanWidget = hc.ScanWidget(self, "Scan Control", True)
+        self.ScanWidget.update_instruments()
 
         self.logtool = hc.DataWidget(self, "Data Logger")
         self.logtool.update_groups()
@@ -708,16 +708,14 @@ class STS50Demo(hc.MainWindow):
         self.run_tool = hc.MacroRunnerTool(
             self,
             "Operations",
-            ["Trigger", "PowerOff"],
-            ["Trigger Beam", "Power Down"],
+            ["Trigger"],
+            ["Trigger Beam"],
             # {"Trigger": "Trigger Beam", "PowerOff": "Power Down"},
             {"SHOT_ID_NUM": "Shot ID Number: "},
             add_countdown=True,
         )
         self.run_tool.update_macros()
         self.run_tool.countdown_end = countdown_end_fn
-        self.power_off_ind = hc.load_icon("voltage_off.svg")
-        self.run_tool.button_widgets[1].setIcon(QIcon(self.power_off_ind))
 
         # self.kill_tool = HC_MacroRunnerTool(
         #     self,
@@ -797,7 +795,7 @@ class STS50Demo(hc.MainWindow):
         # )
         # self.var_tool.update_variables()
 
-        self.scantool.update_macros()
+        self.ScanWidget.update_macros()
 
         #####################################################################
         ######## Tab 3
@@ -817,7 +815,7 @@ class STS50Demo(hc.MainWindow):
         #     10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
         # )
         # self.tab3_layout.addItem(self.tab3_spacer, 3, 0, 1, 2)
-        # # self.tab3_layout.addWidget(self.scantool, 0, 1)
+        # # self.tab3_layout.addWidget(self.ScanWidget, 0, 1)
         # # self.tab3_layout.addWidget(self.run_tool, 1, 1)
         # # self.tab3_layout.addWidget(self.var_tool, 2, 1)
         #
@@ -924,7 +922,7 @@ class STS50Demo(hc.MainWindow):
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.tabs, 0, 0, 3, 1)
         self.master_layout.addWidget(self.run_tool, 0, 1)
-        self.master_layout.addWidget(self.scantool, 1, 1)
+        self.master_layout.addWidget(self.ScanWidget, 1, 1)
         self.master_layout.addWidget(self.statustool, 2, 1)
         # self.master_layout.addWidget(self.logtool, 2, 1)
 

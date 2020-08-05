@@ -102,8 +102,8 @@ class STS50Demo(QMainWindow):
             print("ZMQConnection failed! ")
             print(e)
 
-        self.scantool = hc.ScanTool(self, "Scan Control", True)
-        self.scantool.update_instruments()
+        self.ScanWidget = hc.ScanWidget(self, "Scan Control", True)
+        self.ScanWidget.update_instruments()
 
         self.statustool = hc.StatusTool(self, "Connection Status")
         self.statustool.update_instruments()
@@ -127,7 +127,7 @@ class STS50Demo(QMainWindow):
         )
         self.run_tool.update_macros()
 
-        self.scantool.update_macros()
+        self.ScanWidget.update_macros()
 
         # Put instrument(s) in tab
         self.tab3_layout = QGridLayout()
@@ -135,7 +135,7 @@ class STS50Demo(QMainWindow):
         self.tab3_layout.addWidget(self.trig1_ctrl, 1, 0)
         self.tab3_layout.addWidget(self.trig2_ctrl, 2, 0)
         self.tab3_layout.addWidget(self.zmqtool, 3, 0)
-        self.tab3_layout.addWidget(self.scantool, 0, 1)
+        self.tab3_layout.addWidget(self.ScanWidget, 0, 1)
         self.tab3_layout.addWidget(self.run_tool, 1, 1)
         self.tab3_layout.addWidget(self.statustool, 3, 1)
         self.tab3.setLayout(self.tab3_layout)
@@ -148,7 +148,7 @@ class STS50Demo(QMainWindow):
         # # self.grid.addWidget(self.flow_ctrl, 0, 3)
         # # self.grid.addWidget(self.trig1_ctrl, 1, 3)
         # # self.grid.addWidget(self.trig2_ctr, 2, 3)
-        # # self.grid.addWidget(self.scantool, 0, 4)
+        # # self.grid.addWidget(self.ScanWidget, 0, 4)
         # # self.grid.addWidget(self.statustool, 2, 4)
         # # self.grid.addWidget(self.awg_ctrl, 3, 0, 1, 1)
         # # self.grid.addWidget(self.psu_ctrl, 3, 1, 1, 1)

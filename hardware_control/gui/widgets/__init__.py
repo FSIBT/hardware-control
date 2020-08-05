@@ -7,7 +7,7 @@ from .data_widget import DataWidget
 from .macro_runner import MacroRunnerTool
 from .monitor import MonitorTool
 from .plot import PlotTool, MiniPlotTool
-from .scan import ScanTool
+from .scan import ScanWidget
 from .variable_edit import VariableEditTool
 from .zmq_connection import ZMQConnectionTool
 from .qtconsole import Qtconsole

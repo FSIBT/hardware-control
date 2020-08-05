@@ -63,8 +63,8 @@ class STS50Demo(hc.MainWindow):
 
         self.zmqtool = hc.ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
 
-        self.scantool = hc.ScanTool(self, "Scan Control")
-        self.scantool.update_instruments()
+        self.ScanWidget = hc.ScanWidget(self, "Scan Control")
+        self.ScanWidget.update_instruments()
 
         self.statustool = hc.StatusTool(self, "Connection Status")
         self.statustool.update_instruments()
@@ -93,7 +93,7 @@ class STS50Demo(hc.MainWindow):
         self.grid.addWidget(self.flow_ctrl, 0, 3)
         self.grid.addWidget(self.trig1_ctrl, 1, 3)
         self.grid.addWidget(self.trig2_ctr, 2, 3)
-        self.grid.addWidget(self.scantool, 0, 4)
+        self.grid.addWidget(self.ScanWidget, 0, 4)
         self.grid.addWidget(self.statustool, 2, 4)
         self.grid.addWidget(self.awg_ctrl, 3, 0, 1, 1)
         self.grid.addWidget(self.psu_ctrl, 3, 1, 1, 1)
