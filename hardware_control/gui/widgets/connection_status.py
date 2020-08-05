@@ -92,21 +92,22 @@ class StatusTool(QGroupBox):
 
         """
         for instrument in self.app.instruments:
+
             row = self.instrument_names.get(instrument.name, None)
             if row is None:
                 continue
 
-            if self.instrument_grid.itemAt(2 * row + 1) is None:
+            if self.instrument_grid.itemAtPosition(row, 1) is None:
                 continue
 
             if instrument.online:
-                self.instrument_grid.itemAt(2 * row + 1).widget().setPixmap(
+                self.instrument_grid.itemAtPosition(row, 1).widget().setPixmap(
                     self.blue_indicator
                     if instrument.online_color == "Blue"
                     else self.green_indicator
                 )
             else:
-                self.instrument_grid.itemAt(2 * row + 1).widget().setPixmap(
+                self.instrument_grid.itemAtPosition(row, 1).widget().setPixmap(
                     self.darkgrey_indicator
                     if instrument.online_color == "Blue"
                     else self.red_indicator

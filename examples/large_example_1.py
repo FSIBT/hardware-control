@@ -127,7 +127,7 @@ class STS50Demo(QMainWindow):
         )
         self.run_tool.update_macros()
 
-        self.ScanWidget.update_macros()
+        self.ScanWidget.update_actions()
 
         # Put instrument(s) in tab
         self.tab3_layout = QGridLayout()

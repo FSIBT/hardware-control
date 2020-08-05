@@ -194,6 +194,7 @@ class ZMQConnectionTool(Instrument):
 
         # Check for events
         events = dict(self.poller.poll(10))
+        prt = self.settings["port"]
 
         # If event found...
         if len(events) > 0:
@@ -206,7 +207,7 @@ class ZMQConnectionTool(Instrument):
 
             self.received_label.setText(f"Last Message: {mess_str}")  # Update label
 
-            logger.info("Processing command '{mess_str}'")
+            logger.info(f"Processing command '{mess_str}'")
             rval = self.window.app.process_hc_command(mess_str)
 
             if isinstance(rval, str):

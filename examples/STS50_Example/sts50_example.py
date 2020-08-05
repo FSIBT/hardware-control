@@ -695,12 +695,10 @@ class STS50Demo(hc.MainWindow):
         # "Trigger", ["FUNC:VAR:SHOT_ID_NUM:10", "FUNC:UPDATE:MACRO_IND",],
         app.add_macro("Safe", ["CMD:PSU:ALL_OFF", "CMD:AWG:ALL_OFF"])
         app.add_macro("Wait_1s", ["FUNC:time:sleep:1"])
-        app.add_macro("print_fil_ampl", ["FUNC:HANDLE:print_fil"])
         app.add_macro("MeasurementRequest", ["FUNC:DISP:str:MEAS:REQ"])
 
         app.function_handles["trigger_function"] = lambda: trigger_function(self)
         app.function_handles["power_off"] = lambda: power_off(self)
-        app.function_handles["print_fil"] = self.print_fil
 
         buttons = {}
         buttons["Trigger"] = "Trigger Beam"
@@ -795,7 +793,7 @@ class STS50Demo(hc.MainWindow):
         # )
         # self.var_tool.update_variables()
 
-        self.ScanWidget.update_macros()
+        self.ScanWidget.update_actions()
 
         #####################################################################
         ######## Tab 3
@@ -944,10 +942,6 @@ class STS50Demo(hc.MainWindow):
         #     with open("example_sts50.log", "w") as f:
         #         for item in self.app.log:
         #             f.write("%s\n" % item)
-
-    def print_fil(self):
-
-        print("Filament amplitude = " + str(self.app.variables["FIL_AMPL_V"]))
 
 
 def main():
