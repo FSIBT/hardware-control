@@ -19,6 +19,7 @@ from PyQt5.QtWidgets import (
     QRadioButton,
     QCheckBox,
     QFileDialog,
+    QSizePolicy,
 )
 
 from ..base import Instrument
@@ -181,7 +182,11 @@ class ScanWidget(Instrument):
 
         self.values_select_box.setLayout(self.values_select_frame)
 
-        self.macro_label = QLabel("Scan Macro:")
+        self.scan_opt_box = QGroupBox()
+        self.scan_opt_box.setStyleSheet("QGroupBox{padding-top:3px}")
+        self.scan_opt_frame = QGridLayout()
+
+        self.macro_label = QLabel("Scan Action:")
         self.macro_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
         self.macro_drop = QComboBox()
@@ -192,6 +197,20 @@ class ScanWidget(Instrument):
         )
 
         self.sync_measdir_check = QCheckBox("Sync Measurements")
+
+        self.pause_label = QLabel("Pause (sec):")
+        self.pause_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+
+        self.pause_edit = QLineEdit()
+        self.pause_edit.setText("0")
+
+        self.scan_opt_frame.addWidget(self.macro_label, 0, 0)
+        self.scan_opt_frame.addWidget(self.macro_drop, 0, 1)
+        self.scan_opt_frame.addWidget(self.sync_measdir_check, 0, 3)
+        self.scan_opt_frame.addWidget(self.pause_label, 1, 0)
+        self.scan_opt_frame.addWidget(self.pause_edit, 1, 1)
+
+        self.scan_opt_box.setLayout(self.scan_opt_frame)
 
         self.upper_grid = QGridLayout()
         self.middle_grid = QGridLayout()
@@ -206,9 +225,7 @@ class ScanWidget(Instrument):
         # self.upper_grid.addLayout(self.values_select_frame, 2, 0, 1, 4)
         self.upper_grid.addWidget(self.values_select_box, 2, 0, 1, 4)
 
-        self.upper_grid.addWidget(self.sync_measdir_check, 3, 3)
-        self.upper_grid.addWidget(self.macro_label, 3, 0)
-        self.upper_grid.addWidget(self.macro_drop, 3, 1)
+        self.upper_grid.addWidget(self.scan_opt_box, 3, 0, 1, 4)
         # self.middle_grid.addWidget(self.values_label, 2, 0)
         # self.middle_grid.addWidget(self.values_edit, 2, 1, 1, 2)
 
@@ -217,6 +234,18 @@ class ScanWidget(Instrument):
         self.scan_button.setIcon(QIcon(load_icon("scan.png")))
         self.scan_button.setCheckable(False)
         self.scan_button.clicked.connect(self.start_scan_thread)
+        self.scan_button.setSizePolicy(
+            QSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
+        )
+
+        self.stop_button = QPushButton()
+        self.stop_button.setText("Stop")
+        self.stop_button.setIcon(QIcon(load_icon("stop.svg")))
+        self.stop_button.setCheckable(False)
+        self.stop_button.setSizePolicy(
+            QSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
+        )
+        # self.scan_button.clicked.connect(self.stop_scan)
 
         self.progress_grid = QGridLayout()
 
@@ -237,6 +266,9 @@ class ScanWidget(Instrument):
         # self.master_layout.addLayout(self.middle_grid, 1, 0, 1, 2)
         self.master_layout.addLayout(self.progress_grid, 2, 0, 1, 2)
         self.master_layout.addWidget(self.scan_button, 3, 0)
+        self.master_layout.addWidget(
+            self.stop_button, 3, 1, alignment=QtCore.Qt.AlignRight
+        )
         self.setLayout(self.master_layout)
 
     def settings_to_UI(self):
