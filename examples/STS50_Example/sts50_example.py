@@ -706,7 +706,7 @@ class STS50Demo(hc.MainWindow):
         self.run_tool = hc.MacroRunnerTool(
             self,
             "Operations",
-            ["Trigger"],
+            ["trigger_function"],
             ["Trigger Beam"],
             # {"Trigger": "Trigger Beam", "PowerOff": "Power Down"},
             {"SHOT_ID_NUM": "Shot ID Number: "},

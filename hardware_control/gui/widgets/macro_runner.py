@@ -100,14 +100,14 @@ class MacroRunnerTool(Instrument):
                 self.button_panel.addWidget(macro_drop_label, idx, 1)
                 self.button_panel.addWidget(self.macro_drop, idx, 2)
 
-            # But is a valid macro name....
-            elif but in [x for x in self.window.app.macros]:
+            # But is a valid function name....
+            elif but in [x for x in self.window.app.function_handles]:
 
                 self.button_widgets.append(QPushButton())
                 self.button_widgets[-1].setText(self.button_labels[idx])
                 self.button_widgets[-1].setCheckable(False)
                 self.button_widgets[idx].clicked.connect(
-                    lambda a, v=self.buttons[idx]: self.run_macro(v)
+                    lambda a, v=self.buttons[idx]: self.run_function(v)
                 )
 
                 self.button_panel.addWidget(self.button_widgets[-1], idx, 0)
@@ -187,13 +187,18 @@ class MacroRunnerTool(Instrument):
         self.countdown_val = t_start
         self.countdown_timer.start(100)
 
-    def run_macro(self, macro: str):
-        try:
-            cmds = self.app.macros[macro]
-            logger.info(f"Running macro: {macro}\n\tCommands: {cmds}")
-            self.app.run_macro(cmds)
-        except Exception:
-            logger.error(f"An exception occurred running macro {macro}", exc_info=True)
+    def run_function(self, handle_name: str):
+
+        if handle_name not in self.app.function_handles:
+            logger.warning(f"Handle {handle_name} does not exist")
+            return False
+
+        if not callable(self.app.function_handles[handle_name]):
+            logger.warning(f"Handle {handle_name} does not point to a function")
+            return False
+
+        # Call function
+        self.app.function_handles[handle_name]()
 
     def set_macro(self, m: str):
         logger.debug(f"Setting macro to {m}")
