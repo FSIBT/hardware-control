@@ -447,6 +447,7 @@ class ScanWidget(Instrument):
             logger.warning("Cannot run scan while a scan is in progress")
             return
 
+        self.zmq_receiver.restart_port()
         self.zmq_receiver.connectionOnOff(FakeButton("Accept Incoming Commands"))
 
         # Compute scan values
@@ -465,7 +466,7 @@ class ScanWidget(Instrument):
         key = 10
 
         self.worker = ScanWorker(
-            i, p, m, sync, self.val_list, key, self.socket_addr, int(delay)
+            i, p, m, sync, self.val_list, key, self.socket_addr, int(delay), self.name,
         )
         self.worker_thread = QThread()
         self.worker.moveToThread(self.worker_thread)
@@ -659,7 +660,18 @@ class ScanWorker(QObject):
 
     finished = pyqtSignal()
 
-    def __init__(self, instr, param, action, sync, vals, key, socket_addr, pause: int):
+    def __init__(
+        self,
+        instr,
+        param,
+        action,
+        sync,
+        vals,
+        key,
+        socket_addr,
+        pause: int,
+        scan_tool_name,
+    ):
 
         super().__init__()
 
@@ -671,6 +683,7 @@ class ScanWorker(QObject):
         self.sync = sync
         self.vals = vals
         self.pause = int(pause)
+        self.scan_tool_name = scan_tool_name
 
         self.socket_addr = socket_addr
 
@@ -691,13 +704,13 @@ class ScanWorker(QObject):
     def send_hc(self, command_str: str):
         """ Sends an hc Command to the  """
 
-        self.socket.send(str.encode(command_str))
+        self.socket.send_string(command_str)
 
         events = self.poller.poll(self.timeout)
         if len(events) < 1:
             return False
 
-        rval = self.socket.recv()
+        rval = self.socket.recv_string()
 
         return True
 
@@ -712,7 +725,8 @@ class ScanWorker(QObject):
 
         scan_cancelled = False
 
-        for val in self.vals:
+        num_vals = len(self.vals)
+        for idx, val in enumerate(self.vals):
 
             logger.debug(f"Using value {val}")
 
@@ -735,6 +749,12 @@ class ScanWorker(QObject):
                 while True:
                     if not self.is_busy():
                         break
+
+            if not self.send_hc(
+                f"SET_UI:{self.scan_tool_name}:progress:{100.0*(idx+1.0)/num_vals}"
+            ):
+                scan_cancelled = True
+                break
 
         # End thread
         self.finished.emit()
