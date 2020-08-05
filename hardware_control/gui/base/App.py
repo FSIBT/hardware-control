@@ -236,7 +236,7 @@ class App(QApplication):
             return "ERROR: Invalid command"
 
         # Find out the 'mode' of the command
-        if uptokens[0] == "SET":
+        if uptokens[0] == "SET" or uptokens[0] == "SET_UI":
 
             # Make sure the correct number of arguments are given
             if len(tokens) < 4:  # Requires: MODE:INSTRUMENT:PARAMETER:VALUE
@@ -258,6 +258,9 @@ class App(QApplication):
                 for inst in self.instruments:
                     if instr_str == inst.name:
                         inst.update_setting(setting_str, value_str)
+
+                        if uptokens[0] == "SET_UI":
+                            inst.settings_to_UI()
             else:
                 logger.warning(f"Instrument '{instr_str}' not found.")
                 return "ERROR: Instrument not found"
