@@ -177,8 +177,10 @@ def trigger_function(window):
     """
 
     # Update shot number and shot number widget
-    timestamp = strftime("%H%M%S", localtime())
+    lt = localtime()
+    timestamp = strftime("%H%M%S", lt)
     window.app.variables["SHOT_ID_NUM"] = timestamp
+    window.app.variables["localtime last shot"] = lt
     window.run_tool.update_indicators()
 
     # Check all time delay fields from trigger 1, get max delay time
@@ -258,7 +260,7 @@ def save_shot_format(dataset, filename: str):
     Saves data in the format expected by STS-50 data processing scripts.
     """
 
-    loc_time = localtime()
+    loc_time = dataset.app.variables["localtime last shot"]
     header_datestamp = strftime("%Y-%m-%d %H:%M:%S", loc_time)
     datestamp = strftime("%Y-%m-%d-%H%M%S", loc_time)
 
