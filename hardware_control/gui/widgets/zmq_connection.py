@@ -201,21 +201,19 @@ class ZMQConnectionTool(Instrument):
 
             logger.debug("ZMQConnectionTool received message")
 
-            message = self.socket.recv()  # Receive message...
+            message = self.socket.recv_string()  # Receive message...
 
-            mess_str = message.decode("utf-8")  # Convert from byte array to utf-8
+            self.received_label.setText(f"Last Message: {message}")  # Update label
 
-            self.received_label.setText(f"Last Message: {mess_str}")  # Update label
-
-            logger.info(f"Processing command '{mess_str}'")
-            rval = self.window.app.process_external_command(mess_str)
+            logger.info(f"Processing command '{message}'")
+            rval = self.window.app.process_external_command(message)
 
             if isinstance(rval, str):
                 message = rval
             elif isinstance(rval, bool):
                 message = str(rval)
 
-            self.socket.send(bytes(message, "utf-8"))  # Send reply
+            self.socket.send_string(message)  # Send reply
 
         else:
 
