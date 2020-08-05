@@ -215,8 +215,18 @@ def trigger_function(window):
     # Add timestamp to dataset
     window.app.data_sets["Shots"].data["Timestamp"].append(timestamp)
 
-    print(max_t * 1e3)
-    QTimer.singleShot((max_t + 2) * 1e3, lambda: save_waveforms_to_set(window))
+    QTimer.singleShot((max_t + 1) * 1e3, lambda: refresh_waveforms(window))
+
+    QTimer.singleShot((max_t + 2.5) * 1e3, lambda: save_waveforms_to_set(window))
+
+
+def refresh_waveforms(window):
+
+    pico_idx = window.app.get_instrument_idx("PicoScope")
+    key_idx = window.app.get_instrument_idx("Keysight Scope")
+
+    window.app.instruments[pico_idx].disp.query_waveforms()
+    window.app.instruments[key_idx].disp.query_waveforms()
 
 
 def save_waveforms_to_set(window):
