@@ -251,9 +251,7 @@ class Backend(abc.ABC):
                 )
             except Exception:
                 self.online = False
-                logger.debug(
-                    f"\t({self.ID}) ERROR connecting with visa.", exc_info=True
-                )
+                logger.debug(f"\t({self.ID}) ERROR connecting with visa.",)
                 logger.debug(f"{self.ID} is offline")
             else:
                 self.online = True
@@ -269,9 +267,7 @@ class Backend(abc.ABC):
                 )
             except Exception:
                 self.online = False
-                logger.debug(
-                    f"\t({self.ID}) ERROR connecting with sockets.", exc_info=True
-                )
+                logger.debug(f"\t({self.ID}) ERROR connecting with sockets.")
                 logger.debug(f"{self.ID} is offline")
             else:
                 self.online = True
@@ -285,9 +281,7 @@ class Backend(abc.ABC):
                     )
             except Exception:
                 self.online = False
-                logger.debug(
-                    f"\t({self.ID}) ERROR connecting with modbus.", exc_info=True
-                )
+                logger.debug(f"\t({self.ID}) ERROR connecting with modbus.")
                 logger.debug(f"{self.ID} is offline")
 
         # If connection purportedly successful, verify connection
