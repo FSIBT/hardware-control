@@ -29,6 +29,7 @@ from PyQt5.QtWidgets import (
     QLabel,
     QLineEdit,
     QPushButton,
+    QApplication,
 )
 from PyQt5.QtGui import QIcon, QDoubleValidator
 from docopt import docopt
@@ -391,10 +392,10 @@ def save_shot_format(dataset, filename: str):
 # if "Keysight:" dataset.data
 
 
-class CustomPowerSupplyWidget(QGroupBox):
+class CustomPowerSupplyWidget(hc.Instrument):
     def __init__(self, caen, window, name="Power Supply Control"):
 
-        super().__init__()
+        super().__init__(window, name)
 
         self.window = window
 
@@ -427,13 +428,23 @@ class CustomPowerSupplyWidget(QGroupBox):
             10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
         )
 
+        self.ch3_label = QLabel("CAEN CH3 Vout (V):")
+        self.ch8_label = QLabel("CAEN CH8 Vout (V):")
+        self.ch3_readout = QLabel("")
+        self.ch8_readout = QLabel("")
+
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.main_label, 0, 0, 1, 4)
         self.master_layout.addWidget(self.caen_label, 1, 0)
         self.master_layout.addWidget(self.caen_edit, 1, 1)
         self.master_layout.addItem(self.horiz_spacer, 1, 2)
         self.master_layout.addWidget(self.power_button, 1, 3)
-        self.master_layout.addItem(self.vert_spacer, 2, 0, 1, 4)
+        self.master_layout.addWidget(self.ch3_label, 2, 0)
+        self.master_layout.addWidget(self.ch3_readout, 2, 1)
+        self.master_layout.addWidget(self.ch8_label, 2, 2)
+        self.master_layout.addWidget(self.ch8_readout, 2, 3)
+        self.master_layout.addItem(self.vert_spacer, 3, 0, 1, 4)
+
         # self.master_layout.addWidget(self.filament_amp_label, 1, 2)
         # self.master_layout.addWidget(self.filament_amp_edit, 1, 3)
         # self.master_layout.addWidget(self.spark_delay_label, 2, 0)
@@ -442,6 +453,37 @@ class CustomPowerSupplyWidget(QGroupBox):
         # self.master_layout.addWidget(self.spark_duration_edit, 2, 3)
 
         self.setLayout(self.master_layout)
+
+        self.service_timer = QTimer(self)
+        self.service_timer.timeout.connect(self.settings_to_UI)
+        self.service_timer.start(1e3)
+
+    def settings_to_UI(self):
+
+        volt_set = self.window.app.get_instrument_value(
+            "CAEN High Voltage Power Supply", "CH3_V_set"
+        )
+        volt_read3 = self.window.app.get_instrument_value(
+            "CAEN High Voltage Power Supply", "CH3_V_out"
+        )
+        volt_read8 = self.window.app.get_instrument_value(
+            "CAEN High Voltage Power Supply", "CH8_V_out"
+        )
+
+        if volt_set is not None:
+
+            if QApplication.focusWidget() is not self.caen_edit:
+                self.caen_edit.setText(volt_set)
+
+        if volt_read3 is not None:
+            self.ch3_readout.setText(volt_read3)
+
+        if volt_read8 is not None:
+            self.ch8_readout.setText(volt_read8)
+
+    def default_state(self):
+
+        return {}
 
     def update_caen(self, idx):
 
