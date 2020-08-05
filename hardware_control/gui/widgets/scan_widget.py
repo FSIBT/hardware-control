@@ -245,7 +245,8 @@ class ScanWidget(Instrument):
         self.stop_button.setSizePolicy(
             QSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
         )
-        # self.scan_button.clicked.connect(self.stop_scan)
+        self.stop_button.setEnabled(False)
+        # self.stop_button.clicked.connect(self.stop_scan)
 
         self.progress_grid = QGridLayout()
 
@@ -463,6 +464,7 @@ class ScanWidget(Instrument):
         self.sigStartScan.connect(self.worker.run_scan)
 
         self.scan_button.setEnabled(False)
+        self.stop_button.setEnabled(True)
 
         self.worker_thread.start()
 
@@ -476,6 +478,7 @@ class ScanWidget(Instrument):
         self.zmq_receiver.connectionOnOff(FakeButton("Disable Incoming Commands"))
 
         self.scan_button.setEnabled(True)
+        self.stop_button.setEnabled(False)
         self.worker_thread.quit()
 
     def scan(self):
