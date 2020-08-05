@@ -222,7 +222,7 @@ class App(QApplication):
         """Adds an application variable. Overwrites if variable already exists"""
         self.variables[name] = value
 
-    def process_hc_command(self, command: str):
+    def process_external_command(self, command: str):
         """Accepts a text command, and executes it on the app"""
 
         tokens = command.split(":")  # Split the command up into tokens
@@ -401,238 +401,27 @@ class App(QApplication):
                 logger.warning("Invalid HC-Command received. FUNC requires arguments.",)
                 return "False"
 
-            if uptokens[1] == "LEVEL":  # Turn debug mode on or off
+            # Make sure handle exists
+            if tokens[1] in self.function_handles:
 
-                # Ensure more tokens exist
-                if len(tokens) < 3:
+                if not callable(self.function_handles[tokens[1]]):
+                    func_name = tokens[1]
                     logger.warning(
-                        "Invalid HC-Command received. FUNC:LEVEL requires arguments.",
+                        f"Non-callable object provided as function handle '{func_name}'"
                     )
                     return "False"
 
-                loggers = [logging.getLogger()]  # get the root logger
-                for name in logging.root.manager.loggerDict:
-                    if "hardware_control" in name:
-                        loggers.append(logging.getLogger(name))
-
-                # Change value
-                if uptokens[2] == "DEBUG":
-                    for lgr in loggers:
-                        lgr.setLevel(logging.DEBUG)
-                elif uptokens[2] == "INFO":
-                    for lgr in loggers:
-                        lgr.setLevel(logging.INFO)
-                elif uptokens[2] == "WARNING":
-                    for lgr in loggers:
-                        lgr.setLevel(logging.WARNING)
-                elif uptokens[2] == "ERROR":
-                    for lgr in loggers:
-                        lgr.setLevel(logging.ERROR)
-                elif uptokens[2] == "CRITICAL":
-                    for lgr in loggers:
-                        lgr.setLevel(logging.CRITICAL)
+                # Run function - note: this can become recursive and get stuck in
+                # an infinite loop if the user runs a function that calls itself
+                if len(tokens) > 2:
+                    tokens = command.split(":", 2)
+                    return self.function_handles[tokens[1]](tokens[2])
                 else:
-                    logger.warning(
-                        "Invalid HC-Command received. Invalid logging level provided."
-                    )
+                    return self.function_handles[tokens[1]]()
 
-            elif uptokens[1] == "UPDATE":
-
-                # Ensure more tokens exist
-                if len(tokens) < 3:
-                    logger.warning(
-                        "Invalid HC-Command received. FUNC:UPDATE requires arguments.",
-                    )
-                    return "False"
-
-                # Change value
-                if uptokens[2] == "MACRO_IND":
-                    for inst in self.instruments:
-                        if (
-                            inst.name == "Macro Runner"
-                        ):  # TODO: Fix how it ID's the runner tool
-                            inst.update_indicators()
-                else:
-                    logger.warning(
-                        "Invalid HC-Command received. Invalid update option provided."
-                    )
-
-            elif uptokens[1] == "SYNC":
-
-                for instr in self.instruments:
-                    instr.settings_to_UI()
-
-            elif uptokens[1] == "HANDLE":
-
-                # Ensure more tokens exist
-                if len(tokens) < 3:
-                    logger.warning(
-                        "Invalid HC-Command received. FUNC:handle requires arguments.",
-                    )
-                    return "False"
-
-                # Make sure handle exists
-                if tokens[2] in self.function_handles:
-
-                    if not callable(self.function_handles[tokens[2]]):
-                        func_name = tokens[2]
-                        logger.warning(
-                            f"Non-callable object provided as function handle '{func_name}'"
-                        )
-                        return "False"
-
-                    # Run function - note: this can become recursive and get stuck in
-                    # an infinite loop if the user runs a function that calls itself
-                    if len(tokens) > 3:
-                        tokens = command.split(":", 3)
-                        return self.function_handles[tokens[2]](tokens[3])
-                    else:
-                        return self.function_handles[tokens[2]]()
-
-                else:
-                    logger.warning("Requested macro to run does not exist.",)
-                    return "False"
-
-            elif uptokens[1] == "SVSTATE":
-
-                # Make sure the correct number of arguments are given
-                if len(tokens) != 4:  # Requires: FUNC:SVSTATE:INSTRUMENT:filename
-                    logger.warning(
-                        f"Invalid HC-Command received. Wrong number of tokens."
-                        f" Command: '{command}'"
-                    )
-                    return "ERROR: Invalid command"
-
-                instr_str = tokens[2]
-                filename_str = tokens[3]
-
-                # If instrument exists...
-                if instr_str in [x.name for x in self.instruments]:
-
-                    # Find instrument....
-                    for inst in self.instruments:
-                        if instr_str == inst.name:
-                            inst.save_state(filename_str)
-                else:
-                    logger.warning(f"Instrument '{instr_str}' not found.")
-                    return "ERROR: Instrument not found"
-
-            elif uptokens[1] == "LDSTATE":
-
-                # Make sure the correct number of arguments are given
-                if len(tokens) != 4:  # Requires: FUNC:LDSTATE:INSTRUMENT:filename
-                    logger.warning(
-                        f"Invalid HC-Command received. Wrong number of tokens."
-                        f" Command: '{command}'"
-                    )
-                    return "ERROR: Invalid command"
-
-                instr_str = tokens[2]
-                filename_str = tokens[3]
-
-                # If instrument exists...
-                if instr_str in [x.name for x in self.instruments]:
-
-                    # Find instrument....
-                    for inst in self.instruments:
-                        if instr_str == inst.name:
-                            inst.load_state(filename_str)
-                else:
-                    logger.warning(f"Instrument '{instr_str}' not found.")
-                    return "ERROR: Instrument not found"
-
-            elif uptokens[1] == "RUN":
-
-                # Ensure more tokens exist
-                if len(tokens) < 3:
-                    logger.warning(
-                        "Invalid HC-Command received. FUNC:run requires arguments.",
-                    )
-                    return "False"
-
-                # Make sure macro exists
-                if tokens[2] in self.macros:
-
-                    # Run macro - note: this can become recursive and get stuck in
-                    # an infinite loop if the user runs a macro that calls itself
-                    return self.run_macro(self.macros[tokens[2]])
-
-                else:
-                    logger.warning("Requested macro to run does not exist.",)
-                    return "False"
-
-            elif uptokens[1] == "VAR":  # Change or create variable
-
-                # Ensure more tokens exist
-                if len(tokens) < 4:
-                    logger.warning(
-                        "Invalid HC-Command received. FUNC:var requires arguments.",
-                    )
-                    return "False"
-
-                # Update/create variable
-                self.variables[tokens[2]] = tokens[3]
-
-            elif uptokens[1] == "DISP":  # Display data
-
-                # Ensure more tokens exist
-                if len(tokens) < 3:
-                    logger.warning(
-                        "Invalid HC-Command received. FUNC:disp requires arguments.",
-                    )
-                    return "False"
-
-                if uptokens[2] == "VAR":  # Show all variables
-
-                    print("Application Variables:")
-                    for v in self.variables:
-                        val = self.variables[v]
-                        print(f"\t{v} = {val}")
-
-                elif uptokens[2] == "MACRO":  # Show all macros
-
-                    print("Application Macros:")
-                    for m in self.macros:
-                        cmds = self.macros[m]
-                        print(f"\t{m}: {cmds}")
-
-                elif uptokens[2] == "STR":  # Show a string...
-
-                    # Recalculate tokens w/ all after string counting as 1 token
-                    tokens = command.split(":", 3)
-
-                    if len(tokens) < 4:  # Blank line
-                        print("")
-                    else:  # Display remaining text
-                        print(tokens[3])
-
-                else:
-                    logger.warning("Invalid HC-Command received.")
-                    return "False"
-
-            elif uptokens[1] == "LSDATA":
-
-                print("All Data:")
-                for set_key in self.data_sets:
-                    print(f"\tSet '{set_key}':")
-                    for param_key in self.data_sets[set_key].data:
-                        temp = self.data_sets[set_key].data[param_key]
-                        print(f"\t\t{temp}")
-
-        elif tokens[0] == "DEV":
-
-            # Ensure more tokens exist
-            if len(tokens) < 2:
-                logger.warning("Invalid HC-Command received. DEV requires arguments.")
+            else:
+                logger.warning("Requested function does not exist.")
                 return "False"
-
-            # Set MeasurementDirector state to ready. Don't use this
-            # unless you know what you're doing. It can get
-            # measurement batches out of sync if used at the wrong
-            # time
-            elif uptokens[1] == "MEAS-SET-READY":
-
-                self.director.state = "Ready"
 
         else:
             logger.warning(
@@ -647,7 +436,7 @@ class App(QApplication):
         the GUI until they are complete """
 
         for cmd in m_commands:
-            self.process_hc_command(cmd)
+            self.process_external_command(cmd)
 
     def load_state_from_file(self, filename: str):
         """Reads a JSON file to overwrite instrument's settings dictionaries.

@@ -208,7 +208,7 @@ class ZMQConnectionTool(Instrument):
             self.received_label.setText(f"Last Message: {mess_str}")  # Update label
 
             logger.info(f"Processing command '{mess_str}'")
-            rval = self.window.app.process_hc_command(mess_str)
+            rval = self.window.app.process_external_command(mess_str)
 
             if isinstance(rval, str):
                 message = rval

@@ -191,7 +191,7 @@ class MainWindow(QMainWindow):
 
             # text, okPressed = QInputDialog.getText(self, "Where am I??", "Command", QLineEdit.Normal)
             if okPressed and text != "":
-                self.app.process_hc_command(text)
+                self.app.process_external_command(text)
         else:
             logger.error("function not supported")
 
