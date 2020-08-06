@@ -194,7 +194,7 @@ class ScanWidget(Instrument):
 
         self.action_drop = QComboBox()
         self.action_drop.addItems(["None"])
-        self.action_drop.setCurrentText(self.settings["macro"])
+        self.action_drop.setCurrentText(self.settings["action"])
         self.action_drop.currentIndexChanged.connect(
             lambda: self.macro_changed(self.action_drop.currentText())
         )
@@ -285,7 +285,7 @@ class ScanWidget(Instrument):
         self.instrument_drop.setCurrentText(self.settings["instrument"])
         self.parameter_drop.setCurrentText(self.settings["parameter"])
         self.progress_bar.setValue(float(self.settings["progress"]))
-        self.action_drop.setCurrentText(self.settings["macro"])
+        self.action_drop.setCurrentText(self.settings["action"])
 
     def stop_scan(self):
 
@@ -347,6 +347,8 @@ class ScanWidget(Instrument):
         """ Called when the macro selection is changed. Checks to see if the macro
         submits a measurementrequest, if so, it sets the 'sync with director' check
         to true, otherwise sets it to false. """
+
+        self.settings["action"] = new_macro_name
 
         # Quit if macro can't be found
         if new_macro_name not in self.app.macros:
@@ -659,7 +661,7 @@ class ScanWidget(Instrument):
             "instrument": "----------",
             "parameter": "----------",
             "progress": "0",
-            "macro": "None",
+            "action": "None",
         }
 
 
