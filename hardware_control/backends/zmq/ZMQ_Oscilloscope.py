@@ -57,7 +57,7 @@ class ZMQ_Oscilloscope(Backend):
         try:
             channel, setting_X = get_channel_from_command(setting)
             if setting_X == "CHX_volts_div":
-                self.settings[f"Voltage range{channel}"] = float(value)
+                self.settings[f"Voltage range {channel}"] = float(value)
                 self.send_json_settings()
                 return f"{setting}:{value}"
             if setting == "timebase":
@@ -77,19 +77,19 @@ class ZMQ_Oscilloscope(Backend):
                 self.send_json_settings()
                 return f"{setting}:{value}"
             if setting_X == "CHX_offset":
-                self.settings[f"Voltage offset{channel}"] = float(value)
+                self.settings[f"Voltage offset {channel}"] = float(value)
                 self.send_json_settings()
                 return f"{setting}:{value}"
             if setting_X == "CHX_BW_lim":
                 if bool(value):
-                    self.settings[f"bandwidth filter{channel}"] = "20MHz"
+                    self.settings[f"bandwidth filter {channel}"] = "20MHz"
                 else:
-                    self.settings[f"bandwidth filter{channel}"] = "Full"
+                    self.settings[f"bandwidth filter {channel}"] = "Full"
                 self.send_json_settings()
                 return f"{setting}:{value}"
             if setting_X == "CHX_active":
                 chan_str = get_chan_str()
-                self.settings[f"Ch enable{chan_str}"] = bool(value)
+                self.settings[f"Ch enable {chan_str}"] = bool(value)
                 self.send_json_settings()
                 return f"{setting}:{value}"
             if setting_X == "CHX_impedance":
@@ -109,7 +109,7 @@ class ZMQ_Oscilloscope(Backend):
                 if value not in ["AC", "DC"]:
                     value = "DC"
 
-                self.settings[f"AC/DC{channel}"] = value
+                self.settings[f"AC/DC {channel}"] = value
                 self.send_json_settings()
                 return f"{setting}:{value}"
             if setting == "trigger_level":
@@ -117,8 +117,8 @@ class ZMQ_Oscilloscope(Backend):
                 self.send_json_settings()
                 return f"{setting}:{value}"
             if setting == "trigger_coupling":
-                self.settings[f"Ch enable{channel}"] = value
-                self.send_json_settings()
+                # self.settings[f"Ch enable{channel}"] = value
+                # self.send_json_settings()
                 return f"{setting}:{value}"
             if setting == "trigger_edge":
                 if value == "POS":
@@ -127,7 +127,7 @@ class ZMQ_Oscilloscope(Backend):
                     value = "Falling"
                 else:
                     value = "Rising"
-                self.settings[f"Ch enable{channel}"] = value
+                self.settings["Trigger edge"] = value
                 self.send_json_settings()
                 return f"{setting}:{value}"
             if setting == "trigger_channel":
@@ -268,12 +268,12 @@ class ZMQ_Oscilloscope(Backend):
             "Record Length": 1000.0,
             "Bit resolution": "12",
             "Ref Position (%)": 10.0,
-            "Voltage range": 0.1,
-            "Voltage offset": 0.0,
-            "AC/DC": "DC",
-            "bandwidth filter": "Full",
-            "External Gain/Attenuator": "x1",
-            "Calibration factor": 1.0,
+            "Voltage range 1": 0.1,
+            "Voltage offset 1": 0.0,
+            "AC/DC 1": "DC",
+            "bandwidth filter 1": "Full",
+            "External Gain/Attenuator 1": "x1",
+            "Calibration factor 1": 1.0,
             "Voltage range 2": 15.0,
             "Voltage offset 2": 0.0,
             "AC/DC 2": "DC",
@@ -294,7 +294,7 @@ class ZMQ_Oscilloscope(Backend):
             "Trigger channel": "B",
             "Trigger edge": "Falling",
             "Trigger level": -5.0,
-            "Ch enable": True,
+            "Ch enable 1": True,
             "Ch enable 2": True,
             "Ch enable 3": True,
             "Ch enable 4": True,
