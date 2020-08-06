@@ -211,10 +211,10 @@ class ScanWidget(Instrument):
         self.pause_timer_label_after.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
 
         self.pause_edit_before = QLineEdit()
-        self.pause_edit_before.setText("0")
+        self.pause_edit_before.setText("10")
         self.pause_edit_before.setValidator(QIntValidator())
         self.pause_edit_after = QLineEdit()
-        self.pause_edit_after.setText("0")
+        self.pause_edit_after.setText("10")
         self.pause_edit_after.setValidator(QIntValidator())
 
         self.scan_opt_frame.addWidget(self.macro_label, 0, 0)
@@ -685,8 +685,9 @@ class ScanWidget(Instrument):
             "parameter": "----------",
             "progress": "0",
             "action": "None",
-            "before_countdown": "0",
-            "after_countdown": "0",
+            "macro": "None",
+            "before_countdown": "10",
+            "after_countdown": "10",
         }
 
 
@@ -767,12 +768,13 @@ class ScanWorker(QObject):
             logger.debug(f"Using value {val}")
 
             # First set parameter to value
-            if not self.send_hc(f"SET_UI:{self.instr}:{self.param}:{str(val)}"): break
+            if not self.send_hc(f"SET_UI:{self.instr}:{self.param}:{str(val)}"):
+                break
 
             start_time = time.time()
             while time.time() - start_time < self.pause_before:
                 time_elapsed = time.time() - start_time
-                countdown_time = "{:4.2g}".format(self.pause_before - time_elapsed)
+                countdown_time = "{:05.1f}".format(self.pause_before - time_elapsed)
                 if not self.send_hc(
                     f"SET_UI:{self.scan_tool_name}:before_countdown:{countdown_time}"
                 ):
@@ -782,23 +784,25 @@ class ScanWorker(QObject):
 
             if not self.send_hc(
                     f"SET_UI:{self.scan_tool_name}:before_countdown:{0}"
-            ): break
+            ):
+                break
 
             # Second, run macro (if requested)
             if self.action != "None":
-                if not self.send_hc(f"FUNC:{self.action}"): break
+                if not self.send_hc(f"FUNC:{self.action}"):
+                    break
 
             # Pause if requested
             start_time = time.time()
             while time.time() - start_time < self.pause_after:
                 time_elapsed = time.time() - start_time
-                countdown_time = "{:.2g}".format(self.pause_after - time_elapsed)
+                countdown_time = "{:05.1f}".format(self.pause_after - time_elapsed)
                 if not self.send_hc(
                         f"SET_UI:{self.scan_tool_name}:after_countdown:{countdown_time}"
                 ):
                     self.finished.emit()
                     return
-                time.sleep(0.5)
+                time.sleep(0.1)
 
             if not self.send_hc(
                     f"SET_UI:{self.scan_tool_name}:after_countdown:{0}"
