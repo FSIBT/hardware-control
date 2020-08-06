@@ -201,18 +201,31 @@ class ScanWidget(Instrument):
 
         self.sync_measdir_check = QCheckBox("Sync Measurements")
 
-        self.pause_label = QLabel("Pause (sec):")
-        self.pause_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.pause_label_before = QLabel("Pause before (sec):")
+        self.pause_label_after = QLabel("Pause after (sec):")
+        self.pause_timer_label_before = QLabel("0")
+        self.pause_timer_label_after = QLabel("0")
+        self.pause_label_before.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.pause_label_after.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.pause_timer_label_before.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        self.pause_timer_label_after.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
 
-        self.pause_edit = QLineEdit()
-        self.pause_edit.setText("0")
-        self.pause_edit.setValidator(QIntValidator())
+        self.pause_edit_before = QLineEdit()
+        self.pause_edit_before.setText("0")
+        self.pause_edit_before.setValidator(QIntValidator())
+        self.pause_edit_after = QLineEdit()
+        self.pause_edit_after.setText("0")
+        self.pause_edit_after.setValidator(QIntValidator())
 
         self.scan_opt_frame.addWidget(self.macro_label, 0, 0)
         self.scan_opt_frame.addWidget(self.action_drop, 0, 1)
         self.scan_opt_frame.addWidget(self.sync_measdir_check, 0, 3)
-        self.scan_opt_frame.addWidget(self.pause_label, 1, 0)
-        self.scan_opt_frame.addWidget(self.pause_edit, 1, 1)
+        self.scan_opt_frame.addWidget(self.pause_label_before, 1, 0)
+        self.scan_opt_frame.addWidget(self.pause_label_after, 2, 0)
+        self.scan_opt_frame.addWidget(self.pause_edit_before, 1, 1)
+        self.scan_opt_frame.addWidget(self.pause_edit_after, 2, 1)
+        self.scan_opt_frame.addWidget(self.pause_timer_label_before, 1, 3)
+        self.scan_opt_frame.addWidget(self.pause_timer_label_after, 2, 3)
 
         self.scan_opt_box.setLayout(self.scan_opt_frame)
 
@@ -286,6 +299,8 @@ class ScanWidget(Instrument):
         self.parameter_drop.setCurrentText(self.settings["parameter"])
         self.progress_bar.setValue(float(self.settings["progress"]))
         self.action_drop.setCurrentText(self.settings["action"])
+        self.pause_timer_label_before.setText(self.settings["before_countdown"])
+        self.pause_timer_label_after.setText(self.settings["after_countdown"])
 
     def stop_scan(self):
 
@@ -435,7 +450,11 @@ class ScanWidget(Instrument):
             else:
                 self.val_list = np.linspace(start, end, int(num_points))
 
+<<<<<<< HEAD
             self.val_list = [str(v) for v in self.val_list]
+=======
+            self.val_list = [str(x) for x in self.val_list]
+>>>>>>> added before and after timers for scanning.
 
         elif mode == "file":  # Saves as strings
 
@@ -472,13 +491,14 @@ class ScanWidget(Instrument):
         p = self.parameter_drop.currentText()
         m = self.action_drop.currentText()
         sync = self.sync_measdir_check.isChecked()
-        delay = self.pause_edit.text()
+        delay_before = self.pause_edit_before.text()
+        delay_after = self.pause_edit_after.text()
 
         # Generate a starting key and a socket address
         key = 10
 
         self.worker = ScanWorker(
-            i, p, m, sync, self.val_list, key, self.socket_addr, int(delay), self.name,
+            i, p, m, sync, self.val_list, key, self.socket_addr, int(delay_before), int(delay_after), self.name,
         )
         self.worker_thread = QThread()
         self.worker.moveToThread(self.worker_thread)
@@ -665,6 +685,8 @@ class ScanWidget(Instrument):
             "parameter": "----------",
             "progress": "0",
             "action": "None",
+            "before_countdown": "0",
+            "after_countdown": "0",
         }
 
 
@@ -681,7 +703,8 @@ class ScanWorker(QObject):
         vals,
         key,
         socket_addr,
-        pause: int,
+        pause_before: int,
+        pause_after: int,
         scan_tool_name,
     ):
 
@@ -692,9 +715,11 @@ class ScanWorker(QObject):
         self.instr = instr
         self.param = param
         self.action = action
+        self.running = True
         self.sync = sync
         self.vals = vals
-        self.pause = int(pause)
+        self.pause_before = int(pause_before)
+        self.pause_after = int(pause_after)
         self.scan_tool_name = scan_tool_name
 
         self.socket_addr = socket_addr
@@ -726,6 +751,7 @@ class ScanWorker(QObject):
 
         return True
 
+
     def is_busy(self):
         req_str = "MEAS:GETSTATE"
         self.socket.send(str.encode(req_str))
@@ -735,26 +761,48 @@ class ScanWorker(QObject):
     @pyqtSlot()
     def run_scan(self):
 
-        scan_cancelled = False
-
         num_vals = len(self.vals)
         for idx, val in enumerate(self.vals):
 
             logger.debug(f"Using value {val}")
 
             # First set parameter to value
-            if not self.send_hc(f"SET_UI:{self.instr}:{self.param}:{str(val)}"):
-                scan_cancelled = True
-                break
+            if not self.send_hc(f"SET_UI:{self.instr}:{self.param}:{str(val)}"): break
+
+            start_time = time.time()
+            while time.time() - start_time < self.pause_before:
+                time_elapsed = time.time() - start_time
+                countdown_time = "{:4.2g}".format(self.pause_before - time_elapsed)
+                if not self.send_hc(
+                    f"SET_UI:{self.scan_tool_name}:before_countdown:{countdown_time}"
+                ):
+                    self.finished.emit()
+                    return
+                time.sleep(0.1)
+
+            if not self.send_hc(
+                    f"SET_UI:{self.scan_tool_name}:before_countdown:{0}"
+            ): break
 
             # Second, run macro (if requested)
             if self.action != "None":
-                if not self.send_hc(f"FUNC:{self.action}"):
-                    scan_cancelled = True
-                    break
+                if not self.send_hc(f"FUNC:{self.action}"): break
 
             # Pause if requested
-            time.sleep(self.pause)
+            start_time = time.time()
+            while time.time() - start_time < self.pause_after:
+                time_elapsed = time.time() - start_time
+                countdown_time = "{:.2g}".format(self.pause_after - time_elapsed)
+                if not self.send_hc(
+                        f"SET_UI:{self.scan_tool_name}:after_countdown:{countdown_time}"
+                ):
+                    self.finished.emit()
+                    return
+                time.sleep(0.5)
+
+            if not self.send_hc(
+                    f"SET_UI:{self.scan_tool_name}:after_countdown:{0}"
+            ): break
 
             # Third, sync w/ MeasDir (if requested)
             if self.sync:
@@ -764,9 +812,8 @@ class ScanWorker(QObject):
 
             if not self.send_hc(
                 f"SET_UI:{self.scan_tool_name}:progress:{100.0*(idx+1.0)/num_vals}"
-            ):
-                scan_cancelled = True
-                break
+            ): break
+
 
         # End thread
         self.finished.emit()
