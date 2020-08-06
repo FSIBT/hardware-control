@@ -18,6 +18,7 @@ import logging
 import sys
 from time import localtime, strftime
 import warnings
+import os
 
 from PyQt5.QtWidgets import (
     QStyleFactory,
@@ -170,6 +171,61 @@ def power_off(window):
     )
     window.iomod_usb_wdgt.settings_to_UI()
     window.iomod_float_wdgt.settings_to_UI()
+
+
+def save_continuous_data(dataset, filename: str):
+
+    loc_time = localtime()
+    header_datestamp = strftime("%Y-%m-%d %H:%M:%S", loc_time)
+    datestamp = strftime("%Y-%m-%d-%H%M%S", loc_time)
+
+    # Add extension if not specified
+    ext = os.path.splitext(filename)[-1].lower()
+    if ext == "":
+        filename = filename + ".txt"
+
+    # Write header if file doesn't exist
+    if not os.path.exists(filename):
+        with open(filename, "w") as outfile:
+
+            col_titles = [
+                "time",
+                "Floating-rack-current",
+                "Floating-rack-voltage",
+                "Grid-current",
+                "Grid-voltage",
+                "Pressure",
+                "Extraction-current",
+                "Extraction-voltage",
+            ]
+
+            outfile.write(
+                f"# ALPHA experiment\n"
+                f" Continuous data\n"
+                f"# date: {header_datestamp}\n"
+            )
+
+            for title in col_titles:
+                outfile.write(f"{title} ")
+            outfile.write("\n")
+
+    # Write file data
+    with open(filename, "a") as outfile:
+
+        length = dataset.len_min()
+        while dataset.autosave_next_row < length:
+
+            # Write line
+            line = " ".join(
+                [
+                    str(dataset.data[key][dataset.autosave_next_row])
+                    for key in dataset.data
+                ]
+            )
+            outfile.write(line + "\n")
+
+            # Move pointer to next line
+            dataset.autosave_next_row += 1
 
 
 def trigger_function(window):
@@ -878,11 +934,13 @@ class STS50Demo(hc.MainWindow):
         self.app.data_sets["Shots"].data["Picoscope_waveform"] = []
         self.app.data_sets["Shots"].data["Keysight_waveform"] = []
 
-        # self.app.data_sets["Continuous"] = hc.Dataset("Continuous", self.app)
-        # self.app.data_sets["Continuous"].start_asynch(3)
-        # self.app.data_sets["Continuous"].add_instrument(self.iomod_usb_wdgt)
-        # self.app.data_sets["Continuous"].add_instrument(self.iomod_float_wdgt)
-        # self.app.data_sets["Continuous"].start_autosave(120, "JSON", "./Outputs/continuous.txt")
+        self.app.data_sets["Continuous"] = hc.Dataset("Continuous", self.app)
+        self.app.data_sets["Continuous"].start_asynch(3)
+        self.app.data_sets["Continuous"].add_instrument(self.iomod_usb_wdgt)
+        self.app.data_sets["Continuous"].add_instrument(self.iomod_float_wdgt)
+        self.app.data_sets["Continuous"].start_autosave(
+            10, "STS50", "./Outputs/continuous.txt"
+        )
 
         self.app.data_sets["Demo"] = hc.Dataset("Demo", self.app)
         self.app.data_sets["Demo"].data["time:time"] = [1, 2, 3]
@@ -1096,6 +1154,7 @@ def main():
     app.print_close_info = True
 
     app.add_save_format("SHOT", save_shot_format)
+    app.add_save_format("STS50", save_continuous_data)
 
     ex = STS50Demo(app)
     app.aboutToQuit.connect(ex.close)
