@@ -431,8 +431,11 @@ class ScanWidget(Instrument):
                 self.val_list = np.logspace(
                     np.log10(start), np.log10(end), int(num_points)
                 )
+
             else:
                 self.val_list = np.linspace(start, end, int(num_points))
+
+            self.val_list = [str(v) for v in self.val_list]
 
         elif mode == "file":  # Saves as strings
 
