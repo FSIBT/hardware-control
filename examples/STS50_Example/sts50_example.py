@@ -280,8 +280,8 @@ def save_shot_format(dataset, filename: str):
 
             outfile.write("# ALPHA experiment\n")
             outfile.write("# setting hash: \n")
-            outfile.write("# date: {header_datestamp}\n")
-            outfile.write("# columns: time, ch1, ch2, ch3, ch4\n\n")
+            outfile.write(f"# date: {header_datestamp}\n")
+            outfile.write("# columns:")
 
             T = dataset.data[scope_key][-1][0][0]
             ch1 = dataset.data[scope_key][-1][0][1]
@@ -289,8 +289,72 @@ def save_shot_format(dataset, filename: str):
             ch3 = dataset.data[scope_key][-1][2][1]
             ch4 = dataset.data[scope_key][-1][3][1]
 
-            for t, a, b, c, d in zip(T, ch1, ch2, ch3, ch4):
-                outfile.write(f"{t} {a} {b} {c} {d}\n")
+            # Determine which channels to write
+            wr_lengths = []
+            write_ch1 = False
+            write_ch2 = False
+            write_ch3 = False
+            write_ch4 = False
+            if len(ch1) > 0:
+                write_ch1 = True
+                wr_lengths.append(len(ch1))
+                outfile.write(f" ch1")
+            if len(ch2) > 0:
+                write_ch2 = True
+                wr_lengths.append(len(ch2))
+                outfile.write(f" ch2")
+            if len(ch3) > 0:
+                write_ch3 = True
+                wr_lengths.append(len(ch3))
+                outfile.write(f" ch3")
+            if len(ch4) > 0:
+                write_ch4 = True
+                wr_lengths.append(len(ch4))
+                outfile.write(f" ch4")
+            outfile.write(f"\n")
+
+            # Make sure a list has values
+            if len(wr_lengths) == 0:
+                logger.warning(
+                    "Failed to write oscilloscope data. No channels have data"
+                )
+                return False
+
+            # make sure all lists to write have same length
+            if wr_lengths[1:] != wr_lengths[:-1]:
+                logger.warning(
+                    "Failed to write oscilloscope data. Not all channels have same number of data points"
+                )
+                return False
+
+            # Get time array
+            if write_ch1:
+                T = dataset.data[scope_key][-1][0][0]
+            elif write_ch2:
+                T = dataset.data[scope_key][-1][1][0]
+            elif write_ch3:
+                T = dataset.data[scope_key][-1][2][0]
+            else:
+                T = dataset.data[scope_key][-1][3][0]
+
+            for idx in range(wr_lengths[0]):
+                t = T[idx]
+                outfile.write(f"{t}")
+                if write_ch1:
+                    a = ch1[idx]
+                    outfile.write(f" {a}")
+                if write_ch2:
+                    a = ch2[idx]
+                    outfile.write(f" {a}")
+                if write_ch3:
+                    a = ch3[idx]
+                    outfile.write(f" {a}")
+                if write_ch4:
+                    a = ch4[idx]
+                    outfile.write(f" {a}")
+                outfile.write("\n")
+
+            return True
 
     save_scope_file("Keysight_waveform", f"./Outputs/scope-data-{datestamp}.txt")
     save_scope_file("Picoscope_waveform", f"Outputs/picoscope-data-{datestamp}.txt")
