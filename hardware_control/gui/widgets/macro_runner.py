@@ -146,7 +146,7 @@ class MacroRunnerTool(Instrument):
         if add_countdown:
             self.countdown_wdgt = QLCDNumber()
             self.countdown_wdgt.setSmallDecimalPoint(True)
-            self.countdown_wdgt.display(0)
+            self.countdown_wdgt.display("0.0")
 
         # ******* DEFINE OVERALL LAYOUT
         self.master_layout = QGridLayout()
@@ -178,10 +178,10 @@ class MacroRunnerTool(Instrument):
     def set_timer_readout(self, val: float):
         if self.add_countdown:
             try:
-                self.countdown_wdgt.display(val)
+                self.countdown_wdgt.display(f"{val:.1f}")
             except:
                 logger.error(f"Failed to display {val} as number on countdown")
-                self.countdown_wdgt.display(-1)
+                self.countdown_wdgt.display(f"-1")
 
     def start_countdown(self, t_start: float):
         self.set_timer_readout(t_start)
