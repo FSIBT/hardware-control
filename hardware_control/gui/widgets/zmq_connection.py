@@ -57,6 +57,7 @@ class ZMQConnectionTool(Instrument):
         # self.poller.register(self.socket, zmq.POLLIN)
 
         self.ignore = False
+        self.ignore_control = True
         self.online_color = "Blue"
         self.accept_commands = False
 

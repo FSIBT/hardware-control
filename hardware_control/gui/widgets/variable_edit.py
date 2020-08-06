@@ -26,6 +26,7 @@ class VariableEditTool(Instrument):
         self.name = name
         self.app = window.app
         self.ignore = True
+        self.ignore_control = True
 
         # *************************Create GUI************************
 

@@ -18,6 +18,7 @@ class MonitorTool(QGroupBox):
         self.name = name
         self.app = window.app
         self.ignore = True
+        self.ignore_control = True
 
         self.hooks = {}
 

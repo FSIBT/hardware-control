@@ -399,6 +399,9 @@ class CustomPowerSupplyWidget(hc.Instrument):
 
         self.window = window
 
+        self.ignore = True
+        self.ignore_control = False
+
         self.settings = self.default_state()
 
         self.main_label = QLabel()

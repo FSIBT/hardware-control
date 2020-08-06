@@ -42,9 +42,17 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
         self.online = False
         self.comm = None
         self.window = window
-        self.ignore = (
-            False  # Dictates if instrument should be ignored by connectiontool
-        )
+
+        # Dictates if instrument should be ignored by widgets listing online
+        # status (such as the connection widget)
+        self.ignore = False
+
+        # Dictates if instrument should be ignored by widgets or lists collecting
+        # all instruments with settings to adjust. For example, the scan_widget
+        # will not list instruments with ignore_control=True because the scan
+        # widget is offering a list of controllable intruments.
+        self.ignore_control = False
+
         self.address = ""  # This is used mostly for displaying the instrument's
         # address to the user
 

@@ -56,6 +56,7 @@ class MacroRunnerTool(Instrument):
         self.name = name
         self.app = window.app
         self.ignore = True
+        self.ignore_control = True
         self.label_widgets = {}
 
         self.countdown_end = None

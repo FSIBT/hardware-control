@@ -25,6 +25,7 @@ class StatusTool(QGroupBox):
         self.name = name
         self.app = window.app
         self.ignore = True
+        self.ignore_control = True
         self.instrument_names = {}
 
         if short_indicators:

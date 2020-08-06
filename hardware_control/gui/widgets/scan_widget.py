@@ -52,6 +52,7 @@ class ScanWidget(Instrument):
         self.name = name
         self.app = window.app
         self.ignore = True
+        self.ignore_control = True
         self.include_variables = include_variables
         self.val_list = []
 
@@ -594,7 +595,7 @@ class ScanWidget(Instrument):
         self.instrument_drop.clear()
         names = []
         for inst in self.app.instruments:
-            if inst.ignore:
+            if inst.ignore_control:
                 continue
             names.append(inst.name)
         if self.include_variables and ("App Variables" not in names):
