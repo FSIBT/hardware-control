@@ -13,6 +13,7 @@ Options:
   --console  Print logger output to console
 """
 
+import hashlib
 import logging
 import sys
 from time import localtime, strftime
@@ -265,6 +266,11 @@ def save_shot_format(dataset, filename: str):
     header_datestamp = strftime("%Y-%m-%d %H:%M:%S", loc_time)
     datestamp = strftime("%Y-%m-%d-%H%M%S", loc_time)
 
+    # Get settings hash and save settings file
+    set_str = dataset.app.save_all_states(None)
+    hash_str = hashlib.sha256(set_str.encode("utf-8")).hexdigest()
+    dataset.app.save_all_states(f"./Outputs/settings-{hash_str}.txt")
+
     # Ensure minimum length
     if dataset.len_min() < 1:
         logger.warning(
@@ -279,7 +285,7 @@ def save_shot_format(dataset, filename: str):
         with open(scope_filename, "a") as outfile:
 
             outfile.write("# ALPHA experiment\n")
-            outfile.write("# setting hash: \n")
+            outfile.write(f"# setting hash: {hash_str}\n")
             outfile.write(f"# date: {header_datestamp}\n")
             outfile.write("# columns:")
 
@@ -529,8 +535,6 @@ class CustomPowerSupplyWidget(hc.Instrument):
 
     def settings_to_UI(self):
 
-        print(f"Settings; {self.settings}")
-
         volt_set = self.window.app.get_instrument_value(
             "CAEN High Voltage Power Supply", "CH3_V_set"
         )
@@ -547,7 +551,14 @@ class CustomPowerSupplyWidget(hc.Instrument):
         #         self.caen_edit.setText(volt_set)
         self.caen_edit.setText(self.settings["CAEN_V_set"])
 
-        self.settings["CAEN_V_set"]
+        cidx = self.window.app.get_instrument_idx("CAEN High Voltage Power Supply")
+        if cidx != -1:
+            self.window.app.instruments[cidx].remote_update_setting(
+                "CH3_V_set", self.settings["CAEN_V_set"]
+            )
+            self.window.app.instruments[cidx].remote_update_setting(
+                "CH8_V_set", self.settings["CAEN_V_set"]
+            )
 
         if volt_read3 is not None:
             self.ch3_readout.setText(volt_read3)
@@ -866,6 +877,12 @@ class STS50Demo(hc.MainWindow):
         self.app.data_sets["Shots"].data["Timestamp"] = []
         self.app.data_sets["Shots"].data["Picoscope_waveform"] = []
         self.app.data_sets["Shots"].data["Keysight_waveform"] = []
+
+        # self.app.data_sets["Continuous"] = hc.Dataset("Continuous", self.app)
+        # self.app.data_sets["Continuous"].start_asynch(3)
+        # self.app.data_sets["Continuous"].add_instrument(self.iomod_usb_wdgt)
+        # self.app.data_sets["Continuous"].add_instrument(self.iomod_float_wdgt)
+        # self.app.data_sets["Continuous"].start_autosave(120, "JSON", "./Outputs/continuous.txt")
 
         self.app.data_sets["Demo"] = hc.Dataset("Demo", self.app)
         self.app.data_sets["Demo"].data["time:time"] = [1, 2, 3]

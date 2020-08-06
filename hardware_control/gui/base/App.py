@@ -490,13 +490,23 @@ class App(QApplication):
                 # Write new setting to instrument's dictionary
                 instr.settings[param] = instr_settings[param]
 
-    def save_all_states(self, filename: str):
-        """ Saves the state of every instrument in 'self.instruments' to a file
+    def save_all_states(self, filename: str, pretty: bool = True):
+        """ Saves the state of every instrument in 'self.instruments' to a file.
+        If filename is 'None', does not save a file and instead returns would-be
+        file contents as a string.
 
         Parameters
         ----------
         filename : str
             Name of the JSON file to save the instrument states to
+        pretty : bool
+            Determines if indentation and sorting should be used
+
+        Returns
+        -------
+        str
+            Returns an empty string if saved to file. If filename is None, returns
+            a string with the contents of what would have been saved to the file.
         """
 
         all_states = {}
@@ -505,16 +515,27 @@ class App(QApplication):
         for inst in self.instruments:
             all_states[inst.name] = inst.settings
 
+        if filename is None:
+            if pretty:
+                return json.dumps(all_states, sort_keys=True, indent=4)
+            else:
+                return json.dumps(all_states)
+
         # Save to file
         try:
             with open(filename, "w") as file:
-                json.dump(all_states, file)
+                if pretty:
+                    json.dump(all_states, file, sort_keys=True, indent=4)
+                else:
+                    json.dump(all_states, file)
                 logger.info(f"Settings for all instruments saved to file '{filename}'")
         except Exception:
             logger.error(
                 f"Failed to write file '{filename}'. settings not saved.",
                 exc_info=True,
             )
+
+        return ""
 
     def settings_to_backends(self):
         """ Sends the front end's state to all backends
