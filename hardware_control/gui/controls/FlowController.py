@@ -34,7 +34,7 @@ class FlowController(Instrument):
         self.rate_edit.setText(str(self.settings["rate"]))
 
         self.form = QFormLayout()
-        self.form.addRow("Flow rate (CFM?):", self.rate_edit)
+        self.form.addRow("Flow rate (sccm):", self.rate_edit)
 
         self.lower_grid = QGridLayout()
 
@@ -59,7 +59,7 @@ class FlowController(Instrument):
             QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
         )
 
-        self.pressure_label_fix1 = QLabel(" Torr?")
+        self.pressure_label_fix1 = QLabel(" Torr")
         self.pressure_label_fix1.setAlignment(
             QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
         )
@@ -72,7 +72,7 @@ class FlowController(Instrument):
             QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
         )
 
-        self.flow_label_fix1 = QLabel(" CFM?")
+        self.flow_label_fix1 = QLabel(" sccm")
         self.flow_label_fix1.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
 
         # Add widgets to grid layout
