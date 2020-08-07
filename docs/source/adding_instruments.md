@@ -1,4 +1,4 @@
-# How To Add a New Instrument Backend
+# How to Add a New Instrument Backend
 
 If there is an instrument you'd like to use with Hardware Control but no backend
 is available yet, you are encouraged to make your own backend. If you're feeling
@@ -57,7 +57,16 @@ commands for any channel by replacing the channel number with an "X":
 if setting_x == "CHX_volts_div":
 	#Change volts per division setting for channel 'channel'</code></pre>
 
-The best way to determine which commadns
+There are two ways to determine which commands and parameters need to be
+implemented in `update_setting()` and `command()`. You can copy the
+`update_setting()` and `command()` functions from a different backend for the
+same instrument type as your backend and see which cases the original backend
+covered. The potential risk of the copy method is that some backends cannot
+implement all features present in the widget. For example, if you write a
+backend for a four channel oscilloscope but use a two channel oscilloscope as a
+template, there could be features regarding the two additional channels that you
+do not see. The alternative way is to read the documentation for the frontend
+widget of the instrument type you're interested in.
 
 ### 4. Querying Data
 
