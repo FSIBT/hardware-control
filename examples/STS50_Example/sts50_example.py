@@ -830,7 +830,7 @@ class STS50Demo(hc.MainWindow):
             self.iomod_float,
             self,
             channel_data=None,
-            name="Floating Rack Power Supplies",
+            name="Power Supplies (floating rack)",
             num_columns=2,
             channel_file="nidaq_extraction_conf.json",
             hooks={
@@ -845,7 +845,7 @@ class STS50Demo(hc.MainWindow):
             self.iomod_usb,
             self,
             channel_data=None,
-            name="USB NI-DAC",
+            name="Power Supplies",
             num_columns=2,
             channel_file="nidaq_grid_conf.json",
             hooks={
