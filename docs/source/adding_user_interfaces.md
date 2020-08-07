@@ -1,4 +1,4 @@
-# How to Add A New User Interface
+# Add A New User Interface
 
 If there's an instrument type you'd like to use with Hardware Control but no
 user interface is available yet, or if you'd like to make an alternative

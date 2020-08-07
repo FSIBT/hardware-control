@@ -1,4 +1,4 @@
-# How to Add a New Instrument Backend
+# Add a New Instrument Backend
 
 If there is an instrument you'd like to use with Hardware Control but no backend
 is available yet, you are encouraged to make your own backend. If you're feeling
@@ -32,7 +32,8 @@ happen. These functions are called by the `HC_Comm` class, which relays
 information between the frontend and backend. The function `update_setting()`
 receives two strings are arguments, a parameter to adjust and a value, and
 sends a command to the instrument to update this parameter with the new value.
-An example of where this function would be used is in changing the timescale of an oscilloscope. The `command()` function receives only a single string which
+An example of where this function would be used is in changing the timescale of
+an oscilloscope. The `command()` function receives only a single string which
 represents the name of an action to perform. For example, `commmand()` receives
 the message "SINGLE_TRIGGER" to initiate a single trigger in an oscilloscope.
 
