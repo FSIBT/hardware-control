@@ -20,7 +20,7 @@ on_rtd = os.environ.get("READTHEDOCS") == "True"
 
 project = "Hardware-control"
 copyright = "2019, The Regents of the University of California through Lawrence Berkeley National Laboratory (subject to receipt of any required approvals from the U.S. Dept. of Energy). All rights reserved"
-author = "Arun Persaud et al."
+author = "Arun Persaud, Grant Giesbrecht, Timo Bauer"
 
 
 # -- General configuration ---------------------------------------------------
