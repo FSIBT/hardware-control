@@ -39,7 +39,7 @@ setuptools.setup(
     setup_requires=["pytest-runner"],
     tests_require=["pytest"],
     scripts=[],
-    author="Arun Persaud",
+    author="Arun Persaud, Grant Giesbrecht, Timo Bauer",
     author_email="apersaud@lbl.gov",
     url="https://bitbucket.org/berkeleylab/hardware-control.git",
     classifiers=[
