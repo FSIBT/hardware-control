@@ -405,69 +405,6 @@ class ScanWidget(Instrument):
 
         return True
 
-        #
-        #
-        # # Get value entry mode from radiobuttons
-        # mode = None
-        # if self.use_list.isChecked():
-        #     mode = "list"
-        # elif self.use_space.isChecked():
-        #     mode = "space"
-        # elif self.use_file.isChecked():
-        #     mode = "file"
-        #
-        # # Make sure a radiobutton is selected
-        # if mode is None:
-        #
-        #     logger.error("No mode selected in scan tool")
-        #     return False
-        #
-        # if mode == "list":  # Saves as strings
-        #
-        #     # Break values at commas
-        #     self.val_list = self.values_edit.text().split(",")
-        #
-        # elif mode == "space":  # Saves as floats
-        #
-        #     # Read start, end, num points
-        #     try:
-        #         start = float(self.spacing_start_edit.text())
-        #         end = float(self.spacing_end_edit.text())
-        #         num_points = float(self.num_points_edit.text())
-        #     except:
-        #         logger.error("Invalid values for start, end, or num_points")
-        #         return False
-        #
-        #     # Generate log/lin spacing
-        #     if self.spacing_log_check.isChecked():
-        #
-        #         # Make sure 'start' isn't too low
-        #         if start <= 0:
-        #             start = 1
-        #
-        #         self.val_list = np.logspace(
-        #             np.log10(start), np.log10(end), int(num_points)
-        #         )
-        #
-        #     else:
-        #         self.val_list = np.linspace(start, end, int(num_points))
-        #     self.val_list = [str(v) for v in self.val_list]
-        #
-        # elif mode == "file":  # Saves as strings
-        #
-        #     filename = self.values_file_edit.text()
-        #     if filename == "":
-        #         logger.error("no filename provided for values file")
-        #         return False
-        #
-        #     # Read files
-        #     with open(filename) as file:
-        #         file_str = file.read().replace("\n", "")
-        #
-        #     self.val_list = file_str.split(",")
-        #
-        # return True
-
     def start_scan_thread(self):
 
         # Make sure a scan not already in progress
