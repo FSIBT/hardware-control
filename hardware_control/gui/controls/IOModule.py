@@ -72,6 +72,7 @@ class IOModule(Instrument):
         num_columns: int = 1,
         channel_file: str = "",
         hooks: dict = None,
+        show_ID_labels=False,
     ):
 
         super().__init__(window, name, backend, lock_until_sync)
@@ -118,6 +119,7 @@ class IOModule(Instrument):
                         chan_hook,
                         c_dict["UNITS"],
                         c_dict["LABEL"],
+                        show_ID_labels=show_ID_labels,
                     )
                     self.dig_out_channels.append(last_wdgt)
                 else:  # "ANALOG"
@@ -127,6 +129,7 @@ class IOModule(Instrument):
                         chan_hook,
                         c_dict["UNITS"],
                         c_dict["LABEL"],
+                        show_ID_labels=show_ID_labels,
                     )
                     self.an_out_channels.append(last_wdgt)
             else:  # "INPUT"
@@ -137,6 +140,7 @@ class IOModule(Instrument):
                         chan_hook,
                         c_dict["UNITS"],
                         c_dict["LABEL"],
+                        show_ID_labels=show_ID_labels,
                     )
                     self.dig_in_channels.append(last_wdgt)
                 else:  # "ANALOG"
@@ -146,6 +150,7 @@ class IOModule(Instrument):
                         chan_hook,
                         c_dict["UNITS"],
                         c_dict["LABEL"],
+                        show_ID_labels=show_ID_labels,
                     )
                     self.an_in_channels.append(last_wdgt)
 
@@ -174,26 +179,6 @@ class IOModule(Instrument):
             1 + (int((load_idx - 1) / num_columns)),
             (load_idx - 1) % num_columns,
         )
-
-        # for idx, ic in enumerate(self.in_channels):
-        #     if len(ic) != 4:
-        #         continue
-        #
-        #     self.in_channel_widgets.append(
-        #         AnalogInputChannel(self, ic[0], ic[1], ic[2], ic[3])
-        #     )
-        #     self.channel_panel.addWidget(self.in_channel_widgets[-1], idx, 0)
-        #     lowest_row = max(lowest_row, idx)
-        #
-        # for idx, oc in enumerate(self.out_channels):
-        #     if len(oc) != 4:
-        #         continue
-        #
-        #     self.out_channel_widgets.append(
-        #         AnalogOutputChannel(self, oc[0], oc[1], oc[2], oc[3], set_to_zero_button=True)
-        #     )
-        #     self.channel_panel.addWidget(self.out_channel_widgets[-1], idx, 1)
-        #     lowest_row = max(lowest_row, idx)
 
         self.init_values()
 
