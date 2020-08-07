@@ -97,25 +97,10 @@ class ScanWidget(Instrument):
         )
 
         self.values_select_frame = QGridLayout()
-        #
-        # self.value_src_label = QLabel("Values source:")
-        #
         self.use_list = QRadioButton("List")
-        self.use_list.setChecked(True)
-        # self.use_list.toggled.connect(lambda: self.values_src_set(self.use_list))
-
         self.use_space = QRadioButton("Spacing")
-        # self.use_space.toggled.connect(lambda: self.values_src_set(self.use_space))
-
         self.use_file = QRadioButton("File")
-        # self.use_file.toggled.connect(lambda: self.values_src_set(self.use_file))
-
-        # self.lin_rb = QRadioButton("Linear")
-        # self.lin_rb.setChecked(True)
-        # self.lin_rb.toggled.connect(lambda: self.space_rule_set(self.lin_rb))
-
-        # self.log_rb = QRadioButton("Logarithmic")
-        # self.log_rb.toggled.connect(lambda: self.space_rule_set(self.log_rb))
+        self.use_list.setChecked(True)
 
         self.values_label = QLabel("Values:")
         self.values_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
@@ -132,7 +117,6 @@ class ScanWidget(Instrument):
         )
 
         self.spacing_start_edit = QLineEdit()
-        # self.spacing_start_edit.editingFinished.connect(lambda: self.set_start_value)
 
         self.spacing_end_label = QLabel("End: ")
         self.spacing_end_label.setAlignment(
@@ -140,17 +124,13 @@ class ScanWidget(Instrument):
         )
 
         self.spacing_end_edit = QLineEdit()
-        # self.spacing_end_edit.editingFinished.connect(lambda: self.set_end_value)
 
-        self.num_points_label = QLabel("steps: ")
-        self.num_points_label.setAlignment(
-            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
-        )
+        self.step_size_label = QLabel("step size: ")
+        self.step_size_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
-        self.num_points_edit = QLineEdit()
-        # self.num_points_edit.editingFinished.connect(lambda: self.set_num_points)
+        self.step_size_edit = QLineEdit()
 
-        self.spacing_log_check = QCheckBox("Log Spacing")
+        # self.spacing_log_check = QCheckBox("Log Spacing")
 
         self.values_file_label = QLabel("File:")
         self.values_file_label.setAlignment(
@@ -174,9 +154,9 @@ class ScanWidget(Instrument):
         self.values_select_frame.addWidget(self.spacing_start_edit, 1, 2, 1, 2)
         self.values_select_frame.addWidget(self.spacing_end_label, 1, 4, 1, 2)
         self.values_select_frame.addWidget(self.spacing_end_edit, 1, 6, 1, 2)
-        self.values_select_frame.addWidget(self.num_points_label, 2, 1, 1, 1)
-        self.values_select_frame.addWidget(self.num_points_edit, 2, 2, 1, 2)
-        self.values_select_frame.addWidget(self.spacing_log_check, 2, 6, 1, 2)
+        self.values_select_frame.addWidget(self.step_size_label, 2, 1, 1, 1)
+        self.values_select_frame.addWidget(self.step_size_edit, 2, 2, 1, 2)
+        # self.values_select_frame.addWidget(self.spacing_log_check, 2, 6, 1, 2)
 
         self.values_select_frame.addWidget(self.use_file, 3, 0, 1, 1)
         self.values_select_frame.addWidget(self.values_file_label, 3, 1, 1, 1)
@@ -282,14 +262,12 @@ class ScanWidget(Instrument):
 
         self.progress_grid.addWidget(self.progress_label, 0, 0)
         self.progress_grid.addWidget(self.progress_bar, 0, 1)
-        #        self.progress_bar.setGeometry(200, 80, 250, 20);
 
         self.progress_bar.setValue(float(self.settings["progress"]))
 
         # ******* DEFINE OVERALL LAYOUT
         self.master_layout = QGridLayout()
         self.master_layout.addLayout(self.upper_grid, 0, 0, 1, 2)
-        # self.master_layout.addLayout(self.middle_grid, 1, 0, 1, 2)
         self.master_layout.addLayout(self.progress_grid, 2, 0, 1, 2)
         self.master_layout.addWidget(self.scan_button, 3, 0)
         self.master_layout.addWidget(
@@ -315,8 +293,6 @@ class ScanWidget(Instrument):
         self.zmq_receiver.connectionOnOff(FakeButton("Disable Incoming Commands"))
 
     def browse_values_files(self):
-
-        filename = ""
 
         # Use file dialog to get save location
         dlg = QFileDialog()
@@ -393,74 +369,26 @@ class ScanWidget(Instrument):
             names.append(m)
         self.action_drop.addItems(names)
 
-    # def set_parameter(self, param: str):
-    #     logger.debug(f"Setting parameter to {param}")
-    #     self.settings["parameter"] = param
-    #
-    #     self.settings["progress"] = 0
-    #     self.progress_bar.setValue(self.settings["progress"])
-    #
-    # def set_values(self, new_values: str):
-    #     """ Changes the internal values parameter to a new value """
-    #
-    #     logger.debug(f"Setting values to {new_values}")
-    #     self.settings["values"] = new_values
-    #
-    #     self.settings["progress"] = 0
-    #     self.progress_bar.setValue(self.settings["progress"])
-
     def compute_values(self):
         """ Reads the values of the widgets and computes the values for the scan
         to iterate over. """
 
-        # Get value entry mode from radiobuttons
-        mode = None
         if self.use_list.isChecked():
-            mode = "list"
-        elif self.use_space.isChecked():
-            mode = "space"
-        elif self.use_file.isChecked():
-            mode = "file"
-
-        # Make sure a radiobutton is selected
-        if mode is None:
-
-            logger.error("No mode selected in scan tool")
-            return False
-
-        if mode == "list":  # Saves as strings
-
-            # Break values at commas
             self.val_list = self.values_edit.text().split(",")
-
-        elif mode == "space":  # Saves as floats
-
-            # Read start, end, num points
+        elif self.use_space.isChecked():
             try:
                 start = float(self.spacing_start_edit.text())
                 end = float(self.spacing_end_edit.text())
-                num_points = float(self.num_points_edit.text())
+                step_size = float(self.step_size_edit.text())
             except:
-                logger.error("Invalid values for start, end, or num_points")
+                logger.error("Invalid values for start, end, or step_size")
                 return False
 
-            # Generate log/lin spacing
-            if self.spacing_log_check.isChecked():
+            self.val_list = [
+                str(v) for v in np.arange(start, end + step_size, step_size)
+            ]
 
-                # Make sure 'start' isn't too low
-                if start <= 0:
-                    start = 1
-
-                self.val_list = np.logspace(
-                    np.log10(start), np.log10(end), int(num_points)
-                )
-
-            else:
-                self.val_list = np.linspace(start, end, int(num_points))
-            self.val_list = [str(v) for v in self.val_list]
-
-        elif mode == "file":  # Saves as strings
-
+        elif self.use_file.isChecked():
             filename = self.values_file_edit.text()
             if filename == "":
                 logger.error("no filename provided for values file")
@@ -471,8 +399,74 @@ class ScanWidget(Instrument):
                 file_str = file.read().replace("\n", "")
 
             self.val_list = file_str.split(",")
+        else:
+            logger.error("No mode selected in scan tool")
+            return False
 
         return True
+
+        #
+        #
+        # # Get value entry mode from radiobuttons
+        # mode = None
+        # if self.use_list.isChecked():
+        #     mode = "list"
+        # elif self.use_space.isChecked():
+        #     mode = "space"
+        # elif self.use_file.isChecked():
+        #     mode = "file"
+        #
+        # # Make sure a radiobutton is selected
+        # if mode is None:
+        #
+        #     logger.error("No mode selected in scan tool")
+        #     return False
+        #
+        # if mode == "list":  # Saves as strings
+        #
+        #     # Break values at commas
+        #     self.val_list = self.values_edit.text().split(",")
+        #
+        # elif mode == "space":  # Saves as floats
+        #
+        #     # Read start, end, num points
+        #     try:
+        #         start = float(self.spacing_start_edit.text())
+        #         end = float(self.spacing_end_edit.text())
+        #         num_points = float(self.num_points_edit.text())
+        #     except:
+        #         logger.error("Invalid values for start, end, or num_points")
+        #         return False
+        #
+        #     # Generate log/lin spacing
+        #     if self.spacing_log_check.isChecked():
+        #
+        #         # Make sure 'start' isn't too low
+        #         if start <= 0:
+        #             start = 1
+        #
+        #         self.val_list = np.logspace(
+        #             np.log10(start), np.log10(end), int(num_points)
+        #         )
+        #
+        #     else:
+        #         self.val_list = np.linspace(start, end, int(num_points))
+        #     self.val_list = [str(v) for v in self.val_list]
+        #
+        # elif mode == "file":  # Saves as strings
+        #
+        #     filename = self.values_file_edit.text()
+        #     if filename == "":
+        #         logger.error("no filename provided for values file")
+        #         return False
+        #
+        #     # Read files
+        #     with open(filename) as file:
+        #         file_str = file.read().replace("\n", "")
+        #
+        #     self.val_list = file_str.split(",")
+        #
+        # return True
 
     def start_scan_thread(self):
 
