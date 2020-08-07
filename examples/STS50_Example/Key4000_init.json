@@ -18,7 +18,7 @@
     "CH2_active": "True",
     "CH3_active": "True",
     "CH4_active": "False",
-    "CH1_impedance": "50",
+    "CH1_impedance": "1e6",
     "CH2_impedance": "1e6",
     "CH3_impedance": "1e6",
     "CH4_impedance": "1e6",
