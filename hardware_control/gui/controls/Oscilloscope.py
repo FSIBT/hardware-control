@@ -83,15 +83,8 @@ class Oscilloscope(Instrument):
 
         self.filename = ""
 
-        # # Initialize settings to correct values
-        # if initialize_with == "DEFAULT":
-        #     self.save_on_close = False
-        #     # Can't save without filename
         self.settings = self.default_state()
         self.values = self.default_state()
-        # else:
-        #     self.load_state(initialize_with)
-        #     self.filename = initialize_with
 
         # Create GUI
         self.disp = OscilloscopeDisplayWidget(self, True, right_axis=self.right_axis)
@@ -675,16 +668,32 @@ class OscilloscopeDisplayWidget(QGroupBox):
             self.p1.scene().addItem(self.p2)
             self.p1.getAxis("right").linkToView(self.p2)
             self.p2.setXLink(self.p1)
+            right_label_items = [f"channel {i}" for i in right_axis]
+            left_label_items = [
+                f"channel {i}" for i in range(1, 5) if i not in right_axis
+            ]
+            right_label = ", ".join(right_label_items)
+            left_label = ", ".join(left_label_items)
+            self.p1.getAxis("right").setLabel(right_label, **{"font-size": "20pt"})
+            self.p1.getAxis("left").setLabel(left_label, **{"font-size": "20pt"})
+
         else:
             self.p2 = self.p1
 
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.display, 0, 0, 1, 5)
 
-        self.lineCH1 = pg.mkPen(color=(255, 255, 13), style=QtCore.Qt.SolidLine)
-        self.lineCH2 = pg.mkPen(color=(31, 255, 9), style=QtCore.Qt.SolidLine)
-        self.lineCH3 = pg.mkPen(color=(0, 0, 254), style=QtCore.Qt.SolidLine)
-        self.lineCH4 = pg.mkPen(color=(252, 0, 8), style=QtCore.Qt.SolidLine)
+        channel_colors = {
+            1: (255, 255, 13),
+            2: (31, 255, 9),
+            3: (0, 0, 254),
+            4: (252, 0, 8),
+        }
+
+        self.lineCH1 = pg.mkPen(color=channel_colors[1], style=QtCore.Qt.SolidLine)
+        self.lineCH2 = pg.mkPen(color=channel_colors[2], style=QtCore.Qt.SolidLine)
+        self.lineCH3 = pg.mkPen(color=channel_colors[3], style=QtCore.Qt.SolidLine)
+        self.lineCH4 = pg.mkPen(color=channel_colors[4], style=QtCore.Qt.SolidLine)
         self.CH1 = pg.PlotCurveItem(pen=self.lineCH1, symbol=None)
         self.CH2 = pg.PlotCurveItem(pen=self.lineCH2, symbol=None)
         self.CH3 = pg.PlotCurveItem(pen=self.lineCH3, symbol=None)
