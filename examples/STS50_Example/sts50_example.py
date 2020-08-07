@@ -576,23 +576,24 @@ class CustomPowerSupplyWidget(hc.Instrument):
         self.master_layout.addWidget(self.ch8_readout, 2, 3)
         self.master_layout.addItem(self.vert_spacer, 3, 0, 1, 4)
 
-        # self.master_layout.addWidget(self.filament_amp_label, 1, 2)
-        # self.master_layout.addWidget(self.filament_amp_edit, 1, 3)
-        # self.master_layout.addWidget(self.spark_delay_label, 2, 0)
-        # self.master_layout.addWidget(self.spark_delay_edit, 2, 1)
-        # self.master_layout.addWidget(self.spark_duration_label, 2, 2)
-        # self.master_layout.addWidget(self.spark_duration_edit, 2, 3)
-
         self.setLayout(self.master_layout)
 
         self.service_timer = QTimer(self)
-        self.service_timer.timeout.connect(self.settings_to_UI)
+        self.service_timer.timeout.connect(self.update_from_caen)
         self.service_timer.start(1e3)
 
     def settings_to_UI(self):
+        self.caen_edit.setText(self.settings["CAEN_V_set"])
+        instr_idx = self.window.app.get_instrument_idx("CAEN High Voltage Power Supply")
+        if instr_idx != -1:
+            self.update_caen(instr_idx)
 
-        volt_set = self.window.app.get_instrument_value(
+    def update_from_caen(self):
+        volt_set3 = self.window.app.get_instrument_value(
             "CAEN High Voltage Power Supply", "CH3_V_set"
+        )
+        volt_set8 = self.window.app.get_instrument_value(
+            "CAEN High Voltage Power Supply", "CH8_V_set"
         )
         volt_read3 = self.window.app.get_instrument_value(
             "CAEN High Voltage Power Supply", "CH3_V_out"
@@ -601,20 +602,12 @@ class CustomPowerSupplyWidget(hc.Instrument):
             "CAEN High Voltage Power Supply", "CH8_V_out"
         )
 
-        # if volt_set is not None:
-        #
-        #     if QApplication.focusWidget() is not self.caen_edit:
-        #         self.caen_edit.setText(volt_set)
-        self.caen_edit.setText(self.settings["CAEN_V_set"])
-
-        cidx = self.window.app.get_instrument_idx("CAEN High Voltage Power Supply")
-        if cidx != -1:
-            self.window.app.instruments[cidx].remote_update_setting(
-                "CH3_V_set", self.settings["CAEN_V_set"]
-            )
-            self.window.app.instruments[cidx].remote_update_setting(
-                "CH8_V_set", self.settings["CAEN_V_set"]
-            )
+        if volt_set3 is not None and volt_set8 is not None:
+            if QApplication.focusWidget() is not self.caen_edit:
+                if volt_set3 == volt_set8 and volt_set3 != self.settings["CAEN_V_set"]:
+                    self.caen_edit.setText(volt_set3)
+                else:
+                    self.caen_edit.setText("")
 
         if volt_read3 is not None:
             self.ch3_readout.setText(volt_read3)
@@ -623,7 +616,6 @@ class CustomPowerSupplyWidget(hc.Instrument):
             self.ch8_readout.setText(volt_read8)
 
     def default_state(self):
-
         return {"CAEN_V_set": ""}
 
     def update_caen(self, idx):
@@ -636,8 +628,6 @@ class CustomPowerSupplyWidget(hc.Instrument):
         self.window.app.instruments[idx].remote_update_setting(
             "CH8_V_set", self.caen_edit.text()
         )
-
-        print(self.window.app.instruments[idx].settings)
 
 
 class CustomControlWidget(QGroupBox):
@@ -1141,11 +1131,6 @@ class STS50Demo(hc.MainWindow):
     def close(self):
         print("Closing")
         self.app.close()
-
-        # if log:
-        #     with open("example_sts50.log", "w") as f:
-        #         for item in self.app.log:
-        #             f.write("%s\n" % item)
 
 
 def main():
