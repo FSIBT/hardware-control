@@ -28,6 +28,12 @@ logger = logging.getLogger(__name__)
 class Oscilloscope(Instrument):
     """This is a 4-channel oscilloscope control progam.
 
+    Parameters
+    ----------
+
+    right_axis : list
+        list of channels to display on the right axis. `None` only use one axis
+
     It defines a UI for a 4-ch scope and has the sockets and signals
     to interface with a OscilloscopeComm instance, which facilitates
     communication with the instrument. The Osc.Comm object requires an
@@ -48,13 +54,19 @@ class Oscilloscope(Instrument):
     """
 
     def __init__(
-        self, backend, window, name: str = "Oscilloscope Control", lock_until_sync=False
+        self,
+        backend,
+        window,
+        name: str = "Oscilloscope Control",
+        lock_until_sync=False,
+        right_axis=None,
     ):
 
         super().__init__(window, name, backend, lock_until_sync)
 
         self.settings = {}
         self.channels = 4
+        self.right_axis = right_axis
 
         # backend.sigReturnWaves.connect(self.backend_return_waveform)
         backend.dummy = self.window.app.dummy
@@ -82,7 +94,7 @@ class Oscilloscope(Instrument):
         #     self.filename = initialize_with
 
         # Create GUI
-        self.disp = OscilloscopeDisplayWidget(self, True)
+        self.disp = OscilloscopeDisplayWidget(self, True, right_axis=self.right_axis)
 
         self.horiz = OscilloscopeHorizontalWidget(self)
 
@@ -633,23 +645,38 @@ class OscilloscopeDisplayWidget(QGroupBox):
         Allows user to show or hide display refresh controls
     refresh : float
         Refresh period in seconds
+    right_axis : list
+        channels to display on right axis
 
     """
 
-    def __init__(self, control, show_controls: bool = True, refresh: float = 5):
+    def __init__(
+        self, control, show_controls: bool = True, refresh: float = 5, right_axis=None
+    ):
 
         super().__init__("Oscilloscope Display")
 
         self.control = control
+        self.right_axis = right_axis
 
         self.single_trig_mode = False
 
         # ************** DEFINE UI *********************#
         #
         self.display = pg.PlotWidget()
-        self.pi = self.display.getPlotItem()
-        self.pi.showGrid(x=True, y=True)
-        self.pi.setMenuEnabled(enableMenu=True)
+        self.display.show()
+        self.p1 = self.display.plotItem
+        self.p1.showGrid(x=True, y=True)
+        self.p1.setMenuEnabled(enableMenu=True)
+        # set up second axis
+        if self.right_axis:
+            self.p2 = pg.ViewBox()
+            self.p1.showAxis("right")
+            self.p1.scene().addItem(self.p2)
+            self.p1.getAxis("right").linkToView(self.p2)
+            self.p2.setXLink(self.p1)
+        else:
+            self.p2 = self.p1
 
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.display, 0, 0, 1, 5)
@@ -658,11 +685,20 @@ class OscilloscopeDisplayWidget(QGroupBox):
         self.lineCH2 = pg.mkPen(color=(31, 255, 9), style=QtCore.Qt.SolidLine)
         self.lineCH3 = pg.mkPen(color=(0, 0, 254), style=QtCore.Qt.SolidLine)
         self.lineCH4 = pg.mkPen(color=(252, 0, 8), style=QtCore.Qt.SolidLine)
+        self.CH1 = pg.PlotCurveItem(pen=self.lineCH1, symbol=None)
+        self.CH2 = pg.PlotCurveItem(pen=self.lineCH2, symbol=None)
+        self.CH3 = pg.PlotCurveItem(pen=self.lineCH3, symbol=None)
+        self.CH4 = pg.PlotCurveItem(pen=self.lineCH4, symbol=None)
 
-        self.CH1 = self.display.plot(pen=self.lineCH1, symbol=None)
-        self.CH2 = self.display.plot(pen=self.lineCH2, symbol=None)
-        self.CH3 = self.display.plot(pen=self.lineCH3, symbol=None)
-        self.CH4 = self.display.plot(pen=self.lineCH4, symbol=None)
+        for i, ch in enumerate([self.CH1, self.CH2, self.CH3, self.CH4]):
+            if self.right_axis and i + 1 in self.right_axis:
+                self.p2.addItem(ch)
+            else:
+                self.p1.addItem(ch)
+
+        if self.right_axis:
+            self.updateViews()
+            self.p1.vb.sigResized.connect(self.updateViews)
 
         self.CH1_data = ([], [])
         self.CH2_data = ([], [])
@@ -703,6 +739,10 @@ class OscilloscopeDisplayWidget(QGroupBox):
             self.master_layout.addWidget(self.refresh_but, 1, 4)
 
         self.setLayout(self.master_layout)
+
+    def updateViews(self):
+        self.p2.setGeometry(self.p1.vb.sceneBoundingRect())
+        self.p2.linkedViewChanged(self.p1.vb, self.p2.XAxis)
 
     # Set refresh rate (in Hz)
     def refresh_rate(self, rate: float):

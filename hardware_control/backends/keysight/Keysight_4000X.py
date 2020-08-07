@@ -67,7 +67,7 @@ class Keysight_4000X(Backend):
             self.write(f":TIM:POS {float(value):.6E}")
             return self.query(":TIM:POS?")
         if setting == "NUM_POINTS":
-            self.write(f":WAV:POIN {int(value):}")
+            self.write(f":WAV:POIN {int(float(value)):}")
             num_points = self.query(":WAV:POIN?")
             return f"NUM_POINTS={num_points}"
         if setting == "labels_enabled":

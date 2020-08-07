@@ -760,7 +760,9 @@ class STS50Demo(hc.MainWindow):
         # Enter socket address as ip:port, ex: 192.168.0.14:5025
         # scpi_scope = hc_back.Keysight_4000X("TCPIP0::192.168.0.14::INSTR")
         scpi_scope = hc_back.Keysight_4000X("192.168.0.14")
-        self.scope_ctrl = hc.Oscilloscope(scpi_scope, self, "Keysight Scope")
+        self.scope_ctrl = hc.Oscilloscope(
+            scpi_scope, self, "Keysight Scope", right_axis=[3]
+        )
         self.scope_ctrl.load_state("Key4000_init.json")
         self.scope_ctrl.settings_to_UI()
         self.scope_ctrl.set_online_callback(init_osc_when_online)
@@ -774,7 +776,7 @@ class STS50Demo(hc.MainWindow):
         ######## PicoTab
 
         self.pico = hc_back.ZMQ_Oscilloscope("tcp://192.168.0.30:6000")
-        self.pico_ctrl = hc.Oscilloscope(self.pico, self, "PicoScope")
+        self.pico_ctrl = hc.Oscilloscope(self.pico, self, "PicoScope", right_axis=[1])
         self.pico_ctrl.load_state("picoscope_init.json")
         self.pico_ctrl.settings_to_UI()
         self.pico_ctrl.set_online_callback(init_with_JSON)
