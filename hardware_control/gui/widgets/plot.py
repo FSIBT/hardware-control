@@ -22,9 +22,6 @@ plt.ioff()
 
 logger = logging.getLogger(__name__)
 
-mtpl_logger = logging.getLogger("matplot")
-mtpl_logger.setLevel("ERROR")
-
 
 class PlotBase(QWidget):
     """Base class for plotting widgets to display measured data."""
@@ -36,15 +33,16 @@ class PlotBase(QWidget):
         width=500,
         height=500,
         active=True,
-        tz="America/Los_Angeles",
+        time_zone="America/Los_Angeles",
         dpi=100,
     ):
         super().__init__()
 
         self.app = app
+        self.name = name
         self.normalize = False
         self.autoscale = True
-        self.tz = tz
+        self.time_zone = time_zone
         self.dpi = dpi
         self.fmt = "o-"
 
@@ -104,14 +102,17 @@ class PlotBase(QWidget):
 
         # Return if nothing set
         if self.plot_set is None:
+            logger.error(f"No data set given in {self.name}.")
             return
 
         # Check that set exists
         if self.plot_set not in self.app.data_sets:
+            logger.error(f"Unkown data set {self.plot_set} in {self.name}.")
             return
 
         # Check that is a function of time
         if "time:time" not in self.app.data_sets[self.plot_set].data:
+            logger.error(f"Data set {self.plot_set} in {self.name} has no time data.")
             return
 
         xleft, xright = self.axes.get_xlim()
@@ -154,7 +155,7 @@ class PlotBase(QWidget):
                 y_values,
                 self.fmt,
                 label=label_name,
-                tz=self.tz,
+                time_zone=self.time_zone,
                 linewidth=self.linewidth,
             )
 
