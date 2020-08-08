@@ -45,6 +45,9 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
         self.comm = None
         self.address = None
 
+        self.update_settings_hooks = []
+        self.update_values_hooks = []
+
         if self.backend:
             self.backend.dummy = self.app.dummy
             self.address = self.backend.connection_addr
@@ -113,11 +116,6 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
         """Is called by self.comm when the backend returns from command_listdata,
         which returns a string and two lists. The author of the UI can overwrite
         this function to process the return data."""
-        pass
-
-    def enableDisableWidgets(self, setting: str, value: str):
-        """User can overwrite this to enable/disable widgets when conditions/settings
-        are changed"""
         pass
 
     def init_values(self):
@@ -298,21 +296,32 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
         self.settings_to_UI()
 
     def update_setting(self, setting: str, value: str):
-        """Update a setting in settings and values dictionary for the instrument"""
+        """Update a setting in settings dictionary and send it to the backend.
 
-        self.enableDisableWidgets(setting, value)
+        The user has the option to set hooks that can modify the
+        values. The hooks get called before the value is set and send
+        to the backend. The hook needs to return the value or None if
+        the value should **not** be set.
 
-        try:
-            self.settings[setting] = value
-        except KeyError:
+        """
+
+        if setting not in self.settings:
             logger.error(
                 f"Key '{setting}' does not exist for instrument '{self.name}'"
                 f" in settings dictionary.",
                 exc_info=True,
             )
+            return
+
+        for hook in self.update_settings_hooks:
+            if callable(hook):
+                value = hook(setting, value)
+                if value is None:
+                    return
+
+        self.settings[setting] = value
 
         if self.comm is not None:
-
             # If ramp mode is on, set the target value and activate the timer
             if self.ramp_mode in [Instrument.AUTOMATIC, Instrument.MANUAL]:
                 try:
@@ -323,13 +332,13 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
                         f" value because it cannot be converted to a float."
                         f" Setting '{setting}' directly to '{value}'."
                     )
-                    self.values[setting] = self.comm.update_setting(setting, value)
+                    self.comm.update_setting(setting, value)
                     return
                 if not self.ramp_timer.isActive():
                     self.ramp_timer.start(self.ramp_update_period)
                 return
 
-            self.values[setting] = self.comm.update_setting(setting, value)
+            self.comm.update_setting(setting, value)
 
     def command(self, cmd_str: str):
         """Update a setting in settings and values dictionary for the instrument"""
@@ -465,25 +474,36 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
         self.settings_to_UI()
 
     def backend_return(self, retval: str):
-        """Is called by self.comm when the backend returns a value. The return string
-        is converted here into a dictionary's key/value pair and added to self.values.
-        An equals sign ('=') is used to separate the key and value, with key coming
-        first."""
+        """This function is called by self.comm when the backend returns a value.
+
+        The return string is converted here into a dictionary's
+        key/value pair and added to self.values.  An equals sign ('=')
+        is used to separate the key and value, with key coming
+        first.
+
+        The user can add hooks that will receive the key and value. If
+        the hook returns True, the other hooks will not be called.
+
+        """
 
         if retval == "SYNC_BACKEND":
             self.sync_backend_called()
 
         sep_idx = retval.find("=")
         if sep_idx != -1:  # Separator was found...
-
             key = retval[0:sep_idx]
-            val = retval[sep_idx + 1 :]
-
-            self.values[key] = val
-
+            value = retval[sep_idx + 1 :]
         else:  # If no separator, put under 'Misc'
+            key = "Misc"
+            value = retval
 
-            self.values["Misc"] = retval
+        self.values[key] = value
+
+        for hook in self.update_values_hooks:
+            if callable(hook):
+                ret = hook(key, value)
+                if ret:
+                    return
 
     def backend_return_online(self, connected: bool):
         """Is called by self.comm when the backend returns an online status."""
