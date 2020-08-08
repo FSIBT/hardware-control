@@ -7,7 +7,7 @@ tags:
   - Data Collection
 authors:
   - name: Arun Persaud
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0003-3186-8358
     affiliation: 1
   - name: Grant Giesbrecht
     orcid: 0000-0003-2885-4801
@@ -38,15 +38,16 @@ data.
 
 # Statement of need
 
-`Hardware-Control` is a Python package for instrument control and automation. It
-provides reusable user interfaces and instrument drivers to simplify writing
-control programs. `Hardware-Control` uses Qt to create fast and efficient user
-interfaces compatible with most major operating systems. `Hardware-Control` is
-also designed so that new drivers can be easily added for new instrument models
-and used with existing user interfaces. The package also provides means for
-simplifying data collection with automatic data logging, plotting, and many
-export formats. `Hardware-Control` was designed to be a flexible solution for many experimental
-challenges.
+`Hardware-Control` is a Python package for instrument control and
+automation. It provides reusable user interfaces and instrument
+drivers to simplify writing control programs. `Hardware-Control` uses
+Qt to create fast and efficient user interfaces compatible with most
+major operating systems. `Hardware-Control` is also designed so that
+new drivers can be easily added for new instrument models and used
+with existing user interfaces. The package also provides means for
+simplifying data collection with automatic data logging, plotting, and
+many export formats. `Hardware-Control` was designed to be a flexible
+solution for many experimental challenges.
 
 # Mathematics
 
@@ -93,5 +94,8 @@ for n in range(10):
 
 # Acknowledgements
 
+The information, data, or work presented herein was funded by the Advanced Research
+Projects Agency-Energy (ARPA-E), U.S. Department of Energy, under Contract No. DE-AC02-
+05CH11231.
 
 # References
