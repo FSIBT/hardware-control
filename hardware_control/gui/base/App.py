@@ -84,7 +84,7 @@ class App(QApplication):
         if not inst:
             return None
 
-        return inst.values[value].get(value, None)
+        return inst.values.get(value, None)
 
     def add_instrument(self, widget):
         """ Adds an hc.Instrument to self.instruments list
