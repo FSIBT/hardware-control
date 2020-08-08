@@ -5,7 +5,11 @@ from PyQt5.QtGui import QPixmap
 
 
 def load_icon(name: str):
-    return QPixmap(pkg_resources.resource_filename("hardware_control", f"icons/{name}"))
+    return QPixmap(icon_filename(name))
+
+
+def icon_filename(name: str):
+    return pkg_resources.resource_filename("hardware_control", f"icons/{name}")
 
 
 def setButtonState(button: QPushButton, value):

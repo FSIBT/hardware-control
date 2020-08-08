@@ -1,8 +1,9 @@
 from PyQt5 import QtCore
 from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QPushButton, QSizePolicy
+from PyQt5.QtCore import QSize
+from PyQt5.QtWidgets import QPushButton, QSizePolicy, QSvgWidget
 
-from .utility import load_icon
+from .utility import load_icon, icon_filename
 
 
 class QOnOffButton(QPushButton):
@@ -28,18 +29,18 @@ class QOnOffButton(QPushButton):
 
         self.setCheckable(True)
 
-        self.onText = "On"
-        self.offText = "Off"
-        self.unkownText = "status unkown"
+        self.on_text = "On"
+        self.off_text = "Off"
+        self.unkown_text = "status unkown"
 
-        self.onIcon = QIcon(load_icon("button-power-on.svg"))
-        self.offIcon = QIcon(load_icon("button-power-off.svg"))
-        self.unkownIcon = QIcon(load_icon("button-power-unkown.svg"))
+        self.on_icon = QIcon(load_icon("button-power-on.svg"))
+        self.off_icon = QIcon(load_icon("button-power-off.svg"))
+        self.unkown_icon = QIcon(load_icon("button-power-unkown.svg"))
 
         self.clicked.connect(self.click)
 
-        self.setText(self.unkownText)
-        self.setIcon(self.unkownIcon)
+        self.setText(self.unkown_text)
+        self.setIcon(self.unkown_icon)
         self.setIconSize(QtCore.QSize(30, 30))
 
         self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
@@ -61,74 +62,57 @@ class QOnOffButton(QPushButton):
     def update_status(self, value):
         if value:
             self.setChecked(True)
-            self.setIcon(self.onIcon)
-            self.setText(self.onText)
+            self.setIcon(self.on_icon)
+            self.setText(self.on_text)
         else:
             self.setChecked(False)
-            self.setIcon(self.offIcon)
-            self.setText(self.offText)
+            self.setIcon(self.off_icon)
+            self.setText(self.off_text)
 
 
-# class QOnOffIndicator(QSvgWidget):
-#     """An On/Off indicator
-#
-#     Listens to signals for on/off and shows a green or red light with a tooltip for mouse-over events.
-#
-#     starts in an unkown state (both lights off)"""
-#
-#     def __init__(self, name):
-#         self.name = name
-#         self.onIcon = pkg_resources.resource_filename(
-#             "hardware_control", "icons/on-off-indicator-on.svg"
-#         )
-#         self.offIcon = pkg_resources.resource_filename(
-#             "hardware_control", "icons/on-off-indicator-off.svg"
-#         )
-#         self.unkownIcon = pkg_resources.resource_filename(
-#             "hardware_control", "icons/on-off-indicator-unkown.svg"
-#         )
-#
-#         super().__init__(self.unkownIcon)
-#
-#         self.setMouseTracking(True)
-#         self.setToolTip(name)
-#
-#         self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-#
-#     def sizeHint(self):
-#         return QSize(10, 20)
-#
-#     def on(self):
-#         self.renderer().load(self.onIcon)
-#
-#     def off(self):
-#         self.renderer().load(self.offIcon)
-#
-#     def set(self, status):
-#         if status:
-#             self.on()
-#         else:
-#             self.off()
-#
-#
-# class QFixedLabel(QLabel):
-#     """A QLabel that fixes its width to the initial string"""
-#
-#     def __init__(self, label, color=None):
-#         super().__init__(label)
-#
-#         font = QFont()
-#         font.setPointSize(18)
-#         font.setBold(False)
-#         self.setFont(font)
-#
-#         fm = QFontMetrics(self.font())
-#         self.setFixedWidth(fm.width(self.text()))
-#
-#         self.setAlignment(QtCore.Qt.AlignCenter)
-#         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-#         if color is not None:
-#             self.setStyleSheet(
-#                 f"color: white;background-color:{color}; padding: 5px;border: 1px solid black;"
-#             )
-#
+class QOnOffIndicator(QSvgWidget):
+    """Small On/Off indicator.
+
+    Starts in an unkown state (both lights off)
+
+    Parameters
+    ----------
+    instrument
+        The instrument
+    setting_name : str
+        The instrument.settings and instrument.values to connect to
+
+    """
+
+    def __init__(self, instrument, setting_name):
+        self.name = setting_name
+        self.instrument = instrument
+        self.on_icon = icon_filename("on-off-indicator-on.svg")
+        self.off_icon = icon_filename("on-off-indicator-off.svg")
+        self.unkown_icon = icon_filename("on-off-indicator-unkown.svg")
+
+        self.status = "unkonwn"
+
+        super().__init__(self.unkown_icon)
+
+        self.setMouseTracking(True)
+        self.setToolTip(self.name)
+
+        self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+
+        self.instrument.update_values_hooks.append(self.update_hook)
+
+    def update_hook(self, key, value):
+        if key == self.name:
+            self.set(value)
+
+    def sizeHint(self):
+        return QSize(10, 20)
+
+    def set(self, status):
+        if status != self.status:
+            self.status = status
+            if status:
+                self.renderer().load(self.on_icon)
+            else:
+                self.renderer().load(self.off_icon)

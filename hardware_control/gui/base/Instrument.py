@@ -484,6 +484,11 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
         The user can add hooks that will receive the key and value. If
         the hook returns True, the other hooks will not be called.
 
+        Parameters
+        ----------
+        retval : str
+             most of the times this will be of the form "<setting_name>=<value>"
+
         """
 
         if retval == "SYNC_BACKEND":
