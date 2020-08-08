@@ -1,7 +1,8 @@
 from PyQt5 import QtCore
 from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import QSize
-from PyQt5.QtWidgets import QPushButton, QSizePolicy, QSvgWidget
+from PyQt5.QtWidgets import QPushButton, QSizePolicy
+from PyQt5.QtSvg import QSvgWidget
 
 from .utility import load_icon, icon_filename
 
