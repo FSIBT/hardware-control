@@ -11,4 +11,5 @@ from .scan_widget import ScanWidget
 from .variable_edit import VariableEditTool
 from .zmq_connection import ZMQConnectionTool
 from .qtconsole import Qtconsole
+from .on_off import QOnOffButton
 from .utility import setButtonState, load_icon

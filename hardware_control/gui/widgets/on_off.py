@@ -1,92 +1,72 @@
-# needs to be updated to work with latest version
+from PyQt5 import QtCore
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QPushButton, QSizePolicy
 
-# class QOnOff(QPushButton):
-#     """An On/Off button with a nice icon for on/off
-#
-#     Takes two functions that will be called when turning on/off
-#     starts in an unkown state if not defined otherwise
-#
-#     if f_off is None: assume that f_on is a signal that can emit a boolian.
-#     """
-#
-#     def __init__(self, f_on, f_off=None):
-#         super().__init__()
-#         self.setCheckable(True)
-#
-#         self.onText = "On"
-#         self.offText = "Off"
-#         self.unkownText = "status unkown"
-#
-#         self.onIcon = QIcon(
-#             pkg_resources.resource_filename(
-#                 "hardware_control", "icons/button-power-on.svg"
-#             )
-#         )
-#         self.offIcon = QIcon(
-#             pkg_resources.resource_filename(
-#                 "hardware_control", "icons/button-power-off.svg"
-#             )
-#         )
-#         self.unkownIcon = QIcon(
-#             pkg_resources.resource_filename(
-#                 "hardware_control", "icons/button-power-unkown.svg"
-#             )
-#         )
-#
-#         self.f_on = f_on
-#         self.f_off = f_off
-#         self.clicked.connect(self.click)
-#
-#         self.setText(self.unkownText)
-#         self.setIcon(self.unkownIcon)
-#         self.setIconSize(QtCore.QSize(30, 30))
-#
-#         self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
-#
-#     def click(self):
-#         # we need a 'not' here since the button internally already
-#         # changed state at this point
-#         if not self.isChecked():
-#             if self.f_off:
-#                 self.f_off()
-#             else:
-#                 self.f_on.emit(False)
-#             self.set_icon_off()
-#         else:
-#             if self.f_off:
-#                 self.f_on()
-#             else:
-#                 self.f_on.emit(True)
-#             self.set_icon_on()
-#
-#     def on(self):
-#         if self.f_off:
-#             self.f_on()
-#         else:
-#             self.f_on.emit(True)
-#         self.set_icon_on()
-#
-#     def set_icon_on(self):
-#         """Just set the icon to on. Useful during startup"""
-#         self.setChecked(True)
-#         self.setIcon(self.onIcon)
-#         self.setText(self.onText)
-#
-#     def off(self):
-#         if self.f_off:
-#             self.f_off()
-#         else:
-#             self.f_on.emit(False)
-#         self.set_icon_off()
-#
-#     def set_icon_off(self):
-#         """Just set the icon to off. Useful during startup"""
-#         self.setChecked(False)
-#         self.setIcon(self.offIcon)
-#         self.setText(self.offText)
-#
-#     def isOn(self):
-#         return self.isChecked()
+from .utility import load_icon
+
+
+class QOnOffButton(QPushButton):
+    """An On/Off button with a nice icon for on/off
+
+    Clicking on the button will toggle `instrument.settings[setting_name]`.
+    Tne button will display the state from `instrument.values[setting_name]`
+
+    Parameters
+    ----------
+    instrument
+        The instrument
+    setting_name : str
+        The instrument.settings and instrument.values to connect to
+
+    """
+
+    def __init__(self, instrument, setting_name: str):
+        super().__init__()
+
+        self.instrument = instrument
+        self.name = setting_name
+
+        self.setCheckable(True)
+
+        self.onText = "On"
+        self.offText = "Off"
+        self.unkownText = "status unkown"
+
+        self.onIcon = QIcon(load_icon("button-power-on.svg"))
+        self.offIcon = QIcon(load_icon("button-power-off.svg"))
+        self.unkownIcon = QIcon(load_icon("button-power-unkown.svg"))
+
+        self.clicked.connect(self.click)
+
+        self.setText(self.unkownText)
+        self.setIcon(self.unkownIcon)
+        self.setIconSize(QtCore.QSize(30, 30))
+
+        self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+
+        def instrument_return_hook(key, value):
+            if key == self.name:
+                self.update_status(value)
+
+        instrument.update_values_hooks.append(instrument_return_hook)
+
+    def click(self):
+        """Toggle the current status."""
+        self.instrument.remote_update_setting(
+            self.name, not self.instrument.values[self.name]
+        )
+        current_text = self.getText()
+        self.setText(f"{current_text} (change requested)")
+
+    def update_status(self, value):
+        if value:
+            self.setChecked(True)
+            self.setIcon(self.onIcon)
+            self.setText(self.onText)
+        else:
+            self.setChecked(False)
+            self.setIcon(self.offIcon)
+            self.setText(self.offText)
 
 
 # class QOnOffIndicator(QSvgWidget):
