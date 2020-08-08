@@ -147,30 +147,24 @@ def init_osc_when_online(obj):
 def power_off(window):
 
     # Disable CAEN
-    window.psu_caen_wdgt.update_setting("CH3_enable", "False")
-    window.psu_caen_wdgt.update_setting("CH8_enable", "False")
-    window.psu_caen_wdgt.settings_to_UI()
+    window.psu_caen_wdgt.remote_update_setting("CH3_enable", "False")
+    window.psu_caen_wdgt.remote_update_setting("CH8_enable", "False")
 
     # Disable RF Generator
-    window.awg_ctrl.update_setting("CH1_enabled", "False")
-    window.awg_ctrl.settings_to_UI()
+    window.awg_ctrl.remote_update_setting("CH1_enabled", "False")
 
     # Disable TDK Lambda
-    window.psu_ctrl.update_setting("CH1_enabled", "False")
-    window.psu_ctrl.settings_to_UI()
+    window.psu_ctrl.remote_update_setting("CH1_enabled", "False")
 
     # Shut off gas
-    window.flow_ctrl.update_setting("rate", "0")
-    window.flow_ctrl.settings_to_UI()
+    window.flow_ctrl.remote_update_setting("rate", "0")
 
     # Shut off NI-DAQ Power Supplies
-    window.iomod_usb_wdgt.update_setting("CHcDAQ1Mod1/ao0_analog_write", "0")
-    window.iomod_usb_wdgt.update_setting("CHcDAQ1Mod1/ao1_analog_write", "0")
-    window.iomod_float_wdgt.update_setting(
+    window.iomod_usb_wdgt.remote_update_setting("CHcDAQ1Mod1/ao0_analog_write", "0")
+    window.iomod_usb_wdgt.remote_update_setting("CHcDAQ1Mod1/ao1_analog_write", "0")
+    window.iomod_float_wdgt.remote_update_setting(
         "CHcDAQ9188-1AEF742Mod7/ao4_analog_write", "0"
     )
-    window.iomod_usb_wdgt.settings_to_UI()
-    window.iomod_float_wdgt.settings_to_UI()
 
 
 def save_continuous_data(dataset, filename: str):
