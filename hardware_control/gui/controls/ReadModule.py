@@ -19,8 +19,8 @@ class Read(Instrument):
 
     def __init__(
         self,
+        app,
         backend,
-        window,
         channels: list,  # just a list of numbers
         channelNames: list,  # and their names
         readCommand: str,  # command for reading e.g. TEMP / VOLT / CURR
@@ -29,19 +29,14 @@ class Read(Instrument):
         showLCD=True,
     ):
         # initalizing
-        super().__init__(window, name)
+        super().__init__(app, name)
 
-        self.settings = {}
-        self.backend = backend
-        self.address = backend.connection_addr
-
-        self.backend.dummy = self.window.app.dummy
-        if backend in self.window.app.comms:
-            self.comm = self.window.app.comms[backend]
+        if backend in selfapp.comms:
+            self.comm = self.app.comms[backend]
             self.comm.addWidget(self)
         else:
-            self.window.app.comms[backend] = Comm(backend, self, 2000)
-            self.comm = self.window.app.comms[backend]
+            self.app.comms[backend] = Comm(backend, self, 2000)
+            self.comm = self.app.comms[backend]
 
         # self.filename = ""
 

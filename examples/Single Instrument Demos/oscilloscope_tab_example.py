@@ -82,7 +82,7 @@ class App(QMainWindow):
 
         # QGroupBox;
         scope_com = hc_back.Keysight_4000X("192.168.0.14")
-        self.scope = hc.Oscilloscope(scope_com, self.dummy)
+        self.scope = hc.Oscilloscope(app, scope_com, self.dummy)
 
         quitButton = QAction(QIcon.fromTheme("application-exit"), "Exit", self)
         quitButton.setShortcut("Ctrl+Q")

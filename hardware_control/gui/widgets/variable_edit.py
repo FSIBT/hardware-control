@@ -13,18 +13,16 @@ class VariableEditTool(Instrument):
 
     def __init__(
         self,
-        window,
+        app,
         name: str = "Application Variable Editor",
         vars={"Dynamic": "Value:"},
     ):
 
-        super().__init__(window, name)
+        super().__init__(app, name)
 
         self.vars = vars
 
         self.settings = {}
-        self.name = name
-        self.app = window.app
         self.ignore = True
         self.ignore_control = True
 
@@ -78,9 +76,7 @@ class VariableEditTool(Instrument):
                 self.button_panel.addWidget(value_edit, row + 1, 1)
                 row += 1
 
-            elif v in [
-                x for x in self.window.app.variables
-            ]:  # But is a valid macro name....
+            elif v in [x for x in self.app.variables]:  # But is a valid macro name....
 
                 # Create edit box label
                 value_edit_label = QLabel(vars[v])
@@ -116,7 +112,7 @@ class VariableEditTool(Instrument):
 
     def edit_variable(self, var: str, value: str):
         try:
-            self.window.app.variables[var] = value
+            self.app.variables[var] = value
             logger.debug(f"Setting {var} = '{value}'")
         except Exception:
             logger.debug(f"An exception occurred setting variable {var}")

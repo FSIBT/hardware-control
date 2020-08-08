@@ -40,7 +40,7 @@ class ScopeWindow(QMainWindow):
         self.main_widget = QWidget(self)
 
         scpi_scope = hc_back.Keysight_4000X(address)
-        self.scope_ctrl = hc.Oscilloscope(scpi_scope, self, "Oscilloscope Control")
+        self.scope_ctrl = hc.Oscilloscope(app, scpi_scope, "Oscilloscope Control")
 
         self.grid = QGridLayout()
         self.grid.addWidget(self.scope_ctrl, 0, 0)

@@ -64,8 +64,8 @@ def read_channel_file(filename: str, functions_handles: dict = None):
 class IOModule(Instrument):
     def __init__(
         self,
+        app,
         backend,
-        window,
         channel_data: dict,
         name: str = "IO Module",
         lock_until_sync=False,
@@ -75,18 +75,12 @@ class IOModule(Instrument):
         show_ID_labels=False,
     ):
 
-        super().__init__(window, name, backend, lock_until_sync)
-
-        self.settings = {}
-        self.backend = backend
+        super().__init__(app, name, backend, lock_until_sync)
 
         if channel_data == None:
             self.channel_data = read_channel_file(channel_file)
         else:
             self.channel_data = channel_data
-
-        backend.dummy = self.window.app.dummy
-        self.address = backend.connection_addr
 
         self.filename = ""
 

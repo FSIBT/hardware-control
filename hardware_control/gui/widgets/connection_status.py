@@ -17,13 +17,13 @@ class StatusTool(QGroupBox):
 
     """
 
-    def __init__(self, window, name: str = "Connection Status", short_indicators=False):
+    def __init__(self, app, name: str = "Connection Status", short_indicators=False):
 
         super().__init__(name)
 
         self.settings = self.default_state()
         self.name = name
-        self.app = window.app
+        self.app = app
         self.ignore = True
         self.ignore_control = True
         self.instrument_names = {}

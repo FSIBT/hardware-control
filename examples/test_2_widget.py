@@ -131,8 +131,8 @@ class RootsDemo(hc.MainWindow):
 
         self.psu_be = hc_back.Rigol_DP832("TCPIP0::192.168.1.83::INSTR")
         self.psu_wdgt1 = hc.MultiPowerSupply(
+            app,
             self.psu_be,
-            self,
             [1, 2],
             "Rigol Channel 1,2",
             show_VI_limits=True,
@@ -153,8 +153,8 @@ class RootsDemo(hc.MainWindow):
         self.psu_wdgt1.default_ramp_speed = 1
         self.psu_wdgt1.comm.try_connect()
         self.psu_wdgt2 = hc.MultiPowerSupply(
+            app,
             self.psu_be,
-            self,
             [3],
             "Rigol Channel 3",
             show_VI_limits=True,
@@ -177,7 +177,7 @@ class RootsDemo(hc.MainWindow):
         #####################################################################
         ######### Aux Tab
 
-        self.zmqtool = hc.ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
+        self.zmqtool = hc.ZMQConnectionTool(app, "ZMQ Input Tool", "tcp://*:5555")
 
         self.tab_aux_layout = QGridLayout()
         self.tab_aux_layout.addWidget(self.zmqtool, 0, 0)
@@ -186,7 +186,7 @@ class RootsDemo(hc.MainWindow):
         #####################################################################
         ######### Plot Tab
 
-        self.plot_wdgt = hc.PlotTool(self, "Plot")
+        self.plot_wdgt = hc.PlotTool(app, "Plot")
 
         self.tab_plot_layout = QGridLayout()
         self.tab_plot_layout.addWidget(self.plot_wdgt, 0, 0)
@@ -195,7 +195,7 @@ class RootsDemo(hc.MainWindow):
         #####################################################################
         ######## Tab 3
 
-        self.logtool = hc.DataWidget(self, "Data Logger")
+        self.logtool = hc.DataWidget(app, "Data Logger")
         self.logtool.update_groups()
 
         self.app.data_sets["Autolog"] = hc.Dataset("Autolog")
@@ -224,7 +224,7 @@ class RootsDemo(hc.MainWindow):
         #####################################################################
         ######## Set master window layout
 
-        self.statustool = hc.StatusTool(self, "Connection Status")
+        self.statustool = hc.StatusTool(app, "Connection Status")
         self.statustool.update_instruments()
 
         # self.miniplot = hc.MiniPlotTool(self, "Plot", 220, 220)

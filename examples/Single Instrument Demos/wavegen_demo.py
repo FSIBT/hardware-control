@@ -39,7 +39,7 @@ class WavegenDemo(QMainWindow):
 
         awg = hc_back.Keysight_33500B(address)
 
-        self.awg_ctrl = hc.FunctionGenerator(awg, self, "RF Generator")
+        self.awg_ctrl = hc.FunctionGenerator(app, awg, "RF Generator")
 
         self.grid = QGridLayout()
         self.grid.addWidget(self.awg_ctrl, 1, 1)

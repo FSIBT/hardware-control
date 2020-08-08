@@ -43,14 +43,12 @@ class ScanWidget(Instrument):
     sigStartScan = pyqtSignal()
 
     def __init__(
-        self, window, name: str = "Scan Control", include_variables: bool = True,
+        self, app, name: str = "Scan Control", include_variables: bool = True,
     ):
 
-        super().__init__(window, name)
+        super().__init__(app, name)
 
         self.settings = {}
-        self.name = name
-        self.app = window.app
         self.ignore = True
         self.ignore_control = True
         self.include_variables = include_variables
@@ -64,7 +62,7 @@ class ScanWidget(Instrument):
 
         # This ZMQConnectionTool will receive commands from the scan thread
         self.zmq_receiver = ZMQConnectionTool(
-            window, f"{self.name}-ZMQ Receiver", self.socket_addr, 100
+            app, f"{self.name}-ZMQ Receiver", self.socket_addr, 100
         )
         self.zmq_receiver.connectionOnOff(FakeButton("Disable Incoming Commands"))
 

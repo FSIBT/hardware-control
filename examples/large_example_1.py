@@ -55,7 +55,7 @@ class STS50Demo(QMainWindow):
         scpi_scope = hc_back.Keysight_4000X(
             "TCPIP0::192.168.0.14::INSTR",  # Enter socket address as ip:port, ex: 192.168.0.14:5025
         )
-        self.scope_ctrl = hc.Oscilloscope(scpi_scope, self, "Keysight")
+        self.scope_ctrl = hc.Oscilloscope(app, scpi_scope, "Keysight")
 
         # Put instrument(s) in tab
         self.tab1_layout = QGridLayout()
@@ -68,12 +68,12 @@ class STS50Demo(QMainWindow):
         awg = hc_back.Keysight_33500B(
             "TCPIP0::192.168.1.18::INSTR",
         )  # "USB0::0x0957::0x2907::MY52500624::INSTR"
-        self.awg_ctrl = hc.FunctionGenerator(awg, self, "RF Generator")
+        self.awg_ctrl = hc.FunctionGenerator(app, awg, "RF Generator")
 
         self.psu = hc_back.TDKL_GenH("TCPIP0::192.168.1.19::INSTR")
         awg.psu = debug
         self.psu_ctrl = hc.MultiPowerSupply(
-            self.psu, self, [1], "TDK Lambda (RF Vin)", "DEFAULT"
+            app, self.psu, [1], "TDK Lambda (RF Vin)", "DEFAULT"
         )
 
         # Put instrument(s) in tab
@@ -87,25 +87,25 @@ class STS50Demo(QMainWindow):
 
         self.flow = hc_back.Alicat_M_Series("192.168.1.15")
         self.flow_ctrl = hc.FlowController(
-            self.flow, self, "Flow Controller", "flowcontroller_state.json"
+            app, self.flow, "Flow Controller", "flowcontroller_state.json"
         )
 
         # Todo: linux-gpib is a dependency on some systems
         self.trig1 = hc_back.SRS_DG535("GPIB0::10::INSTR")
-        self.trig1_ctrl = hc.DelayGenerator(self.trig1, self, "Trigger 1", "DEFAULT")
+        self.trig1_ctrl = hc.DelayGenerator(app, self.trig1, "Trigger 1", "DEFAULT")
 
         self.trig2 = hc_back.SRS_DG535("GPIB0::15::INSTR")
-        self.trig2_ctrl = hc.DelayGenerator(self.trig2, self, "Trigger 2", "DEFAULT")
+        self.trig2_ctrl = hc.DelayGenerator(app, self.trig2, "Trigger 2", "DEFAULT")
         try:
-            self.zmqtool = hc.ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
+            self.zmqtool = hc.ZMQConnectionTool(app, "ZMQ Input Tool", "tcp://*:5555")
         except Exception as e:
             print("ZMQConnection failed! ")
             print(e)
 
-        self.ScanWidget = hc.ScanWidget(self, "Scan Control", True)
+        self.ScanWidget = hc.ScanWidget(app, "Scan Control", True)
         self.ScanWidget.update_instruments()
 
-        self.statustool = hc.StatusTool(self, "Connection Status")
+        self.statustool = hc.StatusTool(app, "Connection Status")
         self.statustool.update_instruments()
 
         app.add_variable("FIL_AMPL_V", "5.0")  # Add a filament amplitude variable
@@ -123,7 +123,7 @@ class STS50Demo(QMainWindow):
         app.add_macro("Wait_1s", ["FUNC:time:sleep:1"])
 
         self.run_tool = hc.MacroRunnerTool(
-            self, "Macro Runner", ["Dynamic", "Trigger"], ["Run Macro", "Trigger Beam"],
+            app, "Macro Runner", ["Dynamic", "Trigger"], ["Run Macro", "Trigger Beam"],
         )
         self.run_tool.update_macros()
 

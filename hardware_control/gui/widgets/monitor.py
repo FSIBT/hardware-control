@@ -10,13 +10,13 @@ logger = logging.getLogger(__name__)
 
 
 class MonitorTool(QGroupBox):
-    def __init__(self, window, name: str = "Monitor"):
+    def __init__(self, app, name: str = "Monitor"):
 
         super().__init__(name)
 
         self.settings = {}
         self.name = name
-        self.app = window.app
+        self.app = app
         self.ignore = True
         self.ignore_control = True
 

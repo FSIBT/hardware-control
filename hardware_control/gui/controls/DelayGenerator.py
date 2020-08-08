@@ -23,23 +23,17 @@ logger = logging.getLogger(__name__)
 class DelayGenerator(Instrument):
     def __init__(
         self,
+        app,
         backend,
-        window,
         name: str = "Pulse Generator Control",
         lock_until_sync=False,
         channels: int = 4,
     ):
 
-        super().__init__(window, name, backend, lock_until_sync)
+        super().__init__(app, name, backend, lock_until_sync)
 
-        self.settings = {}
-        self.name = name
-        self.address = backend.connection_addr
         self.channels = channels
-
         self.settings = self.default_state()
-
-        backend.dummy = self.window.app.dummy
 
         self.filename = ""
 

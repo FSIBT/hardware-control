@@ -25,6 +25,7 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.app = app
+        self.app.main_window = self
 
         self.add_menu()
 

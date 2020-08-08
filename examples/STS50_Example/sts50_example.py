@@ -513,11 +513,10 @@ def save_shot_format(dataset, filename: str):
 
 
 class CustomPowerSupplyWidget(hc.Instrument):
-    def __init__(self, caen, window, name="Power Supply Control"):
+    def __init__(self, app, caen, name="Power Supply Control"):
 
-        super().__init__(window, name)
+        super().__init__(app, name)
 
-        self.window = window
         self.ignore = True
         self.ignore_control = False
         self.settings = self.default_state()
@@ -577,16 +576,16 @@ class CustomPowerSupplyWidget(hc.Instrument):
         self.update_caen()
 
     def update_from_caen(self):
-        volt_set3 = self.window.app.get_instrument_value(
+        volt_set3 = self.app.get_instrument_value(
             "CAEN High Voltage Power Supply", "CH3_V_set"
         )
-        volt_set8 = self.window.app.get_instrument_value(
+        volt_set8 = self.app.get_instrument_value(
             "CAEN High Voltage Power Supply", "CH8_V_set"
         )
-        volt_read3 = self.window.app.get_instrument_value(
+        volt_read3 = self.app.get_instrument_value(
             "CAEN High Voltage Power Supply", "CH3_V_out"
         )
-        volt_read8 = self.window.app.get_instrument_value(
+        volt_read8 = self.app.get_instrument_value(
             "CAEN High Voltage Power Supply", "CH8_V_out"
         )
 
@@ -614,12 +613,13 @@ class CustomPowerSupplyWidget(hc.Instrument):
 
 
 class CustomControlWidget(QGroupBox):
-    def __init__(self, window, filament_dg, arc_dg, name="Timing Control"):
+    def __init__(self, app, filament_dg, arc_dg, name="Timing Control"):
 
         super().__init__()
 
         self.filament = filament_dg
         self.arc = arc_dg
+        self.app = app
 
         self.plasma_timing_label = QLabel()
         self.plasma_timing_label.setPixmap(
@@ -690,8 +690,6 @@ class CustomControlWidget(QGroupBox):
 class STS50Demo(hc.MainWindow):
     def __init__(self, app):
         super().__init__(app)
-        self.app = app
-        self.app.main_window = self
 
         self.setWindowTitle("STS-50 Control Panel")
 
@@ -704,7 +702,7 @@ class STS50Demo(hc.MainWindow):
         self.tab4 = QWidget()
         self.tab5 = QWidget()
         self.tab6 = QWidget()
-        self.console_tab = hc.Qtconsole(main_app=app)
+        self.console_tab = hc.Qtconsole(app)
 
         self.tabs.addTab(self.tab0, "Main")
         self.tabs.addTab(self.tab4, "Plasma Source")
@@ -725,7 +723,7 @@ class STS50Demo(hc.MainWindow):
         # scpi_scope = hc_back.Keysight_4000X("TCPIP0::192.168.0.14::INSTR")
         scpi_scope = hc_back.Keysight_4000X("192.168.0.14")
         self.scope_ctrl = hc.Oscilloscope(
-            scpi_scope, self, "Keysight Scope", right_axis=[3]
+            app, scpi_scope, "Keysight Scope", right_axis=[3]
         )
         self.scope_ctrl.load_state("Key4000_init.json")
         self.scope_ctrl.settings_to_UI()
@@ -740,7 +738,7 @@ class STS50Demo(hc.MainWindow):
         ######## PicoTab
 
         self.pico = hc_back.ZMQ_Oscilloscope("tcp://192.168.0.30:6000")
-        self.pico_ctrl = hc.Oscilloscope(self.pico, self, "PicoScope", right_axis=[1])
+        self.pico_ctrl = hc.Oscilloscope(app, self.pico, "PicoScope", right_axis=[1])
         self.pico_ctrl.load_state("picoscope_init.json")
         self.pico_ctrl.settings_to_UI()
         self.pico_ctrl.set_online_callback(init_with_JSON)
@@ -754,14 +752,14 @@ class STS50Demo(hc.MainWindow):
 
         # usb pyvisa address is # "USB0::0x0957::0x2907::MY52500624::INSTR"
         awg = hc_back.Keysight_33500B("TCPIP0::192.168.0.18::INSTR",)
-        self.awg_ctrl = hc.FunctionGenerator(awg, self, "RF Generator", 1)
+        self.awg_ctrl = hc.FunctionGenerator(app, awg, "RF Generator", 1)
 
         self.psu = hc_back.TDKL_GenH("TCPIP0::192.168.1.19::INSTR")
-        self.psu_ctrl = hc.MultiPowerSupply(self.psu, self, [1], "TDK Lambda (RF Vin)",)
+        self.psu_ctrl = hc.MultiPowerSupply(app, self.psu, [1], "TDK Lambda (RF Vin)",)
 
         self.psu_caen = hc_back.Caen_14xxET("192.168.0.1:1470")
         self.psu_caen_wdgt = hc.MultiPowerSupply(
-            self.psu_caen, self, [3, 8], "CAEN High Voltage Power Supply"
+            app, self.psu_caen, [3, 8], "CAEN High Voltage Power Supply"
         )
         self.psu_caen_wdgt.set_online_callback(init_with_instrument)
 
@@ -776,25 +774,25 @@ class STS50Demo(hc.MainWindow):
         ######## Tab 3
 
         self.flow = hc_back.Alicat_M_Series("192.168.0.15")
-        self.flow_ctrl = hc.FlowController(self.flow, self, "Flow Controller")
+        self.flow_ctrl = hc.FlowController(app, self.flow, "Flow Controller")
 
         # Todo: linux-gpib is a dependency on some systems
         self.trig1 = hc_back.SRS_DG535("GPIB0::10::INSTR")
-        self.trig1_ctrl = hc.DelayGenerator(self.trig1, self, "Trigger 1")
+        self.trig1_ctrl = hc.DelayGenerator(app, self.trig1, "Trigger 1")
         self.trig1_ctrl.load_state("delaygen_filament_init.json")
         self.trig1_ctrl.settings_to_UI()
         self.trig1_ctrl.set_online_callback(init_with_JSON)
 
         self.trig2 = hc_back.SRS_DG535("GPIB0::15::INSTR")
-        self.trig2_ctrl = hc.DelayGenerator(self.trig2, self, "Trigger 2")
+        self.trig2_ctrl = hc.DelayGenerator(app, self.trig2, "Trigger 2")
         self.trig2_ctrl.load_state("delaygen_arc_init.json")
         self.trig2_ctrl.settings_to_UI()
         self.trig2_ctrl.set_online_callback(init_with_JSON)
 
         self.iomod_float = hc_back.Ni_9000()
         self.iomod_float_wdgt = hc.IOModule(
+            app,
             self.iomod_float,
-            self,
             channel_data=None,
             name="Power Supplies (floating rack)",
             num_columns=2,
@@ -808,8 +806,8 @@ class STS50Demo(hc.MainWindow):
 
         self.iomod_usb = hc_back.Ni_9000()
         self.iomod_usb_wdgt = hc.IOModule(
+            app,
             self.iomod_usb,
-            self,
             channel_data=None,
             name="Power Supplies",
             num_columns=2,
@@ -826,15 +824,15 @@ class STS50Demo(hc.MainWindow):
         )
         self.iomod_usb_wdgt.command("DISPLAY_CONFIGURATION")
 
-        self.zmqtool = hc.ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
+        self.zmqtool = hc.ZMQConnectionTool(app, "ZMQ Input Tool", "tcp://*:5555")
 
-        self.ScanWidget = hc.ScanWidget(self, "Scan Control", True)
+        self.ScanWidget = hc.ScanWidget(app, "Scan Control", True)
 
-        self.logtool = hc.DataWidget(self, "Data Logger")
+        self.logtool = hc.DataWidget(app, "Data Logger")
         self.logtool.update_groups()
         # self.logtool.update_instruments()
 
-        self.statustool = hc.StatusTool(self, "Connection Status")
+        self.statustool = hc.StatusTool(app, "Connection Status")
 
         app.add_variable("FIL_AMPL_V", "5.0")  # Add a filament amplitude variable
         app.add_variable("DELAY_TIME_S", "7.5")  # Add a delay time variable
@@ -863,7 +861,7 @@ class STS50Demo(hc.MainWindow):
         buttons["Trigger"] = "Trigger Beam"
         buttons["PowerOff"] = "Power Down"
         self.run_tool = hc.MacroRunnerTool(
-            self,
+            app,
             "Operations",
             ["trigger_function"],
             ["Trigger Beam"],
@@ -998,7 +996,7 @@ class STS50Demo(hc.MainWindow):
 
         # ########## Tab 5 - Experimental
 
-        self.plot_wdgt1 = hc.PlotTool(self, "Floating Rack")
+        self.plot_wdgt1 = hc.PlotTool(app, "Floating Rack")
         self.plot_wdgt1.set_dataset("High Voltage")
 
         self.tab5_layout = QGridLayout()
@@ -1018,11 +1016,11 @@ class STS50Demo(hc.MainWindow):
         ######## Tab 0
 
         self.custom_wdgt = CustomControlWidget(
-            self, self.trig1_ctrl, self.trig2_ctrl, "Timing Control"
+            app, self.trig1_ctrl, self.trig2_ctrl, "Timing Control"
         )
 
         self.custom_wdgt2 = CustomPowerSupplyWidget(
-            self.psu_caen_wdgt, self, "Main Tab PS Widget"
+            app, self.psu_caen_wdgt, "Main Tab PS Widget"
         )
 
         # self.grid_ps_label_spacer = QSpacerItem(
@@ -1043,7 +1041,7 @@ class STS50Demo(hc.MainWindow):
         self.gas_flow_label.setPixmap(hc.load_icon("gas_flow_label.svg"))
         self.gas_flow_label.setAlignment(QtCore.Qt.AlignHCenter)
 
-        self.plot_wdgt_custom = hc.PlotTool(self, "Voltage Monitor")
+        self.plot_wdgt_custom = hc.PlotTool(app, "Voltage Monitor")
         self.plot_wdgt_custom.set_dataset("High Voltage")
         self.plot_wdgt_custom.setSizePolicy(
             QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)

@@ -31,7 +31,7 @@ class PlotBase(QWidget):
 
     def __init__(
         self,
-        window,
+        app,
         name="",
         width=500,
         height=500,
@@ -41,7 +41,7 @@ class PlotBase(QWidget):
     ):
         super().__init__()
 
-        self.app = window.app
+        self.app = app
         self.normalize = False
         self.autoscale = True
         self.tz = tz
@@ -169,12 +169,10 @@ class PlotTool(PlotBase):
     with a normalize and autoscale button.
     """
 
-    def __init__(self, window, name="Plot Tool", **kwargs):
-        super().__init__(window, name=name, **kwargs)
+    def __init__(self, app, name="Plot Tool", **kwargs):
+        super().__init__(app, name=name, **kwargs)
 
         self.axes = self.fig.add_subplot()
-
-        self.window = window
 
         self.linewidth = 1
 
@@ -193,7 +191,7 @@ class PlotTool(PlotBase):
         self.autoscalebutton.setChecked(True)
         self.select_set_label = QLabel("Dataset:")
         self.select_set_drop = QComboBox()
-        self.select_set_drop.addItems([x for x in window.app.data_sets])
+        self.select_set_drop.addItems([x for x in app.data_sets])
         self.select_set_drop.currentIndexChanged.connect(self.selector_changed)
 
         self.controls.addWidget(self.normalizebutton)
@@ -234,7 +232,7 @@ class PlotTool(PlotBase):
         super().set_dataset(set_name)
 
         self.select_set_drop.clear()
-        self.select_set_drop.addItems([x for x in self.window.app.data_sets])
+        self.select_set_drop.addItems([x for x in self.app.data_sets])
         self.select_set_drop.setCurrentText(set_name)
 
     def update(self):
@@ -258,8 +256,8 @@ class MiniPlotTool(PlotBase):
 
     """
 
-    def __init__(self, window, name="Mini Plot", width=100, height=100, **kwargs):
-        super().__init__(window, name=name, **kwargs)
+    def __init__(self, app, name="Mini Plot", width=100, height=100, **kwargs):
+        super().__init__(app, name=name, **kwargs)
 
         self.axes = self.fig.add_axes([0, 0, 1, 1])
         self.axes.axis("off")

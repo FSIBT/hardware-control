@@ -12,7 +12,7 @@ class DemoProgram(hc.MainWindow):
 
         scope_be = hc_back.Keysight_4000X("192.168.0.2")
 
-        self.scope_wdgt = hc.Oscilloscope(scope_be, self, "Oscilloscope")
+        self.scope_wdgt = hc.Oscilloscope(app, scope_be, "Oscilloscope")
 
         # Create layout, add oscilloscope to row=0, column=0
         self.main_layout = QGridLayout()

@@ -12,14 +12,9 @@ logger = logging.getLogger(__name__)
 
 class FlowController(Instrument):
     def __init__(
-        self, backend, window, name: str = "Flow Controller", lock_until_sync=False,
+        self, app, backend, name: str = "Flow Controller", lock_until_sync=False,
     ):
-        super().__init__(window, name, backend, lock_until_sync)
-
-        self.name = name
-        self.address = backend.connection_addr
-
-        backend.dummy = self.window.app.dummy
+        super().__init__(app, name, backend, lock_until_sync)
 
         self.settings = self.default_state()
 

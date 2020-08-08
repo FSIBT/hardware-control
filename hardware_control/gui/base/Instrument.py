@@ -31,17 +31,23 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
     AUTOMATIC = "automatic"
     OFF = "off"
 
-    def __init__(self, window, name: str, backend=None, lock_until_sync=False):
+    def __init__(self, app, name: str, backend=None, lock_until_sync=False):
         super().__init__(name)
         self.settings = OrderedDict()
         self.values = OrderedDict()
         self.values_unit = OrderedDict()
+        self.app = app  # The main hc.app
         self.name = name
+        self.backend = backend
         self.manufacturer = None
         self.company = None
         self.online = False
         self.comm = None
-        self.window = window
+        self.address = None
+
+        if self.backend:
+            self.backend.dummy = self.app.dummy
+            self.address = self.backend.connection_addr
 
         # Dictates if instrument should be ignored by widgets listing online
         # status (such as the connection widget)
@@ -59,14 +65,14 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
         self.online_callback = None
 
         if backend is not None:
-            if backend.connection_addr in self.window.app.comms:
-                self.comm = self.window.app.comms[backend.connection_addr]
+            if backend.connection_addr in self.app.comms:
+                self.comm = self.app.comms[backend.connection_addr]
                 self.comm.addWidget(self)
             else:
-                self.window.app.comms[backend.connection_addr] = Comm(
+                self.app.comms[backend.connection_addr] = Comm(
                     backend, self, lock_until_sync=lock_until_sync
                 )
-                self.comm = self.window.app.comms[backend.connection_addr]
+                self.comm = self.app.comms[backend.connection_addr]
 
         self.us_hooks = []  # Run every time update settings is called
         self.ramp_hooks = []  # Run every time update_ramp is called
@@ -88,10 +94,7 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
 
         # ConnectionTool and ScanWidget widgets
 
-        self.window = window  # parent needs to have a field called 'app' which
-        # is an instance of 'hc.App'
-
-        window.app.add_instrument(self)
+        self.app.add_instrument(self)
 
         self.ramp_timer = QTimer(self)
         self.ramp_timer.timeout.connect(self.update_ramp)
@@ -506,7 +509,7 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
         """
 
         found = False
-        for ds in self.window.app.data_sets:
+        for ds in self.app.data_sets:
             if point_data.dataset_name == ds.name:
 
                 sep_idx = retval.find("=")

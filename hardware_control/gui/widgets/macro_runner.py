@@ -39,7 +39,7 @@ class MacroRunnerTool(Instrument):
 
     def __init__(
         self,
-        window,
+        app,
         name: str = "Macro Runner",
         buttons=["Dynamic"],
         button_labels=["Run Macro"],
@@ -47,14 +47,12 @@ class MacroRunnerTool(Instrument):
         add_countdown=False,
     ):
 
-        super().__init__(window, name)
+        super().__init__(app, name)
         self.buttons = buttons
         self.indicators = indicators
         self.button_labels = button_labels
 
         self.settings = {}
-        self.name = name
-        self.app = window.app
         self.ignore = True
         self.ignore_control = True
         self.label_widgets = {}
@@ -102,7 +100,7 @@ class MacroRunnerTool(Instrument):
                 self.button_panel.addWidget(self.macro_drop, idx, 2)
 
             # But is a valid function name....
-            elif but in [x for x in self.window.app.function_handles]:
+            elif but in [x for x in self.app.function_handles]:
 
                 self.button_widgets.append(QPushButton())
                 self.button_widgets[-1].setText(self.button_labels[idx])
@@ -119,7 +117,7 @@ class MacroRunnerTool(Instrument):
 
         for idx, ind in enumerate(self.indicators):  # Requests dynamic...
 
-            if ind in [x for x in self.window.app.variables]:
+            if ind in [x for x in self.app.variables]:
 
                 # Create macro selection dropdown label
                 ind_desc_label = QLabel(self.indicators[ind])
@@ -127,7 +125,7 @@ class MacroRunnerTool(Instrument):
                     QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
                 )
 
-                self.label_widgets[ind] = QLabel(self.window.app.variables[ind])
+                self.label_widgets[ind] = QLabel(self.app.variables[ind])
                 self.label_widgets[ind].setAlignment(
                     QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
                 )
@@ -218,9 +216,9 @@ class MacroRunnerTool(Instrument):
 
     def update_indicators(self):
         for idx, ind in enumerate(self.indicators):  # Requests dynamic...
-            if ind in [x for x in self.window.app.variables]:
+            if ind in [x for x in self.app.variables]:
                 # Create macro selection dropdown label
-                self.label_widgets[ind].setText(self.window.app.variables[ind])
+                self.label_widgets[ind].setText(self.app.variables[ind])
             else:
                 logger.error(f"Macro {ind} does not exist. Ignoring indicator.")
 

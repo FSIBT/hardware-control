@@ -35,7 +35,7 @@ class PSUDemo(QMainWindow):
 
         psu = hc_back.Caen_14xxET("TCPIP::192.168.1.20::1470::SOCKET")
         self.psu_ctrl = hc.MultiPowerSupply(
-            psu, self, [1, 2, 3], "Power Supply Unit", "DEFAULT"
+            app, psu, [1, 2, 3], "Power Supply Unit", "DEFAULT"
         )
 
         self.grid = QGridLayout()

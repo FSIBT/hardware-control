@@ -9,11 +9,11 @@ logger = logging.getLogger(__name__)
 
 
 class DeviceType(Instrument):
-    # Convention: __init__(self, backend, window . . . )
+    # Convention: __init__(self, app, backend, . . . )
     def __init__(
         self,
+        app,
         backend,
-        window,
         channels: list,
         name: str = "TemplateDevice",
         initialize_with: str = "INSTRUMENT",
@@ -21,17 +21,15 @@ class DeviceType(Instrument):
         lock_until_sync=False,
     ):
         # initalizing
-        super().__init__(window, name, backend, lock_until_sync)
-        self.settings = {}  # A dict to store all possible settings
+        super().__init__(app, name, backend, lock_until_sync)
         self.save_on_close = save_on_close
-        self.backend = backend
 
-        if scpi_instr in self.window.app.comms:
-            self.comm = self.window.app.comms[scpi_instr]
+        if scpi_instr in self.app.comms:
+            self.comm = self.app.comms[scpi_instr]
             self.comm.addWidget(self)
         else:
-            self.window.app.comms[scpi_instr] = Comm(scpi_instr, self)
-            self.comm = self.window.app.comms[scpi_instr]
+            self.app.comms[scpi_instr] = Comm(scpi_instr, self)
+            self.comm = self.app.comms[scpi_instr]
 
         # Create UI - example
         self.lineEdit = QLineEdit()

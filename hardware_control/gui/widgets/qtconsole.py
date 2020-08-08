@@ -4,7 +4,7 @@ from qtconsole.inprocess import QtInProcessKernelManager
 
 
 class Qtconsole(RichJupyterWidget):
-    def __init__(self, main_app, *args, **kwargs):
+    def __init__(self, app, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.kernel_manager = QtInProcessKernelManager()
         self.kernel_manager.start_kernel()
@@ -20,6 +20,6 @@ class Qtconsole(RichJupyterWidget):
 
         """
         self.kernel.gui = "qt"
-        self.kernel.shell.push({"np": np, "app": main_app})
+        self.kernel.shell.push({"np": np, "app": app})
         self.kernel_client = self.kernel_manager.client()
         self.kernel_client.start_channels()

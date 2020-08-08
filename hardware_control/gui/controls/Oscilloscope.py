@@ -55,31 +55,26 @@ class Oscilloscope(Instrument):
 
     def __init__(
         self,
+        app,
         backend,
-        window,
         name: str = "Oscilloscope Control",
         lock_until_sync=False,
         right_axis=None,
     ):
 
-        super().__init__(window, name, backend, lock_until_sync)
+        super().__init__(app, name, backend, lock_until_sync)
 
-        self.settings = {}
         self.channels = 4
         self.right_axis = right_axis
 
-        # backend.sigReturnWaves.connect(self.backend_return_waveform)
-        backend.dummy = self.window.app.dummy
-        self.address = backend.connection_addr
-
-        if backend.connection_addr in self.window.app.comms:
-            self.comm = self.window.app.comms[backend.connection_addr]
+        if backend.connection_addr in self.app.comms:
+            self.comm = self.app.comms[backend.connection_addr]
             self.comm.addWidget(self)
         else:
-            self.window.app.comms[backend.connection_addr] = Comm(
+            self.app.comms[backend.connection_addr] = Comm(
                 backend, self, lock_until_sync=lock_until_sync
             )
-            self.comm = self.window.app.comms[backend.connection_addr]
+            self.comm = self.app.comms[backend.connection_addr]
 
         self.filename = ""
 

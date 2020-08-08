@@ -32,7 +32,7 @@ class FlowControllerDemo(QMainWindow):
 
         self.instr = hc_back.Alicat_M_Series("192.168.0.15", dummy, True)
         self.instr_ctrl = hc.FlowController(
-            self.instr, "flowcontroller_state.json", True
+            app, self.instr, "flowcontroller_state.json", True
         )
 
         self.grid = QGridLayout()

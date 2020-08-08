@@ -27,13 +27,11 @@ logger = logging.getLogger(__name__)
 
 
 class DataWidget(Instrument):
-    def __init__(self, window, name: str = "Data Logger"):
+    def __init__(self, app, name: str = "Data Logger"):
 
-        super().__init__(window, name)
+        super().__init__(app, name)
 
         self.settings = {}
-        self.name = name
-        self.app = window.app
         self.ignore = True
         self.ignore_control = True
         self.prevent_overwrite_fields = False
@@ -247,17 +245,13 @@ class DataWidget(Instrument):
 
     def set_filename(self, fn: str):
         try:
-            self.window.app.data_sets[
-                self.settings["display_group"]
-            ].autosave_filename = fn
+            self.app.data_sets[self.settings["display_group"]].autosave_filename = fn
         except:
             logger.error(f"Failed to set autosave filename to {fn}", exc_info=True)
 
     def set_autosave_format(self, fmt: str):
         try:
-            self.window.app.data_sets[
-                self.settings["display_group"]
-            ].autosave_format = fmt
+            self.app.data_sets[self.settings["display_group"]].autosave_format = fmt
         except:
             logger.error(f"Failed to set autosave format to {fmt}", exc_info=True)
 
@@ -265,11 +259,11 @@ class DataWidget(Instrument):
         # Don't allow async mode to be turned on if already on. Also, it can't
         # be switched off after it's turned on
 
-        if self.window.app.data_sets[self.settings["display_group"]].asynchronous_mode:
+        if self.app.data_sets[self.settings["display_group"]].asynchronous_mode:
             return
 
         try:
-            self.window.app.data_sets[self.settings["display_group"]].start_asynch()
+            self.app.data_sets[self.settings["display_group"]].start_asynch()
         except:
             logger.error("Failed to start aynchronous mode", exc_info=True)
 
@@ -277,9 +271,9 @@ class DataWidget(Instrument):
 
     def set_autolog_interval(self, interval: str):
         try:
-            self.window.app.data_sets[
-                self.settings["display_group"]
-            ].set_async_interval(float(interval))
+            self.app.data_sets[self.settings["display_group"]].set_async_interval(
+                float(interval)
+            )
         except:
             logger.error(f"Failed to set autosave format to {interval}", exc_info=True)
 
@@ -298,13 +292,13 @@ class DataWidget(Instrument):
         self.prevent_overwrite_fields = False
 
     def create_new_group(self):
-        self.window.create_new_group()
+        self.app.main_window.create_new_group()
 
         self.update_groups()
 
     def autosave_on_off(self, state: bool):
         try:
-            self.window.app.data_sets[self.settings["display_group"]].autosave = state
+            self.app.data_sets[self.settings["display_group"]].autosave = state
         except:
             logger.error("Failed to set autosave state", exc_info=True)
 
@@ -312,17 +306,17 @@ class DataWidget(Instrument):
         """Sets the autosave interval"""
 
         try:
-            self.window.app.data_sets[self.settings["display_group"]].set_save_interval(
+            self.app.data_sets[self.settings["display_group"]].set_save_interval(
                 float(t)
             )
         except:
             logger.error("ERROR: Failed to set interval time", exc_info=True)
 
     def save_data(self):
-        self.window.save_data(self.settings["display_group"])
+        self.app.main_window.save_data(self.settings["display_group"])
 
     def save_all_data(self):
-        self.window.app.save_all()
+        self.app.main_window.app.save_all()
 
     def erase_group_data(self):
         ds_name = self.settings["display_group"]
@@ -343,7 +337,7 @@ class DataWidget(Instrument):
             return
 
         try:
-            self.window.app.data_sets[self.settings["display_group"]].data = {}
+            self.app.data_sets[self.settings["display_group"]].data = {}
         except:
             logger.error("Failed to delete group data", exc_info=True)
 
@@ -374,7 +368,7 @@ class DataWidget(Instrument):
 
         # Update which widgets are enabled
         try:
-            group = self.window.app.data_sets[self.settings["display_group"]]
+            group = self.app.data_sets[self.settings["display_group"]]
 
             self.clear_button.setEnabled(self.prevent_overwrite_fields)
             self.autosave_check.setEnabled(self.prevent_overwrite_fields)
@@ -397,7 +391,7 @@ class DataWidget(Instrument):
         # ********** Update values in table and control panel ****************
 
         # Get correct group
-        group = self.window.app.data_sets[self.settings["display_group"]]
+        group = self.app.data_sets[self.settings["display_group"]]
         # print("Displaying group: ", self.settings["display_group"])
 
         # Set correct number of columns
@@ -508,7 +502,7 @@ class DataWidget(Instrument):
 
         # Copy all goup names into dropdown
         names = []
-        for key in self.window.app.data_sets:
+        for key in self.app.data_sets:
             names.append(key)
         self.dispgroup_drop.addItems(names)
 
@@ -516,10 +510,10 @@ class DataWidget(Instrument):
         if len(names) > 0 and self.settings["display_group"] == "":
             self.set_group(names[-1])
 
-        # if self.settings['display_group'] == "" and len(self.window.app.data_sets) > 0:
+        # if self.settings['display_group'] == "" and len(self.app.data_sets) > 0:
         #     # print('sets:')
-        #     print([*self.window.app.data_sets])
-        #     self.set_group([*self.window.app.data_sets][-1])
+        #     print([*self.app.data_sets])
+        #     self.set_group([*self.app.data_sets][-1])
 
     def default_state(self):
         return {"display_group": ""}

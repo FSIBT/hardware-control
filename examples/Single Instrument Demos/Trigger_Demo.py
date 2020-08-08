@@ -31,7 +31,7 @@ class Demo(QMainWindow):
 
         ##### Add Device(s)
         self.trig1 = hc_back.SRS_DG535("GPIB0::15::INSTR")
-        self.trig1_ctrl = hc.DelayGenerator(self.trig1, self, "Trigger 1", "DEFAULT")
+        self.trig1_ctrl = hc.DelayGenerator(app, self.trig1, "Trigger 1", "DEFAULT")
 
         ##### Add above HC to the main Widget
         self.grid = QGridLayout()

@@ -127,7 +127,7 @@ class Comm(QObject):
         self.try_connect_timer.stop()  # Stop
         self.sigClose.emit()
         self.worker_thread.quit()  # Kill thread
-        if self.instruments[0].window.app.print_close_info:
+        if self.instruments[0].app.print_close_info:
             print(
                 Fore.BLUE
                 + f"\t'{self.instruments[0].name}': Closing...\t\t\t--:-- sec"
@@ -141,7 +141,7 @@ class Comm(QObject):
         # still be running and try to write to stdout, causing an
         # error to arise)
         self.worker_thread.wait()
-        if self.instruments[0].window.app.print_close_info:
+        if self.instruments[0].app.print_close_info:
             print(
                 f"\r\t'{self.instruments[0].name}': Closed    \t\t\t"
                 + "{:.2f}".format(time.time() - start_time)
@@ -287,9 +287,7 @@ class Comm(QObject):
 
         # print(f"\n\t\t\t\tBACKEND_RETURN_LOG::COMM\t{param_str}\n")
         if len(self.instruments) > 0:
-            self.instruments[0].window.app.director.backend_return_log(
-                retval, param_str
-            )
+            self.instruments[0].app.director.backend_return_log(retval, param_str)
 
             logger.debug(
                 f"Instrument: {self.instruments[0].name} received return"

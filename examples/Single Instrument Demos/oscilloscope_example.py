@@ -58,14 +58,13 @@ logger.info("Scope Example Starting")
 class ScopeDemo(hc.MainWindow):
     def __init__(self, app):
         super().__init__(app)
-        self.app = app
 
         self.setWindowTitle("Oscilloscope Demo")
 
         self.main_widget = QWidget(self)
 
         scpi_scope = hc_back.Keysight_4000X(scope_address)
-        self.scope_ctrl = hc.Oscilloscope(scpi_scope, self, "Keysight")
+        self.scope_ctrl = hc.Oscilloscope(app, scpi_scope, "Keysight")
 
         self.grid = QGridLayout()
         self.grid.addWidget(self.scope_ctrl, 0, 0)

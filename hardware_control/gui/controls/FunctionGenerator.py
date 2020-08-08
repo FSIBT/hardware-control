@@ -28,27 +28,23 @@ logger = logging.getLogger(__name__)
 class FunctionGenerator(Instrument):
     def __init__(
         self,
+        app,
         backend,
-        window,
         name: str = "AWG Control",
         num_channels: int = 2,
         lock_until_sync=False,
     ):
 
-        super().__init__(window, name, backend, lock_until_sync)
+        super().__init__(app, name, backend, lock_until_sync)
 
-        self.settings = {}
-        self.address = backend.connection_addr
         self.num_channels = num_channels
 
-        backend.dummy = self.window.app.dummy
-
-        if backend in self.window.app.comms:
-            self.comm = self.window.app.comms[backend]
+        if backend in self.app.comms:
+            self.comm = self.app.comms[backend]
             self.comm.addWidget(self)
         else:
-            self.window.app.comms[backend] = Comm(backend, self)
-            self.comm = self.window.app.comms[backend]
+            self.app.comms[backend] = Comm(backend, self)
+            self.comm = self.app.comms[backend]
 
         self.filename = ""
 

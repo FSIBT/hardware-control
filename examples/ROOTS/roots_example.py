@@ -128,8 +128,8 @@ class RootsDemo(hc.MainWindow):
 
         self.caen_be = hc_back.Caen_14xxET("192.168.0.1:1470")
         self.caen_wdgt_123 = hc.MultiPowerSupply(
+            app,
             self.caen_be,
-            self,
             [1, 2, 3],
             "CAEN Power Supply 1-3",
             show_VI_limits=True,
@@ -147,8 +147,8 @@ class RootsDemo(hc.MainWindow):
         self.caen_wdgt_123.set_channel_label(2, "2: LaBr")
         self.caen_wdgt_123.set_channel_label(3, "3: YAP")
         self.caen_wdgt_456 = hc.MultiPowerSupply(
+            app,
             self.caen_be,
-            self,
             [4, 5, 6],
             "CAEN Power Supply 4-6",
             show_VI_limits=True,
@@ -168,8 +168,8 @@ class RootsDemo(hc.MainWindow):
 
         self.keysight_ps_be = hc_back.Keysight_36300("TCPIP::192.168.0.3::5025::SOCKET")
         self.keysight_wdgt = hc.MultiPowerSupply(
+            app,
             self.keysight_ps_be,
-            self,
             [1, 2, 3],
             "Keysight Power Supply",
             show_VI_limits=True,
@@ -191,8 +191,8 @@ class RootsDemo(hc.MainWindow):
 
         # self.adam_be = ADAM6024Ctrl("192.168.0.5:1025")
         # self.adam_wdgt = hc.IOModule(
+        #     app,
         #     self.adam_be,
-        #     self,
         #     [
         #         (1, lambda p: p * 100, "Torr", "Pressure"),
         #         (2, lambda i: i / 10 * 3e-3 + 8.1e-6, "A", "Current"),
@@ -214,12 +214,7 @@ class RootsDemo(hc.MainWindow):
         )
         self.adam_be = hc_back.Adam_6015("192.168.0.5:1025")
         self.adam_wdgt = hc.IOModule(
-            self.adam_be,
-            self,
-            adam_config,
-            "ADAM",
-            lock_until_sync=True,
-            num_columns=2,
+            app, self.adam_be, adam_config, "ADAM", lock_until_sync=True, num_columns=2,
         )
 
         # Put instrument(s) in tab
@@ -240,7 +235,7 @@ class RootsDemo(hc.MainWindow):
 
         self.pico1_be = hc_back.Picotech_6000("USB::")
         self.pico1_be.record_length = 70e3
-        self.pico1_wdgt = hc.Oscilloscope(self.pico1_be, self, "Pico1")
+        self.pico1_wdgt = hc.Oscilloscope(app, self.pico1_be, "Pico1")
         self.pico1_wdgt.load_state("./picoscope_init.json")
         self.pico1_wdgt.settings_to_UI()
         self.pico1_wdgt.send_state()
@@ -252,7 +247,7 @@ class RootsDemo(hc.MainWindow):
         #####################################################################
         ######### Aux Tab
 
-        self.zmqtool = hc.ZMQConnectionTool(self, "ZMQ Input Tool", "tcp://*:5555")
+        self.zmqtool = hc.ZMQConnectionTool(app, "ZMQ Input Tool", "tcp://*:5555")
 
         self.tab_aux_layout = QGridLayout()
         self.tab_aux_layout.addWidget(self.zmqtool, 0, 0)
@@ -261,8 +256,8 @@ class RootsDemo(hc.MainWindow):
         #####################################################################
         ######### Plot Tab
 
-        self.plot_wdgt1 = hc.PlotTool(self, "Heater Current")
-        self.plot_wdgt2 = hc.PlotTool(self, "High Voltage")
+        self.plot_wdgt1 = hc.PlotTool(app, "Heater Current")
+        self.plot_wdgt2 = hc.PlotTool(app, "High Voltage")
 
         self.tab_plot_layout = QGridLayout()
         self.tab_plot_layout.addWidget(self.plot_wdgt1, 0, 0)
@@ -272,7 +267,7 @@ class RootsDemo(hc.MainWindow):
         #####################################################################
         ######## Tab 3
 
-        self.logtool = hc.DataWidget(self, "Data Logger")
+        self.logtool = hc.DataWidget(app, "Data Logger")
         self.logtool.update_groups()
 
         self.app.data_sets["Autolog"] = hc.Dataset("Autolog")
@@ -312,13 +307,13 @@ class RootsDemo(hc.MainWindow):
         #####################################################################
         ######## Set master window layout
 
-        self.statustool = hc.StatusTool(self, "Connection Status")
+        self.statustool = hc.StatusTool(app, "Connection Status")
         self.statustool.update_instruments()
 
-        self.miniplot = hc.MiniPlotTool(self, "Plot", 220, 220)
+        self.miniplot = hc.MiniPlotTool(app, "Plot", 220, 220)
         self.miniplot.set_dataset("ADAM")
 
-        self.monitor = hc.MonitorTool(self, "Error Monitor")
+        self.monitor = hc.MonitorTool(app, "Error Monitor")
         self.monitor.add_hook("Hook 1", example_function)
         self.monitor.add_hook("Hook 2", example_function)
         self.monitor.add_spacer()

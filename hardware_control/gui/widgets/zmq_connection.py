@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 class ZMQConnectionTool(Instrument):
     def __init__(
         self,
-        window,
+        app,
         name: str = "ZMQ Input",
         port: str = "tcp://*:5555",
         update_period: int = 500,
@@ -32,7 +32,7 @@ class ZMQConnectionTool(Instrument):
         self.socket = None
         self.poller = None
 
-        super().__init__(window, name)
+        super().__init__(app, name)
 
         self.settings = self.default_state()
         self.settings["port"] = port
@@ -207,7 +207,7 @@ class ZMQConnectionTool(Instrument):
             self.received_label.setText(f"Last Message: {message}")  # Update label
 
             logger.info(f"Processing command '{message}'")
-            rval = self.window.app.process_external_command(message)
+            rval = self.app.process_external_command(message)
 
             if isinstance(rval, str):
                 message = rval

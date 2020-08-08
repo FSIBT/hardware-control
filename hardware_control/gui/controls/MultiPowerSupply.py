@@ -36,8 +36,8 @@ class MultiPowerSupply(Instrument):
 
     def __init__(
         self,
+        app,
         backend,
-        window,
         channels: list,
         name: str = "Multi-Channel PSU",
         show_VI_limits=False,
@@ -49,13 +49,7 @@ class MultiPowerSupply(Instrument):
         if all_enable_button is None:
             all_enable_button = MultiPowerSupply.HIDE
 
-        super().__init__(window, name, backend, lock_until_sync)
-
-        self.settings = {}
-        self.backend = backend
-
-        backend.dummy = self.window.app.dummy
-        self.address = backend.connection_addr
+        super().__init__(app, name, backend, lock_until_sync)
 
         self.all_enable_button = all_enable_button
 
