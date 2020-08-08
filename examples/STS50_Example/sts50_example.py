@@ -282,20 +282,20 @@ def trigger_function(window):
 
 def refresh_waveforms(window):
 
-    pico_idx = window.app.get_instrument_idx("PicoScope")
-    key_idx = window.app.get_instrument_idx("Keysight Scope")
+    pico = window.app.get_instrument_by_name("PicoScope")
+    key = window.app.get_instrument_by_name("Keysight Scope")
 
-    window.app.instruments[pico_idx].disp.query_waveforms()
-    window.app.instruments[key_idx].disp.query_waveforms()
+    pico.disp.query_waveforms()
+    key.disp.query_waveforms()
 
 
 def save_waveforms_to_set(window):
 
-    pico_idx = window.app.get_instrument_idx("PicoScope")
-    key_idx = window.app.get_instrument_idx("Keysight Scope")
+    pico = window.app.get_instrument_by_name("PicoScope")
+    key = window.app.get_instrument_by_name("Keysight Scope")
 
-    picoscope_data = window.app.instruments[pico_idx].get_last_waveform()
-    keysight_data = window.app.instruments[key_idx].get_last_waveform()
+    picoscope_data = pico.get_last_waveform()
+    keysight_data = key.get_last_waveform()
 
     window.app.data_sets["Shots"].data["Picoscope_waveform"].append(picoscope_data)
     window.app.data_sets["Shots"].data["Keysight_waveform"].append(keysight_data)
@@ -524,11 +524,11 @@ class CustomPowerSupplyWidget(hc.Instrument):
         super().__init__(window, name)
 
         self.window = window
-
         self.ignore = True
         self.ignore_control = False
-
         self.settings = self.default_state()
+
+        self.caen = caen
 
         self.main_label = QLabel()
         self.main_label.setPixmap(hc.load_icon("power_supply_controls_label.svg"))
@@ -536,13 +536,9 @@ class CustomPowerSupplyWidget(hc.Instrument):
 
         self.caen_label = QLabel("CAEN CH 3 & 8 Voltage (V): ")
 
-        instr_idx = window.app.get_instrument_idx("CAEN High Voltage Power Supply")
         self.caen_edit = QLineEdit()
         self.caen_edit.setValidator(QDoubleValidator())
-        if instr_idx != -1:
-            self.caen_edit.editingFinished.connect(
-                lambda idx=instr_idx: self.update_caen(idx)
-            )
+        self.caen_edit.editingFinished.connect(self.update_caen)
         self.caen_edit.setText(str(caen.settings["CH3_V_set"]))
 
         self.horiz_spacer = QSpacerItem(
@@ -584,9 +580,7 @@ class CustomPowerSupplyWidget(hc.Instrument):
 
     def settings_to_UI(self):
         self.caen_edit.setText(self.settings["CAEN_V_set"])
-        instr_idx = self.window.app.get_instrument_idx("CAEN High Voltage Power Supply")
-        if instr_idx != -1:
-            self.update_caen(instr_idx)
+        self.update_caen()
 
     def update_from_caen(self):
         volt_set3 = self.window.app.get_instrument_value(
@@ -619,15 +613,10 @@ class CustomPowerSupplyWidget(hc.Instrument):
         return {"CAEN_V_set": ""}
 
     def update_caen(self, idx):
-
         self.settings["CAEN_V_set"] = self.caen_edit.text()
 
-        self.window.app.instruments[idx].remote_update_setting(
-            "CH3_V_set", self.caen_edit.text()
-        )
-        self.window.app.instruments[idx].remote_update_setting(
-            "CH8_V_set", self.caen_edit.text()
-        )
+        self.caen.remote_update_setting("CH3_V_set", self.caen_edit.text())
+        self.caen.remote_update_setting("CH8_V_set", self.caen_edit.text())
 
 
 class CustomControlWidget(QGroupBox):
@@ -635,8 +624,8 @@ class CustomControlWidget(QGroupBox):
 
         super().__init__()
 
-        self.filament_dg = filament_dg
-        self.arc_dg = arc_dg
+        self.filament = filament_dg
+        self.arc = arc_dg
 
         self.plasma_timing_label = QLabel()
         self.plasma_timing_label.setPixmap(
@@ -648,56 +637,47 @@ class CustomControlWidget(QGroupBox):
 
         self.filament_label = QLabel("Filament duration (sec): ")
 
-        instr_idx = window.app.get_instrument_idx("Trigger 1")
         self.filament_edit = QLineEdit()
         self.filament_edit.setValidator(QDoubleValidator())
-        if instr_idx != -1:
-            self.filament_edit.editingFinished.connect(
-                lambda idx=instr_idx: window.app.instruments[idx].remote_update_setting(
-                    "CH2_delay", self.filament_edit.text()
-                )
+        self.filament_edit.editingFinished.connect(
+            lambda: self.filament.remote_update_setting(
+                "CH2_delay", self.filament_edit.text()
             )
-        self.filament_edit.setText(filament_dg.settings["CH2_delay"])
+        )
+        self.filament_edit.setText(self.filament.settings["CH2_delay"])
 
         self.filament_amp_label = QLabel("Filament amplitude (a.u.): ")
 
         self.filament_amp_edit = QLineEdit()
         self.filament_amp_edit.setValidator(QDoubleValidator())
-        if instr_idx != -1:
-            self.filament_amp_edit.editingFinished.connect(
-                lambda idx=instr_idx: window.app.instruments[idx].remote_update_setting(
-                    "CH12_output_amplitude", self.filament_amp_edit.text()
-                )
+        self.filament_amp_edit.editingFinished.connect(
+            lambda: self.filament.remote_update_setting(
+                "CH12_output_amplitude", self.filament_amp_edit.text()
             )
-        self.filament_amp_edit.setText(
-            self.filament_dg.settings["CH12_output_amplitude"]
         )
+        self.filament_amp_edit.setText(self.filament.settings["CH12_output_amplitude"])
 
         self.spark_delay_label = QLabel("Spark delay (sec): ")
 
         self.spark_delay_edit = QLineEdit()
         self.spark_delay_edit.setValidator(QDoubleValidator())
-        if instr_idx != -1:
-            self.spark_delay_edit.editingFinished.connect(
-                lambda idx=instr_idx: window.app.instruments[idx].remote_update_setting(
-                    "CH3_delay", self.spark_delay_edit.text()
-                )
+        self.spark_delay_edit.editingFinished.connect(
+            lambda: self.filament.remote_update_setting(
+                "CH3_delay", self.spark_delay_edit.text()
             )
-        self.spark_delay_edit.setText(filament_dg.settings["CH3_delay"])
+        )
+        self.spark_delay_edit.setText(self.filament.settings["CH3_delay"])
 
         self.spark_duration_label = QLabel("Spark duration (sec): ")
 
-        instr_idx = window.app.get_instrument_idx("Trigger 2")
-
         self.spark_duration_edit = QLineEdit()
         self.spark_duration_edit.setValidator(QDoubleValidator())
-        if instr_idx != -1:
-            self.spark_duration_edit.editingFinished.connect(
-                lambda idx=instr_idx: window.app.instruments[idx].remote_update_setting(
-                    "CH4_delay", self.spark_duration_edit.text()
-                )
+        self.spark_duration_edit.editingFinished.connect(
+            lambda: self.arc.remote_update_setting(
+                "CH4_delay", self.spark_duration_edit.text()
             )
-        self.spark_duration_edit.setText(arc_dg.settings["CH4_delay"])
+        )
+        self.spark_duration_edit.setText(self.arc.settings["CH4_delay"])
 
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.plasma_timing_label, 0, 0, 1, 4)

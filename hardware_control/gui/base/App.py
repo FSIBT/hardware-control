@@ -57,8 +57,8 @@ class App(QApplication):
         # self.macro_timer.timeout.connect(self.resume_macro)
         # Don't start timer yet...
 
-    def get_instrument_idx(self, name: str):
-        """Returns the index of the instrument named 'name' in 'instruments' list
+    def get_instrument_by_name(self, name: str):
+        """Returns the instrument named 'name' in 'instruments' list
 
         Parameters
         ----------
@@ -67,29 +67,24 @@ class App(QApplication):
 
         Returns
         -------
-        int
-            Index in self.instruments of the instrument with name 'name'. Returns
-            -1 if no match is found.
+        hc.Instrument
+            The instrument class or `None` if not found
         """
 
-        instr_idx = -1
-        for idx, inst in enumerate(self.instruments):
+        for inst in self.instruments:
             if name == inst.name:
-                instr_idx = idx
+                return inst
 
-        return instr_idx
+        return None
 
     def get_instrument_value(self, instrument_name: str, value: str):
 
-        inst_idx = self.get_instrument_idx(instrument_name)
+        inst = self.get_instrument_by_name(instrument_name)
 
-        if inst_idx == -1:
+        if not inst:
             return None
 
-        if value in self.instruments[inst_idx].values:
-            return self.instruments[inst_idx].values[value]
-        else:
-            return None
+        return inst.values[value].get(value, None)
 
     def add_instrument(self, widget):
         """ Adds an hc.Instrument to self.instruments list
