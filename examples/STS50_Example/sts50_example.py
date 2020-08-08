@@ -570,7 +570,7 @@ class CustomPowerSupplyWidget(hc.Instrument):
 
         self.service_timer = QTimer(self)
         self.service_timer.timeout.connect(self.update_from_caen)
-        self.service_timer.start(1e3)
+        self.service_timer.start(1000)
 
     def settings_to_UI(self):
         self.caen_edit.setText(self.settings["CAEN_V_set"])
@@ -606,7 +606,7 @@ class CustomPowerSupplyWidget(hc.Instrument):
     def default_state(self):
         return {"CAEN_V_set": ""}
 
-    def update_caen(self, idx):
+    def update_caen(self):
         self.settings["CAEN_V_set"] = self.caen_edit.text()
 
         self.caen.remote_update_setting("CH3_V_set", self.caen_edit.text())
