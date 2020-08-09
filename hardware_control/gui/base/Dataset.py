@@ -1,3 +1,4 @@
+from collections import defaultdict
 import datetime
 import hashlib
 import json
@@ -51,7 +52,7 @@ class Dataset(QObject):
         # Dictionary of datapoints. Each key follows the <instrument>:<parameter>
         # naming scheme. Every value is a list and all lists need to have the
         # same length
-        self.data = {}
+        self.data = defaultdict(list)
 
         # Dictionary to optionally rename channels. key is 'instrument:parameter'
         # of channel to rename. Value is new name
@@ -73,7 +74,7 @@ class Dataset(QObject):
     def clear(self):
         """ Clears the dataset's contents """
 
-        self.data = {}
+        self.data = defaultdict(list)
         self.autosave_next_row = 0
 
     def values_are_numeric(self, key: str):
@@ -103,10 +104,6 @@ class Dataset(QObject):
         # Ensure key exists
         if key not in self.data:
             return False
-
-        # If not a list, check one number
-        if not isinstance(self.data[key], list):
-            return is_number(self.data[key])
 
         # Else, for each item in list, check if number
         for val in self.data[key]:
@@ -379,10 +376,7 @@ class Dataset(QObject):
 
         # Add timestamp if requested
         if self.async_add_timestamp:
-            try:
-                self.data["time:time"].append(str(time.time()))
-            except:
-                self.data["time:time"] = [str(time.time())]
+            self.data["time:time"].append(str(time.time()))
 
         # Add data from each specified instrument
         for ai in self.async_instruments:
@@ -397,31 +391,22 @@ class Dataset(QObject):
 
                 # Check that parameter exists
                 if vk not in ai[0].values:
-                    try:
-                        self.data[f"{name}:{vk}"].append(None)
-                        logger.debug(f"Adding data: data[{name}:{vk}] = None")
-                    except:
-                        self.data[f"{name}:{vk}"] = [None]
+                    self.data[f"{name}:{vk}"].append(None)
+                    logger.debug(f"Adding data: data[{name}:{vk}] = None")
                     continue
 
                 # Check that parameter exists
                 if self.async_require_float and not convertibleToFloat(
                     ai[0].values[vk]
                 ):
-                    try:
-                        self.data[f"{name}:{vk}"].append(None)
-                        logger.debug(f"Adding data: data[{name}:{vk}] = None")
-                    except:
-                        self.data[f"{name}:{vk}"] = [None]
+                    self.data[f"{name}:{vk}"].append(None)
+                    logger.debug(f"Adding data: data[{name}:{vk}] = None")
                     continue
 
                 # Otherwise add raw data
-                try:
-                    self.data[f"{name}:{vk}"].append(ai[0].values[vk])
-                    nd = ai[0].values[vk]
-                    logger.debug(f"Adding data: data[{name}:{vk}]='{nd}'")
-                except:
-                    self.data[f"{name}:{vk}"] = [ai[0].values[vk]]
+                nd = ai[0].values[vk]
+                self.data[f"{name}:{vk}"].append(nd)
+                logger.debug(f"Adding data: data[{name}:{vk}]='{nd}'")
 
     def get_corresponding_arrays(self, set_names: list, convert_to_float=False):
         """Returns lists for each of the parameters specified in set_names (

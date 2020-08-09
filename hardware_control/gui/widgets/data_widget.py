@@ -337,7 +337,7 @@ class DataWidget(Instrument):
             return
 
         try:
-            self.app.data_sets[self.settings["display_group"]].data = {}
+            self.app.data_sets[self.settings["display_group"]].clear()
         except:
             logger.error("Failed to delete group data", exc_info=True)
 
@@ -501,9 +501,7 @@ class DataWidget(Instrument):
         self.dispgroup_drop.clear()
 
         # Copy all goup names into dropdown
-        names = []
-        for key in self.app.data_sets:
-            names.append(key)
+        names = list(self.app.data_sets.keys())
         self.dispgroup_drop.addItems(names)
 
         # Select one group and display it if none currently displayed

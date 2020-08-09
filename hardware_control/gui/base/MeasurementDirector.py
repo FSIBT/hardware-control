@@ -86,6 +86,13 @@ class MeasurementDirector:
         if meas_req is None:
             return
 
+        if ds_name not in self.app.data_sets:
+            self.err_str = f"{ds_name} not in app.data_sets"
+            self.state = "Error"
+            return
+
+        data_set = self.app.data_sets[ds_name]
+
         # Increment number of iterations
         meas_req.iterations += 1
 
@@ -131,14 +138,10 @@ class MeasurementDirector:
             # record data
             data_key = f"{inst_name}:{param_name}"
             if meas_req.keep_as_string:
-                self.app.data_sets[ds_name].data[data_key].append(val)
+                data_set.data[data_key].append(val)
             else:
                 try:
-                    if not data_key in self.app.data_sets[ds_name].data:
-                        self.app.data_sets[ds_name].data[data_key] = []
-
-                    self.app.data_sets[ds_name].data[data_key].append(float(val))
-
+                    data_set.data[data_key].append(float(val))
                 except Exception:
                     logger.error(f"bad float {val}", exc_info=True)
                     self.err_str = (
@@ -149,26 +152,13 @@ class MeasurementDirector:
                     return
 
             # If requested, add timestamp. (Will be added when first value returns)
-            if self.app.data_sets[ds_name].async_add_timestamp:
-
-                # If time column not yet added, add now
-                if not "time:time" in self.app.data_sets[ds_name].data:
-                    self.app.data_sets[ds_name].data["time:time"] = []
-
+            if data_set.async_add_timestamp:
                 # If time not added for this set of measurements yet, add now
-                if (
-                    len(self.app.data_sets[ds_name].data["time:time"])
-                    < meas_req.measurement_index + 1
-                ):
-                    self.app.data_sets[ds_name].data["time:time"].append(
-                        str(time.time())
-                    )
+                if len(data_set.data["time:time"]) < meas_req.measurement_index + 1:
+                    data_set.data["time:time"].append(str(time.time()))
 
             # Double check that correct number of points exist - ie. index == len()
-            if (
-                len(self.app.data_sets[ds_name].data[data_key])
-                != meas_req.measurement_index + 1
-            ):
+            if len(data_set.data[data_key]) != meas_req.measurement_index + 1:
                 logger.error("Wrong number of items in array after measurement")
                 self.err_str = (
                     "Wrong number of items in array after adding measurement."
