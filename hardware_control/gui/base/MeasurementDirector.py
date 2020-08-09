@@ -5,9 +5,6 @@ from PyQt5.QtCore import QTimer
 
 logger = logging.getLogger(__name__)
 
-ipy_logger = logging.getLogger("ipykernel")
-ipy_logger.setLevel("ERROR")
-
 
 class MeasurementDirector:
     def __init__(self, app):

@@ -10,9 +10,6 @@ from .Dataset import Dataset
 
 logger = logging.getLogger(__name__)
 
-ipy_logger = logging.getLogger("ipykernel")
-ipy_logger.setLevel("ERROR")
-
 
 class App(QApplication):
     """The main app class.

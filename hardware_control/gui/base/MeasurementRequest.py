@@ -5,9 +5,6 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
-ipy_logger = logging.getLogger("ipykernel")
-ipy_logger.setLevel("ERROR")
-
 
 class MeasurementRequest:
     """Describes state information for a single measurement. This state

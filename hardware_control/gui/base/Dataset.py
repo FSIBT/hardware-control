@@ -14,9 +14,6 @@ from ...utility import convertibleToFloat
 
 logger = logging.getLogger(__name__)
 
-ipy_logger = logging.getLogger("ipykernel")
-ipy_logger.setLevel("ERROR")
-
 
 class Dataset(QObject):
     """Represents a complete dataset (ie. a collection of datapoints, which are

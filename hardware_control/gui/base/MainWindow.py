@@ -15,9 +15,6 @@ from .Dataset import Dataset
 
 logger = logging.getLogger(__name__)
 
-ipy_logger = logging.getLogger("ipykernel")
-ipy_logger.setLevel("ERROR")
-
 
 class MainWindow(QMainWindow):
     def __init__(self, app):

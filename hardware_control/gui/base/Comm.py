@@ -7,9 +7,6 @@ from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot, QObject, QTimer
 
 logger = logging.getLogger(__name__)
 
-ipy_logger = logging.getLogger("ipykernel")
-ipy_logger.setLevel("ERROR")
-
 
 class Comm(QObject):
     """Class to manage communication between two threads.
