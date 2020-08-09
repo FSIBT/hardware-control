@@ -21,6 +21,8 @@ class SRS_DG535(Backend):
     The instrument uses GPIB (tested with a NI-GPIB-usb adapter) and
     is controlled using the pyvisa library.
 
+    The `DelayGenerator` frontend implements most of the device's features.
+
     """
 
     # 12: combined output for ch1 and ch2
@@ -58,15 +60,15 @@ class SRS_DG535(Backend):
         value_orig = value
         value = ensure_float(value)
 
-        if setting == "trigger_mode":
+        if setting == "TRIGGER_MODE":
             mode = 0
-            if value_orig == "Internal":
+            if value_orig == "INTERNAL":
                 mode = 0
-            elif value_orig == "External":
+            elif value_orig == "EXTERNAL":
                 mode = 1
-            elif value_orig == "Single":
+            elif value_orig == "SINGLE":
                 mode = 2
-            elif value_orig == "Burst":
+            elif value_orig == "BURST":
                 mode = 3
             w = f"TM{mode}"
         elif setting == "trigger_edge":
@@ -121,7 +123,7 @@ class SRS_DG535(Backend):
             w = f"OA {channel},{value}"
         elif setting == "pulses_per_burst":
             w = f"BC{value}"
-        elif setting == "trigger_period":
+        elif setting == "TRIGGER_PERIOD":
             w = f"BP{value}"
         elif setting == "trigger_level":
             w = f"TL{value}"
@@ -141,7 +143,7 @@ class SRS_DG535(Backend):
 
     @ensure_online
     def command(self, cmd: str):
-        if cmd == "single_trigger":
+        if cmd == "SINGLE_TRIGGER":
             self.write("SS")
         else:
             logger.warning(f"{self.ID} : unknown command")

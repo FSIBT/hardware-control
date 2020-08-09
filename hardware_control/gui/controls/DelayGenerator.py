@@ -21,6 +21,13 @@ logger = logging.getLogger(__name__)
 
 
 class DelayGenerator(Instrument):
+    """A GUI for delay generators.
+
+    This GUI can be used for:
+      - SRS DG535.
+
+    """
+
     def __init__(
         self,
         app,
@@ -48,10 +55,10 @@ class DelayGenerator(Instrument):
         self.trig_mode_drop.addItems(["Internal", "External", "Single", "Burst"])
         self.trig_mode_drop.currentIndexChanged.connect(
             lambda: self.update_setting(
-                "trigger_mode", self.trig_mode_drop.currentText()
+                "TRIGGER_MODE", self.trig_mode_drop.currentText()
             )
         )
-        self.trig_mode_drop.setCurrentText(str(self.settings["trigger_mode"]))
+        self.trig_mode_drop.setCurrentText(str(self.settings["TRIGGER_MODE"]))
 
         self.trig_edge_label = QLabel("Trigger Edge:")
         self.trig_edge_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
@@ -94,7 +101,7 @@ class DelayGenerator(Instrument):
         self.single_trig_but.setText("Single Trigger")
         self.single_trig_but.setIcon(QIcon(load_icon("pulse.png")))
         self.single_trig_but.setCheckable(False)
-        self.single_trig_but.clicked.connect(lambda: self.command("single_trigger"))
+        self.single_trig_but.clicked.connect(lambda: self.command("SINGLE_TRIGGER"))
         self.single_trig_but.setEnabled(self.trig_mode_drop.currentText() == "Single")
 
         self.pulse_label = QLabel("Pulses per Burst:")
@@ -114,10 +121,10 @@ class DelayGenerator(Instrument):
         self.period_edit = QSpinBox()
         self.period_edit.setMinimum(1)
         self.period_edit.editingFinished.connect(
-            lambda: self.update_setting("trigger_period", self.period_edit.text())
+            lambda: self.update_setting("TRIGGER_PERIOD", self.period_edit.text())
         )
         self.period_edit.setSingleStep(1)
-        self.period_edit.setValue(int(self.settings["trigger_period"]))
+        self.period_edit.setValue(int(self.settings["TRIGGER_PERIOD"]))
 
         self.write_label = QLabel("Command: ")
         self.write_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
@@ -201,8 +208,8 @@ class DelayGenerator(Instrument):
 
     def enableDisableWidgets(self, setting: str, value: str):
 
-        if setting == "trigger_mode":
-            if value == "Single":
+        if setting == "TRIGGER_MODE":
+            if value == "SINGLE":
                 self.single_trig_but.setEnabled(True)
             else:
                 self.single_trig_but.setEnabled(False)
@@ -213,14 +220,14 @@ class DelayGenerator(Instrument):
 
         default = {}
 
-        default["trigger_mode"] = "INT"
+        default["TRIGGER_MODE"] = "INTERNAL"
         default["trigger_edge"] = "POS"
         default["ext_trig_Zin"] = "HiZ"
         default["burst_count"] = "2"
         default["burst_period"] = "4"
         default["direct_command"] = ""
         default["pulses_per_burst"] = "2"
-        default["trigger_period"] = "4"
+        default["TRIGGER_PERIOD"] = "4"
         default["trigger_level"] = "0"
         for c in range(1, self.channels + 1):
             default[f"CH{c}_delay"] = "1"
@@ -239,12 +246,12 @@ class DelayGenerator(Instrument):
 
     def settings_to_UI(self):
 
-        self.trig_mode_drop.setCurrentText(str(self.settings["trigger_mode"]))
+        self.trig_mode_drop.setCurrentText(str(self.settings["TRIGGER_MODE"]))
         self.trig_edge_drop.setCurrentText(str(self.settings["trigger_edge"]))
         self.trig_z_drop.setCurrentText(str(self.settings["ext_trig_Zin"]))
         self.trig_lev_edit.setValue(float(self.settings["trigger_level"]))
         self.pulse_edit.setValue(int(self.settings["pulses_per_burst"]))
-        self.period_edit.setValue(int(self.settings["trigger_period"]))
+        self.period_edit.setValue(int(self.settings["TRIGGER_PERIOD"]))
         self.write_edit.setText(self.settings["direct_command"])
 
         for cw in self.channel_widgets:

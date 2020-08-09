@@ -262,7 +262,7 @@ def trigger_function(window):
     window.pico_ctrl.command("SINGLE_TRIGGER")
 
     # Trigger the delay generator
-    window.trig1_ctrl.command("single_trigger")
+    window.trig1_ctrl.command("SINGLE_TRIGGER")
 
     # Add timestamp to dataset
     window.app.data_sets["Shots"].data["Timestamp"].append(timestamp)
