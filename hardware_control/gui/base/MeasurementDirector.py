@@ -9,6 +9,8 @@ logger = logging.getLogger(__name__)
 class MeasurementDirector:
     def __init__(self, app):
 
+        self.app = app
+
         # List of MeasurementRequest objects to measure in this datapoint
         self.queue = []
 
@@ -20,17 +22,15 @@ class MeasurementDirector:
         self.state = "Ready"
         self.err_str = ""
 
-        # List of all instruments currently processing a MeasurementRequest
-        self.occ_instruments = []
+        # set of all instruments currently processing a MeasurementRequest
+        self.occ_instruments = set()
 
         # List of parameter_strings of MeasurementRequests in the
         # queue that need to be relaunched once enough time has
         # elapsed
-        self.relaunch_list = []
+        self.relaunch_list = set()
 
         self.cancel_batch = False
-
-        self.app = app
 
         self.relaunch_timer = QTimer()
         self.relaunch_timer.timeout.connect(self.check_relaunch)
@@ -39,7 +39,7 @@ class MeasurementDirector:
     def measure(self, meas_req):
         """Add a measurement to the list of MeasurementRequests"""
 
-        # MAke sure director is ready to take new commands
+        # Make sure director is ready to take new commands
         if self.state != "Ready":
             self.error(
                 f"Director cannot add measurements because it is in"
@@ -66,7 +66,6 @@ class MeasurementDirector:
         return True
 
     def start(self):
-
         self.cancel_batch = False
 
         if self.state == "Ready":
@@ -76,50 +75,19 @@ class MeasurementDirector:
     def stop(self):
         pass
 
-    def get_state(self):
-        return self.state
-
     def backend_return_log(self, retval: str, param_str: str):
 
-        # Interpret 'param_str' to get variables to match in MeasurementRequest
-        components = param_str.split(":")  # Split the command up into tokens
-        if len(components) != 4:
-            self.err_str = (
-                "Wrong number of components returned in param_str by hc.Comm."
-            )
-            self.state = "Error"
-            return
-
-        m_idx = -1
-        try:
-            m_idx = int(components[3])
-        except:
-            midx_str = components[3]
-            self.err_str = f"Failed to read measurement index '{midx_str}'."
-            self.state = "Error"
+        ds_name, inst_name, param_name, _ = self.parse_parameter(param_str)
+        if ds_name is None:
             return
 
         # Find set in queue
-        idx = -1
-        for midx, mr in enumerate(self.queue):  # For evert meas. request...
-            if (
-                mr.dataset_name == components[0]
-                and mr.inst_name == components[1]
-                and mr.param_name == components[2]
-                and mr.measurement_index == m_idx
-            ):  # If identifiers match...
-                idx = midx
-                # The request was found, record its index
-        if idx == -1:
-            self.err_str = (
-                f"Failed to find MeasurementRequest specified by"
-                f" parameteter string '{param_str}'."
-            )
-            self.state = "Error"
+        meas_req = self.find_measurement_request(param_str)
+        if meas_req is None:
             return
 
         # Increment number of iterations
-        self.queue[idx].iterations += 1
+        meas_req.iterations += 1
 
         # ****** Decide what to do...
 
@@ -127,24 +95,14 @@ class MeasurementDirector:
         if self.cancel_batch:
 
             # Delete this MR from queue
-            self.queue.pop(idx)
+            self.queue.remove(meas_req)
 
             logger.debug(
                 f"MeasurementRequest with param_str {param_str} deleted itself"
                 f" due to batch cancelation"
             )
 
-            # Remove instrument from occupied_instruments list
-            inst_idx = 0
-            while inst_idx < len(
-                self.occ_instruments
-            ):  # For each name in occupied instrumnt list...
-                if (
-                    self.occ_instruments[inst_idx] == components[1]
-                ):  # IF matches last instrument...
-                    self.occ_instruments.pop(inst_idx)  # Remove from list
-                else:
-                    inst_idx += 1
+            self.occ_instruments.discard(inst_name)
 
             # If length is zero, set state to ready
             if len(self.queue) == 0:
@@ -153,13 +111,13 @@ class MeasurementDirector:
             return
 
         # Add last measurement to MeasurementRequest
-        if not self.queue[idx].add_point(retval):
+        if not meas_req.add_point(retval):
             self.err_str = "Failed to add point. Return value was invalid."
             self.state = "Error"
             return
 
         # Check if conditions are satisfied
-        if self.queue[idx].conditions_met():
+        if meas_req.conditions_met():
 
             val = ""
             sep_idx = retval.find("=")
@@ -171,19 +129,18 @@ class MeasurementDirector:
                 return False  # Separator was not found, return early
 
             # record data
-            data_key = components[1] + ":" + components[2]
-            if self.queue[idx].keep_as_string:
-                self.app.data_sets[components[0]].data[data_key].append(val)
+            data_key = f"{inst_name}:{param_name}"
+            if meas_req.keep_as_string:
+                self.app.data_sets[ds_name].data[data_key].append(val)
             else:
                 try:
+                    if not data_key in self.app.data_sets[ds_name].data:
+                        self.app.data_sets[ds_name].data[data_key] = []
 
-                    if not data_key in self.app.data_sets[components[0]].data:
-                        self.app.data_sets[components[0]].data[data_key] = []
+                    self.app.data_sets[ds_name].data[data_key].append(float(val))
 
-                    self.app.data_sets[components[0]].data[data_key].append(float(val))
-
-                except Exception as e:
-                    logger.error(f"bad float {val}\n\t{str(e)}")
+                except Exception:
+                    logger.error(f"bad float {val}", exc_info=True)
                     self.err_str = (
                         "Failed to add point. Return value could"
                         " not be converted to a float."
@@ -192,25 +149,25 @@ class MeasurementDirector:
                     return
 
             # If requested, add timestamp. (Will be added when first value returns)
-            if self.app.data_sets[components[0]].async_add_timestamp:
+            if self.app.data_sets[ds_name].async_add_timestamp:
 
                 # If time column not yet added, add now
-                if not "time:time" in self.app.data_sets[components[0]].data:
-                    self.app.data_sets[components[0]].data["time:time"] = []
+                if not "time:time" in self.app.data_sets[ds_name].data:
+                    self.app.data_sets[ds_name].data["time:time"] = []
 
                 # If time not added for this set of measurements yet, add now
                 if (
-                    len(self.app.data_sets[components[0]].data["time:time"])
-                    < self.queue[idx].measurement_index + 1
+                    len(self.app.data_sets[ds_name].data["time:time"])
+                    < meas_req.measurement_index + 1
                 ):
-                    self.app.data_sets[components[0]].data["time:time"].append(
+                    self.app.data_sets[ds_name].data["time:time"].append(
                         str(time.time())
                     )
 
             # Double check that correct number of points exist - ie. index == len()
             if (
-                len(self.app.data_sets[components[0]].data[data_key])
-                != self.queue[idx].measurement_index + 1
+                len(self.app.data_sets[ds_name].data[data_key])
+                != meas_req.measurement_index + 1
             ):
                 logger.error("Wrong number of items in array after measurement")
                 self.err_str = (
@@ -220,30 +177,18 @@ class MeasurementDirector:
                 return
 
             # erase from queue
-            mes_str = self.queue[idx].param_name
             logger.debug(
-                f"Removing index {idx} with parameter {mes_str}. My parameter"
-                f" string is {param_str}"
+                f"Removing MesurementRequest with parameter {meas_req.param_name}."
+                f" My parameter string is {param_str}"
             )
-            self.queue.pop(idx)
-
-            # Remove instrument from occupied_instruments list
-            inst_idx = 0
-            while inst_idx < len(
-                self.occ_instruments
-            ):  # For each name in occupied instrumnt list...
-                if (
-                    self.occ_instruments[inst_idx] == components[1]
-                ):  # IF matches last instrument...
-                    self.occ_instruments.pop(inst_idx)  # Remove from list
-                else:
-                    inst_idx += 1
+            self.queue.remove(meas_req)
+            self.occ_instruments.discard(inst_name)
 
             # Launch available MeasurementRequests
             self.launch_avail()
 
         # Check if too many attempts have occured
-        elif self.queue[idx].meas_failed():
+        elif meas_req.meas_failed():
 
             logger.info(
                 f"MeasurementRequest with parameter string {param_str} failed."
@@ -256,67 +201,18 @@ class MeasurementDirector:
             self.cancel_batch = True
 
             # erase request from queue
-            self.queue.pop(idx)
+            self.queue.remove(meas_req)
 
             # Batch canceled - remove all requests that haven't been launched
-            midx = 0
-            # For each request...
-            while midx < len(self.queue):
-                # If request hasn't been launched...
-                if not self.queue[midx].launched:
-                    # Remove request
-                    self.queue.pop(midx)
-                else:
-                    midx += 1
+            self.queue = [mr for mr in self.queue if mr.launched]
 
-            # Remove instrument from occupied_instruments list
-            inst_idx = 0
-            while inst_idx < len(
-                self.occ_instruments
-            ):  # For each name in occupied instrumnt list...
-                if (
-                    self.occ_instruments[inst_idx] == components[1]
-                ):  # IF matches last instrument...
-                    self.occ_instruments.pop(inst_idx)  # Remove from list
-                else:
-                    inst_idx += 1
+            self.occ_instruments.discard(inst_name)
 
             if len(self.queue) == 0:
                 self.state = "Ready"
 
         else:
-
-            # Relaunch MR
-            if not param_str in self.relaunch_list:
-                self.relaunch_list.append(param_str)
-
-    def relaunch(self, meas_req):
-
-        # Find instrument....
-        instr_idx = -1
-        for idx, inst in enumerate(self.app.instruments):
-            if meas_req.inst_name == inst.name:
-                instr_idx = idx
-
-        if instr_idx != -1:
-            param_str = (
-                meas_req.dataset_name
-                + ":"
-                + meas_req.inst_name
-                + ":"
-                + meas_req.param_name
-                + ":"
-                + str(meas_req.measurement_index)
-            )
-            self.app.instruments[instr_idx].comm.command_log(
-                meas_req.inst_command, param_str
-            )
-        else:
-            logger.warning(
-                f"Invalid Instrument in MeasurementRequest."
-                f" Instrument: '{meas_req.inst_name}'"
-            )
-            return False
+            self.relaunch_list.add(param_str)
 
     def launch_avail(self):
 
@@ -327,104 +223,122 @@ class MeasurementDirector:
             self.state = "Ready"
             return
 
-        for mr_idx, mr in enumerate(
-            self.queue
-        ):  # For every MeasurementRequest in queue...
-            if (not mr.launched) and (
-                mr.inst_name not in self.occ_instruments
-            ):  # IF the request has NOT been launched and its instrument is NOT occupied...
-                self.queue[mr_idx].launched = True  # Mark launched as true
-                self.launch(mr)  # Launch request
+        for mr in self.queue:
+            if (not mr.launched) and (mr.inst_name not in self.occ_instruments):
+                self.launch(mr)
 
     def launch(self, meas_req):
+        """Send measurement command to backend."""
 
-        # Find instrument....
-        instr_idx = -1
-        for idx, inst in enumerate(self.app.instruments):
-            if meas_req.inst_name == inst.name:
-                instr_idx = idx  # Record index
-                self.occ_instruments.append(
-                    inst.name
-                )  # Add to list of occupied instruments
+        m = meas_req
+        instrument = self.app.get_instrument_by_name(m.inst_name)
 
-        if instr_idx != -1:
+        m.launched = True
+
+        if instrument:
+            self.occ_instruments.add(instrument.name)
+
             param_str = (
-                meas_req.dataset_name
-                + ":"
-                + meas_req.inst_name
-                + ":"
-                + meas_req.param_name
-                + ":"
-                + str(meas_req.measurement_index)
+                f"{m.dataset_name}:{m.inst_name}:{m.param_name}:{m.measurement_index}"
             )
-            self.app.instruments[instr_idx].comm.command_log(
-                meas_req.inst_command, param_str
-            )
+            instrument.comm.command_log(meas_req.inst_command, param_str)
         else:
             logger.warning(
-                f"Invalid Instrument in MeasurementRequest."
-                f" Instrument: '{meas_req.inst_name}'"
+                f"Invalid Instrument in MeasurementRequest. Instrument: '{m.inst_name}'"
             )
             return False
 
     def check_relaunch(self):
-        """Called automaticlly periodically. When a measurement needs to be repeated to ensure
-        steady-state, it is added to the relaunch_list. This checks everything in the relaunch
-        list and relaunches it if enough time has ellapsed"""
+        """Called automaticlly periodically via Qtimer.
 
-        # BTW, keep track of the relaunch MRs so you can remove from the relaunch list
+        When a measurement needs to be repeated to ensure
+        steady-state, it is added to the relaunch_list. This checks
+        everything in the relaunch list and relaunches it if enough
+        time has ellapsed.
+
+        """
+
+        # keep track of the relaunched MRs so we can remove them later
+        # from relaunch_list
         remove_from_list = []
 
-        # Scan through every item...
-        for rmr_idx, rmr in enumerate(self.relaunch_list):
-
-            components = rmr.split(":")  # Split the command up into tokens
-            if len(components) != 4:
-                self.err_str = (
-                    "Wrong number of components returned in param_str by hc.Comm."
-                )
-                self.state = "Error"
-                return
-
-            m_idx = -1
-            try:
-                m_idx = int(components[3])
-            except:
-                midx_str = components[3]
-                self.err_str = f"Failed to read measurement index '{midx_str}'."
-                self.state = "Error"
-                return
-
-            # Find set in queue
-            idx = -1
-            for midx, mr in enumerate(self.queue):  # For every meas. request...
-                # print(len(self.queue))
-                if (
-                    mr.dataset_name == components[0]
-                    and mr.inst_name == components[1]
-                    and mr.param_name == components[2]
-                    and mr.measurement_index == m_idx
-                ):  # If identifiers match...
-                    idx = midx
-                    # The request was found, record its index
-            if idx == -1:
-                self.err_str = (
-                    f"Failed to find MeasurementRequest specified"
-                    f" by parameteter string '{rmr}'."
-                )
-                self.state = "Error"
-                return
+        for rmr in self.relaunch_list:
+            meas_req = self.find_measurement_request(rmr)
+            if meas_req is None:
+                continue
 
             # If enough time has ellapsed...
+            if time.time() - meas_req.last_launch_time >= meas_req.steady_dt:
+                meas_req.last_launch_time = time.time()
+                self.launch(meas_req)
+                remove_from_list.append(rmr)
+
+        for rfl in remove_from_list:
+            self.relaunch_list.discard(rfl)
+
+    def parse_parameter(self, parameter_str: str):
+        """Parse parameter string and check for errros.
+
+        Parameters
+        ----------
+        parameter_str : str
+            The parameter string
+
+        Returns
+        -------
+        dataset_name : str
+        instrument_name : str
+        parameter_name : str
+        measurement_index : int
+
+        """
+
+        components = parameter_str.split(":")
+        if len(components) != 4:
+            self.err_str = (
+                "Wrong number of components returned in param_str by hc.Comm."
+            )
+            self.state = "Error"
+            return None, None, None, None
+
+        try:
+            int(components[3])
+        except ValueError:
+            self.err_str = f"Failed to read measurement index '{components[3]}'."
+            self.state = "Error"
+            return None, None, None, None
+
+        return components[0], components[1], components[2], int(components[3])
+
+    def find_measurement_request(self, parameter: str):
+        """Find the MeasurementRequest in self.queue.
+
+        Parameters
+        ----------
+        parameter : str
+
+        Returns
+        -------
+        hc.MeasurementRequest or None
+
+        """
+
+        ds_name, inst_name, param_name, meas_index = self.parse_parameter(parameter)
+        if ds_name is None:
+            return None
+
+        for mr in self.queue:
             if (
-                time.time() - self.queue[idx].last_launch_time
-                >= self.queue[idx].steady_dt
+                mr.dataset_name == ds_name
+                and mr.inst_name == inst_name
+                and mr.param_name == param_name
+                and mr.measurement_index == meas_index
             ):
-                self.queue[idx].last_launch_time = time.time()
-                self.relaunch(self.queue[idx])  # Relaunch measurement
+                return mr
 
-                remove_from_list.append(rmr_idx)
-
-        # Everything has been processed - remove the relaunched items
-        for rfl in reversed(remove_from_list):
-            self.relaunch_list.pop(rfl)
+        self.err_str = (
+            f"Failed to find MeasurementRequest specified"
+            f" by parameteter string '{parameter}'."
+        )
+        self.state = "Error"
+        return None

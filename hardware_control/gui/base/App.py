@@ -360,14 +360,13 @@ class App(QApplication):
 
             elif uptokens[1] == "PSTATE":
 
-                print(self.director.get_state())
+                print(self.director.state)
                 if self.director.state == "Error":
                     print(f"\tError message: {self.director.err_str}")
-                print(self.director.get_state())
 
             elif uptokens[1] == "GETSTATE":
 
-                return self.director.get_state()
+                return self.director.state
 
         elif uptokens[0] == "EXEC":
 

@@ -523,7 +523,7 @@ class ScanWidget(Instrument):
                 if (
                     self.sync_measdir_check.isChecked()
                 ):  # Todo: Put this function in new thread, prevent blocking
-                    while self.app.director.get_state().upper() == "BUSY":
+                    while self.app.director.state.upper() == "BUSY":
                         time.sleep(0.1)
 
         else:
