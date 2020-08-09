@@ -37,5 +37,4 @@ GUI elements
    gui/widgets/qtconsole
    gui/widgets/scan
    gui/widgets/utility
-   gui/widgets/variable_edit
    gui/widgets/zmq_connection
