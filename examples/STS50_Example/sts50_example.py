@@ -231,8 +231,6 @@ def trigger_function(window):
     # Update shot number and shot number widget
     lt = localtime()
     timestamp = strftime("%H%M%S", lt)
-    window.app.variables["SHOT_ID_NUM"] = timestamp
-    window.app.variables["localtime last shot"] = lt
     window.run_tool.update_indicators()
 
     # Check all time delay fields from trigger 1, get max delay time
@@ -312,7 +310,6 @@ def save_shot_format(dataset, filename: str):
     Saves data in the format expected by STS-50 data processing scripts.
     """
 
-    loc_time = dataset.app.variables["localtime last shot"]
     header_datestamp = strftime("%Y-%m-%d %H:%M:%S", loc_time)
     datestamp = strftime("%Y-%m-%d-%H%M%S", loc_time)
 
@@ -834,22 +831,8 @@ class STS50Demo(hc.MainWindow):
 
         self.statustool = hc.StatusTool(app, "Connection Status")
 
-        app.add_variable("FIL_AMPL_V", "5.0")  # Add a filament amplitude variable
-        app.add_variable("DELAY_TIME_S", "7.5")  # Add a delay time variable
-        app.add_variable("PULSE_TIME_S", "500e-6")  # Add a spark time variable
-        app.add_variable("SHOT_ID_NUM", "--")  # Add a shot number variable
-        # app.add_macro(
-        #     "Trigger",
-        #     [
-        #         "SET:Filament DAC:VOLT:FIL_AMPL",
-        #         "CMD:Keysight Scope:SINGLE",
-        #         "SET:Filament DAC:VOLT:0",
-        #     ],
-        # )  # Add a trigger macro
-
         app.add_macro("Trigger", ["FUNC:HANDLE:trigger_function"])
         app.add_macro("PowerOff", ["FUNC:HANDLE:power_off"])
-        # "Trigger", ["FUNC:VAR:SHOT_ID_NUM:10", "FUNC:UPDATE:MACRO_IND",],
         app.add_macro("Safe", ["CMD:PSU:ALL_OFF", "CMD:AWG:ALL_OFF"])
         app.add_macro("Wait_1s", ["FUNC:time:sleep:1"])
         app.add_macro("MeasurementRequest", ["FUNC:DISP:str:MEAS:REQ"])
@@ -865,28 +848,10 @@ class STS50Demo(hc.MainWindow):
             "Operations",
             ["trigger_function"],
             ["Trigger Beam"],
-            # {"Trigger": "Trigger Beam", "PowerOff": "Power Down"},
-            {"SHOT_ID_NUM": "Shot ID Number: "},
             add_countdown=True,
         )
         self.run_tool.update_macros()
         self.run_tool.countdown_end = countdown_end_fn
-
-        # self.kill_tool = HC_MacroRunnerTool(
-        #     self,
-        #     "Shut",
-        #     {"Trigger": "Trigger Beam"},
-        #     {"SHOT_ID_NUM": "Shot ID Number: "},
-        #     add_countdown=True,
-        # )
-        # self.run_tool.update_macros()
-
-        # self.run_tool = HC_MacroRunnerTool(
-        #     self,
-        #     "Trigger Beam",
-        #     {"Dynamic": "Run Macro", "Trigger": "Trigger Beam"},
-        #     {"FIL_AMPL_V" : "Filament Amplitude: "},
-        # )
 
         # Create Datasets
         self.app.data_sets["High Voltage"] = hc.Dataset("High Voltage", self.app)
@@ -920,8 +885,6 @@ class STS50Demo(hc.MainWindow):
         self.app.data_sets["Demo"].channel_names[":Voltage"] = "Vtest"
         self.app.data_sets["Demo"].channel_names[":Current"] = "Itest"
 
-        # {'CHcDAQ1Mod2/ai0_analog_read': '', 'CHcDAQ1Mod2/ai1_analog_read': '', 'CHcDAQ1Mod2/ai2_analog_read': '', 'CHcDAQ1Mod2/ai3_analog_read': '', 'CHcDAQ1Mod2/ai4_analog_read': ''}
-
         self.app.data_sets["High Voltage"].name_channel(
             "USB NI-DAC:CHcDAQ1Mod2/ai0_analog_read", "V float"
         )
@@ -946,17 +909,6 @@ class STS50Demo(hc.MainWindow):
 
         self.logtool.update_groups()
         self.logtool.set_group("High Voltage")
-
-        # self.var_tool = HC_VariableEditTool(
-        #     self,
-        #     "Application Variable Editor",
-        #     {
-        #         "Dynamic": "Value:",
-        #         "FIL_AMPL_V": "Filament Amplitude:",
-        #         "DELAY_TIME_S": "Filament Heating Time:",
-        #     },
-        # )
-        # self.var_tool.update_variables()
 
         self.ScanWidget.update_actions()
 

@@ -68,21 +68,10 @@ class STS50Demo(hc.MainWindow):
         self.statustool = hc.StatusTool(app, "Connection Status")
         self.statustool.update_instruments()
 
-        app.add_variable("FIL_AMPL_V", "5.0")  # Add a filament amplitude variable
-        app.add_variable("DELAY_TIME_S", "7.5")  # Add a delay time variable
-        app.add_variable("PULSE_TIME_S", "500e-6")  # Add a spark time variable
-        app.add_macro(
-            "Trigger",
-            [
-                "SET:Filament DAC:VOLT:FIL_AMPL",
-                "CMD:Keysight Scope:SINGLE",
-                "SET:Filament DAC:VOLT:0",
-            ],
-        )  # Add a trigger macro
         app.add_macro("Safe", ["CMD:PSU:ALL_OFF", "CMD:AWG:ALL_OFF"])
 
         self.run_tool = hc.MacroRunnerTool(
-            app, "Macro Runner", ["Dynamic", "Trigger"], ["Run Macro", "Trigger Beam"]
+            app, "Macro Runner", ["Dynamic"], ["Run Macro"]
         )
 
         self.run_tool.update_macros()

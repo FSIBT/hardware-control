@@ -302,41 +302,23 @@ class ScanWidget(Instrument):
         self.values_file_edit.setText(filename)
 
     def set_instrument(self, inst: str):
-
-        logger.debug(f"Instrument set to '{inst}'")
-
         self.settings["instrument"] = inst
-
         self.parameter_drop.clear()
         params = []
 
-        # update parameters menu options
-
         # If set to 'app variables' populate with app variables, not instrument settings
         if inst == "App Variables":
-
-            # Add app variables
-            for v in self.app.variables:
-                params.append(v)
-            self.parameter_drop.addItems(params)
-
+            params = list(self.app.variables.keys())
         else:  # Is a real instrument name...
+            instrument = self.app.get_instrument_by_name(inst)
 
-            # Search for instrument....
-            found = False
-            for instrument in self.app.instruments:
-                if instrument.name == inst:
-                    instr = instrument
-                    found = True
-
-            if found:
-                for param in instr.settings:
-                    params.append(param)
-                self.parameter_drop.addItems(params)
-                logger.debug(f"\tAdded {len(params)} items to parameter dropdown.")
+            if instrument:
+                params = list(instrummen.settings.keys())
+                logger.debug(f"Added {len(params)} items to parameter dropdown.")
             else:
                 logger.error(f"Couldn't find instrument '{inst}'")
 
+        self.parameter_drop.addItems(params)
         self.settings["progress"] = 0
         self.progress_bar.setValue(self.settings["progress"])
 
@@ -483,9 +465,9 @@ class ScanWidget(Instrument):
 
             # Find instrument, get current setting for parameter
             found = False
-            for instr in self.app.instruments:
-                if instr.name == self.settings["instrument"]:
-                    scan_instrument = instr
+            for instrument in self.app.instruments:
+                if instrument.name == self.settings["instrument"]:
+                    scan_instrument = instrument
                     found = True
                     break
             if not found:
@@ -578,7 +560,7 @@ class ScanWidget(Instrument):
             with open(filename) as file:
                 self.settings = json.load(file)
                 logger.debug(
-                    f"State for {self.comm.instr.ID} read from file '{filename}'"
+                    f"State for {self.comm.instrument.ID} read from file '{filename}'"
                 )
         except:
             logger.error(
@@ -597,7 +579,7 @@ class ScanWidget(Instrument):
             with open(filename, "w") as file:
                 json.dump(self.settings, file)
                 logger.debug(
-                    f"State for {self.comm.instr.ID} saved to file '{filename}'"
+                    f"State for {self.comm.instrument.ID} saved to file '{filename}'"
                 )
         except Exception as e:
             logger.debug(f"ERROR: Failed to write file '{filename}'. State not saved.")
@@ -638,7 +620,7 @@ class ScanWorker(QObject):
 
     def __init__(
         self,
-        instr,
+        instrument,
         param,
         action,
         sync,
@@ -654,7 +636,7 @@ class ScanWorker(QObject):
 
         logger.info("Creating scan thread")
 
-        self.instr = instr
+        self.instrument = instrument
         self.param = param
         self.action = action
         self.running = True
@@ -708,7 +690,7 @@ class ScanWorker(QObject):
             logger.debug(f"Using value {val}")
 
             # First set parameter to value
-            if not self.send_hc(f"SET_UI:{self.instr}:{self.param}:{str(val)}"):
+            if not self.send_hc(f"SET_UI:{self.instrument}:{self.param}:{str(val)}"):
                 break
 
             start_time = time.time()

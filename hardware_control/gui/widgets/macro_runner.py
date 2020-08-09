@@ -20,12 +20,6 @@ class MacroRunnerTool(Instrument):
         Options include: 1.) name of any macro, 2.) 'Dynamic', which gives
         one button with a dropdown letting the user pick whihc macro the
         button triggers.
-    indicators : list
-        specifies which indicators are available to add to the widget.
-        Options must be in dictionary, s.t. option is the key name, and it
-        specifies a string value for the option. Options include:
-        1.) name of any application variable (value is populates a label
-        describing the application variable's value)
     button_labels : list
         1.) 'Label' adds a plain text label, 2.) 'Light', which adds
         a tri-color light with values 'green', 'grey', 'red',
@@ -43,13 +37,11 @@ class MacroRunnerTool(Instrument):
         name: str = "Macro Runner",
         buttons=["Dynamic"],
         button_labels=["Run Macro"],
-        indicators={},
         add_countdown=False,
     ):
 
         super().__init__(app, name)
         self.buttons = buttons
-        self.indicators = indicators
         self.button_labels = button_labels
 
         self.settings = {}
@@ -114,32 +106,6 @@ class MacroRunnerTool(Instrument):
             else:
 
                 logger.error(f"Macro {but} does not exist. Ignoring button.")
-
-        for idx, ind in enumerate(self.indicators):  # Requests dynamic...
-
-            if ind in [x for x in self.app.variables]:
-
-                # Create macro selection dropdown label
-                ind_desc_label = QLabel(self.indicators[ind])
-                ind_desc_label.setAlignment(
-                    QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
-                )
-
-                self.label_widgets[ind] = QLabel(self.app.variables[ind])
-                self.label_widgets[ind].setAlignment(
-                    QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
-                )
-
-                self.button_panel.addWidget(ind_desc_label, idx + len(self.buttons), 0)
-                self.button_panel.addWidget(
-                    self.label_widgets[ind], idx + len(self.buttons), 1
-                )
-
-            else:
-
-                logger.error(
-                    f"Application variable {ind} does not exist. Ignoring indicator."
-                )
 
         if add_countdown:
             self.countdown_wdgt = QLCDNumber()
@@ -213,14 +179,6 @@ class MacroRunnerTool(Instrument):
             self.macro_drop.addItems(names)
         except:
             pass  # no macros to update
-
-    def update_indicators(self):
-        for idx, ind in enumerate(self.indicators):  # Requests dynamic...
-            if ind in [x for x in self.app.variables]:
-                # Create macro selection dropdown label
-                self.label_widgets[ind].setText(self.app.variables[ind])
-            else:
-                logger.error(f"Macro {ind} does not exist. Ignoring indicator.")
 
     # Create a default state object if can't get state from a file
     def default_state(self):
