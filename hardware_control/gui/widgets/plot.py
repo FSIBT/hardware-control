@@ -155,7 +155,7 @@ class PlotBase(QWidget):
                 y_values,
                 self.fmt,
                 label=label_name,
-                time_zone=self.time_zone,
+                tz=self.time_zone,
                 linewidth=self.linewidth,
             )
 
