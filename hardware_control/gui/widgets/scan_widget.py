@@ -313,7 +313,7 @@ class ScanWidget(Instrument):
             instrument = self.app.get_instrument_by_name(inst)
 
             if instrument:
-                params = list(instrummen.settings.keys())
+                params = list(instrument.settings.keys())
                 logger.debug(f"Added {len(params)} items to parameter dropdown.")
             else:
                 logger.error(f"Couldn't find instrument '{inst}'")

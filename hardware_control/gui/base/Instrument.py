@@ -569,7 +569,7 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
                 return 'HV-Voltage[V] HV-Current[A] Pressure[mTorr]' """
 
         # Make sure parameters is list or None
-        if parameters is not None and not isinstance(parameter, list):
+        if parameters is not None and not isinstance(parameters, list):
             return None
 
         #

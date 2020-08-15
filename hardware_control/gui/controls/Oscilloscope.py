@@ -275,7 +275,7 @@ class OscillscopeChannelWidget(QWidget):
         self.coupling_drop = QComboBox()
         self.coupling_drop.addItems(["DC", "AC"])
         self.coupling_drop.currentIndexChanged.connect(
-            lambda: isntrument.update_setting(
+            lambda: instrument.update_setting(
                 f"CH{channel}_coupling", self.coupling_drop.currentText()
             )
         )
@@ -394,7 +394,7 @@ class OscilloscopeTriggerWidget(QWidget):
         # ****** DEFINE TEXT BOXES
         self.level_edit = QDoubleSpinBox()
         self.level_edit.editingFinished.connect(
-            lambda: instrument.update_setting(
+            lambda: instrument.s(
                 "trigger_level", str(self.level_edit.value())
             )
         )

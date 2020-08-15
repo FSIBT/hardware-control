@@ -32,18 +32,14 @@ class QOnOffButton(QPushButton):
 
         self.on_text = "On"
         self.off_text = "Off"
-        self.unkown_text = "status unkown"
 
         self.on_icon = QIcon(load_icon("button-power-on.svg"))
         self.off_icon = QIcon(load_icon("button-power-off.svg"))
-        self.unkown_icon = QIcon(load_icon("button-power-unkown.svg"))
 
         self.clicked.connect(self.click)
+        self.update_status(self.instrument.settings[self.name])
 
-        self.setText(self.unkown_text)
-        self.setIcon(self.unkown_icon)
         self.setIconSize(QtCore.QSize(30, 30))
-
         self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
         def instrument_return_hook(key, value):
@@ -54,14 +50,12 @@ class QOnOffButton(QPushButton):
 
     def click(self):
         """Toggle the current status."""
-        self.instrument.remote_update_setting(
-            self.name, not self.instrument.values[self.name]
-        )
-        current_text = self.getText()
-        self.setText(f"{current_text} (change requested)")
+        toggled_value = str(self.instrument.values[self.name] != "True")
+        self.instrument.remote_update_setting(self.name, toggled_value)
+        self.update_status(toggled_value)
 
     def update_status(self, value):
-        if value:
+        if value == "True":
             self.setChecked(True)
             self.setIcon(self.on_icon)
             self.setText(self.on_text)
@@ -74,7 +68,7 @@ class QOnOffButton(QPushButton):
 class QOnOffIndicator(QSvgWidget):
     """Small On/Off indicator.
 
-    Starts in an unkown state (both lights off)
+    Starts in an unknown state (both lights off)
 
     Parameters
     ----------
@@ -90,11 +84,11 @@ class QOnOffIndicator(QSvgWidget):
         self.instrument = instrument
         self.on_icon = icon_filename("on-off-indicator-on.svg")
         self.off_icon = icon_filename("on-off-indicator-off.svg")
-        self.unkown_icon = icon_filename("on-off-indicator-unkown.svg")
+        self.unknown_icon = icon_filename("on-off-indicator-unknown.svg")
 
-        self.status = "unkonwn"
+        self.status = "unknown"
 
-        super().__init__(self.unkown_icon)
+        super().__init__(self.unknown_icon)
 
         self.setMouseTracking(True)
         self.setToolTip(self.name)
