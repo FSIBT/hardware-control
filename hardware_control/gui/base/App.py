@@ -26,7 +26,6 @@ class App(QApplication):
         super().__init__([])
         self.instruments = []
         self.macros = {}  # Dict of hc-commands (used for scans + trigger buttons)
-        self.variables = {}  # Dict of app variables
         self.function_handles = {}  # Dict of function handles for macros to call
         # self.saved_data = {}
         # Dict of data saved directly with query commmands
@@ -209,10 +208,6 @@ class App(QApplication):
             return True
         else:
             return False
-
-    def add_variable(self, name: str, value: str):
-        """Adds an application variable. Overwrites if variable already exists"""
-        self.variables[name] = value
 
     def process_external_command(self, command: str):
         """Accepts a text command, and executes it on the app"""
