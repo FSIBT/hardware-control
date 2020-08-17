@@ -822,7 +822,7 @@ class STS50Demo(hc.MainWindow):
 
         self.zmqtool = hc.ZMQConnectionTool(app, "ZMQ Input Tool", "tcp://*:5555")
 
-        self.ScanWidget = hc.ScanWidget(app, "Scan Control", True)
+        self.ScanWidget = hc.ScanWidget(app, "Scan Control")
 
         self.logtool = hc.DataWidget(app, "Data Logger")
         self.logtool.update_groups()

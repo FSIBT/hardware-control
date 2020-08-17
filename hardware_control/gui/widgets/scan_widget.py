@@ -3,11 +3,10 @@ import logging
 import time
 
 import numpy as np
-import zmq
 
 import pyqtgraph as pg  # For some reason, without this line QPushButton won't import
 from PyQt5 import QtCore
-from PyQt5.QtCore import QThread, QObject, pyqtSignal, pyqtSlot
+from PyQt5.QtCore import QTimer, QObject
 from PyQt5.QtGui import QProgressBar, QIcon, QApplication, QIntValidator
 from PyQt5.QtWidgets import (
     QGroupBox,
@@ -23,48 +22,29 @@ from PyQt5.QtWidgets import (
 )
 
 from ..base import Instrument
-from .zmq_connection import ZMQConnectionTool
 from .utility import load_icon
 
 logger = logging.getLogger(__name__)
 
 
-class FakeButton:
-    def __init__(self, fakeText):
-
-        self.str = fakeText
-
-    def text(self):
-        return self.str
-
-
 class ScanWidget(Instrument):
-
-    sigStartScan = pyqtSignal()
-
-    def __init__(
-        self, app, name: str = "Scan Control", include_variables: bool = True,
-    ):
+    def __init__(self, app, name: str = "Scan Control"):
 
         super().__init__(app, name)
 
         self.settings = {}
         self.ignore = True
         self.ignore_control = True
-        self.include_variables = include_variables
         self.val_list = []
+        self.count = 0
+        self.number_of_values = 0
+        self.wait = "PRE"  # either "PRE", "SCAN", "POST"
 
         self.socket_addr = "tcp://127.0.0.1:5959"
 
         self.running_scan = False
 
         self.settings = self.default_state()
-
-        # This ZMQConnectionTool will receive commands from the scan thread
-        self.zmq_receiver = ZMQConnectionTool(
-            app, f"{self.name}-ZMQ Receiver", self.socket_addr, 100
-        )
-        self.zmq_receiver.connectionOnOff(FakeButton("Disable Incoming Commands"))
 
         # *************************Create GUI************************
         self.arrow_symbol = QLabel()
@@ -236,7 +216,7 @@ class ScanWidget(Instrument):
         self.scan_button.setText("Scan")
         self.scan_button.setIcon(QIcon(load_icon("scan.png")))
         self.scan_button.setCheckable(False)
-        self.scan_button.clicked.connect(self.start_scan_thread)
+        self.scan_button.clicked.connect(self.start_scan)
         self.scan_button.setSizePolicy(
             QSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
         )
@@ -273,8 +253,11 @@ class ScanWidget(Instrument):
         )
         self.setLayout(self.master_layout)
 
-    def update_local_setting(self, setting: str, value: str):
+        # Create timer to do scan
+        self.scan_timer = QTimer(self)
+        self.scan_timer.timeout.connect(self.scan)
 
+    def update_local_setting(self, setting: str, value: str):
         self.settings[setting] = value
 
     def settings_to_UI(self):
@@ -287,11 +270,17 @@ class ScanWidget(Instrument):
         self.pause_timer_label_after.setText(self.settings["after_countdown"])
 
     def stop_scan(self):
+        self.scan_timer.stop()
+        self.scan_button.setEnabled(True)
+        self.stop_button.setEnabled(False)
 
-        self.zmq_receiver.connectionOnOff(FakeButton("Disable Incoming Commands"))
+    def start_scan(self):
+        dt_before = float(self.pause_edit_before.text())
+        self.count = 0
+        if self.compute_values():
+            self.scan_timer.singleShot(1000 * dt_before, self.scan)
 
     def browse_values_files(self):
-
         # Use file dialog to get save location
         dlg = QFileDialog()
         name_tuple = dlg.getOpenFileName()
@@ -306,17 +295,13 @@ class ScanWidget(Instrument):
         self.parameter_drop.clear()
         params = []
 
-        # If set to 'app variables' populate with app variables, not instrument settings
-        if inst == "App Variables":
-            params = list(self.app.variables.keys())
-        else:  # Is a real instrument name...
-            instrument = self.app.get_instrument_by_name(inst)
+        instrument = self.app.get_instrument_by_name(inst)
 
-            if instrument:
-                params = list(instrument.settings.keys())
-                logger.debug(f"Added {len(params)} items to parameter dropdown.")
-            else:
-                logger.error(f"Couldn't find instrument '{inst}'")
+        if instrument:
+            params = list(instrument.settings.keys())
+            logger.debug(f"Added {len(params)} items to parameter dropdown.")
+        else:
+            logger.error(f"Couldn't find instrument '{inst}'")
 
         self.parameter_drop.addItems(params)
         self.settings["progress"] = 0
@@ -367,7 +352,6 @@ class ScanWidget(Instrument):
             self.val_list = [
                 str(v) for v in np.arange(start, end + step_size, step_size)
             ]
-
         elif self.use_file.isChecked():
             filename = self.values_file_edit.text()
             if filename == "":
@@ -383,161 +367,65 @@ class ScanWidget(Instrument):
             logger.error("No mode selected in scan tool")
             return False
 
+        self.number_of_values = len(self.val_list)
         return True
 
-    def start_scan_thread(self):
-
-        # Make sure a scan not already in progress
-        if self.running_scan:
-            logger.warning("Cannot run scan while a scan is in progress")
-            return
-
-        self.zmq_receiver.restart_port()
-        self.zmq_receiver.connectionOnOff(FakeButton("Accept Incoming Commands"))
-
-        # Compute scan values
-        if not self.compute_values():
-            logger.warning("Failed to compute scan values")
-            return
-
-        # Get parameters, instrument, etc...
-        i = self.instrument_drop.currentText()
-        p = self.parameter_drop.currentText()
-        m = self.action_drop.currentText()
-        sync = self.sync_measdir_check.isChecked()
-        delay_before = self.pause_edit_before.text()
-        delay_after = self.pause_edit_after.text()
-
-        # Generate a starting key and a socket address
-        key = 10
-
-        self.worker = ScanWorker(
-            i,
-            p,
-            m,
-            sync,
-            self.val_list,
-            key,
-            self.socket_addr,
-            int(delay_before),
-            int(delay_after),
-            self.name,
-        )
-        self.worker_thread = QThread()
-        self.worker.moveToThread(self.worker_thread)
-        self.worker.finished.connect(self.scan_thread_finished)
-        self.sigStartScan.connect(self.worker.run_scan)
-
+    def scan(self):
         self.scan_button.setEnabled(False)
         self.stop_button.setEnabled(True)
 
-        self.worker_thread.start()
-
-        self.sigStartScan.emit()
-
-    @pyqtSlot()
-    def scan_thread_finished(self):
-
-        self.zmq_receiver.connectionOnOff(FakeButton("Disable Incoming Commands"))
-
-        self.scan_button.setEnabled(True)
-        self.stop_button.setEnabled(False)
-        self.worker_thread.quit()
-
-    def scan(self):
-
-        # Compute scan values
-        if not self.compute_values():
-            return
-
         # Get parameters, instrument, etc...
         i = self.instrument_drop.currentText()
         p = self.parameter_drop.currentText()
         m = self.action_drop.currentText()
         sync = self.sync_measdir_check.isChecked()
+
+        dt_before = float(self.pause_edit_before.text())
+        dt_after = float(self.pause_edit_after.text())
+
         # vals = self.settings["values"].split(",")
 
         logger.debug(
             f"Starting scan\n\tInstrument: {i}\n\tParameter: {p}\n\tValues:{self.val_list}"
         )
 
-        if i != "App Variables":  # Is real instrument, not App Variable
+        scan_instrument = self.app.get_instrument_by_name(self.settings["instrument"])
+        if scan_instrument is None:
+            logger.error(f"Failed to find instrument {i}")
+            return
 
-            # Find instrument, get current setting for parameter
-            found = False
-            for instrument in self.app.instruments:
-                if instrument.name == self.settings["instrument"]:
-                    scan_instrument = instrument
-                    found = True
-                    break
-            if not found:
-                logger.error(f"Failed to find instrument {i}")
-                return
+        v = self.val_list.pop(0)
+        self.count += 1
 
-            # Scan through values
-            count = 0
-            for v in self.val_list:
+        # Update progress bar
+        self.settings["progress"] = str(self.count / self.number_of_values * 100)
+        logger.debug(
+            f"\tRunning value = '{v}'\t\t{self.count/self.number_of_values*100}%"
+        )
+        self.progress_bar.setValue(float(self.settings["progress"]))
+        QApplication.processEvents()
 
-                # Update progress bar
-                self.settings["progress"] = str(count / len(self.val_list) * 100)
-                logger.debug(
-                    f"\tRunning value = '{v}'\t\t{count/len(self.val_list)*100}%"
-                )
-                self.progress_bar.setValue(float(self.settings["progress"]))
-                QApplication.processEvents()
+        # Update setting
+        scan_instrument.remote_update_setting(self.settings["parameter"], v.strip())
 
-                # Update setting
-                if not scan_instrument.set_setting(
-                    self.settings["parameter"], v.strip()
-                ):
-                    logger.error(
-                        f"Failed to set parameter '{p}' to value '{v}'. Exiting scan."
-                    )
-                    return
-                count += 1
+        # Run Macro (if macro selected)
+        if m != "None":
+            logger.debug(f"\t\tRunning macro {m}")
+            self.app.run_macro(self.app.macros[m])
 
-                # Run Macro (if macro selected)
-                if m != "None":
-                    logger.debug(f"\t\tRunning macro {m}")
-                    self.app.run_macro(self.app.macros[m])
+        # Sync with director (if box checked)
+        if self.sync_measdir_check.isChecked():
+            # Todo: Put this function in new thread, prevent blocking
+            while self.app.director.state.upper() == "BUSY":
+                time.sleep(0.1)
 
-                # Sync with director (if box checked)
-                if (
-                    self.sync_measdir_check.isChecked()
-                ):  # Todo: Put this function in new thread, prevent blocking
-                    while self.app.director.state.upper() == "BUSY":
-                        time.sleep(0.1)
-
+        if self.val_list:
+            self.scan_timer.singleShot(1000 * (dt_before + dt_after), self.scan)
         else:
-
-            # Make sure variable exists
-            if p not in self.app.variables:
-                logger.error("Failed to find app variable.")
-                return
-
-            # Scan thorugh values
-            count = 0
-            for v in self.val_list:
-
-                # Update progress bar
-                self.settings["progress"] = count / len(self.val_list) * 100
-                logger.debug(
-                    f"\tRunning value = '{v}'\t\t{count/len(self.val_list)*100}%"
-                )
-                self.progress_bar.setValue(float(self.settings["progress"]))
-                QApplication.processEvents()
-
-                # Change value of variable
-                self.app.variables[p] = v.strip()  # Set value
-                count += 1
-
-                if m != "None":
-                    logger.debug(f"\t\tRunning macro {m}")
-                    self.app.run_macro(self.app.macros[m])
-
-        self.settings["progress"] = 100
-        self.progress_bar.setValue(self.settings["progress"])
-        logger.debug("Finished scan")
+            self.settings["progress"] = 100
+            self.progress_bar.setValue(self.settings["progress"])
+            logger.debug("Finished scan")
+            self.stop_scan()
 
     def update_instruments(self):
         self.instrument_drop.clear()
@@ -546,8 +434,6 @@ class ScanWidget(Instrument):
             if inst.ignore_control:
                 continue
             names.append(inst.name)
-        if self.include_variables and ("App Variables" not in names):
-            names.append("App Variables")
         self.instrument_drop.addItems(names)
 
     def load_state(self, filename: str):
@@ -585,9 +471,6 @@ class ScanWidget(Instrument):
             logger.debug(f"ERROR: Failed to write file '{filename}'. State not saved.")
             logger.debug(f"\t{e}")
 
-    # Update setting is overwritten so hc-commands can set values such as the
-    # progress bar.
-    #
     def update_setting(self, setting: str, value: str):
 
         try:
@@ -613,130 +496,3 @@ class ScanWidget(Instrument):
             "after_countdown": "10",
         }
 
-
-class ScanWorker(QObject):
-
-    finished = pyqtSignal()
-
-    def __init__(
-        self,
-        instrument,
-        param,
-        action,
-        sync,
-        vals,
-        key,
-        socket_addr,
-        pause_before: int,
-        pause_after: int,
-        scan_tool_name,
-    ):
-
-        super().__init__()
-
-        logger.info("Creating scan thread")
-
-        self.instrument = instrument
-        self.param = param
-        self.action = action
-        self.running = True
-        self.sync = sync
-        self.vals = vals
-        self.pause_before = int(pause_before)
-        self.pause_after = int(pause_after)
-        self.scan_tool_name = scan_tool_name
-
-        self.socket_addr = socket_addr
-
-        self.timeout = 2e3
-
-        context = zmq.Context()
-        self.socket = context.socket(zmq.REQ)
-        self.socket.connect(self.socket_addr)
-
-        self.poller = zmq.Poller()
-        self.poller.register(self.socket, zmq.POLLIN)
-
-        # Make sure vals is a list
-        if not isinstance(vals, list):
-            logger.error("Scan thread received single value instead of list")
-            self.vals = [self.vals]
-
-    def send_hc(self, command_str: str):
-        """ Sends an hc Command to the  """
-
-        self.socket.send_string(command_str)
-
-        events = self.poller.poll(self.timeout)
-        if len(events) < 1:
-            return False
-
-        rval = self.socket.recv_string()
-
-        return True
-
-    def is_busy(self):
-        req_str = "MEAS:GETSTATE"
-        self.socket.send(str.encode(req_str))
-        rval = self.socket.recv()
-        return rval == "Busy"
-
-    @pyqtSlot()
-    def run_scan(self):
-
-        num_vals = len(self.vals)
-        for idx, val in enumerate(self.vals):
-
-            logger.debug(f"Using value {val}")
-
-            # First set parameter to value
-            if not self.send_hc(f"SET_UI:{self.instrument}:{self.param}:{str(val)}"):
-                break
-
-            start_time = time.time()
-            while time.time() - start_time < self.pause_before:
-                time_elapsed = time.time() - start_time
-                countdown_time = "{:05.1f}".format(self.pause_before - time_elapsed)
-                if not self.send_hc(
-                    f"SET_UI:{self.scan_tool_name}:before_countdown:{countdown_time}"
-                ):
-                    self.finished.emit()
-                    return
-                time.sleep(0.1)
-
-            if not self.send_hc(f"SET_UI:{self.scan_tool_name}:before_countdown:{0}"):
-                break
-
-            # Second, run macro (if requested)
-            if self.action != "None":
-                if not self.send_hc(f"FUNC:{self.action}"):
-                    break
-
-            # Pause if requested
-            start_time = time.time()
-            while time.time() - start_time < self.pause_after:
-                time_elapsed = time.time() - start_time
-                countdown_time = "{:05.1f}".format(self.pause_after - time_elapsed)
-                if not self.send_hc(
-                    f"SET_UI:{self.scan_tool_name}:after_countdown:{countdown_time}"
-                ):
-                    self.finished.emit()
-                    return
-                time.sleep(0.1)
-
-            if not self.send_hc(f"SET_UI:{self.scan_tool_name}:after_countdown:{0}"):
-                break
-
-            # Third, sync w/ MeasDir (if requested)
-            if self.sync:
-                while True:
-                    if not self.is_busy():
-                        break
-
-            if not self.send_hc(
-                f"SET_UI:{self.scan_tool_name}:progress:{100.0*(idx+1.0)/num_vals}"
-            ):
-                break
-
-        # End thread
-        self.finished.emit()
