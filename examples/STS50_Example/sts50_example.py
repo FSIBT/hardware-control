@@ -231,7 +231,6 @@ def trigger_function(window):
     # Update shot number and shot number widget
     lt = localtime()
     timestamp = strftime("%H%M%S", lt)
-    window.run_tool.update_indicators()
 
     # Check all time delay fields from trigger 1, get max delay time
     max_t = 0
@@ -539,7 +538,7 @@ class CustomPowerSupplyWidget(hc.Instrument):
         self.power_button.setText("All Off")
         self.power_button.setIcon(QIcon(hc.load_icon("voltage_off.svg")))
         self.power_button.setCheckable(False)
-        self.power_button.clicked.connect(lambda: power_off(window))
+        self.power_button.clicked.connect(lambda: power_off(app.main_window))
 
         self.vert_spacer = QSpacerItem(
             10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
