@@ -175,6 +175,7 @@ class IOModule(Instrument):
         )
 
         self.init_values()
+        self.settings = self.default_state()
 
         self.bottom_spacer = QSpacerItem(
             10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
@@ -219,6 +220,8 @@ class IOModule(Instrument):
 
         for c in self.an_in_channels:
             self.values[f"CH{c.channel}_analog_read"] = ""
+        for c in self.an_out_channels:
+            self.values[f"CH{c.channel}_analog_write"] = ""
         for c in self.dig_in_channels:
             self.values[f"CH{c.channel}_digital_read"] = ""
 
@@ -226,8 +229,11 @@ class IOModule(Instrument):
         default = {}
         for c in self.an_in_channels:
             default[f"CH{c.channel}_analog_read"] = "0"
+        for c in self.an_out_channels:
+            default[f"CH{c.channel}_analog_write"] = "0"
         for c in self.dig_in_channels:
             default[f"CH{c.channel}_digital_read"] = "0"
+
         return default
 
 
