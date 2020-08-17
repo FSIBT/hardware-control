@@ -37,7 +37,7 @@ class QOnOffButton(QPushButton):
         self.off_icon = QIcon(load_icon("button-power-off.svg"))
 
         self.clicked.connect(self.click)
-        self.update_status(self.instrument.settings[self.name])
+        self.update_status(self.instrument.values[self.name])
 
         self.setIconSize(QtCore.QSize(30, 30))
         self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
