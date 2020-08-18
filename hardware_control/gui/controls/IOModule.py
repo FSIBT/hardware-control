@@ -4,6 +4,7 @@ it provides a simple UI.
 """
 import json
 import logging
+from typing import Union
 
 from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QDoubleValidator
@@ -66,35 +67,32 @@ class IOModule(Instrument):
         self,
         app,
         backend,
-        channel_data: dict,
+        channel_data: Union[dict, str],
         name: str = "IO Module",
         lock_until_sync=False,
         num_columns: int = 1,
-        channel_file: str = "",
         hooks: dict = None,
         show_ID_labels=False,
     ):
 
         super().__init__(app, name, backend, lock_until_sync)
 
-        if channel_data == None:
-            self.channel_data = read_channel_file(channel_file)
+        if isinstance(channel_data, str):
+            self.channel_data = read_channel_file(channel_data)
         else:
             self.channel_data = channel_data
-
-        self.filename = ""
 
         self.channel_panel = QGridLayout()
         self.an_in_channels = []
         self.an_out_channels = []
         self.dig_in_channels = []
         self.dig_out_channels = []
+
         load_idx = 0
-        for c_name in self.channel_data:
+        for c_dict in self.channel_data.values():
 
             load_idx += 1
 
-            c_dict = self.channel_data[c_name]
             if not isinstance(c_dict, dict):
                 continue
 

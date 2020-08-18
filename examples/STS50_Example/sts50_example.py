@@ -789,10 +789,9 @@ class STS50Demo(hc.MainWindow):
         self.iomod_float_wdgt = hc.IOModule(
             app,
             self.iomod_float,
-            channel_data=None,
+            channel_data="nidaq_extraction_conf.json",
             name="Power Supplies (floating rack)",
             num_columns=2,
-            channel_file="nidaq_extraction_conf.json",
             hooks={
                 "cDAQ9188-1AEF742Mod7/ao4": lambda v: -v / 1000,
                 "cDAQ9188-1AEF742Mod6/ai6": lambda v: v * 1e-3,
@@ -804,10 +803,9 @@ class STS50Demo(hc.MainWindow):
         self.iomod_usb_wdgt = hc.IOModule(
             app,
             self.iomod_usb,
-            channel_data=None,
+            channel_data="nidaq_grid_conf.json",
             name="Power Supplies",
             num_columns=2,
-            channel_file="nidaq_grid_conf.json",
             hooks={
                 "cDAQ1Mod1/ao0": lambda v: v / 3000,
                 "cDAQ1Mod1/ao1": lambda v: v / 3000,
