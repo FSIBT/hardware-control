@@ -255,6 +255,7 @@ class ScanWidget(Instrument):
 
         # Create timer to do scan
         self.scan_timer = QTimer(self)
+        self.scan_timer.setSingleShot(True)
         self.scan_timer.timeout.connect(self.scan)
 
     def update_local_setting(self, setting: str, value: str):
@@ -273,12 +274,14 @@ class ScanWidget(Instrument):
         self.scan_timer.stop()
         self.scan_button.setEnabled(True)
         self.stop_button.setEnabled(False)
+        self.settings["progress"] = 0
+        self.progress_bar.setValue(self.settings["progress"])
 
     def start_scan(self):
         dt_before = float(self.pause_edit_before.text())
         self.count = 0
         if self.compute_values():
-            self.scan_timer.singleShot(1000 * dt_before, self.scan)
+            self.scan_timer.start(1000 * dt_before)
 
     def browse_values_files(self):
         # Use file dialog to get save location
@@ -411,7 +414,7 @@ class ScanWidget(Instrument):
         # Run Macro (if macro selected)
         if m != "None":
             logger.debug(f"\t\tRunning macro {m}")
-            self.app.run_macro(self.app.macros[m])
+            self.app.run_macro("FUNC:{self.action}")
 
         # Sync with director (if box checked)
         if self.sync_measdir_check.isChecked():
@@ -420,7 +423,7 @@ class ScanWidget(Instrument):
                 time.sleep(0.1)
 
         if self.val_list:
-            self.scan_timer.singleShot(1000 * (dt_before + dt_after), self.scan)
+            self.scan_timer.start(1000 * (dt_before + dt_after))
         else:
             self.settings["progress"] = 100
             self.progress_bar.setValue(self.settings["progress"])
