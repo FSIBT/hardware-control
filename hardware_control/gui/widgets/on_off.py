@@ -4,7 +4,7 @@ from PyQt5.QtCore import QSize
 from PyQt5.QtWidgets import QPushButton, QSizePolicy
 from PyQt5.QtSvg import QSvgWidget
 
-from .utility import load_icon, icon_filename
+from .utility import load_icon, icon_filename, setButtonState
 
 
 class QOnOffButton(QPushButton):
@@ -55,6 +55,7 @@ class QOnOffButton(QPushButton):
         self.update_status(toggled_value)
 
     def update_status(self, value):
+        setButtonState(self, value)
         if value == "True":
             self.setChecked(True)
             self.setIcon(self.on_icon)
