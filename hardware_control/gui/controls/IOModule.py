@@ -103,6 +103,7 @@ class IOModule(Instrument):
                 chan_hook = hooks[c_dict["ID_STR"]]
 
             if c_dict["DIR"] == "OUTPUT":
+                self.update_settings_hooks[]
                 if c_dict["TYPE"] == "DIGITAL":
 
                     last_wdgt = DigitalOutputChannel(

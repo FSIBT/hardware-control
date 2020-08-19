@@ -44,7 +44,7 @@ class DelayGenerator(Instrument):
 
         self.filename = ""
 
-        self.update_settings_hooks.append(self.enableDisableWidgets)
+        self.update_settings_hooks["TRIGGER_MODE"].append(self.enableDisableWidgets)
 
         # Create GUI
 
@@ -206,13 +206,12 @@ class DelayGenerator(Instrument):
         # Write state to scope - synch scope with GUI
         self.send_state()
 
-    def enableDisableWidgets(self, setting: str, value: str):
+    def enableDisableWidgets(value: str):
 
-        if setting == "TRIGGER_MODE":
-            if value == "SINGLE":
-                self.single_trig_but.setEnabled(True)
-            else:
-                self.single_trig_but.setEnabled(False)
+        if value == "SINGLE":
+            self.single_trig_but.setEnabled(True)
+        else:
+            self.single_trig_but.setEnabled(False)
         return value
 
     def default_state(self):

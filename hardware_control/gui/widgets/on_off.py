@@ -42,11 +42,11 @@ class QOnOffButton(QPushButton):
         self.setIconSize(QtCore.QSize(30, 30))
         self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
-        def instrument_return_hook(key, value):
-            if key == self.name:
-                self.update_status(value)
+        def instrument_return_hook(value):
+            self.update_status(value)
+            return value
 
-        instrument.update_values_hooks.append(instrument_return_hook)
+        instrument.update_values_hooks[self.name].append(instrument_return_hook)
 
     def click(self):
         """Toggle the current status."""
@@ -95,11 +95,11 @@ class QOnOffIndicator(QSvgWidget):
 
         self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
-        self.instrument.update_values_hooks.append(self.update_hook)
+        self.instrument.update_values_hooks[self.name].append(self.update_hook)
 
-    def update_hook(self, key, value):
-        if key == self.name:
-            self.set(value)
+    def update_hook(self, value):
+        self.set(value)
+        return value
 
     def sizeHint(self):
         return QSize(10, 20)

@@ -1,4 +1,4 @@
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 import json
 import logging
 import abc
@@ -19,6 +19,15 @@ class CombinedMetaclass(sip.wrappertype, abc.ABCMeta):
     """
 
     pass
+
+
+def call_hooks(hooks_list, value):
+    for hook in hooks_list:
+        if callable(hook):
+            value = hook(value)
+            if value is None:
+                return value
+    return value
 
 
 class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
@@ -42,8 +51,8 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
         self.comm = None
         self.address = None
 
-        self.update_settings_hooks = []
-        self.update_values_hooks = []
+        self.update_settings_hooks = defaultdict(list)
+        self.update_values_hooks = defaultdict(list)
 
         if self.backend:
             self.backend.dummy = self.app.dummy
@@ -310,11 +319,9 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
             )
             return
 
-        for hook in self.update_settings_hooks:
-            if callable(hook):
-                value = hook(setting, value)
-                if value is None:
-                    return
+        value = call_hooks(self.update_settings_hooks[setting], value)
+        if not value:
+            return
 
         self.settings[setting] = value
 
@@ -499,13 +506,11 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
             key = "Misc"
             value = retval
 
-        self.values[key] = value
+        value = call_hooks(self.update_values_hooks[key], value)
+        if not value:
+            return
 
-        for hook in self.update_values_hooks:
-            if callable(hook):
-                ret = hook(key, value)
-                if ret:
-                    return
+        self.values[key] = value
 
     def backend_return_online(self, connected: bool):
         """Is called by self.comm when the backend returns an online status."""
