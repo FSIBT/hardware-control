@@ -793,9 +793,9 @@ class STS50Demo(hc.MainWindow):
             name="Power Supplies (floating rack)",
             num_columns=2,
             hooks={
-                "cDAQ9188-1AEF742Mod7/ao4": lambda v: -v / 1000,
-                "cDAQ9188-1AEF742Mod6/ai6": lambda v: v * 1e-3,
-                "cDAQ9188-1AEF742Mod6/ai7": lambda v: v * 1000,
+                "cDAQ9188-1AEF742Mod7/ao4_analog_write": lambda v: str(-float(v) / 1000),
+                "cDAQ9188-1AEF742Mod6/ai6_analog_read": lambda v: str(float(v) * 1e-3),
+                "cDAQ9188-1AEF742Mod6/ai7_analog_read": lambda v: str(float(v) * 1000),
             },
         )
 
@@ -807,13 +807,13 @@ class STS50Demo(hc.MainWindow):
             name="Power Supplies",
             num_columns=2,
             hooks={
-                "cDAQ1Mod1/ao0": lambda v: v / 3000,
-                "cDAQ1Mod1/ao1": lambda v: v / 3000,
-                "cDAQ1Mod2/ai0": lambda v: v * 3000,
-                "cDAQ1Mod2/ai1": lambda v: v * 1e-3,
-                "cDAQ1Mod2/ai2": lambda v: v * 1e-3,
-                "cDAQ1Mod2/ai3": lambda v: v * 3000,
-                "cDAQ1Mod2/ai4": lambda v: 10 ** (v - 11),
+                "cDAQ1Mod1/ao0_analog_write": lambda v: str(float(v) / 3000),
+                "cDAQ1Mod1/ao1_analog_write": lambda v: str(float(v) / 3000),
+                "cDAQ1Mod2/ai0_analog_read": lambda v: str(float(v) * 3000),
+                "cDAQ1Mod2/ai1_analog_read": lambda v: str(float(v) * 1e-3),
+                "cDAQ1Mod2/ai2_analog_read": lambda v: str(float(v) * 1e-3),
+                "cDAQ1Mod2/ai3_analog_read": lambda v: str(float(v) * 3000),
+                "cDAQ1Mod2/ai4_analog_read": lambda v: str(10 ** (float(v) - 11)),
             },
         )
         self.iomod_usb_wdgt.command("DISPLAY_CONFIGURATION")

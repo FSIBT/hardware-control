@@ -102,14 +102,14 @@ class IOModule(Instrument):
             if hooks is not None and c_dict["ID_STR"] in hooks:
                 chan_hook = hooks[c_dict["ID_STR"]]
 
+            write_setting = f"{c_dict['ID_STR']}_analog_write"
             if c_dict["DIR"] == "OUTPUT":
-                self.update_settings_hooks[]
+                self.update_settings_hooks[write_setting].append(chan_hook)
                 if c_dict["TYPE"] == "DIGITAL":
 
                     last_wdgt = DigitalOutputChannel(
                         self,
                         c_dict["ID_STR"],
-                        chan_hook,
                         c_dict["UNITS"],
                         c_dict["LABEL"],
                         show_ID_labels=show_ID_labels,
@@ -119,18 +119,17 @@ class IOModule(Instrument):
                     last_wdgt = AnalogOutputChannel(
                         self,
                         c_dict["ID_STR"],
-                        chan_hook,
                         c_dict["UNITS"],
                         c_dict["LABEL"],
                         show_ID_labels=show_ID_labels,
                     )
                     self.an_out_channels.append(last_wdgt)
             else:  # "INPUT"
+                self.update_values_hooks[write_setting].append(chan_hook)
                 if c_dict["TYPE"] == "DIGITAL":
                     last_wdgt = DigitalInputChannel(
                         self,
                         c_dict["ID_STR"],
-                        chan_hook,
                         c_dict["UNITS"],
                         c_dict["LABEL"],
                         show_ID_labels=show_ID_labels,
@@ -140,7 +139,6 @@ class IOModule(Instrument):
                     last_wdgt = AnalogInputChannel(
                         self,
                         c_dict["ID_STR"],
-                        chan_hook,
                         c_dict["UNITS"],
                         c_dict["LABEL"],
                         show_ID_labels=show_ID_labels,
@@ -241,7 +239,6 @@ class AnalogInputChannel(QGroupBox):
         self,
         control,
         channel,
-        function=None,
         units="V",
         label="Voltage: ",
         show_ID_labels=True,
@@ -255,7 +252,6 @@ class AnalogInputChannel(QGroupBox):
         self.control = control
         self.channel = channel
 
-        self.conversion_function = function
         if units is None:
             units = ""
         if label is None:
@@ -288,10 +284,6 @@ class AnalogInputChannel(QGroupBox):
                 self.control.read_values(f"CH{self.channel}_analog_read")
             )
 
-            # Convert to float. Run through conversion function if provided
-            if callable(self.conversion_function):
-                V_meas = self.conversion_function(float(V_meas))
-
             # Update label
             apply_to_label(
                 self.measurement_label,
@@ -310,7 +302,6 @@ class AnalogOutputChannel(QGroupBox):
         self,
         control,
         channel,
-        function=None,
         units="V",
         label="Set voltage: ",
         set_to_zero_button=False,
@@ -325,7 +316,6 @@ class AnalogOutputChannel(QGroupBox):
         self.control = control
         self.channel = channel
 
-        self.conversion_function = function
         if units is None:
             units = ""
         if label is None:
@@ -363,25 +353,13 @@ class AnalogOutputChannel(QGroupBox):
         self.setLayout(self.main_layout)
 
     def set_voltage(self):
-        voltage = float(self.editbox.text())
-
-        if callable(self.conversion_function):
-            voltage = self.conversion_function(voltage)
-
-        self.control.update_setting(f"CH{self.channel}_analog_write", str(voltage))
+        self.control.update_setting(f"CH{self.channel}_analog_write", self.editbox.text())
 
     def set_to_zero(self):
-
-        if callable(self.conversion_function):
-            voltage = self.conversion_function(0)
-        else:
-            voltage = 0
-
         self.editbox.setText("0")
-        self.control.update_setting(f"CH{self.channel}_analog_write", str(voltage))
+        self.control.update_setting(f"CH{self.channel}_analog_write", "0")
 
     def settings_to_UI(self):
-
         self.editbox.setText(self.control.settings[f"CH{self.channel}_analog_write"])
 
 
@@ -390,7 +368,6 @@ class DigitalInputChannel(QGroupBox):
         self,
         control,
         channel,
-        function=None,
         units="",
         label="Digital: ",
         show_ID_labels=True,
@@ -409,7 +386,6 @@ class DigitalInputChannel(QGroupBox):
         self.control = control
         self.channel = channel
 
-        self.conversion_function = function
         if units is None:
             units = ""
         if label is None:
@@ -460,7 +436,6 @@ class DigitalOutputChannel(QGroupBox):
         self,
         control,
         channel,
-        function=None,
         units="V",
         label="Set voltage: ",
         show_ID_labels=True,
@@ -477,7 +452,6 @@ class DigitalOutputChannel(QGroupBox):
         self.control = control
         self.channel = channel
 
-        self.conversion_function = function
         if units is None:
             units = ""
         if label is None:
