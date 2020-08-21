@@ -6,14 +6,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## [Unreleased]
+
 ### Changed
 - changed directory structure to separate backend and gui classes and make import easier
 - Renamed LoggerTool to DataWidget
+- pylint/pyflake cleanup
+
 ### Added
-- documentation on RTD: https://hardware-control.readthedocs.io/en/latest/index.html
+- documentation on [RTD](https://hardware-control.readthedocs.io/en/latest/index.html)
+- general hooks when setting variables and getting values from backends
 - simplify import by importing items in __init__.py of the subpackages
   and moving some variables into classes
 - this changelog file
+
+### Removed
+- Removed app.variables
+- Removed old, unused code
 
 ## [0.0.2] 2020-07-08
 ### Added
