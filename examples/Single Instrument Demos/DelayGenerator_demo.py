@@ -1,11 +1,14 @@
 """Device demo
 
 Usage:
-  device_demo [--dummy]
+  device_demo [--dummy] [--debug] [--console] [--info]
 
 Options:
   --dummy    use dummy connection for instruments that return semi-random data
              so that one run the program away from the test stand
+  --debug    allow debug print statements
+  --info     allow info print statements
+  --console  Print logger output to console
 """
 
 import sys
@@ -18,6 +21,9 @@ import hardware_control.gui as hc
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
+
+logger = logging.getLogger(__name__)
+hc.setup_logging(logger, commands, "hardware_control.log")
 
 
 class Demo(QMainWindow):
