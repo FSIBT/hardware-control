@@ -2,14 +2,19 @@
 """wavegen demo
 
 Usage:
-  wavegen_demo [--dummy] [--socket]
+  wavegen_demo [--dummy] [--socket] [--debug] [--console] [--info]
 
 Options:
   --dummy    use dummy connection for instruments that return semi-random data
              so that one run the program away from the test stand
   --socket   use sockets instead of visa
+  --debug    allow debug print statements
+  --info     allow info print statements
+  --console  Print logger output to console
+
 """
 
+import logging
 import sys
 
 from PyQt5.QtWidgets import QMainWindow, QWidget, QGridLayout
@@ -20,16 +25,18 @@ import hardware_control.gui as hc
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
+
 if commands["--socket"]:
-    connection_type = "socket"
     address = "192.168.0.15"
 else:
-    connection_type = "visa"
     address = "USB0::0x0957::0x2907::MY52500624::INSTR"
 
+logger = logging.getLogger(__name__)
+hc.setup_logging(logger, commands, "hardware_control.log")
 
-class WavegenDemo(QMainWindow):
-    def __init__(self, app, connection_type: str):
+
+class Demo(QMainWindow):
+    def __init__(self, app):
         super().__init__()
         self.app = app
 
@@ -38,7 +45,6 @@ class WavegenDemo(QMainWindow):
         self.main_widget = QWidget(self)
 
         awg = hc_back.Keysight_33500B(address)
-
         self.awg_ctrl = hc.FunctionGenerator(app, awg, "RF Generator")
 
         self.grid = QGridLayout()
@@ -54,7 +60,7 @@ class WavegenDemo(QMainWindow):
 
 def main():
     app = hc.App(dummy=dummy)
-    ex = WavegenDemo(app, connection_type)
+    ex = Demo(app)
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())
 
