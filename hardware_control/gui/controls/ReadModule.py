@@ -29,16 +29,7 @@ class Read(Instrument):
         showLCD=True,
     ):
         # initalizing
-        super().__init__(app, name)
-
-        if backend in selfapp.comms:
-            self.comm = self.app.comms[backend]
-            self.comm.addWidget(self)
-        else:
-            self.app.comms[backend] = Comm(backend, self, 2000)
-            self.comm = self.app.comms[backend]
-
-        # self.filename = ""
+        super().__init__(app, name, backend)
 
         self.channels = channels
         self.channelNames = channelNames
@@ -62,7 +53,6 @@ class Read(Instrument):
             self.grid.addWidget(self.listOfWidgets[i], 0, i)
         # Add all the widgets to layout
         self.setLayout(self.grid)
-        ####
 
         ### add your specific settings - there are none
         # self.settings[""] = None

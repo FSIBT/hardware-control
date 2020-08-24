@@ -41,15 +41,6 @@ class FunctionGenerator(Instrument):
 
         self.num_channels = num_channels
 
-        if backend in self.app.comms:
-            self.comm = self.app.comms[backend]
-            self.comm.addWidget(self)
-        else:
-            self.app.comms[backend] = Comm(backend, self)
-            self.comm = self.app.comms[backend]
-
-        self.filename = ""
-
         self.settings = self.default_state()
 
         self.channel_widgets = []

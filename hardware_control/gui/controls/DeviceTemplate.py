@@ -21,19 +21,10 @@ class DeviceType(Instrument):
         channels: list,
         name: str = "TemplateDevice",
         initialize_with: str = "INSTRUMENT",
-        save_on_close: str = False,
         lock_until_sync=False,
     ):
         # initalizing
         super().__init__(app, name, backend, lock_until_sync)
-        self.save_on_close = save_on_close
-
-        if scpi_instr in self.app.comms:
-            self.comm = self.app.comms[scpi_instr]
-            self.comm.addWidget(self)
-        else:
-            self.app.comms[scpi_instr] = Comm(scpi_instr, self)
-            self.comm = self.app.comms[scpi_instr]
 
         # Create UI - example
         self.lineEdit = QLineEdit()

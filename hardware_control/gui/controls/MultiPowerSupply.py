@@ -60,8 +60,6 @@ class MultiPowerSupply(Instrument):
 
         self.all_enable_button = all_enable_button
 
-        self.filename = ""
-
         # Check that the user provided valid channel request...
         if (len(channels) > backend.num_channels) or (
             max(channels) > self.backend.num_channels

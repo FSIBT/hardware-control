@@ -47,8 +47,6 @@ class DelayGenerator(Instrument):
         self.channels = channels
         self.settings = self.default_state()
 
-        self.filename = ""
-
         self.update_settings_hooks["TRIGGER_MODE"].append(self.enableDisableWidgets)
 
         # Create GUI

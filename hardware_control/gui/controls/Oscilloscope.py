@@ -60,17 +60,6 @@ class Oscilloscope(Instrument):
         self.channels = 4
         self.right_axis = right_axis
 
-        if backend.connection_addr in self.app.comms:
-            self.comm = self.app.comms[backend.connection_addr]
-            self.comm.addWidget(self)
-        else:
-            self.app.comms[backend.connection_addr] = Comm(
-                backend, self, lock_until_sync=lock_until_sync
-            )
-            self.comm = self.app.comms[backend.connection_addr]
-
-        self.filename = ""
-
         self.settings = self.default_state()
         self.values = self.default_state()
 
