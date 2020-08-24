@@ -11,6 +11,17 @@ logger = logging.getLogger(__name__)
 
 
 class FlowController(Instrument):
+    """A GUI for a gas flow controller.
+
+    Implements setting the gas flow and the type of gas used. As well
+    as reading out the current flow and pressure at the flow meter.
+
+    See Also
+    --------
+    hardware_control.backends.alicat.Alicat_M_Series.Alicat_M_Series
+
+    """
+
     def __init__(
         self, app, backend, name: str = "Flow Controller", lock_until_sync=False,
     ):
@@ -100,8 +111,8 @@ class FlowController(Instrument):
         self.values["pressure"] = "-"
 
     def close(self):
-        super().close()
         self.readout_timer.stop()
+        super().close()
 
     def update_readout(self):
         """Queries the instrument for current readout data, then reads the most

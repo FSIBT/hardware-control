@@ -9,7 +9,11 @@ logger = logging.getLogger(__name__)
 
 
 class DeviceType(Instrument):
-    # Convention: __init__(self, app, backend, . . . )
+    """An example for new GUI element that controls a backend.
+
+    This code can be used as a template to write a new GUI element.
+    """
+
     def __init__(
         self,
         app,

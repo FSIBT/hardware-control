@@ -23,8 +23,13 @@ logger = logging.getLogger(__name__)
 class DelayGenerator(Instrument):
     """A GUI for delay generators.
 
-    This GUI can be used for:
-      - SRS DG535.
+    This implements all front panel functions of a SRS DG535 and has
+    also has some elements that are probably unique to this
+    instrument.
+
+    See Also
+    --------
+    hardware_control.backends.srs.SRS_DG535.SRS_DG535
 
     """
 
@@ -258,6 +263,11 @@ class DelayGenerator(Instrument):
 
 
 class DelayChannelWidget(QWidget):
+    """A Qt-widget that implements controls for a single channel of a delay generator.
+
+    Used together with :py:class:`DelayGenerator`.
+    """
+
     def __init__(self, main_widget, channel, combine_with: int = -1, use_alpha=True):
 
         super().__init__()

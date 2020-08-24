@@ -63,6 +63,16 @@ def read_channel_file(filename: str, functions_handles: dict = None):
 
 
 class IOModule(Instrument):
+    """A GUI for generic Input/Output(IO) module.
+
+    See Also
+    --------
+    hardware_control.backends.advantech.Adam_6015.Adam_6015
+    hardware_control.backends.advantech.Adam_6024.Adam_6024
+    hardware_control.backends.ni.Ni_9000.Ni_9000
+
+    """
+
     def __init__(
         self,
         app,
@@ -236,12 +246,7 @@ class IOModule(Instrument):
 
 class AnalogInputChannel(QGroupBox):
     def __init__(
-        self,
-        control,
-        channel,
-        units="V",
-        label="Voltage: ",
-        show_ID_labels=True,
+        self, control, channel, units="V", label="Voltage: ", show_ID_labels=True,
     ):
 
         if show_ID_labels:
@@ -353,7 +358,9 @@ class AnalogOutputChannel(QGroupBox):
         self.setLayout(self.main_layout)
 
     def set_voltage(self):
-        self.control.update_setting(f"CH{self.channel}_analog_write", self.editbox.text())
+        self.control.update_setting(
+            f"CH{self.channel}_analog_write", self.editbox.text()
+        )
 
     def set_to_zero(self):
         self.editbox.setText("0")
@@ -365,12 +372,7 @@ class AnalogOutputChannel(QGroupBox):
 
 class DigitalInputChannel(QGroupBox):
     def __init__(
-        self,
-        control,
-        channel,
-        units="",
-        label="Digital: ",
-        show_ID_labels=True,
+        self, control, channel, units="", label="Digital: ", show_ID_labels=True,
     ):
 
         if show_ID_labels:
@@ -433,12 +435,7 @@ class DigitalInputChannel(QGroupBox):
 
 class DigitalOutputChannel(QGroupBox):
     def __init__(
-        self,
-        control,
-        channel,
-        units="V",
-        label="Set voltage: ",
-        show_ID_labels=True,
+        self, control, channel, units="V", label="Set voltage: ", show_ID_labels=True,
     ):
 
         if show_ID_labels:

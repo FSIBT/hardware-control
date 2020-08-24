@@ -26,7 +26,11 @@ logger = logging.getLogger(__name__)
 
 
 class Oscilloscope(Instrument):
-    """This is a 4-channel oscilloscope instrument progam.
+    """This is GUI for a 4-channel oscilloscope.
+
+    This is a very general GUI that allows common controls for the
+    different channels, timing, and the trigger setup. It can display
+    the measured waveforms.
 
     Parameters
     ----------
@@ -34,22 +38,11 @@ class Oscilloscope(Instrument):
     right_axis : list
         list of channels to display on the right axis. `None` only use one axis
 
-    It defines a UI for a 4-ch scope and has the sockets and signals
-    to interface with a OscilloscopeComm instance, which facilitates
-    communication with the instrument. The Osc.Comm object requires an
-    object (originally passed to the instrument object) which
-    fascilitates communication with the scope. An example of such a
-    program is the Key4000XSCPI class for Keysight 4000X series
-    oscilloscopes. These classes mostly just wrap SCPI commands so
-    this UI+Communication code knows how to interface with any
-    specific scope model.
-
-    All instrument parameters are saved in a 'settings'
-    dictionary. When a function such as set_timebase() is called, it
-    updates the settings object and sends it to the communicaiton
-    object instance. The communication object finds the change and
-    sends the correct SCPI commands to the instrument to impliment the
-    change.
+    See Also
+    --------
+    hardware_control.backends.keysight.Keysight_4000X.Keysight_4000X
+    hardware_control.backends.picotech.Picotech_6000.Picotech_6000
+    hardware_control.backends.rigol.Rigol_DS1000Z.Rigol_DS1000Z
 
     """
 
@@ -394,9 +387,7 @@ class OscilloscopeTriggerWidget(QWidget):
         # ****** DEFINE TEXT BOXES
         self.level_edit = QDoubleSpinBox()
         self.level_edit.editingFinished.connect(
-            lambda: instrument.s(
-                "trigger_level", str(self.level_edit.value())
-            )
+            lambda: instrument.s("trigger_level", str(self.level_edit.value()))
         )
         self.level_edit.setValue(float(instrument.settings["trigger_level"]))
         self.level_edit.setSingleStep(0.01)

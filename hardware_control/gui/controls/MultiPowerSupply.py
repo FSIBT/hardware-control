@@ -29,6 +29,13 @@ DISP_DECIMAL_PLACES = 1
 
 
 class MultiPowerSupply(Instrument):
+    """A GUI for a multi channel power supply.
+
+    See Also
+    --------
+    hardware_control.backends.caen.Caen_14xxET.Caen_14xxET
+
+    """
 
     ADD = "Add"
     ONLY = "Only"
@@ -75,22 +82,9 @@ class MultiPowerSupply(Instrument):
                 self.values[f"CH{c}_I_set"] = "-"
 
         self.init_values()
-
-        # Initialize settings to correct values
-        # if initialize_with == "INSTRUMENT":
-        #     self.save_on_close = False
-        #     # Can't save without filename
-        #     self.settings = self.initialize_gui_instrument()
-        # elif initialize_with == "DEFAULT":
-        #     self.save_on_close = False
-        #     # Can't save without filename
         self.settings = self.default_state()
-        # else:
-        #     self.load_state(initialize_with)
-        #     self.filename = initialize_with
 
         # Create GUI
-        #
         #
         # Automatically create channel widgets and push them into a row
         self.channel_widgets = []
@@ -264,27 +258,6 @@ class MultiPowerSupply(Instrument):
 
         self.comm.update_setting(f"CH{channel}_V_max", str(maxV))
 
-    # def get_header(self):
-    #
-    #     retval = ""
-    #     for c in self.channels:
-    #         retval = (
-    #             retval + f"CH{c}_V_out[V] CH{c}_I_out[A] CH{c}_V_set[V] CH{c}_I_set[A] "
-    #         )
-    #
-    #     return retval
-    #
-    # def get_value_keys(self):
-    #
-    #     retval = []
-    #     for c in self.channels:
-    #         retval.append(f"CH{c}_V_out")
-    #         retval.append(f"CH{c}_I_out")
-    #         retval.append(f"CH{c}_V_set")
-    #         retval.append(f"CH{c}_I_set")
-    #
-    #     return retval
-
     def set_channel_label(self, channel: int, label: str):
         """ Sets a channel label to a new custom value """
 
@@ -324,6 +297,11 @@ class MultiPowerSupply(Instrument):
 
 
 class PowerSupplyChannel(QWidget):
+    """A Qt-widget that implements controls for a single channel of a power supply.
+
+    Used together with :py:class:`MulitPowerSupply`.
+    """
+
     def __init__(
         self,
         channel: int,
@@ -344,8 +322,10 @@ class PowerSupplyChannel(QWidget):
         self.show_status_panel = show_status_panel
         self.custom_labels_colorcoded = False
 
+        align_left_center = QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
+        align_right_center = QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
+
         # ************** DEFINE UI *********************#
-        #
         self.channel_label = QLabel()
         if self.channel <= 20 and not self.show_custom_labels:
             self.channel_label.setPixmap(load_icon(f"channel_{self.channel}.png"))
@@ -358,58 +338,51 @@ class PowerSupplyChannel(QWidget):
             else:
                 self.channel_label.setText(f"Channel {channel}")
             self.channel_label.setFont(QFont("Arial", 20))
-            self.channel_label.setAlignment(
-                QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
-            )
+            self.channel_label.setAlignment(align_left_center)
 
         # ****** DEFINE READOUTS
-        #
         self.V_set_label = QLabel("Vset:")
-        self.V_set_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.V_set_label.setAlignment(align_right_center)
 
         self.V_set_label_val = QLabel("-------")
-        self.V_set_label_val.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        self.V_set_label_val.setAlignment(align_left_center)
 
         self.I_set_label = QLabel("Iset:")
-        self.I_set_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.I_set_label.setAlignment(align_right_center)
 
         self.I_set_label_val = QLabel("-------")
-        self.I_set_label_val.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        self.I_set_label_val.setAlignment(align_left_center)
 
         self.V_out_label = QLabel("Vout:")
-        self.V_out_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.V_out_label.setAlignment(align_right_center)
 
         self.V_out_label_val = QLabel("-------")
-        self.V_out_label_val.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        self.V_out_label_val.setAlignment(align_left_center)
 
         self.I_out_label = QLabel("Iout:")
-        self.I_out_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.I_out_label.setAlignment(align_right_center)
 
         self.I_out_label_val = QLabel("-------")
-        self.I_out_label_val.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        self.I_out_label_val.setAlignment(align_left_center)
 
         self.P_out_label = QLabel("Pout:")
-        self.P_out_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.P_out_label.setAlignment(align_right_center)
 
         self.P_out_label_val = QLabel("-------")
-        self.P_out_label_val.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        self.P_out_label_val.setAlignment(align_left_center)
 
         if self.show_VI_limits:
             self.V_max_label = QLabel("Vmax:")
-            self.V_max_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+            self.V_max_label.setAlignment(align_right_center)
 
             self.V_max_label_val = QLabel("-------")
-            self.V_max_label_val.setAlignment(
-                QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
-            )
+            self.V_max_label_val.setAlignment(align_left_center)
 
             self.I_max_label = QLabel("Imax:")
-            self.I_max_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+            self.I_max_label.setAlignment(align_right_center)
 
             self.I_max_label_val = QLabel("-------")
-            self.I_max_label_val.setAlignment(
-                QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
-            )
+            self.I_max_label_val.setAlignment(align_left_center)
 
         # Layout readout
         self.readout_grid = QGridLayout()
@@ -435,10 +408,10 @@ class PowerSupplyChannel(QWidget):
         # ****** DEFINE CONTROLS
         #
         self.V_ctrl_label = QLabel("Voltage (V):")
-        self.V_ctrl_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.V_ctrl_label.setAlignment(align_right_center)
 
         self.I_ctrl_label = QLabel("Current (A): ")
-        self.I_ctrl_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        self.I_ctrl_label.setAlignment(align_left_center)
 
         self.V_edit = QLineEdit()
         self.V_edit.setValidator(QDoubleValidator())
@@ -487,19 +460,17 @@ class PowerSupplyChannel(QWidget):
         self.na_ind = load_icon("na_label.svg")
 
         self.CC_ind_label = QLabel("CC:")
-        self.CC_ind_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        self.CC_ind_label.setAlignment(align_left_center)
         self.CC_indic = QLabel()
         self.CC_indic.setPixmap(self.na_ind)
 
         self.enabled_ind_label = QLabel("Output:")
-        self.enabled_ind_label.setAlignment(
-            QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
-        )
+        self.enabled_ind_label.setAlignment(align_left_center)
         self.enabled_indic = QLabel()
         self.enabled_indic.setPixmap(self.na_ind)
 
         self.ramp_ind_label = QLabel("Ramp:")
-        self.ramp_ind_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        self.ramp_ind_label.setAlignment(align_left_center)
         self.ramp_indic = QLabel()
         self.ramp_indic.setPixmap(self.na_ind)
 
@@ -609,6 +580,7 @@ class PowerSupplyChannel(QWidget):
                 self.ramp_indic.setPixmap(self.steady_ind)
 
     def set_label(self, label: str):
+        align_left_center = QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
 
         if self.custom_labels_colorcoded:
             colors = ["yellow", "green", "blue", "red", "violet", "orange"]
@@ -618,10 +590,9 @@ class PowerSupplyChannel(QWidget):
         else:
             self.channel_label.setText(f"{label}")
         self.channel_label.setFont(QFont("Arial", 20))
-        self.channel_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        self.channel_label.setAlignment(align_left_center)
 
     def settings_to_UI(self):
-
         self.V_edit.setText(str(self.main_widget.settings[f"CH{self.channel}_V_set"]))
         self.I_edit.setText(str(self.main_widget.settings[f"CH{self.channel}_I_set"]))
         setButtonState(
