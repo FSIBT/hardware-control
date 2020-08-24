@@ -2,12 +2,11 @@
 """oscilloscope_example to control the hardware_control test stand
 
 Usage:
-  sts50_example [--dummy] [--socket] [--debug] [--console] [--info]
+  sts50_example [--dummy] [--debug] [--console] [--info]
 
 Options:
   --dummy    use dummy connection for instruments that return semi-random data
              so that one run the program away from the test stand
-  --socket   use sockets instead of visa
   --debug    allow debug print statements
   --info     allow info print statements
   --console  Print logger output to console
@@ -45,10 +44,6 @@ import hardware_control.gui as hc
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
 info = commands["--info"]
-if commands["--socket"]:
-    connection_type = "socket"
-else:
-    connection_type = "visa"
 debug = commands["--debug"]
 print_console = commands["--console"]
 
@@ -793,7 +788,9 @@ class STS50Demo(hc.MainWindow):
             name="Power Supplies (floating rack)",
             num_columns=2,
             hooks={
-                "cDAQ9188-1AEF742Mod7/ao4_analog_write": lambda v: str(-float(v) / 1000),
+                "cDAQ9188-1AEF742Mod7/ao4_analog_write": lambda v: str(
+                    -float(v) / 1000
+                ),
                 "cDAQ9188-1AEF742Mod6/ai6_analog_read": lambda v: str(float(v) * 1e-3),
                 "cDAQ9188-1AEF742Mod6/ai7_analog_read": lambda v: str(float(v) * 1000),
             },
