@@ -111,7 +111,7 @@ class RootsDemo(hc.MainWindow):
         self.tab_aux = QWidget()
         self.tab_plot = QWidget()
         self.tab_data = QWidget()
-        self.python = hc.Qtconsole(main_app=app)
+        self.python = hc.Qtconsole(app)
 
         self.tabs.addTab(self.tab_psu, "Power Supplies 1")
         self.tabs.addTab(self.tab_psu2, "Power Supplies 2")
