@@ -157,11 +157,11 @@ class DelayGenerator(Instrument):
                 )
                 widget_col += 1
 
-            self.channel_widgets.append(DelayChannelWidget(self, 1, 2))
+            self.channel_widgets.append(DelayChannelWidget(self, 12))
             self.channel_box_layout.addWidget(self.channel_widgets[-1], 0, widget_col)
             widget_col += 1
 
-            self.channel_widgets.append(DelayChannelWidget(self, 3, 4))
+            self.channel_widgets.append(DelayChannelWidget(self, 34))
             self.channel_box_layout.addWidget(self.channel_widgets[-1], 0, widget_col)
             widget_col += 1
         if channels == 2:
@@ -263,41 +263,35 @@ class DelayGenerator(Instrument):
 class DelayChannelWidget(QWidget):
     """A Qt-widget that implements controls for a single channel of a delay generator.
 
+    Parameters
+    ----------
+    main_widget : DelayGenerator
+        The main widget where this is used in
+    channel : int
+        The channel this widget controls. Normally 1, 2, 3, or 4, but 12 and 34 are also
+        allowed for combined channels that, for example, exist in the SRS DG533.
+    use_alpha : bool
+        Replace the numbers in the labels with A, B, C, D (or AB, CD).
+
     Used together with :py:class:`DelayGenerator`.
     """
 
-    def __init__(self, main_widget, channel, combine_with: int = -1, use_alpha=True):
+    num_to_alpha = {1: "A", 2: "B", 3: "C", 4: "D", 12: "AB", 34: "CD"}
+
+    def __init__(self, main_widget, channel: int, use_alpha: bool = True):
 
         super().__init__()
 
         self.channel = channel
         self.main_widget = main_widget
-        self.combine_with = combine_with
-        self.combined_channel_num = channel
-        if combine_with != -1:
-            self.combined_channel_num = channel * 10 + combine_with
-
-        def num_to_alpha(x: int):
-            if x == 1:
-                return "A"
-            if x == 2:
-                return "B"
-            if x == 3:
-                return "C"
-            if x == 4:
-                return "D"
-            else:
-                return "?"
 
         if use_alpha:
-            channel_str = num_to_alpha(channel)
-            combine_with_str = num_to_alpha(combine_with)
+            channel_str = DelayChannelWidget.num_to_alpha.get(channel, "?")
+        else:
+            channel_str = str(self.channel)
 
         self.channel_label = QLabel()
-        if combine_with == -1:
-            self.channel_label.setText(f"Channel {channel_str}")
-        else:
-            self.channel_label.setText(f"Channel {channel_str}+{combine_with_str}")
+        self.channel_label.setText(f"Channel {channel_str}")
         self.channel_label.setFont(QFont("Arial", 20))
         self.channel_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
 
@@ -341,16 +335,17 @@ class DelayChannelWidget(QWidget):
 
         self.channel_layout = QGridLayout()
         self.channel_layout.addWidget(self.channel_label, 0, 0, 1, 2)
-        if combine_with == -1:
-            self.channel_layout.addWidget(self.time_edit, 1, 1)
-            self.channel_layout.addWidget(self.time_label, 1, 0)
-            self.channel_layout.addWidget(self.rel_label, 2, 0)
-            self.channel_layout.addWidget(self.rel_drop, 2, 1)
-        else:
+        if self.channel in [12, 34]:
             self.blank_label = QLabel(" ")
             self.channel_layout.addWidget(self.blank_label, 1, 0, 1, 2)
             self.blank_label2 = QLabel(" ")
             self.channel_layout.addWidget(self.blank_label2, 2, 0, 1, 2)
+        else:
+            self.channel_layout.addWidget(self.time_edit, 1, 1)
+            self.channel_layout.addWidget(self.time_label, 1, 0)
+            self.channel_layout.addWidget(self.rel_label, 2, 0)
+            self.channel_layout.addWidget(self.rel_drop, 2, 1)
+
         self.channel_layout.addWidget(self.level_label, 3, 0)
         self.channel_layout.addWidget(self.level_drop, 3, 1)
         self.channel_layout.addWidget(self.volt_edit_label, 4, 0)
@@ -360,26 +355,20 @@ class DelayChannelWidget(QWidget):
         self.settings_to_UI()
 
     def settings_to_UI(self):
-
-        if self.combine_with == -1:
-            self.time_edit.setText(
-                self.main_widget.settings[f"CH{self.combined_channel_num}_delay"]
-            )
+        if self.channel not in [12, 34]:
+            self.time_edit.setText(self.main_widget.settings[f"CH{self.channel}_delay"])
             self.rel_drop.setCurrentText(
-                self.main_widget.settings[f"CH{self.combined_channel_num}_relative"]
+                self.main_widget.settings[f"CH{self.channel}_relative"]
             )
-        mode = self.main_widget.settings[f"CH{self.combined_channel_num}_output_mode"]
+        mode = self.main_widget.settings[f"CH{self.channel}_output_mode"]
         if mode == "VAR":
             mode = "Voltage"
         self.level_drop.setCurrentText(mode)
         self.volt_edit.setText(
-            self.main_widget.settings[f"CH{self.combined_channel_num}_output_amplitude"]
+            self.main_widget.settings[f"CH{self.channel}_output_amplitude"]
         )
 
     def set_output_level(self, new_val: str):
-        """
-        Sets the output mode for the channel
-        """
         if new_val is None:
             return
 
@@ -389,28 +378,14 @@ class DelayChannelWidget(QWidget):
         else:
             self.volt_edit.setEnabled(False)
 
-        self.main_widget.update_setting(
-            f"CH{self.combined_channel_num}_output_mode", new_val
-        )
+        self.main_widget.update_setting(f"CH{self.channel}_output_mode", new_val)
 
     def voltage_changed(self, new_val: str):
-        """
-        Sets a new output amplitude
-        """
-
-        self.main_widget.update_setting(
-            f"CH{self.combined_channel_num}_output_offset", "0"
-        )
-        self.main_widget.update_setting(
-            f"CH{self.combined_channel_num}_output_amplitude", new_val
-        )
+        self.main_widget.update_setting(f"CH{self.channel}_output_offset", "0")
+        self.main_widget.update_setting(f"CH{self.channel}_output_amplitude", new_val)
 
     def relative_changed(self, rel_to: str):
-
-        self.main_widget.update_setting(
-            f"CH{self.combined_channel_num}_relative", rel_to
-        )
+        self.main_widget.update_setting(f"CH{self.channel}_relative", rel_to)
 
     def delay_changed(self, t_delay: str):
-
-        self.main_widget.update_setting(f"CH{self.combined_channel_num}_delay", t_delay)
+        self.main_widget.update_setting(f"CH{self.channel}_delay", t_delay)
