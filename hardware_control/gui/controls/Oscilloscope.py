@@ -376,7 +376,9 @@ class OscilloscopeTriggerWidget(QWidget):
         # ****** DEFINE TEXT BOXES
         self.level_edit = QDoubleSpinBox()
         self.level_edit.editingFinished.connect(
-            lambda: instrument.s("trigger_level", str(self.level_edit.value()))
+            lambda: instrument.update_setting(
+                "trigger_level", str(self.level_edit.value())
+            )
         )
         self.level_edit.setValue(float(instrument.settings["trigger_level"]))
         self.level_edit.setSingleStep(0.01)
