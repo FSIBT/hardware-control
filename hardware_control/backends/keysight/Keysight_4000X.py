@@ -105,8 +105,7 @@ class Keysight_4000X(Backend):
             return self.query(f"CHAN{channel}:BWL?")
         if setting_X == "CHX_active":
             self.write(f"CHAN{channel}:DISP {int(value=='True')}")
-            active = bool(self.query(f"CHAN{channel}:DISP?"))
-            return f"CH{channel}_active={active}"
+            return self.query(f"CHAN{channel}:DISP?")
         if setting_X == "CHX_impedance":
             if value == "50":
                 self.write(f"CHAN{channel}:IMP FIFT")
