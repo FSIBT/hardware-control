@@ -48,7 +48,7 @@ class MeasurementDirector:
             return False
 
         # Get the next index (also checks that dataset is not corrupted)
-        next_idx = self.app.data_sets[meas_req.dataset_name].len()
+        next_idx = self.app.data_sets[meas_req.dataset_name].len_same()
         if next_idx == -1:
             logger.error(
                 f"Dataset {meas_req.dataset_name} corrupted."
