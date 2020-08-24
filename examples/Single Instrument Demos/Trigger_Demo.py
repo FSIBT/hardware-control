@@ -1,7 +1,7 @@
 """Device demo
 
 Usage:
-  device_demo [--dummy] [--socket]
+  device_demo [--dummy]
 
 Options:
   --dummy    use dummy connection for instruments that return semi-random data
@@ -24,25 +24,27 @@ class Demo(QMainWindow):
     def __init__(self, app):
         super().__init__()
         self.app = app
+
         # set title of window
         self.setWindowTitle("Demo")
+
         # this is the main widget, actual device widgets are added to it
         self.main_widget = QWidget(self)
 
-        ##### Add Device(s)
-        self.trig1 = hc_back.SRS_DG535("GPIB0::15::INSTR")
-        self.trig1_ctrl = hc.DelayGenerator(app, self.trig1, "Trigger 1", "DEFAULT")
+        # create a backend and a GUI control for the backend
+        self.trigger = hc_back.SRS_DG535("GPIB0::15::INSTR")
+        self.trigger_ctrl = hc.DelayGenerator(app, self.trigger, "Trigger", "DEFAULT")
 
-        ##### Add above HC to the main Widget
+        # Add control to the main Widget
         self.grid = QGridLayout()
-        self.grid.addWidget(self.trig1_ctrl, 0, 0)
+        self.grid.addWidget(self.trigger_ctrl, 0, 0)
         self.main_widget.setLayout(self.grid)
 
         self.setCentralWidget(self.main_widget)
         self.show()
 
     def close(self):
-        self.trig1_ctrl.close()
+        self.trigger_ctrl.close()
 
 
 def main():

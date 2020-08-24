@@ -71,21 +71,21 @@ class SRS_DG535(Backend):
             elif value_orig == "BURST":
                 mode = 3
             w = f"TM{mode}"
-        elif setting == "trigger_edge":
+        elif setting == "TRIGGER_EDGE":
             mode = 0
-            if value_orig == "Positive":
+            if value_orig == "POSITIVE":
                 mode = 1
-            elif value_orig == "Negative":
+            elif value_orig == "NEGATIVE":
                 mode = 0
             w = f"TS{mode}"
-        elif setting == "ext_trig_Zin":
+        elif setting == "EXT_TRIG_ZIN":
             mode = 0
-            if value_orig == "50 Ohms":
+            if value_orig == "50 OHMS":
                 mode = 0
-            elif value_orig == "Hi-Z":
+            elif value_orig == "HI-Z":
                 mode = 1
             w = f"TZ{mode}"
-        elif setting_X == "CHX_output_mode":
+        elif setting_X == "CHX_OUTPUT_MODE":
             mode = 0
             if value_orig == "TTL":
                 mode = 0
@@ -96,7 +96,7 @@ class SRS_DG535(Backend):
             elif value_orig == "VAR":
                 mode = 3
             w = f"OM {channel},{mode}"
-        elif setting_X == "CHX_relative":
+        elif setting_X == "CHX_RELATIVE":
             self.channels_relative[channel] = value_orig
             if channel in self.channels_ampl:
                 ampl_chan = self.channels_ampl[channel]
@@ -104,28 +104,28 @@ class SRS_DG535(Backend):
                 ampl_chan = "1"
             channel_number = SRS_DG535.SRS_trigger_names.get(value_orig, None)
             w = f"DT {channel},{channel_number},{ampl_chan}"
-        elif setting_X == "CHX_delay":
+        elif setting_X == "CHX_DELAY":
             self.channels_ampl[channel] = value_orig
             if channel in self.channels_relative:
                 rel_chan = self.channels_relative[channel]
             else:
-                rel_chan = "Trig"
+                rel_chan = "TRIG"
             rel_chan = SRS_DG535.SRS_trigger_names.get(rel_chan, None)
 
             w = f"DT {channel},{rel_chan},{value}"
-        elif setting_X == "CHX_output_offset":
+        elif setting_X == "CHX_OUTPUT_OFFSET":
             w = f"OO {channel},{value_orig}"
-        elif setting_X == "CHX_output_amplitude":
+        elif setting_X == "CHX_OUTPUT_AMPLITUDE":
             if value > 4:
                 value = 4
             if value < 0.1:
                 value = 0.1
             w = f"OA {channel},{value}"
-        elif setting == "pulses_per_burst":
+        elif setting == "PULSES_PER_BURST":
             w = f"BC{value}"
         elif setting == "TRIGGER_PERIOD":
             w = f"BP{value}"
-        elif setting == "trigger_level":
+        elif setting == "TRIGGER_LEVEL":
             w = f"TL{value}"
         else:
             logger.warning(f"{self.ID} - Unknown setting: {setting} | {value}")

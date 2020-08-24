@@ -58,10 +58,10 @@ class DelayGenerator(Instrument):
         self.trig_mode_drop.addItems(["Internal", "External", "Single", "Burst"])
         self.trig_mode_drop.currentIndexChanged.connect(
             lambda: self.update_setting(
-                "TRIGGER_MODE", self.trig_mode_drop.currentText()
+                "TRIGGER_MODE", self.trig_mode_drop.currentText().upper()
             )
         )
-        self.trig_mode_drop.setCurrentText(str(self.settings["TRIGGER_MODE"]))
+        self.trig_mode_drop.setCurrentText(str(self.settings["TRIGGER_MODE"].title()))
 
         self.trig_edge_label = QLabel("Trigger Edge:")
         self.trig_edge_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
@@ -70,10 +70,10 @@ class DelayGenerator(Instrument):
         self.trig_edge_drop.addItems(["Positive", "Negative"])
         self.trig_edge_drop.currentIndexChanged.connect(
             lambda: self.update_setting(
-                "trigger_edge", self.trig_edge_drop.currentText()
+                "TRIGGER_EDGE", self.trig_edge_drop.currentText().upper()
             )
         )
-        self.trig_edge_drop.setCurrentText(str(self.settings["trigger_edge"]))
+        self.trig_edge_drop.setCurrentText(str(self.settings["TRIGGER_EDGE"].title()))
 
         self.trig_z_label = QLabel("Ext. Trigger Zin:")
         self.trig_z_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
@@ -81,16 +81,18 @@ class DelayGenerator(Instrument):
         self.trig_z_drop = QComboBox()
         self.trig_z_drop.addItems(["50 Ohms", "Hi-Z"])
         self.trig_z_drop.currentIndexChanged.connect(
-            lambda: self.update_setting("ext_trig_Zin", self.trig_z_drop.currentText())
+            lambda: self.update_setting(
+                "EXT_TRIG_ZIN", self.trig_z_drop.currentText().upper()
+            )
         )
-        self.trig_z_drop.setCurrentText(str(self.settings["ext_trig_Zin"]))
+        self.trig_z_drop.setCurrentText(str(self.settings["EXT_TRIG_ZIN"].title()))
 
         self.trig_lev_label = QLabel("Ext Trig Level (V):")
         self.trig_lev_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
         self.trig_lev_edit = QDoubleSpinBox()
         self.trig_lev_edit.editingFinished.connect(
-            lambda: self.update_setting("trigger_level", self.trig_lev_edit.text())
+            lambda: self.update_setting("TRIGGER_LEVEL", self.trig_lev_edit.text())
         )
         self.trig_lev_edit.setDecimals(3)
         self.trig_lev_edit.setSingleStep(0.05)
@@ -98,7 +100,7 @@ class DelayGenerator(Instrument):
             self.trig_lev_edit.setRange(
                 -backend.ExternalTriggerThreshold, backend.ExternalTriggerThreshold,
             )
-        self.trig_lev_edit.setValue(float(self.settings["trigger_level"]))
+        self.trig_lev_edit.setValue(float(self.settings["TRIGGER_LEVEL"]))
 
         self.single_trig_but = QPushButton()
         self.single_trig_but.setText("Single Trigger")
@@ -112,11 +114,11 @@ class DelayGenerator(Instrument):
 
         self.pulse_edit = QSpinBox()
         self.pulse_edit.editingFinished.connect(
-            lambda: self.update_setting("pulses_per_burst", self.pulse_edit.text())
+            lambda: self.update_setting("PULSES_PER_BURST", self.pulse_edit.text())
         )
         if hasattr(backend, "PulsesPerBurst"):
             self.pulse_edit.setRange(2, backend.PulsesPerBurst)
-        self.pulse_edit.setValue(int(self.settings["pulses_per_burst"]))
+        self.pulse_edit.setValue(int(self.settings["PULSES_PER_BURST"]))
 
         self.period_label = QLabel("Triggers per Burst:")
         self.period_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
@@ -134,15 +136,15 @@ class DelayGenerator(Instrument):
 
         self.write_edit = QLineEdit()
         self.write_edit.editingFinished.connect(
-            lambda: self.update_setting("direct_command", self.write_edit.text())
+            lambda: self.update_setting("DIRECT_COMMAND", self.write_edit.text())
         )
-        self.write_edit.setText(self.settings["direct_command"])
+        self.write_edit.setText(self.settings["DIRECT_COMMAND"])
 
         self.write_but = QPushButton()
         self.write_but.setText("Write")
         self.write_but.setCheckable(False)
         self.write_but.clicked.connect(
-            lambda: self.command(self.settings["direct_command"])
+            lambda: self.command(self.settings["DIRECT_COMMAND"])
         )
 
         widget_col = 0
@@ -172,7 +174,7 @@ class DelayGenerator(Instrument):
                 )
                 widget_col += 1
 
-            self.channel_widgets.append(DelayChannelWidget(self, 1, 2))
+            self.channel_widgets.append(DelayChannelWidget(self, 12))
             self.channel_box_layout.addWidget(self.channel_widgets[-1], 0, widget_col)
             widget_col += 1
 
@@ -209,7 +211,7 @@ class DelayGenerator(Instrument):
         # Write state to scope - synch scope with GUI
         self.send_state()
 
-    def enableDisableWidgets(value: str):
+    def enableDisableWidgets(self, value: str):
 
         if value == "SINGLE":
             self.single_trig_but.setEnabled(True)
@@ -223,38 +225,39 @@ class DelayGenerator(Instrument):
         default = {}
 
         default["TRIGGER_MODE"] = "INTERNAL"
-        default["trigger_edge"] = "POS"
-        default["ext_trig_Zin"] = "HiZ"
-        default["burst_count"] = "2"
-        default["burst_period"] = "4"
-        default["direct_command"] = ""
-        default["pulses_per_burst"] = "2"
+        default["TRIGGER_EDGE"] = "POS"
+        default["EXT_TRIG_ZIN"] = "HI-Z"
+        default["BURST_COUNT"] = "2"
+        default["BURST_PERIOD"] = "4"
+        default["DIRECT_COMMAND"] = ""
+        default["PULSES_PER_BURST"] = "2"
         default["TRIGGER_PERIOD"] = "4"
-        default["trigger_level"] = "0"
+        default["TRIGGER_LEVEL"] = "0"
         for c in range(1, self.channels + 1):
-            default[f"CH{c}_delay"] = "1"
-            default[f"CH{c}_relative"] = "Trig"
-            default[f"CH{c}_output_mode"] = "TTL"
-            default[f"CH{c}_output_amplitude"] = "5"
+            default[f"CH{c}_DELAY"] = "1"
+            default[f"CH{c}_RELATIVE"] = "TRIG"
+            default[f"CH{c}_OUTPUT_MODE"] = "TTL"
+            default[f"CH{c}_OUTPUT_AMPLITUDE"] = "5"
         if self.channels == 4:
-            default["CH12_output_mode"] = "TTL"
-            default["CH12_output_amplitude"] = "5"
-            default["CH34_output_mode"] = "TTL"
-            default["CH34_output_amplitude"] = "5"
+            default["CH12_OUTPUT_MODE"] = "TTL"
+            default["CH12_OUTPUT_AMPLITUDE"] = "5"
+            default["CH34_OUTPUT_MODE"] = "TTL"
+            default["CH34_OUTPUT_AMPLITUDE"] = "5"
         if self.channels == 2:
-            default["CH12_output_mode"] = "TTL"
-            default["CH12_output_amplitude"] = "5"
+            default["CH12_OUTPUT_MODE"] = "TTL"
+            default["CH12_OUTPUT_AMPLITUDE"] = "5"
+
         return default
 
     def settings_to_UI(self):
 
         self.trig_mode_drop.setCurrentText(str(self.settings["TRIGGER_MODE"]))
-        self.trig_edge_drop.setCurrentText(str(self.settings["trigger_edge"]))
-        self.trig_z_drop.setCurrentText(str(self.settings["ext_trig_Zin"]))
-        self.trig_lev_edit.setValue(float(self.settings["trigger_level"]))
-        self.pulse_edit.setValue(int(self.settings["pulses_per_burst"]))
+        self.trig_edge_drop.setCurrentText(str(self.settings["TRIGGER_EDGE"]))
+        self.trig_z_drop.setCurrentText(str(self.settings["EXT_TRIG_ZIN"]))
+        self.trig_lev_edit.setValue(float(self.settings["TRIGGER_LEVEL"]))
+        self.pulse_edit.setValue(int(self.settings["PULSES_PER_BURST"]))
         self.period_edit.setValue(int(self.settings["TRIGGER_PERIOD"]))
-        self.write_edit.setText(self.settings["direct_command"])
+        self.write_edit.setText(self.settings["DIRECT_COMMAND"])
 
         for cw in self.channel_widgets:
             cw.settings_to_UI()
@@ -295,7 +298,7 @@ class DelayChannelWidget(QWidget):
         self.channel_label.setFont(QFont("Arial", 20))
         self.channel_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
 
-        self.time_label = QLabel("t_offset: ")
+        self.time_label = QLabel("t_offset [s]: ")
 
         self.time_edit = QLineEdit()
         self.time_edit.setValidator(QDoubleValidator())
@@ -308,11 +311,12 @@ class DelayChannelWidget(QWidget):
 
         self.rel_drop = QComboBox()
         rels = ["Trig", "A", "B", "C", "D", "T0"]
-        rels.remove(channel_str)
+        if channel not in [12, 34]:
+            rels.remove(channel_str.title())
         self.rel_drop.addItems(rels)
         self.rel_drop.setCurrentText("Trig")
         self.rel_drop.currentIndexChanged.connect(
-            lambda: self.relative_changed(self.rel_drop.currentText())
+            lambda: self.relative_changed(self.rel_drop.currentText().upper())
         )
 
         self.level_label = QLabel("Output mode: ")
@@ -330,7 +334,7 @@ class DelayChannelWidget(QWidget):
         self.level_drop.addItems(["TTL", "Voltage", "NIM", "ECL"])
         self.level_drop.setCurrentText("TTL")
         self.level_drop.currentIndexChanged.connect(
-            lambda: self.set_output_level(self.level_drop.currentText())
+            lambda: self.set_output_level(self.level_drop.currentText().upper())
         )
 
         self.channel_layout = QGridLayout()
@@ -356,36 +360,36 @@ class DelayChannelWidget(QWidget):
 
     def settings_to_UI(self):
         if self.channel not in [12, 34]:
-            self.time_edit.setText(self.main_widget.settings[f"CH{self.channel}_delay"])
+            self.time_edit.setText(self.main_widget.settings[f"CH{self.channel}_DELAY"])
             self.rel_drop.setCurrentText(
-                self.main_widget.settings[f"CH{self.channel}_relative"]
+                self.main_widget.settings[f"CH{self.channel}_RELATIVE"]
             )
-        mode = self.main_widget.settings[f"CH{self.channel}_output_mode"]
+        mode = self.main_widget.settings[f"CH{self.channel}_OUTPUT_MODE"]
         if mode == "VAR":
-            mode = "Voltage"
-        self.level_drop.setCurrentText(mode)
+            mode = "VOLTAGE"
+        self.level_drop.setCurrentText(mode.title())
         self.volt_edit.setText(
-            self.main_widget.settings[f"CH{self.channel}_output_amplitude"]
+            self.main_widget.settings[f"CH{self.channel}_OUTPUT_AMPLITUDE"]
         )
 
     def set_output_level(self, new_val: str):
         if new_val is None:
             return
 
-        if new_val == "Voltage":
+        if new_val == "VOLTAGE":
             self.volt_edit.setEnabled(True)
             new_val = "VAR"
         else:
             self.volt_edit.setEnabled(False)
 
-        self.main_widget.update_setting(f"CH{self.channel}_output_mode", new_val)
+        self.main_widget.update_setting(f"CH{self.channel}_OUTPUT_MODE", new_val)
 
     def voltage_changed(self, new_val: str):
-        self.main_widget.update_setting(f"CH{self.channel}_output_offset", "0")
-        self.main_widget.update_setting(f"CH{self.channel}_output_amplitude", new_val)
+        self.main_widget.update_setting(f"CH{self.channel}_OUTPUT_OFFSET", "0")
+        self.main_widget.update_setting(f"CH{self.channel}_OUTPUT_AMPLITUDE", new_val)
 
     def relative_changed(self, rel_to: str):
-        self.main_widget.update_setting(f"CH{self.channel}_relative", rel_to)
+        self.main_widget.update_setting(f"CH{self.channel}_RELATIVE", rel_to)
 
     def delay_changed(self, t_delay: str):
-        self.main_widget.update_setting(f"CH{self.channel}_delay", t_delay)
+        self.main_widget.update_setting(f"CH{self.channel}_DELAY", t_delay)
