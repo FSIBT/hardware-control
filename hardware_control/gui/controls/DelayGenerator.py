@@ -266,8 +266,11 @@ class DelayGenerator(Instrument):
 class DelayChannelWidget(QWidget):
     """A Qt-widget that implements controls for a single channel of a delay generator.
 
+    Used together with :py:class:`DelayGenerator`.
+
     Parameters
     ----------
+
     main_widget : DelayGenerator
         The main widget where this is used in
     channel : int
@@ -276,7 +279,6 @@ class DelayChannelWidget(QWidget):
     use_alpha : bool
         Replace the numbers in the labels with A, B, C, D (or AB, CD).
 
-    Used together with :py:class:`DelayGenerator`.
     """
 
     num_to_alpha = {1: "A", 2: "B", 3: "C", 4: "D", 12: "AB", 34: "CD"}
