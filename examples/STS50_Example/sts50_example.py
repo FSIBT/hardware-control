@@ -92,7 +92,7 @@ def power_off(window):
     window.psu_ctrl.remote_update_setting("CH1_enabled", "False")
 
     # Shut off gas
-    window.flow_ctrl.remote_update_setting("rate", "0")
+    window.flow_ctrl.remote_update_setting("RATE", "0")
 
     # Shut off NI-DAQ Power Supplies
     window.iomod_usb_wdgt.remote_update_setting("CHcDAQ1Mod1/ao0_analog_write", "0")
@@ -846,32 +846,6 @@ class STS50Demo(hc.MainWindow):
 
         self.ScanWidget.update_actions()
 
-        #####################################################################
-        ######## Tab 3
-
-        # self.source_frame = QFrame(self.)
-
-        # Put instrument(s) in tab
-        # self.tab3_layout = QGridLayout()
-        # # self.tab3_layout.addWidget(self.flow_ctrl, 0, 0)
-        # # self.tab3_layout.addWidget(self.flow_ctrl, 0, 0)
-        # # self.tab3_layout.addWidget(self.trig2_ctrl, 2, 0)
-        # # self.tab3_layout.addWidget(self.zmqtool, 1, 0)
-        # # self.tab3_layout.addWidget(self.iomod_float_wdgt, 2, 1)
-        # # self.tab3_layout.addWidget(self.iomod_usb_wdgt, 0, 1, 2, 1)
-        # # self.tab3_layout.addWidget(self.temp_ctrl, 2, 0)
-        # self.tab3_spacer = QSpacerItem(
-        #     10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
-        # )
-        # self.tab3_layout.addItem(self.tab3_spacer, 3, 0, 1, 2)
-        # # self.tab3_layout.addWidget(self.ScanWidget, 0, 1)
-        # # self.tab3_layout.addWidget(self.run_tool, 1, 1)
-        # # self.tab3_layout.addWidget(self.var_tool, 2, 1)
-        #
-        # # self.tab3_layout.addWidget(self.statustool, 3, 1)
-        # self.tab3.setLayout(self.tab3_layout)
-
-        # #####################################################################
         # ######## Custom Tab
 
         self.tab_sts_layout = QGridLayout()
@@ -954,13 +928,6 @@ class STS50Demo(hc.MainWindow):
         self.tab0_layout.addWidget(self.plot_wdgt_custom, 5, 1, 2, 1)
         self.tab0_layout.addWidget(self.grid_plot_label, 4, 1)
 
-        # self.tab0_layout.addItem(self.main_bottom_spacer, 10, 0, 1, 2)
-
-        # self.tab0_layout.addWidget(self.iomod_float_wdgt, 3, 0)
-        # self.tab0_layout.addWidget(self.iomod_usb_wdgt, 3, 1)
-        # self.tab0_layout.addWidget(self.flow_ctrl, 5, 0)
-        # self.tab0_layout.addWidget(self.plot_wdgt_custom, 5, 1)
-        # self.tab0_layout.addItem(self.main_bottom_spacer, 10, 0, 1, 2)
         self.tab0.setLayout(self.tab0_layout)
 
         #####################################################################
