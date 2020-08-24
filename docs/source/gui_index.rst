@@ -12,6 +12,7 @@ GUI elements
    gui/base/Dataset
    gui/base/MeasurementDirector
    gui/base/MeasurementRequest
+   gui/base/logging
 
 .. toctree::
    :maxdepth: 1

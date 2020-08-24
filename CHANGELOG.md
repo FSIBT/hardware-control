@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - pylint/pyflake cleanup
 
 ### Added
+- gui/base/logging: some function to easily setup different logging styles
 - documentation on [RTD](https://hardware-control.readthedocs.io/en/latest/index.html)
 - general hooks when setting variables and getting values from backends
 - simplify import by importing items in __init__.py of the subpackages

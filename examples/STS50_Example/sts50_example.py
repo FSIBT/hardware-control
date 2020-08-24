@@ -43,69 +43,9 @@ import hardware_control.gui as hc
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
-info = commands["--info"]
-debug = commands["--debug"]
-print_console = commands["--console"]
-
-logfile_name = "hardware_control.log"
-other_logfile_name = "other_hardware_control.log"
-
-if debug:
-    loglevel = logging.DEBUG
-    loglevelname = "Debug"
-elif info:
-    loglevel = logging.INFO
-    loglevelname = "Info"
-else:
-    loglevel = logging.WARNING
-    loglevelname = "Warning"
 
 logger = logging.getLogger(__name__)
-# hc_logger = logging.getLogger("hardware_control")
-
-# Create file or stream handler
-format_str = "[%(asctime)s] %(name)s - %(levelname)s: %(message)s"
-if print_console:
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(logging.Formatter(format_str))
-    handler.setLevel(loglevel)
-    print(f"Logger configured:\n\tLevel: {loglevelname}\n\tOutput: Console")
-else:
-    handler = logging.FileHandler(logfile_name)
-    handler.setFormatter(logging.Formatter(format_str))
-    handler.setLevel(loglevel)
-    print(f"Logger configured:\n\tLevel: {loglevelname}\n\tOutput: File")
-
-# Clear all other handlers
-loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict]
-for name in logging.root.manager.loggerDict:
-
-    lgr = logging.getLogger(name)
-    lgr.propagate = False
-
-    if "hardware_control" in name:
-        lgr.setLevel(loglevel)
-        lgr.handlers = []
-        lgr.addHandler(handler)
-    else:
-        lgr.setLevel(logging.CRITICAL)
-        lgr.handlers = []
-
-# for lg in loggers:
-#
-#     if lg is logger or lg is hc_logger:
-#         continue
-#
-#     lg.setLevel(logging.CRITICAL)
-#     lg.handlers = []
-
-# Add desired handlers
-# hc_logger.setLevel(loglevel)
-# hc_logger.handlers = []
-# hc_logger.addHandler(handler)
-logger.setLevel(loglevel)
-logger.handlers = []
-logger.addHandler(handler)
+hc.setup_logging(logger, commands, "hardware_control.log")
 
 logger.info("STS50 Example Starting")
 
