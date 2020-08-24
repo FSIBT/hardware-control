@@ -42,7 +42,7 @@ class Alicat_M_Series(Backend):
             return value
 
         try:
-            if setting in ["rate", "flow"]:
+            if setting in ["RATE", "FLOW"]:
                 i = converter_IEEE754_to_ulong(float(value))
                 a = i >> 16
                 b = i & ((1 << 16) - 1)
@@ -62,12 +62,12 @@ class Alicat_M_Series(Backend):
             self.online = False
 
     def command(self, cmd: str):
-        if cmd == "rate?":
+        if cmd == "RATE?":
             flow = self.query(address=1208)
-            return f"rate={flow}"
-        if cmd == "pressure?":
+            return f"RATE={flow}"
+        if cmd == "PRESSURE?":
             pressure = self.query(address=1202)
-            return f"pressure={pressure}"
+            return f"PRESSURE={pressure}"
 
     @ensure_online
     def query(self, address: int):

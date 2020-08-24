@@ -35,9 +35,9 @@ class FlowController(Instrument):
         self.rate_edit = QLineEdit()
         self.rate_edit.setValidator(QDoubleValidator())
         self.rate_edit.editingFinished.connect(
-            lambda: self.comm.update_setting("rate", self.rate_edit.text())
+            lambda: self.comm.update_setting("RATE", self.rate_edit.text())
         )
-        self.rate_edit.setText(str(self.settings["rate"]))
+        self.rate_edit.setText(str(self.settings["RATE"]))
 
         self.form = QFormLayout()
         self.form.addRow("Flow rate (sccm):", self.rate_edit)
@@ -51,9 +51,9 @@ class FlowController(Instrument):
         self.gas_drop = QComboBox()
         self.gas_drop.addItems(["Argon", "Helium", "Hydrogen", "Air"])
         self.gas_drop.currentIndexChanged.connect(
-            lambda: self.comm.update_setting("gas", self.gas_drop.currentText())
+            lambda: self.comm.update_setting("GAS", self.gas_drop.currentText().upper())
         )
-        self.gas_drop.setCurrentText(self.settings["gas"])
+        self.gas_drop.setCurrentText(self.settings["GAS"])
 
         self.pressure_label_fix0 = QLabel("Pressure: ")
         self.pressure_label_fix0.setAlignment(
@@ -107,8 +107,8 @@ class FlowController(Instrument):
 
         logger.debug("Initalized")
 
-        self.values["rate"] = "-"
-        self.values["pressure"] = "-"
+        self.values["RATE"] = "-"
+        self.values["PRESSURE"] = "-"
 
     def close(self):
         self.readout_timer.stop()
@@ -119,19 +119,19 @@ class FlowController(Instrument):
         recent readout data from the inbox and pushes it to the GUI"""
 
         # Request updated readout data
-        self.comm.command("rate?")
-        self.comm.command("pressure?")
+        self.comm.command("RATE?")
+        self.comm.command("PRESSURE?")
 
         # Update labels
-        self.pressure_label_readout.setText(self.read_values("pressure"))
-        self.flow_label_readout.setText(self.read_values("rate"))
+        self.pressure_label_readout.setText(self.read_values("PRESSURE"))
+        self.flow_label_readout.setText(self.read_values("RATE"))
 
     def default_state(self):
         return {
-            "gas": "Argon",
-            "rate": "0.0",
+            "GAS": "ARGON",
+            "RATE": "0.0",
         }
 
     def settings_to_UI(self):
-        self.rate_edit.setText(str(self.settings["rate"]))
-        self.gas_drop.setCurrentText(self.settings["gas"])
+        self.rate_edit.setText(str(self.settings["RATE"]))
+        self.gas_drop.setCurrentText(self.settings["GAS"])
