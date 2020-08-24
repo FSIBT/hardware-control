@@ -11,6 +11,7 @@ Options:
   --console  Print logger output to console
 """
 
+import logging
 import sys
 
 from PyQt5.QtWidgets import QMainWindow, QWidget, QGridLayout
