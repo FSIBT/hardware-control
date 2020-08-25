@@ -1,3 +1,12 @@
+"""InfiniiVision 4000 X-Series Oscilloscope.
+
+.. image:: /images/Keysight4000X.jpeg
+  :height: 200
+
+See class definition for details.
+
+"""
+
 import logging
 
 import numpy as np

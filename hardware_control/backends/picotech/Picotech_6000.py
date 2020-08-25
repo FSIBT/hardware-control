@@ -1,5 +1,8 @@
 """Picoscpe 6000 series.
 
+.. image:: /images/Pico_6000.jpg
+  :height: 200
+
 See class definition for details.
 
 """

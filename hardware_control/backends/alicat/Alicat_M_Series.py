@@ -1,5 +1,8 @@
 """Alicat M-Series gas flow meters.
 
+.. image:: /images/Alicat_M-Series.jpg
+  :height: 200
+
 See class definition for details.
 
 """

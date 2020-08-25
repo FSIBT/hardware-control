@@ -1,3 +1,12 @@
+"""TDKL GenH AC-DC power systems.
+
+.. image:: /images/TDKLGenH.jpg
+  :height: 200
+
+See class definition for details.
+
+"""
+
 import logging
 import random
 

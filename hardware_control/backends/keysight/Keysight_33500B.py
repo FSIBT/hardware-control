@@ -1,5 +1,8 @@
 """Keysight 33500 waveform and function generator.
 
+.. image:: /images/Keysight33500B.png
+  :height: 200
+
 See class definition for deails.
 
 """

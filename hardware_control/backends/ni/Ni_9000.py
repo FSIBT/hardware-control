@@ -1,6 +1,9 @@
 """
 Control class to handle NI Daq modules for analog voltage input and outputs.
 
+.. image:: /images/NI9000.jpeg
+  :height: 200
+
 Has been tested with models NI 9264 and NI 9205
 connection works over proprietary driver, with "tasks"
 https://nidaqmx-python.readthedocs.io/en/latest/index.html for further info

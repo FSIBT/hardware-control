@@ -1,5 +1,8 @@
 """Advantac ADAM 6015 (4 thermo couple readouts)
 
+.. image:: /images/ADAM-6015.jpg
+  :height: 200
+
 See class definition for details.
 
 """

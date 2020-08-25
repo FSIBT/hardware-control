@@ -1,5 +1,8 @@
 """ Siglent SDG Series.
 
+.. image:: /images/SDG1000X.png
+  :height: 200
+
 See class definition for details.
 
 """

@@ -1,3 +1,12 @@
+"""RIGOL’s 1000Z Series Digital Oscilloscope
+
+.. image:: /images/RigolDS100Z.png
+  :height: 200
+
+See class definition for details.
+
+"""
+
 import logging
 
 import numpy as np

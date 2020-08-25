@@ -1,3 +1,12 @@
+"""KeysightE36300 Series Triple Output Power Supply
+
+.. image:: /images/Keysight_E36312A.png
+  :height: 200
+
+See class definition for deails.
+
+"""
+
 import logging
 import random
 

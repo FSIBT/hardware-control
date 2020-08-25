@@ -1,5 +1,8 @@
 """Stanford Research Systems DG535.
 
+.. image:: /images/DG535.jpg
+  :height: 200
+
 See class definition for details.
 
 """

@@ -1,3 +1,12 @@
+"""R14xxET CAEN Power Supply
+
+.. image:: /images/CAENR14xxET.jpg
+  :height: 200
+
+See class definition for details.
+
+"""
+
 import logging
 import random
 

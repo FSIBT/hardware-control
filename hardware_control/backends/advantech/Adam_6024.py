@@ -1,5 +1,8 @@
 """Advantac ADAM 6024
 
+.. image:: /images/ADAM-6024.jpg
+  :height: 200
+
 See class definition for details.
 
 """

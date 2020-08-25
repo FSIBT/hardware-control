@@ -1,3 +1,11 @@
+"""DP800 Series Power Supply
+
+.. image:: /images/RigolDP800.png
+  :height: 200
+
+See class definition for details.
+
+"""
 import logging
 import random
 
