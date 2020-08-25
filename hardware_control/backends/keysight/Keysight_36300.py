@@ -38,11 +38,11 @@ class Keysight_36300(Backend):
         value_orig = value
         value = ensure_float(value)
 
-        if setting_X == "CHX_V_max":
+        if setting_X == "CHX_V_MAX":
             self.max_V[channel - 1] = value
             return str(value)
 
-        if setting_X == "CHX_I_max":
+        if setting_X == "CHX_I_MAX":
             self.max_I[channel - 1] = value
             return str(value)
 
@@ -52,7 +52,7 @@ class Keysight_36300(Backend):
         if self.dummy:
             return str(value)
 
-        if setting_X == "CHX_enable":
+        if setting_X == "CHX_ENABLE":
             if value_orig == "True":
                 # self.write(f"OUTPUT ON (@{channel})")
                 self.write("OUTPUT ON")
@@ -69,7 +69,7 @@ class Keysight_36300(Backend):
             self.write(f"SOURCE:CURR {value}, (@{channel})")
             return self.query(f":SOURCE:CURR? (@{channel})")
 
-        if setting_X == "CHX_V_set":
+        if setting_X == "CHX_V_SET":
             if self.max_V[channel - 1] is not None:
                 value = min(value, self.max_V[channel - 1])
 
@@ -81,10 +81,10 @@ class Keysight_36300(Backend):
         # overwrite channel number for easier comparison
         channel, command_X = get_channel_from_command(cmd)
 
-        if command_X == "CHX_I_max?":
+        if command_X == "CHX_I_MAX?":
             rval = self.max_I[channel - 1]
             return f"{cmd[:-1]}={rval}"
-        elif command_X == "CHX_V_max?":
+        elif command_X == "CHX_V_MAX?":
             rval = self.max_V[channel - 1]
             return f"{cmd[:-1]}={rval}"
 
@@ -93,7 +93,7 @@ class Keysight_36300(Backend):
 
         if self.dummy:
             num = random.random() * 10
-            if command_X == "CHX_enable?":
+            if command_X == "CHX_ENABLE?":
                 if num > 5:
                     return "True"
                 else:
@@ -101,15 +101,15 @@ class Keysight_36300(Backend):
 
             return f"{cmd.strip('?')}={num}"
 
-        if command_X == "CHX_V_out?":
+        if command_X == "CHX_V_OUT?":
             rval = self.query(f"MEAS:VOLT? (@{channel})")
-        elif command_X == "CHX_I_out?":
+        elif command_X == "CHX_I_OUT?":
             rval = self.query(f"MEAS:CURR? (@{channel})")
-        elif command_X == "CHX_I_set?":
+        elif command_X == "CHX_I_SET?":
             rval = self.query(f":SOURCE:CURR? (@{channel})")
-        elif command_X == "CHX_V_set?":
+        elif command_X == "CHX_V_SET?":
             rval = self.query(f":SOURCE:VOLT? (@{channel})")
-        elif command_X == "CHX_enable?":
+        elif command_X == "CHX_ENABLE?":
             rval = self.query(f":OUTPUT:STATE? (@{channel})")
             rval = rval == "1"
         else:

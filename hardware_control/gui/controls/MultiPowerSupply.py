@@ -34,6 +34,8 @@ class MultiPowerSupply(Instrument):
     See Also
     --------
     hardware_control.backends.caen.Caen_14xxET.Caen_14xxET
+    hardware_control.backends.keysight.Keysight_36300.Keysight_36300
+    hardware_control.backends.rigol.Rigol_DP832.RigolDP832
 
     """
 
@@ -74,10 +76,10 @@ class MultiPowerSupply(Instrument):
         for c in channels:
             if (c <= self.backend.num_channels) and (not c in self.channels):
                 self.channels.append(c)
-                self.values[f"CH{c}_V_out"] = "-"
-                self.values[f"CH{c}_I_out"] = "-"
-                self.values[f"CH{c}_V_set"] = "-"
-                self.values[f"CH{c}_I_set"] = "-"
+                self.values[f"CH{c}_V_OUT"] = "-"
+                self.values[f"CH{c}_I_OUT"] = "-"
+                self.values[f"CH{c}_V_SET"] = "-"
+                self.values[f"CH{c}_I_SET"] = "-"
 
         self.init_values()
         self.settings = self.default_state()
@@ -149,10 +151,10 @@ class MultiPowerSupply(Instrument):
 
             for c in self.channel_widgets:
                 if any_on:
-                    self.update_setting(f"CH{c.channel}_enable", str(False))
+                    self.update_setting(f"CH{c.channel}_ENABLE", str(False))
                     setButtonState(c.enabled_but, False)
                 else:
-                    self.update_setting(f"CH{c.channel}_enable", str(True))
+                    self.update_setting(f"CH{c.channel}_ENABLE", str(True))
                     setButtonState(c.enabled_but, True)
 
         else:
@@ -162,7 +164,7 @@ class MultiPowerSupply(Instrument):
 
             for c in self.channel_widgets:
                 self.update_setting(
-                    f"CH{c.channel}_enable", str(self.all_enable_but.isChecked())
+                    f"CH{c.channel}_ENABLE", str(self.all_enable_but.isChecked())
                 )
 
     def close(self):
@@ -175,30 +177,30 @@ class MultiPowerSupply(Instrument):
 
         # Request updated readout data
         for idx, c in enumerate(self.channels):  # For each channel...
-            self.comm.command(f"CH{c}_V_out?")
-            self.comm.command(f"CH{c}_I_out?")
-            self.comm.command(f"CH{c}_V_set?")
-            self.comm.command(f"CH{c}_I_set?")
+            self.comm.command(f"CH{c}_V_OUT?")
+            self.comm.command(f"CH{c}_I_OUT?")
+            self.comm.command(f"CH{c}_V_SET?")
+            self.comm.command(f"CH{c}_I_SET?")
             if self.channel_widgets[idx].show_VI_limits:
-                self.comm.command(f"CH{c}_V_max?")
-                self.comm.command(f"CH{c}_I_max?")
+                self.comm.command(f"CH{c}_V_MAX?")
+                self.comm.command(f"CH{c}_I_MAX?")
             if self.channel_widgets[idx].show_status_panel:
-                self.comm.command(f"CH{c}_enable?")
+                self.comm.command(f"CH{c}_ENABLE?")
             # if self.channel_widgets[idx].show_status_panel:
             #     self.comm.command(f"CH{c}_current_limited?")
             #     self.comm.command(f"CH{c}_output_enabled?")
             #     self.comm.command(f"CH{c}_ramp_direction?")
 
             # Get latest inbox entries for readout data...
-            Vout = remove_end_carriage_return(self.read_values(f"CH{c}_V_out"))
-            Iout = remove_end_carriage_return(self.read_values(f"CH{c}_I_out"))
-            Vset = remove_end_carriage_return(self.read_values(f"CH{c}_V_set"))
-            Iset = remove_end_carriage_return(self.read_values(f"CH{c}_I_set"))
+            Vout = remove_end_carriage_return(self.read_values(f"CH{c}_V_OUT"))
+            Iout = remove_end_carriage_return(self.read_values(f"CH{c}_I_OUT"))
+            Vset = remove_end_carriage_return(self.read_values(f"CH{c}_V_SET"))
+            Iset = remove_end_carriage_return(self.read_values(f"CH{c}_I_SET"))
             if self.channel_widgets[idx].show_VI_limits:
-                Vmax = remove_end_carriage_return(self.read_values(f"CH{c}_V_max"))
-                Imax = remove_end_carriage_return(self.read_values(f"CH{c}_I_max"))
+                Vmax = remove_end_carriage_return(self.read_values(f"CH{c}_V_MAX"))
+                Imax = remove_end_carriage_return(self.read_values(f"CH{c}_I_MAX"))
             if self.channel_widgets[idx].show_status_panel:
-                enabled = remove_end_carriage_return(self.read_values(f"CH{c}_enable"))
+                enabled = remove_end_carriage_return(self.read_values(f"CH{c}_ENABLE"))
             else:
                 enabled = None
             # if self.channel_widgets[idx].show_status_panel:
@@ -244,7 +246,7 @@ class MultiPowerSupply(Instrument):
         except:
             return
 
-        self.comm.update_setting(f"CH{channel}_I_max", str(maxI))
+        self.comm.update_setting(f"CH{channel}_I_MAX", str(maxI))
 
     def set_maxV(self, channel: int, maxV: float):
         """ Sets an internal limit for the voltage from channel 'n'. """
@@ -254,7 +256,7 @@ class MultiPowerSupply(Instrument):
         except:
             return
 
-        self.comm.update_setting(f"CH{channel}_V_max", str(maxV))
+        self.comm.update_setting(f"CH{channel}_V_MAX", str(maxV))
 
     def set_channel_label(self, channel: int, label: str):
         """ Sets a channel label to a new custom value """
@@ -270,22 +272,22 @@ class MultiPowerSupply(Instrument):
     def init_values(self):
         self.values = {}
         for c in self.channels:
-            self.values[f"CH{c}_V_out"] = ""
-            self.values[f"CH{c}_I_out"] = ""
-            self.values[f"CH{c}_V_max"] = ""
-            self.values[f"CH{c}_I_max"] = ""
-            self.values[f"CH{c}_V_set"] = ""
-            self.values[f"CH{c}_I_set"] = ""
-            self.values[f"CH{c}_enable"] = ""
+            self.values[f"CH{c}_V_OUT"] = ""
+            self.values[f"CH{c}_I_OUT"] = ""
+            self.values[f"CH{c}_V_MAX"] = ""
+            self.values[f"CH{c}_I_MAX"] = ""
+            self.values[f"CH{c}_V_SET"] = ""
+            self.values[f"CH{c}_I_SET"] = ""
+            self.values[f"CH{c}_ENABLE"] = ""
 
     def default_state(self):
         """Create a default state object if can't get state from a file."""
 
         default = {}
         for c in self.channels:
-            default[f"CH{c}_enable"] = "False"
-            default[f"CH{c}_V_set"] = "0"
-            default[f"CH{c}_I_set"] = "0.5"
+            default[f"CH{c}_ENABLE"] = "False"
+            default[f"CH{c}_V_SET"] = "0"
+            default[f"CH{c}_I_SET"] = "0.5"
 
         return default
 
@@ -415,29 +417,29 @@ class PowerSupplyChannel(QWidget):
         self.V_edit.setValidator(QDoubleValidator())
         self.V_edit.editingFinished.connect(
             lambda: main_widget.update_setting(
-                f"CH{self.channel}_V_set", (self.V_edit.text())
+                f"CH{self.channel}_V_SET", (self.V_edit.text())
             )
         )
-        self.V_edit.setText(str(main_widget.settings[f"CH{channel}_V_set"]))
+        self.V_edit.setText(str(main_widget.settings[f"CH{channel}_V_SET"]))
 
         self.I_edit = QLineEdit()
         self.I_edit.setValidator(QDoubleValidator())
         self.I_edit.editingFinished.connect(
             lambda: main_widget.update_setting(
-                f"CH{self.channel}_I_set", (self.I_edit.text())
+                f"CH{self.channel}_I_SET", (self.I_edit.text())
             )
         )
-        self.I_edit.setText(str(main_widget.settings[f"CH{channel}_I_set"]))
+        self.I_edit.setText(str(main_widget.settings[f"CH{channel}_I_SET"]))
 
         self.enabled_but = QPushButton()
         self.enabled_but.setText("On/Off")
         self.enabled_but.setCheckable(True)
         self.enabled_but.clicked.connect(
             lambda: main_widget.update_setting(
-                f"CH{channel}_enable", str(self.enabled_but.isChecked())
+                f"CH{channel}_ENABLE", str(self.enabled_but.isChecked())
             )
         )
-        setButtonState(self.enabled_but, main_widget.settings[f"CH{channel}_enable"])
+        setButtonState(self.enabled_but, main_widget.settings[f"CH{channel}_ENABLE"])
 
         self.controls_grid = QGridLayout()
         self.controls_grid.addWidget(self.V_ctrl_label, 0, 0)
@@ -552,11 +554,11 @@ class PowerSupplyChannel(QWidget):
             if (
                 self.main_widget.ramp_mode in [Instrument.AUTOMATIC, Instrument.MANUAL]
                 and self.main_widget.ramp_timer.isActive()
-                and f"CH{self.channel}_V_set" in self.main_widget.ramp_target
+                and f"CH{self.channel}_V_SET" in self.main_widget.ramp_target
             ):
 
                 curr = 0
-                key = f"CH{self.channel}_V_set"
+                key = f"CH{self.channel}_V_SET"
                 if key in self.main_widget.ramp_val:
                     curr = self.main_widget.ramp_val[key]
                 elif key in self.main_widget.values:
@@ -570,7 +572,7 @@ class PowerSupplyChannel(QWidget):
                         " assumption of ramping from 0."
                     )
 
-                if self.main_widget.ramp_target[f"CH{self.channel}_V_set"] > curr:
+                if self.main_widget.ramp_target[f"CH{self.channel}_V_SET"] > curr:
                     self.ramp_indic.setPixmap(self.rampup_ind)
                 else:
                     self.ramp_indic.setPixmap(self.rampdn_ind)
@@ -591,8 +593,8 @@ class PowerSupplyChannel(QWidget):
         self.channel_label.setAlignment(align_left_center)
 
     def settings_to_UI(self):
-        self.V_edit.setText(str(self.main_widget.settings[f"CH{self.channel}_V_set"]))
-        self.I_edit.setText(str(self.main_widget.settings[f"CH{self.channel}_I_set"]))
+        self.V_edit.setText(str(self.main_widget.settings[f"CH{self.channel}_V_SET"]))
+        self.I_edit.setText(str(self.main_widget.settings[f"CH{self.channel}_I_SET"]))
         setButtonState(
-            self.enabled_but, self.main_widget.settings[f"CH{self.channel}_enable"]
+            self.enabled_but, self.main_widget.settings[f"CH{self.channel}_ENABLE"]
         )

@@ -44,10 +44,10 @@ class Caen_14xxET(Backend):
 
         # These settings return valid values even in dummy mode or while offline.
         # That's why we check for self.online after these if-statements
-        if setting_X == "CHX_I_max":
+        if setting_X == "CHX_I_MAX":
             self.max_I[channel - 1] = float(value)
             return str(value)
-        elif setting_X == "CHX_V_max":
+        elif setting_X == "CHX_V_MAX":
             self.max_V[channel - 1] = float(value)
             return str(value)
 
@@ -58,7 +58,7 @@ class Caen_14xxET(Backend):
         if self.dummy:
             return str(value)
 
-        if setting_X == "CHX_enable":
+        if setting_X == "CHX_ENABLE":
             if value_original == "True":
                 self.query(f"$BD:00,CMD:SET,CH:{channel},PAR:ON")
             else:
@@ -69,7 +69,7 @@ class Caen_14xxET(Backend):
                 return "None"
             return str(bool(status["on_off"]))
 
-        if setting_X == "CHX_I_set":
+        if setting_X == "CHX_I_SET":
             logger.debug(f"Iset called with value {value}")
 
             if self.max_I[channel - 1] is not None:
@@ -84,7 +84,7 @@ class Caen_14xxET(Backend):
             if result is None:
                 return "None"
             return result[-7:]
-        if setting_X == "CHX_V_set":
+        if setting_X == "CHX_V_SET":
             logger.debug(f"Vset called with value {value}")
 
             if self.max_V[channel - 1] is not None:
@@ -101,7 +101,7 @@ class Caen_14xxET(Backend):
     def command(self, cmd: str):
         channel, command_X = get_channel_from_command(cmd)
 
-        if command_X == "CHX_I_max?":
+        if command_X == "CHX_I_MAX?":
             try:
                 rval = self.max_I[channel - 1]
             except Exception as e:
@@ -109,7 +109,7 @@ class Caen_14xxET(Backend):
 
             return f"{cmd[:-1]}={rval}"
 
-        if command_X == "CHX_V_max?":
+        if command_X == "CHX_V_MAX?":
             try:
                 rval = self.max_V[channel - 1]
             except Exception as e:
@@ -124,21 +124,21 @@ class Caen_14xxET(Backend):
             num = random.random() * 10
             return f"{cmd.strip('?')}={num}"
 
-        if command_X == "CHX_V_out?":
+        if command_X == "CHX_V_OUT?":
             command = "VMON"
-        elif command_X == "CHX_I_out?":
+        elif command_X == "CHX_I_OUT?":
             command = "IMON"
-        elif command_X == "CHX_I_set?":
+        elif command_X == "CHX_I_SET?":
             command = "ISET"
-        elif command_X == "CHX_V_set?":
+        elif command_X == "CHX_V_SET?":
             command = "VSET"
-        elif command_X == "CHX_enable?":
+        elif command_X == "CHX_ENABLE?":
             result = self.read_status(channel)
 
             if result is None:
                 return "False"
 
-            if result["on_off"]:
+            if result["ON_OFF"]:
                 rval = "True"
             else:
                 rval = "False"
@@ -152,7 +152,7 @@ class Caen_14xxET(Backend):
         rval = result[result.find("VAL:") + 4 :]
         rval = rval.strip("\\nr")
 
-        if command_X in ["CHX_I_out?", "CHX_I_set?"]:
+        if command_X in ["CHX_I_OUT?", "CHX_I_SET?"]:
             # Current is read in uA
             rval = float(rval) * 1e-6
 
@@ -174,19 +174,19 @@ class Caen_14xxET(Backend):
             value = int(result[result.find("VAL:") + 4 :])
 
         status = {
-            "on_off": value & 1,
-            "ramping_up": value & 2,
-            "ramping_down": value & 4,
-            "over_current": value & 8,
-            "over_voltage": value & 16,
-            "under_voltage": value & 32,
-            "max_voltage": value & 64,
-            "tripped": value & 128,
-            "over_power": value & 256,
-            "over_temperature": value & 512,
-            "disabled": value & 1024,
-            "kill": value & 2048,
-            "interlocked": value & 4096,
-            "calibration_error": value & 8192,
+            "ON_OFF": value & 1,
+            "RAMPING_UP": value & 2,
+            "RAMPING_DOWN": value & 4,
+            "OVER_CURRENT": value & 8,
+            "OVER_VOLTAGE": value & 16,
+            "UNDER_VOLTAGE": value & 32,
+            "MAX_VOLTAGE": value & 64,
+            "TRIPPED": value & 128,
+            "OVER_POWER": value & 256,
+            "OVER_TEMPERATURE": value & 512,
+            "DISABLED": value & 1024,
+            "KILL": value & 2048,
+            "INTERLOCKED": value & 4096,
+            "CALIBRATION_ERROR": value & 8192,
         }
         return status
