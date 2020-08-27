@@ -5,7 +5,7 @@
 
 ## What is this repository for? ###
 
-The goal is to provide some reusable code for hardware control using python and Qt.
+The goal is to provide reusable code for hardware control using python and Qt.
 
 Documentation can be found at [Read the Docs](https://readthedocs.org/projects/hardware-control/).
 
@@ -14,6 +14,19 @@ Documentation can be found at [Read the Docs](https://readthedocs.org/projects/h
 The easiest way is to pip install the software:
 
     pip install hardware-control
+
+## Tests
+
+Currently, we do not provide unit tests, since for the backends tests can
+really only be run with the hardware connected.  Instead of tests, we
+provide example code that can be run after installing the package. All
+examples can be run using a `--dummy` mode which will enable a
+simulation mode that will make the software believe that all
+instruments are connected to the program (some instrument will also
+generate random data).
+
+New controls and backends should therefore always implement a working
+example.
 
 ## Contribution guidelines ###
 
