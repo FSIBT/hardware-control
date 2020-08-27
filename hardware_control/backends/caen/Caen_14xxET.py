@@ -3,14 +3,16 @@
 .. image:: /images/CAENR14xxET.jpg
   :height: 200
 
+.. image:: /images/CAENR803x.jpg
+  :height: 200
+
+
 See class definition for details.
 
 """
 
 import logging
 import random
-
-import pyvisa
 
 from ..base import Backend
 from ..utility import ensure_float, get_channel_from_command
@@ -20,6 +22,12 @@ logger = logging.getLogger(__name__)
 
 
 class Caen_14xxET(Backend):
+    """CAEN high voltage power supplies.
+
+    This backend provides controls for CAEN power supplies. Tested instruments include: R14xxET and R803x.
+
+    """
+
     def __init__(
         self, connection_addr,
     ):

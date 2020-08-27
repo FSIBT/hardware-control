@@ -27,6 +27,9 @@ class DelayGenerator(Instrument):
     also has some elements that are probably unique to this
     instrument.
 
+    .. image:: /images/controls/DelayGenerator.png
+      :height: 200
+
     See Also
     --------
     hardware_control.backends.srs.SRS_DG535.SRS_DG535
@@ -267,6 +270,10 @@ class DelayChannelWidget(QWidget):
     """A Qt-widget that implements controls for a single channel of a delay generator.
 
     Used together with :py:class:`DelayGenerator`.
+
+    .. image:: /images/controls/DelayGenerator-channel.png
+      :height: 200
+
 
     Parameters
     ----------

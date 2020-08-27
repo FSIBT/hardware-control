@@ -32,6 +32,10 @@ class Oscilloscope(Instrument):
     different channels, timing, and the trigger setup. It can display
     the measured waveforms.
 
+    .. image:: /images/controls/Oscilloscope.png
+      :height: 200
+
+
     Parameters
     ----------
 

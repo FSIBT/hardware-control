@@ -31,6 +31,11 @@ DISP_DECIMAL_PLACES = 1
 class MultiPowerSupply(Instrument):
     """A GUI for a multi channel power supply.
 
+    Example of a 3 channel power supply:
+
+    .. image:: /images/controls/MultiPowerSupply-3ch.png
+      :height: 200
+
     See Also
     --------
     hardware_control.backends.caen.Caen_14xxET.Caen_14xxET

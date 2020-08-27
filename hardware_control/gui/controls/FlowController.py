@@ -16,6 +16,9 @@ class FlowController(Instrument):
     Implements setting the gas flow and the type of gas used. As well
     as reading out the current flow and pressure at the flow meter.
 
+    .. image:: /images/controls/FlowController.png
+      :height: 200
+
     See Also
     --------
     hardware_control.backends.alicat.Alicat_M_Series.Alicat_M_Series

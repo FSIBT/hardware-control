@@ -22,6 +22,11 @@ logger = logging.getLogger(__name__)
 class FunctionGenerator(Instrument):
     """A GUI for Function/Waveform generators.
 
+    Example of a two channel function generator:
+
+    .. image:: /images/controls/FunctionGenerator-2ch.png
+      :height: 200
+
     Note
     ----
     Not all settings and command of the instrument below are supported.
@@ -105,6 +110,9 @@ class FunctionGenerator(Instrument):
 
 class FunctionGeneratorChannelWidget(QWidget):
     """Defines a UI for AWG channels.
+
+    .. image:: /images/controls/FunctionGenerator-single-channel.png
+      :height: 200
 
     """
 
