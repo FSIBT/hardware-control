@@ -10,8 +10,8 @@ authors:
     orcid: 0000-0003-2885-4801
     affiliation: 1
   - name: Timo Bauer
-    orcid: 0000-0000-0000-0000
-    affiliation: "1, 2" # (Multiple affiliations must be quoted)
+    orcid: 0000-0003-2094-2612
+    affiliation: "1, 2"
   - name: Brian Mak
     orcid: 0000-0000-0000-0000
     affiliation: 1
@@ -21,7 +21,7 @@ authors:
 affiliations:
  - name: Lawrence Berkeley National Laboratory, Berkeley, CA 94720, USA
    index: 1
- - name: Technische Universität Darmstadt
+ - name: Technische Universität Darmstadt, 64289 Darmstadt, Hesse, Germany
    index: 2
 date: 27 August 2020
 bibliography: paper.bib

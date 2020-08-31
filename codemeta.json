@@ -47,10 +47,10 @@
         },
         {
             "@type": "Person",
-            "@id": "https://orcid.org/0000-0000-0000-0000",
+            "@id": "https://orcid.org/0000-0003-2094-2612",
             "givenName": "Timo",
             "familyName": "Bauer",
-            "email": "timobauer@lbl.gov",
+            "email": "timo_sebastian.bauer@stud.tu-darmstadt.de",
             "affiliation": {
                 "@type": "Organization",
                 "name": "E.O. Lawrence Berkeley National Laboratory: Berkeley, Ca 94720, US"
