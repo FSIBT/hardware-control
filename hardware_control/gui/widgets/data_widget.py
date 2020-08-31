@@ -35,6 +35,7 @@ class DataWidget(Instrument):
         self.ignore = True
         self.ignore_control = True
         self.prevent_overwrite_fields = False
+        self.add_lock_button = add_lock_button
 
         self.allow_edit_data = False
 
@@ -372,7 +373,9 @@ class DataWidget(Instrument):
         try:
             group = self.app.data_sets[self.settings["display_group"]]
 
-            self.clear_button.setEnabled(self.prevent_overwrite_fields)
+            self.clear_button.setEnabled(
+                self.prevent_overwrite_fields or not self.add_lock_button
+            )
             self.autosave_check.setEnabled(self.prevent_overwrite_fields)
             self.save_format_drop.setEnabled(self.prevent_overwrite_fields)
             self.save_interval_edit.setEnabled(self.prevent_overwrite_fields)
