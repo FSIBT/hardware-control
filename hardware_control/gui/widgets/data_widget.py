@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 class DataWidget(Instrument):
-    def __init__(self, app, name: str = "Data Logger"):
+    def __init__(self, app, name: str = "Data Logger", add_lock_button=False):
 
         super().__init__(app, name)
 
@@ -84,7 +84,8 @@ class DataWidget(Instrument):
         self.table.setRowCount(15)
         self.table.setColumnCount(4)
         self.table.cellChanged.connect(self.data_changed_from_cell)
-        self.table.cellClicked.connect(self.pause_updates)
+        if add_lock_button:
+            self.table.cellClicked.connect(self.pause_updates)
         self.table.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         self.autosave_label = QLabel()
@@ -190,7 +191,8 @@ class DataWidget(Instrument):
         self.disp_buttons_layout = QGridLayout()
         self.table_layout.addWidget(self.table, 0, 0, 1, 4)
 
-        self.disp_buttons_layout.addWidget(self.resume_updates_button, 1, 0)
+        if add_lock_button:
+            self.disp_buttons_layout.addWidget(self.resume_updates_button, 1, 0)
         self.disp_buttons_layout.addWidget(self.save_button, 1, 1)
         self.disp_buttons_layout.addWidget(self.clear_button, 1, 3)
 
