@@ -243,7 +243,9 @@ class PlotTool(PlotBase):
         super().update()
 
         self.axes.set_xlabel("Time (s)")
-        self.axes.legend(loc="best")
+        handles, labels = self.axes.get_legend_handles_labels()
+        if len(handles) > 0:
+            self.axes.legend(loc="best")
         self.axes.grid(True)
         plt.locator_params(axis="y", nbins=6)
         self.plot.draw()
