@@ -55,6 +55,17 @@
                 "@type": "Organization",
                 "name": "E.O. Lawrence Berkeley National Laboratory: Berkeley, Ca 94720, US"
             }
+        },
+        {
+            "@type": "Person",
+            "@id": "https://orcid.org/0000-0001-7095-8108",
+            "givenName": "Brian",
+            "familyName": "Mak",
+            "email": "brianmak@lbl.gov",
+            "affiliation": {
+                "@type": "Organization",
+                "name": "E.O. Lawrence Berkeley National Laboratory: Berkeley, Ca 94720, US"
+            }
         }
     ]
 }

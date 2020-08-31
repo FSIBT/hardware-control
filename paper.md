@@ -13,7 +13,7 @@ authors:
     orcid: 0000-0003-2094-2612
     affiliation: "1, 2"
   - name: Brian Mak
-    orcid: 0000-0000-0000-0000
+    orcid: 0000-0001-7095-8108
     affiliation: 1
   - name: Arun Persaud
     orcid: 0000-0003-3186-8358
