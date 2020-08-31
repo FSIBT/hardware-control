@@ -112,7 +112,7 @@ class PlotBase(QWidget):
 
         # Check that is a function of time
         if "time:time" not in self.app.data_sets[self.plot_set].data:
-            logger.error(f"Data set {self.plot_set} in {self.name} has no time data.")
+            logger.info(f"Data set {self.plot_set} in {self.name} has no time data.")
             return
 
         xleft, xright = self.axes.get_xlim()
