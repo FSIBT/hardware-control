@@ -463,7 +463,7 @@ class CustomPowerSupplyWidget(hc.Instrument):
         self.caen_edit = QLineEdit()
         self.caen_edit.setValidator(QDoubleValidator())
         self.caen_edit.editingFinished.connect(self.update_caen)
-        self.caen_edit.setText(str(caen.settings["CH3_V_set"]))
+        self.caen_edit.setText(str(caen.settings["CH3_V_SET"]))
 
         self.horiz_spacer = QSpacerItem(
             200, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
@@ -503,7 +503,7 @@ class CustomPowerSupplyWidget(hc.Instrument):
         self.service_timer.start(1000)
 
     def settings_to_UI(self):
-        self.caen_edit.setText(self.settings["CAEN_V_set"])
+        self.caen_edit.setText(self.settings["CAEN_V_SET"])
         self.update_caen()
 
     def update_from_caen(self):
@@ -522,7 +522,7 @@ class CustomPowerSupplyWidget(hc.Instrument):
 
         if volt_set3 is not None and volt_set8 is not None:
             if QApplication.focusWidget() is not self.caen_edit:
-                if volt_set3 == volt_set8 and volt_set3 != self.settings["CAEN_V_set"]:
+                if volt_set3 == volt_set8 and volt_set3 != self.settings["CAEN_V_SET"]:
                     self.caen_edit.setText(volt_set3)
                 else:
                     self.caen_edit.setText("")
@@ -537,7 +537,7 @@ class CustomPowerSupplyWidget(hc.Instrument):
         return {"CAEN_V_set": ""}
 
     def update_caen(self):
-        self.settings["CAEN_V_set"] = self.caen_edit.text()
+        self.settings["CAEN_V_SET"] = self.caen_edit.text()
 
         self.caen.remote_update_setting("CH3_V_set", self.caen_edit.text())
         self.caen.remote_update_setting("CH8_V_set", self.caen_edit.text())
@@ -569,7 +569,7 @@ class CustomControlWidget(QGroupBox):
                 "CH2_delay", self.filament_edit.text()
             )
         )
-        self.filament_edit.setText(self.filament.settings["CH2_delay"])
+        self.filament_edit.setText(self.filament.settings["CH2_DELAY"])
 
         self.filament_amp_label = QLabel("Filament amplitude (a.u.): ")
 
@@ -580,7 +580,7 @@ class CustomControlWidget(QGroupBox):
                 "CH12_output_amplitude", self.filament_amp_edit.text()
             )
         )
-        self.filament_amp_edit.setText(self.filament.settings["CH12_output_amplitude"])
+        self.filament_amp_edit.setText(self.filament.settings["CH12_OUTPUT_AMPLITUDE"])
 
         self.spark_delay_label = QLabel("Spark delay (sec): ")
 
@@ -588,10 +588,10 @@ class CustomControlWidget(QGroupBox):
         self.spark_delay_edit.setValidator(QDoubleValidator())
         self.spark_delay_edit.editingFinished.connect(
             lambda: self.filament.remote_update_setting(
-                "CH3_delay", self.spark_delay_edit.text()
+                "CH3_DELAY", self.spark_delay_edit.text()
             )
         )
-        self.spark_delay_edit.setText(self.filament.settings["CH3_delay"])
+        self.spark_delay_edit.setText(self.filament.settings["CH3_DELAY"])
 
         self.spark_duration_label = QLabel("Spark duration (sec): ")
 
@@ -602,7 +602,7 @@ class CustomControlWidget(QGroupBox):
                 "CH4_delay", self.spark_duration_edit.text()
             )
         )
-        self.spark_duration_edit.setText(self.arc.settings["CH4_delay"])
+        self.spark_duration_edit.setText(self.arc.settings["CH4_DELAY"])
 
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.plasma_timing_label, 0, 0, 1, 4)
