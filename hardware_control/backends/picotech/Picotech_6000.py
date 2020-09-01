@@ -184,7 +184,7 @@ class Picotech_6000(Backend):
                 return "Success"
             if setting_X == "CHX_active":
                 self.ps.setChannel(channel=chan, enabled=value)
-                return "Success"
+                return f"CH{channel}={value}"
             if setting_X == "CHX_impedance":
                 return "Not available"
             if setting_X == "CHX_label":

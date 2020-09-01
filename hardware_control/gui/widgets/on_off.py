@@ -52,10 +52,8 @@ class QOnOffButton(QPushButton):
         """Toggle the current status."""
         toggled_value = str(self.instrument.values[self.name] != "True")
         self.instrument.remote_update_setting(self.name, toggled_value)
-        self.update_status(toggled_value)
 
     def update_status(self, value):
-        setButtonState(self, value)
         if value == "True":
             self.setChecked(True)
             self.setIcon(self.on_icon)

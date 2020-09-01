@@ -75,7 +75,7 @@ class Caen_14xxET(Backend):
 
             if status is None:
                 return "None"
-            return str(bool(status["on_off"]))
+            return str(bool(status["ON_OFF"]))
 
         if setting_X == "CHX_I_SET":
             logger.debug(f"Iset called with value {value}")
@@ -152,7 +152,7 @@ class Caen_14xxET(Backend):
                 rval = "False"
             return f"{cmd[:-1]}={rval}"
         else:
-            logging.debug(f"Unkown CAEN command {cmd}")
+            logging.debug(f"Unknown CAEN command {cmd}")
 
         result = self.query(f"$BD:00,CMD:MON,CH:{channel},PAR:{command}")
         if result is None:
