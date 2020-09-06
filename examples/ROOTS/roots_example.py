@@ -69,35 +69,6 @@ else:
 logger.info("Roots Example Starting")
 
 
-def example_function(tool, hook_name):
-
-    return
-
-    print(f"{tool.name} called hook {hook_name}")
-
-    try:
-        tool.counter
-    except:
-        print("Created counter")
-        tool.counter = 0
-
-    if tool.counter < 1:
-        tool.set_indicator(hook_name, "GREEN")
-    elif tool.counter < 2:
-        tool.set_indicator(hook_name, "RED")
-    elif tool.counter < 3:
-        tool.set_indicator(hook_name, "GREY")
-    elif tool.counter < 4:
-        tool.set_indicator(hook_name, "DARKGREY")
-    elif tool.counter < 5:
-        tool.set_indicator(hook_name, "BLUE")
-    else:
-        tool.counter = -0.5
-    tool.counter += 0.5
-
-    print(f"\t{tool.counter}")
-
-
 class RootsDemo(hc.MainWindow):
     def __init__(self, app):
         super().__init__(app)
@@ -313,16 +284,10 @@ class RootsDemo(hc.MainWindow):
         self.miniplot = hc.MiniPlotTool(app, "Plot", 220, 220)
         self.miniplot.set_dataset("ADAM")
 
-        self.monitor = hc.MonitorTool(app, "Error Monitor")
-        self.monitor.add_hook("Hook 1", example_function)
-        self.monitor.add_hook("Hook 2", example_function)
-        self.monitor.add_spacer()
-
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.tabs, 0, 0, 3, 1)
         self.master_layout.addWidget(self.statustool, 0, 1)
         self.master_layout.addWidget(self.miniplot, 1, 1)
-        self.master_layout.addWidget(self.monitor, 2, 1)
 
         self.main_widget = QWidget(self)
         self.main_widget.setLayout(self.master_layout)
