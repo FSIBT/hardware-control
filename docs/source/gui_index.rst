@@ -32,7 +32,6 @@ GUI elements
    gui/widgets/connection_status
    gui/widgets/data_widget
    gui/widgets/macro_runner
-   gui/widgets/monitor
    gui/widgets/on_off
    gui/widgets/plot
    gui/widgets/qtconsole
