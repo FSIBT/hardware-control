@@ -104,6 +104,7 @@ class Backend(abc.ABC):
         self.ip_addr = None
         self.port_no = default_port
         self.termination = "\n"
+        self.encoding = "utf-8"
 
         # This can be set to a single command or list of commands
         # which will enable automatic checks using these commands to
@@ -304,7 +305,7 @@ class Backend(abc.ABC):
                 self.device.write(command)
                 return command
             if self.connection_type == Backend.SOCKET:
-                self.device.sendall(bytes(command + self.termination, "utf-8"))
+                self.device.sendall(bytes(command + self.termination, self.encoding))
                 return command
         except Exception:
             logger.debug(f"ERROR: Write {command} failed in {self.ID}", exc_info=True)
@@ -336,7 +337,7 @@ class Backend(abc.ABC):
             if self.connection_type == Backend.VISA:
                 reply = self.device.query(command)
             elif self.connection_type == Backend.SOCKET:
-                self.device.sendall(bytes(command + self.termination, "utf-8"))
+                self.device.sendall(bytes(command + self.termination, self.encoding))
                 reply_bytes = Backend.recvall(self.device)
                 reply = str(reply_bytes)
                 reply = reply[2 : len(reply) - 3]
