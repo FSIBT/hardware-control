@@ -34,6 +34,7 @@ class FunctionGenerator(Instrument):
     See Also
     --------
     hardware_control.backends.keysight.Keysight_36300.Keysight_36300
+    hardware_control.backends.siglent.Siglent_SDG.Siglent_SDG
 
     """
 

@@ -73,21 +73,21 @@ class SRS_DG535(Backend):
                 mode = 2
             elif value_orig == "BURST":
                 mode = 3
-            w = f"TM{mode}"
+            command = f"TM{mode}"
         elif setting == "TRIGGER_EDGE":
             mode = 0
             if value_orig == "POSITIVE":
                 mode = 1
             elif value_orig == "NEGATIVE":
                 mode = 0
-            w = f"TS{mode}"
+            command = f"TS{mode}"
         elif setting == "EXT_TRIG_ZIN":
             mode = 0
             if value_orig == "50 OHMS":
                 mode = 0
             elif value_orig == "HI-Z":
                 mode = 1
-            w = f"TZ{mode}"
+            command = f"TZ{mode}"
         elif setting_X == "CHX_OUTPUT_MODE":
             mode = 0
             if value_orig == "TTL":
@@ -98,7 +98,7 @@ class SRS_DG535(Backend):
                 mode = 2
             elif value_orig == "VAR":
                 mode = 3
-            w = f"OM {channel},{mode}"
+            command = f"OM {channel},{mode}"
         elif setting_X == "CHX_RELATIVE":
             self.channels_relative[channel] = value_orig
             if channel in self.channels_ampl:
@@ -106,7 +106,7 @@ class SRS_DG535(Backend):
             else:
                 ampl_chan = "1"
             channel_number = SRS_DG535.SRS_trigger_names.get(value_orig, None)
-            w = f"DT {channel},{channel_number},{ampl_chan}"
+            command = f"DT {channel},{channel_number},{ampl_chan}"
         elif setting_X == "CHX_DELAY":
             self.channels_ampl[channel] = value_orig
             if channel in self.channels_relative:
@@ -115,34 +115,41 @@ class SRS_DG535(Backend):
                 rel_chan = "TRIG"
             rel_chan = SRS_DG535.SRS_trigger_names.get(rel_chan, None)
 
-            w = f"DT {channel},{rel_chan},{value}"
+            command = f"DT {channel},{rel_chan},{value}"
         elif setting_X == "CHX_OUTPUT_OFFSET":
-            w = f"OO {channel},{value_orig}"
+            command = f"OO {channel},{value_orig}"
         elif setting_X == "CHX_OUTPUT_AMPLITUDE":
             if value > 4:
                 value = 4
             if value < 0.1:
                 value = 0.1
-            w = f"OA {channel},{value}"
+            command = f"OA {channel},{value}"
         elif setting == "PULSES_PER_BURST":
-            w = f"BC{value}"
+            command = f"BC{value}"
         elif setting == "TRIGGER_PERIOD":
-            w = f"BP{value}"
+            command = f"BP{value}"
         elif setting == "TRIGGER_LEVEL":
-            w = f"TL{value}"
+            command = f"TL{value}"
         else:
             logger.warning(f"{self.ID} - Unknown setting: {setting} | {value}")
             return "False"
 
         try:
-            logger.debug(f"{self.ID} writes: {w}")
-            self.write(w)
-            return "True"
+            logger.debug(f"{self.ID} writes: {command}")
+            self.write(command)
+            error_byte = self.query("ES")
+            if error_byte == 0:
+                return f"{setting}={value_orig}"
+            logging.error(
+                f"{self.ID} - Got instrument error in update_setting: {setting} {value_orig} error: {error_byte}",
+            )
+            return "Error"
+
         except Exception:
             logging.error(
                 f"{self.ID} - An exception occurred in update_setting()", exc_info=True,
             )
-            return "False"
+            return "Error"
 
     @ensure_online
     def command(self, cmd: str):

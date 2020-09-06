@@ -29,77 +29,58 @@ class Siglent_SDG(Backend):
     def update_setting(self, setting: str, value):
 
         if self.dummy:
-            return value
+            return f"{setting}={value}"
 
-        # Note: We ignore channel number because there is only
-        # one channel on this model of AWG
-        if regex_compare("CH._enabled", setting):
-            chan = setting[2]
-
+        # only one channel on this model of AWG
+        if setting == "CH1_ENABLED":
             if value == "True":
-                self.write(f"C{chan}:OUTP ON")
+                self.write("C1:OUTP ON")
             else:
-                self.write(f"C{chan}:OUTP OFF")
-            rval = self.query(f"C{chan}:OUTP?")
-            return str(rval[8:10] == "ON")
+                self.write("C1:OUTP OFF")
+            rval = self.query("C1:OUTP?")
+            rval = rval[8:10] == "ON"
+            return f"{setting}={rval}"
 
-        if regex_compare("CH._waveform", setting):
-            chan = setting[2]
-
+        if setting == "CH1_WAVEFORM":
             wvfm = "SIN"
-            if value == "Sine":
-                wvfm = "SINE"
-            elif value == "Square":
-                wvfm = "SQUARE"
-            elif value == "Triangle":
+            if value in ["SINE", "SQUARE", "RAMP", "PULSE", "PRBS", "NOISE", "DC"]:
+                wvfm = value
+            elif value == "TRIANGLE":
                 wvfm = "RAMP"
-            elif value == "Ramp":
-                wvfm = "RAMP"
-            elif value == "Pulse":
-                wvfm = "PULSE"
-            elif value == "PRBS":  # Pseudo-random binary sequence
-                wvfm = "PRBS"
-            elif value == "Noise":
-                wvfm = "NOISE"
-            elif value == "Arbitrary":
+            elif value == "ARBITRARY":
                 wvfm = "ARB"
-            elif value == "DC":
-                wvfm = "DC"
 
-            self.write(f"C{chan}:BSWV WVTP,{wvfm}")
-            rval = self.query(f":C{chan}:BSWV?")
-            return rval[:-1]  # Trim newline character
+            self.write(f"C1:BSWV WVTP,{wvfm}")
+            rval = self.query(":C1:BSWV?")
+            rval = rval[:-1]  # Trim newline character
+            return f"{setting}={rval}"
 
-        if regex_compare("CH._frequency", setting):
-            chan = setting[2]
+        if setting == "CH1_FREQUENCY":
+            self.write(f"C1:BSWV FRQ,{float(value):.6E}")
+            rval = self.query("C1:BSWV?")
+            rval = rval[:-1]
+            return f"{setting}={rval}"
 
-            self.write(f"C{chan}:BSWV FRQ,{float(value):.6E}")
-            rval = self.query(f"C{chan}:BSWV?")
-            return rval[:-1]
+        if setting == "CH1_AMPLITUDE":
+            self.write(f"C1:BSWV AMP,{float(value):.6E}")
+            rval = self.query("C1:BSWV?")
+            rval = rval[:-1]
+            return f"{setting}={rval}"
 
-        if regex_compare("CH._amplitude", setting):
-            chan = setting[2]
+        if setting == "CH1_OFFSET":
+            self.write(f"C1:BSWV OFST,{float(value):.6E}")
+            rval = self.query("C1:BSWV?")
+            rval = rval[:-1]
+            return f"{setting}={rval}"
 
-            self.write(f"C{chan}:BSWV AMP,{float(value):.6E}")
-            rval = self.query(f"C{chan}:BSWV?")
-            return rval[:-1]
-
-        if regex_compare("CH._offset", setting):
-            chan = setting[2]
-
-            self.write(f"C{chan}:BSWV OFST,{float(value):.6E}")
-            rval = self.query(f"C{chan}:BSWV?")
-            return rval[:-1]
-
-        if regex_compare("CH._impedance", setting):
-            chan = setting[2]
-
+        if setting == "CH1_IMPEDANCE":
             if value == "50":
-                self.write(f"C{chan}:OUTP LOAD,50")
+                self.write("C1:OUTP LOAD,50")
             else:
-                self.write(f"C{chan}:OUTP LOAD,HZ")
-            rval = self.query(f"C{chan}:OUTP?")
-            return rval[:-1]
+                self.write("C1:OUTP LOAD,HZ")
+            rval = self.query("C1:OUTP?")
+            rval = rval[:-1]
+            return f"{setting}={rval}"
 
     @ensure_online
     def command(self, cmd: str):
