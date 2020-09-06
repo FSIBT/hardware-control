@@ -320,7 +320,7 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
             return
 
         value = call_hooks(self.update_settings_hooks[setting], value)
-        if not value:
+        if value is None:
             return
 
         self.settings[setting] = value
@@ -486,7 +486,7 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
         first.
 
         The user can add hooks that will receive the key and value. If
-        the hook returns True, the other hooks will not be called.
+        the hook returns None, the other hooks will not be called and the value ignored.
 
         Parameters
         ----------
@@ -507,7 +507,7 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
             value = retval
 
         value = call_hooks(self.update_values_hooks[key], value)
-        if not value:
+        if value is None:
             return
 
         self.values[key] = value
