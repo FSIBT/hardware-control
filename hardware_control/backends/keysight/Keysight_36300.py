@@ -60,21 +60,24 @@ class Keysight_36300(Backend):
                 # self.write(f"OUTPUT OFF (@{channel})")
                 self.write("OUTPUT OFF")
             out = self.query("OUTPUT:STATE?")
-            return str(out == "1")
+            out = out == "1"
+            return f"{setting}={out}"
 
-        if setting_X == "CHX_I_set":
+        if setting_X == "CHX_I_SET":
             if self.max_I[channel - 1] is not None:
                 value = min(value, self.max_I[channel - 1])
 
             self.write(f"SOURCE:CURR {value}, (@{channel})")
-            return self.query(f":SOURCE:CURR? (@{channel})")
+            rval = self.query(f":SOURCE:CURR? (@{channel})")
+            return f"{setting}={rval}"
 
         if setting_X == "CHX_V_SET":
             if self.max_V[channel - 1] is not None:
                 value = min(value, self.max_V[channel - 1])
 
             self.write(f"SOURCE:VOLT {value}, (@{channel})")
-            return self.query(f":SOURCE:VOLT? (@{channel})")
+            rval = self.query(f":SOURCE:VOLT? (@{channel})")
+            return f"{setting}={rval}"
 
     def command(self, cmd: str):
 

@@ -24,7 +24,8 @@ logger = logging.getLogger(__name__)
 class Caen_14xxET(Backend):
     """CAEN high voltage power supplies.
 
-    This backend provides controls for CAEN power supplies. Tested instruments include: R14xxET and R803x.
+    This backend provides controls for CAEN power supplies.
+    Tested instruments include: R14xxET and R803x.
 
     """
 
@@ -54,17 +55,18 @@ class Caen_14xxET(Backend):
         # That's why we check for self.online after these if-statements
         if setting_X == "CHX_I_MAX":
             self.max_I[channel - 1] = float(value)
-            return str(value)
-        elif setting_X == "CHX_V_MAX":
+            return f"{setting}={value}"
+
+        if setting_X == "CHX_V_MAX":
             self.max_V[channel - 1] = float(value)
-            return str(value)
+            return f"{setting}={value}"
 
         if not self.online:
             logger.info("CAEN")
             return f"{self.ID}-Offline"
 
         if self.dummy:
-            return str(value)
+            return f"{setting}={value}"
 
         if setting_X == "CHX_ENABLE":
             if value_original == "True":
@@ -75,7 +77,8 @@ class Caen_14xxET(Backend):
 
             if status is None:
                 return "None"
-            return str(bool(status["ON_OFF"]))
+            rval = bool(status["ON_OFF"])
+            return f"{setting}={rval}"
 
         if setting_X == "CHX_I_SET":
             logger.debug(f"Iset called with value {value}")
@@ -91,7 +94,9 @@ class Caen_14xxET(Backend):
 
             if result is None:
                 return "None"
-            return result[-7:]
+            rval = result[-7:]
+            return f"{setting}={rval}"
+
         if setting_X == "CHX_V_SET":
             logger.debug(f"Vset called with value {value}")
 
@@ -104,25 +109,18 @@ class Caen_14xxET(Backend):
 
             if result is None:
                 return "None"
-            return result[-6:]
+            rval = result[-6:]
+            return f"{setting}={value}"
 
     def command(self, cmd: str):
         channel, command_X = get_channel_from_command(cmd)
 
         if command_X == "CHX_I_MAX?":
-            try:
-                rval = self.max_I[channel - 1]
-            except Exception as e:
-                rval = f"Error {str(e)}"
-
+            rval = self.max_I[channel - 1]
             return f"{cmd[:-1]}={rval}"
 
         if command_X == "CHX_V_MAX?":
-            try:
-                rval = self.max_V[channel - 1]
-            except Exception as e:
-                rval = f"Error {str(e)}"
-
+            rval = self.max_V[channel - 1]
             return f"{cmd[:-1]}={rval}"
 
         if not self.online:
@@ -157,6 +155,7 @@ class Caen_14xxET(Backend):
         result = self.query(f"$BD:00,CMD:MON,CH:{channel},PAR:{command}")
         if result is None:
             return "None"
+
         rval = result[result.find("VAL:") + 4 :]
         rval = rval.strip("\\nr")
 
