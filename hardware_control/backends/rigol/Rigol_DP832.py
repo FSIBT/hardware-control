@@ -37,25 +37,25 @@ class Rigol_DP832(Backend):
         if setting_X == "CHX_I_MAX":
             value = ensure_float(value)
             self.max_I[channel - 1] = float(value)
-            return str(value)
-        elif setting_X == "CHX_V_MAX":
+            return f"{setting}={value}"
+
+        if setting_X == "CHX_V_MAX":
             value = ensure_float(value)
             self.max_V[channel - 1] = float(value)
-            return str(value)
+            return f"{setting}={value}"
 
         if not self.online:
             return f"{self.ID}-Offline"
 
         if self.dummy:
-            return str(value)
+            return f"{setting}={value}"
 
         if setting_X == "CHX_ENABLE":
             if value == "True":
                 self.write(f"OUTPUT:STATE CH{channel},ON")
             else:
                 self.write(f"OUTPUT:STATE CH{channel},OFF")
-
-            return str(value)
+            return f"{setting}={value}"
 
         value = ensure_float(value)
         if setting_X == "CHX_I_SET":
@@ -67,8 +67,7 @@ class Rigol_DP832(Backend):
                 logger.debug(f"Iset value changed to {value} because it exceeded limit")
 
             self.write(f"SOUR{channel}:CURR {value}")
-
-            return str(value)
+            return f"{setting}={value}"
 
         if setting_X == "CHX_V_SET":
             logger.debug(f"Vset called with value {value}")
@@ -79,8 +78,7 @@ class Rigol_DP832(Backend):
                 logger.debug(f"Vset value changed to {value} because it exceeded limit")
 
             self.write(f"SOUR{channel}:VOLT {value}")
-
-            return str(value)
+            return f"{setting}={value}"
 
     def command(self, cmd: str):
 

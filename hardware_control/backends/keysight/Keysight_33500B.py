@@ -85,87 +85,108 @@ class Keysight_33500B(Backend):
             else:
                 self.write(":OUTP OFF")
             rval = self.query(":OUTP?")
-            return str(rval == "1\n")
+            rval = rval == "1\n"
+            return f"{setting}={rval}"
         if setting_X == "CHX_WAVEFORM":
             wvfm = waveform_lookup[value]
             self.write(f":SOUR:FUNC {wvfm}")
             rval = self.query(":SOUR:FUNC?")
-            return rval[:-1]  # Trim newline character
+            rval = rval[:-1]  # Trim newline character
+            return f"{setting}={rval}"
         if setting_X == "CHX_FREQUENCY":
             self.write(f":FREQ {float(value):.6E}")
             rval = self.query(":FREQ?")
-            return rval[:-1]
+            rval = rval[:-1]
+            return f"{setting}={rval}"
         if setting_X == "CHX_AMPLITUDE":
             self.write(f":VOLT {float(value):.6E}")
             rval = self.query(":VOLT?")
-            return rval[:-1]
+            rval = rval[:-1]
+            return f"{setting}={rval}"
         if setting_X == "CHX_OFFSET":
             self.write(f":VOLT:OFFS {float(value):.6E}")
             rval = self.query(":VOLT:OFFS?")
-            return rval[:-1]
+            rval = rval[:-1]
+            return f"{setting}={rval}"
         if setting_X == "CHX_VOLTS_DIV":
             self.write(f":CHAN{channel}:SCAL {float(value):.6E}")
-            return self.query(f":CHAN{channel}:SCAL?")
+            rval = self.query(f":CHAN{channel}:SCAL?")
+            return f"{setting}={rval}"
         if setting == "TIMEBASE":
             self.write(f":TIM:SCAL {float(value):.6E}")
-            return self.query(":TIM:SCAL?")
+            rval = self.query(":TIM:SCAL?")
+            return f"{setting}={rval}"
         if setting == "TIME_OFFSET":
             self.write(f":TIM:POS {float(value):.6E}")
-            return self.query(":TIM:POS?")
+            rval = self.query(":TIM:POS?")
+            return f"{setting}={rval}"
         if setting_X == "CHX_OFFSET":
             self.write(f"CHAN{channel}:OFFS {-float(value):.6E}")
-            return self.query(f"CHAN{channel}:OFFS?")
+            rval = self.query(f"CHAN{channel}:OFFS?")
+            return f"{setting}={rval}"
         if setting_X == "CHX_BW_LIM":
             self.write(f"CHAN{channel}:BWL {int(value=='True')}")
-            return self.query(f"CHAN{channel}:BWL?")
+            rval = self.query(f"CHAN{channel}:BWL?")
+            return f"{setting}={rval}"
         if setting_X == "CHX_ACTIVE":
             self.write(f"CHAN{channel}:DISP {int(value=='True')}")
-            return self.query(f"CHAN{channel}:DISP?")
+            rval = self.query(f"CHAN{channel}:DISP?")
+            return f"{setting}={rval}"
         if setting_X == "CHX_IMPEDANCE":
             if value == "50":
                 self.write(f"CHAN{channel}:IMP FIFT")
             else:
                 self.write(f"CHAN{channel}:IMP ONEM")
-            return self.query(f"CHAN{channel}:IMP?")
+            rval = self.query(f"CHAN{channel}:IMP?")
+            return f"{setting}={rval}"
         if setting_X == "CHX_LABEL":
             # Length is capped at 32 characters
             if len(value) > 32:
                 value = value[0:32]
             self.write(f"CHAN{channel}:LAB {value}")
-            return self.query(f"CHAN{channel}:LAB?")
+            rval = self.query(f"CHAN{channel}:LAB?")
+            return f"{setting}={rval}"
         if setting == "LABELS_ENABLED":
             self.write(f"DISP:LAB {int(value=='True')}")
-            return self.query("DISP:LAB?")
+            rval = self.query("DISP:LAB?")
+            return f"{setting}={rval}"
         if setting_X == "CHX_INVERT":
             self.write(f"CHAN{channel}:INV {int(value=='True')}")
-            return self.query(f"CHAN{channel}:INV?")
+            rval = self.query(f"CHAN{channel}:INV?")
+            return f"{setting}={rval}"
         if setting_X == "CHX_PROBE_ATTEN":
             self.write(f"CHAN{channel}:PROB {float(value):.6E}")
-            return self.query(f"CHAN{channel}:PROB?")  # ie. 10 gives x10 or 10:1 probe
+            rval = self.query(f"CHAN{channel}:PROB?")  # ie. 10 gives x10 or 10:1 probe
+            return f"{setting}={rval}"
         if setting_X == "CHX_COUPLING":
             # Make sure valid value provided
             if value not in ["AC", "DC"]:
                 value = "DC"
             self.write(f"CHAN{channel}:COUP {value}")
-            return self.query(f"CHAN{channel}:COUP?")
+            rval = self.query(f"CHAN{channel}:COUP?")
+            return f"{setting}={rval}"
         if setting == "TRIGGER_LEVEL":
             self.write(f"TRIG:EDGE:LEV {float(value):.6E}")
-            return self.query("TRIG:EDGE:LEV?")
+            rval = self.query("TRIG:EDGE:LEV?")
+            return f"{setting}={rval}"
         if setting == "TRIGGER_COUPLING":
             # Make sure valid option given
             if value not in ["AC", "DC", "LFReject"]:
                 value = "DC"
             self.write(f"TRIG:COUP {value}")
-            return self.query("TRIG:COUP?")
+            rval = self.query("TRIG:COUP?")
+            return f"{setting}={rval}"
         if setting == "TRIGGER_EDGE":
             # Make sure valid option given
             if value not in ["BOTH", "NEG", "POS", "ALT"]:
                 value = "POS"
             self.write(f"TRIG:EDGE:SLOP {value}")
-            return self.query("TRIG:EDGE:SLOP?")
+            rval = self.query("TRIG:EDGE:SLOP?")
+            return f"{setting}={rval}"
         if setting == "TRIGGER_CHANNEL":
             self.write(f"TRIG:SOUR CHAN{int(value)}")
-            return self.query("TRIG:SOUR?")
+            rval = self.query("TRIG:SOUR?")
+            return f"{setting}={rval}"
 
     @ensure_online
     def command(self, cmd: str):

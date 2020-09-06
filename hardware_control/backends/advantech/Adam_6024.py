@@ -44,8 +44,13 @@ class Adam_6024(Backend):
         self.out_max = 10
 
         self.addr = (self.ip_addr, self.port_no)
-
         self.termination = "\r"
+
+        if self.connection_type != Backend.SOCKET:
+            logger.error(
+                "Wrong instrument address. Needs to be socket type (ip or ip:port)."
+            )
+
         self.try_connect()
 
     def try_connect(self):
@@ -86,7 +91,8 @@ class Adam_6024(Backend):
         if setting_X == "CHX_analog_write":
 
             if value < self.out_min or value > self.out_max:
-                return "Error: value out of bounds"
+                logging.error("Error: value out of bounds")
+                return "value out of bound"
 
             cmd = f"#01{channel:02d}{value:06.3f}\r"
 
@@ -101,11 +107,14 @@ class Adam_6024(Backend):
                     print("Adam: Last command invalid")
                     return "Error: Invalid command sent to ADAM"
                 if output == ">\r":
-                    return str(value)
+                    return f"{setting}={value}"
             else:
                 logger.info(f"Adam: send {cmd}")
-                return str(value)
+                return f"{setting}={value}"
 
+            logger.error(
+                f"{self.ID} trying to set unknown {setting} to {value} at {self.ip_addr}:{self.port_no}"
+            )
             return "Error: unrecognized response from ADAM"
 
     @ensure_online

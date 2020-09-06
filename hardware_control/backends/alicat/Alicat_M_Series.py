@@ -42,7 +42,7 @@ class Alicat_M_Series(Backend):
     def update_setting(self, setting: str, value):
 
         if self.dummy:
-            return value
+            return f"{setting}={value}"
 
         try:
             if setting in ["RATE", "FLOW"]:
@@ -52,7 +52,7 @@ class Alicat_M_Series(Backend):
                 r = self.device.write_registers(address=1009, values=[a, b], unit=0)
 
                 self.error_count = 0
-                return value
+                return f"{setting}={value}"
         except Exception:
             logger.error(
                 f"An error occured in Alicat flowmeter when sending command"

@@ -18,15 +18,13 @@ import os
 import random
 import time
 
-from colorama import Fore, Style
-
 # import nidaqmx happens in a method below, which reports the status
 
 if os.name == "nt":
     import nidaqmx
 from nidaqmx.constants import TerminalConfiguration
 
-from ..base import Backend, ensure_online
+from ..base import Backend
 from ..utility import get_channel_from_command, ensure_float
 
 logger = logging.getLogger(__name__)
@@ -83,23 +81,25 @@ class Ni_9000(Backend):
 
         if setting_X == "CHX_V_max":
 
-            if type(value) != float:
+            if not isinstance(value, float):
                 logger.warning(
-                    f"Failed to set CH{channel} V Max to '{value_orig}'. Failed to convert to float"
+                    f"Failed to set CH{channel} V Max to '{value_orig}'."
+                    f" Failed to convert to float"
                 )
 
             self.term_maxes[channel] = value
-            return value_orig
-        elif setting_X == "CHX_V_min":
+            return f"{setting}={value_orig}"
+        if setting_X == "CHX_V_min":
 
-            if type(value) != float:
+            if not isinstance(value, float):
                 logger.warning(
-                    f"Failed to set CH{channel} V Min to '{value_orig}'. Failed to convert to float"
+                    f"Failed to set CH{channel} V Min to '{value_orig}'."
+                    f" Failed to convert to float"
                 )
 
             self.term_mins[channel] = value
-            return value_orig
-        elif setting_X == "CHX_terminal_config":
+            return f"{setting}={value_orig}"
+        if setting_X == "CHX_terminal_config":
 
             if value_orig == "DIFF":
                 config_mode = TerminalConfiguration.DIFFERENTIAL
@@ -110,13 +110,13 @@ class Ni_9000(Backend):
 
             self.term_config_modes[channel] = config_mode
 
-            return str(value)
+            return f"{setting}={value_orig}"
 
         if not self.online:
             return f"{self.ID}-Offline"
 
         if self.dummy:
-            return str(value)
+            return f"{setting}={value_orig}"
 
         try:
             if setting_X == "CHX_analog_write":
@@ -139,7 +139,8 @@ class Ni_9000(Backend):
                     )
                     task.write(value)
                     time.sleep(0.010)
-                    done = task.is_task_done()
+                    task.is_task_done()
+                    return
 
             if setting_X == "CHX_digital_write":
 
@@ -147,9 +148,8 @@ class Ni_9000(Backend):
                     task.ao_channels.add_do_chan(channel)
                     task.write(value >= 1)
                     time.sleep(0.010)
-                    done = task.is_task_done()
-                return str(done)
-
+                    task.is_task_done()
+                    return
         except:
             logger.error("Error occured in NI9000 command.", exc_info=True)
 
@@ -171,7 +171,7 @@ class Ni_9000(Backend):
             for key in self.term_maxes:
                 val = self.term_maxes[key]
                 print(f"\t{key}:{val}")
-
+            return
         if self.dummy:
             num = random.random() * 10
             return f"{cmd.strip('?')}={num}"
@@ -187,12 +187,12 @@ class Ni_9000(Backend):
                     else:
                         task.ai_channels.add_ai_voltage_chan(channel)
                     val = str(task.read())
-                return cmd[:-1] + "=" + str(val)
+                return f"{cmd[:-1]}={val}"
             if setting_X == "CHX_digital_read?":
                 with nidaqmx.Task() as task:
                     task.ai_channels.add_di_chan(channel)
                     val = str(task.read())
-                return cmd[:-1] + "=" + str(val)
+                return f"{cmd[:-1]}={val}"
         except:
             logger.error("Error occured in NI9000 command.", exc_info=True)
 
