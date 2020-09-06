@@ -304,7 +304,7 @@ class Backend(abc.ABC):
                 self.device.write(command)
                 return command
             if self.connection_type == Backend.SOCKET:
-                self.device.sendall(bytes(command + "\n", "utf-8"))
+                self.device.sendall(bytes(command + self.termination, "utf-8"))
                 return command
         except Exception:
             logger.debug(f"ERROR: Write {command} failed in {self.ID}", exc_info=True)
