@@ -12,7 +12,7 @@ import random
 import socket
 
 from ..base import Backend
-from ..utility import regex_compare
+from ..utility import get_channel_from_command
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +34,13 @@ class Adam_6015(Backend):
 
         self.buf = 200
         self.addr = (self.ip_addr, self.port_no)
+        self.termination = "\r"
+        self.encoding = "ascii"
+
+        if self.connection_type != Backend.SOCKET:
+            logger.error(
+                "Wrong instrument address. Needs to be socket type (ip or ip:port)."
+            )
 
         self.try_connect()
 
@@ -64,58 +71,41 @@ class Adam_6015(Backend):
         # returned, then the device is offline
         self.online = self.check_connection()
 
-    def close(self):
-        """this is a override - sockets are used"""
-        if not self.dummy:
-            self.socket.close()
-        else:
-            logger.debug("Adam: close dummy connection")
-        return False
-
-    def write(self, msg: str):
-        """this is a override - sockets are used"""
-        if not self.dummy:
-            msg = msg + "\r"
-            self.socket.send(msg.encode("ascii"))
-            indata = self.socket.recv(self.buf)
-            data = indata.decode("ascii")[1:-1]
-            return data
-
-    def read(self):
-        """Read values from Adam"""
-        """this is a override - sockets are used"""
-        if not self.dummy:
-            self.socket.send(b"#01\r")
-            indata = self.socket.recv(self.buf)
-            data = indata.decode("ascii")
-        else:
-            # Just a random answer it once received
-            data = ">+0025.9237+0150.0000+0150.0000+0150.0000+0150.0000+0150.0000+0150.0000-0050.0000"
-        return data
-
     def command(self, cmd: str):
-        """Use Convention "CH#_TEMP?"  the answer is like >+0025.9237+0150.0000+0150.0000+0150.0000+0150.0000+0150.0000+0150.0000-0050.0000 """
+        """Query the temperature of a channel.
+
+        Use Convention "CH<#>_TEMP?".
+
+        This will query all channels,
+        the answer is like >+0025.9237+0150.0000+0150.0000+0150.0000+0150.0000+0150.0000+0150.0000-0050.0000
+        and then pick out the correct channel
+
+        """
+
         if self.dummy:
-            d = cmd[:-1] + "=" + str(random.randint(0, 10000) / 10)
-            return d
+            return cmd[:-1] + "=" + str(random.randint(0, 10000) / 10)
+
         if self.online:
+            channel, cmd_X = get_channel_from_command(cmd)
+
+            if channel < 0 or channel > 7:
+                logger.error("Wrong channel number")
+                return "Unexpected Command"
+
             try:
-                if regex_compare("CH._TEMP?", cmd) and int(cmd[2]) in range(0, 7):
-                    # cmd[2] equals the channel#
-                    out = "#01\r"  # simply asks for all channels
-                    self.socket.send(out.encode("ascii"))
-                    indata = self.socket.recv(self.buf)
-                    data = indata.decode("ascii")[1:]  # cut off ">"
-                    n = int(cmd[2])
-                    data = data[n * 10 : n * 10 + 10]
-                    return "CH" + str(n) + "_TEMP=" + data
-                else:
-                    return "Unexpected Command"
-            except Exception:
+                self.device.sendall(b"#01\r")
+
+                indata = self.device.recv(self.buf)
+                # cut off ">"
+                data = indata.decode("ascii")[1:]
+                data = data[channel * 10 : channel * 10 + 10]
+                return f"CH{channel}_TEMP={data}"
+            except:
                 logger.error(
                     self.ID + " online status : " + str(self.try_connect()),
                     exc_info=True,
                 )
+                return "Unexpected Command"
 
     def update_setting(self, setting: str, value: str):
         """Device has no Settings"""
