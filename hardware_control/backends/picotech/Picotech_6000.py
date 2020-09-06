@@ -65,7 +65,9 @@ class Picotech_6000(Backend):
             self.online = True
         except Exception:
             self.online = False
-            logger.debug(f"\t({self.ID}) ERROR connecting with visa.", exc_info=True)
+            logger.debug(
+                f"\t({self.ID}) ERROR connecting with picoscope.", exc_info=True
+            )
             logger.debug(f"{self.ID} is offline")
         else:
             self.online = True
@@ -94,10 +96,10 @@ class Picotech_6000(Backend):
 
         try:
             # first check for commands that are not channel specific
-            if setting == "labels_enabled":
+            if setting == "LABELS_ENABLED":
                 return "Not available"
 
-            if setting == "timebase":
+            if setting == "TIMEBASE":
                 self.timebase = value * 10  # Time/div * #div
 
                 obs_duration = value
@@ -109,22 +111,25 @@ class Picotech_6000(Backend):
                         obs_duration / sampling_interval
                     )
 
-                rval = self.ps.setSamplingInterval(sampling_interval, obs_duration)
+                rval, _, _ = self.ps.setSamplingInterval(
+                    sampling_interval, obs_duration
+                )
                 # could not get normal readout mode to work, so using memory Segments and bulk readout
                 self.ps.memorySegments(1)
                 self.ps.setNoOfCaptures(1)
-                return "Success"
-            if setting == "time_offset":
+                return f"{setting}={rval}"
+            if setting == "TIME_OFFSET":
                 self.offset_position = value
-            if setting == "trigger_level":
+                return f"{setting}={value}"
+            if setting == "TRIGGER_LEVEL":
                 if self.trigger_channel != "None":
                     self.ps.setSimpleTrigger(
                         self.trigger_channel, threshold_V=value, enabled=True
                     )
-                return "Success"
-            if setting == "trigger_coupling":
+                return f"{setting}={value}"
+            if setting == "TRIGGER_COUPLING":
                 return "Not available"
-            if setting == "trigger_edge":
+            if setting == "TRIGGER_EDGE":
                 # Make sure valid option given
                 if value not in ["BOTH", "NEG", "POS", "ALT"]:
                     value = "Rising"
@@ -142,8 +147,8 @@ class Picotech_6000(Backend):
                     self.ps.setSimpleTrigger(
                         self.trigger_channel, direction=value, enabled=True
                     )
-                return "Success"
-            if setting == "trigger_channel":
+                return f"{setting}={value}"
+            if setting == "TRIGGER_CHANNEL":
                 if value_orig == "None":
                     self.trigger_channel = value_orig
                 else:
@@ -152,7 +157,7 @@ class Picotech_6000(Backend):
                     self.ps.setSimpleTrigger(0, enabled=False)
                 else:
                     self.ps.setSimpleTrigger(self.trigger_channel, enabled=True)
-                return "Success"
+                return f"{setting}={value}"
             if regex_compare("meas_slot.", setting):
                 return "Not available"
             if setting == "use_meas_avg":
@@ -173,33 +178,33 @@ class Picotech_6000(Backend):
             else:
                 return "Bad channel number"
 
-            if setting_X == "CHX_volts_div":
+            if setting_X == "CHX_VOLTS_DIV":
                 self.ps.setChannel(channel=chan, VRange=value)
-                return "Success"
-            if setting_X == "CHX_offset":
+                return f"{setting}={value}"
+            if setting_X == "CHX_OFFSET":
                 self.ps.setChannel(channel=chan, VOffset=value)
-                return "Success"
-            if setting_X == "CHX_BW_lim":
+                return f"{setting}={value}"
+            if setting_X == "CHX_BW_LIM":
                 self.ps.setChannel(channel=chan, BWLimited=value)
-                return "Success"
-            if setting_X == "CHX_active":
+                return f"{setting}={value}"
+            if setting_X == "CHX_ACTIVE":
                 self.ps.setChannel(channel=chan, enabled=value)
                 return f"CH{channel}={value}"
-            if setting_X == "CHX_impedance":
+            if setting_X == "CHX_IMPEDANCE":
                 return "Not available"
-            if setting_X == "CHX_label":
+            if setting_X == "CHX_LABEL":
                 return "Not available"
-            if setting_X == "CHX_invert":
+            if setting_X == "CHX_INVERT":
                 return "Not availanle"
-            if setting_X == "CHX_probe_atten":
+            if setting_X == "CHX_PROBE_ATTEN":
                 self.ps.setChannel(channel=chan, probeAttenuation=value)
-                return "Success"
-            if setting_X == "CHX_coupling":
+                return f"{setting}={value}"
+            if setting_X == "CHX_COUPLING":
                 # Make sure valid value provided
                 if value not in ["AC", "DC"]:
                     value = "DC"
                 self.ps.setChannel(channel=chan, coupling=value)
-                return "Success"
+                return f"{setting}={value}"
 
         except Exception:
             logger.error(
@@ -240,25 +245,16 @@ class Picotech_6000(Backend):
 
         channel, cmd_X = get_channel_from_command(cmd)
 
-        if channel == 1:
-            chan = "A"
-        elif channel == 2:
-            chan = "B"
-        elif channel == 3:
-            chan = "C"
-        elif channel == 4:
-            chan = "D"
-
         if not self.online:
             return "", [], []
 
-        if cmd_X == "CHX+_WVFM?":
-            # Returns a tuple (str, list, list)
+        if cmd_X == "CHX_WVFM?":
             return self.read_waveform(channel)
-        if cmd_X == "CHX+_CLEAR":
-            return f"CH{chan}_WVFM", [], []
-        else:
-            return "", [], []
+
+        if cmd_X == "CHX_CLEAR":
+            return f"CH{channel}_WVFM", [], []
+
+        return "", [], []
 
     def read_waveform(self, channel: str):
         """Reads a waveform from the oscilloscope.
@@ -285,7 +281,7 @@ class Picotech_6000(Backend):
             # is 2D array w/ 1 row and we need a 1D array
             v = np.sin(t * 5e3 * float(channel)) + noise[0]
 
-            return f"CH{channel}_WVFM", t.tolist(), v.tolist()
+            return f"CH{channel_orig}_WVFM", t.tolist(), v.tolist()
 
         try:
             number_samples = min(self.ps.noSamples, self.ps.maxSamples)

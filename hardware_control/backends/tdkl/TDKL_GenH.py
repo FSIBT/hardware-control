@@ -11,7 +11,7 @@ import logging
 import random
 
 from ..base import Backend, ensure_online
-from ..utility import regex_compare
+from ..utility import get_channel_from_command
 
 
 logger = logging.getLogger(__name__)
@@ -30,23 +30,26 @@ class TDKL_GenH(Backend):
         if self.dummy:
             return value
 
+        channel, setting_X = get_channel_from_command(setting)
+
         # Note: We ignore channel number because there is only
         # one channel on this model of PSU
-        if regex_compare("CH._enable", setting):
+        if setting_X == "CHX_enable":
             if value == "True":
                 self.write(":OUTP:STAT ON")
             else:
                 self.write(":OUTP:STAT OFF")
             rval = self.query(":OUTP:STAT?")
-            return str(rval == "1\n")
-        if regex_compare("CH._I_set", setting):
+            rval = rval == "1\n"
+            return f"{setting}=={rval}"
+        if setting_X == "CHX_I_set":
             self.write(f":SOUR:CURR:LEV:IMM:AMPL {value}")
             rval = self.query(":SOUR:CURR:LEV:IMM:AMPL?")
-            return rval
-        if regex_compare("CH._V_set", setting):
+            return f"{setting}={rval}"
+        if setting_X == "CHX_V_set":
             self.write(f":SOUR:VOLT:LEV:IMM:AMPL {value}")
             rval = self.query(":SOUR:VOLT:LEV:IMM:AMPL?")
-            return rval
+            return f"{setting}={rval}"
 
     @ensure_online
     def command(self, cmd: str):
@@ -57,19 +60,19 @@ class TDKL_GenH(Backend):
 
         # Note: We ignore channel number because there is only
         # one channel on this model of PSU
-        if regex_compare("CH._V_out?", cmd):
-            rval = self.query(":MEAS:VOLT?")
-            chstr = cmd[0:3]
+        channel, cmd_X = get_channel_from_command(cmd)
+
+        command_map = {
+            "CHX_V_out?": ":MEAS:VOLT?",
+            "CHX_I_out?": ":MEAS:CURR?",
+            "CHX_I_set?": ":SOUR:CURR:LEV:IMM:AMPL?",
+            "CHX_V_set?": ":SOUR:VOLT:LEV:IMM:AMPL?",
+        }
+
+        command = command_map.get(cmd_X, None)
+        if command is not None:
+            rval = self.query(command)
             return f"{cmd}={rval}"
-        if regex_compare("CH._I_out?", cmd):
-            rval = self.query(":MEAS:CURR?")
-            chstr = cmd[0:3]
-            return f"{cmd}={rval}"
-        if regex_compare("CH._I_set?", cmd):
-            chstr = cmd[0:3]
-            rval = self.query(":SOUR:CURR:LEV:IMM:AMPL?")
-            return f"{cmd}={rval}"
-        if regex_compare("CH._V_set?", cmd):
-            chstr = cmd[0:3]
-            rval = self.query(":SOUR:VOLT:LEV:IMM:AMPL?")
-            return f"{cmd}={rval}"
+
+        logger.errro(f"Unknown command: {cmd}")
+        return f"Unknown command"

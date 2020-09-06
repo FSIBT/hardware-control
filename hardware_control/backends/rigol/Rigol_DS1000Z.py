@@ -35,32 +35,36 @@ class Rigol_DS1000Z(Backend):
         if self.dummy:
             return value
 
-        if setting == "timebase":
+        if setting == "TIMEBASE":
             self.write(f":TIM:MAIN:SCAL {float(value):.6E}")
-            return self.query(":TIM:MAIN:SCAL?")
+            rval = self.query(":TIM:MAIN:SCAL?")
+            return f"{setting}={rval}"
 
-        if setting == "time_offset":
+        if setting == "TIME_OFFSET":
             self.write(f":TIM:MAIN:OFFS {float(value):.6E}")
-            return self.query(":TIM:MAIN:OFFS?")
+            rval = self.query(":TIM:MAIN:OFFS?")
+            return f"{setting}={rval}"
 
-        if setting == "labels_enabled":
+        if setting == "LABELS_ENABLED":
             self.write(f"DISP:LAB {int(value=='True')}")
-            return self.query("DISP:LAB?")
+            rval = self.query("DISP:LAB?")
+            return f"{setting}={rval}"
 
-        if setting == "trigger_level":
+        if setting == "TRIGGER_LEVEL":
             self.write(f"TRIG:EDGE:LEV {float(value):.6E}")
-            return self.query("TRIG:EDGE:LEV?")
+            rval = self.query("TRIG:EDGE:LEV?")
+            return f"{setting}={rval}"
 
-        if setting == "trigger_coupling":
+        if setting == "TRIGGER_COUPLING":
             # Make sure valid option given
             if value not in ["AC", "DC", "LFReject", "HFReject"]:
                 value = "DC"
 
             self.write(f"TRIG:COUP {value}")
-            return self.query("TRIG:COUP?")
+            rval = self.query("TRIG:COUP?")
+            return f"{setting}={rval}"
 
-        if setting == "trigger_edge":
-
+        if setting == "TRIGGER_EDGE":
             # Make sure valid option given
             if value not in ["BOTH", "NEG", "POS", "ALT"]:
                 value = "POS"
@@ -74,73 +78,81 @@ class Rigol_DS1000Z(Backend):
                 value = "RFALI"
 
             self.write(f"TRIG:EDGE:SLOP {value}")
-            return self.query("TRIG:EDGE:SLOP?")
+            rval = self.query("TRIG:EDGE:SLOP?")
+            return f"{setting}={rval}"
 
-        if setting == "trigger_channel":
-
+        if setting == "TRIGGER_CHANNEL":
             self.write(f"TRIG:EDG:SOUR CHAN{int(value)}")
-            return self.query("TRIG:EDG:SOUR?")
+            rval = self.query("TRIG:EDG:SOUR?")
+            return f"{setting}={rval}"
 
-        if setting == "use_meas_avg":
-
+        if setting == "USE_MEAS_AVG":
             self.use_avg = value == "True"
-            return f"Use avg.: {value}"
+            return f"{setting}={value}"
 
-        if setting == "meas_stat_enabled":
-
+        if setting == "MEAS_STAT_ENABLED":
             self.write(f":MEAS:STAT:DISP {int(value=='True')}")
-            return self.query(":MEAS:STAT:DISP?")
+            rval = self.query(":MEAS:STAT:DISP?")
+            return f"{setting}={rval}"
 
         channel, setting_X = get_channel_from_command(setting)
 
-        if setting_X == "CHX_volts_div":
+        if setting_X == "CHX_VOLTS_DIV":
             self.write(f":CHAN{channel}:SCAL {float(value):.6E}")
-            return self.query(f":CHAN{channel}:SCAL?")
+            rval = self.query(f":CHAN{channel}:SCAL?")
+            return f"{setting}={rval}"
 
-        if setting_X == "CHX_offset":
+        if setting_X == "CHX_OFFSET":
             self.write(f"CHAN{channel}:OFFS {-float(value):.6E}")
-            return self.query(f"CHAN{channel}:OFFS?")
+            rval = self.query(f"CHAN{channel}:OFFS?")
+            return f"{setting}={rval}"
 
-        if setting_X == "CHX_BW_lim":
+        if setting_X == "CHX_BW_LIM":
             if value == "True":
                 self.write(f"CHAN{channel}:BWL 20M")
             else:
                 self.write(f"CHAN{channel}:BWL OFF")
-            return self.query(f"CHAN{channel}:BWL?")
+            rval = self.query(f"CHAN{channel}:BWL?")
+            return f"{setting}={rval}"
 
-        if setting_X == "CHX_active":
+        if setting_X == "CHX_ACTIVE":
             self.write(f"CHAN{channel}:DISP {int(value=='True')}")
-            return self.query(f"CHAN{channel}:DISP?")
+            rval = self.query(f"CHAN{channel}:DISP?")
+            return f"{setting}={rval}"
 
-        if setting_X == "CHX_impedance":
+        if setting_X == "CHX_IMPEDANCE":
             # This feature is not available on this model
             pass
 
-        if setting_X == "CHX_label":
+        if setting_X == "CHX_LABEL":
             # Length is capped at 32 characters
             if len(value) > 32:
                 value = value[0:32]
 
             self.write(f"CHAN{channel}:LAB {value}")
-            return self.query(f"CHAN{channel}:LAB?")
+            rval = self.query(f"CHAN{channel}:LAB?")
+            return f"{setting}={rval}"
 
-        if setting_X == "CHX_invert":
+        if setting_X == "CHX_INVERT":
             self.write(f"CHAN{channel}:INV {int(value=='True')}")
-            return self.query(f"CHAN{channel}:INV?")
+            rval = self.query(f"CHAN{channel}:INV?")
+            return f"{setting}={rval}"
 
-        if setting_X == "CHX_probe_atten":
+        if setting_X == "CHX_PROBE_ATTEN":
             self.write(f"CHAN{channel}:PROB {float(value):.6E}")
-            return self.query(f"CHAN{channel}:PROB?")  # ie. 10 gives x10 or 10:1 probe
+            rval = self.query(f"CHAN{channel}:PROB?")  # ie. 10 gives x10 or 10:1 probe
+            return f"{setting}={rval}"
 
-        if setting_X == "CHX_coupling":
+        if setting_X == "CHX_COUPLING":
             # Make sure valid value provided
             if value not in ["AC", "DC"]:
                 value = "DC"
             self.write(f"CHAN{channel}:COUP {value}")
-            return self.query(f"CHAN{channel}:COUP?")
+            rval = self.query(f"CHAN{channel}:COUP?")
+            return f"{setting}={rval}"
 
         # Value must follow pattern 'meas_parameter','source_channel'
-        if regex_compare("meas_slot.", setting):
+        if regex_compare("MEAS_SLOT.", setting):
 
             # Get slot number
             slot = int(setting[9])
@@ -175,7 +187,7 @@ class Rigol_DS1000Z(Backend):
         elif cmd == "CLEAR_MEAS":
             self.write("MEAS:CLEAR ALL")
             return "CLEAR_MEAS"
-        elif regex_compare("meas_slot.", cmd):
+        elif regex_compare("MEAS_SLOT.", cmd):
             logger.debug(f"Reading slot w/ '{cmd}'")
 
             # Get slot number
@@ -230,9 +242,9 @@ class Rigol_DS1000Z(Backend):
 
         channel, cmd_X = get_channel_from_command(cmd)
 
-        if cmd_X == "CHX+_WVFM?":
+        if cmd_X == "CHX_WVFM?":
             return self.read_waveform(channel)
-        if cmd_X == "CHX+_CLEAR":
+        if cmd_X == "CHX_CLEAR":
             return f"CH{channel}_WVFM", [], []
         else:
             return "", [], []
