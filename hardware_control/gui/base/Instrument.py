@@ -43,7 +43,6 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
         self.name = name
         self.backend = backend
         self.manufacturer = None
-        self.company = None
         self.online = False
         self.comm = None
         self.address = None
@@ -51,6 +50,7 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
         self.update_settings_hooks = defaultdict(list)
         self.update_values_hooks = defaultdict(list)
 
+        self.address = ""
         if self.backend:
             self.backend.dummy = self.app.dummy
             self.address = self.backend.connection_addr
@@ -64,9 +64,6 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
         # will not list instruments with ignore_control=True because the scan
         # widget is offering a list of controllable intruments.
         self.ignore_control = False
-
-        self.address = ""  # This is used mostly for displaying the instrument's
-        # address to the user
 
         self.online_callback = None
 
@@ -147,9 +144,16 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
         pass
 
     def set_online_callback(self, callback_function):
-        """
-        This function allows the user to specify a callback function which will
-        be called when the backend reports 'online' the next time.
+        """Sets a callback function whenever the backend reports 'online'.
+
+        The function will get call everytime the instrument changes
+        its status to online. If the user only wants to call the
+        function the very first time the instrument comes online, the
+        callback function should set `self.online_callback = None`
+        during its call.
+
+        The callback functions takes a single argument: the instrument class.
+
         """
 
         if not callable(callback_function):
@@ -419,15 +423,8 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
 
         self.online = connected
 
-        if self.online_callback is None:
-            return
-
-        if not callable(self.online_callback):
-            self.online_callback = None
-            return
-
-        self.online_callback(self)
-        self.online_callback = None
+        if self.online_callback and callable(self.online_callback):
+            self.online_callback(self)
 
     def backend_return_log(self, retval: str, point_data):
         """Performs the logging action before backend_return() updates the UI.

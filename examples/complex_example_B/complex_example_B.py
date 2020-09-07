@@ -50,33 +50,31 @@ hc.setup_logging(logger, commands, "hardware_control.log")
 logger.info("STS50 Example Starting")
 
 
-def init_with_JSON(obj):
-    """
-    This function is used by multiple instruments to sync the instrument state
-    and backend once the instrument comes online.
-    """
-    obj.send_state()
+def init_with_JSON(instrument):
+    """Send the current state (after a the state has been read from a json file)."""
+
+    instrument.send_state()
+    instrument.online_callback = None
 
 
-def init_with_instrument(obj):
-    """
-    This function is used by multiple instruments to sync the instrument state
-    and backend once the instrument comes online.
-    """
+def init_with_instrument(instrument):
+    """Load all settings from the instrument."""
 
-    obj.read_state_from_backend()
-    obj.settings_to_UI()
+    instrument.read_state_from_backend()
+    instrument.settings_to_UI()
+    instrument.online_callback = None
 
 
-def init_osc_when_online(obj):
-    """
-    This function is used by the oscilloscope specifically to sync the instrument
-    state and configure the oscilloscope when it comes online.
+def init_osc_when_online(instrument):
+    """First set the state as configured by an already read json file,
+    update so that waveforms are read correctly.
+
     """
 
-    init_with_JSON(obj)
+    init_with_JSON(instrument)
 
-    obj.command("CONFIG_READ_WAVE")
+    instrument.command("CONFIG_READ_WAVE")
+    instrument.online_callback = None
 
 
 def power_off(window):
