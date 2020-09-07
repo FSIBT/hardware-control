@@ -214,7 +214,7 @@ class DelayGenerator(Instrument):
         # Write state to scope - synch scope with GUI
         self.send_state()
 
-    def enableDisableWidgets(self, value: str):
+    def enableDisableWidgets(self, setting: str, value: str):
 
         if value == "SINGLE":
             self.single_trig_but.setEnabled(True)
