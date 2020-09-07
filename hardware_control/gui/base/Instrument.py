@@ -27,7 +27,7 @@ def call_hooks(hooks_list, setting, value):
             value = hook(setting, value)
             if value is None:
                 return None
-    return value
+    return str(value)
 
 
 class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
