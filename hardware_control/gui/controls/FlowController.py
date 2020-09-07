@@ -38,7 +38,7 @@ class FlowController(Instrument):
         self.rate_edit = QLineEdit()
         self.rate_edit.setValidator(QDoubleValidator())
         self.rate_edit.editingFinished.connect(
-            lambda: self.comm.update_setting("RATE", self.rate_edit.text())
+            lambda: self.update_setting("RATE", self.rate_edit.text())
         )
         self.rate_edit.setText(str(self.settings["RATE"]))
 
@@ -54,7 +54,7 @@ class FlowController(Instrument):
         self.gas_drop = QComboBox()
         self.gas_drop.addItems(["Argon", "Helium", "Hydrogen", "Air"])
         self.gas_drop.currentIndexChanged.connect(
-            lambda: self.comm.update_setting("GAS", self.gas_drop.currentText().upper())
+            lambda: self.update_setting("GAS", self.gas_drop.currentText().upper())
         )
         self.gas_drop.setCurrentText(self.settings["GAS"])
 
@@ -122,8 +122,8 @@ class FlowController(Instrument):
         recent readout data from the inbox and pushes it to the GUI"""
 
         # Request updated readout data
-        self.comm.command("RATE?")
-        self.comm.command("PRESSURE?")
+        self.command("RATE?")
+        self.command("PRESSURE?")
 
         # Update labels
         self.pressure_label_readout.setText(self.read_values("PRESSURE"))

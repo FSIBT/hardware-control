@@ -436,11 +436,11 @@ class OscilloscopeTriggerWidget(QWidget):
 
         self.run_but = QPushButton()
         self.run_but.setText("Run")
-        self.run_but.clicked.connect(lambda: instrument.comm.command("RUN"))
+        self.run_but.clicked.connect(lambda: instrument.command("RUN"))
 
         self.stop_but = QPushButton()
         self.stop_but.setText("Stop")
-        self.stop_but.clicked.connect(lambda: instrument.comm.command("STOP"))
+        self.stop_but.clicked.connect(lambda: instrument.command("STOP"))
 
         # Add widgets to grid layout
         self.lower_grid.addWidget(self.trig_chan_label, 0, 0)
@@ -461,7 +461,7 @@ class OscilloscopeTriggerWidget(QWidget):
         self.setLayout(self.master_layout)
 
     def single_trigger(self):
-        self.instrument.comm.command("SINGLE_TRIGGER")
+        self.instrument.command("SINGLE_TRIGGER")
 
         QTimer.singleShot(self.refresh_delay_time_ms, self.display_refresh)
 

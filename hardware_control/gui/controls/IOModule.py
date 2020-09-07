@@ -280,7 +280,7 @@ class AnalogInputChannel(QGroupBox):
 
     def update_readout(self):
         # Query value
-        self.control.comm.command(f"CH{self.channel}_analog_read?")
+        self.control.command(f"CH{self.channel}_analog_read?")
 
         try:
 
@@ -412,7 +412,7 @@ class DigitalInputChannel(QGroupBox):
 
     def update_readout(self):
         # Query value
-        self.control.comm.command(f"CH{self.channel}_digital_read?")
+        self.control.command(f"CH{self.channel}_digital_read?")
 
         try:
 

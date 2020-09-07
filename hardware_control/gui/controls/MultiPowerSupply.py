@@ -182,19 +182,19 @@ class MultiPowerSupply(Instrument):
 
         # Request updated readout data
         for idx, c in enumerate(self.channels):  # For each channel...
-            self.comm.command(f"CH{c}_V_OUT?")
-            self.comm.command(f"CH{c}_I_OUT?")
-            self.comm.command(f"CH{c}_V_SET?")
-            self.comm.command(f"CH{c}_I_SET?")
+            self.command(f"CH{c}_V_OUT?")
+            self.command(f"CH{c}_I_OUT?")
+            self.command(f"CH{c}_V_SET?")
+            self.command(f"CH{c}_I_SET?")
             if self.channel_widgets[idx].show_VI_limits:
-                self.comm.command(f"CH{c}_V_MAX?")
-                self.comm.command(f"CH{c}_I_MAX?")
+                self.command(f"CH{c}_V_MAX?")
+                self.command(f"CH{c}_I_MAX?")
             if self.channel_widgets[idx].show_status_panel:
-                self.comm.command(f"CH{c}_ENABLE?")
+                self.command(f"CH{c}_ENABLE?")
             # if self.channel_widgets[idx].show_status_panel:
-            #     self.comm.command(f"CH{c}_current_limited?")
-            #     self.comm.command(f"CH{c}_output_enabled?")
-            #     self.comm.command(f"CH{c}_ramp_direction?")
+            #     self.command(f"CH{c}_current_limited?")
+            #     self.command(f"CH{c}_output_enabled?")
+            #     self.command(f"CH{c}_ramp_direction?")
 
             # Get latest inbox entries for readout data...
             Vout = remove_end_carriage_return(self.read_values(f"CH{c}_V_OUT"))
@@ -209,9 +209,9 @@ class MultiPowerSupply(Instrument):
             else:
                 enabled = None
             # if self.channel_widgets[idx].show_status_panel:
-            #     self.comm.command(f"CH{c}_current_limited?")
-            #     self.comm.command(f"CH{c}_output_enabled?")
-            #     self.comm.command(f"CH{c}_ramp_direction?")
+            #     self.command(f"CH{c}_current_limited?")
+            #     self.command(f"CH{c}_output_enabled?")
+            #     self.command(f"CH{c}_ramp_direction?")
 
             # self.values[f"CH{c}_V_out"] = Vout
             # self.values[f"CH{c}_I_out"] = Iout
@@ -251,7 +251,7 @@ class MultiPowerSupply(Instrument):
         except:
             return
 
-        self.comm.update_setting(f"CH{channel}_I_MAX", str(maxI))
+        self.update_setting(f"CH{channel}_I_MAX", str(maxI))
 
     def set_maxV(self, channel: int, maxV: float):
         """ Sets an internal limit for the voltage from channel 'n'. """
@@ -261,7 +261,7 @@ class MultiPowerSupply(Instrument):
         except:
             return
 
-        self.comm.update_setting(f"CH{channel}_V_MAX", str(maxV))
+        self.update_setting(f"CH{channel}_V_MAX", str(maxV))
 
     def set_channel_label(self, channel: int, label: str):
         """ Sets a channel label to a new custom value """
