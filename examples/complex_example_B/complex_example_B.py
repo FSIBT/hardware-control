@@ -725,14 +725,16 @@ class STS50Demo(hc.MainWindow):
             channel_data="nidaq_extraction_conf.json",
             name="Power Supplies (floating rack)",
             num_columns=2,
-            hooks={
-                "cDAQ9188-1AEF742Mod7/ao4_analog_write": lambda v: str(
-                    -float(v) / 1000
-                ),
-                "cDAQ9188-1AEF742Mod6/ai6_analog_read": lambda v: str(float(v) * 1e-3),
-                "cDAQ9188-1AEF742Mod6/ai7_analog_read": lambda v: str(float(v) * 1000),
-            },
         )
+        self.iomod_float_wdgt.update_settings_hooks[
+            "cDAQ9188-1AEF742Mod7/ao4_analog_write"
+        ].append(lambda s, v: str(-float(v) / 1000))
+        self.iomod_float_wdgt.update_values_hooks[
+            "cDAQ9188-1AEF742Mod6/ai6_analog_read"
+        ].append(lambda s, v: str(float(v) * 1e-3))
+        self.iomod_float_wdgt.update_values_hooks[
+            "cDAQ9188-1AEF742Mod6/ai7_analog_read"
+        ].append(lambda s, v: str(float(v) * 1000))
 
         self.iomod_usb = hc_back.Ni_9000()
         self.iomod_usb_wdgt = hc.IOModule(
@@ -741,16 +743,29 @@ class STS50Demo(hc.MainWindow):
             channel_data="nidaq_grid_conf.json",
             name="Power Supplies",
             num_columns=2,
-            hooks={
-                "cDAQ1Mod1/ao0_analog_write": lambda v: str(float(v) / 3000),
-                "cDAQ1Mod1/ao1_analog_write": lambda v: str(float(v) / 3000),
-                "cDAQ1Mod2/ai0_analog_read": lambda v: str(float(v) * 3000),
-                "cDAQ1Mod2/ai1_analog_read": lambda v: str(float(v) * 1e-3),
-                "cDAQ1Mod2/ai2_analog_read": lambda v: str(float(v) * 1e-3),
-                "cDAQ1Mod2/ai3_analog_read": lambda v: str(float(v) * 3000),
-                "cDAQ1Mod2/ai4_analog_read": lambda v: str(10 ** (float(v) - 11)),
-            },
         )
+        self.iomod_usb_wdgt.update_settings_hooks["cDAQ1Mod1/ao0_analog_write"].append(
+            lambda s, v: str(float(v) / 3000)
+        )
+        self.iomod_usb_wdgt.update_settings_hooks["cDAQ1Mod1/ao1_analog_write"].append(
+            lambda s, v: str(float(v) / 3000)
+        )
+        self.iomod_usb_wdgt.update_values_hooks["cDAQ1Mod2/ai0_analog_read"].append(
+            lambda s, v: str(float(v) * 3000)
+        )
+        self.iomod_usb_wdgt.update_values_hooks["cDAQ1Mod2/ai1_analog_read"].append(
+            lambda s, v: str(float(v) * 1e-3)
+        )
+        self.iomod_usb_wdgt.update_values_hooks["cDAQ1Mod2/ai2_analog_read"].append(
+            lambda s, v: str(float(v) * 1e-3)
+        )
+        self.iomod_usb_wdgt.update_values_hooks["cDAQ1Mod2/ai3_analog_read"].append(
+            lambda s, v: str(float(v) * 3000)
+        )
+        self.iomod_usb_wdgt.update_values_hooks["cDAQ1Mod2/ai4_analog_read"].append(
+            lambda s, v: str(10 ** (float(v) - 11))
+        )
+
         self.iomod_usb_wdgt.command("DISPLAY_CONFIGURATION")
 
         self.zmqtool = hc.ZMQConnectionTool(app, "ZMQ Input Tool", "tcp://*:5555")

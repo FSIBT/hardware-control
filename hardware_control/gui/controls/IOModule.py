@@ -29,35 +29,15 @@ LABEL_MIN_WIDTH = -15
 DISP_DECIMAL_PLACES = 1
 
 
-def read_channel_file(filename: str, functions_handles: dict = None):
+def read_channel_file(filename: str):
     """
     Reads channel parameters from a JSON file. Returns a dictionary for
     initializing an hc.IOModule class.
-
-    fucntion_handles allows function handles to be specified in the JSON file as
-    a string. That string must then be used as a key in functioN_handles with the
-    handle as the value or else the hook for that channel will be ignored.
     """
-
-    if functions_handles is None:
-        functions_handles = {}
 
     # Read data from file
     with open(filename) as file:
         data = json.load(file)
-
-    # Replace hook strings with actual function handle from dict
-    for chan_key in data:  # For each channel dict...
-
-        # If a hook is not given, skip
-        if "HOOK" not in data[chan_key]:
-            continue
-
-        # If function listed as hook is listed in functioN_handles, get handle
-        if data[chan_key]["HOOK"] in functions_handles:
-            data[chan_key]["HOOK"] = functions_handles[data[chan_key]["HOOK"]]
-        else:  # else delete hook
-            del data[chan_key]["HOOK"]
 
     return data
 
@@ -81,7 +61,6 @@ class IOModule(Instrument):
         name: str = "IO Module",
         lock_until_sync=False,
         num_columns: int = 1,
-        hooks: dict = None,
         show_ID_labels=False,
     ):
 
@@ -108,13 +87,8 @@ class IOModule(Instrument):
 
             c_dict = self.ensure_all_fields(c_dict)
 
-            chan_hook = None
-            if hooks is not None and c_dict["ID_STR"] in hooks:
-                chan_hook = hooks[c_dict["ID_STR"]]
-
             write_setting = f"{c_dict['ID_STR']}_analog_write"
             if c_dict["DIR"] == "OUTPUT":
-                self.update_settings_hooks[write_setting].append(chan_hook)
                 if c_dict["TYPE"] == "DIGITAL":
 
                     last_wdgt = DigitalOutputChannel(
@@ -135,7 +109,6 @@ class IOModule(Instrument):
                     )
                     self.an_out_channels.append(last_wdgt)
             else:  # "INPUT"
-                self.update_values_hooks[write_setting].append(chan_hook)
                 if c_dict["TYPE"] == "DIGITAL":
                     last_wdgt = DigitalInputChannel(
                         self,
@@ -200,7 +173,7 @@ class IOModule(Instrument):
 
     def ensure_all_fields(self, x: dict):
 
-        required_fields = ["ID_STR", "HOOK", "UNITS", "LABEL", "OPTIONS"]
+        required_fields = ["ID_STR", "UNITS", "LABEL", "OPTIONS"]
 
         for field_name in required_fields:
             if field_name not in x:
