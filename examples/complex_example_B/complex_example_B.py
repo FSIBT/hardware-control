@@ -104,7 +104,6 @@ def save_continuous_data(dataset, filename: str):
 
     loc_time = localtime()
     header_datestamp = strftime("%Y-%m-%d %H:%M:%S", loc_time)
-    datestamp = strftime("%Y-%m-%d-%H%M%S", loc_time)
 
     # Add extension if not specified
     ext = os.path.splitext(filename)[-1].lower()
@@ -224,7 +223,7 @@ def save_waveforms_to_set(window):
     window.app.data_sets["Shots"].data["Picoscope_waveform"].append(picoscope_data)
     window.app.data_sets["Shots"].data["Keysight_waveform"].append(keysight_data)
 
-    window.app.data_sets["Shots"].save(f"beam_data.txt", "SHOT")
+    window.app.data_sets["Shots"].save("beam_data.txt", "SHOT")
 
 
 def countdown_end_fn(macro_runner_tool):
@@ -242,6 +241,7 @@ def save_shot_format(dataset, filename: str):
     Saves data in the format expected by STS-50 data processing scripts.
     """
 
+    loc_time = localtime()
     header_datestamp = strftime("%Y-%m-%d %H:%M:%S", loc_time)
     datestamp = strftime("%Y-%m-%d-%H%M%S", loc_time)
 
@@ -705,7 +705,6 @@ class STS50Demo(hc.MainWindow):
         self.flow = hc_back.Alicat_M_Series("192.168.0.15")
         self.flow_ctrl = hc.FlowController(app, self.flow, "Flow Controller")
 
-        # Todo: linux-gpib is a dependency on some systems
         self.trig1 = hc_back.SRS_DG535("GPIB0::10::INSTR")
         self.trig1_ctrl = hc.DelayGenerator(app, self.trig1, "Trigger 1")
         self.trig1_ctrl.load_state("delaygen_filament_init.json")
@@ -770,7 +769,7 @@ class STS50Demo(hc.MainWindow):
 
         self.zmqtool = hc.ZMQConnectionTool(app, "ZMQ Input Tool", "tcp://*:5555")
 
-        self.ScanWidget = hc.ScanWidget(app, "Scan Control")
+        self.scan_widget = hc.ScanWidget(app, "Scan Control")
 
         self.logtool = hc.DataWidget(app, "Data Logger")
         self.logtool.update_groups()
@@ -857,7 +856,7 @@ class STS50Demo(hc.MainWindow):
         self.logtool.update_groups()
         self.logtool.set_group("High Voltage")
 
-        self.ScanWidget.update_actions()
+        self.scan_widget.update_actions()
 
         # ######## Custom Tab
 
@@ -947,12 +946,12 @@ class STS50Demo(hc.MainWindow):
         ######## Set master window layout
 
         self.statustool.update_instruments()
-        self.ScanWidget.update_instruments()
+        self.scan_widget.update_instruments()
 
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.tabs, 0, 0, 3, 1)
         self.master_layout.addWidget(self.run_tool, 0, 1)
-        self.master_layout.addWidget(self.ScanWidget, 1, 1)
+        self.master_layout.addWidget(self.scan_widget, 1, 1)
         self.master_layout.addWidget(self.statustool, 2, 1)
         # self.master_layout.addWidget(self.logtool, 2, 1)
 
@@ -971,10 +970,10 @@ class STS50Demo(hc.MainWindow):
         self.app.close()
 
 
-def main():
+if __name__ == "__main__":
     warnings.filterwarnings(
         action="ignore", message="unclosed", category=ResourceWarning
-    )  # ToDo Not a solution
+    )
     app = hc.App(dummy=dummy)
     app.print_close_info = True
 
@@ -984,6 +983,3 @@ def main():
     ex = STS50Demo(app)
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())
-
-
-main()
