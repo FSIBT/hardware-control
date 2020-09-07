@@ -40,19 +40,6 @@ class App(QApplication):
 
         self.director = MeasurementDirector(self)
 
-        # Dictates if hc_commands are allowed to execute raw python
-        # code via calls to the via teh 'exec' function
-        self.exec_enabled = True
-
-        self.macro_lock_end_time = None
-        self.curr_macro = []
-        self.curr_cmd_idx = 0
-
-        # Start a timer to resume timer after any pauses
-        # self.macro_timer = QTimer(self)
-        # self.macro_timer.timeout.connect(self.resume_macro)
-        # Don't start timer yet...
-
     def get_instrument_by_name(self, name: str):
         """Returns the instrument named 'name' in 'instruments' list
 
@@ -85,12 +72,14 @@ class App(QApplication):
     def add_instrument(self, widget):
         """ Adds an hc.Instrument to self.instruments list
 
+        Instruments must have unique names.
+
         Parameters
         ----------
         widget
             hc.Instrument to add to self.instruments list
         """
-        # check if name is already present
+
         if widget.name in [x.name for x in self.instruments]:
             raise KeyError(f"Intrument name '{widget.name}' is already present")
 
@@ -149,8 +138,7 @@ class App(QApplication):
             )
 
     def list_instruments(self):
-        """ Prints a list of all instruments in self.instruments
-        """
+        """ Prints a list of all instruments in self.instruments."""
 
         if not self.instruments:
             print("No known instruments")
@@ -161,8 +149,7 @@ class App(QApplication):
             print(f"  {i}")
 
     def check_instruments(self):
-        """ Ensures all instruments conform to specifications
-        """
+        """ Ensures all instruments conform to specifications"""
         for i in self.instruments:
             try:
                 i.name
@@ -238,19 +225,14 @@ class App(QApplication):
             setting_str = tokens[2]
             value_str = tokens[3]
 
-            # If instrument exists...
-            if instr_str in [x.name for x in self.instruments]:
-
-                # Find instrument....
-                for inst in self.instruments:
-                    if instr_str == inst.name:
-                        inst.settings[setting_str] = value_str
-                        inst.update_setting(setting_str, value_str)
-                        if uptokens[0] == "SET_UI":
-                            inst.settings_to_UI()
-            else:
+            inst = self.get_instrument_by_name(instr_str)
+            if inst is None:
                 logger.warning(f"Instrument '{instr_str}' not found.")
                 return "ERROR: Instrument not found"
+
+            inst.update_setting(setting_str, value_str)
+            if uptokens[0] == "SET_UI":
+                inst.settings_to_UI()
 
             logger.debug(
                 f"Executed Setting Update:\n\tInstrument: {instr_str}\n"
@@ -273,21 +255,15 @@ class App(QApplication):
             instr_str = tokens[1]
             command_str = tokens[2]
 
-            # Find instrument....
-            instr_idx = -1
-            for idx, inst in enumerate(self.instruments):
-                if instr_str == inst.name:
-                    instr_idx = idx
-
-            if instr_idx != -1:
-                self.instruments[instr_idx].command(command_str)
-            else:
+            inst = self.get_instrument_by_name(instr_str)
+            if inst is None:
                 logger.warning(
                     f"Invalid HC-Command received. Wrong number of tokens."
                     f" Command: '{command}'"
                 )
                 return "ERROR: Invalid command"
 
+            inst.command(command_str)
             logger.debug(
                 f"Executed Command:\n\tInstrument: {instr_str}\n"
                 f"\tCommand: {command_str}"
@@ -295,9 +271,6 @@ class App(QApplication):
 
         elif uptokens[0] == "MEAS":
             if uptokens[1] == "REQ":
-
-                # print("\n\tIN CMDLG\n")
-
                 # Recalculate tokens, with max of 2 splits. This
                 # allows colons to appear in the command
                 tokens = command.split(":", 9)
@@ -330,14 +303,6 @@ class App(QApplication):
                     )
                     return "False"
 
-                # Find instrument....
-                instr_idx = -1
-                instr_str = tokens[2]
-                command_str = tokens[5]
-                for idx, inst in enumerate(self.instruments):
-                    if instr_str == inst.name:
-                        instr_idx = idx
-
                 if not self.director.measure(meas_req):
                     logger.warning("Failed to add MeasurementRequest to director'")
                     return "False"
@@ -348,39 +313,16 @@ class App(QApplication):
                 )
 
             elif uptokens[1] == "START":
-
                 self.director.start()
-
                 return "Started"
 
             elif uptokens[1] == "PSTATE":
-
                 print(self.director.state)
                 if self.director.state == "Error":
                     print(f"\tError message: {self.director.err_str}")
 
             elif uptokens[1] == "GETSTATE":
-
                 return self.director.state
-
-        elif uptokens[0] == "EXEC":
-
-            # Recalculate tokens, with max of 2 splits. This allows colons to appear in the command
-            tokens = command.split(":", 1)
-
-            if self.exec_enabled:
-                try:
-                    exec(tokens[1])
-                except Exception as e:
-                    ec = tokens[1]
-                    logger.error(
-                        f"Failed to execute command '{ec}'.\n\t{e}", exc_info=True
-                    )
-            else:
-                logger.warning(
-                    "Failed to execute code. Executing python code from"
-                    " HC-Commands has been disabled."
-                )
 
         elif uptokens[0] == "FUNC":
             # 'FUNC' indicates that the command is calling an internal function
