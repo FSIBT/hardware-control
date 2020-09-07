@@ -157,8 +157,6 @@ class RootsDemo(hc.MainWindow):
         self.keysight_wdgt.set_channel_label(1, "1: Heater")
         self.keysight_wdgt.set_channel_label(2, "Channel 2")
         self.keysight_wdgt.set_channel_label(3, "Channel 3")
-        self.keysight_wdgt.ramp_mode = hc.MultiPowerSupply.AUTOMATIC
-        self.keysight_wdgt.default_ramp_speed = 1
 
         # self.adam_be = ADAM6024Ctrl("192.168.0.5:1025")
         # self.adam_wdgt = hc.IOModule(

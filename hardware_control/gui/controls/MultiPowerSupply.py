@@ -557,27 +557,13 @@ class PowerSupplyChannel(QWidget):
                     self.enabled_but.setChecked(False)
 
             if (
-                self.main_widget.ramp_mode in [Instrument.AUTOMATIC, Instrument.MANUAL]
-                and self.main_widget.ramp_timer.isActive()
-                and f"CH{self.channel}_V_SET" in self.main_widget.ramp_target
+                self.main_widget.ramp_timer.isActive()
+                and f"CH{self.channel}_V_SET" in self.main_widget.active_ramps
             ):
 
-                curr = 0
                 key = f"CH{self.channel}_V_SET"
-                if key in self.main_widget.ramp_val:
-                    curr = self.main_widget.ramp_val[key]
-                elif key in self.main_widget.values:
-                    curr = self.main_widget.values[key]
-                try:
-                    curr = float(curr)
-                except:
-                    curr = 0
-                    logger.warning(
-                        "Invalid value for 'curr'. Updating indicator with"
-                        " assumption of ramping from 0."
-                    )
 
-                if self.main_widget.ramp_target[f"CH{self.channel}_V_SET"] > curr:
+                if self.main_widget.active_ramps[key] < self.main_widget.settings[key]:
                     self.ramp_indic.setPixmap(self.rampup_ind)
                 else:
                     self.ramp_indic.setPixmap(self.rampdn_ind)

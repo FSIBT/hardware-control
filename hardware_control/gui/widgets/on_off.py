@@ -42,7 +42,7 @@ class QOnOffButton(QPushButton):
         self.setIconSize(QtCore.QSize(30, 30))
         self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
-        def instrument_return_hook(value):
+        def instrument_return_hook(setting, value):
             self.update_status(value)
             return value
 
@@ -96,7 +96,7 @@ class QOnOffIndicator(QSvgWidget):
 
         self.instrument.update_values_hooks[self.name].append(self.update_hook)
 
-    def update_hook(self, value):
+    def update_hook(self, setting, value):
         self.set(value)
         return value
 

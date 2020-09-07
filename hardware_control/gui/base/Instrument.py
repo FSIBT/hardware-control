@@ -21,21 +21,18 @@ class CombinedMetaclass(sip.wrappertype, abc.ABCMeta):
     pass
 
 
-def call_hooks(hooks_list, value):
+def call_hooks(hooks_list, setting, value):
     for hook in hooks_list:
         if callable(hook):
-            value = hook(value)
+            value = hook(setting, value)
             if value is None:
-                return value
+                return None
     return value
 
 
 class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
-
-    # ramp_mode options
-    MANUAL = "manual"
-    AUTOMATIC = "automatic"
-    OFF = "off"
+    """A Base class for any UI element that displays instrument data.
+    """
 
     def __init__(self, app, name: str, backend=None, lock_until_sync=False):
         super().__init__(name)
@@ -83,13 +80,8 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
                 )
                 self.comm = self.app.comms[backend.connection_addr]
 
-        self.us_hooks = []  # Run every time update settings is called
-        self.ramp_hooks = []  # Run every time update_ramp is called
-        self.ramp_mode = Instrument.OFF
-        self.ramp_val = OrderedDict()
-        self.ramp_target = OrderedDict()
-        self.default_ramp_speed = 100  # Units/sec
-        self.ramp_speed = {}  # Override default_ramp_speed for specific parameters here
+        self.active_ramps = {}
+        self.ramp_speed = {}
         self.ramp_update_period = 1e3  # time between ramp steps in ms
 
         # Global Constants
@@ -106,7 +98,8 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
         self.app.add_instrument(self)
 
         self.ramp_timer = QTimer(self)
-        self.ramp_timer.timeout.connect(self.update_ramp)
+        self.ramp_timer.timeout.connect(self.update_ramps)
+        self.ramp_timer.start(self.ramp_update_period)
 
     def __repr__(self):
         return (
@@ -168,117 +161,75 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
 
         self.online_callback = callback_function
 
-    def update_ramp(self):
+    def ramp_hook(self, setting: str, value: str):
+        """Provide a simple ramp hook with constant ramp speed.
 
-        # List of parameters to remove from ramp_target after for loop. Note that
-        # removing items from dict while iterating over dict is not well-defined,
-        # hence why 'pop_list' is neccesary
-        pop_list = []
+        The ramp speed needs to be set in self.ramp_speed[setting]
+        when defining the gui.
 
-        if self.ramp_mode == Instrument.MANUAL:
+        Value will be the target value and the hook makes sure only a
+        step into the right direction is taken.  Additionally to this
+        hook, we then just need to call udpate_setting with the target
+        value in a timer.
 
-            # For each parameter being ramped
-            for key in self.ramp_target:
+        """
+        ramp_speed = self.ramp_speed.get(setting, None)
+        if ramp_speed is None:
+            logging.error(
+                f"no ramp speed for self.ramp_speed[{setting}]... "
+                f"needs to be set in the instrument init"
+            )
+            return value
 
-                # Get current value. Set to 0 if not specified
-                curr = 0
-                if key in self.ramp_val:
-                    curr = self.ramp_val[key]
-                elif key in self.values:
-                    curr = self.values[key]
-                try:
-                    curr = float(curr)
-                except:
-                    logger.warning("Invalid value for 'curr'. Ramping from 0.")
-                    curr = 0
+        value = float(value)
+        current_value = float(self.active_ramps.get(setting, self.settings[setting]))
 
-                # Run all hooks
-                for rhook in self.ramp_hooks:
+        # stop timer if not needed anymore
+        if current_value == value:
+            if setting in self.active_ramps:
+                self.active_ramps.pop(setting)
+            if not self.active_ramps and self.ramp_timer.isActive():
+                self.ramp_timer.stop()
+            return None
 
-                    if callable(rhook):
-                        try:
-                            curr = rhook(self, key, curr, self.ramp_target[key])
-                        except:
-                            logger.warning(
-                                f"Call to hook '{rhook}' failed. skipping. ",
-                                exc_info=True,
-                            )
+        # calculate next value
+        if current_value < value:
+            new_value = min(current_value + ramp_speed, value)
+        else:
+            new_value = max(current_value - ramp_speed, value)
 
-                # If curr is None, that indicates ramp is
-                # complete. Delete value from targets
-                if curr is None:
-                    pop_list.append(key)
-                else:
-                    self.ramp_val[key] = curr
-                    self.comm.update_setting(key, str(curr))
+        # do we need to do this again? If so, activate timer and save current value
+        if value != new_value:
+            self.active_ramps[setting] = new_value
+            if not self.ramp_timer.isActive():
+                self.ramp_timer.start(self.ramp_update_period)
 
-            for pkey in pop_list:
-                self.ramp_target.pop(pkey, None)
+        return new_value
 
-        if self.ramp_mode == Instrument.AUTOMATIC:
+    def update_ramps(self):
+        for s in self.active_ramps:
+            value = self.settings[s]
+            self.update_setting(s, value)
 
-            logger.debug("Callback Automatic ramp")
+    def enable_ramp(self, setting: str, ramp_speed: float):
+        """Set up an automatic ramp for this setting.
 
-            # For each parameter being ramped
-            for key in self.ramp_target:
+        This assumes that the parameter for this setting is a float or
+        integer.
 
-                logger.debug(f"Handling ramp for parameter {key}")
+        Parameters
+        ----------
+        setting : str
+            The name of the setting that should be ramped
+        ramp_speed : float
+            The step size that should be taken in 1 second.
 
-                # Get current value. Set to 0 if not specified
-                curr = 0
-                if key in self.ramp_val:
-                    curr = self.ramp_val[key]
-                elif key in self.values:
-                    curr = self.values[key]
-                try:
-                    curr = float(curr)
-                except:
-                    logger.warning("Invalid value for 'curr'. Ramping from 0.")
-                    curr = 0
+        """
+        # ramp hook should probably always be the first one?
+        self.update_settings_hooks[setting].insert(0, self.ramp_hook)
 
-                logger.debug(f"Value at start for parameter {key} was {curr}")
-
-                # Get increment
-                if key in self.ramp_speed:
-                    dVal = self.ramp_speed[key]
-                else:
-                    dVal = self.default_ramp_speed
-                try:
-                    dVal = float(dVal)
-                except:
-                    logger.error(
-                        "Ramp speeds must be floats. Cannot ramp."
-                        " Changing ramp_mode to OFF."
-                    )
-                    self.ramp_mode = Instrument.OFF
-                    self.ramp_timer.stop()
-                    return
-
-                logger.debug(f"Increment for parameter {key} will be {dVal}")
-
-                # Update value
-                if self.ramp_target[key] > curr:
-                    curr = min(curr + dVal, self.ramp_target[key])
-                else:
-                    curr = max(curr - dVal, self.ramp_target[key])
-
-                logger.debug(f"New value for parameter {key} will be {curr}")
-
-                # If curr is None, that indicates ramp is
-                # complete. Delete value from targets
-                if curr == self.ramp_target[key]:
-                    pop_list.append(key)
-
-                self.ramp_val[key] = curr
-                self.comm.update_setting(key, str(curr))
-
-            for pkey in pop_list:
-                self.ramp_target.pop(pkey, None)
-
-        # IF all ramps complete, stop timer
-        if len(self.ramp_target) < 1:
-            logger.debug("Killing ramp timer")
-            self.ramp_timer.stop()
+        update_interval = self.ramp_update_period
+        self.ramp_speed[setting] = ramp_speed * update_interval
 
     def remote_update_setting(self, setting: str, value: str):
         """ Calls update_setting to update backend, then uses setting_to_UI.
@@ -306,8 +257,17 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
 
         The user has the option to set hooks that can modify the
         values. The hooks get called before the value is set and send
-        to the backend. The hook needs to return the value or None if
-        the value should **not** be set.
+        to the backend.
+
+        Hook functionss need to have 3 parameters (all strings):
+        setting, value_to_instrument, value_to_settings.
+
+        The first one is the name of the setting, the second one is
+        the value that gets send to the instrument, and then third is
+        the value that gets saved in the settings dictionary.
+
+        If the hook sets value_to_instrument to zero at any stage, the
+        update_setting call will be ignored.
 
         """
 
@@ -319,41 +279,25 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
             )
             return
 
-        value = call_hooks(self.update_settings_hooks[setting], value)
+        value_orig = value
+        value = call_hooks(self.update_settings_hooks[setting], setting, value)
         if value is None:
             return
 
-        self.settings[setting] = value
-
-        if self.comm is not None:
-            # If ramp mode is on, set the target value and activate the timer
-            if self.ramp_mode in [Instrument.AUTOMATIC, Instrument.MANUAL]:
-                try:
-                    self.ramp_target[setting] = float(value)
-                except:
-                    logger.warning(
-                        f"Cannot set received value '{value}' as ramp target"
-                        f" value because it cannot be converted to a float."
-                        f" Setting '{setting}' directly to '{value}'."
-                    )
-                    self.comm.update_setting(setting, value)
-                    return
-                if not self.ramp_timer.isActive():
-                    self.ramp_timer.start(self.ramp_update_period)
-                return
-
+        self.settings[setting] = value_orig
+        if self.comm:
             self.comm.update_setting(setting, value)
 
     def command(self, cmd_str: str):
-        """Update a setting in settings and values dictionary for the instrument"""
+        """Send a command to the backend"""
 
-        if self.comm is not None:
+        if self.comm:
             self.comm.command(cmd_str)
 
     def command_listdata(self, cmd_str: str):
         """Send a command to the instrument and get a string and two lists back"""
 
-        if self.comm is not None:
+        if self.comm:
             self.comm.command_listdata(cmd_str)
 
     def set_setting(self, parameter: str, value: str):
@@ -506,7 +450,7 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
             key = "Misc"
             value = retval
 
-        value = call_hooks(self.update_values_hooks[key], value)
+        value = call_hooks(self.update_values_hooks[key], key, value)
         if value is None:
             return
 

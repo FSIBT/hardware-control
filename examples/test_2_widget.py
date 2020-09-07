@@ -85,24 +85,6 @@ logger.info("Roots Example Starting")
 #     logger.setLevel(logging.DEBUG)
 
 
-def ramp_func(obj, parameter, present, target):
-
-    # Mark as complete if within 1 unit of target
-    if present - 1 < target < present + 1:
-        return None
-
-    # Compute ramp speed
-    dVal = obj.default_ramp_speed
-    if parameter in obj.ramp_speed:
-        dVal = obj.ramp_speed[parameter]
-
-    # Compute new value
-    if target > present:
-        return min(present + dVal, target)
-
-    return max(present - dVal, target)
-
-
 class RootsDemo(hc.MainWindow):
     def __init__(self, app):
         super().__init__(app)
@@ -146,12 +128,8 @@ class RootsDemo(hc.MainWindow):
         self.psu_wdgt1.set_maxI(2, 3)
         self.psu_wdgt1.set_channel_label(1, "1: NaI")
         self.psu_wdgt1.set_channel_label(2, "2: LaBr")
-        # self.psu_wdgt1.ramp_mode = HC_Instrument.AUTOMATIC
-        # self.psu_wdgt1.default_ramp_speed = 1
-        self.psu_wdgt1.ramp_mode = hc.Instrument.MANUAL
-        self.psu_wdgt1.ramp_hooks.append(ramp_func)
-        self.psu_wdgt1.default_ramp_speed = 1
-        self.psu_wdgt1.comm.try_connect()
+        self.psu_wdgt1.enable_ramp("CH1_V_SET", ramp_speed=100)
+        self.psu_wdgt1.enable_ramp("CH2_V_SET", ramp_speed=100)
         self.psu_wdgt2 = hc.MultiPowerSupply(
             app,
             self.psu_be,
