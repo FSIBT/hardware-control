@@ -70,7 +70,7 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
 
         self.online_callback = None
 
-        if backend is not None:
+        if backend:
             if backend.connection_addr in self.app.comms:
                 self.comm = self.app.comms[backend.connection_addr]
                 self.comm.addWidget(self)
@@ -207,6 +207,7 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
         return new_value
 
     def update_ramps(self):
+        """Call every setting that is ramped with the target value."""
         for s in self.active_ramps:
             value = self.settings[s]
             self.update_setting(s, value)
@@ -300,47 +301,6 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
         if self.comm:
             self.comm.command_listdata(cmd_str)
 
-    def set_setting(self, parameter: str, value: str):
-        """Adjusts a parameter in 'self.settings' and updates any GUI elements to reflect the change."""
-
-        # Find instrument, get current setting for parameter
-        try:
-            current_val = self.settings[parameter]
-        except KeyError:
-            logger.error(
-                "Key '{parameter}' does not exist for instrument '{self.name}'.",
-                exc_info=True,
-            )
-
-        if isinstance(current_val, str):
-            try:
-                self.settings[parameter] = value
-            except:
-                logger.error(
-                    f"Failed to convert {type(value)} '{value}' to string.",
-                    exc_info=True,
-                )
-                return False
-        elif isinstance(current_val, (int, float)):
-            try:
-                self.settings[parameter] = float(value)
-            except:
-                logger.error(
-                    f"Failed to convert {type(value)} '{value}' to float. Exiting scan.",
-                    exc_info=True,
-                )
-                return False
-
-        else:
-            logger.error(
-                f"Settings must have string, float, or int datatype.\n"
-                f"\tInstrument '{self.name}' setting {parameter} has"
-                f" type: {type(current_val)}"
-            )
-            return False
-
-        return True
-
     def load_state(self, filename: str):
         """Reads the settings dictionary from file"""
 
@@ -375,29 +335,27 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
             )
 
     def send_state(self):
-        """Writes the entire state/settings dicitonary to the oscilloscope"""
+        """Writes the entire state/settings dicitonary to the backend."""
         for key in self.settings:
-            if self.comm is not None:
-                self.comm.update_setting(key, str(self.settings[key]))
+            self.update_setting(key, self.settings[key])
 
     def read_state_from_backend(self):
-
         if self.comm is None:
             logger.warning("Failed to read state from backend. 'Comm' is None.")
             return
 
         # Send a query to the backend for every possible value
         for v in self.values:
-            self.comm.command(f"{v}?")
+            self.command(f"{v}?")
 
         # Send a 'sync' command to the backend. It will be returned
         # immediately and used by the backend as an indicator for when all
         # of the previous commands have been processed
 
-        self.comm.command("SYNC_BACKEND")
+        self.command("SYNC_BACKEND")
 
     def close(self):
-        if self.comm is not None:
+        if self.comm:
             self.comm.close()
 
     def read_values(self, prefix: str):
@@ -502,9 +460,6 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
             return False
 
         return True
-
-        # TODO: Record 'id' for each measurement
-        # TODO: Erase measurements with corresponding ID if one fails
 
     def get_header(self, parameters=None):
         """ Returns a header to describe what is returned by get_values(). It
