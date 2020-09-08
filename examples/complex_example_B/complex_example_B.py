@@ -506,16 +506,16 @@ class CustomPowerSupplyWidget(hc.Instrument):
 
     def update_from_caen(self):
         volt_set3 = self.app.get_instrument_value(
-            "CAEN High Voltage Power Supply", "CH3_V_set"
+            "CAEN High Voltage Power Supply", "CH3_V_SET"
         )
         volt_set8 = self.app.get_instrument_value(
-            "CAEN High Voltage Power Supply", "CH8_V_set"
+            "CAEN High Voltage Power Supply", "CH8_V_SET"
         )
         volt_read3 = self.app.get_instrument_value(
-            "CAEN High Voltage Power Supply", "CH3_V_out"
+            "CAEN High Voltage Power Supply", "CH3_V_OUT"
         )
         volt_read8 = self.app.get_instrument_value(
-            "CAEN High Voltage Power Supply", "CH8_V_out"
+            "CAEN High Voltage Power Supply", "CH8_V_OUT"
         )
 
         if volt_set3 is not None and volt_set8 is not None:
@@ -532,13 +532,13 @@ class CustomPowerSupplyWidget(hc.Instrument):
             self.ch8_readout.setText(volt_read8)
 
     def default_state(self):
-        return {"CAEN_V_set": ""}
+        return {"CAEN_V_SET": ""}
 
     def update_caen(self):
         self.settings["CAEN_V_SET"] = self.caen_edit.text()
 
-        self.caen.remote_update_setting("CH3_V_set", self.caen_edit.text())
-        self.caen.remote_update_setting("CH8_V_set", self.caen_edit.text())
+        self.caen.remote_update_setting("CH3_V_SET", self.caen_edit.text())
+        self.caen.remote_update_setting("CH8_V_SET", self.caen_edit.text())
 
 
 class CustomControlWidget(QGroupBox):
@@ -726,13 +726,13 @@ class STS50Demo(hc.MainWindow):
             num_columns=2,
         )
         self.iomod_float_wdgt.update_settings_hooks[
-            "cDAQ9188-1AEF742Mod7/ao4_analog_write"
+            "CHcDAQ9188-1AEF742Mod7/ao4_analog_write"
         ].append(lambda s, v: str(-float(v) / 1000))
         self.iomod_float_wdgt.update_values_hooks[
-            "cDAQ9188-1AEF742Mod6/ai6_analog_read"
+            "CHcDAQ9188-1AEF742Mod6/ai6_analog_read"
         ].append(lambda s, v: str(float(v) * 1e-3))
         self.iomod_float_wdgt.update_values_hooks[
-            "cDAQ9188-1AEF742Mod6/ai7_analog_read"
+            "CHcDAQ9188-1AEF742Mod6/ai7_analog_read"
         ].append(lambda s, v: str(float(v) * 1000))
 
         self.iomod_usb = hc_back.Ni_9000()
@@ -743,25 +743,25 @@ class STS50Demo(hc.MainWindow):
             name="Power Supplies",
             num_columns=2,
         )
-        self.iomod_usb_wdgt.update_settings_hooks["cDAQ1Mod1/ao0_analog_write"].append(
+        self.iomod_usb_wdgt.update_settings_hooks["CHcDAQ1Mod1/ao0_analog_write"].append(
             lambda s, v: str(float(v) / 3000)
         )
-        self.iomod_usb_wdgt.update_settings_hooks["cDAQ1Mod1/ao1_analog_write"].append(
+        self.iomod_usb_wdgt.update_settings_hooks["CHcDAQ1Mod1/ao1_analog_write"].append(
             lambda s, v: str(float(v) / 3000)
         )
-        self.iomod_usb_wdgt.update_values_hooks["cDAQ1Mod2/ai0_analog_read"].append(
+        self.iomod_usb_wdgt.update_values_hooks["CHcDAQ1Mod2/ai0_analog_read"].append(
             lambda s, v: str(float(v) * 3000)
         )
-        self.iomod_usb_wdgt.update_values_hooks["cDAQ1Mod2/ai1_analog_read"].append(
+        self.iomod_usb_wdgt.update_values_hooks["CHcDAQ1Mod2/ai1_analog_read"].append(
             lambda s, v: str(float(v) * 1e-3)
         )
-        self.iomod_usb_wdgt.update_values_hooks["cDAQ1Mod2/ai2_analog_read"].append(
+        self.iomod_usb_wdgt.update_values_hooks["CHcDAQ1Mod2/ai2_analog_read"].append(
             lambda s, v: str(float(v) * 1e-3)
         )
-        self.iomod_usb_wdgt.update_values_hooks["cDAQ1Mod2/ai3_analog_read"].append(
+        self.iomod_usb_wdgt.update_values_hooks["CHcDAQ1Mod2/ai3_analog_read"].append(
             lambda s, v: str(float(v) * 3000)
         )
-        self.iomod_usb_wdgt.update_values_hooks["cDAQ1Mod2/ai4_analog_read"].append(
+        self.iomod_usb_wdgt.update_values_hooks["CHcDAQ1Mod2/ai4_analog_read"].append(
             lambda s, v: str(10 ** (float(v) - 11))
         )
 

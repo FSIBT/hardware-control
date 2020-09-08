@@ -56,81 +56,80 @@ class ZMQ_Oscilloscope(Backend):
             return value
         try:
             channel, setting_X = get_channel_from_command(setting)
-            if setting_X == "CHX_volts_div":
-                self.settings[f"Voltage range {channel}"] = float(value)
+            if setting_X == "CHX_VOLTS_DIV":
+                self.settings[f"VOLTAGE RANGE {channel}"] = float(value)
                 self.send_json_settings()
-                return f"{setting}:{value}"
-            if setting == "timebase":
-                self.settings["Timebase"] = float(value)
+                return f"{setting}={value}"
+            if setting == "TIMEBASE":
+                self.settings["TIMEBASE"] = float(value)
                 self.send_json_settings()
-                return f"{setting}:{value}"
-            if setting == "time_offset":
+                return f"{setting}={value}"
+            if setting == "TIME_OFFSET":
                 try:
-                    val = float(value) / float(self.settings["Timebase"]) * 100
+                    val = float(value) / float(self.settings["TIMEBASE"]) * 100
                 except:
                     val = 50
                     logger.error(
                         f"{self.ID} - Failed to calculate valid time_offset value",
                         exc_info=True,
                     )
-                self.settings["Ref Position (%)"] = val
+                self.settings["REF POSITION (%)"] = val
                 self.send_json_settings()
-                return f"{setting}:{value}"
-            if setting_X == "CHX_offset":
-                self.settings[f"Voltage offset {channel}"] = float(value)
+                return f"{setting}={value}"
+            if setting_X == "CHX_OFFSET":
+                self.settings[f"VOLTAGE OFFSET {channel}"] = float(value)
                 self.send_json_settings()
-                return f"{setting}:{value}"
-            if setting_X == "CHX_BW_lim":
+                return f"{setting}={value}"
+            if setting_X == "CHX_BW_LIM":
                 if bool(value):
-                    self.settings[f"bandwidth filter {channel}"] = "20MHz"
+                    self.settings[f"BANDWIDTH FILTER {channel}"] = "20MHz"
                 else:
-                    self.settings[f"bandwidth filter {channel}"] = "Full"
+                    self.settings[f"BANDWIDTH FILTER {channel}"] = "Full"
                 self.send_json_settings()
-                return f"{setting}:{value}"
-            if setting_X == "CHX_active":
-                chan_str = get_chan_str()
-                self.settings[f"Ch enable {chan_str}"] = bool(value)
+                return f"{setting}={value}"
+            if setting_X == "CHX_ACTIVE":
+                self.settings[f"CH ENABLE {channel}"] = value == "True"
                 self.send_json_settings()
-                return f"{setting}:{value}"
-            if setting_X == "CHX_impedance":
+                return f"{setting}={value}"
+            if setting_X == "CHX_IMPEDANCE":
                 return "Warning: Setting 'impedance' not available"
-            if setting_X == "CHX_label":
+            if setting_X == "CHX_LABEL":
                 return "Warning: Setting 'label' not available"
-            if setting == "labels_enabled":
+            if setting == "LABELS_ENABLED":
                 return "Warning: Setting 'label' not available"
-            if setting_X == "CHX_invert":
+            if setting_X == "CHX_INVERT":
                 return "Warning: Setting 'label' not available"
-            if setting_X == "CHX_probe_atten":
-                self.settings[f"External Gain/Attenuator{channel}"] = f"x{value}"
+            if setting_X == "CHX_PROBE_ATTEN":
+                self.settings[f"EXTERNAL GAIN/ATTENUATOR{channel}"] = f"x{value}"
                 self.send_json_settings()
-                return f"{setting}:{value}"
-            if setting_X == "CHX_coupling":
+                return f"{setting}={value}"
+            if setting_X == "CHX_COUPLING":
                 # Make sure valid value provided
                 if value not in ["AC", "DC"]:
                     value = "DC"
 
                 self.settings[f"AC/DC {channel}"] = value
                 self.send_json_settings()
-                return f"{setting}:{value}"
-            if setting == "trigger_level":
-                self.settings["Trigger level"] = float(value)
+                return f"{setting}={value}"
+            if setting == "TRIGGER_LEVEL":
+                self.settings["TRIGGER LEVEL"] = float(value)
                 self.send_json_settings()
-                return f"{setting}:{value}"
-            if setting == "trigger_coupling":
+                return f"{setting}={value}"
+            if setting == "TRIGGER_COUPLING":
                 # self.settings[f"Ch enable{channel}"] = value
                 # self.send_json_settings()
-                return f"{setting}:{value}"
-            if setting == "trigger_edge":
+                return f"{setting}={value}"
+            if setting == "TRIGGER_EDGE":
                 if value == "POS":
                     value = "Rising"
                 elif value == "NEG":
                     value = "Falling"
                 else:
                     value = "Rising"
-                self.settings["Trigger edge"] = value
+                self.settings["TRIGGER EDGE"] = value
                 self.send_json_settings()
-                return f"{setting}:{value}"
-            if setting == "trigger_channel":
+                return f"{setting}={value}"
+            if setting == "TRIGGER_CHANNEL":
                 if value == "1":
                     value = "A"
                 elif value == "2":
@@ -141,9 +140,9 @@ class ZMQ_Oscilloscope(Backend):
                     value = "D"
                 else:
                     value = "A"
-                self.settings["Trigger channel"] = value
+                self.settings["TRIGGER CHANNEL"] = value
                 self.send_json_settings()
-                return f"{setting}:{value}"
+                return f"{setting}={value}"
         except Exception:
             logger.error(
                 f"An error occured with {self.ID} when sending commands {setting} = {value} to the instrument.",
@@ -264,40 +263,40 @@ class ZMQ_Oscilloscope(Backend):
 
     def default_settings(self):
         return {
-            "Timebase": 0.001,
-            "Record Length": 1000.0,
-            "Bit resolution": "12",
-            "Ref Position (%)": 10.0,
-            "Voltage range 1": 0.1,
-            "Voltage offset 1": 0.0,
+            "TIMEBASE": 0.001,
+            "RECORD LENGTH": 1000.0,
+            "BIT RESOLUTION": "12",
+            "REF POSITION (%)": 10.0,
+            "VOLTAGE RANGE 1": 0.1,
+            "VOLTAGE OFFSET 1": 0.0,
             "AC/DC 1": "DC",
-            "bandwidth filter 1": "Full",
-            "External Gain/Attenuator 1": "x1",
-            "Calibration factor 1": 1.0,
-            "Voltage range 2": 15.0,
-            "Voltage offset 2": 0.0,
+            "BANDWIDTH FILTER 1": "Full",
+            "EXTERNAL GAIN/ATTENUATOR 1": "x1",
+            "CALIBRATION FACTOR 1": 1.0,
+            "VOLTAGE RANGE 2": 15.0,
+            "VOLTAGE OFFSET 2": 0.0,
             "AC/DC 2": "DC",
-            "bandwidth filter 2": "Full",
-            "External Gain/Attenuator 2": "x1",
-            "Calibration factor 2": 1.0,
-            "Voltage range 3": 15.0,
-            "Voltage offset 3": 0.0,
+            "BANDWIDTH FILTER 2": "Full",
+            "EXTERNAL GAIN/ATTENUATOR 2": "x1",
+            "CALIBRATION FACTOR 2": 1.0,
+            "VOLTAGE RANGE 3": 15.0,
+            "VOLTAGE OFFSET 3": 0.0,
             "AC/DC 3": "DC",
-            "bandwidth filter 3": "Full",
-            "Calibration factor 3": 1.0,
-            "Voltage range 4": 15.0,
-            "Voltage offset 4": 0.0,
+            "BANDWIDTH FILTER 3": "Full",
+            "CALIBRATION FACTOR 3": 1.0,
+            "VOLTAGE RANGE 4": 15.0,
+            "VOLTAGE OFFSET 4": 0.0,
             "AC/DC 4": "DC",
-            "bandwidth filter 4": "Full",
-            "External Gain/Attenuator 3": "x1",
-            "Calibration factor 4": 1.0,
-            "Trigger channel": "B",
-            "Trigger edge": "Falling",
-            "Trigger level": -5.0,
-            "Ch enable 1": True,
-            "Ch enable 2": True,
-            "Ch enable 3": True,
-            "Ch enable 4": True,
+            "BANDWIDTH FILTER 4": "Full",
+            "EXTERNAL GAIN/ATTENUATOR 3": "x1",
+            "CALIBRATION FACTOR 4": 1.0,
+            "TRIGGER CHANNEL": "B",
+            "TRIGGER EDGE": "Falling",
+            "TRIGGER LEVEL": -5.0,
+            "CH ENABLE 1": True,
+            "CH ENABLE 2": True,
+            "CH ENABLE 3": True,
+            "CH ENABLE 4": True,
         }
 
     def send_json_settings(self):

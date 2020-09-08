@@ -69,11 +69,11 @@ class Keysight_4000X(Backend):
         if self.dummy:
             return value
 
-        if setting == "timebase":
+        if setting == "TIMEBASE":
             self.write(f":TIM:SCAL {float(value):.6E}")
             rval = self.query(":TIM:SCAL?")
             return f"{setting}={rval}"
-        if setting == "time_offset":
+        if setting == "TIME_OFFSET":
             self.write(f":TIM:POS {float(value):.6E}")
             rval = self.query(":TIM:POS?")
             return f"{setting}={rval}"
@@ -81,48 +81,48 @@ class Keysight_4000X(Backend):
             self.write(f":WAV:POIN {int(float(value)):}")
             rval = self.query(":WAV:POIN?")
             return f"{setting}={rval}"
-        if setting == "labels_enabled":
+        if setting == "LABELS_ENABLED":
             self.write(f"DISP:LAB {int(value=='True')}")
             rval = self.query("DISP:LAB?")
             return f"{setting}={rval}"
-        if setting == "trigger_level":
+        if setting == "TRIGGER_LEVEL":
             self.write(f"TRIG:EDGE:LEV {float(value):.6E}")
             rval = self.query("TRIG:EDGE:LEV?")
             return f"{setting}={rval}"
-        if setting == "trigger_coupling":
+        if setting == "TRIGGER_COUPLING":
             # Make sure valid option given
             if value not in ["AC", "DC", "LFReject"]:
                 value = "DC"
             self.write(f"TRIG:COUP {value}")
             rval = self.query("TRIG:COUP?")
             return f"{setting}={rval}"
-        if setting == "trigger_edge":
+        if setting == "TRIGGER_EDGE":
             # Make sure valid option given
             if value not in ["BOTH", "NEG", "POS", "ALT"]:
                 value = "POS"
             self.write(f"TRIG:EDGE:SLOP {value}")
             rval = self.query("TRIG:EDGE:SLOP?")
             return f"{setting}={rval}"
-        if setting == "trigger_channel":
+        if setting == "TRIGGER_CHANNEL":
             self.write(f"TRIG:SOUR CHAN{int(value)}")
             rval = self.query("TRIG:SOUR?")
             return f"{setting}={rval}"
 
         channel, setting_X = get_channel_from_command(setting)
 
-        if setting_X == "CHX_volts_div":
+        if setting_X == "CHX_VOLTS_DIV":
             self.write(f":CHAN{channel}:SCAL {float(value):.6E}")
             rval = self.query(f":CHAN{channel}:SCAL?")
             return f"{setting}={rval}"
-        if setting_X == "CHX_offset":
+        if setting_X == "CHX_OFFSET":
             self.write(f"CHAN{channel}:OFFS {-float(value):.6E}")
             rval = self.query(f"CHAN{channel}:OFFS?")
             return f"{setting}={rval}"
-        if setting_X == "CHX_BW_lim":
+        if setting_X == "CHX_BW_LIM":
             self.write(f"CHAN{channel}:BWL {int(value=='True')}")
             rval = self.query(f"CHAN{channel}:BWL?")
             return f"{setting}={rval}"
-        if setting_X == "CHX_active":
+        if setting_X == "CHX_ACTIVE":
             self.write(f"CHAN{channel}:DISP {int(value=='True')}")
             ret = self.query(f"CHAN{channel}:DISP?")
             if ret in ["0", "1"]:
@@ -130,29 +130,29 @@ class Keysight_4000X(Backend):
                 return f"{setting}={rval}"
             else:
                 return ret
-        if setting_X == "CHX_impedance":
+        if setting_X == "CHX_IMPEDANCE":
             if value == "50":
                 self.write(f"CHAN{channel}:IMP FIFT")
             else:
                 self.write(f"CHAN{channel}:IMP ONEM")
             rval = self.query(f"CHAN{channel}:IMP?")
             return f"{setting}={rval}"
-        if setting_X == "CHX_label":
+        if setting_X == "CHX_LABEL":
             # Length is capped at 32 characters
             if len(value) > 32:
                 value = value[0:32]
             self.write(f"CHAN{channel}:LAB {value}")
             rval = self.query(f"CHAN{channel}:LAB?")
             return f"{setting}={rval}"
-        if setting_X == "CHX_invert":
+        if setting_X == "CHX_INVERT":
             self.write(f"CHAN{channel}:INV {int(value=='True')}")
             rval = self.query(f"CHAN{channel}:INV?")
             return f"{setting}={rval}"
-        if setting_X == "CHX_probe_atten":
+        if setting_X == "CHX_PROBE_ATTEN":
             self.write(f"CHAN{channel}:PROB {float(value):.6E}")
             rval = self.query(f"CHAN{channel}:PROB?")  # ie. 10 gives x10 or 10:1 probe
             return f"{setting}={rval}"
-        if setting_X == "CHX_coupling":
+        if setting_X == "CHX_COUPLING":
             # Make sure valid value provided
             if value not in ["AC", "DC"]:
                 value = "DC"
