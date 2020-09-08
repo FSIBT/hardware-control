@@ -10,7 +10,8 @@ See class definition for details.
 import logging
 
 from ..base import Backend, ensure_online
-from ..utility import regex_compare
+from ..utility import regex_compare, get_channel_from_command
+
 
 logger = logging.getLogger(__name__)
 
@@ -28,20 +29,22 @@ class Siglent_SDG(Backend):
     @ensure_online
     def update_setting(self, setting: str, value):
 
+        channel, setting_X = get_channel_from_command(setting)
+
         if self.dummy:
             return f"{setting}={value}"
 
         # only one channel on this model of AWG
-        if setting == "CH1_ENABLED":
+        if setting_X == "CHX_ENABLED":
             if value == "True":
-                self.write("C1:OUTP ON")
+                self.write(f"C{channel}:OUTP ON")
             else:
-                self.write("C1:OUTP OFF")
+                self.write(f"C{channel}:OUTP OFF")
             rval = self.query("C1:OUTP?")
             rval = rval[8:10] == "ON"
             return f"{setting}={rval}"
 
-        if setting == "CH1_WAVEFORM":
+        if setting_X == "CHX_WAVEFORM":
             wvfm = "SIN"
             if value in ["SINE", "SQUARE", "RAMP", "PULSE", "PRBS", "NOISE", "DC"]:
                 wvfm = value
@@ -50,35 +53,35 @@ class Siglent_SDG(Backend):
             elif value == "ARBITRARY":
                 wvfm = "ARB"
 
-            self.write(f"C1:BSWV WVTP,{wvfm}")
-            rval = self.query(":C1:BSWV?")
+            self.write(f"C{channel}:BSWV WVTP,{wvfm}")
+            rval = self.query(f":C{channel}:BSWV?")
             rval = rval[:-1]  # Trim newline character
             return f"{setting}={rval}"
 
-        if setting == "CH1_FREQUENCY":
-            self.write(f"C1:BSWV FRQ,{float(value):.6E}")
-            rval = self.query("C1:BSWV?")
+        if setting_X == "CHX_FREQUENCY":
+            self.write(f"C{channel}:BSWV FRQ,{float(value):.6E}")
+            rval = self.query(f"C{channel}:BSWV?")
             rval = rval[:-1]
             return f"{setting}={rval}"
 
-        if setting == "CH1_AMPLITUDE":
-            self.write(f"C1:BSWV AMP,{float(value):.6E}")
-            rval = self.query("C1:BSWV?")
+        if setting_X == "CHX_AMPLITUDE":
+            self.write(f"C{channel}:BSWV AMP,{float(value):.6E}")
+            rval = self.query(f"C{channel}:BSWV?")
             rval = rval[:-1]
             return f"{setting}={rval}"
 
-        if setting == "CH1_OFFSET":
-            self.write(f"C1:BSWV OFST,{float(value):.6E}")
-            rval = self.query("C1:BSWV?")
+        if setting_X == "CHX_OFFSET":
+            self.write(f"C{channel}:BSWV OFST,{float(value):.6E}")
+            rval = self.query(f"C{channel}:BSWV?")
             rval = rval[:-1]
             return f"{setting}={rval}"
 
-        if setting == "CH1_IMPEDANCE":
+        if setting_X == "CHX_IMPEDANCE":
             if value == "50":
-                self.write("C1:OUTP LOAD,50")
+                self.write(f"C{channel}:OUTP LOAD,50")
             else:
-                self.write("C1:OUTP LOAD,HZ")
-            rval = self.query("C1:OUTP?")
+                self.write(f"C{channel}:OUTP LOAD,HZ")
+            rval = self.query(f"C{channel}:OUTP?")
             rval = rval[:-1]
             return f"{setting}={rval}"
 
