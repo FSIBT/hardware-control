@@ -743,6 +743,7 @@ class STS50Demo(hc.MainWindow):
             name="Power Supplies",
             num_columns=2,
         )
+<<<<<<< HEAD:examples/complex_example_B/complex_example_B.py
         self.iomod_usb_wdgt.update_settings_hooks["cDAQ1Mod1/ao0_analog_write"].append(
             lambda s, v: str(float(v) / 3000)
         )
@@ -766,6 +767,9 @@ class STS50Demo(hc.MainWindow):
         )
 
         self.iomod_usb_wdgt.command("DISPLAY_CONFIGURATION")
+=======
+        # self.iomod_usb_wdgt.command("DISPLAY_CONFIGURATION")
+>>>>>>> IOModule: Fixed initialization of values:examples/STS50_Example/sts50_example.py
 
         self.zmqtool = hc.ZMQConnectionTool(app, "ZMQ Input Tool", "tcp://*:5555")
 

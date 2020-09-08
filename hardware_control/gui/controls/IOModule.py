@@ -200,19 +200,28 @@ class IOModule(Instrument):
 
         for c in self.an_in_channels:
             self.values[f"CH{c.channel}_analog_read"] = ""
+            self.values[f"CH{c.channel}_terminal_config"] = ""
         for c in self.an_out_channels:
             self.values[f"CH{c.channel}_analog_write"] = ""
+            self.values[f"CH{c.channel}_terminal_config"] = ""
         for c in self.dig_in_channels:
             self.values[f"CH{c.channel}_digital_read"] = ""
+            self.values[f"CH{c.channel}_terminal_config"] = ""
 
     def default_state(self):
+
+        print("\n\n\n*****\n\n\n")
+
         default = {}
         for c in self.an_in_channels:
             default[f"CH{c.channel}_analog_read"] = "0"
+            default[f"CH{c.channel}_terminal_config"] = ""
         for c in self.an_out_channels:
             default[f"CH{c.channel}_analog_write"] = "0"
+            default[f"CH{c.channel}_terminal_config"] = ""
         for c in self.dig_in_channels:
             default[f"CH{c.channel}_digital_read"] = "0"
+            default[f"CH{c.channel}_terminal_config"] = ""
 
         return default
 
