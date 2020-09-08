@@ -172,18 +172,23 @@ class RootsDemo(hc.MainWindow):
         #     lock_until_sync=True,
         # )
 
-        adam_config = hc.read_channel_file(
-            "ADAM_init.json",
-            {
-                "hook_ai1": lambda p: p * 100,
-                "hook_ai2": lambda i: i / 10 * 3e-3 + 8.1e-6,
-                "hook_ai3": lambda v: v / 10 * 100e3 + 420,
-                "hook_a01": lambda v: v / 10,
-            },
-        )
+        # adam_config = hc.read_channel_file(
+        #     "ADAM_init.json",
+        #     {
+        #         "hook_ai1": lambda p: p * 100,
+        #         "hook_ai2": lambda i: i / 10 * 3e-3 + 8.1e-6,
+        #         "hook_ai3": lambda v: v / 10 * 100e3 + 420,
+        #         "hook_a01": lambda v: v / 10,
+        #     },
+        # )
         self.adam_be = hc_back.Adam_6015("192.168.0.5:1025")
         self.adam_wdgt = hc.IOModule(
-            app, self.adam_be, adam_config, "ADAM", lock_until_sync=True, num_columns=2,
+            app,
+            self.adam_be,
+            channel_data="ADAM_init.json",
+            name="ADAM",
+            lock_until_sync=True,
+            num_columns=2,
         )
 
         # Put instrument(s) in tab
