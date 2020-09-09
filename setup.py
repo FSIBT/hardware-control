@@ -45,8 +45,8 @@ setuptools.setup(
     classifiers=[
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
-        "Development Status :: 3 - Alpha",
-        "License :: OSI Approved :: BSD-3-Clause-LBNL",
+        "Development Status :: 5 - Production/Stable",
+        "License :: OSI Approved :: BSD License",
         "Intended Audience :: Science/Research",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
