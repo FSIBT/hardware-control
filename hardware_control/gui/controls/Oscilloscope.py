@@ -592,7 +592,7 @@ class OscilloscopeHorizontalWidget(QWidget):
 
         try:
             self.timebase_edit.setValue(
-                1e3 * float(self.instrument.settings["timebase"])
+                1e3 * float(self.instrument.settings["TIMEBASE"])
             )
         except:
             self.timebase_edit.setValue(1e-3)

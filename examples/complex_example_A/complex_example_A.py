@@ -190,7 +190,13 @@ class RootsDemo(hc.MainWindow):
             lock_until_sync=True,
             num_columns=2,
         )
-
+        self.adam_wdgt.update_values_hooks["CHI1"].append(lambda s, v: v * 100)
+        self.adam_wdgt.update_values_hooks["CHI2"].append(
+            lambda s, v: v / 10 * 3e-3 + 8.1e-6
+        )
+        self.adam_wdgt.update_values_hooks["CHI3"].append(
+            lambda s, v: v / 10 * 100e-3 + 420
+        )
         # Put instrument(s) in tab
         self.tab_psu_layout = QGridLayout()
         # self.tab_psu_layout.addWidget(self.keysight_wdgt, 0, 0)

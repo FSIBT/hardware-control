@@ -116,7 +116,7 @@ class ZMQ_Oscilloscope(Backend):
                 self.send_json_settings()
                 return f"{setting}={value}"
             if setting == "TRIGGER_COUPLING":
-                # self.settings[f"Ch enable{channel}"] = value
+                # self.settings[f"CH ENABLE{channel}"] = value
                 # self.send_json_settings()
                 return f"{setting}={value}"
             if setting == "TRIGGER_EDGE":

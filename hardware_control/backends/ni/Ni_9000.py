@@ -79,7 +79,7 @@ class Ni_9000(Backend):
         value_orig = value
         value = ensure_float(value)
 
-        if setting_X == "CHX_V_max":
+        if setting_X == "CHX_V_MAX":
 
             if not isinstance(value, float):
                 logger.warning(
@@ -89,7 +89,7 @@ class Ni_9000(Backend):
 
             self.term_maxes[channel] = value
             return f"{setting}={value_orig}"
-        if setting_X == "CHX_V_min":
+        if setting_X == "CHX_V_MIN":
 
             if not isinstance(value, float):
                 logger.warning(
@@ -99,7 +99,7 @@ class Ni_9000(Backend):
 
             self.term_mins[channel] = value
             return f"{setting}={value_orig}"
-        if setting_X == "CHX_terminal_config":
+        if setting_X == "CHX_TERMINAL_CONFIG":
 
             if value_orig == "DIFF":
                 config_mode = TerminalConfiguration.DIFFERENTIAL
@@ -119,7 +119,7 @@ class Ni_9000(Backend):
             return f"{setting}={value_orig}"
 
         try:
-            if setting_X == "CHX_analog_write":
+            if setting_X == "CHX_ANALOG_WRITE":
 
                 with nidaqmx.Task() as task:
                     if channel in self.term_mins and isinstance(
@@ -142,7 +142,7 @@ class Ni_9000(Backend):
                     task.is_task_done()
                     return
 
-            if setting_X == "CHX_digital_write":
+            if setting_X == "CHX_DIGITAL_WRITE":
 
                 with nidaqmx.Task() as task:
                     task.ao_channels.add_do_chan(channel)
@@ -177,7 +177,7 @@ class Ni_9000(Backend):
             return f"{cmd.strip('?')}={num}"
 
         try:
-            if setting_X == "CHX_analog_read?":
+            if setting_X == "CHX_ANALOG_READ?":
                 with nidaqmx.Task() as task:
                     if channel in self.term_config_modes:
                         config_mode = self.term_config_modes[channel]
@@ -188,7 +188,7 @@ class Ni_9000(Backend):
                         task.ai_channels.add_ai_voltage_chan(channel)
                     val = str(task.read())
                 return f"{cmd[:-1]}={val}"
-            if setting_X == "CHX_digital_read?":
+            if setting_X == "CHX_DIGITAL_READ?":
                 with nidaqmx.Task() as task:
                     task.ai_channels.add_di_chan(channel)
                     val = str(task.read())

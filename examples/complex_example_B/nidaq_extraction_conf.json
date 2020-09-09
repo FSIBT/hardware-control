@@ -6,8 +6,8 @@
         "LABEL": "Extraction Voltage (set):",
         "UNITS": "V",
         "OPTIONS": {
-            "CHX_V_max": "10",
-            "CHX_V_min": "-10"
+            "CHX_V_MAX": "10",
+            "CHX_V_MIN": "-10"
         }
     },
     "extraction_current_in": {
@@ -17,7 +17,7 @@
         "LABEL": "Extraction Current:",
         "UNITS": "A",
         "OPTIONS": {
-            "CHX_terminal_config": "DIFF"
+            "CHX_TERMINAL_CONFIG": "DIFF"
         }
     },
     "extraction_voltage_in": {
@@ -27,7 +27,7 @@
         "LABEL": "Extraction Voltage:",
         "UNITS": "V",
         "OPTIONS": {
-            "CHX_terminal_config": "DIFF"
+            "CHX_TERMINAL_CONFIG": "DIFF"
         }
     }
 }

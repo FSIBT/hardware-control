@@ -213,15 +213,15 @@ class MultiPowerSupply(Instrument):
             #     self.command(f"CH{c}_output_enabled?")
             #     self.command(f"CH{c}_ramp_direction?")
 
-            # self.values[f"CH{c}_V_out"] = Vout
-            # self.values[f"CH{c}_I_out"] = Iout
-            # self.values[f"CH{c}_V_set"] = Vset
-            # self.values[f"CH{c}_I_set"] = Iset
+            # self.values[f"CH{c}_V_OUT"] = Vout
+            # self.values[f"CH{c}_I_OUT"] = Iout
+            # self.values[f"CH{c}_V_SET"] = Vset
+            # self.values[f"CH{c}_I_SET"] = Iset
             # if self.channel_widgets[idx].show_VI_limits:
-            #     self.values[f"CH{c}_V_max"] = Vmax
-            #     self.values[f"CH{c}_I_max"] = Imax
+            #     self.values[f"CH{c}_V_MAX"] = Vmax
+            #     self.values[f"CH{c}_I_MAX"] = Imax
             # if self.channel_widgets[idx].show_status_panel:
-            #     self.values[f"CH{c}_enabeld"] = enabled
+            #     self.values[f"CH{c}_ENABELD"] = enabled
 
             # print(f"Instr '{self.name}' sending values to widget # {idx} (CH: {c}). There are {len(self.channel_widgets)} total widgets.")
             if self.channel_widgets[idx].show_VI_limits:

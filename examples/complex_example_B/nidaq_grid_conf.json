@@ -20,7 +20,7 @@
         "LABEL": "Floating Rack Current (read):",
         "UNITS": "V",
         "OPTIONS": {
-            "CHX_terminal_config": "DIFF"
+            "CHX_TERMINAL_CONFIG": "DIFF"
         }
     },
     "Floating_rack_imon_in": {
@@ -30,7 +30,7 @@
         "LABEL": "Floating Rack Voltage (read):",
         "UNITS": "A",
         "OPTIONS": {
-            "CHX_terminal_config": "DIFF"
+            "CHX_TERMINAL_CONFIG": "DIFF"
         }
     },
     "Grid_rack_imon_in": {
@@ -40,7 +40,7 @@
         "LABEL": "Grid Current (read):",
         "UNITS": "A",
         "OPTIONS": {
-            "CHX_terminal_config": "DIFF"
+            "CHX_TERMINAL_CONFIG": "DIFF"
         }
     },
     "Grid_vmon_in": {
@@ -50,7 +50,7 @@
         "LABEL": "Grid Voltage (read):",
         "UNITS": "V",
         "OPTIONS": {
-            "CHX_terminal_config": "DIFF"
+            "CHX_TERMINAL_CONFIG": "DIFF"
         }
     },
     "Pressure_in": {
@@ -60,7 +60,7 @@
         "LABEL": "Pressure:",
         "UNITS": "Torr",
         "OPTIONS": {
-            "CHX_terminal_config": "DIFF"
+            "CHX_TERMINAL_CONFIG": "DIFF"
         }
     }
 }

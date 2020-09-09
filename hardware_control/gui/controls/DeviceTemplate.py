@@ -40,7 +40,7 @@ class DeviceType(Instrument):
         self.spinbox.setRange(0, 10)
         self.spinbox.setSingleStep(0.15)
         self.spinbox.editingFinished.connect(
-            lambda: self.update_setting("Volt_Channel1", str(self.spinbox.value()))
+            lambda: self.update_setting("VOLT_CHANNEL1", str(self.spinbox.value()))
         )
 
         self.layout = QGridLayout()
@@ -50,8 +50,8 @@ class DeviceType(Instrument):
         self.setLayout(self.layout)
 
         # add your specific settings
-        self.settings["Volt_Channel1"] = 123
-        self.settings["Volt_Channel2"] = 456
+        self.settings["VOLT_CHANNEL1"] = 123
+        self.settings["VOLT_CHANNEL2"] = 456
 
         # Create timer to query
         self.readout_timer = QTimer(self)

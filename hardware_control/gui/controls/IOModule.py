@@ -87,7 +87,7 @@ class IOModule(Instrument):
 
             c_dict = self.ensure_all_fields(c_dict)
 
-            write_setting = f"{c_dict['ID_STR']}_analog_write"
+            write_setting = f"{c_dict['ID_STR']}_ANALOG_WRITE"
             if c_dict["DIR"] == "OUTPUT":
                 if c_dict["TYPE"] == "DIGITAL":
 
@@ -199,14 +199,14 @@ class IOModule(Instrument):
         self.values = {}
 
         for c in self.an_in_channels:
-            self.values[f"CH{c.channel}_analog_read"] = ""
-            self.values[f"CH{c.channel}_terminal_config"] = ""
+            self.values[f"CH{c.channel}_ANALOG_READ"] = ""
+            self.values[f"CH{c.channel}_TERMINAL_CONFIG"] = ""
         for c in self.an_out_channels:
-            self.values[f"CH{c.channel}_analog_write"] = ""
-            self.values[f"CH{c.channel}_terminal_config"] = ""
+            self.values[f"CH{c.channel}_ANALOG_WRITE"] = ""
+            self.values[f"CH{c.channel}_TERMINAL_CONFIG"] = ""
         for c in self.dig_in_channels:
-            self.values[f"CH{c.channel}_digital_read"] = ""
-            self.values[f"CH{c.channel}_terminal_config"] = ""
+            self.values[f"CH{c.channel}_DIGITAL_READ"] = ""
+            self.values[f"CH{c.channel}_TERMINAL_CONFIG"] = ""
 
     def default_state(self):
 
@@ -214,14 +214,14 @@ class IOModule(Instrument):
 
         default = {}
         for c in self.an_in_channels:
-            default[f"CH{c.channel}_analog_read"] = "0"
-            default[f"CH{c.channel}_terminal_config"] = ""
+            default[f"CH{c.channel}_ANALOG_READ"] = "0"
+            default[f"CH{c.channel}_TERMINAL_CONFIG"] = ""
         for c in self.an_out_channels:
-            default[f"CH{c.channel}_analog_write"] = "0"
-            default[f"CH{c.channel}_terminal_config"] = ""
+            default[f"CH{c.channel}_ANALOG_WRITE"] = "0"
+            default[f"CH{c.channel}_TERMINAL_CONFIG"] = ""
         for c in self.dig_in_channels:
-            default[f"CH{c.channel}_digital_read"] = "0"
-            default[f"CH{c.channel}_terminal_config"] = ""
+            default[f"CH{c.channel}_DIGITAL_READ"] = "0"
+            default[f"CH{c.channel}_TERMINAL_CONFIG"] = ""
 
         return default
 
@@ -262,13 +262,13 @@ class AnalogInputChannel(QGroupBox):
 
     def update_readout(self):
         # Query value
-        self.control.command(f"CH{self.channel}_analog_read?")
+        self.control.command(f"CH{self.channel}_ANALOG_READ?")
 
         try:
 
             # Read return value
             V_meas = remove_end_carriage_return(
-                self.control.read_values(f"CH{self.channel}_analog_read")
+                self.control.read_values(f"CH{self.channel}_ANALOG_READ")
             )
 
             # Update label
@@ -341,15 +341,15 @@ class AnalogOutputChannel(QGroupBox):
 
     def set_voltage(self):
         self.control.update_setting(
-            f"CH{self.channel}_analog_write", self.editbox.text()
+            f"CH{self.channel}_ANALOG_WRITE", self.editbox.text()
         )
 
     def set_to_zero(self):
         self.editbox.setText("0")
-        self.control.update_setting(f"CH{self.channel}_analog_write", "0")
+        self.control.update_setting(f"CH{self.channel}_ANALOG_WRITE", "0")
 
     def settings_to_UI(self):
-        self.editbox.setText(self.control.settings[f"CH{self.channel}_analog_write"])
+        self.editbox.setText(self.control.settings[f"CH{self.channel}_ANALOG_WRITE"])
 
 
 class DigitalInputChannel(QGroupBox):
@@ -394,13 +394,13 @@ class DigitalInputChannel(QGroupBox):
 
     def update_readout(self):
         # Query value
-        self.control.command(f"CH{self.channel}_digital_read?")
+        self.control.command(f"CH{self.channel}_DIGITAL_READ?")
 
         try:
 
             # Read return value
             V_meas = remove_end_carriage_return(
-                self.control.read_values(f"CH{self.channel}_digital_read")
+                self.control.read_values(f"CH{self.channel}_DIGITAL_READ")
             )
 
             # Update label
@@ -472,7 +472,7 @@ class DigitalOutputChannel(QGroupBox):
 
     def settings_to_UI(self):
         setButtonState(
-            self.ctrl_but, self.control.settings[f"CH{self.channel}_digital_write"]
+            self.ctrl_but, self.control.settings[f"CH{self.channel}_DIGITAL_WRITE"]
         )
 
         if self.ctrl_but.isChecked():
