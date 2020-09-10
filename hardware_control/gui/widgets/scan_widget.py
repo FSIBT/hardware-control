@@ -255,8 +255,6 @@ class ScanWidget(Instrument):
 
         # Create timer to do scan
         self.scan_timer = QTimer(self)
-        self.scan_timer.setSingleShot(True)
-        self.scan_timer.timeout.connect(self.scan)
 
     def update_local_setting(self, setting: str, value: str):
         self.settings[setting] = value
@@ -269,19 +267,6 @@ class ScanWidget(Instrument):
         self.action_drop.setCurrentText(self.settings["action"])
         self.pause_timer_label_before.setText(self.settings["before_countdown"])
         self.pause_timer_label_after.setText(self.settings["after_countdown"])
-
-    def stop_scan(self):
-        self.scan_timer.stop()
-        self.scan_button.setEnabled(True)
-        self.stop_button.setEnabled(False)
-        self.settings["progress"] = 0
-        self.progress_bar.setValue(self.settings["progress"])
-
-    def start_scan(self):
-        dt_before = float(self.pause_edit_before.text())
-        self.count = 0
-        if self.compute_values():
-            self.scan_timer.start(1000 * dt_before)
 
     def browse_values_files(self):
         # Use file dialog to get save location
@@ -373,62 +358,110 @@ class ScanWidget(Instrument):
         self.number_of_values = len(self.val_list)
         return True
 
-    def scan(self):
-        self.scan_button.setEnabled(False)
-        self.stop_button.setEnabled(True)
-
-        # Get parameters, instrument, etc...
-        i = self.instrument_drop.currentText()
-        p = self.parameter_drop.currentText()
-        m = self.action_drop.currentText()
-        sync = self.sync_measdir_check.isChecked()
-
-        dt_before = float(self.pause_edit_before.text())
-        dt_after = float(self.pause_edit_after.text())
-
-        # vals = self.settings["values"].split(",")
-
-        logger.debug(
-            f"Starting scan\n\tInstrument: {i}\n\tParameter: {p}\n\tValues:{self.val_list}"
-        )
-
+    def set_instrument_setting(self):
+        v = self.val_list[self.count]
         scan_instrument = self.app.get_instrument_by_name(self.settings["instrument"])
-        if scan_instrument is None:
-            logger.error(f"Failed to find instrument {i}")
-            return
-
-        v = self.val_list.pop(0)
-        self.count += 1
-
-        # Update progress bar
-        self.settings["progress"] = str(self.count / self.number_of_values * 100)
-        logger.debug(
-            f"\tRunning value = '{v}'\t\t{self.count/self.number_of_values*100}%"
-        )
-        self.progress_bar.setValue(float(self.settings["progress"]))
-        QApplication.processEvents()
-
         # Update setting
         scan_instrument.remote_update_setting(self.settings["parameter"], v.strip())
 
+    def pause_after(self):
+        start_time = time.time()
+        dt_after = float(self.pause_edit_after.text())
+        end_time = start_time + dt_after
+
+        def pause():
+            time_left = end_time - time.time()
+            if time_left > 0:
+                print('here')
+                label = '{time_left:.2}'
+                self.pause_timer_label_after.setText(label.format(time_left=time_left))
+            else:
+                print('finished')
+                self.pause_timer_label_after.setText('0')
+                self.scan_timer.stop()
+                self.start_cycle()
+
+        try:
+            self.scan_timer.timeout.disconnect()
+        except TypeError:
+            pass
+        self.scan_timer.timeout.connect(pause)
+        self.scan_timer.start(100)
+
+    def start_cycle(self):
+        self.count += 1
+        self.settings["progress"] = str(self.count / self.number_of_values * 100)
+        self.progress_bar.setValue(float(self.settings["progress"]))
+        QApplication.processEvents()
+        if self.count == self.number_of_values:
+            logger.debug("Finished scan")
+            self.stop_scan()
+        else:
+            self.set_instrument_setting()
+            self.pause_before()
+
+    def stop_scan(self):
+        self.scan_timer.stop()
+        self.pause_timer_label_before.setText('0')
+        self.pause_timer_label_after.setText('0')
+        self.scan_button.setEnabled(True)
+        self.stop_button.setEnabled(False)
+        self.progress_bar.setValue(float(self.settings["progress"]))
+
+    def start_scan(self):
+        scan_instrument = self.app.get_instrument_by_name(self.settings["instrument"])
+        if scan_instrument is None:
+            logger.error(f"Failed to find instrument {self.instrument_drop.currentText()}")
+            return
+        if not self.compute_values():
+            return
+        i = self.instrument_drop.currentText()
+        p = self.parameter_drop.currentText()
+        m = self.action_drop.currentText()
+        logger.debug(
+            f"Starting scan\n\tInstrument: {i}\n\tParameter: {p}\n\tValues:{self.val_list}"
+        )
+        self.scan_button.setEnabled(False)
+        self.stop_button.setEnabled(True)
+        self.count = 0
+        self.set_instrument_setting()
+        self.pause_before()
+
+    def pause_before(self):
+        start_time = time.time()
+        dt_before = float(self.pause_edit_before.text())
+        end_time = start_time + dt_before
+
+        def pause():
+            time_left = end_time - time.time()
+            if time_left > 0:
+                label = '{time_left:.2}'
+                self.pause_timer_label_before.setText(label.format(time_left=time_left))
+            else:
+                self.pause_timer_label_before.setText('0')
+                self.scan_timer.stop()
+                self.scan()
+
+        try:
+            self.scan_timer.timeout.disconnect()
+        except TypeError:
+            pass
+        self.scan_timer.timeout.connect(pause)
+        self.scan_timer.start(100)
+
+    def scan(self):
+        m = self.action_drop.currentText()
         # Run Macro (if macro selected)
         if m != "None":
             logger.debug(f"\t\tRunning macro {m}")
-            self.app.run_macro("FUNC:{self.action}")
+            self.app.run_macro([f"FUNC:{m}"])
 
         # Sync with director (if box checked)
         if self.sync_measdir_check.isChecked():
             # Todo: Put this function in new thread, prevent blocking
             while self.app.director.state.upper() == "BUSY":
                 time.sleep(0.1)
-
-        if self.val_list:
-            self.scan_timer.start(1000 * (dt_before + dt_after))
-        else:
-            self.settings["progress"] = 100
-            self.progress_bar.setValue(self.settings["progress"])
-            logger.debug("Finished scan")
-            self.stop_scan()
+        self.pause_after()
 
     def update_instruments(self):
         self.instrument_drop.clear()
