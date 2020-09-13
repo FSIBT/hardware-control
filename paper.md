@@ -69,9 +69,17 @@ implement. The software also makes it easy to develop and test the
 code without any hardware connected to the system.
 
 A similar package with a slightly different approach can be found at
-Scopefoundry.org [@Barnard]. However, our experiments have a lightly
+Scopefoundry.org [@Barnard]. However, our experiments have a slightly
 different need and we therefore decided to implement the provided
-solution.
+solution. This software is actively being used in two different research
+projects in our group at Lawrence Berkeley National Laboratory. One
+such project, ROOTS, uses `Hardware-Control` to run a variety of data
+acquisition modules and power supplies to measure carbon content in soil via
+neutron irradiation. Our other project, STS-50, uses `Hardware-Control` to
+operate a compact RF particle accelerator. Although our group is using
+`Hardware-Control` specifically in particle physics applications, it can be
+used in almost any field of experimental research because it solves the broadly
+applicable problem of instrument automation.
 
 
 # Acknowledgements
@@ -81,4 +89,3 @@ Projects Agency-Energy (ARPA-E), U.S. Department of Energy, under Contract No. D
 05CH11231.
 
 # References
-
