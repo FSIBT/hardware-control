@@ -726,13 +726,13 @@ class STS50Demo(hc.MainWindow):
             num_columns=2,
         )
         self.iomod_float_wdgt.update_settings_hooks[
-            "CHcDAQ9188-1AEF742Mod7/ao4_analog_write"
+            "CHcDAQ9188-1AEF742Mod7/ao4_ANALOG_WRITE"
         ].append(lambda s, v: str(-float(v) / 1000))
         self.iomod_float_wdgt.update_values_hooks[
-            "CHcDAQ9188-1AEF742Mod6/ai6_analog_read"
+            "CHcDAQ9188-1AEF742Mod6/ai6_ANALOG_READ"
         ].append(lambda s, v: str(float(v) * 1e-3))
         self.iomod_float_wdgt.update_values_hooks[
-            "CHcDAQ9188-1AEF742Mod6/ai7_analog_read"
+            "CHcDAQ9188-1AEF742Mod6/ai7_ANALOG_READ"
         ].append(lambda s, v: str(float(v) * 1000))
 
         self.iomod_usb = hc_back.Ni_9000()
@@ -743,25 +743,25 @@ class STS50Demo(hc.MainWindow):
             name="Power Supplies",
             num_columns=2,
         )
-        self.iomod_usb_wdgt.update_settings_hooks["CHcDAQ1Mod1/ao0_analog_write"].append(
-            lambda s, v: str(float(v) / 3000)
-        )
-        self.iomod_usb_wdgt.update_settings_hooks["CHcDAQ1Mod1/ao1_analog_write"].append(
-            lambda s, v: str(float(v) / 3000)
-        )
-        self.iomod_usb_wdgt.update_values_hooks["CHcDAQ1Mod2/ai0_analog_read"].append(
+        self.iomod_usb_wdgt.update_settings_hooks[
+            "CHcDAQ1Mod1/ao0_ANALOG_WRITE"
+        ].append(lambda s, v: str(float(v) / 3000))
+        self.iomod_usb_wdgt.update_settings_hooks[
+            "CHcDAQ1Mod1/ao1_ANALOG_WRITE"
+        ].append(lambda s, v: str(float(v) / 3000))
+        self.iomod_usb_wdgt.update_values_hooks["CHcDAQ1Mod2/ai0_ANALOG_READ"].append(
             lambda s, v: str(float(v) * 3000)
         )
-        self.iomod_usb_wdgt.update_values_hooks["CHcDAQ1Mod2/ai1_analog_read"].append(
+        self.iomod_usb_wdgt.update_values_hooks["CHcDAQ1Mod2/ai1_ANALOG_READ"].append(
             lambda s, v: str(float(v) * 1e-3)
         )
-        self.iomod_usb_wdgt.update_values_hooks["CHcDAQ1Mod2/ai2_analog_read"].append(
+        self.iomod_usb_wdgt.update_values_hooks["CHcDAQ1Mod2/ai2_ANALOG_READ"].append(
             lambda s, v: str(float(v) * 1e-3)
         )
-        self.iomod_usb_wdgt.update_values_hooks["CHcDAQ1Mod2/ai3_analog_read"].append(
+        self.iomod_usb_wdgt.update_values_hooks["CHcDAQ1Mod2/ai3_ANALOG_READ"].append(
             lambda s, v: str(float(v) * 3000)
         )
-        self.iomod_usb_wdgt.update_values_hooks["CHcDAQ1Mod2/ai4_analog_read"].append(
+        self.iomod_usb_wdgt.update_values_hooks["CHcDAQ1Mod2/ai4_ANALOG_READ"].append(
             lambda s, v: str(10 ** (float(v) - 11))
         )
 
