@@ -372,12 +372,10 @@ class ScanWidget(Instrument):
         def pause():
             time_left = end_time - time.time()
             if time_left > 0:
-                print('here')
-                label = '{time_left:.2}'
+                label = "{time_left:.2}"
                 self.pause_timer_label_after.setText(label.format(time_left=time_left))
             else:
-                print('finished')
-                self.pause_timer_label_after.setText('0')
+                self.pause_timer_label_after.setText("0")
                 self.scan_timer.stop()
                 self.start_cycle()
 
@@ -402,8 +400,8 @@ class ScanWidget(Instrument):
 
     def stop_scan(self):
         self.scan_timer.stop()
-        self.pause_timer_label_before.setText('0')
-        self.pause_timer_label_after.setText('0')
+        self.pause_timer_label_before.setText("0")
+        self.pause_timer_label_after.setText("0")
         self.scan_button.setEnabled(True)
         self.stop_button.setEnabled(False)
         self.progress_bar.setValue(float(self.settings["progress"]))
@@ -411,7 +409,9 @@ class ScanWidget(Instrument):
     def start_scan(self):
         scan_instrument = self.app.get_instrument_by_name(self.settings["instrument"])
         if scan_instrument is None:
-            logger.error(f"Failed to find instrument {self.instrument_drop.currentText()}")
+            logger.error(
+                f"Failed to find instrument {self.instrument_drop.currentText()}"
+            )
             return
         if not self.compute_values():
             return
@@ -435,10 +435,10 @@ class ScanWidget(Instrument):
         def pause():
             time_left = end_time - time.time()
             if time_left > 0:
-                label = '{time_left:.2}'
+                label = "{time_left:.2}"
                 self.pause_timer_label_before.setText(label.format(time_left=time_left))
             else:
-                self.pause_timer_label_before.setText('0')
+                self.pause_timer_label_before.setText("0")
                 self.scan_timer.stop()
                 self.scan()
 
