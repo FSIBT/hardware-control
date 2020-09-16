@@ -18,6 +18,7 @@ import sys
 from time import localtime, strftime
 import warnings
 import os
+from pathlib import Path
 
 from PyQt5.QtWidgets import (
     QStyleFactory,
@@ -48,6 +49,19 @@ logger = logging.getLogger(__name__)
 hc.setup_logging(logger, commands, "hardware_control.log")
 
 logger.info("STS50 Example Starting")
+
+# where should we save the data
+OUTPUT_DIR = Path.home() / "Desktop" / "STS50-data"
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def get_output_dir():
+    """Adds the current date to the output dir"""
+    loc_time = localtime()
+    YYYYMMDD = strftime("%Y-%m-%d", loc_time)
+    output_dir = OUTPUT_DIR / YYYYMMDD
+    output_dir.mkdir(parents=True, exist_ok=True)
+    return output_dir
 
 
 def init_with_JSON(instrument):
@@ -246,7 +260,7 @@ def save_shot_format(dataset, filename: str):
     # Get settings hash and save settings file
     set_str = dataset.app.save_all_states(None)
     hash_str = hashlib.sha256(set_str.encode("utf-8")).hexdigest()
-    dataset.app.save_all_states(f"./Outputs/settings-{hash_str}.txt")
+    dataset.app.save_all_states(get_output_dir() / f"settings-{hash_str}.txt")
 
     # Ensure minimum length
     if dataset.len_min() < 1:
@@ -339,10 +353,14 @@ def save_shot_format(dataset, filename: str):
 
             return True
 
-    save_scope_file("Keysight_waveform", f"./Outputs/scope-data-{datestamp}.txt")
-    save_scope_file("Picoscope_waveform", f"Outputs/picoscope-data-{datestamp}.txt")
+    save_scope_file(
+        "Keysight_waveform", get_output_dir() / f"scope-data-{datestamp}.txt"
+    )
+    save_scope_file(
+        "Picoscope_waveform", get_output_dir() / f"picoscope-data-{datestamp}.txt"
+    )
 
-    misc_fn = f"Outputs/misc-data-{datestamp}.txt"
+    misc_fn = get_output_dir() / f"misc-data-{datestamp}.txt"
 
     with open(misc_fn, "a") as outfile:
 
@@ -802,7 +820,7 @@ class STS50Demo(hc.MainWindow):
         self.app.data_sets["Continuous"].add_instrument(self.iomod_usb_wdgt)
         self.app.data_sets["Continuous"].add_instrument(self.iomod_float_wdgt)
         self.app.data_sets["Continuous"].start_autosave(
-            10, "STS50", "./Outputs/continuous.txt"
+            10, "STS50", get_output_dir() / "continuous.txt"
         )
 
         self.app.data_sets["Demo"] = hc.Dataset("Demo", self.app)
