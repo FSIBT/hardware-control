@@ -93,11 +93,9 @@ def power_off(window):
     window.flow_ctrl.remote_update_setting("RATE", "0")
 
     # Shut off NI-DAQ Power Supplies
-    window.iomod_usb_wdgt.remote_update_setting("CHcDAQ1Mod1/ao0_analog_write", "0")
-    window.iomod_usb_wdgt.remote_update_setting("CHcDAQ1Mod1/ao1_analog_write", "0")
-    window.iomod_float_wdgt.remote_update_setting(
-        "CHcDAQ9188-1AEF742Mod7/ao4_analog_write", "0"
-    )
+    window.iomod_usb_wdgt.remote_update_setting("CHMod1/ao0_analog_write", "0")
+    window.iomod_usb_wdgt.remote_update_setting("CHMod1/ao1_analog_write", "0")
+    window.iomod_float_wdgt.remote_update_setting("CHMod7/ao4_analog_write", "0")
 
 
 def save_continuous_data(dataset, filename: str):
@@ -717,7 +715,7 @@ class STS50Demo(hc.MainWindow):
         self.trig2_ctrl.settings_to_UI()
         self.trig2_ctrl.set_online_callback(init_with_JSON)
 
-        self.iomod_float = hc_back.Ni_9000()
+        self.iomod_float = hc_back.Ni_9000("cDAQ9188-1AEF742")
         self.iomod_float_wdgt = hc.IOModule(
             app,
             self.iomod_float,
@@ -725,17 +723,17 @@ class STS50Demo(hc.MainWindow):
             name="Power Supplies (floating rack)",
             num_columns=2,
         )
-        self.iomod_float_wdgt.update_settings_hooks[
-            "CHcDAQ9188-1AEF742Mod7/ao4_ANALOG_WRITE"
-        ].append(lambda s, v: str(-float(v) / 1000))
-        self.iomod_float_wdgt.update_values_hooks[
-            "CHcDAQ9188-1AEF742Mod6/ai6_ANALOG_READ"
-        ].append(lambda s, v: str(float(v) * 1e-3))
-        self.iomod_float_wdgt.update_values_hooks[
-            "CHcDAQ9188-1AEF742Mod6/ai7_ANALOG_READ"
-        ].append(lambda s, v: str(float(v) * 1000))
+        self.iomod_float_wdgt.update_settings_hooks["CHMod7/ao4_ANALOG_WRITE"].append(
+            lambda s, v: str(-float(v) / 1000)
+        )
+        self.iomod_float_wdgt.update_values_hooks["CHMod6/ai6_ANALOG_READ"].append(
+            lambda s, v: str(float(v) * 1e-3)
+        )
+        self.iomod_float_wdgt.update_values_hooks["CHMod6/ai7_ANALOG_READ"].append(
+            lambda s, v: str(float(v) * 1000)
+        )
 
-        self.iomod_usb = hc_back.Ni_9000()
+        self.iomod_usb = hc_back.Ni_9000("cDAQ1")
         self.iomod_usb_wdgt = hc.IOModule(
             app,
             self.iomod_usb,
@@ -743,25 +741,25 @@ class STS50Demo(hc.MainWindow):
             name="Power Supplies",
             num_columns=2,
         )
-        self.iomod_usb_wdgt.update_settings_hooks[
-            "CHcDAQ1Mod1/ao0_ANALOG_WRITE"
-        ].append(lambda s, v: str(float(v) / 3000))
-        self.iomod_usb_wdgt.update_settings_hooks[
-            "CHcDAQ1Mod1/ao1_ANALOG_WRITE"
-        ].append(lambda s, v: str(float(v) / 3000))
-        self.iomod_usb_wdgt.update_values_hooks["CHcDAQ1Mod2/ai0_ANALOG_READ"].append(
+        self.iomod_usb_wdgt.update_settings_hooks["CHMod1/ao0_ANALOG_WRITE"].append(
+            lambda s, v: str(float(v) / 3000)
+        )
+        self.iomod_usb_wdgt.update_settings_hooks["CHMod1/ao1_ANALOG_WRITE"].append(
+            lambda s, v: str(float(v) / 3000)
+        )
+        self.iomod_usb_wdgt.update_values_hooks["CHMod2/ai0_ANALOG_READ"].append(
             lambda s, v: str(float(v) * 3000)
         )
-        self.iomod_usb_wdgt.update_values_hooks["CHcDAQ1Mod2/ai1_ANALOG_READ"].append(
+        self.iomod_usb_wdgt.update_values_hooks["CHMod2/ai1_ANALOG_READ"].append(
             lambda s, v: str(float(v) * 1e-3)
         )
-        self.iomod_usb_wdgt.update_values_hooks["CHcDAQ1Mod2/ai2_ANALOG_READ"].append(
+        self.iomod_usb_wdgt.update_values_hooks["CHMod2/ai2_ANALOG_READ"].append(
             lambda s, v: str(float(v) * 1e-3)
         )
-        self.iomod_usb_wdgt.update_values_hooks["CHcDAQ1Mod2/ai3_ANALOG_READ"].append(
+        self.iomod_usb_wdgt.update_values_hooks["CHMod2/ai3_ANALOG_READ"].append(
             lambda s, v: str(float(v) * 3000)
         )
-        self.iomod_usb_wdgt.update_values_hooks["CHcDAQ1Mod2/ai4_ANALOG_READ"].append(
+        self.iomod_usb_wdgt.update_values_hooks["CHMod2/ai4_ANALOG_READ"].append(
             lambda s, v: str(10 ** (float(v) - 11))
         )
 

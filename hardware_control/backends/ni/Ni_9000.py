@@ -122,20 +122,13 @@ class Ni_9000(Backend):
             if setting_X == "CHX_ANALOG_WRITE":
 
                 with nidaqmx.Task() as task:
-                    if channel in self.term_mins and isinstance(
-                        self.term_mins[channel], float
-                    ):
-                        channel_min = self.term_mins[channel]
-                    else:
-                        channel_min = -10.0
-                    if channel in self.term_maxes and isinstance(
-                        self.term_maxes[channel], float
-                    ):
-                        channel_max = self.term_maxes[channel]
-                    else:
-                        channel_max = 10.0
+                    channel_min = self.term_mins.get(channel, -10)
+                    channel_max = self.term_maxes.get(channel, 10)
+
                     task.ao_channels.add_ao_voltage_chan(
-                        channel, min_val=channel_min, max_val=channel_max
+                        f"{self.connection_addr}{channel}",
+                        min_val=channel_min,
+                        max_val=channel_max,
                     )
                     task.write(value)
                     time.sleep(0.010)
@@ -145,7 +138,7 @@ class Ni_9000(Backend):
             if setting_X == "CHX_DIGITAL_WRITE":
 
                 with nidaqmx.Task() as task:
-                    task.ao_channels.add_do_chan(channel)
+                    task.ao_channels.add_do_chan(f"{self.connection_addr}{channel}")
                     task.write(value >= 1)
                     time.sleep(0.010)
                     task.is_task_done()
@@ -182,15 +175,18 @@ class Ni_9000(Backend):
                     if channel in self.term_config_modes:
                         config_mode = self.term_config_modes[channel]
                         task.ai_channels.add_ai_voltage_chan(
-                            channel, terminal_config=config_mode
+                            f"{self.connection_addr}{channel}",
+                            terminal_config=config_mode,
                         )
                     else:
-                        task.ai_channels.add_ai_voltage_chan(channel)
+                        task.ai_channels.add_ai_voltage_chan(
+                            f"{self.connection_addr}{channel}"
+                        )
                     val = str(task.read())
                 return f"{cmd[:-1]}={val}"
             if setting_X == "CHX_DIGITAL_READ?":
                 with nidaqmx.Task() as task:
-                    task.ai_channels.add_di_chan(channel)
+                    task.ai_channels.add_di_chan(f"{self.connection_addr}{channel}")
                     val = str(task.read())
                 return f"{cmd[:-1]}={val}"
         except:

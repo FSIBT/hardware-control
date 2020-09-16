@@ -2,21 +2,21 @@
     "Floating_rack_voltage_out": {
         "DIR": "OUTPUT",
         "TYPE": "ANALOG",
-        "ID_STR": "cDAQ1Mod1/ao0",
+        "ID_STR": "Mod1/ao0",
         "LABEL": "Floating Rack Voltage (set):",
         "UNITS": "V"
     },
     "Grid_voltage_out": {
         "DIR": "OUTPUT",
         "TYPE": "ANALOG",
-        "ID_STR": "cDAQ1Mod1/ao1",
+        "ID_STR": "Mod1/ao1",
         "LABEL": "Grid Voltage (set):",
         "UNITS": "V"
     },
     "Floating_rack_vmon_in": {
         "DIR": "INPUT",
         "TYPE": "ANALOG",
-        "ID_STR": "cDAQ1Mod2/ai0",
+        "ID_STR": "Mod2/ai0",
         "LABEL": "Floating Rack Current (read):",
         "UNITS": "V",
         "OPTIONS": {
@@ -26,7 +26,7 @@
     "Floating_rack_imon_in": {
         "DIR": "INPUT",
         "TYPE": "ANALOG",
-        "ID_STR": "cDAQ1Mod2/ai1",
+        "ID_STR": "Mod2/ai1",
         "LABEL": "Floating Rack Voltage (read):",
         "UNITS": "A",
         "OPTIONS": {
@@ -36,7 +36,7 @@
     "Grid_rack_imon_in": {
         "DIR": "INPUT",
         "TYPE": "ANALOG",
-        "ID_STR": "cDAQ1Mod2/ai2",
+        "ID_STR": "Mod2/ai2",
         "LABEL": "Grid Current (read):",
         "UNITS": "A",
         "OPTIONS": {
@@ -46,7 +46,7 @@
     "Grid_vmon_in": {
         "DIR": "INPUT",
         "TYPE": "ANALOG",
-        "ID_STR": "cDAQ1Mod2/ai3",
+        "ID_STR": "Mod2/ai3",
         "LABEL": "Grid Voltage (read):",
         "UNITS": "V",
         "OPTIONS": {
@@ -56,7 +56,7 @@
     "Pressure_in": {
         "DIR": "INPUT",
         "TYPE": "ANALOG",
-        "ID_STR": "cDAQ1Mod2/ai4",
+        "ID_STR": "Mod2/ai4",
         "LABEL": "Pressure:",
         "UNITS": "Torr",
         "OPTIONS": {
