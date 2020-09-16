@@ -552,7 +552,7 @@ class CustomControlWidget(QGroupBox):
         self.filament_edit.setValidator(QDoubleValidator())
         self.filament_edit.editingFinished.connect(
             lambda: self.filament.remote_update_setting(
-                "CH2_delay", self.filament_edit.text()
+                "CH2_DELAY", self.filament_edit.text()
             )
         )
         self.filament_edit.setText(self.filament.settings["CH2_DELAY"])
@@ -563,7 +563,7 @@ class CustomControlWidget(QGroupBox):
         self.filament_amp_edit.setValidator(QDoubleValidator())
         self.filament_amp_edit.editingFinished.connect(
             lambda: self.filament.remote_update_setting(
-                "CH12_output_amplitude", self.filament_amp_edit.text()
+                "CH12_OUTPUT_AMPLITUDE", self.filament_amp_edit.text()
             )
         )
         self.filament_amp_edit.setText(self.filament.settings["CH12_OUTPUT_AMPLITUDE"])
@@ -585,7 +585,7 @@ class CustomControlWidget(QGroupBox):
         self.spark_duration_edit.setValidator(QDoubleValidator())
         self.spark_duration_edit.editingFinished.connect(
             lambda: self.arc.remote_update_setting(
-                "CH4_delay", self.spark_duration_edit.text()
+                "CH4_DELAY", self.spark_duration_edit.text()
             )
         )
         self.spark_duration_edit.setText(self.arc.settings["CH4_DELAY"])
