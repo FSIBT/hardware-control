@@ -312,6 +312,9 @@ class AnalogOutputChannel(QGroupBox):
         self.set_to_zero_button = set_to_zero_button
 
         self.edit_label = QLabel(label)
+        self.edit_label.setToolTip(
+            f"{self.control.backend.connection_addr}{self.channel}"
+        )
 
         self.edit_spacer = QSpacerItem(
             10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
