@@ -1,6 +1,7 @@
 import json
 import logging
-from typing import Callable
+from pathlib import Path
+from typing import Callable, Union
 
 from PyQt5.QtWidgets import QApplication
 
@@ -109,7 +110,7 @@ class App(QApplication):
 
         self.additional_save_formats[name] = format
 
-    def save_settings(self, filename: str):
+    def save_settings(self, filename: Union[str, Path]):
         """Save all settings as JSON.
 
         Copys the settings dictionaries from each instrument into a
@@ -118,7 +119,7 @@ class App(QApplication):
 
         Parameters
         ----------
-        filename : str
+        filename : str or Path
             Name of file to save parameters to
 
         """
@@ -369,7 +370,7 @@ class App(QApplication):
         for cmd in m_commands:
             self.process_external_command(cmd)
 
-    def load_state_from_file(self, filename: str):
+    def load_state_from_file(self, filename: Union[str, Path]):
         """Reads a JSON file to overwrite instrument's settings dictionaries.
 
         Expectss JSON to be a dictionary of dictionaries. The
@@ -382,7 +383,7 @@ class App(QApplication):
 
         Parameters
         ----------
-        filename : str
+        filename : str or Path
             Name of JSON file to read settings from
 
         """
@@ -418,14 +419,14 @@ class App(QApplication):
                 # Write new setting to instrument's dictionary
                 instr.settings[param] = instr_settings[param]
 
-    def save_all_states(self, filename: str, pretty: bool = True):
+    def save_all_states(self, filename: Union[str, Path], pretty: bool = True):
         """ Saves the state of every instrument in 'self.instruments' to a file.
         If filename is 'None', does not save a file and instead returns would-be
         file contents as a string.
 
         Parameters
         ----------
-        filename : str
+        filename : str or Path
             Name of the JSON file to save the instrument states to
         pretty : bool
             Determines if indentation and sorting should be used
