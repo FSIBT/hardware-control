@@ -163,7 +163,7 @@ def save_continuous_data(dataset, filename: str):
             dataset.autosave_next_row += 1
 
 
-def trigger_function(window):
+def trigger_function(app):
     """
     This function is used by the app to describe the beam triggering sequence. It
     is called when the beam trigger button is pressed or the trigger macro is run.
@@ -175,7 +175,7 @@ def trigger_function(window):
 
     # Check all time delay fields from trigger 1, get max delay time
     max_t = 0
-    for cw in window.trig1_ctrl.channel_widgets:
+    for cw in app.main_window.trig1_ctrl.channel_widgets:
 
         # Get text from field
         delay_text = cw.time_edit.text()
@@ -189,60 +189,56 @@ def trigger_function(window):
         # Compare maxima
         max_t = max(t_delay, max_t)
 
-    # Start countdown timer and widget
-    window.run_tool.start_countdown(max_t)
-
     # Disable trigger button
-    window.run_tool.button_widgets[0].setEnabled(False)
+    app.main_window.run_tool.run_button.setEnabled(False)
 
     # Set Keysight oscilloscope to single trigger
-    window.scope_ctrl.command("SINGLE_TRIGGER")
+    app.main_window.scope_ctrl.command("SINGLE_TRIGGER")
 
     # Set Picoscope to single trigger
-    window.pico_ctrl.command("SINGLE_TRIGGER")
+    app.main_window.pico_ctrl.command("SINGLE_TRIGGER")
 
     # Trigger the delay generator
-    window.trig1_ctrl.command("SINGLE_TRIGGER")
+    app.main_window.trig1_ctrl.command("SINGLE_TRIGGER")
 
     # Add timestamp to dataset
-    window.app.data_sets["Shots"].data["Timestamp"].append(timestamp)
+    app.data_sets["Shots"].data["Timestamp"].append(timestamp)
 
-    QTimer.singleShot((max_t + 1) * 1e3, lambda: refresh_waveforms(window))
+    QTimer.singleShot(int((max_t + 1) * 1000), lambda: refresh_waveforms(app))
+    QTimer.singleShot(int((max_t + 2.5) * 1000), lambda: save_waveforms_to_set(app))
 
-    QTimer.singleShot((max_t + 2.5) * 1e3, lambda: save_waveforms_to_set(window))
 
+def refresh_waveforms(app):
 
-def refresh_waveforms(window):
-
-    pico = window.app.get_instrument_by_name("PicoScope")
-    key = window.app.get_instrument_by_name("Keysight Scope")
+    pico = app.get_instrument_by_name("PicoScope")
+    key = app.get_instrument_by_name("Keysight Scope")
 
     pico.disp.query_waveforms()
     key.disp.query_waveforms()
 
 
-def save_waveforms_to_set(window):
+def save_waveforms_to_set(app):
 
-    pico = window.app.get_instrument_by_name("PicoScope")
-    key = window.app.get_instrument_by_name("Keysight Scope")
+    pico = app.get_instrument_by_name("PicoScope")
+    key = app.get_instrument_by_name("Keysight Scope")
 
     picoscope_data = pico.get_last_waveform()
     keysight_data = key.get_last_waveform()
 
-    window.app.data_sets["Shots"].data["Picoscope_waveform"].append(picoscope_data)
-    window.app.data_sets["Shots"].data["Keysight_waveform"].append(keysight_data)
+    app.data_sets["Shots"].data["Picoscope_waveform"].append(picoscope_data)
+    app.data_sets["Shots"].data["Keysight_waveform"].append(keysight_data)
 
-    window.app.data_sets["Shots"].save("beam_data.txt", "SHOT")
+    app.data_sets["Shots"].save("beam_data.txt", "SHOT")
 
 
-def countdown_end_fn(macro_runner_tool):
+def countdown_end_fn(app):
     """
     This function is called at the end of the trigger button countdown timer. It
     re-enables the trigger button (which is disabled during countdown).
     """
 
     # Re-enable trigger button
-    macro_runner_tool.button_widgets[0].setEnabled(True)
+    app.main_window.run_tool.run_button.setEnabled(True)
 
 
 def save_shot_format(dataset, filename: str):
@@ -789,18 +785,14 @@ class STS50Demo(hc.MainWindow):
         app.function_handles["trigger_function"] = lambda: trigger_function(self)
         app.function_handles["power_off"] = lambda: power_off(self)
 
-        buttons = {}
-        buttons["Trigger"] = "Trigger Beam"
-        buttons["PowerOff"] = "Power Down"
-        self.run_tool = hc.MacroRunnerTool(
+        self.run_tool = hc.FunctionRunnerTool(
             app,
-            "Operations",
-            ["trigger_function"],
-            ["Trigger Beam"],
-            add_countdown=True,
+            name="Operations",
+            button_label="Trigger beam",
+            call_function=trigger_function,
+            countdown=10,
+            countdown_callback=countdown_end_fn,
         )
-        self.run_tool.update_macros()
-        self.run_tool.countdown_end = countdown_end_fn
 
         # Create Datasets
         self.app.data_sets["High Voltage"] = hc.Dataset("High Voltage", self.app)

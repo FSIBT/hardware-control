@@ -207,7 +207,9 @@ class ZMQConnectionTool(Instrument):
             self.received_label.setText(f"Last Message: {message}")  # Update label
 
             logger.info(f"Processing command '{message}'")
-            rval = self.app.process_external_command(message)
+            # TODO: need to add what kind of commands we accept
+            # should be: a) set setting b) read setting c) read value d) call python function
+            rval = "Not Implemented"
 
             if isinstance(rval, str):
                 message = rval

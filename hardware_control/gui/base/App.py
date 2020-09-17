@@ -1,7 +1,7 @@
 import json
 import logging
 from pathlib import Path
-from typing import Callable, Union
+from typing import Union
 
 from PyQt5.QtWidgets import QApplication
 
@@ -180,22 +180,6 @@ class App(QApplication):
     def add_macro(self, name: str, commands: list):
         """Adds a macro to the app's macro list. Overwrites if macro already exists"""
         self.macros[name] = commands
-
-    def add_macro_file(self, name: str, filename: str):
-        """Adds a macro to the app's macro list. Overwrites if macro already exists"""
-
-        commands = []
-
-        # Read file line by line
-        with open(filename) as infile:
-            for line in infile:
-                commands.append(line.rstrip("\n"))
-
-        if len(commands) > 0:
-            self.add_macro(name, commands)
-            return True
-        else:
-            return False
 
     def process_external_command(self, command: str):
         """Accepts a text command, and executes it on the app"""

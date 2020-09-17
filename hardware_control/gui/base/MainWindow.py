@@ -82,14 +82,6 @@ class MainWindow(QMainWindow):
         self.print_addresses_act = QAction("Print Addresses", self)
         self.instr_menu.addAction(self.print_addresses_act)
 
-        # Scripting Menu
-        self.scripting_menu = self.bar.addMenu("Scripting")
-        self.scripting_menu.triggered[QAction].connect(self.process_scripting_menu)
-
-        self.run_command_act = QAction("Run Command", self)
-        self.run_command_act.setShortcut("Ctrl+R")
-        self.scripting_menu.addAction(self.run_command_act)
-
     def process_file_menu(self, q):
 
         if q.text() == "Save Instrument States":
@@ -174,22 +166,6 @@ class MainWindow(QMainWindow):
 
                 print(f"\t{inst.name}:\t {addr}")
 
-        else:
-            logger.error("function not supported")
-
-    def process_scripting_menu(self, q):
-        if q.text() == "Run Command":
-
-            dlg = QInputDialog(self)
-            dlg.setInputMode(QInputDialog.TextInput)
-            dlg.setLabelText("Command:")
-            dlg.resize(500, 100)
-            okPressed = dlg.exec_()
-            text = dlg.textValue()
-
-            # text, okPressed = QInputDialog.getText(self, "Where am I??", "Command", QLineEdit.Normal)
-            if okPressed and text != "":
-                self.app.process_external_command(text)
         else:
             logger.error("function not supported")
 

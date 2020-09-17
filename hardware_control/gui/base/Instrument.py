@@ -90,8 +90,6 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
             "Green"  # Color of online light for status tool. Can be Green or Blue
         )
 
-        # ConnectionTool and ScanWidget widgets
-
         self.app.add_instrument(self)
 
         self.ramp_timer = QTimer(self)
