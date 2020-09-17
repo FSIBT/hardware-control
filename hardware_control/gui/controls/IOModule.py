@@ -63,6 +63,36 @@ class IOModule(Instrument):
         num_columns: int = 1,
         show_ID_labels=False,
     ):
+        """Initialize the IOModule.
+
+        Parameters
+        ----------
+        app : hardware_control.App
+            The main app instance
+        backend : hardware_control.backends.base.Backend
+            An instrument backend that will be controlled using this instrument
+        channel_data : dict or json-file
+            A dictionary that contains that contains data for each channel used (see example below)
+        lock_until_sync : bool
+        num_columns : integer
+        show_ID_labels : bool
+
+        Example
+        -------
+            channel_data =  {
+                    "extraction_voltage_out": {
+                        "DIR": "OUTPUT",
+                        "TYPE": "Analog",
+                        "ID_STR": "Mod7/ao4",
+                        "LABEL": "Extraction Voltage (set):",
+                        "UNITS": "V",
+                        "OPTIONS": {
+                             "CHX_V_MAX": "10",
+                             "CHX_V_MIN": "-10"
+                        }
+                     },
+                }
+        """
 
         super().__init__(app, name, backend, lock_until_sync)
 
@@ -77,10 +107,7 @@ class IOModule(Instrument):
         self.dig_in_channels = []
         self.dig_out_channels = []
 
-        load_idx = 0
-        for c_dict in self.channel_data.values():
-
-            load_idx += 1
+        for load_idx, c_dict in enumerate(self.channel_data.values()):
 
             if not isinstance(c_dict, dict):
                 continue
@@ -172,7 +199,7 @@ class IOModule(Instrument):
         self.readout_timer.start(self.globalRefreshRate)
 
     def ensure_all_fields(self, x: dict):
-
+        """Test for certain fields that need to be present in a channel_data dict."""
         required_fields = ["ID_STR", "UNITS", "LABEL", "OPTIONS"]
 
         for field_name in required_fields:
@@ -188,30 +215,12 @@ class IOModule(Instrument):
             ic.update_readout()
 
     def settings_to_UI(self):
-
         for c in self.an_out_channels:
             c.settings_to_UI()
         for c in self.dig_out_channels:
             c.settings_to_UI()
 
-    def init_values(self):
-
-        self.values = {}
-
-        for c in self.an_in_channels:
-            self.values[f"CH{c.channel}_ANALOG_READ"] = ""
-            self.values[f"CH{c.channel}_TERMINAL_CONFIG"] = ""
-        for c in self.an_out_channels:
-            self.values[f"CH{c.channel}_ANALOG_WRITE"] = ""
-            self.values[f"CH{c.channel}_TERMINAL_CONFIG"] = ""
-        for c in self.dig_in_channels:
-            self.values[f"CH{c.channel}_DIGITAL_READ"] = ""
-            self.values[f"CH{c.channel}_TERMINAL_CONFIG"] = ""
-
     def default_state(self):
-
-        print("\n\n\n*****\n\n\n")
-
         default = {}
         for c in self.an_in_channels:
             default[f"CH{c.channel}_ANALOG_READ"] = "0"
