@@ -19,14 +19,17 @@ class QOnOffButton(QPushButton):
         The instrument
     setting_name : str
         The instrument.settings and instrument.values to connect to
-
+    remote : bool
+        Set to true, if a button press should also update the main instrument
+        (e.g. if the button is not part of the main instrument UI)
     """
 
-    def __init__(self, instrument, setting_name: str):
+    def __init__(self, instrument, setting_name: str, remote: bool = False):
         super().__init__()
 
         self.instrument = instrument
         self.name = setting_name
+        self.remote = remote
 
         self.setCheckable(True)
 
@@ -51,7 +54,10 @@ class QOnOffButton(QPushButton):
     def click(self):
         """Toggle the current status."""
         toggled_value = str(self.instrument.values[self.name] != "True")
-        self.instrument.remote_update_setting(self.name, toggled_value)
+        if self.remote:
+            self.instrument.remote_update_setting(self.name, toggled_value)
+        else:
+            self.instrument.update_setting(self.name, toggled_value)
 
     def update_status(self, value):
         if value == "True":
