@@ -94,22 +94,22 @@ def init_osc_when_online(instrument):
 def power_off(window):
 
     # Disable CAEN
-    window.psu_caen_wdgt.remote_update_setting("CH3_enable", "False")
-    window.psu_caen_wdgt.remote_update_setting("CH8_enable", "False")
+    window.psu_caen_wdgt.remote_update_setting("CH3_ENABLE", "False")
+    window.psu_caen_wdgt.remote_update_setting("CH8_ENABLE", "False")
 
     # Disable RF Generator
-    window.awg_ctrl.remote_update_setting("CH1_enabled", "False")
+    window.awg_ctrl.remote_update_setting("CH1_ENABLED", "False")
 
     # Disable TDK Lambda
-    window.psu_ctrl.remote_update_setting("CH1_enabled", "False")
+    window.psu_ctrl.remote_update_setting("CH1_ENABLED", "False")
 
     # Shut off gas
     window.flow_ctrl.remote_update_setting("RATE", "0")
 
     # Shut off NI-DAQ Power Supplies
-    window.iomod_usb_wdgt.remote_update_setting("CHMod1/ao0_analog_write", "0")
-    window.iomod_usb_wdgt.remote_update_setting("CHMod1/ao1_analog_write", "0")
-    window.iomod_float_wdgt.remote_update_setting("CHMod7/ao4_analog_write", "0")
+    window.iomod_usb_wdgt.remote_update_setting("CHMod1/ao0_ANALOG_WRITE", "0")
+    window.iomod_usb_wdgt.remote_update_setting("CHMod1/ao1_ANALOG_WRITE", "0")
+    window.iomod_float_wdgt.remote_update_setting("CHMod7/ao4_ANALOG_WRITE", "0")
 
 
 def save_continuous_data(dataset, filename: str):
@@ -126,6 +126,12 @@ def save_continuous_data(dataset, filename: str):
     if not os.path.exists(filename):
         with open(filename, "w") as outfile:
 
+            outfile.write(
+                f"# ALPHA experiment\n"
+                f"# Continuous data\n"
+                f"# date: {header_datestamp}\n"
+            )
+
             col_titles = [
                 "time",
                 "Floating-rack-current",
@@ -136,16 +142,7 @@ def save_continuous_data(dataset, filename: str):
                 "Extraction-current",
                 "Extraction-voltage",
             ]
-
-            outfile.write(
-                f"# ALPHA experiment\n"
-                f" Continuous data\n"
-                f"# date: {header_datestamp}\n"
-            )
-
-            for title in col_titles:
-                outfile.write(f"{title} ")
-            outfile.write("\n")
+            outfile.write(f'{" ".join(col_titles)} \n')
 
     # Write file data
     with open(filename, "a") as outfile:
@@ -807,8 +804,8 @@ class STS50Demo(hc.MainWindow):
 
         # Create Datasets
         self.app.data_sets["High Voltage"] = hc.Dataset("High Voltage", self.app)
-        self.app.data_sets["High Voltage"].start_asynch(3)
         self.app.data_sets["High Voltage"].add_instrument(self.iomod_usb_wdgt)
+        self.app.data_sets["High Voltage"].start_asynch(3)
 
         self.app.data_sets["Shots"] = hc.Dataset("Shots", self.app)
         self.app.data_sets["Shots"].data["Timestamp"] = []
@@ -816,12 +813,12 @@ class STS50Demo(hc.MainWindow):
         self.app.data_sets["Shots"].data["Keysight_waveform"] = []
 
         self.app.data_sets["Continuous"] = hc.Dataset("Continuous", self.app)
-        self.app.data_sets["Continuous"].start_asynch(3)
         self.app.data_sets["Continuous"].add_instrument(self.iomod_usb_wdgt)
         self.app.data_sets["Continuous"].add_instrument(self.iomod_float_wdgt)
         self.app.data_sets["Continuous"].start_autosave(
             10, "STS50", get_output_dir() / "continuous.txt"
         )
+        self.app.data_sets["Continuous"].start_asynch(3)
 
         self.app.data_sets["Demo"] = hc.Dataset("Demo", self.app)
         self.app.data_sets["Demo"].data["time:time"] = [1, 2, 3]
