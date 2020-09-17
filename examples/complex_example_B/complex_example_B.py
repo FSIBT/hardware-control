@@ -768,8 +768,6 @@ class STS50Demo(hc.MainWindow):
 
         self.zmqtool = hc.ZMQConnectionTool(app, "ZMQ Input Tool", "tcp://*:5555")
 
-        self.scan_widget = hc.ScanWidget(app, "Scan Control")
-
         self.logtool = hc.DataWidget(app, "Data Logger")
         self.logtool.update_groups()
         # self.logtool.update_instruments()
@@ -792,6 +790,10 @@ class STS50Demo(hc.MainWindow):
             call_function=trigger_function,
             countdown=10,
             countdown_callback=countdown_end_fn,
+        )
+
+        self.scan_widget = hc.ScanWidget(
+            app, "Scan Control", {"Trigger": self.run_tool.run_function}
         )
 
         # Create Datasets
@@ -850,8 +852,6 @@ class STS50Demo(hc.MainWindow):
 
         self.logtool.update_groups()
         self.logtool.set_group("High Voltage")
-
-        self.scan_widget.update_actions()
 
         # ######## Custom Tab
 

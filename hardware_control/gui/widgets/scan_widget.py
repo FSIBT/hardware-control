@@ -7,7 +7,7 @@ import numpy as np
 import pyqtgraph as pg  # For some reason, without this line QPushButton won't import
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer, QObject
-from PyQt5.QtGui import QProgressBar, QIcon, QApplication, QIntValidator
+from PyQt5.QtGui import QProgressBar, QIcon, QApplication, QIntValidator, QGroupBox
 from PyQt5.QtWidgets import (
     QGroupBox,
     QLineEdit,
@@ -27,24 +27,34 @@ from .utility import load_icon
 logger = logging.getLogger(__name__)
 
 
-class ScanWidget(Instrument):
-    def __init__(self, app, name: str = "Scan Control"):
+class ScanWidget(QGroupBox):
+    def __init__(self, app, name, actions):
+        """
+        Parameters
+        ----------
+        app :
+            The main app
+        name : str
+            The name of the groupbox
+        actions : dict
+            A dictionary with names of the action as keys and function to call during the scan
+        """
 
-        super().__init__(app, name)
+        super().__init__(name)
 
-        self.settings = {}
-        self.ignore = True
-        self.ignore_control = True
+        self.app = app
+
+        self.actions = actions
+
+        self.scan_instrument = None
+        self.scan_parameter = None
+        self.scan_action = None
+        self.scan_progress = 0
+
+        self.values = ""
         self.val_list = []
         self.count = 0
         self.number_of_values = 0
-        self.wait = "PRE"  # either "PRE", "SCAN", "POST"
-
-        self.socket_addr = "tcp://127.0.0.1:5959"
-
-        self.running_scan = False
-
-        self.settings = self.default_state()
 
         # *************************Create GUI************************
         self.arrow_symbol = QLabel()
@@ -57,7 +67,6 @@ class ScanWidget(Instrument):
 
         self.instrument_drop = QComboBox()
         self.instrument_drop.addItems(["----------"])
-        self.instrument_drop.setCurrentText(self.settings["instrument"])
         self.instrument_drop.currentIndexChanged.connect(
             lambda: self.set_instrument(self.instrument_drop.currentText())
         )
@@ -67,11 +76,8 @@ class ScanWidget(Instrument):
 
         self.parameter_drop = QComboBox()
         self.parameter_drop.addItems(["----------"])
-        self.parameter_drop.setCurrentText(self.settings["parameter"])
         self.parameter_drop.currentIndexChanged.connect(
-            lambda: self.update_local_setting(
-                "parameter", self.parameter_drop.currentText()
-            )
+            lambda: self.set_parameter(self.parameter_drop.currentText())
         )
 
         self.values_select_frame = QGridLayout()
@@ -85,9 +91,9 @@ class ScanWidget(Instrument):
 
         self.values_edit = QLineEdit()
         self.values_edit.textChanged.connect(
-            lambda: self.update_local_setting("values", self.values_edit.text())
+            lambda: self.set_values(self.values_edit.text())
         )
-        self.values_edit.setText(str(self.settings["values"]))
+        self.values_edit.setText(self.values)
 
         self.spacing_start_label = QLabel("Start: ")
         self.spacing_start_label.setAlignment(
@@ -151,13 +157,10 @@ class ScanWidget(Instrument):
         self.macro_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
         self.action_drop = QComboBox()
-        self.action_drop.addItems(["None"])
-        self.action_drop.setCurrentText(self.settings["action"])
+        self.action_drop.addItems(self.actions.keys())
         self.action_drop.currentIndexChanged.connect(
-            lambda: self.macro_changed(self.action_drop.currentText())
+            lambda: self.action_changed(self.action_drop.currentText())
         )
-
-        self.sync_measdir_check = QCheckBox("Sync Measurements")
 
         self.pause_label_before = QLabel("Pause before (sec):")
         self.pause_label_after = QLabel("Pause after (sec):")
@@ -185,7 +188,6 @@ class ScanWidget(Instrument):
 
         self.scan_opt_frame.addWidget(self.macro_label, 0, 0)
         self.scan_opt_frame.addWidget(self.action_drop, 0, 1)
-        self.scan_opt_frame.addWidget(self.sync_measdir_check, 0, 3)
         self.scan_opt_frame.addWidget(self.pause_label_before, 1, 0)
         self.scan_opt_frame.addWidget(self.pause_label_after, 2, 0)
         self.scan_opt_frame.addWidget(self.pause_edit_before, 1, 1)
@@ -205,12 +207,9 @@ class ScanWidget(Instrument):
         self.upper_grid.addWidget(self.parameter_label, 0, 3)
         self.upper_grid.addWidget(self.parameter_drop, 1, 3)
 
-        # self.upper_grid.addLayout(self.values_select_frame, 2, 0, 1, 4)
         self.upper_grid.addWidget(self.values_select_box, 2, 0, 1, 4)
 
         self.upper_grid.addWidget(self.scan_opt_box, 3, 0, 1, 4)
-        # self.middle_grid.addWidget(self.values_label, 2, 0)
-        # self.middle_grid.addWidget(self.values_edit, 2, 1, 1, 2)
 
         self.scan_button = QPushButton()
         self.scan_button.setText("Scan")
@@ -241,7 +240,7 @@ class ScanWidget(Instrument):
         self.progress_grid.addWidget(self.progress_label, 0, 0)
         self.progress_grid.addWidget(self.progress_bar, 0, 1)
 
-        self.progress_bar.setValue(float(self.settings["progress"]))
+        self.progress_bar.setValue(float(self.scan_progress))
 
         # ******* DEFINE OVERALL LAYOUT
         self.master_layout = QGridLayout()
@@ -253,20 +252,12 @@ class ScanWidget(Instrument):
         )
         self.setLayout(self.master_layout)
 
+        # might need to call this manually again in the main app, if instruments get defined
+        # after the scan widget
+        self.update_instruments()
+
         # Create timer to do scan
         self.scan_timer = QTimer(self)
-
-    def update_local_setting(self, setting: str, value: str):
-        self.settings[setting] = value
-
-    def settings_to_UI(self):
-        self.values_edit.setText(str(self.settings["values"]))
-        self.instrument_drop.setCurrentText(self.settings["instrument"])
-        self.parameter_drop.setCurrentText(self.settings["parameter"])
-        self.progress_bar.setValue(float(self.settings["progress"]))
-        self.action_drop.setCurrentText(self.settings["action"])
-        self.pause_timer_label_before.setText(self.settings["before_countdown"])
-        self.pause_timer_label_after.setText(self.settings["after_countdown"])
 
     def browse_values_files(self):
         # Use file dialog to get save location
@@ -279,48 +270,30 @@ class ScanWidget(Instrument):
         self.values_file_edit.setText(filename)
 
     def set_instrument(self, inst: str):
-        self.settings["instrument"] = inst
+        """Update the list of parameterts that can be scanned."""
         self.parameter_drop.clear()
         params = []
 
-        instrument = self.app.get_instrument_by_name(inst)
+        self.scan_instrument = self.app.get_instrument_by_name(inst)
 
-        if instrument:
-            params = list(instrument.settings.keys())
+        if self.scan_instrument:
+            params = list(self.scan_instrument.settings.keys())
             logger.debug(f"Added {len(params)} items to parameter dropdown.")
         else:
             logger.error(f"Couldn't find instrument '{inst}'")
 
         self.parameter_drop.addItems(params)
-        self.settings["progress"] = 0
-        self.progress_bar.setValue(self.settings["progress"])
+        self.scan_progress = 0
+        self.progress_bar.setValue(self.scan_progress)
 
-    def macro_changed(self, new_macro_name: str):
-        """ Called when the macro selection is changed. Checks to see if the macro
-        submits a measurementrequest, if so, it sets the 'sync with director' check
-        to true, otherwise sets it to false. """
+    def set_parameter(self, parameter: str):
+        self.scan_parameter = parameter
 
-        self.settings["action"] = new_macro_name
+    def set_values(self, values: str):
+        self.values = values
 
-        # Quit if macro can't be found
-        if new_macro_name not in self.app.macros:
-            logger.error(
-                f"Failed to find macro {new_macro_name} despite being option in dropdown"
-            )
-            return
-
-        all_cmds = "".join(self.app.macros[new_macro_name])
-        if "MEAS:REQ" in all_cmds.upper():
-            self.sync_measdir_check.setChecked(True)
-        else:
-            self.sync_measdir_check.setChecked(False)
-
-    def update_actions(self):
-        self.action_drop.clear()
-        names = ["None"]
-        for m in self.app.function_handles:
-            names.append(m)
-        self.action_drop.addItems(names)
+    def action_changed(self, action: str):
+        self.scan_action = self.actions[action]
 
     def compute_values(self):
         """ Reads the values of the widgets and computes the values for the scan
@@ -360,9 +333,7 @@ class ScanWidget(Instrument):
 
     def set_instrument_setting(self):
         v = self.val_list[self.count]
-        scan_instrument = self.app.get_instrument_by_name(self.settings["instrument"])
-        # Update setting
-        scan_instrument.remote_update_setting(self.settings["parameter"], v.strip())
+        self.scan_instrument.remote_update_setting(self.scan_parameter, v.strip())
 
     def pause_after(self):
         start_time = time.time()
@@ -388,8 +359,8 @@ class ScanWidget(Instrument):
 
     def start_cycle(self):
         self.count += 1
-        self.settings["progress"] = str(self.count / self.number_of_values * 100)
-        self.progress_bar.setValue(float(self.settings["progress"]))
+        self.scan_progress = str(self.count / self.number_of_values * 100)
+        self.progress_bar.setValue(float(self.scan_progress))
         QApplication.processEvents()
         if self.count == self.number_of_values:
             logger.debug("Finished scan")
@@ -404,11 +375,10 @@ class ScanWidget(Instrument):
         self.pause_timer_label_after.setText("0")
         self.scan_button.setEnabled(True)
         self.stop_button.setEnabled(False)
-        self.progress_bar.setValue(float(self.settings["progress"]))
+        self.progress_bar.setValue(float(self.scan_progress))
 
     def start_scan(self):
-        scan_instrument = self.app.get_instrument_by_name(self.settings["instrument"])
-        if scan_instrument is None:
+        if self.scan_instrument is None:
             logger.error(
                 f"Failed to find instrument {self.instrument_drop.currentText()}"
             )
@@ -451,16 +421,11 @@ class ScanWidget(Instrument):
 
     def scan(self):
         m = self.action_drop.currentText()
-        # Run Macro (if macro selected)
-        if m != "None":
-            logger.debug(f"\t\tRunning macro {m}")
-            self.app.run_macro([f"FUNC:{m}"])
+        func = self.actions.get(m, None)
+        if func is not None:
+            logger.debug(f"\t\tRunning scan function {m}")
+            func()
 
-        # Sync with director (if box checked)
-        if self.sync_measdir_check.isChecked():
-            # Todo: Put this function in new thread, prevent blocking
-            while self.app.director.state.upper() == "BUSY":
-                time.sleep(0.1)
         self.pause_after()
 
     def update_instruments(self):
@@ -471,64 +436,3 @@ class ScanWidget(Instrument):
                 continue
             names.append(inst.name)
         self.instrument_drop.addItems(names)
-
-    def load_state(self, filename: str):
-
-        # Get default state - this identifies all required fields
-        dflt = self.default_state()
-
-        # Read a state from file
-        try:
-            with open(filename) as file:
-                self.settings = json.load(file)
-                logger.debug(
-                    f"State for {self.comm.instrument.ID} read from file '{filename}'"
-                )
-        except:
-            logger.error(
-                f"{self.name} failed to read file '{filename}'. Using defualt case.",
-                exc_info=True,
-            )
-            self.settings = self.default_state()
-
-        # Ensure all fields in default_state are present in the loaded state
-        for key in dflt:
-            if key not in self.settings:
-                self.settings[key] = dflt[key]
-
-    def save_state(self, filename: str):
-        try:
-            with open(filename, "w") as file:
-                json.dump(self.settings, file)
-                logger.debug(
-                    f"State for {self.comm.instrument.ID} saved to file '{filename}'"
-                )
-        except Exception as e:
-            logger.debug(f"ERROR: Failed to write file '{filename}'. State not saved.")
-            logger.debug(f"\t{e}")
-
-    def update_setting(self, setting: str, value: str):
-
-        try:
-            self.settings[setting] = value
-        except Exception:
-            return
-
-        if setting == "progress":
-            try:
-                self.progress_bar.setValue(float(self.settings["progress"]))
-            except:
-                logger.error(f"Can't convert {value} to float.", exc_info=True)
-
-    def default_state(self):
-        return {
-            "values": "",
-            "instrument": "----------",
-            "parameter": "----------",
-            "progress": "0",
-            "action": "None",
-            "macro": "None",
-            "before_countdown": "10",
-            "after_countdown": "10",
-        }
-
