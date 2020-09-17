@@ -293,7 +293,7 @@ class Dataset(QObject):
                     if self.async_add_timestamp:
                         datastructure += "Time[s] "
                     datastructure += " ".join(
-                        [e[0].get_header(e[1]) for e in self.async_instruments]
+                        [instrument.get_header(parameters) for instrument, parameters in self.async_instruments]
                     )
 
                     myhash = hashlib.sha256()
@@ -346,9 +346,9 @@ class Dataset(QObject):
         # aren't, don't log anything. This ensures the dataset's
         # columns are all the same length
         if self.require_all:
-            for ai in self.async_instruments:
-                name = ai[0].name
-                vkeys = ai[0].get_value_keys(ai[1])
+            for instrument, parameters in self.async_instruments:
+                name = instrument.name
+                vkeys = instrument.get_value_keys(parameters)
 
                 if vkeys is None:
                     logger.info(
@@ -361,12 +361,12 @@ class Dataset(QObject):
             # true) and all values must be convertible to float, check
             # that values are valid num
             if self.async_require_float:
-                for ai in self.async_instruments:
+                for instrument, parameters in self.async_instruments:
                     for vk in vkeys:
                         try:
-                            float(ai[0].values[vk])
+                            float(instrument.values[vk])
                         except:
-                            v = ai[0].values[vk]
+                            v = instrument.values[vk]
                             logger.info(
                                 f"Async log for dataset {self.name} aborted"
                                 f" because value '{v}' for parameter '{vk}'"
@@ -379,32 +379,32 @@ class Dataset(QObject):
             self.data["time:time"].append(str(time.time()))
 
         # Add data from each specified instrument
-        for ai in self.async_instruments:
-            name = ai[0].name
+        for instrument, parameters in self.async_instruments:
+            name = instrument.name
 
-            vkeys = ai[0].get_value_keys(ai[1], False)
+            vkeys = instrument.get_value_keys(parameters, False)
             logger.debug(f"Logging data for instrument: {name}. Keys: {vkeys}")
 
             # Get each key
-            name = ai[0].name
+            name = instrument.name
             for vk in vkeys:
 
                 # Check that parameter exists
-                if vk not in ai[0].values:
+                if vk not in instrument.values:
                     self.data[f"{name}:{vk}"].append(None)
                     logger.debug(f"Adding data: data[{name}:{vk}] = None")
                     continue
 
                 # Check that parameter exists
                 if self.async_require_float and not convertibleToFloat(
-                    ai[0].values[vk]
+                    instrument.values[vk]
                 ):
                     self.data[f"{name}:{vk}"].append(None)
                     logger.debug(f"Adding data: data[{name}:{vk}] = None")
                     continue
 
                 # Otherwise add raw data
-                nd = ai[0].values[vk]
+                nd = instrument.values[vk]
                 self.data[f"{name}:{vk}"].append(nd)
                 logger.debug(f"Adding data: data[{name}:{vk}]='{nd}'")
 
@@ -450,8 +450,8 @@ class Dataset(QObject):
 
         return ret_dic
 
-    def add_instrument(self, instr, parameters=None):
+    def add_instrument(self, instrument, parameters=None):
 
         # TODO: Add units to backends
 
-        self.async_instruments.append((instr, parameters))
+        self.async_instruments.append((instrument, parameters))
