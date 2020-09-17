@@ -10,8 +10,6 @@ GUI elements
    gui/base/Instrument
    gui/base/MainWindow
    gui/base/Dataset
-   gui/base/MeasurementDirector
-   gui/base/MeasurementRequest
    gui/base/logging
 
 .. toctree::

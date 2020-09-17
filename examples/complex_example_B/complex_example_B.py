@@ -774,15 +774,6 @@ class STS50Demo(hc.MainWindow):
 
         self.statustool = hc.StatusTool(app, "Connection Status")
 
-        app.add_macro("Trigger", ["FUNC:HANDLE:trigger_function"])
-        app.add_macro("PowerOff", ["FUNC:HANDLE:power_off"])
-        app.add_macro("Safe", ["CMD:PSU:ALL_OFF", "CMD:AWG:ALL_OFF"])
-        app.add_macro("Wait_1s", ["FUNC:time:sleep:1"])
-        app.add_macro("MeasurementRequest", ["FUNC:DISP:str:MEAS:REQ"])
-
-        app.function_handles["trigger_function"] = lambda: trigger_function(self)
-        app.function_handles["power_off"] = lambda: power_off(self)
-
         self.run_tool = hc.FunctionRunnerTool(
             app,
             name="Operations",

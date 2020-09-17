@@ -5,8 +5,6 @@ from typing import Union
 
 from PyQt5.QtWidgets import QApplication
 
-from .MeasurementDirector import MeasurementDirector
-from .MeasurementRequest import MeasurementRequest
 from .Dataset import Dataset
 
 logger = logging.getLogger(__name__)
@@ -26,10 +24,6 @@ class App(QApplication):
         # we currently don't use this
         super().__init__([])
         self.instruments = []
-        self.macros = {}  # Dict of hc-commands (used for scans + trigger buttons)
-        self.function_handles = {}  # Dict of function handles for macros to call
-        # self.saved_data = {}
-        # Dict of data saved directly with query commmands
         self.dummy = dummy
         self.print_close_info = False
         self.comms = {}  # Dictionary of hc.Comm objects
@@ -38,8 +32,6 @@ class App(QApplication):
         self.data_sets = {}  # Dict of datasets
         untitled_set = Dataset("Untitled")
         self.data_sets["Untitled"] = untitled_set
-
-        self.director = MeasurementDirector(self)
 
     def get_instrument_by_name(self, name: str):
         """Returns the instrument named 'name' in 'instruments' list
@@ -177,182 +169,6 @@ class App(QApplication):
             if self.data_sets[ds_key].autosave:
                 self.data_sets[ds_key].exec_autosave()
 
-    def add_macro(self, name: str, commands: list):
-        """Adds a macro to the app's macro list. Overwrites if macro already exists"""
-        self.macros[name] = commands
-
-    def process_external_command(self, command: str):
-        """Accepts a text command, and executes it on the app"""
-
-        tokens = command.split(":")  # Split the command up into tokens
-        uptokens = command.upper().split(":")  # Upper case tokens...
-
-        # Check if too few commands are given
-        if len(tokens) < 1:
-            logger.warning(
-                f"Invalid HC-Command received. No tokens. Command: '{command}'"
-            )
-            return "ERROR: Invalid command"
-
-        # Find out the 'mode' of the command
-        if uptokens[0] == "SET" or uptokens[0] == "SET_UI":
-
-            # Make sure the correct number of arguments are given
-            if len(tokens) < 4:  # Requires: MODE:INSTRUMENT:PARAMETER:VALUE
-                logger.warning(
-                    f"Invalid HC-Command received. Wrong number of tokens."
-                    f" Command: '{command}'"
-                )
-                return "ERROR: Invalid command"
-
-            tokens = command.split(":", 3)
-            instr_str = tokens[1]
-            setting_str = tokens[2]
-            value_str = tokens[3]
-
-            inst = self.get_instrument_by_name(instr_str)
-            if inst is None:
-                logger.warning(f"Instrument '{instr_str}' not found.")
-                return "ERROR: Instrument not found"
-
-            inst.update_setting(setting_str, value_str)
-            if uptokens[0] == "SET_UI":
-                inst.settings_to_UI()
-
-            logger.debug(
-                f"Executed Setting Update:\n\tInstrument: {instr_str}\n"
-                f"\tSetting: {setting_str}\n\tValue: {value_str}"
-            )
-
-        elif uptokens[0] == "CMD":
-
-            # Recalculate tokens, with max of 2 splits. This allows colons to appear in the command
-            tokens = command.split(":", 2)
-
-            # Make sure the correct number of arguments are given
-            if len(tokens) != 3:  # Requires: MODE:INSTRUMENT:PARAMETER:VALUE
-                logger.warning(
-                    f"Invalid HC-Command received. Wrong number of tokens."
-                    f" Command'{command}'"
-                )
-                return "ERROR: Invalid command"
-
-            instr_str = tokens[1]
-            command_str = tokens[2]
-
-            inst = self.get_instrument_by_name(instr_str)
-            if inst is None:
-                logger.warning(
-                    f"Invalid HC-Command received. Wrong number of tokens."
-                    f" Command: '{command}'"
-                )
-                return "ERROR: Invalid command"
-
-            inst.command(command_str)
-            logger.debug(
-                f"Executed Command:\n\tInstrument: {instr_str}\n"
-                f"\tCommand: {command_str}"
-            )
-
-        elif uptokens[0] == "MEAS":
-            if uptokens[1] == "REQ":
-                # Recalculate tokens, with max of 2 splits. This
-                # allows colons to appear in the command
-                tokens = command.split(":", 9)
-
-                # Format: CMDLG:group:instrument:parameter:cmd_str:steady_num:dt:tol:iterations
-
-                # Make sure the correct number of arguments are given
-                if len(tokens) != 10:  # Requires: MODE:INSTRUMENT:PARAMETER:VALUE
-                    logger.warning(
-                        f"Invalid HC-Command received. Wrong number of tokens."
-                        f" Command'{command}'"
-                    )
-                    return "False"
-
-                try:
-                    meas_req = MeasurementRequest(
-                        tokens[2],
-                        tokens[3],
-                        tokens[4],
-                        tokens[5],
-                        int(tokens[6]),
-                        float(tokens[7]),
-                        float(tokens[8]),
-                        int(tokens[9]),
-                    )
-                except Exception:
-                    logger.warning(
-                        "Invalid HC-Command received. Failed to create "
-                        "MeasurementRequest from given arguments.",
-                    )
-                    return "False"
-
-                if not self.director.measure(meas_req):
-                    logger.warning("Failed to add MeasurementRequest to director'")
-                    return "False"
-
-                logger.debug(
-                    f"Executed Command:\n\tInstrument: {instr_str}\n"
-                    f"\tCommand: {command_str}"
-                )
-
-            elif uptokens[1] == "START":
-                self.director.start()
-                return "Started"
-
-            elif uptokens[1] == "PSTATE":
-                print(self.director.state)
-                if self.director.state == "Error":
-                    print(f"\tError message: {self.director.err_str}")
-
-            elif uptokens[1] == "GETSTATE":
-                return self.director.state
-
-        elif uptokens[0] == "FUNC":
-            # 'FUNC' indicates that the command is calling an internal function
-
-            # Ensure more tokens exist
-            if len(tokens) < 2:
-                logger.warning("Invalid HC-Command received. FUNC requires arguments.",)
-                return "False"
-
-            # Make sure handle exists
-            if tokens[1] in self.function_handles:
-
-                if not callable(self.function_handles[tokens[1]]):
-                    func_name = tokens[1]
-                    logger.warning(
-                        f"Non-callable object provided as function handle '{func_name}'"
-                    )
-                    return "False"
-
-                # Run function - note: this can become recursive and get stuck in
-                # an infinite loop if the user runs a function that calls itself
-                if len(tokens) > 2:
-                    tokens = command.split(":", 2)
-                    return self.function_handles[tokens[1]](tokens[2])
-                else:
-                    return self.function_handles[tokens[1]]()
-
-            else:
-                logger.warning("Requested function does not exist.")
-                return "False"
-
-        else:
-            logger.warning(
-                f"Invalid HC-Command received. Unrecognized mode token. Command: '{command}'"
-            )
-            return "WARNING: Couldn't process command"
-
-        return "True"
-
-    def run_macro(self, m_commands):
-        """ Accepts a list of hc-commands (from a macro) and runs all, blocking
-        the GUI until they are complete """
-
-        for cmd in m_commands:
-            self.process_external_command(cmd)
 
     def load_state_from_file(self, filename: Union[str, Path]):
         """Reads a JSON file to overwrite instrument's settings dictionaries.

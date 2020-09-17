@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- scan widget: use python function directly instead of macros
+- MacroRunnerTool now uses python function directly, renamed to FunctionRunnerTool
+
+### Removed
+- Removed MeasurementDirector, MeasurementRequests
+- Removed macros
+
 ## [1.0.0] 2020-09-09
 
 Started to use the program at our test stands. Lots of cleanup and improvements
