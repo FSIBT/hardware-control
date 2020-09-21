@@ -158,7 +158,7 @@ class Picotech_6000(Backend):
                 else:
                     self.ps.setSimpleTrigger(self.trigger_channel, enabled=True)
                 return f"{setting}={value}"
-            if regex_compare("meas_slot.", setting):
+            if regex_compare("MEAS_SLOT.", setting):
                 return "Not available"
             if setting == "use_meas_avg":
                 return "Not available"
@@ -231,7 +231,7 @@ class Picotech_6000(Backend):
             self.ps.stop()
         elif cmd == "CLEAR_MEAS":
             return "Not available"
-        elif regex_compare("meas_slot.", cmd):
+        elif regex_compare("MEAS_SLOT.", cmd):
 
             return "Not available"
 
