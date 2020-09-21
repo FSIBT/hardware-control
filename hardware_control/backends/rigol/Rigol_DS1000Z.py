@@ -12,7 +12,7 @@ import logging
 import numpy as np
 
 from ..base import Backend, ensure_online
-from ..utility import get_channel_from_command, returnChannelNumber, regex_compare
+from ..utility import get_channel_from_command, regex_compare
 
 logger = logging.getLogger(__name__)
 

@@ -9,16 +9,6 @@ def regex_compare(pattern: str, comp: str):
     return bool(re.match(regex, comp))
 
 
-def returnChannelNumber(s: str):
-    """Return channel number for a string like 'CH###_TEMP' """
-    if s[:2] == "CH":
-        number = s[2 : s.find("_")]
-        if number.isdigit():
-            return number
-    else:
-        return None
-
-
 def get_channel_from_command(command: str):
     """Processes a command from the front end.
 

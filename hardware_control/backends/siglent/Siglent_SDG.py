@@ -10,7 +10,7 @@ See class definition for details.
 import logging
 
 from ..base import Backend, ensure_online
-from ..utility import regex_compare, get_channel_from_command
+from ..utility import get_channel_from_command
 
 
 logger = logging.getLogger(__name__)
