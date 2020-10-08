@@ -156,9 +156,7 @@ class IOModule(Instrument):
                     self.an_in_channels.append(last_wdgt)
 
             self.channel_panel.addWidget(
-                last_wdgt,
-                int((load_idx - 1) / num_columns),
-                (load_idx - 1) % num_columns,
+                last_wdgt, int(load_idx / num_columns), (load_idx) % num_columns,
             )
 
             if "OPTIONS" in c_dict and c_dict["OPTIONS"] is not None:
