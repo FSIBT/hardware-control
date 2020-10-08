@@ -41,7 +41,6 @@ class Comm(QObject):
     sigQuery = pyqtSignal(str, float)
     sigTryConnect = pyqtSignal(float)
     sigCommandList = pyqtSignal(str, float)
-    sigCommandLog = pyqtSignal(str, float, str)
     sigClose = pyqtSignal()
 
     def __init__(
@@ -70,14 +69,12 @@ class Comm(QObject):
         self.sigQuery.connect(self.worker.query)
         self.sigTryConnect.connect(self.worker.try_connect)
         self.sigCommandList.connect(self.worker.command_listdata)
-        self.sigCommandLog.connect(self.worker.command_log)
         self.sigClose.connect(self.worker.close)
 
         # Connect CommWorker's signals to Comm's slots
         self.worker.sigReturnValues.connect(self.backend_return)
         self.worker.sigReturnOnline.connect(self.backend_return_online)
         self.worker.sigReturnList.connect(self.backend_return_listdata)
-        self.worker.sigReturnLog.connect(self.backend_return_log)
 
         # Connect timer
         self.try_connect_timer = QTimer(self)
@@ -226,20 +223,6 @@ class Comm(QObject):
         )
         self.sigCommandList.emit(cmd, time.time() + self.list_expire_time)
 
-    def command_log(self, cmd: str, param_str: str):
-        """Sends a command to the worker in the worker thread with details to
-        help data acquisition.
-
-        """
-
-        # print(f"\n\t\tCOMMAND_LOG::hc.COMM\t{param_str}\n")
-
-        logger.debug(
-            f"Instrument: {self.instruments[0].name} called 'command()'"
-            f" and sent command: '{cmd}'."
-        )
-        self.sigCommandLog.emit(cmd, time.time() + self.expire_time, param_str)
-
     @pyqtSlot(str)
     def backend_return(self, retval: str):
         """Receives a return value from the CommWorker and sends it to the instrument's
@@ -275,24 +258,6 @@ class Comm(QObject):
         for instr in self.instruments:
             instr.backend_return_listdata(desc, data1, data2)
 
-    @pyqtSlot(str, str)
-    def backend_return_log(self, retval: str, param_str: str):
-        """Receives a return value from the CommWorker and sends it to the instrument's
-        backend_return function, which adds it to the instrument's values dictionary or
-        , if overwritten, may process the return string immediately for example by
-        updating the UI."""
-
-        # print(f"\n\t\t\t\tBACKEND_RETURN_LOG::COMM\t{param_str}\n")
-        if len(self.instruments) > 0:
-            self.instruments[0].app.director.backend_return_log(retval, param_str)
-
-            logger.debug(
-                f"Instrument: {self.instruments[0].name} received return"
-                f" from backend '{self.backend_model}'. Return message: {retval}"
-            )
-        for instr in self.instruments:
-            instr.backend_return(retval)
-
 
 class CommWorker(QObject):
     """Uses signals + slots to receive data from hc.Comm and relays the
@@ -305,7 +270,6 @@ class CommWorker(QObject):
     sigReturnValues = pyqtSignal(str)
     sigReturnOnline = pyqtSignal(bool)
     sigReturnList = pyqtSignal(str, list, list)
-    sigReturnLog = pyqtSignal(str, str)
 
     def __init__(self, backend):
         super().__init__()
@@ -414,22 +378,6 @@ class CommWorker(QObject):
         else:
             ret_val = self.backend.command_listdata(cmd)
         self.sigReturnList.emit(ret_val[0], ret_val[1], ret_val[2])
-
-    @pyqtSlot(str, float, str)
-    def command_log(self, cmd: str, expire_time: float, param_str: str):
-        """Transfers the command to the backend"""
-
-        # print(f"\n\t\t\tCOMMAND_LOG::COMMWORKER\t{param_str}\n")
-
-        if time.time() > expire_time:  # Skip command if too old
-            ret_val = (
-                f'EXPIRED=CMDLG:"{cmd}" \t[Exec: {time.time()},'
-                f" Exp: {expire_time}] [{self.backend.ID}]"
-            )
-        else:
-            ret_val = self.backend.command(cmd)
-
-        self.sigReturnLog.emit(ret_val, param_str)
 
     @pyqtSlot()
     def close(self):

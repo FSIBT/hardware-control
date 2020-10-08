@@ -424,38 +424,6 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
         if self.online_callback and callable(self.online_callback):
             self.online_callback(self)
 
-    def backend_return_log(self, retval: str, point_data):
-        """Performs the logging action before backend_return() updates the UI.
-
-        When hc.Comm's command_log() returns, backend_return_log() is called
-        prior to backend_return(). backend_return_log() stores the value in
-        self.values, or whatever else it may be configured to do.
-        """
-
-        found = False
-        for ds in self.app.data_sets:
-            if point_data.dataset_name == ds.name:
-
-                sep_idx = retval.find("=")
-                if sep_idx == -1:
-                    logger.error(
-                        "Failed to find '=' in return string after call to command_log()",
-                        exc_info=True,
-                    )
-                    return False
-
-                key_param = retval[0:sep_idx]
-                val = retval[sep_idx + 1 :]
-
-                key_name = point_data.instrument_name + ":" + key_param
-                ds.data[key_name].append(val)
-                found = True
-
-        if not found:
-            return False
-
-        return True
-
     def get_header(self, parameters=None):
         """ Returns a header to describe what is returned by get_values(). It
         must be overwritten by the instrument if the instrument is to be
