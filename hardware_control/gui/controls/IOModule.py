@@ -114,46 +114,29 @@ class IOModule(Instrument):
 
             c_dict = self.ensure_all_fields(c_dict)
 
-            write_setting = f"{c_dict['ID_STR']}_ANALOG_WRITE"
             if c_dict["DIR"] == "OUTPUT":
                 if c_dict["TYPE"] == "DIGITAL":
-
-                    last_wdgt = DigitalOutputChannel(
-                        self,
-                        c_dict["ID_STR"],
-                        c_dict["UNITS"],
-                        c_dict["LABEL"],
-                        show_ID_labels=show_ID_labels,
-                    )
-                    self.dig_out_channels.append(last_wdgt)
-                else:  # "ANALOG"
-                    last_wdgt = AnalogOutputChannel(
-                        self,
-                        c_dict["ID_STR"],
-                        c_dict["UNITS"],
-                        c_dict["LABEL"],
-                        show_ID_labels=show_ID_labels,
-                    )
-                    self.an_out_channels.append(last_wdgt)
+                    create_widget_function = DigitalOutputChannel
+                    list_of_widgets = self.dig_out_channels
+                else:
+                    create_widget_function = AnalogOutputChannel
+                    list_of_widgets = self.an_out_channels
             else:  # "INPUT"
                 if c_dict["TYPE"] == "DIGITAL":
-                    last_wdgt = DigitalInputChannel(
-                        self,
-                        c_dict["ID_STR"],
-                        c_dict["UNITS"],
-                        c_dict["LABEL"],
-                        show_ID_labels=show_ID_labels,
-                    )
-                    self.dig_in_channels.append(last_wdgt)
-                else:  # "ANALOG"
-                    last_wdgt = AnalogInputChannel(
-                        self,
-                        c_dict["ID_STR"],
-                        c_dict["UNITS"],
-                        c_dict["LABEL"],
-                        show_ID_labels=show_ID_labels,
-                    )
-                    self.an_in_channels.append(last_wdgt)
+                    create_widget_function = DigitalInputChannel
+                    list_of_widgets = self.dig_in_channels
+                else:
+                    create_widget_function = AnalogInputChannel
+                    list_of_widgets = self.an_in_channels
+
+            last_wdgt = create_widget_function(
+                self,
+                c_dict["ID_STR"],
+                c_dict["UNITS"],
+                c_dict["LABEL"],
+                show_ID_labels=show_ID_labels,
+            )
+            list_of_widgets.append(last_wdgt)
 
             self.channel_panel.addWidget(
                 last_wdgt, int(load_idx / num_columns), (load_idx) % num_columns,
@@ -167,7 +150,6 @@ class IOModule(Instrument):
                         chan_name = c_dict["ID_STR"]
                         opt_name = f"CH{chan_name}" + opt_name[3:]
                         valstr = c_dict["OPTIONS"][opt]
-                        print(f"Calling update setting with {opt_name} = {valstr}")
                     self.update_setting(opt_name, c_dict["OPTIONS"][opt])
 
         self.channel_spacer = QSpacerItem(
@@ -186,10 +168,8 @@ class IOModule(Instrument):
             10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
         )
         self.channel_panel.addItem(self.bottom_spacer, int(load_idx / num_columns), 0)
-        self.main_layout = QGridLayout()
-        self.main_layout.addLayout(self.channel_panel, 0, 0)
 
-        self.setLayout(self.main_layout)
+        self.setLayout(self.channel_panel)
 
         # Create timer to query voltages
         self.readout_timer = QTimer(self)
@@ -206,13 +186,13 @@ class IOModule(Instrument):
 
         return x
 
-    def update_readout(self):
+    def update_readout(self) -> None:
         for ic in self.an_in_channels:
             ic.update_readout()
         for ic in self.dig_in_channels:
             ic.update_readout()
 
-    def settings_to_UI(self):
+    def settings_to_UI(self) -> None:
         for c in self.an_out_channels:
             c.settings_to_UI()
         for c in self.dig_out_channels:
@@ -227,6 +207,9 @@ class IOModule(Instrument):
             default[f"CH{c.channel}_ANALOG_WRITE"] = "0"
             default[f"CH{c.channel}_TERMINAL_CONFIG"] = ""
         for c in self.dig_in_channels:
+            default[f"CH{c.channel}_DIGITAL_READ"] = "0"
+            default[f"CH{c.channel}_TERMINAL_CONFIG"] = ""
+        for c in self.dig_out_channels:
             default[f"CH{c.channel}_DIGITAL_READ"] = "0"
             default[f"CH{c.channel}_TERMINAL_CONFIG"] = ""
 
