@@ -11,13 +11,14 @@ import logging
 import random
 import socket
 
-from ..base import Backend
+from ..base import ensure_online
 from ..utility import get_channel_from_command
+from .Adam_base import AdamBackend
 
 logger = logging.getLogger(__name__)
 
 
-class Adam_6015(Backend):
+class Adam_6015(AdamBackend):
     """A driver for the Adam 6015.
 
     Instrument home page: https://www.advantech.com/products/a67f7853-013a-4b50-9b20-01798c56b090/adam-6015/mod_9c835a28-5c91-49fc-9de1-ec7f1dd3a82d
@@ -25,52 +26,11 @@ class Adam_6015(Backend):
     """
 
     def __init__(self, connection_addr):
-
         super().__init__(
-            instrument_name="Advantac_ADAM-6015",
-            connection_addr=connection_addr,
-            default_port=1025,
+            instrument_name="Advantac_ADAM-6015", connection_addr=connection_addr,
         )
 
-        self.buf = 200
-        self.addr = (self.ip_addr, self.port_no)
-        self.termination = "\r"
-        self.encoding = "ascii"
-
-        if self.connection_type != Backend.SOCKET:
-            logger.error(
-                "Wrong instrument address. Needs to be socket type (ip or ip:port)."
-            )
-
-        self.try_connect()
-
-    def try_connect(self):
-        """Force the use of sockets with different option (DGRAM instead of STREAM)."""
-        if self.dummy:
-            if not self.online:
-                logger.debug(f"Adam: creating dummy connection to {self.addr}")
-            self.online = True
-            return self.online
-
-        # First Check current state
-        if not self.online:  # If not online, try to connect
-            try:
-                self.device = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                self.device.settimeout(0.950)
-                self.device.connect(self.addr)
-                logger.debug(
-                    f"opened socket connection to {self.ID} at"
-                    f" {self.ip_addr}:{self.port_no}"
-                )
-            except:
-                logger.debug("exception during try connect", exc_info=True)
-                self.online = False
-                return self.online
-
-        # Independent of the state, try to receive data, if nothing is
-        # returned, then the device is offline
-        self.online = self.check_connection()
-
+    @ensure_online
     def command(self, cmd: str):
         """Query the temperature of a channel.
 
