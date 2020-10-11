@@ -237,8 +237,8 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
         update_interval = self.ramp_update_period
         self.ramp_speed[setting] = ramp_speed * update_interval
 
-    def remote_update_setting(self, setting: str, value: str):
-        """ Calls update_setting to update backend, then uses setting_to_UI.
+    def remote_update_setting(self, setting: str, value: str) -> None:
+        """Calls update_setting to update backend, then uses settings_to_UI.
 
         A function to be called from outside the widget which both updates the
         widget and backend.

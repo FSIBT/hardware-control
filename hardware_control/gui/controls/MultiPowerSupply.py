@@ -4,7 +4,6 @@ from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QDoubleValidator, QFont
 from PyQt5.QtWidgets import (
-    QLineEdit,
     QPushButton,
     QLabel,
     QWidget,
@@ -19,7 +18,7 @@ from ...utility import (
     remove_end_carriage_return,
     apply_to_label,
 )
-from ..widgets import setButtonState, load_icon
+from ..widgets import setButtonState, load_icon, QControl, QIndicator
 
 
 logger = logging.getLogger(__name__)
@@ -191,10 +190,6 @@ class MultiPowerSupply(Instrument):
                 self.command(f"CH{c}_I_MAX?")
             if self.channel_widgets[idx].show_status_panel:
                 self.command(f"CH{c}_ENABLE?")
-            # if self.channel_widgets[idx].show_status_panel:
-            #     self.command(f"CH{c}_current_limited?")
-            #     self.command(f"CH{c}_output_enabled?")
-            #     self.command(f"CH{c}_ramp_direction?")
 
             # Get latest inbox entries for readout data...
             Vout = remove_end_carriage_return(self.read_values(f"CH{c}_V_OUT"))
@@ -208,22 +203,7 @@ class MultiPowerSupply(Instrument):
                 enabled = remove_end_carriage_return(self.read_values(f"CH{c}_ENABLE"))
             else:
                 enabled = None
-            # if self.channel_widgets[idx].show_status_panel:
-            #     self.command(f"CH{c}_current_limited?")
-            #     self.command(f"CH{c}_output_enabled?")
-            #     self.command(f"CH{c}_ramp_direction?")
 
-            # self.values[f"CH{c}_V_OUT"] = Vout
-            # self.values[f"CH{c}_I_OUT"] = Iout
-            # self.values[f"CH{c}_V_SET"] = Vset
-            # self.values[f"CH{c}_I_SET"] = Iset
-            # if self.channel_widgets[idx].show_VI_limits:
-            #     self.values[f"CH{c}_V_MAX"] = Vmax
-            #     self.values[f"CH{c}_I_MAX"] = Imax
-            # if self.channel_widgets[idx].show_status_panel:
-            #     self.values[f"CH{c}_ENABELD"] = enabled
-
-            # print(f"Instr '{self.name}' sending values to widget # {idx} (CH: {c}). There are {len(self.channel_widgets)} total widgets.")
             if self.channel_widgets[idx].show_VI_limits:
                 logger.debug(
                     f"'{self.name}'[{c}] received values: {Vout}, {Iout}, {Vset}, {Iset}, {Vmax}, {Imax}"
@@ -328,7 +308,6 @@ class PowerSupplyChannel(QWidget):
         self.custom_labels_colorcoded = False
 
         align_left_center = QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
-        align_right_center = QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
 
         self.main_widget.setting_names[f"Ch{channel} V set"] = f"CH{channel}_V_SET"
         self.main_widget.setting_names[f"Ch{channel} I set"] = f"CH{channel}_I_SET"
@@ -349,95 +328,56 @@ class PowerSupplyChannel(QWidget):
             self.channel_label.setAlignment(align_left_center)
 
         # ****** DEFINE READOUTS
-        self.V_set_label = QLabel("Vset:")
-        self.V_set_label.setAlignment(align_right_center)
-
-        self.V_set_label_val = QLabel("-------")
-        self.V_set_label_val.setAlignment(align_left_center)
-
-        self.I_set_label = QLabel("Iset:")
-        self.I_set_label.setAlignment(align_right_center)
-
-        self.I_set_label_val = QLabel("-------")
-        self.I_set_label_val.setAlignment(align_left_center)
-
-        self.V_out_label = QLabel("Vout:")
-        self.V_out_label.setAlignment(align_right_center)
-
-        self.V_out_label_val = QLabel("-------")
-        self.V_out_label_val.setAlignment(align_left_center)
-
-        self.I_out_label = QLabel("Iout:")
-        self.I_out_label.setAlignment(align_right_center)
-
-        self.I_out_label_val = QLabel("-------")
-        self.I_out_label_val.setAlignment(align_left_center)
-
-        self.P_out_label = QLabel("Pout:")
-        self.P_out_label.setAlignment(align_right_center)
-
-        self.P_out_label_val = QLabel("-------")
-        self.P_out_label_val.setAlignment(align_left_center)
+        self.Voltage_set = QIndicator("Vset", label_align="right")
+        self.Current_set = QIndicator("Iset", label_align="right")
+        self.Voltage_out = QIndicator("Vout", label_align="right")
+        self.Current_out = QIndicator("Iout", label_align="right")
+        self.Power_out = QIndicator("Pout", label_align="right")
 
         if self.show_VI_limits:
-            self.V_max_label = QLabel("Vmax:")
-            self.V_max_label.setAlignment(align_right_center)
-
-            self.V_max_label_val = QLabel("-------")
-            self.V_max_label_val.setAlignment(align_left_center)
-
-            self.I_max_label = QLabel("Imax:")
-            self.I_max_label.setAlignment(align_right_center)
-
-            self.I_max_label_val = QLabel("-------")
-            self.I_max_label_val.setAlignment(align_left_center)
+            self.Voltage_max = QIndicator("Vmax", label_align="right")
+            self.Current_max = QIndicator("Imax", label_align="right")
 
         # Layout readout
         self.readout_grid = QGridLayout()
-        self.readout_grid.addWidget(self.V_set_label, 0, 0)
-        self.readout_grid.addWidget(self.V_set_label_val, 0, 1)
-        self.readout_grid.addWidget(self.I_set_label, 1, 0)
-        self.readout_grid.addWidget(self.I_set_label_val, 1, 1)
+        self.readout_grid.addWidget(self.Voltage_set.label, 0, 0)
+        self.readout_grid.addWidget(self.Voltage_set.value, 0, 1)
+        self.readout_grid.addWidget(self.Current_set.label, 1, 0)
+        self.readout_grid.addWidget(self.Current_set.value, 1, 1)
 
-        self.readout_grid.addWidget(self.V_out_label, 0, 2)
-        self.readout_grid.addWidget(self.V_out_label_val, 0, 3)
-        self.readout_grid.addWidget(self.I_out_label, 1, 2)
-        self.readout_grid.addWidget(self.I_out_label_val, 1, 3)
+        self.readout_grid.addWidget(self.Voltage_out.label, 0, 2)
+        self.readout_grid.addWidget(self.Voltage_out.value, 0, 3)
+        self.readout_grid.addWidget(self.Current_out.label, 1, 2)
+        self.readout_grid.addWidget(self.Current_out.value, 1, 3)
 
-        self.readout_grid.addWidget(self.P_out_label, 2, 2)
-        self.readout_grid.addWidget(self.P_out_label_val, 2, 3)
+        self.readout_grid.addWidget(self.Power_out.label, 2, 2)
+        self.readout_grid.addWidget(self.Power_out.value, 2, 3)
 
         if self.show_VI_limits:
-            self.readout_grid.addWidget(self.V_max_label, 3, 0)
-            self.readout_grid.addWidget(self.V_max_label_val, 3, 1)
-            self.readout_grid.addWidget(self.I_max_label, 3, 2)
-            self.readout_grid.addWidget(self.I_max_label_val, 3, 3)
+            self.readout_grid.addWidget(self.Voltage_max.label, 3, 0)
+            self.readout_grid.addWidget(self.Voltage_max.value, 3, 1)
+            self.readout_grid.addWidget(self.Current_max.label, 3, 2)
+            self.readout_grid.addWidget(self.Current_max.value, 3, 3)
 
         # ****** DEFINE CONTROLS
         #
-        self.V_ctrl_label = QLabel("Voltage (V):")
-        self.V_ctrl_label.setAlignment(align_right_center)
-
-        self.I_ctrl_label = QLabel("Current (A): ")
-        self.I_ctrl_label.setAlignment(align_left_center)
-
-        self.V_edit = QLineEdit()
-        self.V_edit.setValidator(QDoubleValidator())
-        self.V_edit.editingFinished.connect(
-            lambda: main_widget.update_setting(
-                f"CH{self.channel}_V_SET", (self.V_edit.text())
-            )
+        self.Voltage = QControl(
+            self.main_widget,
+            f"CH{self.channel}_V_SET",
+            "Voltage (V)",
+            validator=QDoubleValidator(),
+            remote=False,
+            label_align="right",
         )
-        self.V_edit.setText(str(main_widget.settings[f"CH{channel}_V_SET"]))
 
-        self.I_edit = QLineEdit()
-        self.I_edit.setValidator(QDoubleValidator())
-        self.I_edit.editingFinished.connect(
-            lambda: main_widget.update_setting(
-                f"CH{self.channel}_I_SET", (self.I_edit.text())
-            )
+        self.Current = QControl(
+            self.main_widget,
+            f"CH{self.channel}_I_SET",
+            "Current (A)",
+            validator=QDoubleValidator(),
+            remote=False,
+            label_align="right",
         )
-        self.I_edit.setText(str(main_widget.settings[f"CH{channel}_I_SET"]))
 
         self.enabled_but = QPushButton()
         self.enabled_but.setText("On/Off")
@@ -450,10 +390,10 @@ class PowerSupplyChannel(QWidget):
         setButtonState(self.enabled_but, main_widget.settings[f"CH{channel}_ENABLE"])
 
         self.controls_grid = QGridLayout()
-        self.controls_grid.addWidget(self.V_ctrl_label, 0, 0)
-        self.controls_grid.addWidget(self.V_edit, 0, 1)
-        self.controls_grid.addWidget(self.I_ctrl_label, 1, 0)
-        self.controls_grid.addWidget(self.I_edit, 1, 1)
+        self.controls_grid.addWidget(self.Voltage.label, 0, 0)
+        self.controls_grid.addWidget(self.Voltage.edit, 0, 1)
+        self.controls_grid.addWidget(self.Current.label, 1, 0)
+        self.controls_grid.addWidget(self.Current.edit, 1, 1)
         if not hide_power_button:
             self.controls_grid.addWidget(self.enabled_but, 2, 1)
 
@@ -506,39 +446,34 @@ class PowerSupplyChannel(QWidget):
     ):
 
         apply_to_label(
-            self.V_out_label_val, Vout, "V", DISP_DECIMAL_PLACES, LABEL_MIN_WIDTH
+            self.Voltage_out.value, Vout, "V", DISP_DECIMAL_PLACES, LABEL_MIN_WIDTH
         )
         apply_to_label(
-            self.I_out_label_val, Iout, "A", DISP_DECIMAL_PLACES, LABEL_MIN_WIDTH
+            self.Current_out.value, Iout, "A", DISP_DECIMAL_PLACES, LABEL_MIN_WIDTH
         )
         apply_to_label(
-            self.V_set_label_val, Vset, "V", DISP_DECIMAL_PLACES, LABEL_MIN_WIDTH
+            self.Voltage_set.value, Vset, "V", DISP_DECIMAL_PLACES, LABEL_MIN_WIDTH
         )
         apply_to_label(
-            self.I_set_label_val, Iset, "A", DISP_DECIMAL_PLACES, LABEL_MIN_WIDTH
+            self.Current_set.value, Iset, "A", DISP_DECIMAL_PLACES, LABEL_MIN_WIDTH
         )
 
         if Vout is not None and Iout is not None:
             try:
                 pwr = float(Vout) * float(Iout)
-                apply_to_label(
-                    self.P_out_label_val, pwr, "W", DISP_DECIMAL_PLACES, LABEL_MIN_WIDTH
-                )
             except:
-                apply_to_label(
-                    self.P_out_label_val,
-                    "----",
-                    "W",
-                    DISP_DECIMAL_PLACES,
-                    LABEL_MIN_WIDTH,
-                )
+                pwr = "----"
+
+            apply_to_label(
+                self.Power_out.value, pwr, "W", DISP_DECIMAL_PLACES, LABEL_MIN_WIDTH
+            )
 
         if self.show_VI_limits:
             apply_to_label(
-                self.V_max_label_val, Vmax, "V", DISP_DECIMAL_PLACES, LABEL_MIN_WIDTH
+                self.Voltage_max.value, Vmax, "V", DISP_DECIMAL_PLACES, LABEL_MIN_WIDTH
             )
             apply_to_label(
-                self.I_max_label_val, Imax, "A", DISP_DECIMAL_PLACES, LABEL_MIN_WIDTH
+                self.Current_max.value, Imax, "A", DISP_DECIMAL_PLACES, LABEL_MIN_WIDTH
             )
 
         if self.show_status_panel:
@@ -587,8 +522,8 @@ class PowerSupplyChannel(QWidget):
         self.channel_label.setAlignment(align_left_center)
 
     def settings_to_UI(self):
-        self.V_edit.setText(str(self.main_widget.settings[f"CH{self.channel}_V_SET"]))
-        self.I_edit.setText(str(self.main_widget.settings[f"CH{self.channel}_I_SET"]))
+        self.Voltage.settings_to_UI()
+        self.Current.settings_to_UI()
         setButtonState(
             self.enabled_but, self.main_widget.settings[f"CH{self.channel}_ENABLE"]
         )

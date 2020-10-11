@@ -6,6 +6,7 @@ from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtWidgets import QLineEdit, QLabel, QFormLayout, QGridLayout, QComboBox
 
 from ..base import Instrument
+from ..widgets import QControlCombo, QIndicator, QControl
 
 logger = logging.getLogger(__name__)
 
@@ -37,63 +38,45 @@ class FlowController(Instrument):
         # *************************Create GUI************************
 
         # ****** DEFINE TEXT BOXES
-        self.rate_edit = QLineEdit()
-        self.rate_edit.setValidator(QDoubleValidator())
-        self.rate_edit.editingFinished.connect(
-            lambda: self.update_setting("RATE", self.rate_edit.text())
+        self.rate = QControl(
+            self, "RATE", "Flow rate (sccm)", validator=QDoubleValidator(), remote=False
         )
-        self.rate_edit.setText(str(self.settings["RATE"]))
 
         self.form = QFormLayout()
-        self.form.addRow("Flow rate (sccm):", self.rate_edit)
+        self.form.addRow(f"{self.rate.name}: ", self.rate.edit)
 
         self.lower_grid = QGridLayout()
 
         # ******* DEFINE DROPDOWNS + READOUT
-        self.gas_label = QLabel("Gas:")
-        self.gas_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-
-        self.gas_drop = QComboBox()
-        self.gas_drop.addItems(["Argon", "Helium", "Hydrogen", "Air"])
-        self.gas_drop.currentIndexChanged.connect(
-            lambda: self.update_setting("GAS", self.gas_drop.currentText().upper())
-        )
-        self.gas_drop.setCurrentText(self.settings["GAS"])
-
-        self.pressure_label_fix0 = QLabel("Pressure: ")
-        self.pressure_label_fix0.setAlignment(
-            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
+        self.gas = QControlCombo(
+            self,
+            "GAS",
+            "Gas",
+            ["Argon", "Helium", "Hydrogen", "Air"],
+            label_align="right",
+            remote=False,
         )
 
-        self.pressure_label_readout = QLabel("--")
-        self.pressure_label_readout.setAlignment(
-            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
-        )
+        self.pressure = QIndicator("Pressure", label_align="right")
 
         self.pressure_label_fix1 = QLabel(" Torr")
         self.pressure_label_fix1.setAlignment(
             QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
         )
 
-        self.flow_label_fix0 = QLabel("Flow: ")
-        self.flow_label_fix0.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-
-        self.flow_label_readout = QLabel("--")
-        self.flow_label_readout.setAlignment(
-            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
-        )
+        self.flow = QIndicator("Flow", label_align="right")
 
         self.flow_label_fix1 = QLabel(" sccm")
         self.flow_label_fix1.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
 
         # Add widgets to grid layout
-        self.lower_grid.addWidget(self.gas_label, 0, 0, 1, 1)
-        self.lower_grid.addWidget(self.gas_drop, 0, 1, 1, 2)
-        self.lower_grid.addWidget(self.pressure_label_fix0, 1, 0, 1, 1)
-        self.lower_grid.addWidget(self.pressure_label_readout, 1, 1, 1, 1)
+        self.lower_grid.addWidget(self.gas.label, 0, 0, 1, 1)
+        self.lower_grid.addWidget(self.gas.combo, 0, 1, 1, 2)
+        self.lower_grid.addWidget(self.pressure.label, 1, 0, 1, 1)
+        self.lower_grid.addWidget(self.pressure.value, 1, 1, 1, 1)
         self.lower_grid.addWidget(self.pressure_label_fix1, 1, 2, 1, 1)
-        self.lower_grid.addWidget(self.flow_label_fix0, 2, 0, 1, 1)
-        self.lower_grid.addWidget(self.flow_label_readout, 2, 1, 1, 1)
+        self.lower_grid.addWidget(self.flow.label, 2, 0, 1, 1)
+        self.lower_grid.addWidget(self.flow.value, 2, 1, 1, 1)
         self.lower_grid.addWidget(self.flow_label_fix1, 2, 2, 1, 1)
 
         # ******* DEFINE OVERALL LAYOUT
@@ -128,8 +111,8 @@ class FlowController(Instrument):
         self.command("PRESSURE?")
 
         # Update labels
-        self.pressure_label_readout.setText(self.read_values("PRESSURE"))
-        self.flow_label_readout.setText(self.read_values("RATE"))
+        self.pressure.setText(self.read_values("PRESSURE"))
+        self.flow.setText(self.read_values("RATE"))
 
     def default_state(self):
         return {
@@ -138,5 +121,5 @@ class FlowController(Instrument):
         }
 
     def settings_to_UI(self):
-        self.rate_edit.setText(str(self.settings["RATE"]))
-        self.gas_drop.setCurrentText(self.settings["GAS"])
+        self.rate.settings_to_UI()
+        self.gas.settings_to_UI()

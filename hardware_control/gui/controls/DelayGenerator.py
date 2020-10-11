@@ -4,7 +4,6 @@ from PyQt5 import QtCore
 from PyQt5.QtGui import QIcon, QFont, QDoubleValidator
 from PyQt5.QtWidgets import (
     QGroupBox,
-    QLineEdit,
     QPushButton,
     QLabel,
     QGridLayout,
@@ -15,7 +14,7 @@ from PyQt5.QtWidgets import (
 )
 
 from ..base import Instrument
-from ..widgets import load_icon
+from ..widgets import load_icon, QControl, QControlCombo
 
 logger = logging.getLogger(__name__)
 
@@ -53,42 +52,26 @@ class DelayGenerator(Instrument):
         self.update_settings_hooks["TRIGGER_MODE"].append(self.enableDisableWidgets)
 
         # Create GUI
-
-        self.trig_mode_label = QLabel("Trigger Mode:")
-        self.trig_mode_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-
-        self.trig_mode_drop = QComboBox()
-        self.trig_mode_drop.addItems(["Internal", "External", "Single", "Burst"])
-        self.trig_mode_drop.currentIndexChanged.connect(
-            lambda: self.update_setting(
-                "TRIGGER_MODE", self.trig_mode_drop.currentText().upper()
-            )
+        self.trig_mode = QControlCombo(
+            self,
+            "TRIGGER_MODE",
+            "Trigger Mode",
+            ["Internal", "External", "Single", "Burst"],
+            remote=False,
         )
-        self.trig_mode_drop.setCurrentText(str(self.settings["TRIGGER_MODE"].title()))
+        self.trig_mode.label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
-        self.trig_edge_label = QLabel("Trigger Edge:")
-        self.trig_edge_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-
-        self.trig_edge_drop = QComboBox()
-        self.trig_edge_drop.addItems(["Positive", "Negative"])
-        self.trig_edge_drop.currentIndexChanged.connect(
-            lambda: self.update_setting(
-                "TRIGGER_EDGE", self.trig_edge_drop.currentText().upper()
-            )
+        self.trig_edge = QControlCombo(
+            self, "TRIGGER_EDGE", "Trigger Edge", ["Positive", "Negative"], remote=False
         )
-        self.trig_edge_drop.setCurrentText(str(self.settings["TRIGGER_EDGE"].title()))
+        self.trig_edge.label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
-        self.trig_z_label = QLabel("Ext. Trigger Zin:")
-        self.trig_z_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-
-        self.trig_z_drop = QComboBox()
-        self.trig_z_drop.addItems(["50 Ohms", "Hi-Z"])
-        self.trig_z_drop.currentIndexChanged.connect(
-            lambda: self.update_setting(
-                "EXT_TRIG_ZIN", self.trig_z_drop.currentText().upper()
-            )
+        self.trig_impedance = QControlCombo(
+            self, "EXT_TRIG_ZIN", "Ext. Trigger Zin", ["50 Ohms", "Hi-Z"], remote=False
         )
-        self.trig_z_drop.setCurrentText(str(self.settings["EXT_TRIG_ZIN"].title()))
+        self.trig_impedance.label.setAlignment(
+            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
+        )
 
         self.trig_lev_label = QLabel("Ext Trig Level (V):")
         self.trig_lev_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
@@ -110,7 +93,7 @@ class DelayGenerator(Instrument):
         self.single_trig_but.setIcon(QIcon(load_icon("pulse.png")))
         self.single_trig_but.setCheckable(False)
         self.single_trig_but.clicked.connect(lambda: self.command("SINGLE_TRIGGER"))
-        self.single_trig_but.setEnabled(self.trig_mode_drop.currentText() == "Single")
+        self.single_trig_but.setEnabled(self.trig_mode.currentText() == "Single")
 
         self.pulse_label = QLabel("Pulses per Burst:")
         self.pulse_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
@@ -133,22 +116,6 @@ class DelayGenerator(Instrument):
         )
         self.period_edit.setSingleStep(1)
         self.period_edit.setValue(int(self.settings["TRIGGER_PERIOD"]))
-
-        self.write_label = QLabel("Command: ")
-        self.write_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-
-        self.write_edit = QLineEdit()
-        self.write_edit.editingFinished.connect(
-            lambda: self.update_setting("DIRECT_COMMAND", self.write_edit.text())
-        )
-        self.write_edit.setText(self.settings["DIRECT_COMMAND"])
-
-        self.write_but = QPushButton()
-        self.write_but.setText("Write")
-        self.write_but.setCheckable(False)
-        self.write_but.clicked.connect(
-            lambda: self.command(self.settings["DIRECT_COMMAND"])
-        )
 
         widget_col = 0
         self.channel_widgets = []
@@ -184,13 +151,13 @@ class DelayGenerator(Instrument):
         self.channel_box.setLayout(self.channel_box_layout)
 
         self.master_layout = QGridLayout()
-        self.master_layout.addWidget(self.trig_mode_label, 0, 0)
-        self.master_layout.addWidget(self.trig_mode_drop, 0, 1)
-        self.master_layout.addWidget(self.trig_z_label, 0, 2)
-        self.master_layout.addWidget(self.trig_z_drop, 0, 3)
+        self.master_layout.addWidget(self.trig_mode.label, 0, 0)
+        self.master_layout.addWidget(self.trig_mode.combo, 0, 1)
+        self.master_layout.addWidget(self.trig_impedance.label, 0, 2)
+        self.master_layout.addWidget(self.trig_impedance.combo, 0, 3)
 
-        self.master_layout.addWidget(self.trig_edge_label, 1, 0)
-        self.master_layout.addWidget(self.trig_edge_drop, 1, 1)
+        self.master_layout.addWidget(self.trig_edge.label, 1, 0)
+        self.master_layout.addWidget(self.trig_edge.combo, 1, 1)
         self.master_layout.addWidget(self.trig_lev_label, 1, 2)
         self.master_layout.addWidget(self.trig_lev_edit, 1, 3)
 
@@ -202,12 +169,7 @@ class DelayGenerator(Instrument):
         self.master_layout.addWidget(self.period_label, 3, 2)
         self.master_layout.addWidget(self.period_edit, 3, 3)
 
-        self.master_layout.addWidget(self.write_label, 4, 0)
-        self.master_layout.addWidget(self.write_edit, 4, 1)
-
-        self.master_layout.addWidget(self.write_but, 4, 3)
-
-        self.master_layout.addWidget(self.channel_box, 5, 0, 1, 4)
+        self.master_layout.addWidget(self.channel_box, 4, 0, 1, 4)
 
         self.setLayout(self.master_layout)
 
@@ -253,14 +215,12 @@ class DelayGenerator(Instrument):
         return default
 
     def settings_to_UI(self):
-
-        self.trig_mode_drop.setCurrentText(str(self.settings["TRIGGER_MODE"]))
-        self.trig_edge_drop.setCurrentText(str(self.settings["TRIGGER_EDGE"]))
-        self.trig_z_drop.setCurrentText(str(self.settings["EXT_TRIG_ZIN"]))
+        self.trig_mode.settings_to_UI()
+        self.trig_edge.settings_to_UI()
+        self.trig_impedance.settings_to_UI()
         self.trig_lev_edit.setValue(float(self.settings["TRIGGER_LEVEL"]))
         self.pulse_edit.setValue(int(self.settings["PULSES_PER_BURST"]))
         self.period_edit.setValue(int(self.settings["TRIGGER_PERIOD"]))
-        self.write_edit.setText(self.settings["DIRECT_COMMAND"])
 
         for cw in self.channel_widgets:
             cw.settings_to_UI()
@@ -307,98 +267,77 @@ class DelayChannelWidget(QWidget):
         self.channel_label.setFont(QFont("Arial", 20))
         self.channel_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
 
-        self.time_label = QLabel("t_offset [s]: ")
+        if channel not in [12, 34]:
+            self.time_delay = QControl(
+                self.main_widget,
+                f"CH{self.channel}_DELAY",
+                "t_offset [s]",
+                validator=QDoubleValidator(),
+                remote=False,
+            )
 
-        self.time_edit = QLineEdit()
-        self.time_edit.setValidator(QDoubleValidator())
-        self.time_edit.editingFinished.connect(
-            lambda: self.delay_changed(self.time_edit.text())
-        )
-        self.time_edit.setText("0")
-
-        self.rel_label = QLabel("Relative to:")
-
-        self.rel_drop = QComboBox()
         rels = ["Trig", "A", "B", "C", "D", "T0"]
         if channel not in [12, 34]:
             rels.remove(channel_str.title())
-        self.rel_drop.addItems(rels)
-        self.rel_drop.setCurrentText("Trig")
-        self.rel_drop.currentIndexChanged.connect(
-            lambda: self.relative_changed(self.rel_drop.currentText().upper())
-        )
+            self.relative = QControlCombo(
+                self.main_widget,
+                f"CH{self.channel}_RELATIVE",
+                "Relative to",
+                rels,
+                remote=False,
+            )
 
-        self.level_label = QLabel("Output mode: ")
-
-        self.volt_edit_label = QLabel("High Level (V):")
-        self.volt_edit = QLineEdit()
-        self.volt_edit.setValidator(QDoubleValidator())
-        self.volt_edit.setText("5")
-        self.volt_edit.editingFinished.connect(
-            lambda: self.voltage_changed(self.volt_edit.text())
+        self.volt = QControl(
+            self.main_widget,
+            f"CH{self.channel}_OUTPUT_AMPLITUDE",
+            "High Level (V)",
+            validator=QDoubleValidator(),
+            remote=False,
         )
-        self.volt_edit.setEnabled(False)
+        self.volt.setEnabled(False)
 
-        self.level_drop = QComboBox()
-        self.level_drop.addItems(["TTL", "Voltage", "NIM", "ECL"])
-        self.level_drop.setCurrentText("TTL")
-        self.level_drop.currentIndexChanged.connect(
-            lambda: self.set_output_level(self.level_drop.currentText().upper())
+        self.level = QControlCombo(
+            self.main_widget,
+            f"CH{self.channel}_OUTPUT_MODE",
+            "Output mode",
+            ["TTL", "Voltage", "NIM", "ECL"],
+            remote=False,
         )
+        self.level.pre_update_hook.append(self.set_output_level_hook)
 
         self.channel_layout = QGridLayout()
         self.channel_layout.addWidget(self.channel_label, 0, 0, 1, 2)
-        if self.channel in [12, 34]:
-            self.blank_label = QLabel(" ")
-            self.channel_layout.addWidget(self.blank_label, 1, 0, 1, 2)
-            self.blank_label2 = QLabel(" ")
-            self.channel_layout.addWidget(self.blank_label2, 2, 0, 1, 2)
-        else:
-            self.channel_layout.addWidget(self.time_edit, 1, 1)
-            self.channel_layout.addWidget(self.time_label, 1, 0)
-            self.channel_layout.addWidget(self.rel_label, 2, 0)
-            self.channel_layout.addWidget(self.rel_drop, 2, 1)
+        if self.channel not in [12, 34]:
+            self.channel_layout.addWidget(self.time_delay.label, 1, 0)
+            self.channel_layout.addWidget(self.time_delay.edit, 1, 1)
+            self.channel_layout.addWidget(self.relative.label, 2, 0)
+            self.channel_layout.addWidget(self.relative.combo, 2, 1)
 
-        self.channel_layout.addWidget(self.level_label, 3, 0)
-        self.channel_layout.addWidget(self.level_drop, 3, 1)
-        self.channel_layout.addWidget(self.volt_edit_label, 4, 0)
-        self.channel_layout.addWidget(self.volt_edit, 4, 1)
+        self.channel_layout.addWidget(self.level.label, 3, 0)
+        self.channel_layout.addWidget(self.level.combo, 3, 1)
+        self.channel_layout.addWidget(self.volt.label, 4, 0)
+        self.channel_layout.addWidget(self.volt.edit, 4, 1)
         self.setLayout(self.channel_layout)
 
         self.settings_to_UI()
 
     def settings_to_UI(self):
         if self.channel not in [12, 34]:
-            self.time_edit.setText(self.main_widget.settings[f"CH{self.channel}_DELAY"])
-            self.rel_drop.setCurrentText(
-                self.main_widget.settings[f"CH{self.channel}_RELATIVE"]
-            )
+            self.time_delay.settings_to_UI()
+            self.relative.settings_to_UI()
         mode = self.main_widget.settings[f"CH{self.channel}_OUTPUT_MODE"]
         if mode == "VAR":
             mode = "VOLTAGE"
-        self.level_drop.setCurrentText(mode.title())
-        self.volt_edit.setText(
-            self.main_widget.settings[f"CH{self.channel}_OUTPUT_AMPLITUDE"]
-        )
+        self.level.setCurrentText(mode.title())
+        self.volt.settings_to_UI()
 
-    def set_output_level(self, new_val: str):
-        if new_val is None:
+    def set_output_level_hook(self, value, setting):
+        if value is None:
             return
 
-        if new_val == "VOLTAGE":
-            self.volt_edit.setEnabled(True)
-            new_val = "VAR"
+        if value == "VOLTAGE":
+            self.volt.setEnabled(True)
+            value = "VAR"
         else:
-            self.volt_edit.setEnabled(False)
-
-        self.main_widget.update_setting(f"CH{self.channel}_OUTPUT_MODE", new_val)
-
-    def voltage_changed(self, new_val: str):
-        self.main_widget.update_setting(f"CH{self.channel}_OUTPUT_OFFSET", "0")
-        self.main_widget.update_setting(f"CH{self.channel}_OUTPUT_AMPLITUDE", new_val)
-
-    def relative_changed(self, rel_to: str):
-        self.main_widget.update_setting(f"CH{self.channel}_RELATIVE", rel_to)
-
-    def delay_changed(self, t_delay: str):
-        self.main_widget.update_setting(f"CH{self.channel}_DELAY", t_delay)
+            self.volt.setEnabled(False)
+        return value, setting

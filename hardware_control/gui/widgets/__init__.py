@@ -10,4 +10,12 @@ from .scan_widget import ScanWidget
 from .zmq_connection import ZMQConnectionTool
 from .qtconsole import Qtconsole
 from .on_off import QOnOffButton, QOnOffIndicator
-from .utility import setButtonState, load_icon, icon_filename
+from .utility import (
+    setButtonState,
+    load_icon,
+    icon_filename,
+    QControl,
+    QControlCombo,
+    QIndicator,
+    QHeader,
+)

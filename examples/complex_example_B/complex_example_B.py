@@ -28,15 +28,12 @@ from PyQt5.QtWidgets import (
     QSpacerItem,
     QSizePolicy,
     QGroupBox,
-    QLabel,
-    QLineEdit,
     QPushButton,
     QApplication,
 )
 from PyQt5.QtGui import QIcon, QDoubleValidator
 from docopt import docopt
 from PyQt5.QtCore import QTimer
-from PyQt5 import QtCore
 
 import hardware_control.backends as hc_back
 import hardware_control.gui as hc
@@ -112,7 +109,7 @@ def power_off(window):
     window.iomod_float_wdgt.remote_update_setting("CHMod7/ao4_ANALOG_WRITE", "0")
 
 
-def save_continuous_data(dataset, filename: str):
+def save_continuous_data(dataset: hc.Dataset, filename: str) -> None:
 
     loc_time = localtime()
     header_datestamp = strftime("%Y-%m-%d %H:%M:%S", loc_time)
@@ -241,7 +238,7 @@ def countdown_end_fn(app):
     app.main_window.run_tool.run_button.setEnabled(True)
 
 
-def save_shot_format(dataset, filename: str):
+def save_shot_format(dataset: hc.Dataset, filename: str) -> None:
     """
     Saves data in the format expected by STS-50 data processing scripts.
     """
@@ -451,16 +448,15 @@ class CustomPowerSupplyWidget(hc.Instrument):
 
         self.caen = caen
 
-        self.main_label = QLabel()
-        self.main_label.setPixmap(hc.load_icon("power_supply_controls_label.svg"))
-        self.main_label.setAlignment(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignHCenter)
+        self.main_header = hc.QHeader("power_supply_controls_label.svg")
 
-        self.caen_label = QLabel("CAEN CH 3 & 8 Voltage (V): ")
-
-        self.caen_edit = QLineEdit()
-        self.caen_edit.setValidator(QDoubleValidator())
-        self.caen_edit.editingFinished.connect(self.update_caen)
-        self.caen_edit.setText(str(caen.settings["CH3_V_SET"]))
+        self.caen_input = hc.QControl(
+            self.caen,
+            "CH3_V_SET",
+            "CAEN CH 3 & 8 Voltage (V)",
+            validator=QDoubleValidator(),
+            update_function=self.update_caen,
+        )
 
         self.horiz_spacer = QSpacerItem(
             200, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
@@ -476,21 +472,19 @@ class CustomPowerSupplyWidget(hc.Instrument):
             10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
         )
 
-        self.ch3_label = QLabel("CAEN CH3 Vout (V):")
-        self.ch8_label = QLabel("CAEN CH8 Vout (V):")
-        self.ch3_readout = QLabel("")
-        self.ch8_readout = QLabel("")
+        self.ch3 = hc.QIndicator("CAEN CH3 Vout (V)")
+        self.ch8 = hc.QIndicator("CAEN CH8 Vout (V)")
 
         self.master_layout = QGridLayout()
-        self.master_layout.addWidget(self.main_label, 0, 0, 1, 4)
-        self.master_layout.addWidget(self.caen_label, 1, 0)
-        self.master_layout.addWidget(self.caen_edit, 1, 1)
+        self.master_layout.addWidget(self.main_header, 0, 0, 1, 4)
+        self.master_layout.addWidget(self.caen_input.label, 1, 0)
+        self.master_layout.addWidget(self.caen_input.edit, 1, 1)
         self.master_layout.addItem(self.horiz_spacer, 1, 2)
         self.master_layout.addWidget(self.power_button, 1, 3)
-        self.master_layout.addWidget(self.ch3_label, 2, 0)
-        self.master_layout.addWidget(self.ch3_readout, 2, 1)
-        self.master_layout.addWidget(self.ch8_label, 2, 2)
-        self.master_layout.addWidget(self.ch8_readout, 2, 3)
+        self.master_layout.addWidget(self.ch3.label, 2, 0)
+        self.master_layout.addWidget(self.ch3.value, 2, 1)
+        self.master_layout.addWidget(self.ch8.label, 2, 2)
+        self.master_layout.addWidget(self.ch8.value, 2, 3)
         self.master_layout.addItem(self.vert_spacer, 3, 0, 1, 4)
 
         self.setLayout(self.master_layout)
@@ -500,7 +494,7 @@ class CustomPowerSupplyWidget(hc.Instrument):
         self.service_timer.start(1000)
 
     def settings_to_UI(self):
-        self.caen_edit.setText(self.settings["CAEN_V_SET"])
+        self.caen_input.setText(self.settings["CAEN_V_SET"])
         self.update_caen()
 
     def update_from_caen(self):
@@ -518,26 +512,26 @@ class CustomPowerSupplyWidget(hc.Instrument):
         )
 
         if volt_set3 is not None and volt_set8 is not None:
-            if QApplication.focusWidget() is not self.caen_edit:
+            if QApplication.focusWidget() is not self.caen_input.edit:
                 if volt_set3 == volt_set8 and volt_set3 != self.settings["CAEN_V_SET"]:
-                    self.caen_edit.setText(volt_set3)
+                    self.caen_input.setText(volt_set3)
                 else:
-                    self.caen_edit.setText("")
+                    self.caen_input.setText("")
 
         if volt_read3 is not None:
-            self.ch3_readout.setText(volt_read3)
+            self.ch3.setText(volt_read3)
 
         if volt_read8 is not None:
-            self.ch8_readout.setText(volt_read8)
+            self.ch8.setText(volt_read8)
 
     def default_state(self):
         return {"CAEN_V_SET": ""}
 
-    def update_caen(self):
-        self.settings["CAEN_V_SET"] = self.caen_edit.text()
+    def update_caen(self, settings="", value=""):
+        self.settings["CAEN_V_SET"] = self.caen_input.text()
 
-        self.caen.remote_update_setting("CH3_V_SET", self.caen_edit.text())
-        self.caen.remote_update_setting("CH8_V_SET", self.caen_edit.text())
+        self.caen.remote_update_setting("CH3_V_SET", self.caen_input.text())
+        self.caen.remote_update_setting("CH8_V_SET", self.caen_input.text())
 
 
 class CustomControlWidget(QGroupBox):
@@ -549,68 +543,45 @@ class CustomControlWidget(QGroupBox):
         self.arc = arc_dg
         self.app = app
 
-        self.plasma_timing_label = QLabel()
-        self.plasma_timing_label.setPixmap(
-            hc.load_icon("plasma_source_timing_settings_label.svg")
-        )
-        self.plasma_timing_label.setAlignment(
-            QtCore.Qt.AlignVCenter | QtCore.Qt.AlignHCenter
+        self.plasma_timing_header = hc.QHeader(
+            "plasma_source_timing_settings_label.svg"
         )
 
-        self.filament_label = QLabel("Filament duration (sec): ")
-
-        self.filament_edit = QLineEdit()
-        self.filament_edit.setValidator(QDoubleValidator())
-        self.filament_edit.editingFinished.connect(
-            lambda: self.filament.remote_update_setting(
-                "CH2_DELAY", self.filament_edit.text()
-            )
+        self.filament_duration = hc.QControl(
+            self.filament,
+            "CH2_DELAY",
+            "Filament duration (sec)",
+            validator=QDoubleValidator(),
         )
-        self.filament_edit.setText(self.filament.settings["CH2_DELAY"])
 
-        self.filament_amp_label = QLabel("Filament amplitude (a.u.): ")
-
-        self.filament_amp_edit = QLineEdit()
-        self.filament_amp_edit.setValidator(QDoubleValidator())
-        self.filament_amp_edit.editingFinished.connect(
-            lambda: self.filament.remote_update_setting(
-                "CH12_OUTPUT_AMPLITUDE", self.filament_amp_edit.text()
-            )
+        self.filament_amp = hc.QControl(
+            self.filament,
+            "CH12_OUTPUT_AMPLITUDE",
+            "Filament amplitude (a.u.)",
+            validator=QDoubleValidator(),
         )
-        self.filament_amp_edit.setText(self.filament.settings["CH12_OUTPUT_AMPLITUDE"])
 
-        self.spark_delay_label = QLabel("Spark delay (sec): ")
-
-        self.spark_delay_edit = QLineEdit()
-        self.spark_delay_edit.setValidator(QDoubleValidator())
-        self.spark_delay_edit.editingFinished.connect(
-            lambda: self.filament.remote_update_setting(
-                "CH3_DELAY", self.spark_delay_edit.text()
-            )
+        self.spark_delay = hc.QControl(
+            self.filament,
+            "CH3_DELAY",
+            "Spark delay (sec)",
+            validator=QDoubleValidator(),
         )
-        self.spark_delay_edit.setText(self.filament.settings["CH3_DELAY"])
 
-        self.spark_duration_label = QLabel("Spark duration (sec): ")
-
-        self.spark_duration_edit = QLineEdit()
-        self.spark_duration_edit.setValidator(QDoubleValidator())
-        self.spark_duration_edit.editingFinished.connect(
-            lambda: self.arc.remote_update_setting(
-                "CH4_DELAY", self.spark_duration_edit.text()
-            )
+        self.spark_duration = hc.QControl(
+            self.arc, "CH4_DELAY", "Spark duration (sec)", validator=QDoubleValidator()
         )
-        self.spark_duration_edit.setText(self.arc.settings["CH4_DELAY"])
 
         self.master_layout = QGridLayout()
-        self.master_layout.addWidget(self.plasma_timing_label, 0, 0, 1, 4)
-        self.master_layout.addWidget(self.filament_label, 1, 0)
-        self.master_layout.addWidget(self.filament_edit, 1, 1)
-        self.master_layout.addWidget(self.filament_amp_label, 1, 2)
-        self.master_layout.addWidget(self.filament_amp_edit, 1, 3)
-        self.master_layout.addWidget(self.spark_delay_label, 2, 0)
-        self.master_layout.addWidget(self.spark_delay_edit, 2, 1)
-        self.master_layout.addWidget(self.spark_duration_label, 2, 2)
-        self.master_layout.addWidget(self.spark_duration_edit, 2, 3)
+        self.master_layout.addWidget(self.plasma_timing_header, 0, 0, 1, 4)
+        self.master_layout.addWidget(self.filament_duration.label, 1, 0)
+        self.master_layout.addWidget(self.filament_duration.edit, 1, 1)
+        self.master_layout.addWidget(self.filament_amp.label, 1, 2)
+        self.master_layout.addWidget(self.filament_amp.edit, 1, 3)
+        self.master_layout.addWidget(self.spark_delay.label, 2, 0)
+        self.master_layout.addWidget(self.spark_delay.edit, 2, 1)
+        self.master_layout.addWidget(self.spark_duration.label, 2, 2)
+        self.master_layout.addWidget(self.spark_duration.edit, 2, 3)
 
         self.setLayout(self.master_layout)
 
@@ -881,50 +852,33 @@ class STS50Demo(hc.MainWindow):
             app, self.psu_caen_wdgt, "Main Tab PS Widget"
         )
 
-        # self.grid_ps_label_spacer = QSpacerItem(
-        #     10, 25, QSizePolicy.Minimum, QSizePolicy.Fixed
-        # )
+        self.grid_ps_header = hc.QHeader("grid_power_supplies_label.svg")
 
-        self.grid_ps_label = QLabel()
-        self.grid_ps_label.setPixmap(hc.load_icon("grid_power_supplies_label.svg"))
-        self.grid_ps_label.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
-
-        self.grid_plot_label = QLabel()
-        self.grid_plot_label.setPixmap(hc.load_icon("grid_monitor_label.svg"))
-        self.grid_plot_label.setAlignment(
-            QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter
+        self.grid_plot_header = hc.QHeader("grid_monitor_label.svg")
+        self.grid_plot_header.setSizePolicy(
+            QSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
         )
 
-        self.gas_flow_label = QLabel()
-        self.gas_flow_label.setPixmap(hc.load_icon("gas_flow_label.svg"))
-        self.gas_flow_label.setAlignment(QtCore.Qt.AlignHCenter)
+        self.gas_flow_header = hc.QHeader("gas_flow_label.svg")
 
         self.plot_wdgt_custom = hc.PlotTool(app, "Voltage Monitor")
         self.plot_wdgt_custom.set_dataset("High Voltage")
         self.plot_wdgt_custom.setSizePolicy(
             QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         )
-        self.grid_plot_label.setSizePolicy(
-            QSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
-        )
-
-        # self.main_bottom_spacer = QSpacerItem(
-        #     10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
-        # )
 
         self.tab0_layout = QGridLayout()
         self.tab0_layout.addWidget(self.custom_wdgt, 0, 0, 1, 2)
-        # self.tab0_layout.addItem(self.grid_ps_label_spacer, 1, 0)
 
-        self.tab0_layout.addWidget(self.grid_ps_label, 2, 0)
+        self.tab0_layout.addWidget(self.grid_ps_header, 2, 0)
         self.tab0_layout.addWidget(self.iomod_float_wdgt, 3, 0, 1, 1)
         self.tab0_layout.addWidget(self.iomod_usb_wdgt, 4, 0, 2, 1)
         self.tab0_layout.addWidget(self.custom_wdgt2, 6, 0)
 
-        self.tab0_layout.addWidget(self.gas_flow_label, 2, 1)
+        self.tab0_layout.addWidget(self.gas_flow_header, 2, 1)
         self.tab0_layout.addWidget(self.flow_ctrl, 3, 1)
         self.tab0_layout.addWidget(self.plot_wdgt_custom, 5, 1, 2, 1)
-        self.tab0_layout.addWidget(self.grid_plot_label, 4, 1)
+        self.tab0_layout.addWidget(self.grid_plot_header, 4, 1)
 
         self.tab0.setLayout(self.tab0_layout)
 
