@@ -5,7 +5,7 @@ import abc
 import sip
 
 from PyQt5.QtCore import QTimer
-from PyQt5.QtWidgets import QGroupBox
+from PyQt5.QtWidgets import QGroupBox, QGridLayout
 
 from .Comm import Comm
 
@@ -39,9 +39,9 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
         self.settings = OrderedDict()
         self.values = OrderedDict()
         self.values_unit = OrderedDict()
-        # a mapping from settings names to readable names
-        # these are used for example in the scanning widget
-        self.setting_names = {}
+        # list of QIndicators, QControls, ...
+        self.UIs = []
+        self.control_UIs = []
         self.app = app  # The main hc.app
         self.name = name
         self.backend = backend
@@ -498,3 +498,16 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
                 )
                 return None
         return rval
+
+    def autolayout_grid(self, grid=None, instrument=None, ncols=1, row_offset=0):
+        """Create a GridLayout of ``instruments``"""
+        if grid is None:
+            grid = QGridLayout()
+            self.grid = grid
+        L = len(self.UIs)
+        for i, ui in enumerate(self.UIs):
+            row = i // ncols + row_offset
+            col = i % ncols
+            grid.addWidget(ui.label, row, 2 * col)
+            grid.addWidget(ui.value, row, 2 * col + 1)
+        self.setLayout(grid)

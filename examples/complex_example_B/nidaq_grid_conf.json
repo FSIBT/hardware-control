@@ -3,21 +3,21 @@
         "DIR": "OUTPUT",
         "TYPE": "ANALOG",
         "ID_STR": "Mod1/ao0",
-        "LABEL": "Floating Rack Voltage (set):",
+        "LABEL": "Floating Rack Voltage (set)",
         "UNITS": "V"
     },
     "Grid_voltage_out": {
         "DIR": "OUTPUT",
         "TYPE": "ANALOG",
         "ID_STR": "Mod1/ao1",
-        "LABEL": "Grid Voltage (set):",
+        "LABEL": "Grid Voltage (set)",
         "UNITS": "V"
     },
     "Floating_rack_vmon_in": {
         "DIR": "INPUT",
         "TYPE": "ANALOG",
         "ID_STR": "Mod2/ai0",
-        "LABEL": "Floating Rack Current (read):",
+        "LABEL": "Floating Rack Current",
         "UNITS": "V",
         "OPTIONS": {
             "CHX_TERMINAL_CONFIG": "DIFF"
@@ -27,7 +27,7 @@
         "DIR": "INPUT",
         "TYPE": "ANALOG",
         "ID_STR": "Mod2/ai1",
-        "LABEL": "Floating Rack Voltage (read):",
+        "LABEL": "Floating Rack Voltage",
         "UNITS": "A",
         "OPTIONS": {
             "CHX_TERMINAL_CONFIG": "DIFF"
@@ -37,7 +37,7 @@
         "DIR": "INPUT",
         "TYPE": "ANALOG",
         "ID_STR": "Mod2/ai2",
-        "LABEL": "Grid Current (read):",
+        "LABEL": "Grid Current",
         "UNITS": "A",
         "OPTIONS": {
             "CHX_TERMINAL_CONFIG": "DIFF"
@@ -47,7 +47,7 @@
         "DIR": "INPUT",
         "TYPE": "ANALOG",
         "ID_STR": "Mod2/ai3",
-        "LABEL": "Grid Voltage (read):",
+        "LABEL": "Grid Voltage",
         "UNITS": "V",
         "OPTIONS": {
             "CHX_TERMINAL_CONFIG": "DIFF"
@@ -57,7 +57,8 @@
         "DIR": "INPUT",
         "TYPE": "ANALOG",
         "ID_STR": "Mod2/ai4",
-        "LABEL": "Pressure:",
+        "LABEL": "Pressure",
+	"use_prefix": false,
         "UNITS": "Torr",
         "OPTIONS": {
             "CHX_TERMINAL_CONFIG": "DIFF"

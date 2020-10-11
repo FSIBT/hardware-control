@@ -1,8 +1,9 @@
 import pkg_resources
 
 from PyQt5.QtWidgets import QPushButton, QLabel, QLineEdit, QComboBox
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtGui import QPixmap, QDoubleValidator
 from PyQt5 import QtCore
+from typing import List
 
 
 def load_icon(name: str) -> QPixmap:
@@ -35,17 +36,68 @@ def setButtonState(button: QPushButton, value):
                 button.toggle()
 
 
+def convert_prefix(value: str, decimals: int = 3) -> List[str]:
+    try:
+        value = float(value)
+    except:
+        return value, ""
+    if abs(value) < 1e-9:
+        return f"{round(value*1e12, decimals)}", "p"
+    if abs(value) < 1e-6:
+        return f"{round(value*1e9, decimals)}", "n"
+    if abs(value) < 1e-3:
+        return f"{round(value*1e6, decimals)}", "µ"
+    if abs(value) < 1:
+        return f"{round(value*1e3, decimals)}", "m"
+    if abs(value) < 1e3:
+        return f"{round(value, decimals)}", ""
+    if abs(value) < 1e6:
+        return f"{round(value*1e-3, decimals)}", "k"
+    if abs(value) < 1e9:
+        return f"{round(value*1e-6, decimals)}", "M"
+    if abs(value) < 1e12:
+        return f"{round(value*1e-9, decimals)}", "G"
+
+
 class QIndicator:
     """A simpel indicator widget for a label(QLabel) and a value (QLabel)."""
 
-    def __init__(self, label: str, label_align: str = "left") -> None:
+    def __init__(
+        self,
+        instrument,
+        label: str,
+        unit: str = "",
+        use_prefix: bool = True,
+        label_align: str = "left",
+        min_width: int = 10,
+        remote=None,
+    ) -> None:
+        self.instrument = instrument
         self.name = label
-        self.label = QLabel(f"{label} :")
+        self.unit = unit
+        self.use_prefix = use_prefix
+        self.min_width = min_width
+        self.remote = remote
+
+        self.label = QLabel(f"{label}: ")
         self.value = QLabel("")
         if label_align == "right":
             self.label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
+        self.instrument.UIs.append(self)
+
     def setText(self, text: str) -> None:
+        if self.unit:
+            if self.use_prefix:
+                text, prefix = convert_prefix(text)
+                text = f"{text} {prefix}{self.unit}"
+            else:
+                try:
+                    text = f"{float(text):.3g} {self.unit}"
+                except:
+                    text = f"{text} {self.unit}"
+        if self.min_width:
+            text = text.rjust(self.min_width)
         self.value.setText(text)
 
 
@@ -67,52 +119,72 @@ class QControl:
         setting,
         label: str,
         label_align="left",
-        validator=None,
+        validator=QDoubleValidator,
         update_function=None,
-        remote=True,
+        remote=None,
     ):
 
         self.instrument = inst
         self.setting = setting
         self.name = label
+        self.remote = remote
+        if remote:
+            self.remote_instrument, self.remote_setting = remote
+        self.pre_update_hook = []
+        self.update_function = update_function
 
         self.label = QLabel(f"{label}: ")
         if label_align == "right":
             self.label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
-        self.edit = QLineEdit()
-        if validator:
-            self.edit.setValidator(validator)
+        self.value = QLineEdit()
+        if validator is not None:
+            self.value.setValidator(validator())
 
-        self.edit.setText(self.instrument.settings[self.setting])
-
-        if update_function:
-            self.edit.editingFinished.connect(update_function)
+        # self.instrument.settings might not be initialized correctly
+        if self.setting in self.instrument.settings:
+            self.value.setText(self.instrument.settings[self.setting])
         else:
-            if remote:
-                self.edit.editingFinished.connect(
-                    lambda: self.instrument.remote_update_setting(
-                        self.setting, self.edit.text()
-                    )
-                )
-            else:
-                self.edit.editingFinished.connect(
-                    lambda: self.instrument.update_setting(
-                        self.setting, self.edit.text()
-                    )
-                )
+            self.value.setText("----")
+
+        self.value.editingFinished.connect(self.value_change)
+
+        self.instrument.UIs.append(self)
+        self.instrument.control_UIs.append(self)
+
+    def value_change(self) -> None:
+        value = self.value.text()
+        setting = self.setting
+
+        for f in self.pre_update_hook:
+            setting, value = f(setting, value)
+        if value is None:
+            return
+
+        if self.update_function:
+            self.update_function(setting, value)
+            return
+        self.instrument.update_setting(setting, value)
+        if self.remote:
+            self.remote_instrument.remote_update_setting(self.remote_setting, value)
+
+    def update_from_remote(self) -> None:
+        if self.remote is None:
+            return
+        value = self.remote_instrument.settings[self.remote_setting]
+        self.setText(value)
 
     def text(self) -> str:
-        return self.edit.text()
+        return self.value.text()
 
     def setText(self, text: str) -> None:
-        self.edit.setText(text)
+        self.value.setText(text)
 
-    def settings_to_UI(self):
-        self.edit.setText(self.instrument.settings[self.setting])
+    def settings_to_UI(self) -> None:
+        self.value.setText(self.instrument.settings[self.setting])
 
     def setEnabled(self, value: bool) -> None:
-        self.edit.setEnabled(value)
+        self.value.setEnabled(value)
 
 
 class QControlCombo:
@@ -133,7 +205,7 @@ class QControlCombo:
         items,
         label_align: str = "left",
         update_function=None,
-        remote: bool = True,
+        remote=None,
     ):
 
         self.instrument = inst
@@ -144,24 +216,27 @@ class QControlCombo:
         self.pre_update_hook = []
         self.update_function = update_function
         self.remote = remote
+        if remote:
+            self.remote_instrument, self.remote_setting = remote
 
         self.label = QLabel(f"{label}: ")
         if label_align == "right":
             self.label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
-        self.combo = QComboBox()
+        self.value = QComboBox()
 
-        self.combo.addItems(self.items)
-        self.combo.setCurrentText(self.items[0])
+        self.value.addItems(self.items)
+        self.value.setCurrentText(self.items[0])
 
-        self.combo.currentIndexChanged.connect(self.value_change)
+        self.value.currentIndexChanged.connect(self.value_change)
+        self.instrument.UIs.append(self)
 
     def value_change(self) -> None:
-        value = self.combo.currentText().upper()
+        value = self.value.currentText().upper()
         setting = self.setting
 
         for f in self.pre_update_hook:
-            value, setting = f(value, setting)
+            setting, value = f(setting, value)
         if value is None:
             return
 
@@ -174,16 +249,16 @@ class QControlCombo:
         self.instrument.update_setting(setting, value)
 
     def currentText(self) -> str:
-        return self.combo.currentText()
+        return self.value.currentText()
 
     def setCurrentText(self, text: str) -> None:
-        self.combo.setCurrentText(text)
+        self.value.setCurrentText(text)
 
     def settings_to_UI(self) -> None:
-        self.combo.setCurrentText(self.instrument.settings[self.setting])
+        self.value.setCurrentText(self.instrument.settings[self.setting])
 
     def setEnabled(self, value: bool) -> None:
-        self.combo.setEnabled(value)
+        self.value.setEnabled(value)
 
 
 class QHeader(QLabel):

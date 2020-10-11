@@ -164,8 +164,8 @@ class ScanWidget(QGroupBox):
 
         self.pause_label_before = QLabel("Pause before (sec):")
         self.pause_label_after = QLabel("Pause after (sec):")
-        self.pause_timer_label_before = QLabel("0")
-        self.pause_timer_label_after = QLabel("0")
+        self.pause_timer_label_before = QLabel("0.0")
+        self.pause_timer_label_after = QLabel("0.0")
         self.pause_label_before.setAlignment(
             QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
         )
@@ -277,7 +277,7 @@ class ScanWidget(QGroupBox):
         self.scan_instrument = self.app.get_instrument_by_name(inst)
 
         if self.scan_instrument:
-            params = list(self.scan_instrument.setting_names.keys())
+            params = list(x.name for x in self.scan_instrument.control_UIs)
             logger.debug(f"Added {len(params)} items to parameter dropdown.")
         else:
             logger.error(f"Couldn't find instrument '{inst}'")
@@ -289,8 +289,9 @@ class ScanWidget(QGroupBox):
     def set_parameter(self, parameter: str) -> None:
         if self.scan_instrument is None:
             return
-        if parameter in self.scan_instrument.setting_names:
-            self.scan_parameter = self.scan_instrument.setting_names[parameter]
+        for ui in self.scan_instrument.control_UIs:
+            if ui.name == parameter:
+                self.scan_parameter = ui.setting
 
     def set_values(self, values: str) -> None:
         self.values = values
@@ -346,10 +347,9 @@ class ScanWidget(QGroupBox):
         def pause():
             time_left = end_time - time.time()
             if time_left > 0:
-                label = "{time_left:.2}"
-                self.pause_timer_label_after.setText(label.format(time_left=time_left))
+                self.pause_timer_label_after.setText(f"{time_left:.1f}")
             else:
-                self.pause_timer_label_after.setText("0")
+                self.pause_timer_label_after.setText("0.0")
                 self.scan_timer.stop()
                 self.start_cycle()
 
@@ -374,8 +374,8 @@ class ScanWidget(QGroupBox):
 
     def stop_scan(self):
         self.scan_timer.stop()
-        self.pause_timer_label_before.setText("0")
-        self.pause_timer_label_after.setText("0")
+        self.pause_timer_label_before.setText("0.0")
+        self.pause_timer_label_after.setText("0.0")
         self.scan_button.setEnabled(True)
         self.stop_button.setEnabled(False)
         self.progress_bar.setValue(float(self.scan_progress))
@@ -408,10 +408,9 @@ class ScanWidget(QGroupBox):
         def pause():
             time_left = end_time - time.time()
             if time_left > 0:
-                label = "{time_left:.2}"
-                self.pause_timer_label_before.setText(label.format(time_left=time_left))
+                self.pause_timer_label_before.setText(f"{time_left:.1f}")
             else:
-                self.pause_timer_label_before.setText("0")
+                self.pause_timer_label_before.setText("0.0")
                 self.scan_timer.stop()
                 self.scan()
 
@@ -437,7 +436,7 @@ class ScanWidget(QGroupBox):
         for inst in self.app.instruments:
             if inst.ignore_control:
                 continue
-            if not inst.setting_names:
+            if not inst.control_UIs:
                 continue
             names.append(inst.name)
         self.instrument_drop.addItems(names)

@@ -3,7 +3,7 @@
         "DIR": "OUTPUT",
         "TYPE": "Analog",
         "ID_STR": "Mod7/ao4",
-        "LABEL": "Extraction Voltage (set):",
+        "LABEL": "Extraction Voltage (set)",
         "UNITS": "V",
         "OPTIONS": {
             "CHX_V_MAX": "10",
@@ -14,7 +14,7 @@
         "DIR": "INPUT",
         "TYPE": "Analog",
         "ID_STR": "Mod6/ai6",
-        "LABEL": "Extraction Current:",
+        "LABEL": "Extraction Current",
         "UNITS": "A",
         "OPTIONS": {
             "CHX_TERMINAL_CONFIG": "DIFF"
@@ -24,7 +24,7 @@
         "DIR": "INPUT",
         "TYPE": "Analog",
         "ID_STR": "Mod6/ai7",
-        "LABEL": "Extraction Voltage:",
+        "LABEL": "Extraction Voltage",
         "UNITS": "V",
         "OPTIONS": {
             "CHX_TERMINAL_CONFIG": "DIFF"

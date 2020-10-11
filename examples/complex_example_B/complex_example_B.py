@@ -174,8 +174,11 @@ def trigger_function(app):
     max_t = 0
     for cw in app.main_window.trig1_ctrl.channel_widgets:
 
-        # Get text from field
-        delay_text = cw.time_edit.text()
+        # Get text from field, not all channels have a delay though
+        try:
+            delay_text = cw.time_delay.text()
+        except:
+            continue
 
         # Convert text to float
         try:
@@ -451,11 +454,11 @@ class CustomPowerSupplyWidget(hc.Instrument):
         self.main_header = hc.QHeader("power_supply_controls_label.svg")
 
         self.caen_input = hc.QControl(
-            self.caen,
-            "CH3_V_SET",
+            self,
+            "CAEN_V_SET",
             "CAEN CH 3 & 8 Voltage (V)",
-            validator=QDoubleValidator(),
             update_function=self.update_caen,
+            remote=False,
         )
 
         self.horiz_spacer = QSpacerItem(
@@ -472,13 +475,13 @@ class CustomPowerSupplyWidget(hc.Instrument):
             10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
         )
 
-        self.ch3 = hc.QIndicator("CAEN CH3 Vout (V)")
-        self.ch8 = hc.QIndicator("CAEN CH8 Vout (V)")
+        self.ch3 = hc.QIndicator(self, "CAEN CH3 Vout", unit="V")
+        self.ch8 = hc.QIndicator(self, "CAEN CH8 Vout", unit="V")
 
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.main_header, 0, 0, 1, 4)
         self.master_layout.addWidget(self.caen_input.label, 1, 0)
-        self.master_layout.addWidget(self.caen_input.edit, 1, 1)
+        self.master_layout.addWidget(self.caen_input.value, 1, 1)
         self.master_layout.addItem(self.horiz_spacer, 1, 2)
         self.master_layout.addWidget(self.power_button, 1, 3)
         self.master_layout.addWidget(self.ch3.label, 2, 0)
@@ -494,7 +497,7 @@ class CustomPowerSupplyWidget(hc.Instrument):
         self.service_timer.start(1000)
 
     def settings_to_UI(self):
-        self.caen_input.setText(self.settings["CAEN_V_SET"])
+        self.caen_input.settings_to_UI()
         self.update_caen()
 
     def update_from_caen(self):
@@ -512,7 +515,7 @@ class CustomPowerSupplyWidget(hc.Instrument):
         )
 
         if volt_set3 is not None and volt_set8 is not None:
-            if QApplication.focusWidget() is not self.caen_input.edit:
+            if QApplication.focusWidget() is not self.caen_input.value:
                 if volt_set3 == volt_set8 and volt_set3 != self.settings["CAEN_V_SET"]:
                     self.caen_input.setText(volt_set3)
                 else:
@@ -528,16 +531,16 @@ class CustomPowerSupplyWidget(hc.Instrument):
         return {"CAEN_V_SET": ""}
 
     def update_caen(self, settings="", value=""):
-        self.settings["CAEN_V_SET"] = self.caen_input.text()
+        if not value:
+            value = self.settings["CAEN_V_SET"]
+        self.caen.remote_update_setting("CH3_V_SET", value)
+        self.caen.remote_update_setting("CH8_V_SET", value)
 
-        self.caen.remote_update_setting("CH3_V_SET", self.caen_input.text())
-        self.caen.remote_update_setting("CH8_V_SET", self.caen_input.text())
 
-
-class CustomControlWidget(QGroupBox):
+class CustomControlWidget(hc.Instrument):
     def __init__(self, app, filament_dg, arc_dg, name="Timing Control"):
 
-        super().__init__()
+        super().__init__(app, name)
 
         self.filament = filament_dg
         self.arc = arc_dg
@@ -548,42 +551,44 @@ class CustomControlWidget(QGroupBox):
         )
 
         self.filament_duration = hc.QControl(
-            self.filament,
-            "CH2_DELAY",
+            self,
+            "FIL_DURATION",
             "Filament duration (sec)",
-            validator=QDoubleValidator(),
+            remote=[self.filament, "CH2_DELAY"],
         )
 
         self.filament_amp = hc.QControl(
-            self.filament,
-            "CH12_OUTPUT_AMPLITUDE",
+            self,
+            "FIL_AMP",
             "Filament amplitude (a.u.)",
-            validator=QDoubleValidator(),
+            remote=[self.filament, "CH12_OUTPUT_AMPLITUDE",],
         )
 
-        self.spark_delay = hc.QControl(
-            self.filament,
-            "CH3_DELAY",
-            "Spark delay (sec)",
-            validator=QDoubleValidator(),
+        self.arc_delay = hc.QControl(
+            self, "ARC_DELAY", "Arc delay (sec)", remote=[self.filament, "CH3_DELAY",]
         )
 
-        self.spark_duration = hc.QControl(
-            self.arc, "CH4_DELAY", "Spark duration (sec)", validator=QDoubleValidator()
+        self.arc_duration = hc.QControl(
+            self, "ARC_DURATION", "Arc duration (sec)", remote=[self.arc, "CH4_DELAY",],
         )
 
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.plasma_timing_header, 0, 0, 1, 4)
-        self.master_layout.addWidget(self.filament_duration.label, 1, 0)
-        self.master_layout.addWidget(self.filament_duration.edit, 1, 1)
-        self.master_layout.addWidget(self.filament_amp.label, 1, 2)
-        self.master_layout.addWidget(self.filament_amp.edit, 1, 3)
-        self.master_layout.addWidget(self.spark_delay.label, 2, 0)
-        self.master_layout.addWidget(self.spark_delay.edit, 2, 1)
-        self.master_layout.addWidget(self.spark_duration.label, 2, 2)
-        self.master_layout.addWidget(self.spark_duration.edit, 2, 3)
+        self.autolayout_grid(self.master_layout, ncols=2, row_offset=1)
+        self.settings = self.default_state()
+        self.update_from_remote()
 
-        self.setLayout(self.master_layout)
+    def update_from_remote(self):
+        for ui in self.UIs:
+            if isinstance(ui, hc.QControl):
+                ui.update_from_remote()
+
+    def settings_to_UI(self):
+        for ui in self.UIs:
+            ui.settings_to_UI()
+
+    def default_state(self):
+        return {"FIL_DURATION": "", "FIL_AMP": "", "ARC_DELAY": "", "ARC_DURATION": ""}
 
 
 class STS50Demo(hc.MainWindow):

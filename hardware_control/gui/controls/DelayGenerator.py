@@ -57,17 +57,16 @@ class DelayGenerator(Instrument):
             "TRIGGER_MODE",
             "Trigger Mode",
             ["Internal", "External", "Single", "Burst"],
-            remote=False,
         )
         self.trig_mode.label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
         self.trig_edge = QControlCombo(
-            self, "TRIGGER_EDGE", "Trigger Edge", ["Positive", "Negative"], remote=False
+            self, "TRIGGER_EDGE", "Trigger Edge", ["Positive", "Negative"]
         )
         self.trig_edge.label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
         self.trig_impedance = QControlCombo(
-            self, "EXT_TRIG_ZIN", "Ext. Trigger Zin", ["50 Ohms", "Hi-Z"], remote=False
+            self, "EXT_TRIG_ZIN", "Ext. Trigger Zin", ["50 Ohms", "Hi-Z"],
         )
         self.trig_impedance.label.setAlignment(
             QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
@@ -152,12 +151,12 @@ class DelayGenerator(Instrument):
 
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.trig_mode.label, 0, 0)
-        self.master_layout.addWidget(self.trig_mode.combo, 0, 1)
+        self.master_layout.addWidget(self.trig_mode.value, 0, 1)
         self.master_layout.addWidget(self.trig_impedance.label, 0, 2)
-        self.master_layout.addWidget(self.trig_impedance.combo, 0, 3)
+        self.master_layout.addWidget(self.trig_impedance.value, 0, 3)
 
         self.master_layout.addWidget(self.trig_edge.label, 1, 0)
-        self.master_layout.addWidget(self.trig_edge.combo, 1, 1)
+        self.master_layout.addWidget(self.trig_edge.value, 1, 1)
         self.master_layout.addWidget(self.trig_lev_label, 1, 2)
         self.master_layout.addWidget(self.trig_lev_edit, 1, 3)
 
@@ -269,30 +268,18 @@ class DelayChannelWidget(QWidget):
 
         if channel not in [12, 34]:
             self.time_delay = QControl(
-                self.main_widget,
-                f"CH{self.channel}_DELAY",
-                "t_offset [s]",
-                validator=QDoubleValidator(),
-                remote=False,
+                self.main_widget, f"CH{self.channel}_DELAY", "t_offset [s]",
             )
 
         rels = ["Trig", "A", "B", "C", "D", "T0"]
         if channel not in [12, 34]:
             rels.remove(channel_str.title())
             self.relative = QControlCombo(
-                self.main_widget,
-                f"CH{self.channel}_RELATIVE",
-                "Relative to",
-                rels,
-                remote=False,
+                self.main_widget, f"CH{self.channel}_RELATIVE", "Relative to", rels,
             )
 
         self.volt = QControl(
-            self.main_widget,
-            f"CH{self.channel}_OUTPUT_AMPLITUDE",
-            "High Level (V)",
-            validator=QDoubleValidator(),
-            remote=False,
+            self.main_widget, f"CH{self.channel}_OUTPUT_AMPLITUDE", "High Level (V)",
         )
         self.volt.setEnabled(False)
 
@@ -301,7 +288,6 @@ class DelayChannelWidget(QWidget):
             f"CH{self.channel}_OUTPUT_MODE",
             "Output mode",
             ["TTL", "Voltage", "NIM", "ECL"],
-            remote=False,
         )
         self.level.pre_update_hook.append(self.set_output_level_hook)
 
@@ -309,14 +295,14 @@ class DelayChannelWidget(QWidget):
         self.channel_layout.addWidget(self.channel_label, 0, 0, 1, 2)
         if self.channel not in [12, 34]:
             self.channel_layout.addWidget(self.time_delay.label, 1, 0)
-            self.channel_layout.addWidget(self.time_delay.edit, 1, 1)
+            self.channel_layout.addWidget(self.time_delay.value, 1, 1)
             self.channel_layout.addWidget(self.relative.label, 2, 0)
-            self.channel_layout.addWidget(self.relative.combo, 2, 1)
+            self.channel_layout.addWidget(self.relative.value, 2, 1)
 
         self.channel_layout.addWidget(self.level.label, 3, 0)
-        self.channel_layout.addWidget(self.level.combo, 3, 1)
+        self.channel_layout.addWidget(self.level.value, 3, 1)
         self.channel_layout.addWidget(self.volt.label, 4, 0)
-        self.channel_layout.addWidget(self.volt.edit, 4, 1)
+        self.channel_layout.addWidget(self.volt.value, 4, 1)
         self.setLayout(self.channel_layout)
 
         self.settings_to_UI()
@@ -331,7 +317,7 @@ class DelayChannelWidget(QWidget):
         self.level.setCurrentText(mode.title())
         self.volt.settings_to_UI()
 
-    def set_output_level_hook(self, value, setting):
+    def set_output_level_hook(self, setting, value):
         if value is None:
             return
 
@@ -340,4 +326,4 @@ class DelayChannelWidget(QWidget):
             value = "VAR"
         else:
             self.volt.setEnabled(False)
-        return value, setting
+        return setting, value

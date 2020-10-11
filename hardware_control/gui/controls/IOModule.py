@@ -18,8 +18,8 @@ from PyQt5.QtWidgets import (
     QSizePolicy,
 )
 
-from ...utility import remove_end_carriage_return, apply_to_label
-from ..widgets import load_icon, setButtonState
+from ...utility import remove_end_carriage_return
+from ..widgets import load_icon, setButtonState, QControl, QIndicator
 from ..base import Instrument
 
 
@@ -113,7 +113,7 @@ class IOModule(Instrument):
                 continue
 
             c_dict = self.ensure_all_fields(c_dict)
-
+            kwargs = {}
             if c_dict["DIR"] == "OUTPUT":
                 if c_dict["TYPE"] == "DIGITAL":
                     create_widget_function = DigitalOutputChannel
@@ -128,6 +128,8 @@ class IOModule(Instrument):
                 else:
                     create_widget_function = AnalogInputChannel
                     list_of_widgets = self.an_in_channels
+                    if "use_prefix" in c_dict:
+                        kwargs["use_prefix"] = c_dict["use_prefix"]
 
             last_wdgt = create_widget_function(
                 self,
@@ -135,6 +137,7 @@ class IOModule(Instrument):
                 c_dict["UNITS"],
                 c_dict["LABEL"],
                 show_ID_labels=show_ID_labels,
+                **kwargs,
             )
             list_of_widgets.append(last_wdgt)
 
@@ -218,7 +221,13 @@ class IOModule(Instrument):
 
 class AnalogInputChannel(QGroupBox):
     def __init__(
-        self, control, channel, units="V", label="Voltage: ", show_ID_labels=True,
+        self,
+        control,
+        channel,
+        units="V",
+        label="Voltage",
+        show_ID_labels=True,
+        use_prefix=True,
     ):
 
         if show_ID_labels:
@@ -235,43 +244,24 @@ class AnalogInputChannel(QGroupBox):
             label = ""
         self.units = units
 
-        self.label_str = label
-        self.param_label = QLabel(self.label_str)
-        if not self.label_str.endswith(": "):
-            self.label_str = self.label_str + ": "
-            self.param_label.setText(self.label_str)
-
-        self.measurement_label = QLabel(f"---- {self.units}")
-        self.measurement_label.setFixedWidth(120)
+        self.input = QIndicator(self.control, label, units, use_prefix=use_prefix)
 
         self.main_layout = QGridLayout()
-        self.main_layout.addWidget(self.param_label, 0, 0)
-        self.main_layout.addWidget(self.measurement_label, 0, 1)
+        self.main_layout.addWidget(self.input.label, 0, 0)
+        self.main_layout.addWidget(self.input.value, 0, 1)
 
         self.setLayout(self.main_layout)
 
     def update_readout(self):
-        # Query value
         self.control.command(f"CH{self.channel}_ANALOG_READ?")
 
         try:
-
-            # Read return value
             V_meas = remove_end_carriage_return(
                 self.control.read_values(f"CH{self.channel}_ANALOG_READ")
             )
-
-            # Update label
-            apply_to_label(
-                self.measurement_label,
-                V_meas,
-                self.units,
-                DISP_DECIMAL_PLACES,
-                LABEL_MIN_WIDTH,
-            )
-
         except Exception:
-            self.measurement_label.setText(f"---- {self.units}")
+            V_meas = "----"
+        self.input.setText(V_meas)
 
 
 class AnalogOutputChannel(QGroupBox):
@@ -280,7 +270,7 @@ class AnalogOutputChannel(QGroupBox):
         control,
         channel,
         units="V",
-        label="Set voltage: ",
+        label="Voltage (set)",
         set_to_zero_button=False,
         show_ID_labels=True,
     ):
@@ -299,24 +289,13 @@ class AnalogOutputChannel(QGroupBox):
             label = ""
         self.units = units
 
-        self.control.setting_names[label] = f"CH{self.channel}_ANALOG_WRITE"
-
         self.set_to_zero_button = set_to_zero_button
-
-        self.edit_label = QLabel(label)
-        self.edit_label.setToolTip(
-            f"{self.control.backend.connection_addr}{self.channel}"
-        )
 
         self.edit_spacer = QSpacerItem(
             10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
         )
 
-        self.editbox = QLineEdit()
-        self.editbox.setValidator(QDoubleValidator())
-        self.editbox.setFixedWidth(100)
-        self.editbox.editingFinished.connect(self.set_voltage)
-        self.editbox.setText("0")
+        self.edit = QControl(self.control, f"CH{self.channel}_ANALOG_WRITE", label,)
 
         self.unit_label = QLabel(f" {self.units}")
 
@@ -326,25 +305,20 @@ class AnalogOutputChannel(QGroupBox):
             self.to_zero_but.clicked.connect(lambda: self.set_to_zero())
 
         self.main_layout = QGridLayout()
-        self.main_layout.addWidget(self.edit_label, 0, 0)
-        self.main_layout.addWidget(self.editbox, 0, 1)
+        self.main_layout.addWidget(self.edit.label, 0, 0)
+        self.main_layout.addWidget(self.edit.value, 0, 1)
         self.main_layout.addWidget(self.unit_label, 0, 2)
         if self.set_to_zero_button:
             self.main_layout.addWidget(self.to_zero_but, 1, 1, 1, 2)
 
         self.setLayout(self.main_layout)
 
-    def set_voltage(self):
-        self.control.update_setting(
-            f"CH{self.channel}_ANALOG_WRITE", self.editbox.text()
-        )
-
     def set_to_zero(self):
-        self.editbox.setText("0")
+        self.edit.setText("0")
         self.control.update_setting(f"CH{self.channel}_ANALOG_WRITE", "0")
 
     def settings_to_UI(self):
-        self.editbox.setText(self.control.settings[f"CH{self.channel}_ANALOG_WRITE"])
+        self.edit.settings_to_UI()
 
 
 class DigitalInputChannel(QGroupBox):
@@ -431,8 +405,6 @@ class DigitalOutputChannel(QGroupBox):
         if label is None:
             label = ""
         self.units = units
-
-        self.control.setting_names[label] = f"CH{self.channel}_DIGITAL_WRITE"
 
         self.edit_spacer = QSpacerItem(
             10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding

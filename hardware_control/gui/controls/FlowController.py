@@ -33,19 +33,10 @@ class FlowController(Instrument):
 
         self.settings = self.default_state()
 
-        self.setting_names["Flow rate"] = "RATE"
-
         # *************************Create GUI************************
 
         # ****** DEFINE TEXT BOXES
-        self.rate = QControl(
-            self, "RATE", "Flow rate (sccm)", validator=QDoubleValidator(), remote=False
-        )
-
-        self.form = QFormLayout()
-        self.form.addRow(f"{self.rate.name}: ", self.rate.edit)
-
-        self.lower_grid = QGridLayout()
+        self.rate = QControl(self, "RATE", "Flow rate (sccm)")
 
         # ******* DEFINE DROPDOWNS + READOUT
         self.gas = QControlCombo(
@@ -54,36 +45,16 @@ class FlowController(Instrument):
             "Gas",
             ["Argon", "Helium", "Hydrogen", "Air"],
             label_align="right",
-            remote=False,
         )
 
-        self.pressure = QIndicator("Pressure", label_align="right")
-
-        self.pressure_label_fix1 = QLabel(" Torr")
-        self.pressure_label_fix1.setAlignment(
-            QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
+        self.pressure = QIndicator(
+            self, "Pressure", unit="Torr", use_prefix=False, label_align="right",
+        )
+        self.flow = QIndicator(
+            self, "Flow", unit="sccm", use_prefix=False, label_align="right",
         )
 
-        self.flow = QIndicator("Flow", label_align="right")
-
-        self.flow_label_fix1 = QLabel(" sccm")
-        self.flow_label_fix1.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
-
-        # Add widgets to grid layout
-        self.lower_grid.addWidget(self.gas.label, 0, 0, 1, 1)
-        self.lower_grid.addWidget(self.gas.combo, 0, 1, 1, 2)
-        self.lower_grid.addWidget(self.pressure.label, 1, 0, 1, 1)
-        self.lower_grid.addWidget(self.pressure.value, 1, 1, 1, 1)
-        self.lower_grid.addWidget(self.pressure_label_fix1, 1, 2, 1, 1)
-        self.lower_grid.addWidget(self.flow.label, 2, 0, 1, 1)
-        self.lower_grid.addWidget(self.flow.value, 2, 1, 1, 1)
-        self.lower_grid.addWidget(self.flow_label_fix1, 2, 2, 1, 1)
-
-        # ******* DEFINE OVERALL LAYOUT
-        self.master_layout = QGridLayout()
-        self.master_layout.addLayout(self.form, 0, 0)
-        self.master_layout.addLayout(self.lower_grid, 1, 0)
-        self.setLayout(self.master_layout)
+        self.autolayout_grid()
 
         # Write state to scope - synch scope with GUI
         self.send_state()
