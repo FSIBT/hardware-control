@@ -81,7 +81,9 @@ class App(QApplication):
 
         self.instruments.append(instr)
 
-    def add_save_format(self, name: str, format: Callable[Dataset, str]) -> None:
+    def add_save_format(
+        self, name: str, format: Callable[[Dataset, str], None]
+    ) -> None:
         """
         The callback function must accept two parameters:
             1st: Dataset object
