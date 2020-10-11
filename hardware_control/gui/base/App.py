@@ -1,11 +1,12 @@
 import json
 import logging
 from pathlib import Path
-from typing import Union
+from typing import Union, Callable
 
 from PyQt5.QtWidgets import QApplication
 
 from .Dataset import Dataset
+from .Instrument import Instrument
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +20,7 @@ class App(QApplication):
 
     """
 
-    def __init__(self, dummy=False):
+    def __init__(self, dummy: bool = False) -> None:
         # QApplication can take a list of strings, e.g. from sys.argv
         # we currently don't use this
         super().__init__([])
@@ -33,8 +34,8 @@ class App(QApplication):
         untitled_set = Dataset("Untitled")
         self.data_sets["Untitled"] = untitled_set
 
-    def get_instrument_by_name(self, name: str):
-        """Returns the instrument named 'name' in 'instruments' list
+    def get_instrument_by_name(self, name: str) -> Union[Instrument, None]:
+        """Returns the instrument named ``name`` from the ``instruments`` list
 
         Parameters
         ----------
@@ -44,7 +45,7 @@ class App(QApplication):
         Returns
         -------
         hc.Instrument
-            The instrument class or `None` if not found
+            The instrument class or ``None`` if not found
         """
 
         for inst in self.instruments:
@@ -53,7 +54,9 @@ class App(QApplication):
 
         return None
 
-    def get_instrument_value(self, instrument_name: str, value: str):
+    def get_instrument_value(
+        self, instrument_name: str, value: str
+    ) -> Union[str, None]:
 
         inst = self.get_instrument_by_name(instrument_name)
 
@@ -62,23 +65,23 @@ class App(QApplication):
 
         return inst.values.get(value, None)
 
-    def add_instrument(self, widget):
+    def add_instrument(self, instr: Instrument) -> None:
         """ Adds an hc.Instrument to self.instruments list
 
         Instruments must have unique names.
 
         Parameters
         ----------
-        widget
+        instr
             hc.Instrument to add to self.instruments list
         """
 
-        if widget.name in [x.name for x in self.instruments]:
-            raise KeyError(f"Intrument name '{widget.name}' is already present")
+        if instr.name in [x.name for x in self.instruments]:
+            raise KeyError(f"Intrument name '{instr.name}' is already present")
 
-        self.instruments.append(widget)
+        self.instruments.append(instr)
 
-    def add_save_format(self, name: str, format):
+    def add_save_format(self, name: str, format: Callable[Dataset, str]) -> None:
         """
         The callback function must accept two parameters:
             1st: Dataset object
@@ -102,7 +105,7 @@ class App(QApplication):
 
         self.additional_save_formats[name] = format
 
-    def save_settings(self, filename: Union[str, Path]):
+    def save_settings(self, filename: Union[str, Path]) -> None:
         """Save all settings as JSON.
 
         Copys the settings dictionaries from each instrument into a
@@ -130,7 +133,7 @@ class App(QApplication):
                 f"Failed to write file '{filename}'. State not saved.", exc_info=True
             )
 
-    def list_instruments(self):
+    def list_instruments(self) -> None:
         """ Prints a list of all instruments in self.instruments."""
 
         if not self.instruments:
@@ -141,7 +144,7 @@ class App(QApplication):
         for i in self.instruments:
             print(f"  {i}")
 
-    def check_instruments(self):
+    def check_instruments(self) -> None:
         """ Ensures all instruments conform to specifications"""
         for i in self.instruments:
             try:
@@ -153,7 +156,7 @@ class App(QApplication):
             if i.model is None:
                 logger.error(f"Instrument  {i} needs a .model")
 
-    def close(self):
+    def close(self) -> None:
         """ Closes the application
 
         Safely closes the application by disconnecting all instruments and saving
@@ -169,8 +172,7 @@ class App(QApplication):
             if self.data_sets[ds_key].autosave:
                 self.data_sets[ds_key].exec_autosave()
 
-
-    def load_state_from_file(self, filename: Union[str, Path]):
+    def load_state_from_file(self, filename: Union[str, Path]) -> None:
         """Reads a JSON file to overwrite instrument's settings dictionaries.
 
         Expectss JSON to be a dictionary of dictionaries. The
@@ -219,7 +221,7 @@ class App(QApplication):
                 # Write new setting to instrument's dictionary
                 instr.settings[param] = instr_settings[param]
 
-    def save_all_states(self, filename: Union[str, Path], pretty: bool = True):
+    def save_all_states(self, filename: Union[str, Path], pretty: bool = True) -> str:
         """ Saves the state of every instrument in 'self.instruments' to a file.
         If filename is 'None', does not save a file and instead returns would-be
         file contents as a string.
@@ -266,7 +268,7 @@ class App(QApplication):
 
         return ""
 
-    def settings_to_backends(self):
+    def settings_to_backends(self) -> None:
         """ Sends the front end's state to all backends
 
         Calls 'send_state' for each instrument in self.instruments, thus sending
@@ -277,7 +279,7 @@ class App(QApplication):
         for instr in self.instruments:
             instr.send_state()
 
-    def backends_to_settings(self):
+    def backends_to_settings(self) -> None:
         """ Overwrites all settings with the current values measured in the physical instrument.
 
         Calls 'read_state_from_backend' for each instrument, thus updating the
