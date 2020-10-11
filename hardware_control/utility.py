@@ -25,7 +25,7 @@ def change_units(x: float, base_unit: str, decimals: int = 3, min_width: int = -
 
 def apply_to_label(
     label, value, units: str = "", decimals: int = 3, min_width: int = -1
-):
+) -> None:
 
     if value is not None:
         try:
@@ -43,7 +43,7 @@ def apply_to_label(
     label.setText(new_str)
 
 
-def convertibleToFloat(input: str):
+def convertibleToFloat(input: str) -> bool:
     """ Checks if a string can be converted to a float and returns T/F """
 
     try:
@@ -60,7 +60,7 @@ def ensure_float(x):
         return "Invalid value"
 
 
-def remove_end_carriage_return(text: str):
+def remove_end_carriage_return(text: str) -> str:
     try:
         if text.endswith(r"\r"):
             return text[:-2]
