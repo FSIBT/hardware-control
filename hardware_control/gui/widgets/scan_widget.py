@@ -259,7 +259,7 @@ class ScanWidget(QGroupBox):
         # Create timer to do scan
         self.scan_timer = QTimer(self)
 
-    def browse_values_files(self):
+    def browse_values_files(self) -> None:
         # Use file dialog to get save location
         dlg = QFileDialog()
         name_tuple = dlg.getOpenFileName()
@@ -269,7 +269,7 @@ class ScanWidget(QGroupBox):
 
         self.values_file_edit.setText(filename)
 
-    def set_instrument(self, inst: str):
+    def set_instrument(self, inst: str) -> None:
         """Update the list of parameterts that can be scanned."""
         self.parameter_drop.clear()
         params = []
@@ -289,10 +289,10 @@ class ScanWidget(QGroupBox):
     def set_parameter(self, parameter: str):
         self.scan_parameter = parameter
 
-    def set_values(self, values: str):
+    def set_values(self, values: str) -> None:
         self.values = values
 
-    def action_changed(self, action: str):
+    def action_changed(self, action: str) -> None:
         self.scan_action = self.actions[action]
 
     def compute_values(self):

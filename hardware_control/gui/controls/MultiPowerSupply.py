@@ -310,12 +310,12 @@ class PowerSupplyChannel(QWidget):
     def __init__(
         self,
         channel: int,
-        main_widget,
-        show_VI_limits=False,
-        show_custom_labels=False,
-        show_status_panel=False,
-        hide_power_button=False,
-    ):
+        main_widget: Instrument,
+        show_VI_limits: bool = False,
+        show_custom_labels: bool = False,
+        show_status_panel: bool = False,
+        hide_power_button: bool = False,
+    ) -> None:
         super().__init__()
 
         self.channel = channel
