@@ -330,6 +330,9 @@ class PowerSupplyChannel(QWidget):
         align_left_center = QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
         align_right_center = QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
 
+        self.main_widget.setting_names[f"Ch{channel} V set"] = f"CH{channel}_V_SET"
+        self.main_widget.setting_names[f"Ch{channel} I set"] = f"CH{channel}_I_SET"
+
         # ************** DEFINE UI *********************#
         self.channel_label = QLabel()
         if self.channel <= 20 and not self.show_custom_labels:

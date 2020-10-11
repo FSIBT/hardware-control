@@ -39,6 +39,9 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
         self.settings = OrderedDict()
         self.values = OrderedDict()
         self.values_unit = OrderedDict()
+        # a mapping from settings names to readable names
+        # these are used for example in the scanning widget
+        self.setting_names = {}
         self.app = app  # The main hc.app
         self.name = name
         self.backend = backend

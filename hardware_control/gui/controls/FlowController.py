@@ -32,6 +32,8 @@ class FlowController(Instrument):
 
         self.settings = self.default_state()
 
+        self.setting_names["Flow rate"] = "RATE"
+
         # *************************Create GUI************************
 
         # ****** DEFINE TEXT BOXES

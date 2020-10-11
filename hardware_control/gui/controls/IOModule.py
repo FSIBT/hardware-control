@@ -299,6 +299,8 @@ class AnalogOutputChannel(QGroupBox):
             label = ""
         self.units = units
 
+        self.control.setting_names[label] = f"CH{self.channel}_ANALOG_WRITE"
+
         self.set_to_zero_button = set_to_zero_button
 
         self.edit_label = QLabel(label)
@@ -429,6 +431,8 @@ class DigitalOutputChannel(QGroupBox):
         if label is None:
             label = ""
         self.units = units
+
+        self.control.setting_names[label] = f"CH{self.channel}_DIGITAL_WRITE"
 
         self.edit_spacer = QSpacerItem(
             10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding

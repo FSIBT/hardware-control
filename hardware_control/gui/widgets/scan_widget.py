@@ -277,7 +277,7 @@ class ScanWidget(QGroupBox):
         self.scan_instrument = self.app.get_instrument_by_name(inst)
 
         if self.scan_instrument:
-            params = list(self.scan_instrument.settings.keys())
+            params = list(self.scan_instrument.setting_names.keys())
             logger.debug(f"Added {len(params)} items to parameter dropdown.")
         else:
             logger.error(f"Couldn't find instrument '{inst}'")
@@ -286,8 +286,11 @@ class ScanWidget(QGroupBox):
         self.scan_progress = 0
         self.progress_bar.setValue(self.scan_progress)
 
-    def set_parameter(self, parameter: str):
-        self.scan_parameter = parameter
+    def set_parameter(self, parameter: str) -> None:
+        if self.scan_instrument is None:
+            return
+        if parameter in self.scan_instrument.setting_names:
+            self.scan_parameter = self.scan_instrument.setting_names[parameter]
 
     def set_values(self, values: str) -> None:
         self.values = values
@@ -433,6 +436,8 @@ class ScanWidget(QGroupBox):
         names = []
         for inst in self.app.instruments:
             if inst.ignore_control:
+                continue
+            if not inst.setting_names:
                 continue
             names.append(inst.name)
         self.instrument_drop.addItems(names)
