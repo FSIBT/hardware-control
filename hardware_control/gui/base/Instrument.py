@@ -402,13 +402,11 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
         if retval == "SYNC_BACKEND":
             self.sync_backend_called()
 
-        sep_idx = retval.find("=")
-        if sep_idx != -1:  # Separator was found...
-            key = retval[0:sep_idx]
-            value = retval[sep_idx + 1 :]
-        else:  # If no separator, put under 'Misc'
-            key = "Misc"
-            value = retval
+        split_values = retval.split("=", maxsplit=1)
+        if len(split_values) == 2:
+            key, value = split_values
+        else:
+            key, value = "Misc", retval
 
         value = call_hooks(self.update_values_hooks[key], key, value)
         if value is None:
