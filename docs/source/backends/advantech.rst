@@ -16,3 +16,11 @@ hardware_control.backends.advantech.Adam_6024 module
    :members:
    :undoc-members:
    :show-inheritance:
+
+hardware_control.backends.advantech.Adam_base module
+----------------------------------------------------
+
+.. automodule:: hardware_control.backends.advantech.Adam_base
+   :members:
+   :undoc-members:
+   :show-inheritance:
