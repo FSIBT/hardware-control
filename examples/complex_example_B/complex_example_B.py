@@ -380,28 +380,28 @@ def save_shot_format(dataset: hc.Dataset, filename: str) -> None:
         col_vals = []
         col_vals.append(header_datestamp)
         col_vals.append(
-            dataset.app.get_instrument_value("USB NI-DAC", "CHMod2/ai0_analog_read")
+            dataset.app.get_instrument_value("Power Supplies", "CHMod2/ai0_ANALOG_READ")
         )
         col_vals.append(
-            dataset.app.get_instrument_value("USB NI-DAC", "CHMod2/ai1_analog_read")
+            dataset.app.get_instrument_value("Power Supplies", "CHMod2/ai1_ANALOG_READ")
         )
         col_vals.append(
-            dataset.app.get_instrument_value("USB NI-DAC", "CHMod2/ai2_analog_read")
+            dataset.app.get_instrument_value("Power Supplies", "CHMod2/ai2_ANALOG_READ")
         )
         col_vals.append(
-            dataset.app.get_instrument_value("USB NI-DAC", "CHMod2/ai3_analog_read")
+            dataset.app.get_instrument_value("Power Supplies", "CHMod2/ai3_ANALOG_READ")
         )
         col_vals.append(
-            dataset.app.get_instrument_value("USB NI-DAC", "CHMod2/ai4_analog_read")
+            dataset.app.get_instrument_value("Power Supplies", "CHMod2/ai4_ANALOG_READ")
         )
         col_vals.append(
             dataset.app.get_instrument_value(
-                "Floating Rack Power Supplies", "CHMod6/ai6_analog_read"
+                "Power Supplies (floating rack)", "CHMod6/ai6_ANALOG_READ"
             )
         )
         col_vals.append(
             dataset.app.get_instrument_value(
-                "Floating Rack Power Supplies", "CHMod6/ai7_analog_read"
+                "Power Supplies (floating rack)", "CHMod6/ai7_ANALOG_READ"
             )
         )
 
@@ -796,25 +796,25 @@ class STS50Demo(hc.MainWindow):
         self.app.data_sets["Demo"].channel_names[":Current"] = "Itest"
 
         self.app.data_sets["High Voltage"].name_channel(
-            "USB NI-DAC:CHMod2/ai0_analog_read", "V float"
+            "Power Supplies:CHMod2/ai0_ANALOG_READ", "V float"
         )
         self.app.data_sets["High Voltage"].name_channel(
-            "USB NI-DAC:CHMod2/ai1_analog_read", "I float"
+            "Power Supplies:CHMod2/ai1_ANALOG_READ", "I float"
         )
         self.app.data_sets["High Voltage"].name_channel(
-            "USB NI-DAC:CHMod2/ai2_analog_read", "I grid"
+            "Power Supplies:CHMod2/ai2_ANALOG_READ", "I grid"
         )
         self.app.data_sets["High Voltage"].name_channel(
-            "USB NI-DAC:CHMod2/ai3_analog_read", "V grid"
+            "Power Supplies:CHMod2/ai3_ANALOG_READ", "V grid"
         )
         self.app.data_sets["High Voltage"].name_channel(
-            "USB NI-DAC:CHMod2/ai4_analog_read", "Pressure"
+            "Power Supplies:CHMod2/ai4_ANALOG_READ", "Pressure"
         )
         self.app.data_sets["High Voltage"].name_channel(
-            "USB NI-DAC:CHMod6/ai7_analog_read", "V extract"
+            "Power Supplies:CHMod6/ai7_ANALOG_READ", "V extract"
         )
         self.app.data_sets["High Voltage"].name_channel(
-            "USB NI-DAC:CHMod6/ai6_analog_read", "I extract"
+            "Power Supplies:CHMod6/ai6_ANALOG_READ", "I extract"
         )
 
         self.logtool.update_groups()

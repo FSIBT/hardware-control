@@ -52,6 +52,7 @@ class App(QApplication):
             if name == inst.name:
                 return inst
 
+        logging.error(f"in app.get_instrument_by_name could not find name {name}")
         return None
 
     def get_instrument_value(
