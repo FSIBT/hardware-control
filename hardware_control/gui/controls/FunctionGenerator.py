@@ -85,7 +85,7 @@ class FunctionGenerator(Instrument):
         default["CH1_MODULATE"] = "False"
         default["CH1_BURST_EN"] = "False"
         default["CH1_IMPEDANCE"] = "1e6"
-        default["CH1_ENABLED"] = "False"
+        default["CH1_ENABLE"] = "False"
         default["CH1_NUM_PULSE"] = "300"
         default["CH1_BURST_FREQ"] = "1"
 
@@ -97,7 +97,7 @@ class FunctionGenerator(Instrument):
             default["CH2_MODULATE"] = "False"
             default["CH2_BURST_EN"] = "False"
             default["CH2_IMPEDANCE"] = "1e6"
-            default["CH2_ENABLED"] = "False"
+            default["CH2_ENABLE"] = "False"
             default["CH2_NUM_PULSE"] = "300"
             default["CH2_BURST_FREQ"] = "1"
 
@@ -195,10 +195,10 @@ class FunctionGeneratorChannelWidget(QWidget):
         self.active_but.setCheckable(True)
         self.active_but.clicked.connect(
             lambda: control.update_setting(
-                f"CH{channel}_ENABLED", str(self.active_but.isChecked())
+                f"CH{channel}_ENABLE", str(self.active_but.isChecked())
             )
         )
-        setButtonState(self.active_but, control.settings[f"CH{channel}_ENABLED"])
+        setButtonState(self.active_but, control.settings[f"CH{channel}_ENABLE"])
 
         self.mod_but = QPushButton()
         self.mod_but.setText("Modulation")
