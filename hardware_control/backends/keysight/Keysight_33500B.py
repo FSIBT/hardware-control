@@ -189,8 +189,16 @@ class Keysight_33500B(Backend):
             rval = self.query("TRIG:SOUR?")
             return f"{setting}={rval}"
         if setting == "CHX_BURST_EN":
-            self.write(f"BURS:STAT {int(value)}")  # page 180
+            print(value)
+            self.write(f"BURS:STAT {value}")  # page 180
             rval = self.query("BURS:STAT")
+            print(rval)
+            return f"{setting}={rval}"
+        if setting == "TRIG":
+            print(value)
+            self.write(f"(TRIG:SOUR {value}")  # page 180
+            rval = self.query("(TRIG:SOUR")
+            print(rval)
             return f"{setting}={rval}"
 
     @ensure_online

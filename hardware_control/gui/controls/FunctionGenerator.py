@@ -64,7 +64,7 @@ class FunctionGenerator(Instrument):
             label_align="right",
         )
         self.burst_mode = QControlCombo(
-            self, "CH1_BURST_EN", "Burst Mode", ["True", "False"], label_align="right",
+            self, "CH1_BURST_EN", "Burst Mode", ["ON", "OFF"], label_align="right",
         )
         self.num_pulse = QControl(self, "CH1_NUM_PULSE", "Num Burst Pulses")
         self.burst_freq = QControl(self, "CH1_BURST_FREQ", "Burst Freq (Hz)")
@@ -74,6 +74,9 @@ class FunctionGenerator(Instrument):
             "Enable Output On/Off",
             ["True", "False"],
             label_align="right",
+        )
+        self.trigger = QControlCombo(
+            self, "TRIG", "Trigger Mode", ["EXT", "IMM"], label_align="right",
         )
 
         self.autolayout_grid(ncols=2)
@@ -108,11 +111,12 @@ class FunctionGenerator(Instrument):
         default["CH1_OFFSET"] = "0"
         default["CH1_WAVEFORM"] = "SINE"
         default["CH1_MODULATE"] = "FALSE"
-        default["CH1_BURST_EN"] = "TRUE"
+        default["CH1_BURST_EN"] = "ON"
         default["CH1_IMPEDANCE"] = "1e6"
         default["CH1_ENABLE"] = "TRUE"
         default["CH1_NUM_PULSE"] = "500"
         default["CH1_BURST_FREQ"] = "1"
+        default["TRIG"] = "EXT"
 
         if self.num_channels > 1:
             default["CH2_AMPLITUDE"] = "1"
@@ -120,11 +124,12 @@ class FunctionGenerator(Instrument):
             default["CH2_OFFSET"] = "0"
             default["CH2_WAVEFORM"] = "SINE"
             default["CH2_MODULATE"] = "FALSE"
-            default["CH2_BURST_EN"] = "FALSE"
+            default["CH2_BURST_EN"] = "ON"
             default["CH2_IMPEDANCE"] = "1e6"
             default["CH2_ENABLE"] = "FALSE"
             default["CH2_NUM_PULSE"] = "500"
             default["CH2_BURST_FREQ"] = "1"
+            default["TRIG"] = "EXT"
 
         return default
 
@@ -137,6 +142,7 @@ class FunctionGenerator(Instrument):
         self.burst_mode.settings_to_UI()
         self.burst_freq.settings_to_UI()
         self.enable.settings_to_UI()
+        self.trigger.settings_to_UI()
         return
 
         for chan in self.channel_widgets:
@@ -178,7 +184,7 @@ class FunctionGeneratorChannelWidget(QWidget):
             label_align="right",
         )
         self.burst_mode = QControlCombo(
-            self, "CH1_BURST_EN", "Burst Mode", ["True", "False"], label_align="right",
+            self, "CH1_BURST_EN", "Burst Mode", ["ON", "OFF"], label_align="right",
         )
         self.num_pulse = QControl(self, "CH1_NUM_PULSE", "Num Burst Pulses")
         self.burst_freq = QControl(self, "CH1_BURST_FREQ", "Burst Freq (Hz)")
@@ -189,7 +195,9 @@ class FunctionGeneratorChannelWidget(QWidget):
             ["True", "False"],
             label_align="right",
         )
-
+        self.trigger = QControlCombo(
+            self, "TRIG", "Trigger Mode", ["EXT", "IMM"], label_align="right",
+        )
         # default["CH1_MODULATE"] = "False"
         # default["CH1_BURST_EN"] = "False"
         # default["CH1_IMPEDANCE"] = "1e6"
@@ -344,6 +352,7 @@ class FunctionGeneratorChannelWidget(QWidget):
         self.burst_mode.settings_to_UI()
         self.burst_freq.settings_to_UI()
         self.enable.settings_to_UI()
+        self.trigger.settings_to_UI()
 
         return
 
