@@ -78,8 +78,10 @@ class Keysight_33500B(Backend):
             return value
 
         channel, setting_X = get_channel_from_command(setting)
+        print(channel, setting_X, value, flush=True)
+
         if setting_X == "CHX_ENABLE":
-            if value == "True":
+            if value == "TRUE":
                 self.write(":OUTP ON")
             else:
                 self.write(":OUTP OFF")
