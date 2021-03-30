@@ -14,6 +14,7 @@ from PyQt5.QtWidgets import (
 
 from ..base import Instrument, Comm
 from ..widgets import setButtonState, load_icon
+from ..widgets import QControl, QControlCombo
 
 
 logger = logging.getLogger(__name__)
@@ -52,21 +53,45 @@ class FunctionGenerator(Instrument):
         self.num_channels = num_channels
 
         self.settings = self.default_state()
+        self.frequency = QControl(self, "CH1_FREQUENCY", "Frequency (Hz)")
+        self.amplitude = QControl(self, "CH1_AMPLITUDE", "Amplitude (Vpp)")
+        self.offset = QControl(self, "CH1_OFFSET", "Offset (V)")
+        self.waveform = QControlCombo(
+            self,
+            "CH1_WAVEFORM",
+            "Waveform",
+            ["Sine", "Square", "Triangle", "Ramp", "Pulse", "Noise", "DC", "File"],
+            label_align="right",
+        )
+        self.burst_mode = QControlCombo(
+            self, "CH1_BURST_EN", "Burst Mode", ["True", "False"], label_align="right",
+        )
+        self.num_pulse = QControl(self, "CH1_NUM_PULSE", "Num Burst Pulses")
+        self.burst_freq = QControl(self, "CH1_BURST_FREQ", "Burst Freq (Hz)")
+        self.enable = QControlCombo(
+            self,
+            "CH1_ENABLE",
+            "Enable Output On/Off",
+            ["True", "False"],
+            label_align="right",
+        )
 
-        self.channel_widgets = []
-        self.channel_widgets.append(FunctionGeneratorChannelWidget(1, self))
+        self.autolayout_grid(ncols=2)
 
-        self.channel_panel = QGridLayout()
-        self.channel_panel.addWidget(self.channel_widgets[0], 0, 0)
+        # self.channel_widgets = []
+        # self.channel_widgets.append(FunctionGeneratorChannelWidget(1, self))
 
-        if self.num_channels == 2:
-            self.channel_widgets.append(FunctionGeneratorChannelWidget(2, self))
-            self.channel_panel.addWidget(self.channel_widgets[-1], 0, 1)
+        # self.channel_panel = QGridLayout()
+        # self.channel_panel.addWidget(self.channel_widgets[0], 0, 0)
 
-        self.master_layout = QGridLayout()
-        self.master_layout.addLayout(self.channel_panel, 1, 0, 1, 4)
+        # if self.num_channels == 2:
+        #     self.channel_widgets.append(FunctionGeneratorChannelWidget(2, self))
+        #     self.channel_panel.addWidget(self.channel_widgets[-1], 0, 1)
 
-        self.setLayout(self.master_layout)
+        # self.master_layout = QGridLayout()
+        # self.master_layout.addLayout(self.channel_panel, 1, 0, 1, 4)
+
+        # self.setLayout(self.master_layout)
 
         # Write state to scope - synch scope with GUI
         self.send_state()
@@ -81,29 +106,38 @@ class FunctionGenerator(Instrument):
         default["CH1_AMPLITUDE"] = "1"
         default["CH1_FREQUENCY"] = "1e3"
         default["CH1_OFFSET"] = "0"
-        default["CH1_WAVEFORM"] = "Sine"
-        default["CH1_MODULATE"] = "False"
-        default["CH1_BURST_EN"] = "False"
+        default["CH1_WAVEFORM"] = "SINE"
+        default["CH1_MODULATE"] = "FALSE"
+        default["CH1_BURST_EN"] = "TRUE"
         default["CH1_IMPEDANCE"] = "1e6"
-        default["CH1_ENABLE"] = "False"
-        default["CH1_NUM_PULSE"] = "300"
+        default["CH1_ENABLE"] = "TRUE"
+        default["CH1_NUM_PULSE"] = "500"
         default["CH1_BURST_FREQ"] = "1"
 
         if self.num_channels > 1:
             default["CH2_AMPLITUDE"] = "1"
             default["CH2_FREQUENCY"] = "1e3"
             default["CH2_OFFSET"] = "0"
-            default["CH2_WAVEFORM"] = "Sine"
-            default["CH2_MODULATE"] = "False"
-            default["CH2_BURST_EN"] = "False"
+            default["CH2_WAVEFORM"] = "SINE"
+            default["CH2_MODULATE"] = "FALSE"
+            default["CH2_BURST_EN"] = "FALSE"
             default["CH2_IMPEDANCE"] = "1e6"
-            default["CH2_ENABLE"] = "False"
-            default["CH2_NUM_PULSE"] = "300"
+            default["CH2_ENABLE"] = "FALSE"
+            default["CH2_NUM_PULSE"] = "500"
             default["CH2_BURST_FREQ"] = "1"
 
         return default
 
     def settings_to_UI(self):
+        self.frequency.settings_to_UI()
+        self.amplitude.settings_to_UI()
+        self.offset.settings_to_UI()
+        self.waveform.settings_to_UI()
+        self.num_pulse.settings_to_UI()
+        self.burst_mode.settings_to_UI()
+        self.burst_freq.settings_to_UI()
+        self.enable.settings_to_UI()
+        return
 
         for chan in self.channel_widgets:
             chan.settings_to_UI()
@@ -132,15 +166,48 @@ class FunctionGeneratorChannelWidget(QWidget):
             self.channel_label.setPixmap(load_icon("channel2_green.png"))
 
         # ****** DEFINE TEXT BOXES
-        self.amplitude_edit = QLineEdit()
-        self.amplitude_edit.setValidator(QDoubleValidator())
-        self.amplitude_edit.editingFinished.connect(
-            lambda: control.update_setting(
-                f"CH{channel}_AMPLITUDE", (self.amplitude_edit.text())
-            )
+        # self.rate = QControl(self, "RATE", "Flow rate (sccm)")
+        self.frequency = QControl(self, "CH1_FREQUENCY", "Frequency (Hz)")
+        self.amplitude = QControl(self, "CH1_AMPLITUDE", "Amplitude (Vpp)")
+        self.offset = QControl(self, "CH1_OFFSET", "Offset (V)")
+        self.waveform = QControlCombo(
+            self,
+            "CH1_WAVEFORM",
+            "Waveform",
+            ["Sine", "Square", "Triangle", "Ramp", "Pulse", "Noise", "DC", "File"],
+            label_align="right",
         )
-        self.amplitude_edit.setText(str(control.settings[f"CH{channel}_AMPLITUDE"]))
+        self.burst_mode = QControlCombo(
+            self, "CH1_BURST_EN", "Burst Mode", ["True", "False"], label_align="right",
+        )
+        self.num_pulse = QControl(self, "CH1_NUM_PULSE", "Num Burst Pulses")
+        self.burst_freq = QControl(self, "CH1_BURST_FREQ", "Burst Freq (Hz)")
+        self.enable = QControlCombo(
+            self,
+            "CH1_ENABLE",
+            "Enable Output On/Off",
+            ["True", "False"],
+            label_align="right",
+        )
 
+        # default["CH1_MODULATE"] = "False"
+        # default["CH1_BURST_EN"] = "False"
+        # default["CH1_IMPEDANCE"] = "1e6"
+        # default["CH1_ENABLE"] = "False"
+        # default["CH1_NUM_PULSE"] = "300"
+        # default["CH1_BURST_FREQ"] = "1"
+
+        # self.amplitude_edit = QLineEdit()
+        # self.amplitude_edit.setValidator(QDoubleValidator())
+        # self.amplitude_edit.editingFinished.connect(
+        #    lambda: control.update_setting(
+        #        f"CH{channel}_AMPLITUDE", (self.amplitude_edit.text())
+        #    )
+        # )
+        # self.amplitude_edit.setText(str(control.settings[f"CH{channel}_AMPLITUDE"]))
+        self.autolayout_grid(ncols=2)
+
+    """
         self.offset_edit = QLineEdit()
         self.offset_edit.setValidator(QDoubleValidator())
         self.offset_edit.editingFinished.connect(
@@ -240,7 +307,7 @@ class FunctionGeneratorChannelWidget(QWidget):
         self.impedance_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
         self.impedance_drop = QComboBox()
-        self.impedance_drop.addItems(["1e6", "50"])
+        self.impedance_drop.addItems()
         self.impedance_drop.currentIndexChanged.connect(
             lambda: control.update_setting(
                 f"CH{channel}_IMPEDANCE", self.impedance_drop.currentText()
@@ -266,8 +333,20 @@ class FunctionGeneratorChannelWidget(QWidget):
         self.master_layout.addLayout(self.lower_grid, 2, 0)
         self.master_layout.addLayout(self.form2, 2, 1)
         self.setLayout(self.master_layout)
+    """
 
     def settings_to_UI(self):
+        self.frequency.settings_to_UI()
+        self.amplitude.settings_to_UI()
+        self.offset.settings_to_UI()
+        self.waveform.settings_to_UI()
+        self.num_pulse.settings_to_UI()
+        self.burst_mode.settings_to_UI()
+        self.burst_freq.settings_to_UI()
+        self.enable.settings_to_UI()
+
+        return
+
         ch = self.channel
 
         self.amplitude_edit.setText(str(self.control.settings[f"CH{ch}_AMPLITUDE"]))
