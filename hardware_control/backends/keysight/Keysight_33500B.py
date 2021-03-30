@@ -188,6 +188,10 @@ class Keysight_33500B(Backend):
             self.write(f"TRIG:SOUR CHAN{int(value)}")
             rval = self.query("TRIG:SOUR?")
             return f"{setting}={rval}"
+        if setting == "CHX_BURST_EN":
+            self.write(f"BURS:STAT {int(value)}")  # page 180
+            rval = self.query("BURS:STAT")
+            return f"{setting}={rval}"
 
     @ensure_online
     def command(self, cmd: str):
