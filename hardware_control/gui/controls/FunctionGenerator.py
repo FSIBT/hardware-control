@@ -85,7 +85,13 @@ class FunctionGenerator(Instrument):
         self.trigger = QControlCombo(
             self, "CH1_TRIG:SOUR", "Trigger Mode", ["EXT", "IMM"], label_align="right",
         )
-
+        self.load_state = QControlCombo(
+            self,
+            "MMEM:LOAD:STAT",
+            "Load State",
+            ["STATE_1", "STATE_3"],
+            label_align="right",
+        )
         self.autolayout_grid(ncols=2)
 
         # self.channel_widgets = []
@@ -125,6 +131,7 @@ class FunctionGenerator(Instrument):
         default["CH1_BURS:NCYC"] = "500"
         default["CH1_BURST_FREQ"] = "1"
         default["CH1_TRIG:SOUR"] = "EXT"
+        default["MMEM:LOAD:STAT"] = "STATE_3"
 
         if self.num_channels > 1:
             default["CH2_AMPLITUDE"] = "1"
@@ -138,6 +145,7 @@ class FunctionGenerator(Instrument):
             default["CH1_BURS:NCYC"] = "500"
             default["CH2_BURST_FREQ"] = "1"
             default["CH2_TRIG:SOUR"] = "EXT"
+            default["MMEM:LOAD:STAT"] = "STATE_3"
 
         return default
 
@@ -151,6 +159,7 @@ class FunctionGenerator(Instrument):
         self.burst_freq.settings_to_UI()
         self.enable.settings_to_UI()
         self.trigger.settings_to_UI()
+        self.load_state.settings_to_UI()
         return
 
         for chan in self.channel_widgets:
@@ -213,6 +222,15 @@ class FunctionGeneratorChannelWidget(QWidget):
         self.trigger = QControlCombo(
             self, "CH1_TRIG:SOUR", "Trigger Mode", ["EXT", "IMM"], label_align="right",
         )
+
+        self.load_state = QControlCombo(
+            self,
+            "MMEM:LOAD:STAT",
+            "Load State",
+            ["STATE_1", "STATE_3"],
+            label_align="right",
+        )
+
         # default["CH1_MODULATE"] = "False"
         # default["CH1_BURST_EN"] = "False"
         # default["CH1_IMPEDANCE"] = "1e6"
@@ -369,6 +387,7 @@ class FunctionGeneratorChannelWidget(QWidget):
         self.burst_freq.settings_to_UI()
         self.enable.settings_to_UI()
         self.trigger.settings_to_UI()
+        self.load_state.settings_to_UI()
 
         return
 

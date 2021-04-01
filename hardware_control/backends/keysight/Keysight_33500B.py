@@ -164,6 +164,12 @@ class Keysight_33500B(Backend):
             rval = rval[:-1]  # Trim newline character
             return f"{setting}={rval}"
 
+        """    MMEMory Subsystem    """
+        if setting_X == "MMEM:LOAD:STAT":
+            self.write(f":MMEM:LOAD:STAT INT:/{value}.sta")
+            rval = self.query(":MMEM:LOAD:STAT?")
+            return f"{setting}={rval}"
+
         """    OUTPut Subsystem    """
         if setting_X == "CHX_IMPEDANCE":  # needs to be adjusted to OUTP I believe
             if value == "50":
@@ -212,20 +218,20 @@ class Keysight_33500B(Backend):
             return f"{setting}={rval}"
 
         """    VOLT Subsystem    """
-        if setting_X == "CHX_AMPLITUDE":
-            self.write(f":VOLT {float(value):.6E}")
-            rval = self.query(":VOLT?")
-            rval = rval[:-1]
+        # if setting_X == "CHX_AMPLITUDE":
+        #    self.write(f":VOLT {float(value):.6E}")
+        #    rval = self.query(":VOLT?")
+        #    rval = rval[:-1]
         if setting_X == "CHX_AMPLITUDE":
             self.write(f":VOLT {float(value):.6E}")
             rval = self.query(":VOLT?")
             rval = rval[:-1]
             return f"{setting}={rval}"
-        if setting_X == "CHX_OFFSET":
-            # This one works as it is, but I think the proper form is VOLTage:OFFSet
-            self.write(f"CHAN{channel}:OFFS {-float(value):.6E}")
-            rval = self.query(f"CHAN{channel}:OFFS?")
-            return f"{setting}={rval}"
+        # if setting_X == "CHX_OFFSET":
+        #    # This one works as it is, but I think the proper form is VOLTage:OFFSet
+        #    self.write(f"CHAN{channel}:OFFS {-float(value):.6E}")
+        #    rval = self.query(f"CHAN{channel}:OFFS?")
+        #    return f"{setting}={rval}"
         if setting_X == "CHX_OFFSET":
             self.write(f":VOLT:OFFS {float(value):.6E}")
             rval = self.query(":VOLT:OFFS?")
