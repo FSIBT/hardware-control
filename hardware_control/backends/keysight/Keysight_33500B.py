@@ -191,25 +191,25 @@ class Keysight_33500B(Backend):
         if setting == "CHX_BURS:MODE":
             print(value)
             self.write(f"BURS:MODE {value}")
-            rval = self.query("BURS:MODE")
+            rval = self.query("BURS:MODE?")
             print(rval)
             return f"{setting}={rval}"
         if setting == "CHX_BURS:STAT":
             print(value)
             self.write(f"BURS:STAT {value}")  # page 180
-            rval = self.query("BURS:STAT")
+            rval = self.query("BURS:STAT?")
             print(rval)
             return f"{setting}={rval}"
         if setting == "CHX_BURS:NCYC":
             print(value)
             self.write(f"BURS:NCYC {value}")
-            rval = self.query("BURS:NCYC")
+            rval = self.query("BURS:NCYC?")
             print(rval)
             return f"{setting}={rval}"
         if setting == "CHX_TRIG:SOUR":
             print(value)
             self.write(f"(CHX_TRIG:SOUR {value}")
-            rval = self.query("(CHX_TRIG:SOUR")
+            rval = self.query("(CHX_TRIG:SOUR?")
             print(rval)
             return f"{setting}={rval}"
 

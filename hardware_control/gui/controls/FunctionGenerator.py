@@ -134,7 +134,7 @@ class FunctionGenerator(Instrument):
             default["CH2_MODULATE"] = "FALSE"
             default["CH2_BURS:MODE"] = "ON"
             default["CH2_IMPEDANCE"] = "1e6"
-            default["CH2_ENABLE"] = "FALSE"
+            default["CH2_ENABLE"] = "TRUE"
             default["CH1_BURS:NCYC"] = "500"
             default["CH2_BURST_FREQ"] = "1"
             default["CH2_TRIG:SOUR"] = "EXT"
@@ -207,7 +207,7 @@ class FunctionGeneratorChannelWidget(QWidget):
             self,
             "CH1_ENABLE",
             "Enable Output On/Off",
-            ["True", "False"],
+            ["TRUE", "FALSE"],
             label_align="right",
         )
         self.trigger = QControlCombo(
