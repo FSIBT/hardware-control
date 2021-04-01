@@ -80,6 +80,98 @@ class Keysight_33500B(Backend):
         channel, setting_X = get_channel_from_command(setting)
         print(channel, setting_X, value, flush=True)
 
+        if setting_X == "CHX_VOLTS_DIV":  ##Not used?
+            self.write(f":CHAN{channel}:SCAL {float(value):.6E}")
+            rval = self.query(f":CHAN{channel}:SCAL?")
+            return f"{setting}={rval}"
+        if setting == "TIMEBASE":  ##Not used?
+            self.write(f":TIM:SCAL {float(value):.6E}")
+            rval = self.query(":TIM:SCAL?")
+            return f"{setting}={rval}"
+        if setting == "TIME_OFFSET":  ##Not used?
+            self.write(f":TIM:POS {float(value):.6E}")
+            rval = self.query(":TIM:POS?")
+            return f"{setting}={rval}"
+        if setting_X == "CHX_LABEL":  ##Not used?
+            # Length is capped at 32 characters
+            if len(value) > 32:
+                value = value[0:32]
+            self.write(f"CHAN{channel}:LAB {value}")
+            rval = self.query(f"CHAN{channel}:LAB?")
+            return f"{setting}={rval}"
+        if setting == "LABELS_ENABLED":  ##Not used?
+            self.write(f"DISP:LAB {int(value=='True')}")
+            rval = self.query("DISP:LAB?")
+            return f"{setting}={rval}"
+        if setting_X == "CHX_INVERT":  ##Not corresponding to correct thing
+            self.write(f"CHAN{channel}:INV {int(value=='True')}")
+            rval = self.query(f"CHAN{channel}:INV?")
+            return f"{setting}={rval}"
+        if setting_X == "CHX_PROBE_ATTEN":  ##Not used?
+            self.write(f"CHAN{channel}:PROB {float(value):.6E}")
+            rval = self.query(f"CHAN{channel}:PROB?")  # ie. 10 gives x10 or 10:1 probe
+            return f"{setting}={rval}"
+        if setting_X == "CHX_COUPLING":  ##Not used?
+            # Make sure valid value provided
+            if value not in ["AC", "DC"]:
+                value = "DC"
+            self.write(f"CHAN{channel}:COUP {value}")
+            rval = self.query(f"CHAN{channel}:COUP?")
+            return f"{setting}={rval}"
+
+        """    BURSt Subsystem    """
+        if setting == "CHX_BURS:MODE":
+            print(value)
+            self.write(f"BURS:MODE {value}")
+            rval = self.query("BURS:MODE?")
+            print(rval)
+            return f"{setting}={rval}"
+        if setting == "CHX_BURS:STAT":
+            print(value)
+            self.write(f"BURS:STAT {value}")  # page 180
+            rval = self.query("BURS:STAT?")
+            print(rval)
+            return f"{setting}={rval}"
+        if setting == "CHX_BURS:NCYC":
+            print(value)
+            self.write(f"BURS:NCYC {value}")
+            rval = self.query("BURS:NCYC?")
+            print(rval)
+            return f"{setting}={rval}"
+
+        """    DISPlay Subsystem    """
+        if setting_X == "CHX_ACTIVE":  # Adjust to DISP
+            self.write(f"CHAN{channel}:DISP {int(value=='True')}")
+            rval = self.query(f"CHAN{channel}:DISP?")
+            return f"{setting}={rval}"
+
+        """    FREQuency Subsystem    """
+        if setting_X == "CHX_FREQUENCY":
+            self.write(f":FREQ {float(value):.6E}")
+            rval = self.query(":FREQ?")
+            rval = rval[:-1]
+            return f"{setting}={rval}"
+        """    FUNCtion Subsystem    """
+        if setting_X == "CHX_BW_LIM":
+            # FUNCtion:NOISe:BANDwidth - bandwidth for NOISe waveform
+            self.write(f"CHAN{channel}:BWL {int(value=='True')}")
+            rval = self.query(f"CHAN{channel}:BWL?")
+            return f"{setting}={rval}"
+        if setting_X == "CHX_WAVEFORM":
+            wvfm = waveform_lookup[value]
+            self.write(f":SOUR:FUNC {wvfm}")
+            rval = self.query(":SOUR:FUNC?")
+            rval = rval[:-1]  # Trim newline character
+            return f"{setting}={rval}"
+
+        """    OUTPut Subsystem    """
+        if setting_X == "CHX_IMPEDANCE":  # needs to be adjusted to OUTP I believe
+            if value == "50":
+                self.write(f"CHAN{channel}:IMP FIFT")
+            else:
+                self.write(f"CHAN{channel}:IMP ONEM")
+            rval = self.query(f"CHAN{channel}:IMP?")
+            return f"{setting}={rval}"
         if setting_X == "CHX_ENABLE":
             if value == "TRUE":
                 self.write(":OUTP ON")
@@ -88,83 +180,13 @@ class Keysight_33500B(Backend):
             rval = self.query(":OUTP?")
             rval = rval == "1\n"
             return f"{setting}={rval}"
-        if setting_X == "CHX_WAVEFORM":
-            wvfm = waveform_lookup[value]
-            self.write(f":SOUR:FUNC {wvfm}")
-            rval = self.query(":SOUR:FUNC?")
-            rval = rval[:-1]  # Trim newline character
-            return f"{setting}={rval}"
-        if setting_X == "CHX_FREQUENCY":
-            self.write(f":FREQ {float(value):.6E}")
-            rval = self.query(":FREQ?")
-            rval = rval[:-1]
-            return f"{setting}={rval}"
-        if setting_X == "CHX_AMPLITUDE":
-            self.write(f":VOLT {float(value):.6E}")
-            rval = self.query(":VOLT?")
-            rval = rval[:-1]
-            return f"{setting}={rval}"
-        if setting_X == "CHX_OFFSET":
-            self.write(f":VOLT:OFFS {float(value):.6E}")
-            rval = self.query(":VOLT:OFFS?")
-            rval = rval[:-1]
-            return f"{setting}={rval}"
-        if setting_X == "CHX_VOLTS_DIV":
-            self.write(f":CHAN{channel}:SCAL {float(value):.6E}")
-            rval = self.query(f":CHAN{channel}:SCAL?")
-            return f"{setting}={rval}"
-        if setting == "TIMEBASE":
-            self.write(f":TIM:SCAL {float(value):.6E}")
-            rval = self.query(":TIM:SCAL?")
-            return f"{setting}={rval}"
-        if setting == "TIME_OFFSET":
-            self.write(f":TIM:POS {float(value):.6E}")
-            rval = self.query(":TIM:POS?")
-            return f"{setting}={rval}"
-        if setting_X == "CHX_OFFSET":
-            self.write(f"CHAN{channel}:OFFS {-float(value):.6E}")
-            rval = self.query(f"CHAN{channel}:OFFS?")
-            return f"{setting}={rval}"
-        if setting_X == "CHX_BW_LIM":
-            self.write(f"CHAN{channel}:BWL {int(value=='True')}")
-            rval = self.query(f"CHAN{channel}:BWL?")
-            return f"{setting}={rval}"
-        if setting_X == "CHX_ACTIVE":
-            self.write(f"CHAN{channel}:DISP {int(value=='True')}")
-            rval = self.query(f"CHAN{channel}:DISP?")
-            return f"{setting}={rval}"
-        if setting_X == "CHX_IMPEDANCE":
-            if value == "50":
-                self.write(f"CHAN{channel}:IMP FIFT")
-            else:
-                self.write(f"CHAN{channel}:IMP ONEM")
-            rval = self.query(f"CHAN{channel}:IMP?")
-            return f"{setting}={rval}"
-        if setting_X == "CHX_LABEL":
-            # Length is capped at 32 characters
-            if len(value) > 32:
-                value = value[0:32]
-            self.write(f"CHAN{channel}:LAB {value}")
-            rval = self.query(f"CHAN{channel}:LAB?")
-            return f"{setting}={rval}"
-        if setting == "LABELS_ENABLED":
-            self.write(f"DISP:LAB {int(value=='True')}")
-            rval = self.query("DISP:LAB?")
-            return f"{setting}={rval}"
-        if setting_X == "CHX_INVERT":
-            self.write(f"CHAN{channel}:INV {int(value=='True')}")
-            rval = self.query(f"CHAN{channel}:INV?")
-            return f"{setting}={rval}"
-        if setting_X == "CHX_PROBE_ATTEN":
-            self.write(f"CHAN{channel}:PROB {float(value):.6E}")
-            rval = self.query(f"CHAN{channel}:PROB?")  # ie. 10 gives x10 or 10:1 probe
-            return f"{setting}={rval}"
-        if setting_X == "CHX_COUPLING":
-            # Make sure valid value provided
-            if value not in ["AC", "DC"]:
-                value = "DC"
-            self.write(f"CHAN{channel}:COUP {value}")
-            rval = self.query(f"CHAN{channel}:COUP?")
+
+        """    TRIGger Subsystem    """
+        if setting == "CHX_TRIG:SOUR":
+            print(value)
+            self.write(f"(CHX_TRIG:SOUR {value}")
+            rval = self.query("(CHX_TRIG:SOUR?")
+            print(rval)
             return f"{setting}={rval}"
         if setting == "TRIGGER_LEVEL":
             self.write(f"TRIG:EDGE:LEV {float(value):.6E}")
@@ -188,35 +210,27 @@ class Keysight_33500B(Backend):
             self.write(f"TRIG:SOUR CHAN{int(value)}")
             rval = self.query("TRIG:SOUR?")
             return f"{setting}={rval}"
-        if setting == "CHX_BURS:MODE":
-            print(value)
-            self.write(f"BURS:MODE {value}")
-            rval = self.query("BURS:MODE?")
-            print(rval)
-            return f"{setting}={rval}"
-        if setting == "CHX_BURS:STAT":
-            print(value)
-            self.write(f"BURS:STAT {value}")  # page 180
-            rval = self.query("BURS:STAT?")
-            print(rval)
-            return f"{setting}={rval}"
-        if setting == "CHX_BURS:NCYC":
-            print(value)
-            self.write(f"BURS:NCYC {value}")
-            rval = self.query("BURS:NCYC?")
-            print(rval)
-            return f"{setting}={rval}"
-        if setting == "CHX_TRIG:SOUR":
-            print(value)
-            self.write(f"(CHX_TRIG:SOUR {value}")
-            rval = self.query("(CHX_TRIG:SOUR?")
-            print(rval)
-            return f"{setting}={rval}"
 
+        """    VOLT Subsystem    """
         if setting_X == "CHX_AMPLITUDE":
             self.write(f":VOLT {float(value):.6E}")
             rval = self.query(":VOLT?")
             rval = rval[:-1]
+        if setting_X == "CHX_AMPLITUDE":
+            self.write(f":VOLT {float(value):.6E}")
+            rval = self.query(":VOLT?")
+            rval = rval[:-1]
+            return f"{setting}={rval}"
+        if setting_X == "CHX_OFFSET":
+            # This one works as it is, but I think the proper form is VOLTage:OFFSet
+            self.write(f"CHAN{channel}:OFFS {-float(value):.6E}")
+            rval = self.query(f"CHAN{channel}:OFFS?")
+            return f"{setting}={rval}"
+        if setting_X == "CHX_OFFSET":
+            self.write(f":VOLT:OFFS {float(value):.6E}")
+            rval = self.query(":VOLT:OFFS?")
+            rval = rval[:-1]
+            return f"{setting}={rval}"
 
     @ensure_online
     def command(self, cmd: str):
