@@ -188,18 +188,35 @@ class Keysight_33500B(Backend):
             self.write(f"TRIG:SOUR CHAN{int(value)}")
             rval = self.query("TRIG:SOUR?")
             return f"{setting}={rval}"
-        if setting == "CHX_BURST_EN":
+        if setting == "CHX_BURS:MODE":
+            print(value)
+            self.write(f"BURS:MODE {value}")
+            rval = self.query("BURS:MODE")
+            print(rval)
+            return f"{setting}={rval}"
+        if setting == "CHX_BURS:STAT":
             print(value)
             self.write(f"BURS:STAT {value}")  # page 180
             rval = self.query("BURS:STAT")
             print(rval)
             return f"{setting}={rval}"
-        if setting == "TRIG":
+        if setting == "CHX_BURS:NCYC":
             print(value)
-            self.write(f"(TRIG:SOUR {value}")  # page 180
-            rval = self.query("(TRIG:SOUR")
+            self.write(f"BURS:NCYC {value}")
+            rval = self.query("BURS:NCYC")
             print(rval)
             return f"{setting}={rval}"
+        if setting == "CHX_TRIG:SOUR":
+            print(value)
+            self.write(f"(CHX_TRIG:SOUR {value}")
+            rval = self.query("(CHX_TRIG:SOUR")
+            print(rval)
+            return f"{setting}={rval}"
+
+        if setting_X == "CHX_AMPLITUDE":
+            self.write(f":VOLT {float(value):.6E}")
+            rval = self.query(":VOLT?")
+            rval = rval[:-1]
 
     @ensure_online
     def command(self, cmd: str):
