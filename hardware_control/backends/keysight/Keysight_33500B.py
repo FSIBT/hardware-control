@@ -203,9 +203,7 @@ class Keysight_33500B(Backend):
             return f"{setting}={rval}"
         if setting == "TRIGGER_CHANNEL":
             self.write(f"TRIG:SOUR {value}")
-
             rval = self.query("TRIG:SOUR?")
-            print(rval, value, flush=True)
             return f"{setting}={rval}"
 
         """    VOLT Subsystem    """

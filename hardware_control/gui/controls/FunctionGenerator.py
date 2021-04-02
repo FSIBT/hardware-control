@@ -60,48 +60,45 @@ class FunctionGenerator(Instrument):
         self.send_state()
 
     def setup_UI(self):
-        self.frequency = QControl(self, "CH1_FREQUENCY", "Frequency (Hz)")
-        self.amplitude = QControl(self, "CH1_AMPLITUDE", "Amplitude (Vpp)")
-        self.offset = QControl(self, "CH1_OFFSET", "Offset (V)")
+        self.frequency = QControl(
+            self, "CH1_FREQUENCY", "Frequency (Hz)")
+        self.amplitude = QControl(
+            self, "CH1_AMPLITUDE", "Amplitude (Vpp)")
+        self.offset = QControl(
+            self, "CH1_OFFSET", "Offset (V)")
         self.waveform = QControlCombo(
             self,
             "CH1_WAVEFORM",
             "Waveform",
-            ["Sine", "Square", "Triangle", "Ramp", "Pulse", "Noise", "DC", "File"],
-            label_align="right",
-        )
+            ["Sine", "Square", "Triangle", "Ramp", "Pulse", "Noise", "DC", "File"],)
         self.burst_mode = QControlCombo(
-            self, "CH1_BURS_MODE", "Burst Mode", ["TRIG", "GAT"], label_align="right",
-        )
+            self, "CH1_BURS_MODE", "Burst Mode", ["TRIG", "GAT"],)
         self.burst_enable = QControlCombo(
             self,
             "CH1_BURS_STAT",
             "Burst Enable/State",
-            ["1", "0"],
-            label_align="right",
-        )
-        self.num_pulse = QControl(self, "CH1_BURS_NCYC", "Num Burst Pulses")
-        self.burst_period = QControl(self, "CH1_BURS_PER", "Burst Period (s)")
+            ["1", "0"],)
+        self.num_pulse = QControl(
+            self, "CH1_BURS_NCYC", "Num Burst Pulses", )
+        self.burst_period = QControl(
+            self, "CH1_BURS_PER", "Burst Period (s)", )
         self.enable = QControlCombo(
             self,
             "CH1_ENABLE",
             "Enable Output On/Off",
             ["True", "False"],
-            label_align="right",
         )
         self.trigger = QControlCombo(
             self,
             "TRIGGER_CHANNEL",
             "Trigger Channel",
             ["EXT", "IMM", "TIM", "BUS"],
-            label_align="right",
         )
         self.impedance = QControlCombo(
             self,
             "CH1_IMPEDANCE",
             "Impedance",
             ["HiZ", "50 (OHM)"],
-            label_align="right",
         )
 
     def initialize_gui_instrument(self):
@@ -139,4 +136,3 @@ class FunctionGenerator(Instrument):
         self.trigger.settings_to_UI()
         self.impedance.settings_to_UI()
         return
-
