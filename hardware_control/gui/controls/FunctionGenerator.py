@@ -53,6 +53,13 @@ class FunctionGenerator(Instrument):
         self.num_channels = num_channels
 
         self.settings = self.default_state()
+        self.setup_UI()
+        self.autolayout_grid(ncols=2)
+
+        # Write state to scope - synch scope with GUI
+        self.send_state()
+
+    def setup_UI(self):
         self.frequency = QControl(self, "CH1_FREQUENCY", "Frequency (Hz)")
         self.amplitude = QControl(self, "CH1_AMPLITUDE", "Amplitude (Vpp)")
         self.offset = QControl(self, "CH1_OFFSET", "Offset (V)")
@@ -64,17 +71,17 @@ class FunctionGenerator(Instrument):
             label_align="right",
         )
         self.burst_mode = QControlCombo(
-            self, "CH1_BURS:MODE", "Burst Mode", ["TRIG", "GAT"], label_align="right",
+            self, "CH1_BURS_MODE", "Burst Mode", ["TRIG", "GAT"], label_align="right",
         )
         self.burst_enable = QControlCombo(
             self,
-            "CH1_BURS:STAT",
+            "CH1_BURS_STAT",
             "Burst Enable/State",
             ["1", "0"],
             label_align="right",
         )
-        self.num_pulse = QControl(self, "CH1_BURS:NCYC", "Num Burst Pulses")
-        self.burst_freq = QControl(self, "CH1_BURST_FREQ", "Burst Freq (Hz)")
+        self.num_pulse = QControl(self, "CH1_BURS_NCYC", "Num Burst Pulses")
+        self.burst_period = QControl(self, "CH1_BURS_PER", "Burst Period (s)")
         self.enable = QControlCombo(
             self,
             "CH1_ENABLE",
@@ -83,34 +90,19 @@ class FunctionGenerator(Instrument):
             label_align="right",
         )
         self.trigger = QControlCombo(
-            self, "CH1_TRIG:SOUR", "Trigger Mode", ["EXT", "IMM"], label_align="right",
-        )
-        self.load_state = QControlCombo(
             self,
-            "MMEM:LOAD:STAT",
-            "Load State",
-            ["STATE_1", "STATE_3"],
+            "TRIGGER_CHANNEL",
+            "Trigger Channel",
+            ["EXT", "IMM", "TIM", "BUS"],
             label_align="right",
         )
-        self.autolayout_grid(ncols=2)
-
-        # self.channel_widgets = []
-        # self.channel_widgets.append(FunctionGeneratorChannelWidget(1, self))
-
-        # self.channel_panel = QGridLayout()
-        # self.channel_panel.addWidget(self.channel_widgets[0], 0, 0)
-
-        # if self.num_channels == 2:
-        #     self.channel_widgets.append(FunctionGeneratorChannelWidget(2, self))
-        #     self.channel_panel.addWidget(self.channel_widgets[-1], 0, 1)
-
-        # self.master_layout = QGridLayout()
-        # self.master_layout.addLayout(self.channel_panel, 1, 0, 1, 4)
-
-        # self.setLayout(self.master_layout)
-
-        # Write state to scope - synch scope with GUI
-        self.send_state()
+        self.impedance = QControlCombo(
+            self,
+            "CH1_IMPEDANCE",
+            "Impedance",
+            ["HiZ", "50 (OHM)"],
+            label_align="right",
+        )
 
     def initialize_gui_instrument(self):
         return self.default_state()
@@ -124,28 +116,14 @@ class FunctionGenerator(Instrument):
         default["CH1_OFFSET"] = "0"
         default["CH1_WAVEFORM"] = "SINE"
         default["CH1_MODULATE"] = "FALSE"
-        default["CH1_BURS:MODE"] = "ON"
-        default["CH1_BURS:STAT"] = "1"
-        default["CH1_IMPEDANCE"] = "1e6"
+        default["CH1_BURS_MODE"] = "TRIG"
+        default["CH1_BURS_STAT"] = "1"
+        default["CH1_IMPEDANCE"] = "HiZ"
         default["CH1_ENABLE"] = "TRUE"
-        default["CH1_BURS:NCYC"] = "500"
-        default["CH1_BURST_FREQ"] = "1"
-        default["CH1_TRIG:SOUR"] = "EXT"
-        default["MMEM:LOAD:STAT"] = "STATE_3"
-
-        if self.num_channels > 1:
-            default["CH2_AMPLITUDE"] = "1"
-            default["CH2_FREQUENCY"] = "1e3"
-            default["CH2_OFFSET"] = "0"
-            default["CH2_WAVEFORM"] = "SINE"
-            default["CH2_MODULATE"] = "FALSE"
-            default["CH2_BURS:MODE"] = "ON"
-            default["CH2_IMPEDANCE"] = "1e6"
-            default["CH2_ENABLE"] = "TRUE"
-            default["CH1_BURS:NCYC"] = "500"
-            default["CH2_BURST_FREQ"] = "1"
-            default["CH2_TRIG:SOUR"] = "EXT"
-            default["MMEM:LOAD:STAT"] = "STATE_3"
+        default["CH1_BURS_NCYC"] = "500"
+        default["CH1_BURS_PER"] = "1"
+        default["CH1_TRIG_SOUR"] = "EXT"
+        default["TRIGGER_CHANNEL"] = "EXT"
 
         return default
 
@@ -156,254 +134,9 @@ class FunctionGenerator(Instrument):
         self.waveform.settings_to_UI()
         self.num_pulse.settings_to_UI()
         self.burst_mode.settings_to_UI()
-        self.burst_freq.settings_to_UI()
+        self.burst_period.settings_to_UI()
         self.enable.settings_to_UI()
         self.trigger.settings_to_UI()
-        self.load_state.settings_to_UI()
+        self.impedance.settings_to_UI()
         return
 
-        for chan in self.channel_widgets:
-            chan.settings_to_UI()
-
-
-class FunctionGeneratorChannelWidget(QWidget):
-    """Defines a UI for AWG channels.
-
-    .. image:: /images/controls/FunctionGenerator-single-channel.png
-      :height: 200
-
-    """
-
-    def __init__(self, channel: int, control):
-        super().__init__()
-
-        self.channel = channel
-        self.control = control
-
-        # ************** DEFINE UI *********************#
-
-        self.channel_label = QLabel()
-        if self.channel == 1:
-            self.channel_label.setPixmap(load_icon("channel1_yellow.png"))
-        else:
-            self.channel_label.setPixmap(load_icon("channel2_green.png"))
-
-        # ****** DEFINE TEXT BOXES
-        # self.rate = QControl(self, "RATE", "Flow rate (sccm)")
-        self.frequency = QControl(self, "CH1_FREQUENCY", "Frequency (Hz)")
-        self.amplitude = QControl(self, "CH1_AMPLITUDE", "Amplitude (Vpp)")
-        self.offset = QControl(self, "CH1_OFFSET", "Offset (V)")
-        self.waveform = QControlCombo(
-            self,
-            "CH1_WAVEFORM",
-            "Waveform",
-            ["Sine", "Square", "Triangle", "Ramp", "Pulse", "Noise", "DC", "File"],
-            label_align="right",
-        )
-        self.burst_enable = QControlCombo(
-            self,
-            "CH1_BURS:STAT",
-            "Burst Enable/State",
-            ["1", "0"],
-            label_align="right",
-        )
-        self.burst_mode = QControlCombo(
-            self, "CH1_BURS:MODE", "Burst Mode", ["TRIG", "GAT"], label_align="right",
-        )
-        self.num_pulse = QControl(self, "CH1_BURS:NCYC", "Num Burst Pulses")
-        self.burst_freq = QControl(self, "CH1_BURST_FREQ", "Burst Freq (Hz)")
-        self.enable = QControlCombo(
-            self,
-            "CH1_ENABLE",
-            "Enable Output On/Off",
-            ["TRUE", "FALSE"],
-            label_align="right",
-        )
-        self.trigger = QControlCombo(
-            self, "CH1_TRIG:SOUR", "Trigger Mode", ["EXT", "IMM"], label_align="right",
-        )
-
-        self.load_state = QControlCombo(
-            self,
-            "MMEM:LOAD:STAT",
-            "Load State",
-            ["STATE_1", "STATE_3"],
-            label_align="right",
-        )
-
-        # default["CH1_MODULATE"] = "False"
-        # default["CH1_BURST_EN"] = "False"
-        # default["CH1_IMPEDANCE"] = "1e6"
-        # default["CH1_ENABLE"] = "False"
-        # default["CH1_NUM_PULSE"] = "300"
-        # default["CH1_BURST_FREQ"] = "1"
-
-        # self.amplitude_edit = QLineEdit()
-        # self.amplitude_edit.setValidator(QDoubleValidator())
-        # self.amplitude_edit.editingFinished.connect(
-        #    lambda: control.update_setting(
-        #        f"CH{channel}_AMPLITUDE", (self.amplitude_edit.text())
-        #    )
-        # )
-        # self.amplitude_edit.setText(str(control.settings[f"CH{channel}_AMPLITUDE"]))
-        self.autolayout_grid(ncols=2)
-
-    """
-        self.offset_edit = QLineEdit()
-        self.offset_edit.setValidator(QDoubleValidator())
-        self.offset_edit.editingFinished.connect(
-            lambda: control.update_setting(
-                f"CH{channel}_OFFSET", (self.offset_edit.text())
-            )
-        )
-        self.offset_edit.setText(str(control.settings[f"CH{channel}_OFFSET"]))
-
-        self.frequency_edit = QLineEdit()
-        self.frequency_edit.setValidator(QDoubleValidator())
-        self.frequency_edit.editingFinished.connect(
-            lambda: control.update_setting(
-                f"CH{channel}_FREQUENCY", (self.frequency_edit.text())
-            )
-        )
-        self.frequency_edit.setText(str(control.settings[f"CH{channel}_FREQUENCY"]))
-
-        self.form = QFormLayout()
-        self.form.addRow("Amplitude (Vpp):", self.amplitude_edit)
-        self.form.addRow("Offset (V):", self.offset_edit)
-        self.form.addRow("Frequency (Hz):", self.frequency_edit)
-
-        self.lower_grid = QGridLayout()
-
-        # ****** DEFINE 2nd COL TEXT BOXES
-        self.num_pulse_edit = QLineEdit()
-        self.num_pulse_edit.setValidator(QDoubleValidator())
-        self.num_pulse_edit.editingFinished.connect(
-            lambda: control.update_setting(
-                f"CH{channel}_NUM_PULSE", (self.num_pulse_edit.text())
-            )
-        )
-        self.num_pulse_edit.setText(str(control.settings[f"CH{channel}_NUM_PULSE"]))
-
-        self.burst_freq_edit = QLineEdit()
-        self.burst_freq_edit.setValidator(QDoubleValidator())
-        self.burst_freq_edit.editingFinished.connect(
-            lambda: control.update_setting(
-                f"CH{channel}_BURST_FREQ", (self.burst_freq_edit.text())
-            )
-        )
-        self.burst_freq_edit.setText(str(control.settings[f"CH{channel}_BURST_FREQ"]))
-
-        self.form2 = QFormLayout()
-        self.form2.addRow("Num Burst Pulses:", self.num_pulse_edit)
-        self.form2.addRow("Burst Freq (Hz):", self.burst_freq_edit)
-
-        # ******* DEFINE BUTTONS + DROPDOWNS
-        self.active_but = QPushButton()
-        self.active_but.setText("Output On/Off")
-        self.active_but.setCheckable(True)
-        self.active_but.clicked.connect(
-            lambda: control.update_setting(
-                f"CH{channel}_ENABLE", str(self.active_but.isChecked())
-            )
-        )
-        setButtonState(self.active_but, control.settings[f"CH{channel}_ENABLE"])
-
-        self.mod_but = QPushButton()
-        self.mod_but.setText("Modulation")
-        self.mod_but.setIcon(QIcon(load_icon("modulation.png")))
-        self.mod_but.setCheckable(True)
-        self.mod_but.clicked.connect(
-            lambda: control.update_setting(
-                f"CH{channel}_MODULATE", str(self.mod_but.isChecked())
-            )
-        )
-        setButtonState(self.mod_but, control.settings[f"CH{channel}_MODULATE"])
-
-        self.burst_but = QPushButton()
-        self.burst_but.setText("Burst")
-        self.burst_but.setCheckable(True)
-        self.burst_but.setIcon(QIcon(load_icon("burst.png")))
-        self.burst_but.clicked.connect(
-            lambda: control.update_setting(
-                f"CH{channel}_BURST_EN", str(self.burst_but.isChecked())
-            )
-        )
-        setButtonState(self.burst_but, control.settings[f"CH{channel}_BURST_EN"])
-
-        self.waveform_label = QLabel("Waveform:")
-        self.waveform_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-
-        self.waveform_drop = QComboBox()
-        self.waveform_drop.addItems(
-            ["Sine", "Square", "Triangle", "Ramp", "Pulse", "Noise", "DC", "File"]
-        )
-        self.waveform_drop.currentIndexChanged.connect(
-            lambda: control.update_setting(
-                f"CH{self.channel}_WAVEFORM", self.waveform_drop.currentText().upper()
-            )
-        )
-        self.waveform_drop.setCurrentText(control.settings[f"CH{channel}_WAVEFORM"])
-
-        self.impedance_label = QLabel("Impedance:")
-        self.impedance_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-
-        self.impedance_drop = QComboBox()
-        self.impedance_drop.addItems()
-        self.impedance_drop.currentIndexChanged.connect(
-            lambda: control.update_setting(
-                f"CH{channel}_IMPEDANCE", self.impedance_drop.currentText()
-            )
-        )
-        self.impedance_drop.setCurrentText(
-            str(control.settings[f"CH{channel}_IMPEDANCE"])
-        )
-
-        # Add widgets to grid layout
-        self.lower_grid.addWidget(self.active_but, 0, 0)
-        self.lower_grid.addWidget(self.mod_but, 1, 0)
-        self.lower_grid.addWidget(self.burst_but, 1, 1)
-        self.lower_grid.addWidget(self.waveform_label, 2, 0)
-        self.lower_grid.addWidget(self.waveform_drop, 2, 1)
-        self.lower_grid.addWidget(self.impedance_label, 3, 0)
-        self.lower_grid.addWidget(self.impedance_drop, 3, 1)
-
-        # ******* DEFINE OVERALL LAYOUT
-        self.master_layout = QGridLayout()
-        self.master_layout.addWidget(self.channel_label, 0, 0)
-        self.master_layout.addLayout(self.form, 1, 0)
-        self.master_layout.addLayout(self.lower_grid, 2, 0)
-        self.master_layout.addLayout(self.form2, 2, 1)
-        self.setLayout(self.master_layout)
-    """
-
-    def settings_to_UI(self):
-        self.frequency.settings_to_UI()
-        self.amplitude.settings_to_UI()
-        self.offset.settings_to_UI()
-        self.waveform.settings_to_UI()
-        self.num_pulse.settings_to_UI()
-        self.burst_mode.settings_to_UI()
-        self.burst_enable.settings_to_UI()
-        self.burst_freq.settings_to_UI()
-        self.enable.settings_to_UI()
-        self.trigger.settings_to_UI()
-        self.load_state.settings_to_UI()
-
-        return
-
-        ch = self.channel
-
-        self.amplitude_edit.setText(str(self.control.settings[f"CH{ch}_AMPLITUDE"]))
-        self.offset_edit.setText(str(self.control.settings[f"CH{ch}_OFFSET"]))
-        self.frequency_edit.setText(str(self.control.settings[f"CH{ch}_FREQUENCY"]))
-        self.num_pulse_edit.setText(str(self.control.settings[f"CH{ch}_NUM_PULSE"]))
-        self.burst_freq_edit.setText(str(self.control.settings[f"CH{ch}_BURST_FREQ"]))
-        setButtonState(self.active_but, self.control.settings[f"CH{ch}_ENABLED"])
-        setButtonState(self.mod_but, self.control.settings[f"CH{ch}_MODULATE"])
-        setButtonState(self.burst_but, self.control.settings[f"CH{ch}_BURST_EN"])
-        self.waveform_drop.setCurrentText(
-            self.control.settings[f"CH{ch}_WAVEFORM"].title()
-        )
-        self.impedance_drop.setCurrentText(
-            str(self.control.settings[f"CH{ch}_IMPEDANCE"])
-        )

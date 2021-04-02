@@ -120,23 +120,24 @@ class Keysight_33500B(Backend):
             return f"{setting}={rval}"
 
         """    BURSt Subsystem    """
-        if setting == "CHX_BURS:MODE":
-            print(value)
+        if setting_X == "CHX_BURS_MODE":
             self.write(f"BURS:MODE {value}")
             rval = self.query("BURS:MODE?")
-            print(rval)
             return f"{setting}={rval}"
-        if setting == "CHX_BURS:STAT":
-            print(value)
+        if setting_X == "CHX_BURS_STAT":
             self.write(f"BURS:STAT {value}")  # page 180
             rval = self.query("BURS:STAT?")
-            print(rval)
             return f"{setting}={rval}"
-        if setting == "CHX_BURS:NCYC":
-            print(value)
+        if setting_X == "CHX_BURS_NCYC":
             self.write(f"BURS:NCYC {value}")
             rval = self.query("BURS:NCYC?")
-            print(rval)
+            return f"{setting}={rval}"
+        if setting_X == "CHX_BURS_PER":
+            print("val PER:", value)
+            self.write(f"BURS:INT:PER {value}")
+            rval = self.query("BURS:INT:PER?")
+            print("rval PER:", rval)
+            print(f"{setting}={rval}")
             return f"{setting}={rval}"
 
         """    DISPlay Subsystem    """
@@ -164,19 +165,13 @@ class Keysight_33500B(Backend):
             rval = rval[:-1]  # Trim newline character
             return f"{setting}={rval}"
 
-        """    MMEMory Subsystem    """
-        if setting_X == "MMEM:LOAD:STAT":
-            self.write(f":MMEM:LOAD:STAT INT:/{value}.sta")
-            rval = self.query(":MMEM:LOAD:STAT?")
-            return f"{setting}={rval}"
-
         """    OUTPut Subsystem    """
         if setting_X == "CHX_IMPEDANCE":  # needs to be adjusted to OUTP I believe
-            if value == "50":
-                self.write(f"CHAN{channel}:IMP FIFT")
+            if value == "50 (OHM)":
+                self.write(f"OUTP:LOAD 50")
             else:
-                self.write(f"CHAN{channel}:IMP ONEM")
-            rval = self.query(f"CHAN{channel}:IMP?")
+                self.write(f"OUTP:LOAD INF")
+            rval = self.query(f"OUTP:LOAD?")
             return f"{setting}={rval}"
         if setting_X == "CHX_ENABLE":
             if value == "TRUE":
@@ -188,12 +183,6 @@ class Keysight_33500B(Backend):
             return f"{setting}={rval}"
 
         """    TRIGger Subsystem    """
-        if setting == "CHX_TRIG:SOUR":
-            print(value)
-            self.write(f"(CHX_TRIG:SOUR {value}")
-            rval = self.query("(CHX_TRIG:SOUR?")
-            print(rval)
-            return f"{setting}={rval}"
         if setting == "TRIGGER_LEVEL":
             self.write(f"TRIG:EDGE:LEV {float(value):.6E}")
             rval = self.query("TRIG:EDGE:LEV?")
@@ -213,8 +202,10 @@ class Keysight_33500B(Backend):
             rval = self.query("TRIG:EDGE:SLOP?")
             return f"{setting}={rval}"
         if setting == "TRIGGER_CHANNEL":
-            self.write(f"TRIG:SOUR CHAN{int(value)}")
+            self.write(f"TRIG:SOUR {value}")
+
             rval = self.query("TRIG:SOUR?")
+            print(rval, value, flush=True)
             return f"{setting}={rval}"
 
         """    VOLT Subsystem    """
