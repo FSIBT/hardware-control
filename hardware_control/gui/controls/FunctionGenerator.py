@@ -61,7 +61,7 @@ class FunctionGenerator(Instrument):
 
     def setup_UI(self):
         self.frequency = QControl(
-            self, "CH1_FREQUENCY", "Frequency (Hz)")
+            self, "CH1_FREQUENCY", "Frequency (MHz)")
         self.amplitude = QControl(
             self, "CH1_AMPLITUDE", "Amplitude (Vpp)")
         self.offset = QControl(
@@ -109,7 +109,7 @@ class FunctionGenerator(Instrument):
         default = {}
 
         default["CH1_AMPLITUDE"] = "1"
-        default["CH1_FREQUENCY"] = "1e3"
+        default["CH1_FREQUENCY"] = "12"
         default["CH1_OFFSET"] = "0"
         default["CH1_WAVEFORM"] = "SINE"
         default["CH1_MODULATE"] = "FALSE"

@@ -80,38 +80,39 @@ class Keysight_33500B(Backend):
         channel, setting_X = get_channel_from_command(setting)
         print(channel, setting_X, value, flush=True)
 
-        if setting_X == "CHX_VOLTS_DIV":  ##Not used?
+        if setting_X == "CHX_VOLTS_DIV":  # Not used?
             self.write(f":CHAN{channel}:SCAL {float(value):.6E}")
             rval = self.query(f":CHAN{channel}:SCAL?")
             return f"{setting}={rval}"
-        if setting == "TIMEBASE":  ##Not used?
+        if setting == "TIMEBASE":  # Not used?
             self.write(f":TIM:SCAL {float(value):.6E}")
             rval = self.query(":TIM:SCAL?")
             return f"{setting}={rval}"
-        if setting == "TIME_OFFSET":  ##Not used?
+        if setting == "TIME_OFFSET":  # Not used?
             self.write(f":TIM:POS {float(value):.6E}")
             rval = self.query(":TIM:POS?")
             return f"{setting}={rval}"
-        if setting_X == "CHX_LABEL":  ##Not used?
+        if setting_X == "CHX_LABEL":  # Not used?
             # Length is capped at 32 characters
             if len(value) > 32:
                 value = value[0:32]
             self.write(f"CHAN{channel}:LAB {value}")
             rval = self.query(f"CHAN{channel}:LAB?")
             return f"{setting}={rval}"
-        if setting == "LABELS_ENABLED":  ##Not used?
+        if setting == "LABELS_ENABLED":  # Not used?
             self.write(f"DISP:LAB {int(value=='True')}")
             rval = self.query("DISP:LAB?")
             return f"{setting}={rval}"
-        if setting_X == "CHX_INVERT":  ##Not corresponding to correct thing
+        if setting_X == "CHX_INVERT":  # Not corresponding to correct thing
             self.write(f"CHAN{channel}:INV {int(value=='True')}")
             rval = self.query(f"CHAN{channel}:INV?")
             return f"{setting}={rval}"
-        if setting_X == "CHX_PROBE_ATTEN":  ##Not used?
+        if setting_X == "CHX_PROBE_ATTEN":  # Not used?
             self.write(f"CHAN{channel}:PROB {float(value):.6E}")
-            rval = self.query(f"CHAN{channel}:PROB?")  # ie. 10 gives x10 or 10:1 probe
+            # ie. 10 gives x10 or 10:1 probe
+            rval = self.query(f"CHAN{channel}:PROB?")
             return f"{setting}={rval}"
-        if setting_X == "CHX_COUPLING":  ##Not used?
+        if setting_X == "CHX_COUPLING":  # Not used?
             # Make sure valid value provided
             if value not in ["AC", "DC"]:
                 value = "DC"
@@ -148,7 +149,10 @@ class Keysight_33500B(Backend):
 
         """    FREQuency Subsystem    """
         if setting_X == "CHX_FREQUENCY":
+            print(value, flush=True)
+            value = value * 1e6  # converting MHz to Hz
             self.write(f":FREQ {float(value):.6E}")
+            print(value, flush=True)
             rval = self.query(":FREQ?")
             rval = rval[:-1]
             return f"{setting}={rval}"
