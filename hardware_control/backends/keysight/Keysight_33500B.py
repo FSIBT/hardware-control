@@ -150,7 +150,7 @@ class Keysight_33500B(Backend):
         """    FREQuency Subsystem    """
         if setting_X == "CHX_FREQUENCY":
             print(value, flush=True)
-            value = value * 1e6  # converting MHz to Hz
+            value = str(float(value) * 1e6)  # converting MHz to Hz
             self.write(f":FREQ {float(value):.6E}")
             print(value, flush=True)
             rval = self.query(":FREQ?")
