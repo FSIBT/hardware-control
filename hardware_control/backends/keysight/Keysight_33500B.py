@@ -209,7 +209,10 @@ class Keysight_33500B(Backend):
             self.write(f"TRIG:SOUR {value}")
             rval = self.query("TRIG:SOUR?")
             return f"{setting}={rval}"
-
+        if setting == "TRIGGER_DELAY":
+            self.write(f"TRIG:DEL {float(value):.6E}")
+            rval = self.query("TRIG:DEL?")
+            return f"{setting}={rval}"
         """    VOLT Subsystem    """
         # if setting_X == "CHX_AMPLITUDE":
         #    self.write(f":VOLT {float(value):.6E}")
