@@ -138,10 +138,10 @@ class SRS_DG535(Backend):
             logger.debug(f"{self.ID} writes: {command}")
             self.write(command)
             error_byte = self.query("ES")
-            if error_byte == 0:
+            if error_byte == "0":
                 return f"{setting}={value_orig}"
             logging.error(
-                f"{self.ID} - Got instrument error in update_setting: {setting} {value_orig} error: {error_byte}",
+                f"{self.ID} - Got instrument error in update_setting: {setting} {value_orig} error: >{error_byte}<",
             )
             return "Error"
 
