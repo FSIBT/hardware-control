@@ -187,7 +187,8 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
             return value
 
         value = float(value)
-        current_value = float(self.active_ramps.get(setting, self.settings[setting]))
+        current_value = float(self.active_ramps.get(
+            setting, self.settings[setting]))
 
         # stop timer if not needed anymore
         if current_value == value:
@@ -316,7 +317,8 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
         try:
             with open(filename) as file:
                 self.settings = json.load(file)
-                logger.info(f"settings for {self.name} read from file '{filename}'")
+                logger.info(
+                    f"settings for {self.name} read from file '{filename}'")
         except:
             logger.error(
                 f"Failed to read file '{filename}'. Using defualt case.", exc_info=True
@@ -333,7 +335,8 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
         try:
             with open(filename, "w") as file:
                 json.dump(self.settings, file)
-                logger.info(f"settings for {self.name} saved to file '{filename}'")
+                logger.info(
+                    f"settings for {self.name} saved to file '{filename}'")
         except Exception:
             logger.error(
                 f"Failed to write file '{filename}'. settings not saved.", exc_info=True
@@ -346,7 +349,8 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
 
     def read_state_from_backend(self):
         if self.comm is None:
-            logger.warning("Failed to read state from backend. 'Comm' is None.")
+            logger.warning(
+                "Failed to read state from backend. 'Comm' is None.")
             return
 
         # Send a query to the backend for every possible value
@@ -499,11 +503,13 @@ class Instrument(QGroupBox, abc.ABC, metaclass=CombinedMetaclass):
                 return None
         return rval
 
-    def autolayout_grid(self, grid=None, instrument=None, ncols=1, row_offset=0):
+    def autolayout_grid(self, grid=None, instrument=None, ncols=1, row_offset=0, UIs=None):
         """Create a GridLayout of ``instruments``"""
         if grid is None:
             grid = QGridLayout()
             self.grid = grid
+        if UIs is None:
+            UIs = self.UIs
         L = len(self.UIs)
         for i, ui in enumerate(self.UIs):
             row = i // ncols + row_offset
