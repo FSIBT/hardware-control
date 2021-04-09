@@ -112,7 +112,8 @@ class PlotBase(QWidget):
 
         # Check that is a function of time
         if "time:time" not in self.app.data_sets[self.plot_set].data:
-            logger.info(f"Data set {self.plot_set} in {self.name} has no time data.")
+            logger.info(
+                f"Data set {self.plot_set} in {self.name} has no time data.")
             return
 
         xleft, xright = self.axes.get_xlim()
@@ -120,25 +121,28 @@ class PlotBase(QWidget):
 
         self.axes.clear()
         for key in self.app.data_sets[self.plot_set].data:
-
             # Skip non-lists
             if not self.app.data_sets[self.plot_set].values_are_list(key):
                 continue
 
             # Skip non-numeric types
-            if not self.app.data_sets[self.plot_set].values_are_numeric(key):
-                continue
+            # if not self.app.data_sets[self.plot_set].values_are_numeric(key):
+            #    continue
 
             if key[-4:] == "Misc":
                 continue
 
             if key == "time:time":
                 continue
-
             arrs = self.app.data_sets[self.plot_set].get_corresponding_arrays(
                 ["time:time", key], True
             )
             y_values = np.array(arrs[key])
+            x_values = epoch2num(np.array(arrs["time:time"]))
+            mask = [type(y) != type(None) for y in y_values]
+            y_values = y_values[mask]
+            x_values = x_values[mask]
+
             if self.normalize:
                 mymax = np.abs(y_values).max()
                 if mymax > 0:
@@ -151,7 +155,7 @@ class PlotBase(QWidget):
                 label_name = key
 
             self.axes.plot_date(
-                epoch2num(np.array(arrs["time:time"])),
+                x_values,
                 y_values,
                 self.fmt,
                 label=label_name,
