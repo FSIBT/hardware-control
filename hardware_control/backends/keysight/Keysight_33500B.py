@@ -80,39 +80,39 @@ class Keysight_33500B(Backend):
         channel, setting_X = get_channel_from_command(setting)
         print(channel, setting_X, value, flush=True)
 
-        if setting_X == "CHX_VOLTS_DIV":  # Not used?
+        if setting_X == "CHX_VOLTS_DIV":
             self.write(f":CHAN{channel}:SCAL {float(value):.6E}")
             rval = self.query(f":CHAN{channel}:SCAL?")
             return f"{setting}={rval}"
-        if setting == "TIMEBASE":  # Not used?
+        if setting == "TIMEBASE":
             self.write(f":TIM:SCAL {float(value):.6E}")
             rval = self.query(":TIM:SCAL?")
             return f"{setting}={rval}"
-        if setting == "TIME_OFFSET":  # Not used?
+        if setting == "TIME_OFFSET":
             self.write(f":TIM:POS {float(value):.6E}")
             rval = self.query(":TIM:POS?")
             return f"{setting}={rval}"
-        if setting_X == "CHX_LABEL":  # Not used?
+        if setting_X == "CHX_LABEL":
             # Length is capped at 32 characters
             if len(value) > 32:
                 value = value[0:32]
             self.write(f"CHAN{channel}:LAB {value}")
             rval = self.query(f"CHAN{channel}:LAB?")
             return f"{setting}={rval}"
-        if setting == "LABELS_ENABLED":  # Not used?
+        if setting == "LABELS_ENABLED":
             self.write(f"DISP:LAB {int(value=='True')}")
             rval = self.query("DISP:LAB?")
             return f"{setting}={rval}"
-        if setting_X == "CHX_INVERT":  # Not corresponding to correct thing
+        if setting_X == "CHX_INVERT":
             self.write(f"CHAN{channel}:INV {int(value=='True')}")
             rval = self.query(f"CHAN{channel}:INV?")
             return f"{setting}={rval}"
-        if setting_X == "CHX_PROBE_ATTEN":  # Not used?
+        if setting_X == "CHX_PROBE_ATTEN":
             self.write(f"CHAN{channel}:PROB {float(value):.6E}")
             # ie. 10 gives x10 or 10:1 probe
             rval = self.query(f"CHAN{channel}:PROB?")
             return f"{setting}={rval}"
-        if setting_X == "CHX_COUPLING":  # Not used?
+        if setting_X == "CHX_COUPLING":
             # Make sure valid value provided
             if value not in ["AC", "DC"]:
                 value = "DC"
@@ -126,7 +126,7 @@ class Keysight_33500B(Backend):
             rval = self.query("BURS:MODE?")
             return f"{setting}={rval}"
         if setting_X == "CHX_BURS_STAT":
-            self.write(f"BURS:STAT {value}")  # page 180
+            self.write(f"BURS:STAT {value}")
             rval = self.query("BURS:STAT?")
             return f"{setting}={rval}"
         if setting_X == "CHX_BURS_NCYC":
@@ -142,7 +142,7 @@ class Keysight_33500B(Backend):
             return f"{setting}={rval}"
 
         """    DISPlay Subsystem    """
-        if setting_X == "CHX_ACTIVE":  # Adjust to DISP
+        if setting_X == "CHX_ACTIVE":
             self.write(f"CHAN{channel}:DISP {int(value=='True')}")
             rval = self.query(f"CHAN{channel}:DISP?")
             return f"{setting}={rval}"
@@ -170,7 +170,7 @@ class Keysight_33500B(Backend):
             return f"{setting}={rval}"
 
         """    OUTPut Subsystem    """
-        if setting_X == "CHX_IMPEDANCE":  # needs to be adjusted to OUTP I believe
+        if setting_X == "CHX_IMPEDANCE":
             if value == "50 (OHM)":
                 self.write(f"OUTP:LOAD 50")
             else:
