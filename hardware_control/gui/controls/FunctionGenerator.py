@@ -88,6 +88,41 @@ class FunctionGenerator(Instrument):
         self.impedance = QControlCombo(
             self, "CH1_IMPEDANCE", "Impedance", ["HiZ", "50 (OHM)"],
         )
+        if self.num_channels >= 2:
+            self.frequency2 = QControl(
+                self, "CH2_FREQUENCY", "Frequency (MHz)")
+            self.amplitude2 = QControl(
+                self, "CH2_AMPLITUDE", "Amplitude (Vpp)")
+            self.offset2 = QControl(self, "CH2_OFFSET", "Offset (V)")
+            self.waveform2 = QControlCombo(
+                self,
+                "CH2_WAVEFORM",
+                "Waveform",
+                ["Sine", "Square", "Triangle", "Ramp",
+                    "Pulse", "Noise", "DC", "File"],
+            )
+            self.burst_mode2 = QControlCombo(
+                self, "CH2_BURS_MODE", "Burst Mode", ["TRIG", "GAT"],
+            )
+            self.burst_enable2 = QControlCombo(
+                self, "CH2_BURS_STAT", "Burst Enable/State", ["1", "0"],
+            )
+            self.num_pulse2 = QControl(
+                self, "CH2_BURS_NCYC", "Num Burst Pulses",)
+            self.burst_period2 = QControl(
+                self, "CH2_BURS_PER", "Burst Period (s)",)
+            self.enable2 = QControlCombo(
+                self, "CH2_ENABLE", "Enable Output On/Off", ["True", "False"],
+            )
+            self.trigger2 = QControlCombo(
+                self, "CH2_TRIGGER_CHANNEL", "Trigger Channel", [
+                    "EXT", "IMM", "TIM", "BUS"],
+            )
+            self.delay2 = QControl(
+                self, "CH2_TRIGGER_DELAY", "Trigger Delay (s)")
+            self.impedance2 = QControlCombo(
+                self, "CH2_IMPEDANCE", "Impedance", ["HiZ", "50 (OHM)"],
+            )
         self.widgets = [
             self.frequency,
             self.amplitude,
