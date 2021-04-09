@@ -81,12 +81,41 @@ class FunctionGenerator(Instrument):
             self, "CH1_ENABLE", "Enable Output On/Off", ["True", "False"],
         )
         self.trigger = QControlCombo(
-            self, "TRIGGER_CHANNEL", "Trigger Channel", ["EXT", "IMM", "TIM", "BUS"],
+            self, "CH1_TRIGGER_CHANNEL", "Trigger Channel", [
+                "EXT", "IMM", "TIM", "BUS"],
         )
-        self.delay = QControl(self, "TRIGGER_DELAY", "Trigger Delay (s)")
+        self.delay = QControl(self, "CH1_TRIGGER_DELAY", "Trigger Delay (s)")
         self.impedance = QControlCombo(
             self, "CH1_IMPEDANCE", "Impedance", ["HiZ", "50 (OHM)"],
         )
+        self.widgets = [
+            self.frequency,
+            self.amplitude,
+            self.offset,
+            self.waveform,
+            self.num_pulse,
+            self.burst_mode,
+            self.burst_period,
+            self.enable,
+            self.trigger,
+            self.delay,
+            self.impedance
+        ]
+
+        if self.num_channels >= 2:
+            self.widgets2 = [
+                self.frequency2,
+                self.amplitude2,
+                self.offset2,
+                self.waveform2,
+                self.num_pulse2,
+                self.burst_mode2,
+                self.burst_period2,
+                self.enable2,
+                self.trigger2,
+                self.delay2,
+                self.impedance2,
+            ]
 
     def initialize_gui_instrument(self):
         return self.default_state()
@@ -94,34 +123,29 @@ class FunctionGenerator(Instrument):
     def default_state(self):
 
         default = {}
-
-        default["CH1_AMPLITUDE"] = "1"
-        default["CH1_FREQUENCY"] = "12"
-        default["CH1_OFFSET"] = "0"
-        default["CH1_WAVEFORM"] = "SINE"
-        default["CH1_MODULATE"] = "FALSE"
-        default["CH1_BURS_MODE"] = "TRIG"
-        default["CH1_BURS_STAT"] = "1"
-        default["CH1_IMPEDANCE"] = "HiZ"
-        default["CH1_ENABLE"] = "TRUE"
-        default["CH1_BURS_NCYC"] = "500"
-        default["CH1_BURS_PER"] = "1"
-        default["CH1_TRIG_SOUR"] = "EXT"
-        default["TRIGGER_CHANNEL"] = "EXT"
-        default["TRIGGER_DELAY"] = "10e-6"
+        for i in range(1, self.num_channels+1):
+            default[f"CH{i}_AMPLITUDE"] = "1"
+            default[f"CH{i}_FREQUENCY"] = "12"
+            default[f"CH{i}_OFFSET"] = "0"
+            default[f"CH{i}_WAVEFORM"] = "SINE"
+            default[f"CH{i}_MODULATE"] = "FALSE"
+            default[f"CH{i}_BURS_MODE"] = "TRIG"
+            default[f"CH{i}_BURS_STAT"] = "1"
+            default[f"CH{i}_IMPEDANCE"] = "HiZ"
+            default[f"CH{i}_ENABLE"] = "TRUE"
+            default[f"CH{i}_BURS_NCYC"] = "500"
+            default[f"CH{i}_BURS_PER"] = "1"
+            default[f"CH{i}_TRIG_SOUR"] = "EXT"
+            default[f"CH{i}_TRIGGER_CHANNEL"] = "EXT"
+            default[f"CH{i}_TRIGGER_DELAY"] = "10e-6"
 
         return default
 
     def settings_to_UI(self):
-        self.frequency.settings_to_UI()
-        self.amplitude.settings_to_UI()
-        self.offset.settings_to_UI()
-        self.waveform.settings_to_UI()
-        self.num_pulse.settings_to_UI()
-        self.burst_mode.settings_to_UI()
-        self.burst_period.settings_to_UI()
-        self.enable.settings_to_UI()
-        self.trigger.settings_to_UI()
-        self.delay.settings_to_UI()
-        self.impedance.settings_to_UI()
+        for w in self.widgets:
+            w.settings_to_UI()
+        if self.num_channels >= 2:
+            for w in self.widgets2:
+                w.settings_to_UI()
+
         return
