@@ -205,11 +205,11 @@ class Keysight_33500B(Backend):
             self.write(f"TRIG:EDGE:SLOP {value}")
             rval = self.query("TRIG:EDGE:SLOP?")
             return f"{setting}={rval}"
-        if setting == "TRIGGER_CHANNEL":
+        if setting == "CHX_TRIGGER_CHANNEL":
             self.write(f"TRIG:SOUR {value}")
             rval = self.query("TRIG:SOUR?")
             return f"{setting}={rval}"
-        if setting == "TRIGGER_DELAY":
+        if setting == "CHX_TRIGGER_DELAY":
             self.write(f"TRIG:DEL {float(value):.6E}")
             rval = self.query("TRIG:DEL?")
             return f"{setting}={rval}"
