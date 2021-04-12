@@ -126,8 +126,11 @@ class PlotBase(QWidget):
                 continue
 
             # Skip non-numeric types
-            # if not self.app.data_sets[self.plot_set].values_are_numeric(key):
-            #    continue
+            if not self.app.data_sets[self.plot_set].values_are_numeric(key):
+                if any(val is not None for val in self.app.data_sets[self.plot_set].data[key]):
+                    pass
+                else:
+                    continue
 
             if key[-4:] == "Misc":
                 continue
