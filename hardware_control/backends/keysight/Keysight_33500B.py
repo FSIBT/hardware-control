@@ -202,11 +202,11 @@ class Keysight_33500B(Backend):
             return f"{setting}={rval}"
         if setting_X == "CHX_TRIGGER_CHANNEL":
             self.write(f"TRIG{channel}:SOUR {value}")
-            rval = self.query("TRIG:SOUR?")
+            rval = self.query(f"TRIG{channel}:SOUR?")
             return f"{setting}={rval}"
         if setting_X == "CHX_TRIGGER_DELAY":
             self.write(f"TRIG{channel}:DEL {float(value):.6E}")
-            rval = self.query("TRIG:DEL?")
+            rval = self.query(f"TRIG{channel}:DEL?")
             return f"{setting}={rval}"
         """    VOLT Subsystem    """
         # if setting_X == "CHX_AMPLITUDE":
