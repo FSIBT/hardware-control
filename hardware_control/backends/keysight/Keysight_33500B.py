@@ -229,6 +229,11 @@ class Keysight_33500B(Backend):
             rval = rval[:-1]
             return f"{setting}={rval}"
 
+        if setting_X == "CHX_TRACK":
+            self.write(f"SOUR{channel}:TRAC {value}")
+            #rval = self.query(f"SOUR{channel}:TRAC?")
+            rval = self.query("TRAC?")
+            return f"{setting}={rval}"
     @ensure_online
     def command(self, cmd: str):
         pass
