@@ -122,23 +122,20 @@ class Keysight_33500B(Backend):
 
         """    BURSt Subsystem    """
         if setting_X == "CHX_BURS_MODE":
-            self.write(f"BURS:MODE {value}")
-            rval = self.query("BURS:MODE?")
+            self.write(f"SOUR{channel}:BURS:MODE {value}")
+            rval = self.query(f"SOUR{channel}:BURS:MODE?")
             return f"{setting}={rval}"
         if setting_X == "CHX_BURS_STAT":
-            self.write(f"BURS:STAT {value}")
-            rval = self.query("BURS:STAT?")
+            self.write(f"SOUR{channel}:BURS:STAT {value}")
+            rval = self.query(f"SOUR{channel}:BURS:STAT?")
             return f"{setting}={rval}"
         if setting_X == "CHX_BURS_NCYC":
-            self.write(f"BURS:NCYC {value}")
-            rval = self.query("BURS:NCYC?")
+            self.write(f"SOUR{channel}:BURS:NCYC {value}")
+            rval = self.query(f"SOUR{channel}:BURS:NCYC?")
             return f"{setting}={rval}"
         if setting_X == "CHX_BURS_PER":
-            print("val PER:", value)
-            self.write(f"BURS:INT:PER {value}")
-            rval = self.query("BURS:INT:PER?")
-            print("rval PER:", rval)
-            print(f"{setting}={rval}")
+            self.write(f"SOUR{channel}:BURS:INT:PER {value}")
+            rval = self.query(f"SOUR{channel}:BURS:INT:PER?")
             return f"{setting}={rval}"
 
         """    DISPlay Subsystem    """
@@ -149,11 +146,9 @@ class Keysight_33500B(Backend):
 
         """    FREQuency Subsystem    """
         if setting_X == "CHX_FREQUENCY":
-            print(value, flush=True)
             value = str(float(value) * 1e6)  # converting MHz to Hz
-            self.write(f":FREQ {float(value):.6E}")
-            print(value, flush=True)
-            rval = self.query(":FREQ?")
+            self.write(f"SOUR{channel}:FREQ {float(value):.6E}")
+            rval = self.query(f"SOUR{channel}:FREQ?")
             rval = rval[:-1]
             return f"{setting}={rval}"
         """    FUNCtion Subsystem    """
@@ -164,25 +159,25 @@ class Keysight_33500B(Backend):
             return f"{setting}={rval}"
         if setting_X == "CHX_WAVEFORM":
             wvfm = waveform_lookup[value]
-            self.write(f":SOUR:FUNC {wvfm}")
-            rval = self.query(":SOUR:FUNC?")
+            self.write(f":SOUR{channel}:FUNC {wvfm}")
+            rval = self.query(f":SOUR{channel}:FUNC?")
             rval = rval[:-1]  # Trim newline character
             return f"{setting}={rval}"
 
         """    OUTPut Subsystem    """
         if setting_X == "CHX_IMPEDANCE":
             if value == "50 (OHM)":
-                self.write(f"OUTP:LOAD 50")
+                self.write(f"OUTP{channel}:LOAD 50")
             else:
-                self.write(f"OUTP:LOAD INF")
-            rval = self.query(f"OUTP:LOAD?")
+                self.write(f"OUTP{channel}:LOAD INF")
+            rval = self.query(f"OUTP{channel}:LOAD?")
             return f"{setting}={rval}"
         if setting_X == "CHX_ENABLE":
             if value == "TRUE":
-                self.write(":OUTP ON")
+                self.write(f":OUTP{channel} ON")
             else:
-                self.write(":OUTP OFF")
-            rval = self.query(":OUTP?")
+                self.write(f":OUTP{channel} OFF")
+            rval = self.query(f":OUTP{channel}?")
             rval = rval == "1\n"
             return f"{setting}={rval}"
 
@@ -219,7 +214,7 @@ class Keysight_33500B(Backend):
         #    rval = self.query(":VOLT?")
         #    rval = rval[:-1]
         if setting_X == "CHX_AMPLITUDE":
-            self.write(f":VOLT {float(value):.6E}")
+            self.write(f"SOUR{channel}:VOLT {float(value):.6E}")
             rval = self.query(":VOLT?")
             rval = rval[:-1]
             return f"{setting}={rval}"
@@ -229,8 +224,8 @@ class Keysight_33500B(Backend):
         #    rval = self.query(f"CHAN{channel}:OFFS?")
         #    return f"{setting}={rval}"
         if setting_X == "CHX_OFFSET":
-            self.write(f":VOLT:OFFS {float(value):.6E}")
-            rval = self.query(":VOLT:OFFS?")
+            self.write(f"SOUR{channel}:VOLT:OFFS {float(value):.6E}")
+            rval = self.query(f"SOUR{channel}:VOLT:OFFS?")
             rval = rval[:-1]
             return f"{setting}={rval}"
 
