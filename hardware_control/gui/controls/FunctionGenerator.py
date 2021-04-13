@@ -123,6 +123,12 @@ class FunctionGenerator(Instrument):
             self.impedance2 = QControlCombo(
                 self, "CH2_IMPEDANCE", "Impedance", ["HiZ", "50 (OHM)"],
             )
+            self.track2 = QControlCombo(
+                self, "CH2_TRACK", "CH1 Track CH2", ["OFF", "ON", "INV"],
+            )
+            self.track1 = QControlCombo(
+                self, "CH1_TRACK", "CH2 Track CH1", ["OFF", "ON", "INV"],
+            )
         self.widgets = [
             self.frequency,
             self.amplitude,
@@ -150,6 +156,8 @@ class FunctionGenerator(Instrument):
                 self.trigger2,
                 self.delay2,
                 self.impedance2,
+                self.track2,
+                self.track1,
             ]
 
     def initialize_gui_instrument(self):
@@ -173,6 +181,7 @@ class FunctionGenerator(Instrument):
             default[f"CH{i}_TRIG_SOUR"] = "EXT"
             default[f"CH{i}_TRIGGER_CHANNEL"] = "EXT"
             default[f"CH{i}_TRIGGER_DELAY"] = "10e-6"
+            default[f"CH{i}_TRACK"] = "OFF"
 
         return default
 
