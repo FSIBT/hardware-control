@@ -54,7 +54,7 @@ class FunctionGenerator(Instrument):
 
         self.settings = self.default_state()
         self.setup_UI()
-        self.autolayout_grid(ncols=1)
+        self.autolayout_grid(ncols=2)
 
         # Write state to scope - synch scope with GUI
         self.send_state()
