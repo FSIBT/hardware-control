@@ -88,6 +88,9 @@ class FunctionGenerator(Instrument):
         self.impedance = QControlCombo(
             self, "CH1_IMPEDANCE", "CH1 Impedance", ["HiZ", "50 (OHM)"],
         )
+        self.polarity = QControlCombo(
+            self, "CH1_POLARITY", "CH1 Polarity", ["NORM", "INV"],
+        )
         if self.num_channels >= 2:
             self.frequency2 = QControl(
                 self, "CH2_FREQUENCY", "CH2 Frequency (MHz)")
@@ -123,6 +126,9 @@ class FunctionGenerator(Instrument):
             self.impedance2 = QControlCombo(
                 self, "CH2_IMPEDANCE", "CH2 Impedance", ["HiZ", "50 (OHM)"],
             )
+            self.polarity2 = QControlCombo(
+                self, "CH2_POLARITY", "CH2 Polarity", ["NORM", "INV"],
+            )
             self.track2 = QControlCombo(
                 self, "CH2_TRACK", "CH1 Track CH2", ["OFF", "ON", "INV"],
             )
@@ -143,7 +149,8 @@ class FunctionGenerator(Instrument):
             self.enable,
             self.trigger,
             self.delay,
-            self.impedance
+            self.impedance,
+            self.polarity,
         ]
 
         if self.num_channels >= 2:
@@ -160,6 +167,7 @@ class FunctionGenerator(Instrument):
                 self.trigger2,
                 self.delay2,
                 self.impedance2,
+                self.polarity2,
                 self.track2,
                 self.track1,
             ]
@@ -179,6 +187,7 @@ class FunctionGenerator(Instrument):
             default[f"CH{i}_BURS_MODE"] = "TRIG"
             default[f"CH{i}_BURS_STAT"] = "1"
             default[f"CH{i}_IMPEDANCE"] = "HiZ"
+            default[f"CH{i}_POLARITY"] = "NORM"
             default[f"CH{i}_ENABLE"] = "TRUE"
             default[f"CH{i}_BURS_NCYC"] = "500"
             default[f"CH{i}_BURS_PER"] = "1"
