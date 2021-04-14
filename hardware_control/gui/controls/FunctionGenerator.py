@@ -126,9 +126,11 @@ class FunctionGenerator(Instrument):
             self.track2 = QControlCombo(
                 self, "CH2_TRACK", "CH1 Track CH2", ["OFF", "ON", "INV"],
             )
+            self.track2.pre_update_hook.append(self.set_tracking_hook)
             self.track1 = QControlCombo(
                 self, "CH1_TRACK", "CH2 Track CH1", ["OFF", "ON", "INV"],
             )
+            self.track1.pre_update_hook.append(self.set_tracking_hook)
         self.widgets = [
             self.frequency,
             self.amplitude,
@@ -136,6 +138,7 @@ class FunctionGenerator(Instrument):
             self.waveform,
             self.num_pulse,
             self.burst_mode,
+            self.burst_enable,
             self.burst_period,
             self.enable,
             self.trigger,
@@ -151,6 +154,7 @@ class FunctionGenerator(Instrument):
                 self.waveform2,
                 self.num_pulse2,
                 self.burst_mode2,
+                self.burst_enable2,
                 self.burst_period2,
                 self.enable2,
                 self.trigger2,
@@ -191,5 +195,27 @@ class FunctionGenerator(Instrument):
         if self.num_channels >= 2:
             for w in self.widgets2:
                 w.settings_to_UI()
-
         return
+
+    def set_tracking_hook(self, setting, value):
+        if value is None:
+            return
+        if setting == "CH2_TRACK":
+            settings_list = self.widgets
+        elif setting == "CH1_TRACK":
+            settings_list = self.widgets2
+            # Don't want to remove tracking buttons
+            if self.track2 in settings_list:
+                settings_list.remove(self.track2) 
+                settings_list.remove(self.track1)
+        else: 
+            print('Unknown setting being called',flush=True)
+
+        for w in settings_list:
+            if value == "OFF":
+                w.setEnabled(True)
+            else:
+                w.setEnabled(False)
+            w.settings_to_UI()
+
+        return setting, value
