@@ -180,6 +180,10 @@ class Keysight_33500B(Backend):
             rval = self.query(f":OUTP{channel}?")
             rval = rval == "1\n"
             return f"{setting}={rval}"
+        if setting_X == "CHX_POLARITY":
+            self.write(f":OUTP{channel}:POL {value}")
+            rval = self.query(f"OUTP{channel}:POL?")
+            return f"{setting}={rval}"
 
         """    TRIGger Subsystem    """
         if setting == "TRIGGER_LEVEL":
