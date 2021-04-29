@@ -17,14 +17,14 @@ logger = logging.getLogger(__name__)
 # a lookup table to convert from pulse shape to the correct Keysight
 # command
 waveform_lookup = {
-    "SINE": "SIN",
-    "SQUARE": "SQU",
-    "TRIANGLE": "TRI",
-    "RAMP": "RAMP",
-    "PULSE": "PULS",
+    "Sine": "SIN",
+    "Square": "SQU",
+    "Triangle": "TRI",
+    "Ramp": "RAMP",
+    "Pulse": "PULS",
     "PRBS": "PRBS",
-    "NOISE": "NOIS",
-    "ARBITRARY": "ARB",
+    "Noise": "NOIS",
+    "Arbitrary": "ARB",
     "DC": "DC",
 }
 
