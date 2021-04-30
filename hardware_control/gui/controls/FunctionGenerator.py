@@ -181,7 +181,7 @@ class FunctionGenerator(Instrument):
             default[f"CH{i}_AMPLITUDE"] = "1"
             default[f"CH{i}_FREQUENCY"] = "12"
             default[f"CH{i}_OFFSET"] = "0"
-            default[f"CH{i}_WAVEFORM"] = "SINE"
+            default[f"CH{i}_WAVEFORM"] = "SQUARE"
             default[f"CH{i}_MODULATE"] = "FALSE"
             default[f"CH{i}_BURS_MODE"] = "TRIG"
             default[f"CH{i}_BURS_STAT"] = "1"
