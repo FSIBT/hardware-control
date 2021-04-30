@@ -164,7 +164,6 @@ class Keysight_33500B(Backend):
 
             self.write(f":SOUR{channel}:FUNC {wvfm}")
             rval = self.query(f":SOUR{channel}:FUNC?")
-            rval = rval[:-1]  # Trim newline character
             return f"{setting}={rval}"
 
         """    OUTPut Subsystem    """
