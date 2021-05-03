@@ -52,6 +52,8 @@ class Lakeshore_224(Backend):
             "D5",
         ]
         self.termination = "\r\n"
+        # self.read_termination = '\r\n'
+        # self.write_termination ='\n'
 
     def update_setting(self, setting: str, value):
         """
