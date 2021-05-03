@@ -138,8 +138,11 @@ class Lakeshore_224(Backend):
                 temp = self.query(f"KRDG? {chan}")
                 temps[f"{chan}"] = f"{temp}"
 
-        else:
+        elif channel in self.active_channels:
             temp = self.query(f"KRDG? {channel}")
             temps[f"{channel}"] = f"{temp}"
+
+        else:
+            raise Exception(f"Sorry, channel {channel} is Offline")
 
         return temps
