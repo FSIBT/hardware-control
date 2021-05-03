@@ -37,7 +37,7 @@ class Lakeshore_224(Backend):
         )
         self.num_channels = 12
         self.check_connection_commands = "*IDN?"
-        self.channels = [
+        self.active_channels = [
             "A",
             "B",
             "C1",
@@ -51,6 +51,7 @@ class Lakeshore_224(Backend):
             "D4",
             "D5",
         ]
+        self.termination = "\r\n"
 
     def update_setting(self, setting: str, value):
         """
@@ -89,14 +90,16 @@ class Lakeshore_224(Backend):
         if setting_X == "CHX_CURVE":
             if value_original == "None":
                 self.query(f"INCRV {channel} 0")
-                self.channels.remove(channel)
+                self.active_channels.remove(channel)
+                return f"{channel} is OFF"
             else:
                 self.query(f"INCRV {channel} {value}")
-                self.channels.append(channel)
+                self.active_channels.append(channel)
 
                 # remove dupilicate item in channal list
-                self.channels = list(set(self.channels))
-            status = self.read_status(channel)
+                self.active_channels = list(set(self.active_channels))
+
+                return f"{channel} is using curve {value}"
 
     def command(self, cmd: str):
         """
@@ -129,10 +132,14 @@ class Lakeshore_224(Backend):
         # if self.dummy:
         #     outputs = [1 + 128 + 1024, 128, 1, 1024]
         #     value = random.choice(outputs)
-
         temps = {}
-        for chan in self.channels:
-            temp = self.query(f"KRDG? {chan}")
-            temps[f"{chan}"].append(f"{temp}")
+        if channel == 0:
+            for chan in self.active_channels:
+                temp = self.query(f"KRDG? {chan}")
+                temps[f"{chan}"] = f"{temp}"
+
+        else:
+            temp = self.query(f"KRDG? {channel}")
+            temps[f"{channel}"] = f"{temp}"
 
         return temps
