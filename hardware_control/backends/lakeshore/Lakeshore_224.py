@@ -66,7 +66,7 @@ class Lakeshore_224(Backend):
         --------
         Available settings (<X> indicates a number, values in parethesis show acceptable values):
 
-        * CH<X>_CURVE: select calibration curve for channel X
+        * CH<X>_CHANGE_CURVE: select calibration curve for channel X
         """
 
         channel, setting_X = get_channel_from_command(setting)
@@ -87,8 +87,8 @@ class Lakeshore_224(Backend):
         if self.dummy:
             return f"{setting}={value}"
 
-        if setting_X == "CHX_CURVE":
-            if value_original == "None":
+        if setting_X == "CHX_CHANGE_CURVE":
+            if value_original == 0:
                 self.query(f"INCRV {channel} 0")
                 self.active_channels.remove(channel)
                 return f"{channel} is OFF"
@@ -112,37 +112,22 @@ class Lakeshore_224(Backend):
 
         Notes
         -----
-        !!!Just copy for future use!!!
+        CHX_READ_TEMP:  Read the temperature for channel [A, B, C1-C5, D1-D5], 0 is all online channels
         """
+        channel, cmd_X = get_channel_from_command(cmd)
 
-        if cmd == "SINGLE_TRIGGER":
-            self.write(":SING")
-        elif cmd == "RUN":
-            self.write(":RUN")
-        elif cmd == "CONFIG_READ_WAVE":
-            self.configure_read_waveform()
-        elif cmd == "STOP":
-            self.write(":STOP")
+        if cmd_X == "CHX_READ_TEMP":
+            temps = {}
+            if channel == 0:
+                for chan in self.active_channels:
+                    temp = self.query(f"KRDG? {chan}")
+                    temps[f"{chan}"] = f"{temp}"
 
-    def read_temps(self, channel):
-        """
-        Read the temperature for channel online channel from [A, B, C1-C5, D1-D5]
-        """
+            elif channel in self.active_channels:
+                temp = self.query(f"KRDG? {channel}")
+                temps[f"{channel}"] = f"{temp}"
 
-        # if self.dummy:
-        #     outputs = [1 + 128 + 1024, 128, 1, 1024]
-        #     value = random.choice(outputs)
-        temps = {}
-        if channel == 0:
-            for chan in self.active_channels:
-                temp = self.query(f"KRDG? {chan}")
-                temps[f"{chan}"] = f"{temp}"
+            else:
+                raise Exception(f"Sorry, channel {channel} is Offline")
 
-        elif channel in self.active_channels:
-            temp = self.query(f"KRDG? {channel}")
-            temps[f"{channel}"] = f"{temp}"
-
-        else:
-            raise Exception(f"Sorry, channel {channel} is Offline")
-
-        return temps
+            return temps
