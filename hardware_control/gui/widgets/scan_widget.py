@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 
 class ScanWidget(QGroupBox):
-    def __init__(self, app, name, actions):
+    def __init__(self, app, name, actions, regressor = None, kernel = None):
         """
         Parameters
         ----------
@@ -55,6 +55,8 @@ class ScanWidget(QGroupBox):
         self.val_list = []
         self.count = 0
         self.number_of_values = 0
+        self.GPKernel = kernel
+        self.GPRegressor = regressor
 
         # *************************Create GUI************************
         self.arrow_symbol = QLabel()
@@ -133,10 +135,10 @@ class ScanWidget(QGroupBox):
 
         self.values_select_box = QGroupBox()
         self.values_select_box.setStyleSheet("QGroupBox{padding-top:3px}")
-
-        self.values_select_frame.addWidget(self.use_GP, 0, 0, 1, 1)
-        self.values_select_frame.addWidget(self.n_queries_label, 0, 1, 1, 1)
-        self.values_select_frame.addWidget(self.n_queries_edit, 0, 2, 1, 1)
+        if self.GPKernel:
+            self.values_select_frame.addWidget(self.use_GP, 0, 0, 1, 1)
+            self.values_select_frame.addWidget(self.n_queries_label, 0, 1, 1, 1)
+            self.values_select_frame.addWidget(self.n_queries_edit, 0, 2, 1, 1)
         self.values_select_frame.addWidget(self.use_list, 1, 0, 1, 1)
         self.values_select_frame.addWidget(self.values_label, 1, 1, 1, 1)
         self.values_select_frame.addWidget(self.values_edit, 1, 2, 1, 6)
@@ -334,7 +336,7 @@ class ScanWidget(QGroupBox):
             with open(filename) as file:
                 file_str = file.read().replace("\n", "")
             self.val_list = file_str.split(",")
-            
+
         elif self.use_GP.isChecked():
                 self.n_queries = float(self.n_queries_edit.text())
                 self.number_of_values = self.n_queries
