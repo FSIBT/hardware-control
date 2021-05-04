@@ -81,10 +81,15 @@ class ScanWidget(QGroupBox):
         )
 
         self.values_select_frame = QGridLayout()
+        self.use_GP = QRadioButton("GP")
         self.use_list = QRadioButton("List")
         self.use_space = QRadioButton("Spacing")
         self.use_file = QRadioButton("File")
-        self.use_list.setChecked(True)
+        self.use_space.setChecked(True)
+
+        self.n_queries_label = QLabel("Queries:")
+        self.n_queries_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.n_queries_edit = QLineEdit()
 
         self.values_label = QLabel("Values:")
         self.values_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
@@ -95,21 +100,21 @@ class ScanWidget(QGroupBox):
         )
         self.values_edit.setText(self.values)
 
-        self.spacing_start_label = QLabel("Start: ")
+        self.spacing_start_label = QLabel("Start:")
         self.spacing_start_label.setAlignment(
             QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
         )
 
         self.spacing_start_edit = QLineEdit()
 
-        self.spacing_end_label = QLabel("End: ")
+        self.spacing_end_label = QLabel("End:")
         self.spacing_end_label.setAlignment(
             QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
         )
 
         self.spacing_end_edit = QLineEdit()
 
-        self.step_size_label = QLabel("step size: ")
+        self.step_size_label = QLabel("Step:")
         self.step_size_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
         self.step_size_edit = QLineEdit()
@@ -129,17 +134,20 @@ class ScanWidget(QGroupBox):
         self.values_select_box = QGroupBox()
         self.values_select_box.setStyleSheet("QGroupBox{padding-top:3px}")
 
-        self.values_select_frame.addWidget(self.use_list, 0, 0, 1, 1)
-        self.values_select_frame.addWidget(self.values_label, 0, 1, 1, 1)
-        self.values_select_frame.addWidget(self.values_edit, 0, 2, 1, 6)
+        self.values_select_frame.addWidget(self.use_GP, 0, 0, 1, 1)
+        self.values_select_frame.addWidget(self.n_queries_label, 0, 1, 1, 1)
+        self.values_select_frame.addWidget(self.n_queries_edit, 0, 2, 1, 1)
+        self.values_select_frame.addWidget(self.use_list, 1, 0, 1, 1)
+        self.values_select_frame.addWidget(self.values_label, 1, 1, 1, 1)
+        self.values_select_frame.addWidget(self.values_edit, 1, 2, 1, 6)
 
-        self.values_select_frame.addWidget(self.use_space, 1, 0, 1, 1)
-        self.values_select_frame.addWidget(self.spacing_start_label, 1, 1, 1, 1)
-        self.values_select_frame.addWidget(self.spacing_start_edit, 1, 2, 1, 2)
-        self.values_select_frame.addWidget(self.spacing_end_label, 1, 4, 1, 2)
-        self.values_select_frame.addWidget(self.spacing_end_edit, 1, 6, 1, 2)
-        self.values_select_frame.addWidget(self.step_size_label, 2, 1, 1, 1)
-        self.values_select_frame.addWidget(self.step_size_edit, 2, 2, 1, 2)
+        self.values_select_frame.addWidget(self.use_space, 2, 0, 1, 1)
+        self.values_select_frame.addWidget(self.spacing_start_label, 2, 1, 1, 1)
+        self.values_select_frame.addWidget(self.spacing_start_edit, 2, 2, 1, 1)
+        self.values_select_frame.addWidget(self.spacing_end_label, 2, 3, 1, 1)
+        self.values_select_frame.addWidget(self.spacing_end_edit, 2, 4, 1, 1)
+        self.values_select_frame.addWidget(self.step_size_label, 2, 5, 1, 1)
+        self.values_select_frame.addWidget(self.step_size_edit, 2, 6, 1, 1)
         # self.values_select_frame.addWidget(self.spacing_log_check, 2, 6, 1, 2)
 
         self.values_select_frame.addWidget(self.use_file, 3, 0, 1, 1)
@@ -322,16 +330,20 @@ class ScanWidget(QGroupBox):
             if filename == "":
                 logger.error("no filename provided for values file")
                 return False
-
             # Read files
             with open(filename) as file:
                 file_str = file.read().replace("\n", "")
-
             self.val_list = file_str.split(",")
+            
+        elif self.use_GP.isChecked():
+                self.n_queries = float(self.n_queries_edit.text())
+                self.number_of_values = self.n_queries
+                self.val_list = ["1000","2000","3000","4000"]
+                return True
         else:
             logger.error("No mode selected in scan tool")
             return False
-
+    
         self.number_of_values = len(self.val_list)
         return True
 
