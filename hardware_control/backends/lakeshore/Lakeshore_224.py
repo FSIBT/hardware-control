@@ -12,6 +12,7 @@ https://www.lakeshore.com/docs/default-source/product-downloads/224_manual.pdf f
 """
 
 import logging
+import random
 
 from ..base import Backend, ensure_online
 from ..utility import ensure_float, get_channel_from_command
@@ -98,10 +99,26 @@ class Lakeshore_224(Backend):
                 self.query(f"INCRV {channel} {value}")
                 self.active_channels.append(channel)
 
-                # remove dupilicate item in channal list
-                self.active_channels = list(set(self.active_channels))
+                if self.read_status()["CURVE"] == value:
+                    # remove dupilicate item in channal list
+                    self.active_channels = list(set(self.active_channels))
+                    return f"{channel} is using curve {value}"
 
-                return f"{channel} is using curve {value}"
+                elif self.read_status()["CURVE"] == "00":
+                    # remove this channel from active channel list
+                    self.active_channels.remove(channel)
+                    raise Exception(f"{channel} is not using any curve")
+
+                else:
+                    raise Exception(f"setting curve {value} to {channel} is failure")
+
+        if setting_X == "CHX_CHANGE_NAME":
+            if value_original == 0:
+                self.query(f"INNAME {channel} {channel}")
+                return f"{channel} is named as default"
+            else:
+                self.query(f"INCRV {channel} {value}")
+                return f"{channel} is named {value}"
 
     def command(self, cmd: str):
         """
@@ -133,3 +150,22 @@ class Lakeshore_224(Backend):
                 raise Exception(f"Sorry, channel {channel} is Offline")
 
             return temps
+
+    def read_status(self, channel):
+        """
+        Read all settings of the instrument
+
+        Parameters
+        ----------
+        setting : str
+            Setting to change
+        """
+        if self.dummy:
+            outputs = [1 + 128 + 1024, 128, 1, 1024]
+            value = random.choice(outputs)
+        else:
+            status = {}
+            status["CURVE"] = self.query(f"INCRV? {channel}")
+            status["NAME"] = self.query(f"INNAME? {channel}")
+
+        return status
