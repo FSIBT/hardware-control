@@ -5,3 +5,4 @@ from .IOModule import IOModule, read_channel_file
 from .MultiPowerSupply import MultiPowerSupply
 from .Oscilloscope import Oscilloscope
 from .ReadModule import Read
+from .TempMonitor import TempMonitor
