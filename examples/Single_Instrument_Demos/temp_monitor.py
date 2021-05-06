@@ -44,8 +44,12 @@ class TemperatureMonitor(QMainWindow):
 
         # Add control to the main Widget
         self.grid = QGridLayout()
-        self.grid.addWidget(self.temp_gui, 0, 0)
+        self.grid.addWidget(self.temp_gui, 1, 0)
         self.main_widget.setLayout(self.grid)
+
+        self.plot_wdgt = hc.PlotTool(app, "Temperature Plot")
+        #self.plot_wdgt1.set_dataset(" ") # Could add
+        self.grid.addWidget(self.plot_wdgt, 0, 0)
 
         self.setCentralWidget(self.main_widget)
         self.show()
