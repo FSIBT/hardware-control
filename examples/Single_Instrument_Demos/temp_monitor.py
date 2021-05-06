@@ -40,7 +40,7 @@ class TemperatureMonitor(QMainWindow):
 
         # create a backend and a GUI control for the backend
         self.temp_backend = hc_back.Lakeshore_224("TCPIP0::192.168.0.14::INSTR") ## need to adjust to actual IP
-        self.temp_gui = hc.TempMonitor(app, self.temp_backend, "Temperature Monitor")
+        self.temp_gui = hc.TempMonitor(app, self.temp_backend)
 
         # Add control to the main Widget
         self.grid = QGridLayout()

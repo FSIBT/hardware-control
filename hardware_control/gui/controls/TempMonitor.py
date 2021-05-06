@@ -38,7 +38,7 @@ class TempMonitor(Instrument):
         super().__init__(app, name, backend, lock_until_sync)
 
         self.channels = channels
-        self.settings = self.default_state()
+        # self.settings = self.default_state()
 
         # Create GUI
 
