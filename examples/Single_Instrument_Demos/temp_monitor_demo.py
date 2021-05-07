@@ -30,8 +30,6 @@ hc.setup_logging(logger, commands, "hardware_control.log")
 class TemperatureMonitor(QMainWindow):
     def __init__(self, app):
         super().__init__()
-        self.app = app
-
         # set title of window
         self.setWindowTitle("Temperature Monitor")
 
@@ -39,7 +37,9 @@ class TemperatureMonitor(QMainWindow):
         self.main_widget = QWidget(self)
 
         # create a backend and a GUI control for the backend
-        self.temp_backend = hc_back.Lakeshore_224("TCPIP0::192.168.0.14::INSTR") ## need to adjust to actual IP
+        self.temp_backend = hc_back.Lakeshore_224(
+            "TCPIP::192.168.0.12::7777::SOCKET"
+        )  ## need to adjust to actual IP
         self.temp_gui = hc.TempMonitor(app, self.temp_backend)
 
         # Add control to the main Widget
@@ -48,7 +48,7 @@ class TemperatureMonitor(QMainWindow):
         self.main_widget.setLayout(self.grid)
 
         self.plot_wdgt = hc.PlotTool(app, "Temperature Plot")
-        #self.plot_wdgt1.set_dataset(" ") # Could add
+        # self.plot_wdgt1.set_dataset(" ") # Could add
         self.grid.addWidget(self.plot_wdgt, 0, 0)
 
         self.setCentralWidget(self.main_widget)
