@@ -340,7 +340,9 @@ class Backend(abc.ABC):
                 self.device.sendall(bytes(command + self.termination, self.encoding))
                 reply_bytes = Backend.recvall(self.device)
                 reply = str(reply_bytes)
-                reply = reply[2 : len(reply) - 3]
+                print('debug',reply)
+                reply = reply[2 : len(reply) - 1 - 2 * len(self.termination)]
+                print('debug',reply)
                 logger.debug(f'\t{self.ID}< "{command}"')
             return reply
         except Exception:

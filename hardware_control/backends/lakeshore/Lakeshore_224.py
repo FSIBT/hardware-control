@@ -102,7 +102,7 @@ class Lakeshore_224(Backend):
                 if self.read_status()["CURVE"] == value:
                     # remove dupilicate item in channal list
                     self.active_channels = list(set(self.active_channels))
-                    return f"{channel} is using curve {value}"
+                    return f"{channel}={value}"
 
                 elif self.read_status()["CURVE"] == "00":
                     # remove this channel from active channel list
@@ -134,8 +134,9 @@ class Lakeshore_224(Backend):
         CHX_READ_TEMP:  Read the temperature for channel [A, B, C1-C5, D1-D5], 0 is all online channels
         """
         channel, cmd_X = get_channel_from_command(cmd)
+        print('debug', cmd, cmd_X, channel)
 
-        if cmd_X == "CHX_READ_TEMP":
+        if cmd_X == "CHX_READ_TEMP?":
             temps = {}
             if channel == 0:
                 for chan in self.active_channels:
@@ -144,7 +145,8 @@ class Lakeshore_224(Backend):
 
             elif channel in self.active_channels:
                 temp = self.query(f"KRDG? {channel}")
-                temps[f"{channel}"] = f"{temp}"
+                print('debug return', f"{cmd}={temp}")
+                return f"{cmd[:-1]}={temp}"
 
             else:
                 raise Exception(f"Sorry, channel {channel} is Offline")

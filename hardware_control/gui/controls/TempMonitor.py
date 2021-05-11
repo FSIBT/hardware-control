@@ -14,9 +14,10 @@ from PyQt5.QtWidgets import (
     QLineEdit,
     QLabel,
 )
+from PyQt5.QtCore import QTimer
 
 from ..base import Instrument
-from ..widgets import load_icon, QControl, QControlCombo
+from ..widgets import load_icon, QControl, QControlCombo, QIndicator
 
 logger = logging.getLogger(__name__)
 
@@ -55,11 +56,46 @@ class TempMonitor(Instrument):
         self.settings = self.default_state()
         # Create GUI
 
-        self.channel_layout = QGridLayout()
-        for i in range(self.channels):
-            self.setChannelWidgets(i)
+        self.pressureA = QIndicator(
+            self, "CHA_READ_TEMP", unit="K", use_prefix=False, label_align="right",
+        )
+       
+        self.pressureB = QIndicator(
+            self, "CHB_READ_TEMP", unit="K", use_prefix=False, label_align="right",
+        )
+        self.Bcurve = QControl(
+            self, "CHB_CHANGE_CURVE", label="Curve for ch B:", label_align="right",
+        )
+        self.autolayout_grid()
 
-        self.setLayout(self.channel_layout)
+
+        # Create timer to query voltages
+        self.readout_timer = QTimer(self)
+        self.readout_timer.timeout.connect(self.update_readout)
+        self.readout_timer.start(self.globalRefreshRate)
+
+        logger.debug("Initalized")
+
+        self.values["CHA_READ_TEMP"] = "-"
+        self.values["CHB_READ_TEMP"] = "-"
+
+    def close(self):
+        self.readout_timer.stop()
+        super().close()
+
+    def update_readout(self):
+        """Queries the instrument for current readout data, then reads the most
+        recent readout data from the inbox and pushes it to the GUI"""
+
+        # Request updated readout data
+        self.command("CHA_READ_TEMP?")
+        self.command("CHB_READ_TEMP?")
+
+        print('debug', self.values, flush=True)
+
+        # Update labels
+        self.pressureA.setText(self.read_values("CHA_READ_TEMP"))
+        self.pressureB.setText(self.read_values("CHB_READ_TEMP"))
 
     def setChannelWidgets(self, ch_num):
         ch_label = QLabel(f"CH{ch_num+1}:")
@@ -83,4 +119,4 @@ class TempMonitor(Instrument):
     def default_state(self):
         """Create the defualt state variable"""
 
-        default = {}
+        return {'CHB_CHANGE_CURVE': "0"}
