@@ -56,18 +56,33 @@ class TempMonitor(Instrument):
         self.settings = self.default_state()
         # Create GUI
 
-        self.pressureA = QIndicator(
-            self, "CHA_READ_TEMP", unit="K", use_prefix=False, label_align="right",
+        self.TempA = QIndicator(
+            self,
+            "CHA_TEMP",
+            unit="K",
+            use_prefix=False,
+            label_align="right",
         )
-       
-        self.pressureB = QIndicator(
-            self, "CHB_READ_TEMP", unit="K", use_prefix=False, label_align="right",
+        self.Acurve = QControl(
+            self,
+            "CHA_CHANGE_CURVE",
+            label="CHA_CURVE",
+            label_align="right",
+        )
+        self.TempB = QIndicator(
+            self,
+            "CHB_TEMP",
+            unit="K",
+            use_prefix=False,
+            label_align="right",
         )
         self.Bcurve = QControl(
-            self, "CHB_CHANGE_CURVE", label="Curve for ch B:", label_align="right",
+            self,
+            "CHB_CHANGE_CURVE",
+            label="CHB_CURVE:",
+            label_align="right",
         )
         self.autolayout_grid()
-
 
         # Create timer to query voltages
         self.readout_timer = QTimer(self)
@@ -91,27 +106,11 @@ class TempMonitor(Instrument):
         self.command("CHA_READ_TEMP?")
         self.command("CHB_READ_TEMP?")
 
-        print('debug', self.values, flush=True)
+        print("debug", self.values, flush=True)
 
         # Update labels
-        self.pressureA.setText(self.read_values("CHA_READ_TEMP"))
-        self.pressureB.setText(self.read_values("CHB_READ_TEMP"))
-
-    def setChannelWidgets(self, ch_num):
-        ch_label = QLabel(f"CH{ch_num+1}:")
-        curve_label = QLabel(f"Curve:")
-
-        # Pick up one channel to read
-        self.channel_drop = QComboBox()
-        self.channel_drop.addItems(self.channel_list)
-        self.channel_drop.setCurrentText(self.channel_list[ch_num])
-
-        self.file_name = QLineEdit()
-
-        self.channel_layout.addWidget(ch_label, 0, ch_num * 2)
-        self.channel_layout.addWidget(curve_label, 1, ch_num * 2)
-        self.channel_layout.addWidget(self.channel_drop, 0, ch_num * 2 + 1)
-        self.channel_layout.addWidget(self.file_name, 1, ch_num * 2 + 1)
+        self.TempA.setText(self.read_values("CHA_READ_TEMP"))
+        self.TempB.setText(self.read_values("CHB_READ_TEMP"))
 
     def settings_to_UI(self):
         print("Need to Add?")
@@ -119,4 +118,4 @@ class TempMonitor(Instrument):
     def default_state(self):
         """Create the defualt state variable"""
 
-        return {'CHB_CHANGE_CURVE': "0"}
+        return {"CHB_CHANGE_CURVE": "0"}
