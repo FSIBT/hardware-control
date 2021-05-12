@@ -14,6 +14,8 @@ https://www.lakeshore.com/docs/default-source/product-downloads/224_manual.pdf f
 import logging
 import random
 
+import numpy as np
+
 from ..base import Backend, ensure_online
 from ..utility import ensure_float, get_channel_from_command
 
@@ -133,6 +135,10 @@ class Lakeshore_224(Backend):
         -----
         CHX_READ_TEMP:  Read the temperature for channel [A, B, C1-C5, D1-D5], 0 is all online channels
         """
+
+        if self.dummy:
+            return f"{cmd[:-1]}={np.random.uniform()*100}"
+
         channel, cmd_X = get_channel_from_command(cmd)
         print("debug", cmd, cmd_X, channel)
 

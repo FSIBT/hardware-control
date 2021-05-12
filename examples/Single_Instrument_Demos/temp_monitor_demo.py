@@ -29,7 +29,11 @@ hc.setup_logging(logger, commands, "hardware_control.log")
 
 class TemperatureMonitor(QMainWindow):
     def __init__(self, app):
+
         super().__init__()
+
+        self.app = app
+
         # set title of window
         self.setWindowTitle("Temperature Monitor")
 
@@ -37,19 +41,29 @@ class TemperatureMonitor(QMainWindow):
         self.main_widget = QWidget(self)
 
         # create a backend and a GUI control for the backend
-        self.temp_backend = hc_back.Lakeshore_224(
-            "TCPIP::192.168.0.12::7777::SOCKET"
-        )  ## need to adjust to actual IP
-        self.temp_gui = hc.TempMonitor(app, self.temp_backend)
+        self.temp_backend = hc_back.Lakeshore_224("TCPIP::192.168.0.12::7777::SOCKET")
+        self.temp_wdgt = hc.TempMonitor(app, self.temp_backend)
+
+        # Create data_sets
+        self.app.data_sets["Temps"] = hc.Dataset("Temps", self.app)
+        self.app.data_sets["Temps"].add_instrument(self.temp_wdgt)
+        self.app.data_sets["Temps"].start_asynch(3)
 
         # Add control to the main Widget
         self.grid = QGridLayout()
-        self.grid.addWidget(self.temp_gui, 1, 0)
+        self.grid.addWidget(self.temp_wdgt, 1, 0)
         self.main_widget.setLayout(self.grid)
 
         self.plot_wdgt = hc.PlotTool(app, "Temperature Plot")
-        # self.plot_wdgt1.set_dataset(" ") # Could add
+        self.plot_wdgt.set_dataset("Temps")  # Could add
         self.grid.addWidget(self.plot_wdgt, 0, 0)
+
+        # self.app.data_sets["Temps"].name_channel(
+        #     "Power Supplies:CHMod2/ai0_ANALOG_READ", "V float"
+        # )
+        # self.app.data_sets["Temps"].name_channel(
+        #     "Power Supplies:CHMod2/ai1_ANALOG_READ", "I float"
+        # )
 
         self.setCentralWidget(self.main_widget)
         self.show()
