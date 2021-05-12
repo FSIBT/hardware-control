@@ -252,7 +252,9 @@ class Backend(abc.ABC):
                 )
             except Exception:
                 self.online = False
-                logger.debug(f"\t({self.ID}) ERROR connecting with visa.",)
+                logger.debug(
+                    f"\t({self.ID}) ERROR connecting with visa.",
+                )
                 logger.debug(f"{self.ID} is offline")
             else:
                 self.online = True
@@ -340,9 +342,9 @@ class Backend(abc.ABC):
                 self.device.sendall(bytes(command + self.termination, self.encoding))
                 reply_bytes = Backend.recvall(self.device)
                 reply = str(reply_bytes)
-                print('debug',reply)
+                # print('debug',reply)
                 reply = reply[2 : len(reply) - 1 - 2 * len(self.termination)]
-                print('debug',reply)
+                # print('debug',reply)
                 logger.debug(f'\t{self.ID}< "{command}"')
             return reply
         except Exception:

@@ -118,4 +118,7 @@ class TempMonitor(Instrument):
     def default_state(self):
         """Create the defualt state variable"""
 
-        return {"CHB_CHANGE_CURVE": "0"}
+        return {
+            "CHA_CHANGE_CURVE": "21",
+            "CHB_CHANGE_CURVE": "32",
+        }
