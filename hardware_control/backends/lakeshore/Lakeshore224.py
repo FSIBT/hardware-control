@@ -134,18 +134,19 @@ class Lakeshore_224(Backend):
         CHX_READ_TEMP:  Read the temperature for channel [A, B, C1-C5, D1-D5], 0 is all online channels
         """
         channel, cmd_X = get_channel_from_command(cmd)
-        print('debug', cmd, cmd_X, channel)
+        print("debug", cmd, cmd_X, channel)
 
         if cmd_X == "CHX_READ_TEMP?":
-            temps = {}
             if channel == 0:
+                temps = {}
                 for chan in self.active_channels:
                     temp = self.query(f"KRDG? {chan}")
                     temps[f"{chan}"] = f"{temp}"
+                return temps
 
             elif channel in self.active_channels:
                 temp = self.query(f"KRDG? {channel}")
-                print('debug return', f"{cmd}={temp}")
+                print("debug return", f"{cmd}={temp}")
                 return f"{cmd[:-1]}={temp}"
 
             else:
