@@ -119,6 +119,6 @@ class TempMonitor(Instrument):
         """Create the defualt state variable"""
 
         return {
-            "CHA_CHANGE_CURVE": "21",
-            "CHB_CHANGE_CURVE": "32",
+            "CHA_CHANGE_CURVE": "06",
+            "CHB_CHANGE_CURVE": "21",
         }
