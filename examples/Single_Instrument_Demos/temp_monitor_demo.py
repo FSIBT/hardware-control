@@ -48,6 +48,7 @@ class TemperatureMonitor(QMainWindow):
         self.app.data_sets["Temps"] = hc.Dataset("Temps", self.app)
         self.app.data_sets["Temps"].add_instrument(self.temp_wdgt)
         self.app.data_sets["Temps"].start_asynch(3)
+        self.app.data_sets["Temps"].start_autosave()
 
         # Add control to the main Widget
         self.grid = QGridLayout()
@@ -58,12 +59,18 @@ class TemperatureMonitor(QMainWindow):
         self.plot_wdgt.set_dataset("Temps")  # Could add
         self.grid.addWidget(self.plot_wdgt, 0, 0)
 
-        # self.app.data_sets["Temps"].name_channel(
-        #     "Power Supplies:CHMod2/ai0_ANALOG_READ", "V float"
-        # )
-        # self.app.data_sets["Temps"].name_channel(
-        #     "Power Supplies:CHMod2/ai1_ANALOG_READ", "I float"
-        # )
+        self.app.data_sets["Temps"].name_channel(
+            "Lakeshore 224 Temperature Monitor:CHA_READ_TEMP", "Temp A"
+        )
+        self.app.data_sets["Temps"].name_channel(
+            "Lakeshore 224 Temperature Monitor:CHB_READ_TEMP", "Temp B"
+        )
+        self.app.data_sets["Temps"].name_channel(
+            "Lakeshore 224 Temperature Monitor:CHC1_READ_TEMP", "Temp C1"
+        )
+        self.app.data_sets["Temps"].name_channel(
+            "Lakeshore 224 Temperature Monitor:CHD1_READ_TEMP", "Temp D1"
+        )
 
         self.setCentralWidget(self.main_widget)
         self.show()

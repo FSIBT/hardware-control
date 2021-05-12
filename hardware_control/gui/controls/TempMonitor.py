@@ -58,7 +58,7 @@ class TempMonitor(Instrument):
 
         self.TempA = QIndicator(
             self,
-            "CHA_TEMP",
+            "A_TEMP",
             unit="K",
             use_prefix=False,
             label_align="right",
@@ -66,12 +66,12 @@ class TempMonitor(Instrument):
         self.Acurve = QControl(
             self,
             "CHA_CHANGE_CURVE",
-            label="CHA_CURVE",
+            label="A_CURVE",
             label_align="right",
         )
         self.TempB = QIndicator(
             self,
-            "CHB_TEMP",
+            "B_TEMP",
             unit="K",
             use_prefix=False,
             label_align="right",
@@ -79,7 +79,33 @@ class TempMonitor(Instrument):
         self.Bcurve = QControl(
             self,
             "CHB_CHANGE_CURVE",
-            label="CHB_CURVE:",
+            label="B_CURVE:",
+            label_align="right",
+        )
+        self.TempC1 = QIndicator(
+            self,
+            "C1_TEMP",
+            unit="K",
+            use_prefix=False,
+            label_align="right",
+        )
+        self.C1curve = QControl(
+            self,
+            "CHC1_CHANGE_CURVE",
+            label="C1_CURVE",
+            label_align="right",
+        )
+        self.TempD1 = QIndicator(
+            self,
+            "D1_TEMP",
+            unit="K",
+            use_prefix=False,
+            label_align="right",
+        )
+        self.D1curve = QControl(
+            self,
+            "CHD1_CHANGE_CURVE",
+            label="D1_CURVE",
             label_align="right",
         )
         self.autolayout_grid()
@@ -105,12 +131,16 @@ class TempMonitor(Instrument):
         # Request updated readout data
         self.command("CHA_READ_TEMP?")
         self.command("CHB_READ_TEMP?")
+        self.command("CHC1_READ_TEMP?")
+        self.command("CHD1_READ_TEMP?")
 
         print("debug", self.values, flush=True)
 
         # Update labels
         self.TempA.setText(self.read_values("CHA_READ_TEMP"))
         self.TempB.setText(self.read_values("CHB_READ_TEMP"))
+        self.TempC1.setText(self.read_values("CHC1_READ_TEMP"))
+        self.TempD1.setText(self.read_values("CHD1_READ_TEMP"))
 
     def settings_to_UI(self):
         print("Need to Add?")
@@ -121,4 +151,6 @@ class TempMonitor(Instrument):
         return {
             "CHA_CHANGE_CURVE": "06",
             "CHB_CHANGE_CURVE": "21",
+            "CHC1_CHANGE_CURVE": "32",
+            "CHD1_CHANGE_CURVE": "20",
         }
