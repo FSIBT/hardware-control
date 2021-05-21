@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 
 class ScanWidget(QGroupBox):
-    def __init__(self, app, name, actions, regressor = None, kernel = None):
+    def __init__(self, app, name, actions, regressor = None, measure_value = None):
         """
         Parameters
         ----------
@@ -55,9 +55,11 @@ class ScanWidget(QGroupBox):
         self.val_list = []
         self.count = 0
         self.number_of_values = 0
-        self.GPKernel = kernel
         self.GPRegressor = regressor
 
+        if self.GPRegressor:
+            self.measure_value = self.GPRegressor.get_measured_values
+            
         # *************************Create GUI************************
         self.arrow_symbol = QLabel()
         self.arrow_symbol.setPixmap(load_icon("arrow.png"))
@@ -135,7 +137,7 @@ class ScanWidget(QGroupBox):
 
         self.values_select_box = QGroupBox()
         self.values_select_box.setStyleSheet("QGroupBox{padding-top:3px}")
-        if self.GPKernel:
+        if self.GPRegressor:
             self.values_select_frame.addWidget(self.use_GP, 0, 0, 1, 1)
             self.values_select_frame.addWidget(self.n_queries_label, 0, 1, 1, 1)
             self.values_select_frame.addWidget(self.n_queries_edit, 0, 2, 1, 1)
@@ -222,14 +224,21 @@ class ScanWidget(QGroupBox):
         self.upper_grid.addWidget(self.scan_opt_box, 3, 0, 1, 4)
 
         self.scan_button = QPushButton()
-        self.scan_button.setText("Scan")
+        self.scan_button.setText("New Scan")
         self.scan_button.setIcon(QIcon(load_icon("scan.png")))
         self.scan_button.setCheckable(False)
-        self.scan_button.clicked.connect(self.start_scan)
+        self.scan_button.clicked.connect(self.new_scan)
         self.scan_button.setSizePolicy(
             QSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
         )
-
+        self.continue_scan_button = QPushButton()
+        self.continue_scan_button.setText("Continue Scan")
+        self.continue_scan_button.setCheckable(False)
+        self.continue_scan_button.clicked.connect(self.continue_scan)
+        self.continue_scan_button.setSizePolicy(
+            QSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
+        )
+        self.continue_scan_button.setEnabled(False)
         self.stop_button = QPushButton()
         self.stop_button.setText("Stop")
         self.stop_button.setIcon(QIcon(load_icon("stop.svg")))
@@ -250,16 +259,21 @@ class ScanWidget(QGroupBox):
         self.progress_grid.addWidget(self.progress_label, 0, 0)
         self.progress_grid.addWidget(self.progress_bar, 0, 1)
 
+        self.scan_button_grid = QGridLayout()
+        self.scan_button_grid.addWidget(self.scan_button, 0, 0)
+        self.scan_button_grid.addWidget(self.continue_scan_button, 0, 1)
+
+        self.scan_button_grid.addWidget(
+            self.stop_button, 0, 2, alignment=QtCore.Qt.AlignRight
+        )
         self.progress_bar.setValue(float(self.scan_progress))
 
         # ******* DEFINE OVERALL LAYOUT
         self.master_layout = QGridLayout()
         self.master_layout.addLayout(self.upper_grid, 0, 0, 1, 2)
         self.master_layout.addLayout(self.progress_grid, 2, 0, 1, 2)
-        self.master_layout.addWidget(self.scan_button, 3, 0)
-        self.master_layout.addWidget(
-            self.stop_button, 3, 1, alignment=QtCore.Qt.AlignRight
-        )
+        self.master_layout.addLayout(self.scan_button_grid, 3, 0, 1, 2)
+
         self.setLayout(self.master_layout)
 
         # might need to call this manually again in the main app, if instruments get defined
@@ -338,10 +352,17 @@ class ScanWidget(QGroupBox):
             self.val_list = file_str.split(",")
 
         elif self.use_GP.isChecked():
-                self.n_queries = float(self.n_queries_edit.text())
-                self.number_of_values = self.n_queries
-                self.val_list = ["1000","2000","3000","4000"]
-                return True
+            if self.n_queries_edit.text() == "":
+                self.n_queries_edit.setText("20")
+            self.n_queries = float(self.n_queries_edit.text())
+            
+            if not self.continue_scan:
+                self.number_of_values = self.n_queries + self.GPRegressor.pre_scan_num
+                self.val_list = np.append(self.first_pre_scans,np.zeros(int(self.n_queries)))
+            else:
+                self.number_of_values += self.n_queries
+                self.val_list = np.append(self.val_list,np.zeros(int(self.n_queries)))
+            return True
         else:
             logger.error("No mode selected in scan tool")
             return False
@@ -350,8 +371,25 @@ class ScanWidget(QGroupBox):
         return True
 
     def set_instrument_setting(self):
+        if self.GPRegressor:
+            # For when the count is past the initial scan, get the measured value from the GP widget
+            if self.count<self.GPRegressor.pre_scan_num and self.count>0 and not self.continue_scan:
+                self.measure_value()
+                self.GPRegressor.regressor.teach(self.val_list[self.count-1].reshape(1, -1), self.GPRegressor.integrated_first_peak_list[self.count-1].reshape(1, -1))
+                self.GPRegressor.plotGP()
+            # For once the count is past the pre scans or if it is a continued scan
+            # Get the measured value, and set the next value to scan
+            if self.count>self.GPRegressor.pre_scan_num-1 or self.continue_scan:
+                self.measure_value()
+                self.GPRegressor.regressor.teach(self.val_list[self.count-1].reshape(1, -1), self.GPRegressor.integrated_first_peak_list[self.count-1].reshape(1, -1))
+                query_idx, query_instance = self.GPRegressor.regressor.query(self.val_list.reshape(-1, 1))
+                self.val_list[self.count] = query_instance # next to measure
+                self.GPRegressor.plotGP()
+
         v = self.val_list[self.count]
-        self.scan_instrument.remote_update_setting(self.scan_parameter, v.strip())
+        if type(v) == str:
+            v = v.strip()
+        self.scan_instrument.remote_update_setting(self.scan_parameter, str(v))
 
     def pause_after(self):
         start_time = time.time()
@@ -391,6 +429,7 @@ class ScanWidget(QGroupBox):
         self.pause_timer_label_before.setText("0.0")
         self.pause_timer_label_after.setText("0.0")
         self.scan_button.setEnabled(True)
+        self.continue_scan_button.setEnabled(True)
         self.stop_button.setEnabled(False)
         self.progress_bar.setValue(float(self.scan_progress))
 
@@ -409,10 +448,22 @@ class ScanWidget(QGroupBox):
             f"Starting scan\n\tInstrument: {i}\n\tParameter: {p}\n\tValues:{self.val_list}"
         )
         self.scan_button.setEnabled(False)
+        self.continue_scan_button.setEnabled(False)
         self.stop_button.setEnabled(True)
-        self.count = 0
         self.set_instrument_setting()
         self.pause_before()
+    def new_scan(self):
+        self.count = 0
+        if self.GPRegressor:
+            self.GPRegressor.initialize_GPR()
+            bias_range = self.GPRegressor.end_bias - self.GPRegressor.start_bias
+            self.first_pre_scans=np.linspace(self.GPRegressor.start_bias + 0.1*bias_range, self.GPRegressor.end_bias - 0.1*bias_range, self.GPRegressor.pre_scan_num)
+
+        self.continue_scan = False
+        self.start_scan()
+    def continue_scan(self):
+        self.continue_scan = True
+        self.start_scan()
 
     def pause_before(self):
         start_time = time.time()
@@ -422,7 +473,7 @@ class ScanWidget(QGroupBox):
         def pause():
             time_left = end_time - time.time()
             if time_left > 0:
-                self.pause_timer_label_before.setText(f"{time_left:.1f}")
+                self.pause_timer_label_before.setText(f"{time_left:.1f}")       
             else:
                 self.pause_timer_label_before.setText("0.0")
                 self.scan_timer.stop()
@@ -441,7 +492,7 @@ class ScanWidget(QGroupBox):
         if func is not None:
             logger.debug(f"\t\tRunning scan function {m}")
             func()
-
+        self.first_run = False
         self.pause_after()
 
     def update_instruments(self):
