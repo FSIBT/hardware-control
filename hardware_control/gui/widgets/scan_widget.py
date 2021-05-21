@@ -375,13 +375,13 @@ class ScanWidget(QGroupBox):
             # For when the count is past the initial scan, get the measured value from the GP widget
             if self.count<self.GPRegressor.pre_scan_num and self.count>0 and not self.continue_scan:
                 self.measure_value()
-                self.GPRegressor.regressor.teach(self.val_list[self.count-1].reshape(1, -1), self.GPRegressor.integrated_first_peak_list[self.count-1].reshape(1, -1))
+                self.GPRegressor.regressor.teach(self.val_list[self.count-1].reshape(1, -1), self.GPRegressor.faraday_voltage_list[self.count-1].reshape(1, -1))
                 self.GPRegressor.plotGP()
             # For once the count is past the pre scans or if it is a continued scan
             # Get the measured value, and set the next value to scan
             if self.count>self.GPRegressor.pre_scan_num-1 or self.continue_scan:
                 self.measure_value()
-                self.GPRegressor.regressor.teach(self.val_list[self.count-1].reshape(1, -1), self.GPRegressor.integrated_first_peak_list[self.count-1].reshape(1, -1))
+                self.GPRegressor.regressor.teach(self.val_list[self.count-1].reshape(1, -1), self.GPRegressor.faraday_voltage_list[self.count-1].reshape(1, -1))
                 query_idx, query_instance = self.GPRegressor.regressor.query(self.val_list.reshape(-1, 1))
                 self.val_list[self.count] = query_instance # next to measure
                 self.GPRegressor.plotGP()
