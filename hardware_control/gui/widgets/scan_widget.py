@@ -391,19 +391,31 @@ class ScanWidget(QGroupBox):
             v = v.strip()
         self.scan_instrument.remote_update_setting(self.scan_parameter, str(v))
 
-    def pause_after(self):
+    def pause_before_after(self):
         start_time = time.time()
-        dt_after = float(self.pause_edit_after.text())
-        end_time = start_time + dt_after
+        if self.pause_before:
+            dt = float(self.pause_edit_before.text())
+        else:
+            dt = float(self.pause_edit_after.text())
+        end_time = start_time + dt
 
         def pause():
             time_left = end_time - time.time()
             if time_left > 0:
-                self.pause_timer_label_after.setText(f"{time_left:.1f}")
+                if self.pause_before:
+                    self.pause_timer_label_before.setText(f"{time_left:.1f}")       
+                else:
+                    self.pause_timer_label_after.setText(f"{time_left:.1f}")
             else:
-                self.pause_timer_label_after.setText("0.0")
+                if self.pause_before:
+                    self.pause_timer_label_before.setText("0.0")
+                else:
+                    self.pause_timer_label_after.setText("0.0")
                 self.scan_timer.stop()
-                self.start_cycle()
+                if self.pause_before:
+                    self.scan()
+                else:
+                    self.start_cycle()
 
         try:
             self.scan_timer.timeout.disconnect()
@@ -422,7 +434,8 @@ class ScanWidget(QGroupBox):
             self.stop_scan()
         else:
             self.set_instrument_setting()
-            self.pause_before()
+            self.pause_before = True
+            self.pause_before_after()
 
     def stop_scan(self):
         self.scan_timer.stop()
@@ -451,40 +464,20 @@ class ScanWidget(QGroupBox):
         self.continue_scan_button.setEnabled(False)
         self.stop_button.setEnabled(True)
         self.set_instrument_setting()
-        self.pause_before()
+        self.pause_before = True
+        self.pause_before_after()
     def new_scan(self):
         self.count = 0
         if self.GPRegressor:
             self.GPRegressor.initialize_GPR()
             bias_range = self.GPRegressor.end_bias - self.GPRegressor.start_bias
             self.first_pre_scans=np.linspace(self.GPRegressor.start_bias + 0.1*bias_range, self.GPRegressor.end_bias - 0.1*bias_range, self.GPRegressor.pre_scan_num)
-
+        self.new_scan_time = ""
         self.continue_scan = False
         self.start_scan()
     def continue_scan(self):
         self.continue_scan = True
         self.start_scan()
-
-    def pause_before(self):
-        start_time = time.time()
-        dt_before = float(self.pause_edit_before.text())
-        end_time = start_time + dt_before
-
-        def pause():
-            time_left = end_time - time.time()
-            if time_left > 0:
-                self.pause_timer_label_before.setText(f"{time_left:.1f}")       
-            else:
-                self.pause_timer_label_before.setText("0.0")
-                self.scan_timer.stop()
-                self.scan()
-
-        try:
-            self.scan_timer.timeout.disconnect()
-        except TypeError:
-            pass
-        self.scan_timer.timeout.connect(pause)
-        self.scan_timer.start(100)
 
     def scan(self):
         m = self.action_drop.currentText()
@@ -493,7 +486,8 @@ class ScanWidget(QGroupBox):
             logger.debug(f"\t\tRunning scan function {m}")
             func()
         self.first_run = False
-        self.pause_after()
+        self.pause_before = False
+        self.pause_before_after()
 
     def update_instruments(self):
         self.instrument_drop.clear()
