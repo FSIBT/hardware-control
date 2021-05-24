@@ -58,7 +58,7 @@ class ScanWidget(QGroupBox):
         self.GPRegressor = regressor
 
         if self.GPRegressor:
-            self.measure_value = self.GPRegressor.get_measured_values
+            self.measure_value = self.app.main_window.tab7.get_measured_values
             
         # *************************Create GUI************************
         self.arrow_symbol = QLabel()
@@ -356,12 +356,13 @@ class ScanWidget(QGroupBox):
                 self.n_queries_edit.setText("20")
             self.n_queries = float(self.n_queries_edit.text())
             
-            if not self.continue_scan:
-                self.number_of_values = self.n_queries + self.GPRegressor.pre_scan_num
-                self.val_list = np.append(self.first_pre_scans,np.zeros(int(self.n_queries)))
-            else:
+            if self.continue_scan:
                 self.number_of_values += self.n_queries
                 self.val_list = np.append(self.val_list,np.zeros(int(self.n_queries)))
+            else:
+                self.number_of_values = self.n_queries + self.GPRegressor.pre_scan_num
+                self.val_list = np.append(self.first_pre_scans,np.zeros(int(self.n_queries)))
+        
             return True
         else:
             logger.error("No mode selected in scan tool")
@@ -371,20 +372,26 @@ class ScanWidget(QGroupBox):
         return True
 
     def set_instrument_setting(self):
-        if self.GPRegressor:
+        if self.use_GP.isChecked():
             # For when the count is past the initial scan, get the measured value from the GP widget
             if self.count<self.GPRegressor.pre_scan_num and self.count>0 and not self.continue_scan:
                 self.measure_value()
-                self.GPRegressor.regressor.teach(self.val_list[self.count-1].reshape(1, -1), self.GPRegressor.faraday_voltage_list[self.count-1].reshape(1, -1))
+                self.GPRegressor.regressor.teach(self.val_list[self.count-1].reshape(1, -1), self.app.main_window.tab7.faraday_voltage_list[self.count-1].reshape(1, -1))
                 self.GPRegressor.plotGP()
+                self.app.main_window.tab7.plotScan()
             # For once the count is past the pre scans or if it is a continued scan
             # Get the measured value, and set the next value to scan
-            if self.count>self.GPRegressor.pre_scan_num-1 or self.continue_scan:
+            if self.count>=self.GPRegressor.pre_scan_num or self.continue_scan:
                 self.measure_value()
-                self.GPRegressor.regressor.teach(self.val_list[self.count-1].reshape(1, -1), self.GPRegressor.faraday_voltage_list[self.count-1].reshape(1, -1))
+                self.GPRegressor.regressor.teach(self.val_list[self.count-1].reshape(1, -1), self.app.main_window.tab7.faraday_voltage_list[self.count-1].reshape(1, -1))
                 query_idx, query_instance = self.GPRegressor.regressor.query(self.val_list.reshape(-1, 1))
                 self.val_list[self.count] = query_instance # next to measure
                 self.GPRegressor.plotGP()
+                self.app.main_window.tab7.plotScan()
+        else: # if not GP
+            if self.count>0:
+                self.measure_value()
+                self.app.main_window.tab7.plotScan()
 
         v = self.val_list[self.count]
         if type(v) == str:
@@ -468,7 +475,7 @@ class ScanWidget(QGroupBox):
         self.pause_before_after()
     def new_scan(self):
         self.count = 0
-        if self.GPRegressor:
+        if self.use_GP.isChecked():
             self.GPRegressor.initialize_GPR()
             bias_range = self.GPRegressor.end_bias - self.GPRegressor.start_bias
             self.first_pre_scans=np.linspace(self.GPRegressor.start_bias + 0.1*bias_range, self.GPRegressor.end_bias - 0.1*bias_range, self.GPRegressor.pre_scan_num)
