@@ -94,10 +94,11 @@ class ScanWidget(QGroupBox):
         self.use_file = QRadioButton("File")
         self.use_space.setChecked(True)
 
-        self.n_queries_label = QLabel("Queries:")
+        self.n_queries_label = QLabel("GP Queries:")
         self.n_queries_label.setAlignment(
             QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         self.n_queries_edit = QLineEdit()
+        self.n_queries_edit.setText("20")
 
         self.values_label = QLabel("Values:")
         self.values_label.setAlignment(
@@ -340,7 +341,10 @@ class ScanWidget(QGroupBox):
         to iterate over. """
 
         if self.use_list.isChecked():
-            self.val_list = self.values_edit.text().split(",")
+            if self.continue_scan:
+                self.val_list += self.values_edit.text().split(",")
+            else:
+                self.val_list = self.values_edit.text().split(",")
         elif self.use_space.isChecked():
             try:
                 start = float(self.spacing_start_edit.text())
@@ -349,10 +353,14 @@ class ScanWidget(QGroupBox):
             except:
                 logger.error("Invalid values for start, end, or step_size")
                 return False
-
-            self.val_list = [
-                str(v) for v in np.arange(start, end + step_size, step_size)
-            ]
+            if self.continue_scan:
+                self.val_list += [
+                    str(v) for v in np.arange(start, end + step_size, step_size)
+                ]            
+            else:
+                self.val_list = [
+                    str(v) for v in np.arange(start, end + step_size, step_size)
+                ]
         elif self.use_file.isChecked():
             filename = self.values_file_edit.text()
             if filename == "":
@@ -361,7 +369,10 @@ class ScanWidget(QGroupBox):
             # Read files
             with open(filename) as file:
                 file_str = file.read().replace("\n", "")
-            self.val_list = file_str.split(",")
+            if self.continue_scan:
+                self.val_list += file_str.split(",")
+            else:
+                self.val_list = file_str.split(",")
 
         elif self.use_GP.isChecked():
             if self.n_queries_edit.text() == "":
