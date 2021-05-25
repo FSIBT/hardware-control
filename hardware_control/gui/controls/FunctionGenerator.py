@@ -67,7 +67,7 @@ class FunctionGenerator(Instrument):
             self,
             "CH1_WAVEFORM",
             "CH1 Waveform",
-            ["Sine", "Square", "Triangle", "Ramp", "Pulse", "Noise", "PRBS", "Arbitrary", "DC"],
+            ["Square", "Sine", "Triangle", "Ramp", "Pulse", "Noise", "PRBS", "Arbitrary", "DC"],
         )
         self.burst_mode = QControlCombo(
             self, "CH1_BURS_MODE", "CH1 Burst Mode", ["TRIG", "GAT"],
@@ -101,7 +101,7 @@ class FunctionGenerator(Instrument):
                 self,
                 "CH2_WAVEFORM",
                 "CH2 Waveform",
-            ["Sine", "Square", "Triangle", "Ramp", "Pulse", "Noise", "PRBS", "Arbitrary", "DC"],
+            ["Square", "Sine", "Triangle", "Ramp", "Pulse", "Noise", "PRBS", "Arbitrary", "DC"],
             )
             self.burst_mode2 = QControlCombo(
                 self, "CH2_BURS_MODE", "CH2 Burst Mode", ["TRIG", "GAT"],
