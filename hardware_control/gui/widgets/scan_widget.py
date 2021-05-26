@@ -341,10 +341,11 @@ class ScanWidget(QGroupBox):
         to iterate over. """
 
         if self.use_list.isChecked():
+            new_val_list = [float(x) for x in self.values_edit.text().split(",")]
             if self.continue_scan:
-                self.val_list += self.values_edit.text().split(",")
+                self.val_list += new_val_list
             else:
-                self.val_list = self.values_edit.text().split(",")
+                self.val_list = new_val_list
         elif self.use_space.isChecked():
             try:
                 start = float(self.spacing_start_edit.text())
@@ -355,11 +356,11 @@ class ScanWidget(QGroupBox):
                 return False
             if self.continue_scan:
                 self.val_list += [
-                    str(v) for v in np.arange(start, end + step_size, step_size)
+                    float(v) for v in np.arange(start, end + step_size, step_size)
                 ]            
             else:
                 self.val_list = [
-                    str(v) for v in np.arange(start, end + step_size, step_size)
+                    float(v) for v in np.arange(start, end + step_size, step_size)
                 ]
         elif self.use_file.isChecked():
             filename = self.values_file_edit.text()
@@ -369,10 +370,11 @@ class ScanWidget(QGroupBox):
             # Read files
             with open(filename) as file:
                 file_str = file.read().replace("\n", "")
+            new_val_list = [float(x) for x in file_str.split(",")]
             if self.continue_scan:
-                self.val_list += file_str.split(",")
+                self.val_list += new_val_list
             else:
-                self.val_list = file_str.split(",")
+                self.val_list = new_val_list
 
         elif self.use_GP.isChecked():
             if self.n_queries_edit.text() == "":
