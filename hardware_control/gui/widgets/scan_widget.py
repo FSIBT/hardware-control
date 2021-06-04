@@ -482,6 +482,8 @@ class ScanWidget(QGroupBox):
         self.continue_scan_button.setEnabled(True)
         self.stop_button.setEnabled(False)
         self.progress_bar.setValue(float(self.scan_progress))
+        self.measure_value()
+        self.app.main_window.tab7.save_scan()
 
     def start_scan(self):
         if self.scan_instrument is None:
