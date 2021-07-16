@@ -513,8 +513,8 @@ class ScanWidget(QGroupBox):
             self.GPRegressor.initialize_GPR()
             bias_range = self.GPRegressor.end_bias - self.GPRegressor.start_bias
             self.first_pre_scans = np.linspace(
-                self.GPRegressor.start_bias + 0.1 * bias_range,
-                self.GPRegressor.end_bias - 0.1 * bias_range,
+                self.GPRegressor.start_bias,
+                self.GPRegressor.end_bias,
                 self.GPRegressor.pre_scan_num,
             )
         self.new_scan_time = ""
