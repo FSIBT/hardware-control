@@ -27,7 +27,11 @@ class FlowController(Instrument):
     """
 
     def __init__(
-        self, app, backend, name: str = "Flow Controller", lock_until_sync=False,
+        self,
+        app,
+        backend,
+        name: str = "Flow Controller",
+        lock_until_sync=False,
     ):
         super().__init__(app, name, backend, lock_until_sync)
 
@@ -48,10 +52,18 @@ class FlowController(Instrument):
         )
 
         self.pressure = QIndicator(
-            self, "Pressure", unit="Torr", use_prefix=False, label_align="right",
+            self,
+            "Pressure",
+            unit="Torr",
+            use_prefix=False,
+            label_align="right",
         )
         self.flow = QIndicator(
-            self, "Flow", unit="sccm", use_prefix=False, label_align="right",
+            self,
+            "Flow",
+            unit="sccm",
+            use_prefix=False,
+            label_align="right",
         )
 
         self.autolayout_grid()
@@ -82,8 +94,8 @@ class FlowController(Instrument):
         self.command("PRESSURE?")
 
         # Update labels
-        self.pressure.setText(self.read_values("PRESSURE"))
-        self.flow.setText(self.read_values("RATE"))
+        self.pressure.setText(self.values.get("PRESSURE"))
+        self.flow.setText(self.values.get("RATE"))
 
     def default_state(self):
         return {

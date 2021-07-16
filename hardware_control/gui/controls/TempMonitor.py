@@ -137,10 +137,10 @@ class TempMonitor(Instrument):
         print("debug", self.values, flush=True)
 
         # Update labels
-        self.TempA.setText(self.read_values("CHA_READ_TEMP"))
-        self.TempB.setText(self.read_values("CHB_READ_TEMP"))
-        self.TempC1.setText(self.read_values("CHC1_READ_TEMP"))
-        self.TempD1.setText(self.read_values("CHD1_READ_TEMP"))
+        self.TempA.setText(self.values.get("CHA_READ_TEMP"))
+        self.TempB.setText(self.values.get("CHB_READ_TEMP"))
+        self.TempC1.setText(self.values.get("CHC1_READ_TEMP"))
+        self.TempD1.setText(self.values.get("CHD1_READ_TEMP"))
 
     def settings_to_UI(self):
         print("Need to Add?")

@@ -189,15 +189,15 @@ class MultiPowerSupply(Instrument):
                 self.command(f"CH{c}_ENABLE?")
 
             # Get latest inbox entries for readout data...
-            Vout = remove_end_carriage_return(self.read_values(f"CH{c}_V_OUT"))
-            Iout = remove_end_carriage_return(self.read_values(f"CH{c}_I_OUT"))
-            Vset = remove_end_carriage_return(self.read_values(f"CH{c}_V_SET"))
-            Iset = remove_end_carriage_return(self.read_values(f"CH{c}_I_SET"))
+            Vout = remove_end_carriage_return(self.values.get(f"CH{c}_V_OUT"))
+            Iout = remove_end_carriage_return(self.values.get(f"CH{c}_I_OUT"))
+            Vset = remove_end_carriage_return(self.values.get(f"CH{c}_V_SET"))
+            Iset = remove_end_carriage_return(self.values.get(f"CH{c}_I_SET"))
             if self.channel_widgets[idx].show_VI_limits:
-                Vmax = remove_end_carriage_return(self.read_values(f"CH{c}_V_MAX"))
-                Imax = remove_end_carriage_return(self.read_values(f"CH{c}_I_MAX"))
+                Vmax = remove_end_carriage_return(self.values.get(f"CH{c}_V_MAX"))
+                Imax = remove_end_carriage_return(self.values.get(f"CH{c}_I_MAX"))
             if self.channel_widgets[idx].show_status_panel:
-                enabled = remove_end_carriage_return(self.read_values(f"CH{c}_ENABLE"))
+                enabled = remove_end_carriage_return(self.values.get(f"CH{c}_ENABLE"))
             else:
                 enabled = None
 
@@ -221,7 +221,7 @@ class MultiPowerSupply(Instrument):
                 )
 
     def set_maxI(self, channel: int, maxI: float):
-        """ Sets an internal limit for the current from channel 'n'. """
+        """Sets an internal limit for the current from channel 'n'."""
 
         try:
             channel = int(channel)
@@ -231,7 +231,7 @@ class MultiPowerSupply(Instrument):
         self.update_setting(f"CH{channel}_I_MAX", str(maxI))
 
     def set_maxV(self, channel: int, maxV: float):
-        """ Sets an internal limit for the voltage from channel 'n'. """
+        """Sets an internal limit for the voltage from channel 'n'."""
 
         try:
             channel = int(channel)
@@ -241,7 +241,7 @@ class MultiPowerSupply(Instrument):
         self.update_setting(f"CH{channel}_V_MAX", str(maxV))
 
     def set_channel_label(self, channel: int, label: str):
-        """ Sets a channel label to a new custom value """
+        """Sets a channel label to a new custom value"""
 
         try:
             for cw in self.channel_widgets:
