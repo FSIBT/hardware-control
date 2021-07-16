@@ -63,13 +63,11 @@ class ScanWidget(QGroupBox):
         # *************************Create GUI************************
         self.arrow_symbol = QLabel()
         self.arrow_symbol.setPixmap(load_icon("arrow.png"))
-        self.arrow_symbol.setAlignment(
-            QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
+        self.arrow_symbol.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
 
         # ****** DEFINE TEXT BOXES
         self.instrument_label = QLabel("Instrument:")
-        self.instrument_label.setAlignment(
-            QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        self.instrument_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
 
         self.instrument_drop = QComboBox()
         self.instrument_drop.addItems(["----------"])
@@ -78,8 +76,7 @@ class ScanWidget(QGroupBox):
         )
 
         self.parameter_label = QLabel("Parameter:")
-        self.parameter_label.setAlignment(
-            QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        self.parameter_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
 
         self.parameter_drop = QComboBox()
         self.parameter_drop.addItems(["----------"])
@@ -95,14 +92,12 @@ class ScanWidget(QGroupBox):
         self.use_space.setChecked(True)
 
         self.n_queries_label = QLabel("GP Queries:")
-        self.n_queries_label.setAlignment(
-            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.n_queries_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         self.n_queries_edit = QLineEdit()
         self.n_queries_edit.setText("20")
 
         self.values_label = QLabel("Values:")
-        self.values_label.setAlignment(
-            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.values_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
         self.values_edit = QLineEdit()
         self.values_edit.textChanged.connect(
@@ -125,8 +120,7 @@ class ScanWidget(QGroupBox):
         self.spacing_end_edit = QLineEdit()
 
         self.step_size_label = QLabel("Step:")
-        self.step_size_label.setAlignment(
-            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.step_size_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
         self.step_size_edit = QLineEdit()
 
@@ -140,23 +134,20 @@ class ScanWidget(QGroupBox):
         self.values_file_edit = QLineEdit()
 
         self.values_file_select_button = QPushButton("Browse")
-        self.values_file_select_button.clicked.connect(
-            self.browse_values_files)
+        self.values_file_select_button.clicked.connect(self.browse_values_files)
 
         self.values_select_box = QGroupBox()
         self.values_select_box.setStyleSheet("QGroupBox{padding-top:3px}")
         if self.GPRegressor:
             self.values_select_frame.addWidget(self.use_GP, 0, 0, 1, 1)
-            self.values_select_frame.addWidget(
-                self.n_queries_label, 0, 1, 1, 1)
+            self.values_select_frame.addWidget(self.n_queries_label, 0, 1, 1, 1)
             self.values_select_frame.addWidget(self.n_queries_edit, 0, 2, 1, 1)
         self.values_select_frame.addWidget(self.use_list, 1, 0, 1, 1)
         self.values_select_frame.addWidget(self.values_label, 1, 1, 1, 1)
         self.values_select_frame.addWidget(self.values_edit, 1, 2, 1, 6)
 
         self.values_select_frame.addWidget(self.use_space, 2, 0, 1, 1)
-        self.values_select_frame.addWidget(
-            self.spacing_start_label, 2, 1, 1, 1)
+        self.values_select_frame.addWidget(self.spacing_start_label, 2, 1, 1, 1)
         self.values_select_frame.addWidget(self.spacing_start_edit, 2, 2, 1, 1)
         self.values_select_frame.addWidget(self.spacing_end_label, 2, 3, 1, 1)
         self.values_select_frame.addWidget(self.spacing_end_edit, 2, 4, 1, 1)
@@ -167,8 +158,7 @@ class ScanWidget(QGroupBox):
         self.values_select_frame.addWidget(self.use_file, 3, 0, 1, 1)
         self.values_select_frame.addWidget(self.values_file_label, 3, 1, 1, 1)
         self.values_select_frame.addWidget(self.values_file_edit, 3, 2, 1, 2)
-        self.values_select_frame.addWidget(
-            self.values_file_select_button, 3, 6, 1, 2)
+        self.values_select_frame.addWidget(self.values_file_select_button, 3, 6, 1, 2)
 
         self.values_select_box.setLayout(self.values_select_frame)
 
@@ -177,8 +167,7 @@ class ScanWidget(QGroupBox):
         self.scan_opt_frame = QGridLayout()
 
         self.macro_label = QLabel("Scan Action:")
-        self.macro_label.setAlignment(
-            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.macro_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
         self.action_drop = QComboBox()
         self.action_drop.addItems(self.actions.keys())
@@ -264,8 +253,7 @@ class ScanWidget(QGroupBox):
         self.progress_grid = QGridLayout()
 
         self.progress_label = QLabel("Scan Progress")
-        self.progress_label.setAlignment(
-            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.progress_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
         self.progress_bar = QProgressBar()
 
@@ -337,8 +325,8 @@ class ScanWidget(QGroupBox):
         self.scan_action = self.actions[action]
 
     def compute_values(self):
-        """ Reads the values of the widgets and computes the values for the scan
-        to iterate over. """
+        """Reads the values of the widgets and computes the values for the scan
+        to iterate over."""
 
         if self.use_list.isChecked():
             new_val_list = [float(x) for x in self.values_edit.text().split(",")]
@@ -357,7 +345,7 @@ class ScanWidget(QGroupBox):
             if self.continue_scan:
                 self.val_list += [
                     float(v) for v in np.arange(start, end + step_size, step_size)
-                ]            
+                ]
             else:
                 self.val_list = [
                     float(v) for v in np.arange(start, end + step_size, step_size)
@@ -383,12 +371,12 @@ class ScanWidget(QGroupBox):
 
             if self.continue_scan:
                 self.number_of_values += self.n_queries
-                self.val_list = np.append(
-                    self.val_list, np.zeros(int(self.n_queries)))
+                self.val_list = np.append(self.val_list, np.zeros(int(self.n_queries)))
             else:
                 self.number_of_values = self.n_queries + self.GPRegressor.pre_scan_num
                 self.val_list = np.append(
-                    self.first_pre_scans, np.zeros(int(self.n_queries)))
+                    self.first_pre_scans, np.zeros(int(self.n_queries))
+                )
 
             return True
         else:
@@ -401,20 +389,33 @@ class ScanWidget(QGroupBox):
     def set_instrument_setting(self):
         if self.use_GP.isChecked():
             # For when the count is past the initial scan, get the measured value from the GP widget
-            if self.count < self.GPRegressor.pre_scan_num and self.count > 0 and not self.continue_scan:
+            if (
+                self.count < self.GPRegressor.pre_scan_num
+                and self.count > 0
+                and not self.continue_scan
+            ):
                 self.measure_value()
-                self.GPRegressor.regressor.teach(self.val_list[self.count-1].reshape(
-                    1, -1), self.app.main_window.tab7.faraday_voltage_list[self.count-1].reshape(1, -1))
+                self.GPRegressor.regressor.teach(
+                    self.val_list[self.count - 1].reshape(1, -1),
+                    self.app.main_window.tab7.faraday_voltage_list[
+                        self.count - 1
+                    ].reshape(1, -1),
+                )
                 self.GPRegressor.plotGP()
                 self.app.main_window.tab7.plotScan()
             # For once the count is past the pre scans or if it is a continued scan
             # Get the measured value, and set the next value to scan
             if self.count >= self.GPRegressor.pre_scan_num or self.continue_scan:
                 self.measure_value()
-                self.GPRegressor.regressor.teach(self.val_list[self.count-1].reshape(
-                    1, -1), self.app.main_window.tab7.faraday_voltage_list[self.count-1].reshape(1, -1))
+                self.GPRegressor.regressor.teach(
+                    self.val_list[self.count - 1].reshape(1, -1),
+                    self.app.main_window.tab7.faraday_voltage_list[
+                        self.count - 1
+                    ].reshape(1, -1),
+                )
                 query_idx, query_instance = self.GPRegressor.regressor.query(
-                    self.val_list.reshape(-1, 1))
+                    self.val_list.reshape(-1, 1)
+                )
                 self.val_list[self.count] = query_instance  # next to measure
                 self.GPRegressor.plotGP()
                 self.app.main_window.tab7.plotScan()
@@ -511,8 +512,11 @@ class ScanWidget(QGroupBox):
         if self.use_GP.isChecked():
             self.GPRegressor.initialize_GPR()
             bias_range = self.GPRegressor.end_bias - self.GPRegressor.start_bias
-            self.first_pre_scans = np.linspace(self.GPRegressor.start_bias + 0.1*bias_range,
-                                               self.GPRegressor.end_bias - 0.1*bias_range, self.GPRegressor.pre_scan_num)
+            self.first_pre_scans = np.linspace(
+                self.GPRegressor.start_bias + 0.1 * bias_range,
+                self.GPRegressor.end_bias - 0.1 * bias_range,
+                self.GPRegressor.pre_scan_num,
+            )
         self.new_scan_time = ""
         self.continue_scan = False
         self.start_scan()
