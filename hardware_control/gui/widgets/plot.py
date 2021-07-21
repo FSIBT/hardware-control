@@ -62,7 +62,7 @@ class PlotBase(QWidget):
             self.update_timer.start(self.interval)
 
     def set_dataset(self, set_name: str):
-        """ Specifies which dataset the widget should display
+        """Specifies which dataset the widget should display
 
         Parameters
         ----------
@@ -74,7 +74,7 @@ class PlotBase(QWidget):
         self.axes.clear()
 
     def toggle_autoscale(self):
-        """ Toggles the autoscale function.
+        """Toggles the autoscale function.
 
         The autoscale function will automatically adjust the axes to fit the
         data. This function toggles the autoscale function on and off.
@@ -82,7 +82,7 @@ class PlotBase(QWidget):
         self.autoscale = not self.autoscale
 
     def toggle_normalize(self):
-        """ Toggles the normalize function.
+        """Toggles the normalize function.
 
         The normalize function will automatically normalize the displayed data to
         have a maximum value of 1. This allows parameters of greatly different
@@ -112,8 +112,7 @@ class PlotBase(QWidget):
 
         # Check that is a function of time
         if "time:time" not in self.app.data_sets[self.plot_set].data:
-            logger.info(
-                f"Data set {self.plot_set} in {self.name} has no time data.")
+            logger.info(f"Data set {self.plot_set} in {self.name} has no time data.")
             return
 
         xleft, xright = self.axes.get_xlim()
@@ -127,7 +126,10 @@ class PlotBase(QWidget):
 
             # Skip non-numeric types
             if not self.app.data_sets[self.plot_set].values_are_numeric(key):
-                if any(val is not None for val in self.app.data_sets[self.plot_set].data[key]):
+                if any(
+                    val is not None
+                    for val in self.app.data_sets[self.plot_set].data[key]
+                ):
                     pass
                 else:
                     continue
@@ -217,7 +219,7 @@ class PlotTool(PlotBase):
         self.setLayout(self.vbox)
 
     def selector_changed(self):
-        """ Is automatically called when the dataset dropdown is changed.
+        """Is automatically called when the dataset dropdown is changed.
 
         This function updates the dataset to plot using the current value of the
         dropdown widget.
@@ -229,7 +231,7 @@ class PlotTool(PlotBase):
             super().set_dataset(current_text)
 
     def set_dataset(self, set_name: str):
-        """ Sets the dataset in hc.App to plot.
+        """Sets the dataset in hc.App to plot.
 
         Parameters
         ----------
@@ -244,8 +246,7 @@ class PlotTool(PlotBase):
         self.select_set_drop.setCurrentText(set_name)
 
     def update(self):
-        """ Updates the plot widget with the most recent data.
-        """
+        """Updates the plot widget with the most recent data."""
 
         super().update()
 
@@ -283,8 +284,7 @@ class MiniPlotTool(PlotBase):
         self.setLayout(self.vbox)
 
     def update(self):
-        """ Updates the plot widget with the most recent data.
-        """
+        """Updates the plot widget with the most recent data."""
         super().update()
 
         self.axes.axis("off")

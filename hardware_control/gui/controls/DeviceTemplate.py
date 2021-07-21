@@ -67,12 +67,12 @@ class DeviceType(Instrument):
         self.command("RND")  # Sends readout command (for example)
         # recived messige will be stored, once available this will
         # read it out, that way the UI wont freeze
-        mess = self.read_values("RND")
+        mess = self.values.get("RND")
         if mess:
             self.text.setText(mess)
 
     def settings_to_UI(self):
-        """ Add code to this function to make the widgets in the GUI update
-        to reflect the state of the 'self.settings' dictionary. """
+        """Add code to this function to make the widgets in the GUI update
+        to reflect the state of the 'self.settings' dictionary."""
 
         pass

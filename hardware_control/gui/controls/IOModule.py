@@ -142,7 +142,9 @@ class IOModule(Instrument):
             list_of_widgets.append(last_wdgt)
 
             self.channel_panel.addWidget(
-                last_wdgt, int(load_idx / num_columns), (load_idx) % num_columns,
+                last_wdgt,
+                int(load_idx / num_columns),
+                (load_idx) % num_columns,
             )
 
             if "OPTIONS" in c_dict and c_dict["OPTIONS"] is not None:
@@ -257,7 +259,7 @@ class AnalogInputChannel(QGroupBox):
 
         try:
             V_meas = remove_end_carriage_return(
-                self.control.read_values(f"CH{self.channel}_ANALOG_READ")
+                self.control.values.get(f"CH{self.channel}_ANALOG_READ")
             )
         except Exception:
             V_meas = "----"
@@ -295,7 +297,11 @@ class AnalogOutputChannel(QGroupBox):
             10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
         )
 
-        self.edit = QControl(self.control, f"CH{self.channel}_ANALOG_WRITE", label,)
+        self.edit = QControl(
+            self.control,
+            f"CH{self.channel}_ANALOG_WRITE",
+            label,
+        )
 
         self.unit_label = QLabel(f" {self.units}")
 
@@ -323,7 +329,12 @@ class AnalogOutputChannel(QGroupBox):
 
 class DigitalInputChannel(QGroupBox):
     def __init__(
-        self, control, channel, units="", label="Digital: ", show_ID_labels=True,
+        self,
+        control,
+        channel,
+        units="",
+        label="Digital: ",
+        show_ID_labels=True,
     ):
 
         if show_ID_labels:
@@ -369,7 +380,7 @@ class DigitalInputChannel(QGroupBox):
 
             # Read return value
             V_meas = remove_end_carriage_return(
-                self.control.read_values(f"CH{self.channel}_DIGITAL_READ")
+                self.control.values.get(f"CH{self.channel}_DIGITAL_READ")
             )
 
             # Update label
@@ -386,7 +397,12 @@ class DigitalInputChannel(QGroupBox):
 
 class DigitalOutputChannel(QGroupBox):
     def __init__(
-        self, control, channel, units="V", label="Set voltage: ", show_ID_labels=True,
+        self,
+        control,
+        channel,
+        units="V",
+        label="Set voltage: ",
+        show_ID_labels=True,
     ):
 
         if show_ID_labels:

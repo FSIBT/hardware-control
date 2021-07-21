@@ -17,14 +17,14 @@ logger = logging.getLogger(__name__)
 # a lookup table to convert from pulse shape to the correct Keysight
 # command
 waveform_lookup = {
-    "Sine": "SIN",
-    "Square": "SQU",
-    "Triangle": "TRI",
-    "Ramp": "RAMP",
-    "Pulse": "PULS",
+    "SINE": "SIN",
+    "SQUARE": "SQU",
+    "TRIANGLE": "TRI",
+    "RAMP": "RAMP",
+    "PULSE": "PULS",
     "PRBS": "PRBS",
-    "Noise": "NOIS",
-    "Arbitrary": "ARB",
+    "NOISE": "NOIS",
+    "ARBITRARY": "ARB",
     "DC": "DC",
 }
 
@@ -158,10 +158,9 @@ class Keysight_33500B(Backend):
             rval = self.query(f"CHAN{channel}:BWL?")
             return f"{setting}={rval}"
         if setting_X == "CHX_WAVEFORM":
-            wvfm = waveform_lookup[value]
+            wvfm = waveform_lookup[value.upper()]
             self.write(f":SOUR{channel}:FUNC {wvfm}")
             rval = self.query(f":SOUR{channel}:FUNC?")
-            rval = rval[:-1]  # Trim newline character
             return f"{setting}={rval}"
 
         """    OUTPut Subsystem    """
@@ -238,6 +237,7 @@ class Keysight_33500B(Backend):
             #rval = self.query(f"SOUR{channel}:TRAC?")
             rval = self.query("TRAC?")
             return f"{setting}={rval}"
+
     @ensure_online
     def command(self, cmd: str):
         pass

@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 
 class ScanWidget(QGroupBox):
-    def __init__(self, app, name, actions, regressor = None, measure_value = None):
+    def __init__(self, app, name, actions, regressor=None, measure_value=None):
         """
         Parameters
         ----------
@@ -59,7 +59,7 @@ class ScanWidget(QGroupBox):
 
         if self.GPRegressor:
             self.measure_value = self.app.main_window.tab7.get_measured_values
-            
+
         # *************************Create GUI************************
         self.arrow_symbol = QLabel()
         self.arrow_symbol.setPixmap(load_icon("arrow.png"))
@@ -91,9 +91,10 @@ class ScanWidget(QGroupBox):
         self.use_file = QRadioButton("File")
         self.use_space.setChecked(True)
 
-        self.n_queries_label = QLabel("Queries:")
+        self.n_queries_label = QLabel("GP Queries:")
         self.n_queries_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         self.n_queries_edit = QLineEdit()
+        self.n_queries_edit.setText("20")
 
         self.values_label = QLabel("Values:")
         self.values_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
@@ -324,11 +325,15 @@ class ScanWidget(QGroupBox):
         self.scan_action = self.actions[action]
 
     def compute_values(self):
-        """ Reads the values of the widgets and computes the values for the scan
-        to iterate over. """
+        """Reads the values of the widgets and computes the values for the scan
+        to iterate over."""
 
         if self.use_list.isChecked():
-            self.val_list = self.values_edit.text().split(",")
+            new_val_list = [float(x) for x in self.values_edit.text().split(",")]
+            if self.continue_scan:
+                self.val_list += new_val_list
+            else:
+                self.val_list = new_val_list
         elif self.use_space.isChecked():
             try:
                 start = float(self.spacing_start_edit.text())
@@ -337,10 +342,14 @@ class ScanWidget(QGroupBox):
             except:
                 logger.error("Invalid values for start, end, or step_size")
                 return False
-
-            self.val_list = [
-                str(v) for v in np.arange(start, end + step_size, step_size)
-            ]
+            if self.continue_scan:
+                self.val_list += [
+                    float(v) for v in np.arange(start, end + step_size, step_size)
+                ]
+            else:
+                self.val_list = [
+                    float(v) for v in np.arange(start, end + step_size, step_size)
+                ]
         elif self.use_file.isChecked():
             filename = self.values_file_edit.text()
             if filename == "":
@@ -349,47 +358,69 @@ class ScanWidget(QGroupBox):
             # Read files
             with open(filename) as file:
                 file_str = file.read().replace("\n", "")
-            self.val_list = file_str.split(",")
+            new_val_list = [float(x) for x in file_str.split(",")]
+            if self.continue_scan:
+                self.val_list += new_val_list
+            else:
+                self.val_list = new_val_list
 
         elif self.use_GP.isChecked():
             if self.n_queries_edit.text() == "":
                 self.n_queries_edit.setText("20")
             self.n_queries = float(self.n_queries_edit.text())
-            
+
             if self.continue_scan:
                 self.number_of_values += self.n_queries
-                self.val_list = np.append(self.val_list,np.zeros(int(self.n_queries)))
+                self.val_list = np.append(self.val_list, np.zeros(int(self.n_queries)))
             else:
                 self.number_of_values = self.n_queries + self.GPRegressor.pre_scan_num
-                self.val_list = np.append(self.first_pre_scans,np.zeros(int(self.n_queries)))
-        
+                self.val_list = np.append(
+                    self.first_pre_scans, np.zeros(int(self.n_queries))
+                )
+
             return True
         else:
             logger.error("No mode selected in scan tool")
             return False
-    
+
         self.number_of_values = len(self.val_list)
         return True
 
     def set_instrument_setting(self):
         if self.use_GP.isChecked():
             # For when the count is past the initial scan, get the measured value from the GP widget
-            if self.count<self.GPRegressor.pre_scan_num and self.count>0 and not self.continue_scan:
+            if (
+                self.count < self.GPRegressor.pre_scan_num
+                and self.count > 0
+                and not self.continue_scan
+            ):
                 self.measure_value()
-                self.GPRegressor.regressor.teach(self.val_list[self.count-1].reshape(1, -1), self.app.main_window.tab7.faraday_voltage_list[self.count-1].reshape(1, -1))
+                self.GPRegressor.regressor.teach(
+                    self.val_list[self.count - 1].reshape(1, -1),
+                    self.app.main_window.tab7.faraday_voltage_list[
+                        self.count - 1
+                    ].reshape(1, -1),
+                )
                 self.GPRegressor.plotGP()
                 self.app.main_window.tab7.plotScan()
             # For once the count is past the pre scans or if it is a continued scan
             # Get the measured value, and set the next value to scan
-            if self.count>=self.GPRegressor.pre_scan_num or self.continue_scan:
+            if self.count >= self.GPRegressor.pre_scan_num or self.continue_scan:
                 self.measure_value()
-                self.GPRegressor.regressor.teach(self.val_list[self.count-1].reshape(1, -1), self.app.main_window.tab7.faraday_voltage_list[self.count-1].reshape(1, -1))
-                query_idx, query_instance = self.GPRegressor.regressor.query(self.val_list.reshape(-1, 1))
-                self.val_list[self.count] = query_instance # next to measure
+                self.GPRegressor.regressor.teach(
+                    self.val_list[self.count - 1].reshape(1, -1),
+                    self.app.main_window.tab7.faraday_voltage_list[
+                        self.count - 1
+                    ].reshape(1, -1),
+                )
+                query_idx, query_instance = self.GPRegressor.regressor.query(
+                    self.val_list.reshape(-1, 1)
+                )
+                self.val_list[self.count] = query_instance  # next to measure
                 self.GPRegressor.plotGP()
                 self.app.main_window.tab7.plotScan()
-        else: # if not GP
-            if self.count>0:
+        else:  # if not GP
+            if self.count > 0:
                 self.measure_value()
                 self.app.main_window.tab7.plotScan()
 
@@ -410,7 +441,7 @@ class ScanWidget(QGroupBox):
             time_left = end_time - time.time()
             if time_left > 0:
                 if self.pause_before:
-                    self.pause_timer_label_before.setText(f"{time_left:.1f}")       
+                    self.pause_timer_label_before.setText(f"{time_left:.1f}")
                 else:
                     self.pause_timer_label_after.setText(f"{time_left:.1f}")
             else:
@@ -452,6 +483,8 @@ class ScanWidget(QGroupBox):
         self.continue_scan_button.setEnabled(True)
         self.stop_button.setEnabled(False)
         self.progress_bar.setValue(float(self.scan_progress))
+        self.measure_value()
+        self.app.main_window.tab7.save_scan()
 
     def start_scan(self):
         if self.scan_instrument is None:
@@ -473,15 +506,21 @@ class ScanWidget(QGroupBox):
         self.set_instrument_setting()
         self.pause_before = True
         self.pause_before_after()
+
     def new_scan(self):
         self.count = 0
         if self.use_GP.isChecked():
             self.GPRegressor.initialize_GPR()
             bias_range = self.GPRegressor.end_bias - self.GPRegressor.start_bias
-            self.first_pre_scans=np.linspace(self.GPRegressor.start_bias + 0.1*bias_range, self.GPRegressor.end_bias - 0.1*bias_range, self.GPRegressor.pre_scan_num)
+            self.first_pre_scans = np.linspace(
+                self.GPRegressor.start_bias,
+                self.GPRegressor.end_bias,
+                self.GPRegressor.pre_scan_num,
+            )
         self.new_scan_time = ""
         self.continue_scan = False
         self.start_scan()
+
     def continue_scan(self):
         self.continue_scan = True
         self.start_scan()

@@ -13,9 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class Read(Instrument):
-    """A simple UI for read-only modules
-
-    """
+    """A simple UI for read-only modules"""
 
     def __init__(
         self,
@@ -119,7 +117,7 @@ class SingleChannelRead(QWidget):
         """Send a command for all the used channels."""
         # for i, c in enumerate(self.mainWindow.channels):
         self.mainWindow.command(f"CH{self.channelNumber}_TEMP?")
-        mess = self.mainWindow.read_values(f"CH{self.channelNumber}_TEMP")
+        mess = self.mainWindow.values.get(f"CH{self.channelNumber}_TEMP")
         if mess:  # only write to UI if message not None
             # show 00023.7632 as 23.7 and include signs correctly
             mess = float(mess[0] + mess[2:7])
