@@ -1,13 +1,3 @@
-def convertibleToFloat(input: str) -> bool:
-    """ Checks if a string can be converted to a float and returns T/F """
-
-    try:
-        float(input)
-        return True
-    except:
-        return False
-
-
 def ensure_float(x):
     try:
         return float(x)

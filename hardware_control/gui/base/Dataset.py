@@ -1,20 +1,16 @@
 from collections import defaultdict
 import datetime
-import hashlib
 import json
 import logging
-import os
 from pathlib import Path
 import pickle
 import time
-from typing import Dict, Union, Optional
+from typing import Dict, Optional
 
 import numpy as np
 import pandas as pd
 
 from PyQt5.QtCore import QObject, QTimer
-
-from ...utility import convertibleToFloat
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +51,7 @@ class Dataset(QObject):
 
     """
 
-    def __init__(self, name: str, app=None):
+    def __init__(self, name: str, app=None) -> None:
 
         super().__init__()
 
@@ -65,7 +61,7 @@ class Dataset(QObject):
         self.autosave = False
         self.autosave_interval = 120  # in seconds
         self.autosave_format = "JSON"
-        self.autosave_filename = f"autosave_{self.name}"
+        self.autosave_filename = Path(f"autosave_{self.name}")
         # for some autosave formats it makes sense to only append new
         # rows, so we keep track of the rows that already have been
         # written to the output file
@@ -90,13 +86,13 @@ class Dataset(QObject):
         self.update_timer = QTimer(self)
         self.update_timer.timeout.connect(self.update_data)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"Dataset {self.name} @ {hex(id(self))}"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Dataset {self.name}"
 
-    def __len__(self):
+    def __len__(self) -> int:
         """Returns the number of rows in self.data."""
 
         if len(self.data.keys()) == 0:
@@ -106,21 +102,17 @@ class Dataset(QObject):
 
         return len(self.data[first_key])
 
-    def clear(self):
+    def clear(self) -> None:
         """Clears the dataset's contents"""
 
         self.data = defaultdict(list)
         self.autosave_next_row = 0
 
-    def add_instrument(self, instrument, parameters=None):
+    def add_instrument(self, instrument, parameters=None) -> None:
         self.instruments.append((instrument, parameters))
 
-    def name_channel(self, channel: str, name: str):
-        """Channel must be a string listing the instrument and parameter of
-        the channel to rename. THe instrument:parameter pair must be
-        listed in self.data.
-
-        """
+    def name_channel(self, channel: str, name: str) -> None:
+        """Channel must be a key in self.data and name is the replacement string."""
 
         self.channel_names[channel] = name
 
@@ -132,7 +124,7 @@ class Dataset(QObject):
         self.autosave = True
         self.autosave_interval = interval
         self.autosave_format = format
-        self.autosave_filename = filename
+        self.autosave_filename = Path(filename)
 
         self.autosave_timer.start(1e3 * self.autosave_interval)
 
@@ -142,7 +134,7 @@ class Dataset(QObject):
         )
 
     def start_updates(self, interval: float = 10):
-        """Converts the dataset to an asynchronous logging dataset."""
+        """Start automaticaly logging data every `interval` seconds."""
 
         self.update_interval = interval
 
@@ -234,7 +226,6 @@ class Dataset(QObject):
            Pickle
            NPY
            TXT
-           HDF
         """
         format = format.upper()
 
@@ -256,8 +247,8 @@ class Dataset(QObject):
         else:
             logger.warning(f"unrecognized file format '{format}'.")
 
-    def update_data(self):
-        """Logs values from specified instruments to the datasets.
+    def update_data(self) -> None:
+        """Logs values from the specified instruments to the datasets.
 
         Normally called by the internal timer.
         """
@@ -284,7 +275,7 @@ class Dataset(QObject):
                 self.data[f"{name}:{vk}"].append(nd)
                 logger.debug(f"Adding data: data[{name}:{vk}]='{nd}'")
 
-    def get_columns(self, columns: list):
+    def get_columns(self, columns: list) -> Dict:
         """Return a subset of columns.
 
         Parameters
@@ -319,11 +310,6 @@ class Dataset(QObject):
             Keys in self.data that should be returned
         cleanup
             Remove all None values
-
-        Returns
-        -------
-        dict
-            dictionay of requested columns
 
         """
 

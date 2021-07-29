@@ -57,16 +57,6 @@ def remove_end_carriage_return(text: str):
         return text
 
 
-def convertibleToFloat(input: str):
-    """ Checks if a string can be converted to a float and returns T/F """
-
-    try:
-        float(input)
-        return True
-    except:
-        return False
-
-
 def ensure_float(x):
     try:
         return float(x)
