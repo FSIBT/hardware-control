@@ -4,10 +4,13 @@ import hashlib
 import json
 import logging
 import os
+from pathlib import Path
 import pickle
 import time
+from typing import Dict, Union, Optional
 
 import numpy as np
+import pandas as pd
 
 from PyQt5.QtCore import QObject, QTimer
 
@@ -17,37 +20,60 @@ logger = logging.getLogger(__name__)
 
 
 class Dataset(QObject):
-    """Represents a complete dataset (ie. a collection of datapoints, which are
-    collections of individual measurements)."""
+    """Collect values from different instruments over time.
+
+    This data structure an be used to track values over time. You give
+    it a list of instruments and parameter names and a time interval and
+    every N seconds it will add a row to an internal data table with
+    the current time stamp and the values for each parameter.
+
+    The object also automates saving this table to disc in different
+    formats and enables other widgets to easily display the whole
+    dataset or certain columns vs time.
+
+    The idea is that a single datasets can group together certain
+    instrument/parameter combinations that are useful to log into a
+    file or display in a single plot.
+
+    The length of a Dataset is the number of rows in self.data.
+
+    Since parameters in instruments can have complicated names, the
+    class provides an easy way to overwrite names when the data is
+    output to, for example, disk.
+
+    The internal data is saved as a defaultdict of list where the keys
+    have the form 'instrument:parameter' and the list has the
+    instrument value for each time stamp.
+
+    The time is stored in a special columns called 'time:time'.
+
+    The data is taken from hc.Instruments, that is it is not taken
+    directly from the backend and there is no communication with the
+    actual hardware. It is assumed that the user has set up a timer
+    that pulls new data from the hardware into the Instrument.values
+    dictionary periodically.
+
+    """
 
     def __init__(self, name: str, app=None):
 
         super().__init__()
 
         self.app = app
-
-        # Name of dataset
         self.name = name
 
-        self.autosave = False  # Whether or not to enable autosave
-        self.autosave_interval = 120  # Seconds
-        self.autosave_format = "JSON"  # Save format
+        self.autosave = False
+        self.autosave_interval = 120  # in seconds
+        self.autosave_format = "JSON"
         self.autosave_filename = f"autosave_{self.name}"
+        # for some autosave formats it makes sense to only append new
+        # rows, so we keep track of the rows that already have been
+        # written to the output file
         self.autosave_next_row = 0
         self.built_in_save_formats = ["JSON", "Pickle", "NPY", "TXT"]
-        # Next row to save (prev. already saved)
 
-        self.asynchronous_mode = False  # Synchronous vs asynchronous logging
-        # list of tuples of instrument and parameters to log. If the parameters
-        # list is None, will log all parameters
-        self.async_instruments = []
-        self.async_log_interval = 10  # Seconds
-        self.async_add_timestamp = True  # Option to add timestamp to all values
-        self.async_require_float = True  # Whether to requrire async data to be floats
-
-        # Whether or not to require all data to present before allowing data to
-        # be logged. If is False, missing values will be saved as None
-        self.require_all = False
+        self.instruments = []
+        self.update_interval = 10  # Seconds
 
         # Dictionary of datapoints. Each key follows the <instrument>:<parameter>
         # naming scheme. Every value is a list and all lists need to have the
@@ -59,82 +85,35 @@ class Dataset(QObject):
         self.channel_names = {}
 
         self.autosave_timer = QTimer(self)
-        self.autosave_timer.timeout.connect(self.exec_autosave)
+        self.autosave_timer.timeout.connect(self.timer_autosave)
 
-        self.async_log_timer = QTimer(self)
-        self.async_log_timer.timeout.connect(self.log_async)
+        self.update_timer = QTimer(self)
+        self.update_timer.timeout.connect(self.update_data)
 
     def __repr__(self):
         return f"Dataset {self.name} @ {hex(id(self))}"
 
     def __str__(self):
-        # return f"{self.manufacturer} {self.model}"
-        return f"{self.name}"
+        return f"Dataset {self.name}"
+
+    def __len__(self):
+        """Returns the number of rows in self.data."""
+
+        if len(self.data.keys()) == 0:
+            return 0
+
+        first_key = list(self.data.keys())[0]
+
+        return len(self.data[first_key])
 
     def clear(self):
-        """ Clears the dataset's contents """
+        """Clears the dataset's contents"""
 
         self.data = defaultdict(list)
         self.autosave_next_row = 0
 
-    def values_are_numeric(self, key: str):
-        """ Looks at the value in self.data specified by 'key' and returns if it is numeric
-
-        Parameters
-        ----------
-        key : str
-            Key in self.data specifing a list of data to analyze.
-
-        Returns
-        -------
-        bool
-            True if key in self.data and all values in list specified by 'key' can
-            be converted to numeric type.
-        """
-
-        def is_number(x):
-            try:
-                float(x)
-            except ValueError:
-                return False
-            except TypeError:
-                return False
-            return True
-
-        # Ensure key exists
-        if key not in self.data:
-            return False
-
-        # Else, for each item in list, check if number
-        for val in self.data[key]:
-            if not is_number(val):
-                return False
-
-        return True
-
-    def values_are_list(self, key: str):
-        """ Looks at the value in self.data specified by 'key' and returns if it is a list
-
-        Parameters
-        ----------
-        key : str
-            Key in self.data specifing value to check if is list
-
-        Returns
-        -------
-        bool
-            True if key in self.data and points to a list
-        """
-
-        # Ensure key exists
-        if key not in self.data:
-            return False
-
-        # If not a list, check one number
-        if isinstance(self.data[key], list):
-            return True
-
-        return False
+    def add_instrument(self, instrument, parameters=None):
+        self.instruments.append((instrument, parameters))
 
     def name_channel(self, channel: str, name: str):
         """Channel must be a string listing the instrument and parameter of
@@ -148,7 +127,7 @@ class Dataset(QObject):
     def start_autosave(
         self, interval: float = 120, format: str = "JSON", filename: str = "autosave"
     ):
-        """ Activates the dataset's autosave feature. """
+        """Activates the dataset's autosave feature."""
 
         self.autosave = True
         self.autosave_interval = interval
@@ -162,164 +141,111 @@ class Dataset(QObject):
             f" Interval: {self.autosave_interval} s"
         )
 
-    def start_asynch(self, interval: float = 10, add_timestamp: bool = True):
-        """ Converts the dataset to an asynchronous logging dataset. """
+    def start_updates(self, interval: float = 10):
+        """Converts the dataset to an asynchronous logging dataset."""
 
-        self.async_log_interval = interval
-        self.async_add_timestamp = add_timestamp
-        self.asynchronous_mode = True
+        self.update_interval = interval
 
-        self.async_log_timer.start(1e3 * self.async_log_interval)
+        self.update_timer.start(1e3 * self.update_interval)
 
         logger.info(
             f"Dataset {self.name} activated asynchronous mode."
-            f" Interval: {self.async_log_interval} s"
+            f" Interval: {self.update_interval} s"
         )
 
     def set_save_interval(self, interval: float):
-
         self.autosave_interval = interval
-
         self.autosave_timer.setInterval(1e3 * self.autosave_interval)
 
-    def set_async_interval(self, interval: float):
+    def set_update_interval(self, interval: float):
+        self.update_interval = interval
+        self.update_timer.setInterval(1e3 * self.update_interval)
 
-        self.async_log_interval = interval
-
-        self.async_log_timer.setInterval(1e3 * self.async_log_interval)
-
-    def len_same(self):
-        """Returns the length of all of the values in self.data. If they aren't
-        all the same length (they should be), returns -1."""
-
-        # Get maximum and minium length
-        val_min = self.len_min()
-        val_max = self.len_max()
-
-        # If not same, some values have different lengths
-        if val_min != val_max:
-            return -1
-
-        # Otherwise return length
-        return val_min
-
-    def len_max(self):
-
-        if len(self.data) == 0:
-            return 0
-
-        return max([len(self.data[key]) for key in self.data])
-
-    def len_min(self):
-        """Returns the length of the shortest list in self.data."""
-
-        if len(self.data) == 0:
-            return 0
-
-        return min([len(self.data[key]) for key in self.data])
-
-    def exec_autosave(self):
-        """ Called by the autosave timer. Triggers a call to self.save() """
-
+    def timer_autosave(self):
         logger.info(
             f"Dataset {self.name} autosaveing to" f" file {self.autosave_filename}"
         )
 
-        if self.autosave:  # Check if autosave enabled
+        if self.autosave:
             self.save(self.autosave_filename, self.autosave_format)
 
-    def save(self, filename: str, format: str):
-        """Saves the dataset to a file. format specifies the file format. The
+    def save_txt(self, filename: str):
+        """Appends data if the file already exists."""
+
+        if filename.suffix != ".txt":
+            filename = filename.with_suffix(".txt")
+
+        # Write header if file doesn't exist
+        if not filename.is_file():
+            with filename.open("w") as outfile:
+                outfile.write(
+                    f"# {datetime.datetime.today().strftime('%Y-%m-%d')}\n"
+                    f"# Logfile from hardware_control run\n"
+                )
+
+                datastructure = "Time[s] "
+                datastructure += " ".join(
+                    [
+                        instrument.get_header(parameters)
+                        for instrument, parameters in self.instruments
+                    ]
+                )
+
+                outfile.write(f"{datastructure}\n")
+
+        # Write file data
+        with filename.open("a") as outfile:
+            length = len(self)
+            while self.autosave_next_row < length:
+
+                # Write line
+                line = " ".join(
+                    [str(self.data[key][self.autosave_next_row]) for key in self.data]
+                )
+                outfile.write(line + "\n")
+
+                # Move pointer to next line
+                self.autosave_next_row += 1
+
+    def save_json(self, filename: Path):
+        if filename.suffix != ".json":
+            filename = filename.with_suffix(".json")
+
+        with filename.open("w", encoding="utf-8") as outfile:
+            json.dump(self.data, outfile, ensure_ascii=False, indent=4)
+
+    def save_pickle(self, filename: str):
+        if filename.suffix != ".pickle":
+            filename = filename.with_suffix(".pickle")
+        with filename.open("wb") as outfile:
+            pickle.dump(self.data, outfile)
+
+    def save_npy(self, filename: str):
+        if filename.suffix != ".npy":
+            filename = filename.with_suffix(".npy")
+        np.save(filename, self.data)
+
+    def save(self, filename: Path, format: str):
+        """Saves the dataset to a file. Format specifies the file format. The
         file format specifier is not case sensitive.
 
-                File Formats:
-                    JSON
-                    Pickle
-                    NPY
-                    TXT
-                    HDF"""
-
-        ext = os.path.splitext(filename)[-1].lower()
+        File Formats:
+           JSON
+           Pickle
+           NPY
+           TXT
+           HDF
+        """
+        format = format.upper()
 
         if format == "JSON":
-
-            # Add extension if not specified
-            if ext == "":
-                filename = filename + ".json"
-
-            # Write header if file doesn't exist
-            with open(filename, "w", encoding="utf-8") as outfile:
-                json.dump(self.data, outfile, ensure_ascii=False, indent=4)
-
-        elif format == "Pickle":
-
-            # Add extension if not specified
-            if ext == "":
-                filename = filename + ".pickle"
-
-            # Write header if file doesn't exist
-            with open(filename, "wb") as outfile:
-                pickle.dump(self.data, outfile)
-
+            self.save_jsong(filename)
+        elif format == "PICKLE":
+            self.save_pickle(filename)
         elif format == "NPY":
-
-            # Add extension if not specified
-            if ext == "":
-                filename = filename + ".npy"
-
-            # Write header if file doesn't exist
-            # with open(filename, "w") as outfile:
-            np.save(filename, self.data)
-
-        elif format == "TXT":  # TODO: this only appends, not overwrite
-            # TODO: Jump to new file if file too big
-
-            # Add extension if not specified
-            if ext == "":
-                filename = filename + ".txt"
-
-            # Create directory
-
-            # Write header if file doesn't exist
-            if not os.path.exists(filename):
-                with open(filename, "w") as outfile:
-
-                    outfile.write(
-                        f"# {datetime.datetime.today().strftime('%Y-%m-%d')}\n"
-                        f"# Logfile from hardware_control run\n"
-                    )
-
-                    datastructure = ""
-                    if self.async_add_timestamp:
-                        datastructure += "Time[s] "
-                    datastructure += " ".join(
-                        [instrument.get_header(parameters) for instrument, parameters in self.async_instruments]
-                    )
-
-                    myhash = hashlib.sha256()
-                    myhash.update(datastructure.encode("utf-8"))
-                    version = myhash.hexdigest()
-
-                    outfile.write(f"# Version: {version}\n")
-                    outfile.write(f"{datastructure}\n")
-
-            # Write file data
-            with open(filename, "a") as outfile:
-
-                length = self.len_min()
-                while self.autosave_next_row < length:
-
-                    # Write line
-                    line = " ".join(
-                        [
-                            str(self.data[key][self.autosave_next_row])
-                            for key in self.data
-                        ]
-                    )
-                    outfile.write(line + "\n")
-
-                    # Move pointer to next line
-                    self.autosave_next_row += 1
+            self.save_npy(filename)
+        elif format == "TXT":
+            self.save_txt(filename)
         elif self.app is not None and format in self.app.additional_save_formats:
             try:
                 self.app.additional_save_formats[format](self, filename)
@@ -330,128 +256,92 @@ class Dataset(QObject):
         else:
             logger.warning(f"unrecognized file format '{format}'.")
 
-    def log_async(self):
-        """Periodically called by timer, logs values from included instruments
-        to the datasets. Logs timestamp if requested.
+    def update_data(self):
+        """Logs values from specified instruments to the datasets.
 
+        Normally called by the internal timer.
         """
 
-        # Return immediately if not in async mode
-        if not self.asynchronous_mode:
-            return
+        logger.debug(f"Dataset {self.name} updating data")
 
-        logger.debug(f"Dataset {self.name} logging asynchronous data")
+        self.data["time:time"].append(str(time.time()))
 
-        # Check that all requested parameters are available. If they
-        # aren't, don't log anything. This ensures the dataset's
-        # columns are all the same length
-        if self.require_all:
-            for instrument, parameters in self.async_instruments:
-                name = instrument.name
-                vkeys = instrument.get_value_keys(parameters)
-
-                if vkeys is None:
-                    logger.info(
-                        f"Async log for dataset {self.name} aborted because"
-                        f" not all values present"
-                    )
-                    return
-
-            # If all values must be valid (because require_all is
-            # true) and all values must be convertible to float, check
-            # that values are valid num
-            if self.async_require_float:
-                for instrument, parameters in self.async_instruments:
-                    for vk in vkeys:
-                        try:
-                            float(instrument.values[vk])
-                        except:
-                            v = instrument.values[vk]
-                            logger.info(
-                                f"Async log for dataset {self.name} aborted"
-                                f" because value '{v}' for parameter '{vk}'"
-                                f" cannot be converted to a float."
-                            )
-                            return
-
-        # Add timestamp if requested
-        if self.async_add_timestamp:
-            self.data["time:time"].append(str(time.time()))
-
-        # Add data from each specified instrument
-        for instrument, parameters in self.async_instruments:
+        for instrument, parameters in self.instruments:
             name = instrument.name
 
             vkeys = instrument.get_value_keys(parameters, False)
             logger.debug(f"Logging data for instrument: {name}. Keys: {vkeys}")
 
-            # Get each key
-            name = instrument.name
             for vk in vkeys:
-
                 # Check that parameter exists
                 if vk not in instrument.values:
                     self.data[f"{name}:{vk}"].append(None)
                     logger.debug(f"Adding data: data[{name}:{vk}] = None")
                     continue
 
-                # Check that parameter exists
-                if self.async_require_float and not convertibleToFloat(
-                    instrument.values[vk]
-                ):
-                    self.data[f"{name}:{vk}"].append(None)
-                    logger.debug(f"Adding data: data[{name}:{vk}] = None")
-                    continue
-
-                # Otherwise add raw data
+                # add raw data
                 nd = instrument.values[vk]
                 self.data[f"{name}:{vk}"].append(nd)
                 logger.debug(f"Adding data: data[{name}:{vk}]='{nd}'")
 
-    def get_corresponding_arrays(self, set_names: list, convert_to_float=False):
-        """Returns lists for each of the parameters specified in set_names (
-        indicated as <instrument>:<parameter>). If 'None' appears in
-        any of the specified lists, all data points at that index for
-        all returned lists are removed. This guarantees all returned
-        lists have the same length and that the lists indecies
-        correspond with eachother.
+    def get_columns(self, columns: list):
+        """Return a subset of columns.
 
-        Returns a dictionary, key = parameter name, value = list
+        Parameters
+        ----------
+        columns
+            Keys in self.data that should be returned
+
+        Returns
+        -------
+        dict
+            dictionay of requested columns
+        """
+
+        out = {}
+        for name in columns:
+            if name in self.data:
+                out[name] = self.data[name]
+            else:
+                logger.error(f"{name} does not exist in data set {self.name}")
+        return out
+
+    def to_pandas(
+        self,
+        columns: Optional[list] = None,
+        cleanup: bool = True,
+    ) -> pd.DataFrame:
+        """Return a subset of columns as a pandas dataframe and optionally clean it up.
+
+        Parameters
+        ----------
+        columns
+            Keys in self.data that should be returned
+        cleanup
+            Remove all None values
+
+        Returns
+        -------
+        dict
+            dictionay of requested columns
 
         """
 
-        # Initialze return dictionary with the valid values in set_names
-        ret_dic = {}
-        for sn in set_names:
-            if sn in self.data:
-                ret_dic[sn] = []
+        if columns is None:
+            data = self.data
+        else:
+            data = self.get_columns(columns)
 
-        # Populate ret_dic
-        for idx in range(self.len_min()):
+        df = pd.DataFrame.from_dict(data)
 
-            skip_idx = False
+        # convert from strings to numeric type
+        for key in df.columns:
+            df[key] = pd.to_numeric(df[key], errors="coerce")
 
-            # Check that no elements are 'None' at this index
-            for sn in ret_dic:
-                # If 'None' present, skip to next index
-                if self.data[sn][idx] is None:
-                    skip_idx = True
-                    break
+        if cleanup:
+            df = df.dropna()
 
-            if skip_idx:
-                continue
+        if "time:time" in df.columns:
+            df.set_index("time:time")
 
-            # Add data to ret_dic
-            for sn in ret_dic:
-                if convert_to_float:
-                    ret_dic[sn].append(float(self.data[sn][idx]))
-                else:
-                    ret_dic[sn].append(self.data[sn][idx])
-
-        return ret_dic
-
-    def add_instrument(self, instrument, parameters=None):
-
-        # TODO: Add units to backends
-
-        self.async_instruments.append((instrument, parameters))
+        return df

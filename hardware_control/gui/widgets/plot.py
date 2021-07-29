@@ -110,43 +110,25 @@ class PlotBase(QWidget):
             logger.error(f"Unkown data set {self.plot_set} in {self.name}.")
             return
 
-        # Check that is a function of time
-        if "time:time" not in self.app.data_sets[self.plot_set].data:
-            logger.info(f"Data set {self.plot_set} in {self.name} has no time data.")
-            return
-
         xleft, xright = self.axes.get_xlim()
         ybottom, ytop = self.axes.get_ylim()
 
+        dataset = self.app.data_sets[self.plot_set]
+
         self.axes.clear()
-        for key in self.app.data_sets[self.plot_set].data:
-            # Skip non-lists
-            if not self.app.data_sets[self.plot_set].values_are_list(key):
-                continue
-
-            # Skip non-numeric types
-            if not self.app.data_sets[self.plot_set].values_are_numeric(key):
-                if any(
-                    val is not None
-                    for val in self.app.data_sets[self.plot_set].data[key]
-                ):
-                    pass
-                else:
-                    continue
-
+        for key in dataset.data:
             if key[-4:] == "Misc":
                 continue
 
             if key == "time:time":
                 continue
-            arrs = self.app.data_sets[self.plot_set].get_corresponding_arrays(
-                ["time:time", key], True
-            )
-            y_values = np.array(arrs[key])
-            x_values = epoch2num(np.array(arrs["time:time"]))
-            mask = [type(y) != type(None) for y in y_values]
-            y_values = y_values[mask]
-            x_values = x_values[mask]
+
+            df = dataset.to_pandas(columns=["time:time", key], cleanup=True)
+            if df.empty:
+                return
+
+            y_values = df[key].to_numpy()
+            x_values = epoch2num(df.index.to_numpy())
 
             if self.normalize:
                 mymax = np.abs(y_values).max()
@@ -154,8 +136,8 @@ class PlotBase(QWidget):
                     y_values /= mymax
 
             # Get channel name
-            if key in self.app.data_sets[self.plot_set].channel_names:
-                label_name = self.app.data_sets[self.plot_set].channel_names[key]
+            if key in dataset.channel_names:
+                label_name = dataset.channel_names[key]
             else:
                 label_name = key
 

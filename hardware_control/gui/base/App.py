@@ -31,8 +31,6 @@ class App(QApplication):
         self.additional_save_formats = {}
 
         self.data_sets = {}  # Dict of datasets
-        untitled_set = Dataset("Untitled")
-        self.data_sets["Untitled"] = untitled_set
 
     def get_instrument_by_name(self, name: str) -> Union[Instrument, None]:
         """Returns the instrument named ``name`` from the ``instruments`` list
@@ -67,7 +65,7 @@ class App(QApplication):
         return inst.values.get(value, None)
 
     def add_instrument(self, instr: Instrument) -> None:
-        """ Adds an hc.Instrument to self.instruments list
+        """Adds an hc.Instrument to self.instruments list
 
         Instruments must have unique names.
 
@@ -137,7 +135,7 @@ class App(QApplication):
             )
 
     def list_instruments(self) -> None:
-        """ Prints a list of all instruments in self.instruments."""
+        """Prints a list of all instruments in self.instruments."""
 
         if not self.instruments:
             print("No known instruments")
@@ -148,7 +146,7 @@ class App(QApplication):
             print(f"  {i}")
 
     def check_instruments(self) -> None:
-        """ Ensures all instruments conform to specifications"""
+        """Ensures all instruments conform to specifications"""
         for i in self.instruments:
             try:
                 i.name
@@ -160,7 +158,7 @@ class App(QApplication):
                 logger.error(f"Instrument  {i} needs a .model")
 
     def close(self) -> None:
-        """ Closes the application
+        """Closes the application
 
         Safely closes the application by disconnecting all instruments and saving
         any data specified to save automatically before close.
@@ -171,9 +169,9 @@ class App(QApplication):
             instr.close()
 
         # Loop through datasets, save all set to autosave
-        for ds_key in self.data_sets:
-            if self.data_sets[ds_key].autosave:
-                self.data_sets[ds_key].exec_autosave()
+        for key in self.data_sets:
+            if self.data_sets[key].autosave:
+                self.data_sets[key].timer_autosave()
 
     def load_state_from_file(self, filename: Union[str, Path]) -> None:
         """Reads a JSON file to overwrite instrument's settings dictionaries.
@@ -225,7 +223,7 @@ class App(QApplication):
                 instr.settings[param] = instr_settings[param]
 
     def save_all_states(self, filename: Union[str, Path], pretty: bool = True) -> str:
-        """ Saves the state of every instrument in 'self.instruments' to a file.
+        """Saves the state of every instrument in 'self.instruments' to a file.
         If filename is 'None', does not save a file and instead returns would-be
         file contents as a string.
 
@@ -272,7 +270,7 @@ class App(QApplication):
         return ""
 
     def settings_to_backends(self) -> None:
-        """ Sends the front end's state to all backends
+        """Sends the front end's state to all backends
 
         Calls 'send_state' for each instrument in self.instruments, thus sending
         their settings dictionaries to their backends.
@@ -283,7 +281,7 @@ class App(QApplication):
             instr.send_state()
 
     def backends_to_settings(self) -> None:
-        """ Overwrites all settings with the current values measured in the physical instrument.
+        """Overwrites all settings with the current values measured in the physical instrument.
 
         Calls 'read_state_from_backend' for each instrument, thus updating the
         'settings' dictionary by querying each value from the backend.

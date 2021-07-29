@@ -2,7 +2,6 @@ import logging
 
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
-import pyqtgraph as pg  # For some reason, without this line QPushButton won't import
 from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtWidgets import (
     QCheckBox,
@@ -27,6 +26,8 @@ logger = logging.getLogger(__name__)
 
 
 class DataWidget(Instrument):
+    """Display all datasets in the app."""
+
     def __init__(self, app, name: str = "Data Logger", add_lock_button=False):
 
         super().__init__(app, name)
@@ -239,13 +240,6 @@ class DataWidget(Instrument):
         self.update_table_timer.timeout.connect(self.update_table)
         self.update_table_timer.start(1000)
 
-        # self.autosave_timer = QTimer(self)
-        # self.autosave_timer.timeout.connect(self.exec_autosave)
-        # try:
-        #     self.autosave_timer.start(1e3*float(self.settings["save_interval"]))
-        # except:
-        #     self.autosave_timer.start(120*1e3)
-
     def set_filename(self, fn: str):
         try:
             self.app.data_sets[self.settings["display_group"]].autosave_filename = fn
@@ -274,7 +268,7 @@ class DataWidget(Instrument):
 
     def set_autolog_interval(self, interval: str):
         try:
-            self.app.data_sets[self.settings["display_group"]].set_async_interval(
+            self.app.data_sets[self.settings["display_group"]].set_update_interval(
                 float(interval)
             )
         except:
@@ -404,7 +398,7 @@ class DataWidget(Instrument):
         # print(f"\tCols: {len(group.data)}")
 
         # Set correct number of rows
-        num_rows = group.len_max()
+        num_rows = len(group)
         self.table.setRowCount(num_rows)
         # print(f"\tRows: {num_rows}")
         # print(f"\tTitles:")
@@ -487,20 +481,8 @@ class DataWidget(Instrument):
         # Set autosave filename
         self.save_filename_edit.setText(str(group.autosave_filename))
 
-        # Set if async is on
-        # this will:
-        #     1.) enable/disable convert to async button
-        #     2.) set indicator to blue/grey and write ON/OFF next to it
-        #     3.) enable/disable interval edit
-        if group.asynchronous_mode:
-            self.autolog_enabled_label.setText("Asynchronous Mode: ON ")
-            self.autolog_ind_label.setPixmap(load_icon("ind_blue.png"))
-        else:
-            self.autolog_enabled_label.setText("Asynchronous Mode: OFF")
-            self.autolog_ind_label.setPixmap(load_icon("ind_darkgrey.png"))
-
         # Set log interval time
-        self.autolog_interval_edit.setText(str(group.async_log_interval))
+        self.autolog_interval_edit.setText(str(group.update_interval))
 
     def update_groups(self):
         self.dispgroup_drop.clear()
