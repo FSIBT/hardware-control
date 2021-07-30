@@ -446,24 +446,23 @@ class DataWidget(Instrument):
                 # If value can be converted to a string, do so
                 if isinstance(val, float) or isinstance(val, int):
                     temp_item.setText(f"{val:g}")
-                    # print(" NUM")
                 elif isinstance(val, bool):
                     temp_item.setText(str(val))
-                    # print(" BOOl")
                 elif isinstance(val, str):
-                    temp_item.setText(val)
-                    # print(" STR")
+                    if val in ["None", ""]:
+                        temp_item.setText("<offline>")
+                    else:
+                        temp_item.setText(val)
                 elif isinstance(val, list):
-                    # print(" LIST")
                     if len(val) > 0:
                         temp_item.setText(f"[{type(val[0])}*{len(val)}]")
                     else:
                         temp_item.setText("List")
                 elif isinstance(val, dict):
-                    # print(" DICT")
                     temp_item.setText(f"Dict * {len(val)}")
+                elif val is None:
+                    temp_item.setText("<offline>")
                 else:
-                    # print(" ?")
                     temp_item.setText(f"Type={type(val)}")
                 self.table.setItem(ridx, col, temp_item)
 
