@@ -161,29 +161,43 @@ class Dataset(QObject):
         if self.autosave:
             self.save(self.autosave_filename, self.autosave_format)
 
-    def save_txt(self, filename: str):
-        """Appends data if the file already exists."""
+    def save_txt(self, filename: Path, header: Optional[str] = None) -> None:
+        """Appends data if the file already exists.
+
+        Parameters
+        ----------
+        filename
+            filename to be used
+        header
+            None or string to be used as a header. If given the header needs to include
+            and end on a \n.
+
+        """
 
         if filename.suffix != ".txt":
             filename = filename.with_suffix(".txt")
 
         # Write header if file doesn't exist
         if not filename.is_file():
-            with filename.open("w") as outfile:
-                outfile.write(
-                    f"# {datetime.datetime.today().strftime('%Y-%m-%d')}\n"
-                    f"# Logfile from hardware_control run\n"
-                )
+            if header is None:
+                # write default header
+                with filename.open("w") as outfile:
+                    outfile.write(
+                        f"# {datetime.datetime.today().strftime('%Y-%m-%d')}\n"
+                        f"# Logfile from hardware_control run\n"
+                    )
 
-                datastructure = "Time[s] "
-                datastructure += " ".join(
-                    [
-                        instrument.get_header(parameters)
-                        for instrument, parameters in self.instruments
-                    ]
-                )
+                    datastructure = "Time[s] "
+                    datastructure += " ".join(
+                        [
+                            instrument.get_header(parameters)
+                            for instrument, parameters in self.instruments
+                        ]
+                    )
 
-                outfile.write(f"{datastructure}\n")
+                    outfile.write(f"{datastructure}\n")
+            else:
+                outfile.write(header)
 
         # Write file data
         with filename.open("a") as outfile:
@@ -206,13 +220,13 @@ class Dataset(QObject):
         with filename.open("w", encoding="utf-8") as outfile:
             json.dump(self.data, outfile, ensure_ascii=False, indent=4)
 
-    def save_pickle(self, filename: str):
+    def save_pickle(self, filename: Path):
         if filename.suffix != ".pickle":
             filename = filename.with_suffix(".pickle")
         with filename.open("wb") as outfile:
             pickle.dump(self.data, outfile)
 
-    def save_npy(self, filename: str):
+    def save_npy(self, filename: Path):
         if filename.suffix != ".npy":
             filename = filename.with_suffix(".npy")
         np.save(filename, self.data)
