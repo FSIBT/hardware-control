@@ -51,6 +51,8 @@ class Dataset(QObject):
 
     """
 
+    built_in_save_formats = ["JSON", "Pickle", "NPY", "TXT"]
+
     def __init__(self, name: str, app=None) -> None:
 
         super().__init__()
@@ -66,7 +68,6 @@ class Dataset(QObject):
         # rows, so we keep track of the rows that already have been
         # written to the output file
         self.autosave_next_row = 0
-        self.built_in_save_formats = ["JSON", "Pickle", "NPY", "TXT"]
 
         self.instruments = []
         self.update_interval = 10  # Seconds

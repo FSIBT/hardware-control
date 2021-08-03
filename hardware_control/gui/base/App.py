@@ -89,9 +89,7 @@ class App(QApplication):
             2nd: Filename
         """
 
-        dummy_set = Dataset("Dummy")
-
-        if name in dummy_set.built_in_save_formats:
+        if name in Dataset.built_in_save_formats:
             logger.warning(
                 f"Cannot add save format '{name}'"
                 f" because it is already included by default."
