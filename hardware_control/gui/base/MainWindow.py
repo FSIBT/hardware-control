@@ -216,7 +216,9 @@ class MainWindow(QMainWindow):
         save_types = ["JSON", "Pickle", "NPY", "TXT"]
         if self.app is not None:
             for data_format in self.app.additional_save_formats:
-                save_types.append(data_format)
+                # Ignore save formats that are only for automatic saving
+                if data_format != "SHOT" and data_format != "STS50":
+                    save_types.append(data_format)
         file_type, okay = QInputDialog.getItem(
             self, "Select File Type", "File Type:", save_types, 0, False
         )
