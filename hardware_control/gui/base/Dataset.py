@@ -245,7 +245,7 @@ class Dataset(QObject):
         format = format.upper()
 
         if format == "JSON":
-            self.save_jsong(filename)
+            self.save_json(filename)
         elif format == "PICKLE":
             self.save_pickle(filename)
         elif format == "NPY":

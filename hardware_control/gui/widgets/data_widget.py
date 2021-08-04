@@ -65,7 +65,7 @@ class DataWidget(QWidget):
         self.data_select_layout.addItem(self.sidebar_v_spacer)
         self.data_select_layout.addWidget(self.save_all_button)
 
-        # right column
+        # Right column
         self.table = QTableWidget()
         self.table.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
         self.table.setRowCount(15)
@@ -108,7 +108,7 @@ class DataWidget(QWidget):
         self.app.main_window.save_data(self.current_dataset)
 
     def save_all_data(self):
-        self.app.main_window.app.save_all()
+        self.app.main_window.save_all()
 
     def erase_dataset_data(self):
         ds_name = self.current_dataset

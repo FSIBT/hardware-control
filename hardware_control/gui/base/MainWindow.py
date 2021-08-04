@@ -3,6 +3,7 @@ import json
 import logging
 import os
 from sys import platform
+from pathlib import Path
 
 from PyQt5.QtWidgets import (
     QMainWindow,
@@ -170,7 +171,7 @@ class MainWindow(QMainWindow):
             logger.error("function not supported")
 
     def save_all(self):
-        """ Save all datasets to a file, specified by a file dialog """
+        """Save all datasets to a file, specified by a file dialog"""
 
         filename = ""
 
@@ -207,8 +208,8 @@ class MainWindow(QMainWindow):
         # Use file dialog to get save location
         dlg = QFileDialog()
         name_tuple = dlg.getSaveFileName()
-        name = name_tuple[0]
-        if not name:  # If cancel bttonw as hit, name will be null
+        name = Path(name_tuple[0])
+        if not name:  # If cancel button was hit, name will be null
             return
 
         # Use input dialog to get save file type
@@ -224,13 +225,8 @@ class MainWindow(QMainWindow):
 
         if okay and file_type:
             logger.info(f"Saving as {file_type} with name {name}")
-            try:
-                self.app.data_sets[dataset_name].save(name, file_type)
-            except:
-                logger.error(
-                    f"Failed to find and save dataset with name '{dataset_name}'",
-                    exc_info=True,
-                )
+            self.app.data_sets[dataset_name].save(name, file_type)
+
         else:
             logger.info("Save canceled")
 
