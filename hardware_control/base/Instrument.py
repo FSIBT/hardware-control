@@ -41,10 +41,10 @@ def ensure_online(f):
     return wrapped
 
 
-class Backend:
+class Instrument:
     """Base class for all physical instruments.
 
-    The backend implements the actual communications between python
+    The instrument implements the actual communications between python
     and the instrument.
 
     The class supports several connections modes out of the box:
@@ -53,7 +53,7 @@ class Backend:
     For other type of communictioan the try_connect function needs to
     be overwritten.
 
-    When implementing a backend, the user inherits from this base class
+    When implementing a instrument, the user inherits from this base class
     and then calls add_parameter and add_command several times. These
     commands define 'read only' or 'read and write' parameters, for
     example, voltage settings or just basic commands, such as,
@@ -125,7 +125,7 @@ class Backend:
         IP address or an IP address and a port number seperated by a
         ":".  For this case sockets are automatically assumed. If
         modbus should be used, the user needs to overwrite this in the
-        init function of the backend.
+        init function of the instrument.
 
         """
 
@@ -138,9 +138,9 @@ class Backend:
             or self.connection_addr.startswith("USB")
             or self.connection_addr.startswith("VXI")
         ):
-            self.connection_type = Backend.VISA
+            self.connection_type = Instrument.VISA
         else:
-            self.connection_type = Backend.SOCKET
+            self.connection_type = Instrument.SOCKET
             values = self.connection_addr.rsplit(":", 1)
             if len(values) == 1:
                 self.ip_addr = values[0]
@@ -181,7 +181,7 @@ class Backend:
         set_command: Optional[str] = None,
         dummy_return: Optional[Any] = None,
     ) -> None:
-        """Adds a new parameter to the backend.
+        """Adds a new parameter to the instrument.
 
         If the parameter is read_only (say the actual voltage in a
         power supply), only the read_command needs to be defined. If
@@ -207,26 +207,26 @@ class Backend:
         """
         if name in ["online", "command"]:
             logger.error(
-                f"command 'online' and 'command' a special command and cannot be used in backend {self.name}"
+                f"command 'online' and 'command' a special command and cannot be used in instrument {self.name}"
             )
             return
 
         if name in self.read_commands:
-            logger.error(f"command {name} already exists in backend {self.name}")
+            logger.error(f"command {name} already exists in instrument {self.name}")
             return
 
         self.read_commands[name] = read_command
 
         if set_command is not None:
             if name in self.set_commands:
-                logger.error(f"command {name} already exists in backend {self.name}")
+                logger.error(f"command {name} already exists in instrument {self.name}")
                 return
 
             self.set_commands[name] = set_command
 
         if dummy_return is not None:
             if name in self.dummy_returns:
-                logger.error(f"dummy {name} already exists in backend {self.name}")
+                logger.error(f"dummy {name} already exists in instrument {self.name}")
                 return
 
             self.dummy_returns[name] = dummy_return
@@ -234,11 +234,11 @@ class Backend:
     def add_command(self, name: str, command: str):
         if name == "online":
             logger.error(
-                f"command 'online' is a special command and cannot be used in backend {self.name}"
+                f"command 'online' is a special command and cannot be used in instrument {self.name}"
             )
             return
         if name in self.commands:
-            logger.error(f"command {name} already exists in backend {self.name}")
+            logger.error(f"command {name} already exists in instrument {self.name}")
             return
         self.commands[name] = command
 
@@ -290,19 +290,19 @@ class Backend:
     def __getitem__(self, name: str):
         """Allow values to be easily accessed.
 
-        b = certain_backend()
+        b = certain_instrument()
         volts = b['voltage']
 
         """
         val = self.get_value(name)
         if val is not None:
             return val
-        logger.error(f"{name} not available in backend {self.name}")
+        logger.error(f"{name} not available in instrument {self.name}")
 
     def __getattr__(self, name: str):
         """Allow values to be easily accessed.
 
-        b = certain_backend()
+        b = certain_instrument()
         volts = b.voltage
 
         """
@@ -315,19 +315,19 @@ class Backend:
     def __setitem__(self, name, value):
         """Allow values to be easily accessed.
 
-        b = certain_backend()
+        b = certain_instrument()
         b['voltage'] = 10
 
         """
         if name in self.set_commands:
             self.write(self.set_commands[name].format(value))
             return
-        logger.error(f"{name} not available in backend {self.name}")
+        logger.error(f"{name} not available in instrument {self.name}")
 
     def __setattr__(self, name: str, value):
         """Allow values to be easily accessed.
 
-        b = certain_backend()
+        b = certain_instrument()
         b.voltage = 10
 
         """
@@ -341,7 +341,7 @@ class Backend:
     def command(self, name: str):
         """Allow values to be easily accessed.
 
-        b = certain_backend()
+        b = certain_instrument()
         b.command('trigger')
 
         """
@@ -353,7 +353,7 @@ class Backend:
             self.write(self.commands[name])
             return
 
-        logger.error(f"{name} not available in backend {self.name}")
+        logger.error(f"{name} not available in instrument {self.name}")
 
     def close(self):
         """Close connection to instrument."""
@@ -369,7 +369,7 @@ class Backend:
         self.device.close()
 
     def try_connect(self):
-        """Checks if the backend is in communication with the object, if it is
+        """Checks if the instrument is in communication with the object, if it is
         not, it tries to re-establish communication."""
 
         if self.dummy:
@@ -388,7 +388,7 @@ class Backend:
 
         logger.debug(f"{self.name}: trying to connect")
 
-        if self.connection_type == Backend.VISA:
+        if self.connection_type == Instrument.VISA:
             try:
                 rm = pyvisa.ResourceManager("@py")
                 self.device = rm.open_resource(self.connection_addr)
@@ -405,7 +405,7 @@ class Backend:
                 logger.debug(f"{self.name} is offline")
             else:
                 self.online = True
-        elif self.connection_type == Backend.SOCKET:
+        elif self.connection_type == Instrument.SOCKET:
             try:
                 self.device = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.device.settimeout(2)
@@ -421,7 +421,7 @@ class Backend:
                 logger.debug(f"{self.name} is offline")
             else:
                 self.online = True
-        elif self.connection_type == Backend.MODBUS:
+        elif self.connection_type == Instrument.MODBUS:
             try:
                 self.device = ModbusClient(host=self.connection_addr)
                 if self.device.connect():
@@ -450,10 +450,10 @@ class Backend:
 
         try:
             logger.debug(f'\t{self.name} < "{command}"')
-            if self.connection_type == Backend.VISA:
+            if self.connection_type == Instrument.VISA:
                 self.device.write(command)
                 return command
-            if self.connection_type == Backend.SOCKET:
+            if self.connection_type == Instrument.SOCKET:
                 self.device.sendall(bytes(command + self.termination, self.encoding))
                 return command
         except Exception:
@@ -482,11 +482,11 @@ class Backend:
 
         try:
             logger.debug(f"INFO: Sending query {command} in {self.name}")
-            if self.connection_type == Backend.VISA:
+            if self.connection_type == Instrument.VISA:
                 reply = self.device.query(command)
-            elif self.connection_type == Backend.SOCKET:
+            elif self.connection_type == Instrument.SOCKET:
                 self.device.sendall(bytes(command + self.termination, self.encoding))
-                reply_bytes = Backend.recvall(self.device)
+                reply_bytes = Instrument.recvall(self.device)
                 reply = str(reply_bytes)
                 reply = reply[2 : len(reply) - 1 - 2 * len(self.termination)]
                 logger.debug(f'\t{self.name}< "{command}"')

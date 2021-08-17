@@ -15,17 +15,18 @@ class ZMQAdapter(threading.Thread):
 
     """
 
-    def __init__(self, backend, stopevent, context, publisher):
-        super().__init__(name=backend.name)
-        self.backend = backend
+    def __init__(self, instrument, stopevent, context, publisher):
+        super().__init__(name=instrument.name)
+        self.instrument = instrument
         self.stop = stopevent
+        self.name = instrument.name
 
         # subscribe to main app
         self.zmq_subscriber = context.socket(zmq.SUB)
         self.zmq_subscriber.connect(publisher)
-        self.zmq_subscriber.subscribe(backend.name)
+        self.zmq_subscriber.subscribe(instrument.name)
         self.zmq_topic_length = (
-            len(backend.name) + 1
+            len(instrument.name) + 1
         )  # +1 for extra whitespace after topic name
 
         # create our own publisher
@@ -47,7 +48,7 @@ class ZMQAdapter(threading.Thread):
     def run(self):
         while not self.stop.is_set():
 
-            # would add test here to call backend.connect iff offline
+            # would add test here to call instrument.connect iff offline
 
             try:
                 msg = self.zmq_subscriber.recv_string(flags=zmq.NOBLOCK)
@@ -58,12 +59,12 @@ class ZMQAdapter(threading.Thread):
             msg = msg.split()
             if len(msg) == 1:
                 # requesting a value
-                ret = self.backend[msg[0]]
-                self.zmq_publisher.send_string(f"{self.backend.name} {msg[0]} {ret}")
+                ret = self.instrument[msg[0]]
+                self.zmq_publisher.send_string(f"{self.instrument.name} {msg[0]} {ret}")
                 continue
             elif len(msg) == 2:
                 if msg[1] == "command":
-                    self.backend.command(msg[2])
+                    self.instrument.command(msg[2])
                     continue
                 # if it is not a command, we are trying to set a value
-                self.backend[msg[0]] = msg[1]
+                self.instrument[msg[0]] = msg[1]
