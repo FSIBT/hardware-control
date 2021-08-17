@@ -207,26 +207,26 @@ class Backend:
         """
         if name == "online":
             logger.error(
-                f"command 'online' is a special command and cannot be used in backend {self.name}"
+                f"command 'online' is a special command and cannot be used in backend {self.ID}"
             )
             return
 
         if name in self.read_commands:
-            logger.error(f"command {name} already exists in backend {self.name}")
+            logger.error(f"command {name} already exists in backend {self.ID}")
             return
 
         self.read_commands[name] = read_command
 
         if set_command is not None:
             if name in self.set_commands:
-                logger.error(f"command {name} already exists in backend {self.name}")
+                logger.error(f"command {name} already exists in backend {self.ID}")
                 return
 
             self.set_commands[name] = set_command
 
         if dummy_return is not None:
             if name in self.dummy_returns:
-                logger.error(f"dummy {name} already exists in backend {self.name}")
+                logger.error(f"dummy {name} already exists in backend {self.ID}")
                 return
 
             self.dummy_returns[name] = dummy_return
@@ -234,11 +234,11 @@ class Backend:
     def add_command(self, name: str, command: str):
         if name == "online":
             logger.error(
-                f"command 'online' is a special command and cannot be used in backend {self.name}"
+                f"command 'online' is a special command and cannot be used in backend {self.ID}"
             )
             return
         if name in self.commands:
-            logger.error(f"command {name} already exists in backend {self.name}")
+            logger.error(f"command {name} already exists in backend {self.ID}")
             return
         self.commands[name] = command
 
@@ -297,7 +297,7 @@ class Backend:
         val = self.get_value(name)
         if val is not None:
             return val
-        logger.error(f"{name} not available in backend {self.name}")
+        logger.error(f"{name} not available in backend {self.ID}")
 
     def __getattr__(self, name: str):
         """Allow values to be easily accessed.
@@ -322,7 +322,7 @@ class Backend:
         if name in self.set_commands:
             self.write(self.set_commands[name].format(value))
             return
-        logger.error(f"{name} not available in backend {self.name}")
+        logger.error(f"{name} not available in backend {self.ID}")
 
     def __setattr__(self, name: str, value):
         """Allow values to be easily accessed.
@@ -353,7 +353,7 @@ class Backend:
             self.write(self.commands[name])
             return
 
-        logger.error(f"{name} not available in backend {self.name}")
+        logger.error(f"{name} not available in backend {self.ID}")
 
     def close(self):
         """Close connection to instrument."""
@@ -445,7 +445,7 @@ class Backend:
     def write(self, command: str):
 
         if self.dummy:
-            logger.info(f"{self.name} sending command {command}")
+            logger.info(f"{self.ID} sending write command {command}")
             return
 
         try:
@@ -477,7 +477,8 @@ class Backend:
     def query(self, command: str):
 
         if self.dummy:
-            return command
+            logger.info(f"{self.ID} sending query command {command}")
+            return
 
         try:
             logger.debug(f"INFO: Sending query {command} in {self.ID}")
