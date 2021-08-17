@@ -205,9 +205,9 @@ class Backend:
            These can also easily be overwritten in an actual app to customize this.
 
         """
-        if name == "online":
+        if name in ["online", "command"]:
             logger.error(
-                f"command 'online' is a special command and cannot be used in backend {self.name}"
+                f"command 'online' and 'command' a special command and cannot be used in backend {self.name}"
             )
             return
 
