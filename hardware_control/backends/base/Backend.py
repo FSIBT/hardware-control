@@ -1,7 +1,11 @@
 """Base class and helper function for implementing an instrument backend.
 
-A backend for an instrument will run in its own thread. It should have
-no Qt references, so that it can also be used in command line apps.
+A backend for an instrument should be kept very basic, so that one can
+use it in a terminal for example. A backend should not have any GUI
+elements and therefore no references to Qt.
+
+Hardware control will automatically start each backend in its own
+thread, see the ZMQ adapter class.
 
 Several default connections modes are supported out of the box:
 pyvisa, sockets, and modbus.
@@ -12,41 +16,16 @@ connect function.
 """
 
 
-import abc
 from functools import wraps
-import inspect
 import logging
 import socket
-import time
-import threading
+from typing import Optional, Any
 
 import pyvisa
 from pymodbus.client.sync import ModbusTcpClient as ModbusClient
 
 
 logger = logging.getLogger(__name__)
-
-
-def thread_info(f):
-    @wraps(f)
-    def wrapped(*args, **kwargs):
-        start = time.time()
-
-        frame = inspect.currentframe()
-        retval = f(*args, **kwargs)
-        end = time.time()
-        print(
-            f"Function: {inspect.getframeinfo(frame).function},"
-            f" start: {start}, end: {end}, thread: {threading.get_ident()} dt: {start-end}"
-        )
-        inspect.getframeinfo(frame).function
-        print(
-            "Function: %-20.20s thread: %17.17d dt: %15f"
-            % (inspect.stack()[1][3], threading.get_ident(), end - start)
-        )
-        return retval
-
-    return wrapped
 
 
 def ensure_online(f):
@@ -62,10 +41,8 @@ def ensure_online(f):
     return wrapped
 
 
-class Backend(abc.ABC):
-    """Base class for all instruments.
-
-    This class should be inherited for every instrument backend.
+class Backend:
+    """Base class for all physical instruments.
 
     The backend implements the actual communications between python
     and the instrument.
@@ -76,8 +53,28 @@ class Backend(abc.ABC):
     For other type of communictioan the try_connect function needs to
     be overwritten.
 
-    When implementing a backend the abstracmethods need to be
-    implemented: update_setting, command, and check_connection.
+    When implementing a backend, the user inherits from this base class
+    and then calls add_parameter and add_command several times. These
+    commands define 'read only' or 'read and write' parameters, for
+    example, voltage settings or just basic commands, such as,
+    'trigger' and links these to the actual hardware command that
+    needs to be send to the instrument.
+
+    We also overwrite __getitem__, __getattr__ and the corresponding set functions to
+    allow for a more pythonic way of reading and writing these parameters.
+
+    An instrument can also be in `dummy` mode. Here, python will not
+    try to connect to the instrument and return pre-defined data or
+    call a user-defined function to generate the return value. This
+    can be handy for creating and debugging an app when one doesn't
+    have access to the hardware.
+
+    Attributes
+    ----------
+    online : bool
+         status of the instrument
+    dummy : bool
+         are we in dummy mode (no commands are send to the instrument) or normal mode
 
     """
 
@@ -93,18 +90,24 @@ class Backend(abc.ABC):
     ):
 
         self.ID = instrument_name
-        self.online = False  # does a connection to the instrument exist?
+        self.online: bool = False
 
         self.device = None  # This is the physical instrument to write to
-        self.dummy = False
+        self.dummy: bool = False
 
         self.connection_addr = connection_addr
         self.connection_type = None
 
         self.ip_addr = None
         self.port_no = default_port
-        self.termination = "\n"
-        self.encoding = "utf-8"
+        self.termination: str = "\n"
+        self.encoding: str = "utf-8"
+
+        # We save all possible commands and settings in several dictionaries
+        self.set_commands = {}  # e.g. a voltage that can be set
+        self.read_commands = {}  # e.g. a voltage that can be read and return a value
+        self.commands = {}  # e.g. a trigger command that does not return a value
+        self.dummy_returns = {}
 
         # This can be set to a single command or list of commands
         # which will enable automatic checks using these commands to
@@ -171,42 +174,186 @@ class Backend(abc.ABC):
                 self.query(cmd)
             return self.online
 
-    @abc.abstractmethod
-    def update_setting(self, setting: str, value: str) -> str:
-        """Overload this function to adjust settings on the device.
+    def add_parameter(
+        self,
+        name: str,
+        read_command: str,
+        set_command: Optional[str] = None,
+        dummy_return: Optional[Any] = None,
+    ) -> None:
+        """Adds a new parameter to the backend.
 
+        If the parameter is read_only (say the actual voltage in a
+        power supply), only the read_command needs to be defined. If
+        the parameter can also be written to the set_command should
+        also be defined.
 
-        Returns
-        -------
-        Must return a string (which hc.CommWorker will send back to
-        the main thread)
-
-        """
-        pass
-
-    @abc.abstractmethod
-    def command(self, cmd: str) -> str:
-        """Overload this function to send commands to the device.
-
-        Returns
-        -------
-        Must return a string (which hc.CommWorker will send back to
-        the main thread)
-
-        """
-        pass
-
-    def command_listdata(self, cmd: str):
-        """Overload this function to send commands to the device.
-
-        Returns
-        -------
-
-        Must return a tuple with an str, list, and list (which
-        hc.CommWorker will send back to the main thread)
+        Parameters
+        ----------
+        name
+           This name must be unique and will be used within hardware control to
+           access this setting.
+        read_command
+           The control characters that need to be send to the instrument
+           to read this value
+        set_command
+           The control characters that need to be send to the instrument to set
+           this value. This string can include '{value}' including possible formating
+           definitions where the value should be used.
+        dummy_return
+           A value or a user-defined function that will be returned in dummy mode.
+           These can also easily be overwritten in an actual app to customize this.
 
         """
-        return "", [], []
+        if name == "online":
+            logger.error(
+                f"command 'online' is a special command and cannot be used in backend {self.name}"
+            )
+            return
+
+        if name in self.read_commands:
+            logger.error(f"command {name} already exists in backend {self.name}")
+            return
+
+        self.read_commands[name] = read_command
+
+        if set_command is not None:
+            if name in self.set_commands:
+                logger.error(f"command {name} already exists in backend {self.name}")
+                return
+
+            self.set_commands[name] = set_command
+
+        if dummy_return is not None:
+            if name in self.dummy_returns:
+                logger.error(f"dummy {name} already exists in backend {self.name}")
+                return
+
+            self.dummy_returns[name] = dummy_return
+
+    def add_command(self, name: str, command: str):
+        if name == "online":
+            logger.error(
+                f"command 'online' is a special command and cannot be used in backend {self.name}"
+            )
+            return
+        if name in self.commands:
+            logger.error(f"command {name} already exists in backend {self.name}")
+            return
+        self.commands[name] = command
+
+    def list_commands(self):
+        """Return all names of all commands.
+
+        This is mostly used so that the main app can know what commands are available.
+        """
+        return (
+            list(self.read_commands.keys()),
+            list(self.set_commands.keys()),
+            list(self.commands.keys()),
+        )
+
+    def get_value(self, name: str):
+        """Get a value from an instrument.
+
+        Also handle the special case to query 'online' status and
+        dummy mode.
+
+        Note: user defined functions in dummy mode should not return
+        None, since we use this to indicate that the name doesn't
+        exists.
+
+        """
+        if name == "online":
+            return self.online
+
+        if self.dummy:
+            if name in self.dummy_returns:
+                val = self.dummy_returns[name]
+                if callable(val):
+                    val = val()
+                    if val is None:
+                        logger.error(
+                            "User defined function for dummy mode returned None"
+                        )
+                    return val
+                else:
+                    return val
+            else:
+                return
+
+        # talk to the instrument
+        if name in self.read_commands:
+            value = self.query(self.read_commands[name])
+            return value
+
+    def __getitem__(self, name: str):
+        """Allow values to be easily accessed.
+
+        b = certain_backend()
+        volts = b['voltage']
+
+        """
+        val = self.get_value(name)
+        if val is not None:
+            return val
+        logger.error(f"{name} not available in backend {self.name}")
+
+    def __getattr__(self, name: str):
+        """Allow values to be easily accessed.
+
+        b = certain_backend()
+        volts = b.voltage
+
+        """
+        val = self.get_value(name)
+        if val is not None:
+            return val
+
+        raise AttributeError
+
+    def __setitem__(self, name, value):
+        """Allow values to be easily accessed.
+
+        b = certain_backend()
+        b['voltage'] = 10
+
+        """
+        if name in self.set_commands:
+            self.write(self.set_commands[name].format(value))
+            return
+        logger.error(f"{name} not available in backend {self.name}")
+
+    def __setattr__(self, name: str, value):
+        """Allow values to be easily accessed.
+
+        b = certain_backend()
+        b.voltage = 10
+
+        """
+
+        # need to check if 'set_commands' is in self.__dict__ to avoid an invinite loop
+        if "set_commands" in self.__dict__ and name in self.set_commands:
+            self.write((self.set_commands[name]).format(value))
+            return
+        super().__setattr__(name, value)
+
+    def command(self, name: str):
+        """Allow values to be easily accessed.
+
+        b = certain_backend()
+        b.command('trigger')
+
+        """
+
+        if name in self.commands:
+            if self.dummy:
+                logger.debug(f"{self.ID}: Would call {name} -> {self.commands[name]}")
+                return
+            self.write(self.commands[name])
+            return
+
+        logger.error(f"{name} not available in backend {self.name}")
 
     def close(self):
         """Close connection to instrument."""
@@ -294,12 +441,12 @@ class Backend(abc.ABC):
 
         return self.online
 
-    # @thread_info
     @ensure_online
     def write(self, command: str):
 
         if self.dummy:
-            return command
+            logger.info(f"{self.name} sending command {command}")
+            return
 
         try:
             logger.debug(f'\t{self.ID} < "{command}"')
@@ -314,7 +461,6 @@ class Backend(abc.ABC):
             self.online = False
             return f"{self.ID}-Offline"
 
-    # @thread_info
     @staticmethod
     def recvall(sock):
         BUFF_SIZE = 4096  # 4 KiB
@@ -327,7 +473,6 @@ class Backend(abc.ABC):
                 break
         return data
 
-    # @thread_info
     @ensure_online
     def query(self, command: str):
 
@@ -342,9 +487,7 @@ class Backend(abc.ABC):
                 self.device.sendall(bytes(command + self.termination, self.encoding))
                 reply_bytes = Backend.recvall(self.device)
                 reply = str(reply_bytes)
-                # print('debug',reply)
                 reply = reply[2 : len(reply) - 1 - 2 * len(self.termination)]
-                # print('debug',reply)
                 logger.debug(f'\t{self.ID}< "{command}"')
             return reply
         except Exception:
