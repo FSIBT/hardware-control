@@ -34,7 +34,7 @@ def ensure_online(f):
         self = args[0]
 
         if not self.online:
-            return f"{self.ID}-Offline"
+            return f"{self.name}-Offline"
 
         return f(*args, **kwargs)
 
@@ -89,7 +89,7 @@ class Backend:
         self, instrument_name: str, connection_addr: str, default_port: int = None
     ):
 
-        self.ID = instrument_name
+        self.name = instrument_name
         self.online: bool = False
 
         self.device = None  # This is the physical instrument to write to
@@ -207,26 +207,26 @@ class Backend:
         """
         if name == "online":
             logger.error(
-                f"command 'online' is a special command and cannot be used in backend {self.ID}"
+                f"command 'online' is a special command and cannot be used in backend {self.name}"
             )
             return
 
         if name in self.read_commands:
-            logger.error(f"command {name} already exists in backend {self.ID}")
+            logger.error(f"command {name} already exists in backend {self.name}")
             return
 
         self.read_commands[name] = read_command
 
         if set_command is not None:
             if name in self.set_commands:
-                logger.error(f"command {name} already exists in backend {self.ID}")
+                logger.error(f"command {name} already exists in backend {self.name}")
                 return
 
             self.set_commands[name] = set_command
 
         if dummy_return is not None:
             if name in self.dummy_returns:
-                logger.error(f"dummy {name} already exists in backend {self.ID}")
+                logger.error(f"dummy {name} already exists in backend {self.name}")
                 return
 
             self.dummy_returns[name] = dummy_return
@@ -234,11 +234,11 @@ class Backend:
     def add_command(self, name: str, command: str):
         if name == "online":
             logger.error(
-                f"command 'online' is a special command and cannot be used in backend {self.ID}"
+                f"command 'online' is a special command and cannot be used in backend {self.name}"
             )
             return
         if name in self.commands:
-            logger.error(f"command {name} already exists in backend {self.ID}")
+            logger.error(f"command {name} already exists in backend {self.name}")
             return
         self.commands[name] = command
 
@@ -297,7 +297,7 @@ class Backend:
         val = self.get_value(name)
         if val is not None:
             return val
-        logger.error(f"{name} not available in backend {self.ID}")
+        logger.error(f"{name} not available in backend {self.name}")
 
     def __getattr__(self, name: str):
         """Allow values to be easily accessed.
@@ -322,7 +322,7 @@ class Backend:
         if name in self.set_commands:
             self.write(self.set_commands[name].format(value))
             return
-        logger.error(f"{name} not available in backend {self.ID}")
+        logger.error(f"{name} not available in backend {self.name}")
 
     def __setattr__(self, name: str, value):
         """Allow values to be easily accessed.
@@ -348,22 +348,22 @@ class Backend:
 
         if name in self.commands:
             if self.dummy:
-                logger.debug(f"{self.ID}: Would call {name} -> {self.commands[name]}")
+                logger.debug(f"{self.name}: Would call {name} -> {self.commands[name]}")
                 return
             self.write(self.commands[name])
             return
 
-        logger.error(f"{name} not available in backend {self.ID}")
+        logger.error(f"{name} not available in backend {self.name}")
 
     def close(self):
         """Close connection to instrument."""
 
         if self.dummy:
-            logger.debug(f"{self.ID}: Dummy connection closed")
+            logger.debug(f"{self.name}: Dummy connection closed")
             return False
 
         if self.device is None:
-            logger.debug(f"{self.ID}: Called close with not device defined")
+            logger.debug(f"{self.name}: Called close with not device defined")
             return False
 
         self.device.close()
@@ -376,7 +376,7 @@ class Backend:
             if self.online:
                 return True
             logger.debug(
-                f"{self.ID}: creating dummy connection to {self.connection_addr}"
+                f"{self.name}: creating dummy connection to {self.connection_addr}"
             )
             self.online = True
             return True
@@ -386,7 +386,7 @@ class Backend:
                 return True
             self.online = False
 
-        logger.debug(f"{self.ID}: trying to connect")
+        logger.debug(f"{self.name}: trying to connect")
 
         if self.connection_type == Backend.VISA:
             try:
@@ -395,14 +395,14 @@ class Backend:
                 self.device.read_termination = self.termination
                 self.device.write_termination = self.termination
                 logger.debug(
-                    f"opened pyvisa connection to {self.ID} at {self.connection_addr}"
+                    f"opened pyvisa connection to {self.name} at {self.connection_addr}"
                 )
             except Exception:
                 self.online = False
                 logger.debug(
-                    f"\t({self.ID}) ERROR connecting with visa.",
+                    f"\t({self.name}) ERROR connecting with visa.",
                 )
-                logger.debug(f"{self.ID} is offline")
+                logger.debug(f"{self.name} is offline")
             else:
                 self.online = True
         elif self.connection_type == Backend.SOCKET:
@@ -413,12 +413,12 @@ class Backend:
                 self.device.connect((self.ip_addr, int(self.port_no)))
 
                 logger.debug(
-                    f"opened socket connection to {self.ID} at {self.ip_addr}:{self.port_no}"
+                    f"opened socket connection to {self.name} at {self.ip_addr}:{self.port_no}"
                 )
             except Exception:
                 self.online = False
-                logger.debug(f"\t({self.ID}) ERROR connecting with sockets.")
-                logger.debug(f"{self.ID} is offline")
+                logger.debug(f"\t({self.name}) ERROR connecting with sockets.")
+                logger.debug(f"{self.name} is offline")
             else:
                 self.online = True
         elif self.connection_type == Backend.MODBUS:
@@ -427,12 +427,12 @@ class Backend:
                 if self.device.connect():
                     self.online = True
                     logger.debug(
-                        f"opened modbus connection to {self.ID} at {self.connection_addr}"
+                        f"opened modbus connection to {self.name} at {self.connection_addr}"
                     )
             except Exception:
                 self.online = False
-                logger.debug(f"\t({self.ID}) ERROR connecting with modbus.")
-                logger.debug(f"{self.ID} is offline")
+                logger.debug(f"\t({self.name}) ERROR connecting with modbus.")
+                logger.debug(f"{self.name} is offline")
 
         # If connection purportedly successful, verify connection
         if self.online:
@@ -445,11 +445,11 @@ class Backend:
     def write(self, command: str):
 
         if self.dummy:
-            logger.info(f"{self.ID} sending write command {command}")
+            logger.info(f"{self.name} sending write command {command}")
             return
 
         try:
-            logger.debug(f'\t{self.ID} < "{command}"')
+            logger.debug(f'\t{self.name} < "{command}"')
             if self.connection_type == Backend.VISA:
                 self.device.write(command)
                 return command
@@ -457,9 +457,9 @@ class Backend:
                 self.device.sendall(bytes(command + self.termination, self.encoding))
                 return command
         except Exception:
-            logger.debug(f"ERROR: Write {command} failed in {self.ID}", exc_info=True)
+            logger.debug(f"ERROR: Write {command} failed in {self.name}", exc_info=True)
             self.online = False
-            return f"{self.ID}-Offline"
+            return f"{self.name}-Offline"
 
     @staticmethod
     def recvall(sock):
@@ -477,11 +477,11 @@ class Backend:
     def query(self, command: str):
 
         if self.dummy:
-            logger.info(f"{self.ID} sending query command {command}")
+            logger.info(f"{self.name} sending query command {command}")
             return
 
         try:
-            logger.debug(f"INFO: Sending query {command} in {self.ID}")
+            logger.debug(f"INFO: Sending query {command} in {self.name}")
             if self.connection_type == Backend.VISA:
                 reply = self.device.query(command)
             elif self.connection_type == Backend.SOCKET:
@@ -489,9 +489,9 @@ class Backend:
                 reply_bytes = Backend.recvall(self.device)
                 reply = str(reply_bytes)
                 reply = reply[2 : len(reply) - 1 - 2 * len(self.termination)]
-                logger.debug(f'\t{self.ID}< "{command}"')
+                logger.debug(f'\t{self.name}< "{command}"')
             return reply
         except Exception:
-            logger.debug(f"ERROR: Query {command} failed in {self.ID}", exc_info=True)
+            logger.debug(f"ERROR: Query {command} failed in {self.name}", exc_info=True)
             self.online = False
-            return f"{self.ID}-Offline"
+            return f"{self.name}-Offline"
