@@ -19,7 +19,7 @@ connect function.
 from functools import wraps
 import logging
 import socket
-from typing import Optional, Any
+from typing import Optional, Any, Dict, Callable
 
 import pyvisa
 from pymodbus.client.sync import ModbusTcpClient as ModbusClient
@@ -92,6 +92,10 @@ class Instrument:
         self.name = instrument_name
         self.online: bool = False
 
+        # can be set when defining the instrument
+        self.manufacturer = None
+        self.model = None
+
         self.device = None  # This is the physical instrument to write to
         self.dummy: bool = False
 
@@ -108,6 +112,9 @@ class Instrument:
         self.read_commands = {}  # e.g. a voltage that can be read and return a value
         self.commands = {}  # e.g. a trigger command that does not return a value
         self.dummy_returns = {}
+        self.convert_read = {}
+        self.convert_set = {}
+        self.validator = {}
 
         # This can be set to a single command or list of commands
         # which will enable automatic checks using these commands to
@@ -179,6 +186,8 @@ class Instrument:
         name: str,
         read_command: str,
         set_command: Optional[str] = None,
+        converter: Optional[Dict] = None,
+        validator: Optional[Callable[Any]] = None,
         dummy_return: Optional[Any] = None,
     ) -> None:
         """Adds a new parameter to the instrument.
@@ -223,6 +232,31 @@ class Instrument:
                 return
 
             self.set_commands[name] = set_command
+
+        if converter is not None:
+            if name in self.convert_set:
+                logger.error(
+                    f"converter {name} already exists in instrument {self.name}"
+                )
+                return
+            if name in self.convert_read:
+                logger.error(
+                    f"converter {name} already exists in instrument {self.name}"
+                )
+                return
+
+            self.convert_set[name] = converter
+            # invert dictionary
+            converter_inverse = {b: a for a, b in converter.items()}
+            self.convert_read[name] = converter_inverse
+
+        if validator is not None:
+            if name in self.validator:
+                logger.error(
+                    f"validator {name} already exists in instrument {self.name}"
+                )
+                return
+            self.validator[name] = validator
 
         if dummy_return is not None:
             if name in self.dummy_returns:
@@ -285,6 +319,13 @@ class Instrument:
         # talk to the instrument
         if name in self.read_commands:
             value = self.query(self.read_commands[name])
+            if name in self.convert_read:
+                if value not in self.convert_read[name]:
+                    logger.errro(
+                        f"'{value}' not defined in converter for instrument '{self.name}'"
+                    )
+                    return
+                value = self.convert_read[name][value]
             return value
 
     def __getitem__(self, name: str):
@@ -312,6 +353,21 @@ class Instrument:
 
         raise AttributeError
 
+    def set_value(self, name, value):
+        if name in self.set_commands:
+            if name in self.convert_set:
+                if value not in self.convert_set[name]:
+                    logger.error(
+                        f"{value} not defined in converter for instrument '{self.name}'"
+                    )
+                return
+                value = self.convert_set[name][value]
+            if name in self.validator:
+                value = self.validator[name](value)
+            self.write(self.set_commands[name].format(value))
+            return
+        logger.error(f"{name} not available in instrument {self.name}")
+
     def __setitem__(self, name, value):
         """Allow values to be easily accessed.
 
@@ -319,10 +375,7 @@ class Instrument:
         b['voltage'] = 10
 
         """
-        if name in self.set_commands:
-            self.write(self.set_commands[name].format(value))
-            return
-        logger.error(f"{name} not available in instrument {self.name}")
+        self.set_value(name, value)
 
     def __setattr__(self, name: str, value):
         """Allow values to be easily accessed.
@@ -333,9 +386,13 @@ class Instrument:
         """
 
         # need to check if 'set_commands' is in self.__dict__ to avoid an invinite loop
-        if "set_commands" in self.__dict__ and name in self.set_commands:
-            self.write((self.set_commands[name]).format(value))
-            return
+        if (
+            "set_commands" in self.__dict__
+            and "convert_set" in self.__dict__
+            and "validator" in self.__dict__
+            and name in self.set_commands
+        ):
+            self.set_values(name, value)
         super().__setattr__(name, value)
 
     def command(self, name: str):
