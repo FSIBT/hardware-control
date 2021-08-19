@@ -105,8 +105,8 @@ class DelayGenerator(QGroupBox):
             args=[self],
         )
 
-        #        self.pulse_label = QLabel("Pulses per Burst:")
-        #        self.pulse_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.pulse_label = QLabel("Pulses per Burst:")
+        self.pulse_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         #
         #        self.pulse_edit = QSpinBox()
         #        self.pulse_edit.editingFinished.connect(
@@ -116,8 +116,8 @@ class DelayGenerator(QGroupBox):
         #            self.pulse_edit.setRange(2, backend.PulsesPerBurst)
         #        self.pulse_edit.setValue(int(self.settings["PULSES_PER_BURST"]))
         #
-        #        self.period_label = QLabel("Triggers per Burst:")
-        #        self.period_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.period_label = QLabel("Triggers per Burst:")
+        self.period_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
         #
         #        self.period_edit = QSpinBox()
         #        self.period_edit.setMinimum(1)
@@ -127,39 +127,49 @@ class DelayGenerator(QGroupBox):
         #        self.period_edit.setSingleStep(1)
         #        self.period_edit.setValue(int(self.settings["TRIGGER_PERIOD"]))
         #
-        #        widget_col = 0
-        #        self.channel_widgets = []
-        #        self.channel_box = QGroupBox()
-        #        self.channel_box_layout = QGridLayout()
-        #        if channels == 4:
-        #            for i in range(1, 5):
-        #                self.channel_widgets.append(DelayChannelWidget(self, i))
-        #                self.channel_box_layout.addWidget(
-        #                    self.channel_widgets[-1], 0, widget_col
-        #                )
-        #                widget_col += 1
-        #
-        #            self.channel_widgets.append(DelayChannelWidget(self, 12))
-        #            self.channel_box_layout.addWidget(self.channel_widgets[-1], 0, widget_col)
-        #            widget_col += 1
-        #
-        #            self.channel_widgets.append(DelayChannelWidget(self, 34))
-        #            self.channel_box_layout.addWidget(self.channel_widgets[-1], 0, widget_col)
-        #            widget_col += 1
-        #        if channels == 2:
-        #            for i in range(1, 3):
-        #                self.channel_widgets.append(DelayChannelWidget(self, i))
-        #                self.channel_box_layout.addWidget(
-        #                    self.channel_widgets[-1], 0, widget_col
-        #                )
-        #                widget_col += 1
-        #
-        #            self.channel_widgets.append(DelayChannelWidget(self, 12))
-        #            self.channel_box_layout.addWidget(self.channel_widgets[-1], 0, widget_col)
-        #            widget_col += 1
-        #
-        #        self.channel_box.setLayout(self.channel_box_layout)
-        #
+        widget_col = 0
+        self.channel_widgets = []
+        self.channel_box = QGroupBox()
+        self.channel_box_layout = QGridLayout()
+        if self.channels == 4:
+            for i in range(1, 5):
+                self.channel_widgets.append(
+                    DelayChannelWidget(self.app, self.instrument, i)
+                )
+                self.channel_box_layout.addWidget(
+                    self.channel_widgets[-1], 0, widget_col
+                )
+                widget_col += 1
+
+            self.channel_widgets.append(
+                DelayChannelWidget(self.app, self.instrument, 12)
+            )
+            self.channel_box_layout.addWidget(self.channel_widgets[-1], 0, widget_col)
+            widget_col += 1
+
+            self.channel_widgets.append(
+                DelayChannelWidget(self.app, self.instrument, 34)
+            )
+            self.channel_box_layout.addWidget(self.channel_widgets[-1], 0, widget_col)
+            widget_col += 1
+        if self.channels == 2:
+            for i in range(1, 3):
+                self.channel_widgets.append(
+                    DelayChannelWidget(self.app, self.instrument, i)
+                )
+                self.channel_box_layout.addWidget(
+                    self.channel_widgets[-1], 0, widget_col
+                )
+                widget_col += 1
+
+            self.channel_widgets.append(
+                DelayChannelWidget(self.app, self.instrument, 12)
+            )
+            self.channel_box_layout.addWidget(self.channel_widgets[-1], 0, widget_col)
+            widget_col += 1
+
+        self.channel_box.setLayout(self.channel_box_layout)
+
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.trig_mode.label, 0, 0)
         self.master_layout.addWidget(self.trig_mode, 0, 1)
@@ -173,10 +183,10 @@ class DelayGenerator(QGroupBox):
 
         self.master_layout.addWidget(self.single_trig_but, 2, 3)
 
-        # self.master_layout.addWidget(self.pulse_label, 3, 0)
+        self.master_layout.addWidget(self.pulse_label, 3, 0)
         # self.master_layout.addWidget(self.pulse_edit, 3, 1)
         #
-        # self.master_layout.addWidget(self.period_label, 3, 2)
+        self.master_layout.addWidget(self.period_label, 3, 2)
         # self.master_layout.addWidget(self.period_edit, 3, 3)
         #
         # self.master_layout.addWidget(self.channel_box, 4, 0, 1, 4)
@@ -215,12 +225,13 @@ class DelayChannelWidget(QWidget):
 
     num_to_alpha = {1: "A", 2: "B", 3: "C", 4: "D", 12: "AB", 34: "CD"}
 
-    def __init__(self, main_widget, channel: int, use_alpha: bool = True):
+    def __init__(self, app, instrument, channel: int, use_alpha: bool = True):
 
         super().__init__()
 
         self.channel = channel
-        self.main_widget = main_widget
+        self.app = app
+        self.instrument = instrument
 
         if use_alpha:
             channel_str = DelayChannelWidget.num_to_alpha.get(channel, "?")
@@ -234,69 +245,67 @@ class DelayChannelWidget(QWidget):
 
         if channel not in [12, 34]:
             self.time_delay = QControl(
-                self.main_widget,
+                self.app,
+                self.instrument,
                 f"CH{self.channel}_DELAY",
-                "t_offset [s]",
+                label="t_offset [s]",
             )
 
         rels = ["Trig", "A", "B", "C", "D", "T0"]
         if channel not in [12, 34]:
             rels.remove(channel_str.title())
             self.relative = QControlCombo(
-                self.main_widget,
+                self.app,
+                self.instrument,
                 f"CH{self.channel}_RELATIVE",
-                "Relative to",
-                rels,
+                label="Relative to",
+                items=rels,
             )
 
         self.volt = QControl(
-            self.main_widget,
+            self.app,
+            self.instrument,
             f"CH{self.channel}_OUTPUT_AMPLITUDE",
-            "High Level (V)",
+            label="High Level (V)",
         )
         self.volt.setEnabled(False)
 
         self.level = QControlCombo(
-            self.main_widget,
+            self.app,
+            self.instrument,
             f"CH{self.channel}_OUTPUT_MODE",
-            "Output mode",
-            ["TTL", "Voltage", "NIM", "ECL"],
+            label="Output mode",
+            items=["TTL", "Voltage", "NIM", "ECL"],
         )
-        self.level.pre_update_hook.append(self.set_output_level_hook)
+        self.app.add_hook(
+            self.instrument,
+            f"CH{self.channel}_OUTPUT_MODE",
+            when="pre_set_hooks",
+            function=self.set_output_level_hook,
+            args=[self],
+        )
 
         self.channel_layout = QGridLayout()
         self.channel_layout.addWidget(self.channel_label, 0, 0, 1, 2)
         if self.channel not in [12, 34]:
             self.channel_layout.addWidget(self.time_delay.label, 1, 0)
-            self.channel_layout.addWidget(self.time_delay.value, 1, 1)
+            self.channel_layout.addWidget(self.time_delay, 1, 1)
             self.channel_layout.addWidget(self.relative.label, 2, 0)
-            self.channel_layout.addWidget(self.relative.value, 2, 1)
+            self.channel_layout.addWidget(self.relative, 2, 1)
 
         self.channel_layout.addWidget(self.level.label, 3, 0)
-        self.channel_layout.addWidget(self.level.value, 3, 1)
+        self.channel_layout.addWidget(self.level, 3, 1)
         self.channel_layout.addWidget(self.volt.label, 4, 0)
-        self.channel_layout.addWidget(self.volt.value, 4, 1)
+        self.channel_layout.addWidget(self.volt, 4, 1)
         self.setLayout(self.channel_layout)
 
-        self.settings_to_UI()
-
-    def settings_to_UI(self):
-        if self.channel not in [12, 34]:
-            self.time_delay.settings_to_UI()
-            self.relative.settings_to_UI()
-        mode = self.main_widget.settings[f"CH{self.channel}_OUTPUT_MODE"]
-        if mode == "VAR":
-            mode = "VOLTAGE"
-        self.level.setCurrentText(mode.title())
-        self.volt.settings_to_UI()
-
-    def set_output_level_hook(self, setting, value):
+    def set_output_level_hook(self, value, widget):
         if value is None:
             return
 
         if value == "VOLTAGE":
-            self.volt.setEnabled(True)
+            widget.volt.setEnabled(True)
             value = "VAR"
         else:
-            self.volt.setEnabled(False)
-        return setting, value
+            widget.volt.setEnabled(False)
+        return value

@@ -14,7 +14,7 @@ Options:
 import logging
 import sys
 
-from PyQt5.QtWidgets import QMainWindow, QWidget, QGridLayout
+from PyQt5.QtWidgets import QWidget, QGridLayout
 from docopt import docopt
 
 import hardware_control.backends as hc_back
@@ -33,15 +33,15 @@ class Demo(hardware_control.base.MainWindow):
         super().__init__(app)
         self.app = app
 
-        # set title of window
         self.setWindowTitle("Demo")
 
         # this is the main widget, actual device widgets are added to it
         self.main_widget = QWidget(self)
 
         # create a backend and a GUI control for the backend
-        trigger = hc_back.SRS_DG535(name="dg5353", connection_addr="GPIB0::15::INSTR")
-        self.app.add_instrument(trigger)
+        self.app.add_instrument(
+            hc_back.SRS_DG535(name="dg5353", connection_addr="GPIB0::15::INSTR")
+        )
 
         self.trigger_ctrl = hc.controls.DelayGenerator(self.app, "dg5353")
 
