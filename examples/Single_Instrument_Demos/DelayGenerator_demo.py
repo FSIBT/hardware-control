@@ -19,17 +19,18 @@ from docopt import docopt
 
 import hardware_control.backends as hc_back
 import hardware_control.gui as hc
+import hardware_control
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
 
 logger = logging.getLogger(__name__)
-hc.setup_logging(logger, commands, "hardware_control.log")
+hardware_control.base.setup_logging(logger, commands, "hardware_control.log")
 
 
-class Demo(QMainWindow):
+class Demo(hardware_control.base.MainWindow):
     def __init__(self, app):
-        super().__init__()
+        super().__init__(app)
         self.app = app
 
         # set title of window
@@ -39,8 +40,10 @@ class Demo(QMainWindow):
         self.main_widget = QWidget(self)
 
         # create a backend and a GUI control for the backend
-        self.trigger = hc_back.SRS_DG535("GPIB0::15::INSTR")
-        self.trigger_ctrl = hc.DelayGenerator(app, self.trigger, "Trigger", "DEFAULT")
+        trigger = hc_back.SRS_DG535(name="dg5353", connection_addr="GPIB0::15::INSTR")
+        self.app.add_instrument(trigger)
+
+        self.trigger_ctrl = hc.controls.DelayGenerator(self.app, "dg5353")
 
         # Add control to the main Widget
         self.grid = QGridLayout()
@@ -55,8 +58,7 @@ class Demo(QMainWindow):
 
 
 def main():
-    app = hc.App(dummy=dummy)
-    app.print_close_info = True
+    app = hardware_control.base.App(dummy=dummy)
     ex = Demo(app)
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())

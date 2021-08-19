@@ -9,20 +9,19 @@ The QT instrument frontend for this virtual instrument can be found in hardware_
 
 import logging
 
-from ..base import Backend, ensure_online
+from ...base import Instrument
 from ..utility import get_channel_from_command
 
 logger = logging.getLogger(__name__)
 
 
-class DemoA(Backend):
+class DemoA(Instrument):
     def __init__(self, connection_addr: str):
         super().__init__(
             instrument_name="DemoA", connection_addr=connection_addr, default_port=7123
         )
         self.encoding = "ascii"
 
-    @ensure_online
     def update_setting(self, setting: str, value):
 
         channel, setting_X = get_channel_from_command(setting)
@@ -32,7 +31,6 @@ class DemoA(Backend):
             rval = self.query(f"CH{channel}?")
             return f"{setting}={rval}"
 
-    @ensure_online
     def command(self, cmd: str):
         channel, cmd_X = get_channel_from_command(cmd)
         print(cmd_X, channel)

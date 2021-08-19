@@ -19,13 +19,12 @@ from PyQt5.QtWidgets import (
 
 from ...utility import get_channel_from_command
 from ..widgets import setButtonState, load_icon, QOnOffButton
-from ..base import Instrument, Comm
 
 
 logger = logging.getLogger(__name__)
 
 
-class Oscilloscope(Instrument):
+class Oscilloscope(QGroupBox):
     """This is GUI for a 4-channel oscilloscope.
 
     This is a very general GUI that allows common controls for the
@@ -352,7 +351,7 @@ class OscillscopeChannelWidget(QWidget):
 
 class OscilloscopeTriggerWidget(QWidget):
     def __init__(self, instrument, display_widget=None):
-        """ Initializes the OscilloscopeTriggerWidget
+        """Initializes the OscilloscopeTriggerWidget
 
         Parameters
         ----------
@@ -571,7 +570,8 @@ class OscilloscopeHorizontalWidget(QWidget):
         self.number_points_edit.setValue(float(instrument.settings["NUM_POINTS"]))
         self.number_points_edit.editingFinished.connect(
             lambda: instrument.update_setting(
-                "NUM_POINTS", str(float(self.number_points_edit.text())),
+                "NUM_POINTS",
+                str(float(self.number_points_edit.text())),
             )
         )
         self.form = QFormLayout()
@@ -603,7 +603,7 @@ class OscilloscopeHorizontalWidget(QWidget):
 
 
 class OscilloscopeDisplayWidget(QGroupBox):
-    """ Creates a widget that displays a plot that can automatically refresh
+    """Creates a widget that displays a plot that can automatically refresh
     from oscilloscope data.
 
     Has three display refresh modes: Timer, Manual, and Single Trigger. Timer mode

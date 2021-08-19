@@ -1,12 +1,12 @@
 import logging
 import random
 
-from ..base import Backend
+from ...base import Instrument
 
 logger = logging.getLogger(__name__)
 
 
-class Device_Backend(Backend):
+class Device_Backend(Instrument):
     def __init__(self, connection_addr):
 
         super().__init__(

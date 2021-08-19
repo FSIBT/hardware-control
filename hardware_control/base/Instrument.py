@@ -187,7 +187,7 @@ class Instrument:
         read_command: str,
         set_command: Optional[str] = None,
         converter: Optional[Dict] = None,
-        validator: Optional[Callable[Any]] = None,
+        validator: Optional[Callable[[Any], Any]] = None,
         dummy_return: Optional[Any] = None,
     ) -> None:
         """Adds a new parameter to the instrument.
@@ -276,7 +276,7 @@ class Instrument:
             return
         self.commands[name] = command
 
-    def list_commands(self):
+    def list_parameters(self):
         """Return all names of all commands.
 
         This is mostly used so that the main app can know what commands are available.

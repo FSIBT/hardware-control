@@ -21,7 +21,6 @@ from PyQt5.QtWidgets import (
     QSizePolicy,
 )
 
-from ..base import Instrument
 from .utility import load_icon
 
 logger = logging.getLogger(__name__)

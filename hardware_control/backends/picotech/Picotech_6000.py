@@ -12,7 +12,7 @@ import numpy as np
 
 from picoscope.ps6000 import PS6000
 
-from ..base import Backend, ensure_online
+from ...base import Instrument
 from ..utility import (
     regex_compare,
     ensure_float,
@@ -22,14 +22,15 @@ from ..utility import (
 logger = logging.getLogger(__name__)
 
 
-class Picotech_6000(Backend):
+class Picotech_6000(Instrument):
     """A driver for the Picotech Picoscpe 6000 series
 
     Instrument home page: https://www.picotech.com/oscilloscope/picoscope-6000-series
     """
 
     def __init__(
-        self, connection_addr,
+        self,
+        connection_addr,
     ):
         super().__init__(instrument_name="Pico-6000", connection_addr=connection_addr)
 
@@ -86,7 +87,6 @@ class Picotech_6000(Backend):
 
         return True
 
-    @ensure_online
     def update_setting(self, setting: str, value):
         value_orig = value
         value = ensure_float(value)
@@ -208,10 +208,10 @@ class Picotech_6000(Backend):
 
         except Exception:
             logger.error(
-                "An error occured in Picoscope6000.", exc_info=True,
+                "An error occured in Picoscope6000.",
+                exc_info=True,
             )
 
-    @ensure_online
     def command(self, cmd: str):
 
         ret_str = ""

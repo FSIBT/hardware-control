@@ -4,13 +4,13 @@ import logging
 import numpy as np
 import zmq
 
-from ..base import Backend, ensure_online
+from ...base import Instrument
 from ..utility import get_channel_from_command
 
 logger = logging.getLogger(__name__)
 
 
-class ZMQ_Oscilloscope(Backend):
+class ZMQ_Oscilloscope(Instrument):
     """This backend communicates with a remote computer via ZMQ.
 
     This backend acts as a client to the remote computer's ZMQ
@@ -23,7 +23,8 @@ class ZMQ_Oscilloscope(Backend):
     """
 
     def __init__(
-        self, connection_addr: str,
+        self,
+        connection_addr: str,
     ):
         super().__init__(
             instrument_name="ZMQ-Oscilloscope", connection_addr=connection_addr
@@ -49,7 +50,6 @@ class ZMQ_Oscilloscope(Backend):
             return False  # Receive timed out
         return False
 
-    @ensure_online
     def update_setting(self, setting: str, value):
 
         if self.dummy:
@@ -149,13 +149,11 @@ class ZMQ_Oscilloscope(Backend):
                 exc_info=True,
             )
 
-    @ensure_online
     def command(self, cmd: str):
         pass
 
-    @ensure_online
     def command_listdata(self, cmd: str):
-        """ Executes an action specified by 'cmd', returns a tuple with a string and two lists
+        """Executes an action specified by 'cmd', returns a tuple with a string and two lists
 
         Parameters
         ----------
@@ -186,7 +184,6 @@ class ZMQ_Oscilloscope(Backend):
         else:
             return "", [], []
 
-    @ensure_online
     def read_waveform(self, channel: int):
 
         if self.socket is None:

@@ -1,9 +1,13 @@
+import logging
 import pkg_resources
 
-from PyQt5.QtWidgets import QPushButton, QLabel, QLineEdit, QComboBox
+from PyQt5.QtWidgets import QPushButton, QLabel, QLineEdit, QComboBox, QDoubleSpinBox
 from PyQt5.QtGui import QPixmap, QDoubleValidator
 from PyQt5 import QtCore
-from typing import List
+from typing import List, Any
+
+
+logger = logging.getLogger(__name__)
 
 
 def load_icon(name: str) -> QPixmap:
@@ -59,32 +63,76 @@ def convert_prefix(value: str, decimals: int = 3) -> List[str]:
         return f"{round(value*1e-9, decimals)}", "G"
 
 
-class QIndicator:
+class HCMixin:
+    """Connect a Qt element to a setting or command in the app.
+
+    This mixin sets the app, instrument, parameter values, connects to
+    the app and also defines an update function. The update function
+    still needs to be overwritten to connect to the actual widget,
+    since there might be custom code needed to do this.
+
+    """
+
+    def __init__(self, **kwargs) -> None:
+
+        app = kwargs.pop("app")
+        instrument = kwargs.pop("instrument")
+        parameter = kwargs.pop("parameter")
+        label = kwargs.pop("label")
+        label_align = kwargs.pop("label_align")
+
+        for arg in [app, instrument, parameter, label, label_align]:
+            if arg is None:
+                logger.error(
+                    f"Widget {self.name} does not get correct arguments (app, instrument, parameter)"
+                )
+
+        self.app = app
+        self.instrument = instrument
+        self.parameter = parameter
+
+        super().__init__(**kwargs)
+
+        # create an optional label
+        self.name = label
+        self.label = QLabel(f"{label}: ")
+        if label_align == "right":
+            self.label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+
+        # connect to app
+        self.app.add_widget(self.instrument, self.parameter, self)
+
+
+class QIndicator(HCMixin, QLabel):
     """A simpel indicator widget for a label(QLabel) and a value (QLabel)."""
 
     def __init__(
         self,
-        instrument,
+        app,
+        instrument: str,
+        parameter: str,
         label: str,
         unit: str = "",
         use_prefix: bool = True,
         label_align: str = "left",
         min_width: int = 10,
-        remote=None,
     ) -> None:
-        self.instrument = instrument
-        self.name = label
+
+        super().__init__(
+            app=app,
+            instrument=instrument,
+            parameter=parameter,
+            label=label,
+            label_align=label_align,
+            text="",
+        )
         self.unit = unit
         self.use_prefix = use_prefix
         self.min_width = min_width
-        self.remote = remote
 
-        self.label = QLabel(f"{label}: ")
-        self.value = QLabel("")
-        if label_align == "right":
-            self.label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-
-        self.instrument.UIs.append(self)
+    def update(self):
+        value = self.app.get_instrument_parameter(self.instrument, self.parameter)
+        self.setText(value)
 
     def setText(self, text: str) -> None:
         if self.unit:
@@ -98,10 +146,10 @@ class QIndicator:
                     text = f"{text} {self.unit}"
         if self.min_width:
             text = text.rjust(self.min_width)
-        self.value.setText(text)
+        super().setText(text)
 
 
-class QControl:
+class QControl(HCMixin, QLineEdit):
     """A simple control widget with a label (QLabel) and an input box (QLineEdit).
 
     The control widget can be connected to a generic function, or
@@ -115,79 +163,116 @@ class QControl:
 
     def __init__(
         self,
-        inst,
-        setting,
+        app,
+        instrument: str,
+        parameter: str,
         label: str,
         label_align="left",
         validator=QDoubleValidator,
-        update_function=None,
-        remote=None,
     ):
+        super().__init__(
+            app=app,
+            instrument=instrument,
+            parameter=parameter,
+            label=label,
+            label_align=label_align,
+        )
 
-        self.instrument = inst
-        self.setting = setting
-        self.name = label
-        self.remote = remote
-        if remote:
-            self.remote_instrument, self.remote_setting = remote
-        self.pre_update_hook = []
-        self.update_function = update_function
-
-        self.label = QLabel(f"{label}: ")
-        if label_align == "right":
-            self.label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-
-        self.value = QLineEdit()
         if validator is not None:
-            self.value.setValidator(validator())
+            self.setValidator(validator())
 
-        # self.instrument.settings might not be initialized correctly
-        if self.setting in self.instrument.settings:
-            self.value.setText(self.instrument.settings[self.setting])
-        else:
-            self.value.setText("----")
+        self.setText("----")
 
-        self.value.editingFinished.connect(self.value_change)
-
-        self.instrument.UIs.append(self)
-        self.instrument.control_UIs.append(self)
+        self.editingFinished.connect(self.value_change)
 
     def value_change(self) -> None:
-        value = self.value.text()
-        setting = self.setting
+        value = self.text()
+        self.app.set_instrument_parameter(self.instrument, self.parameter, value)
 
-        for f in self.pre_update_hook:
-            setting, value = f(setting, value)
-        if value is None:
-            return
-
-        if self.update_function:
-            self.update_function(setting, value)
-            return
-        self.instrument.update_setting(setting, value)
-        if self.remote:
-            self.remote_instrument.remote_update_setting(self.remote_setting, value)
-
-    def update_from_remote(self) -> None:
-        if self.remote is None:
-            return
-        value = self.remote_instrument.settings[self.remote_setting]
+    def update(self) -> None:
+        value = self.app.get_instrument_parameter(self.instrument, self.parameter)
         self.setText(value)
 
-    def text(self) -> str:
-        return self.value.text()
 
-    def setText(self, text: str) -> None:
-        self.value.setText(text)
+class QControlDoubleSpinBox(HCMixin, QDoubleSpinBox):
+    """A simple control widget with a label (QLabel) and an input box (QLineEdit).
 
-    def settings_to_UI(self) -> None:
-        self.value.setText(self.instrument.settings[self.setting])
+    The control widget can be connected to a generic function, or
+    directly to an instrument and a specific setting.
 
-    def setEnabled(self, value: bool) -> None:
-        self.value.setEnabled(value)
+    A validator can also be set for the QLineEdit widget.
+
+    When used directly inside an instrument the ``remote`` should be set to False.
+
+    """
+
+    def __init__(
+        self,
+        app,
+        instrument: str,
+        parameter: str,
+        label: str,
+        label_align="left",
+    ):
+        super().__init__(
+            app=app,
+            instrument=instrument,
+            parameter=parameter,
+            label=label,
+            label_align=label_align,
+        )
+
+        self.setValue(0)
+
+        self.editingFinished.connect(self.value_change)
+
+    def value_change(self) -> None:
+        value = self.text()
+        self.app.set_instrument_parameter(self.instrument, self.parameter, value)
+
+    def update(self) -> None:
+        value = float(
+            self.app.get_instrument_parameter(self.instrument, self.parameter)
+        )
+        self.setValue(value)
 
 
-class QControlCombo:
+class QControlPushButton(HCMixin, QPushButton):
+    """A simple control widget with a label (QLabel) and an input box (QLineEdit).
+
+    The control widget can be connected to a generic function, or
+    directly to an instrument and a specific setting.
+
+    A validator can also be set for the QLineEdit widget.
+
+    When used directly inside an instrument the ``remote`` should be set to False.
+
+    """
+
+    def __init__(
+        self,
+        app,
+        instrument: str,
+        parameter: str,
+        label: str,
+        label_align="left",
+    ):
+        super().__init__(
+            app=app,
+            instrument=instrument,
+            parameter=parameter,
+            label="",
+            label_align=label_align,
+            text=label,
+        )
+
+        self.clicked.connect(self.value_change)
+
+    def value_change(self) -> None:
+        self.app.call_instrument_command(self.instrument, self.parameter)
+
+
+class QControlCombo(HCMixin, QComboBox):
     """A simple control widget with a label (QLabel) and an input box (QComboBox).
 
     The control widget can be connected to a generic function, or
@@ -199,66 +284,39 @@ class QControlCombo:
 
     def __init__(
         self,
-        inst,
-        setting,
+        app,
+        instrument: str,
+        parameter: str,
         label: str,
         items,
         label_align: str = "left",
-        update_function=None,
-        remote=None,
     ):
-
-        self.instrument = inst
-        self.setting = setting
-        self.name = label
+        super().__init__(
+            app=app,
+            instrument=instrument,
+            parameter=parameter,
+            label=label,
+            label_align=label_align,
+        )
         self.items = items
 
-        self.pre_update_hook = []
-        self.update_function = update_function
-        self.remote = remote
-        if remote:
-            self.remote_instrument, self.remote_setting = remote
+        self.addItems(self.items)
+        self.setCurrentText(self.items[0])
 
-        self.label = QLabel(f"{label}: ")
-        if label_align == "right":
-            self.label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-
-        self.value = QComboBox()
-
-        self.value.addItems(self.items)
-        self.value.setCurrentText(self.items[0])
-
-        self.value.currentIndexChanged.connect(self.value_change)
-        self.instrument.UIs.append(self)
+        self.currentIndexChanged.connect(self.value_change)
 
     def value_change(self) -> None:
-        value = self.value.currentText().upper()
-        setting = self.setting
+        value = self.currentText().upper()
+        self.app.set_instrument_parameter(self.instrument, self.parameter, value)
 
-        for f in self.pre_update_hook:
-            setting, value = f(setting, value)
-        if value is None:
-            return
-
-        if self.update_function:
-            self.update_function(setting, value)
-            return
-        if self.remote:
-            self.instrument.remote_update_setting(setting, value)
-            return
-        self.instrument.update_setting(setting, value)
-
-    def currentText(self) -> str:
-        return self.value.currentText()
-
-    def setCurrentText(self, text: str) -> None:
-        self.value.setCurrentText(text)
-
-    def settings_to_UI(self) -> None:
-        self.value.setCurrentText(self.instrument.settings[self.setting])
-
-    def setEnabled(self, value: bool) -> None:
-        self.value.setEnabled(value)
+    def update(self) -> None:
+        value = self.app.get_instrument_parameter(self.instrument, self.parameter)
+        for i in self.items:
+            if value.casefold() == i.casefold():
+                self.setCurrentText(i)
+                break
+        else:
+            logger.error(f"QControlCombo: could not find '{value}' in item list")
 
 
 class QHeader(QLabel):

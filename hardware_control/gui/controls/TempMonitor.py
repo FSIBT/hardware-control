@@ -16,13 +16,12 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import QTimer
 
-from ..base import Instrument
 from ..widgets import load_icon, QControl, QControlCombo, QIndicator
 
 logger = logging.getLogger(__name__)
 
 
-class TempMonitor(Instrument):
+class TempMonitor(QGroupBox):
     """
     A GUI for Lakeshore Temperature Monitor
     """

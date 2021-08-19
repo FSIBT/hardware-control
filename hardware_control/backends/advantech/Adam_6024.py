@@ -10,7 +10,6 @@ See class definition for details.
 import logging
 import random
 
-from ..base import ensure_online
 from ..utility import ensure_float, get_channel_from_command
 from .Adam_base import AdamBackend
 
@@ -26,7 +25,8 @@ class Adam_6024(AdamBackend):
 
     def __init__(self, connection_addr):
         super().__init__(
-            instrument_name="Advantac_ADAM-6025", connection_addr=connection_addr,
+            instrument_name="Advantac_ADAM-6025",
+            connection_addr=connection_addr,
         )
 
         # This specifies the max number of channels the user can request
@@ -39,7 +39,6 @@ class Adam_6024(AdamBackend):
         self.out_min = 0
         self.out_max = 10
 
-    @ensure_online
     def update_setting(self, setting: str, value):
 
         if self.dummy:
@@ -78,7 +77,6 @@ class Adam_6024(AdamBackend):
             )
             return "Error: unrecognized response from ADAM"
 
-    @ensure_online
     def command(self, cmd: str):
 
         if self.dummy:

@@ -3,7 +3,7 @@ import json
 import logging
 from pathlib import Path
 import threading
-from typing import Union, Callable, Any
+from typing import Union, Callable, Any, List
 
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QTimer
@@ -16,22 +16,22 @@ from .ZMQAdapter import ZMQAdapter
 logger = logging.getLogger(__name__)
 
 
-def call_hooks(hooks_list, name, setting, value, app):
+def call_hooks(hooks_list, value):
     """Call a list of function.
 
     If any of the functions returns None, the final value will be
     ignored and the no further hooks will be called.
 
     Every hook function must take the following parameter:
-    * the name of the instrument
-    * the name of the command/paramter
     * the value of the parameter to be set (set to None for commands)
     * the app (so that one can do for example interlocks and access other values)
+    * the name of a widget that should be changed
 
     """
     for hook in hooks_list:
-        if callable(hook):
-            value = hook(name, setting, value, app)
+        func, args = hook
+        if callable(func):
+            value = func(value, *args)
             if value is None:
                 return None
     return str(value)
@@ -186,8 +186,8 @@ class App(QApplication):
             # would need error checking here
             parameter, value = msg.split()
 
-            post_read_hooks = self.parameter[name][parameter]["post_read_hooks"]
-            value = call_hooks(post_read_hooks, name, parameter, value, self)
+            post_read_hooks = self.parameters[name][parameter]["post_read_hooks"]
+            value = call_hooks(post_read_hooks, value)
             if value is not None:
                 self.parameters[name][parameter]["read_value"] = value
                 for w in self.parameters[name][parameter]["widgets"]:
@@ -217,10 +217,10 @@ class App(QApplication):
 
         """
         if not raw:
-            pre_set_hooks = self.parameter[instrument][parameter]["pre_set_hooks"]
-            value = call_hooks(pre_set_hooks, instrument, parameter, value, self)
+            pre_set_hooks = self.parameters[instrument][parameter]["pre_set_hooks"]
+            value = call_hooks(pre_set_hooks, value)
         if value is not None:
-            self.parameter[instrument][parameter]["set_value"] = value
+            self.parameters[instrument][parameter]["set_value"] = value
             self.zmq_publisher.send_string(f"{instrument} {parameter} {value}")
 
     @ensure_instrument_exists
@@ -232,8 +232,8 @@ class App(QApplication):
         execute if none of the hooks returns None.
 
         """
-        pre_call_hooks = self.parameter[instrument][command]["pre_set_hooks"]
-        value = call_hooks(pre_call_hooks, instrument, command, None, self)
+        pre_call_hooks = self.parameters[instrument][command]["pre_call_hooks"]
+        value = call_hooks(pre_call_hooks, command)
         if value:
             self.zmq_publisher.send_string(f"{instrument} command {command}")
 
@@ -246,7 +246,7 @@ class App(QApplication):
 
         This function does not communicate with the instrument.
         """
-        return self.parameter[instrument][parameter]["read_value"]
+        return self.parameters[instrument][parameter]["read_value"]
 
     @ensure_instrument_exists
     @ensure_parameter_in_instrument
@@ -258,16 +258,12 @@ class App(QApplication):
         This function does not communicate with the instrument.
         """
 
-        return self.parameter[instrument][parameter]["set_value"]
+        return self.parameters[instrument][parameter]["set_value"]
 
     @ensure_instrument_exists
     @ensure_parameter_in_instrument
     def add_hook(
-        self,
-        instrument: str,
-        name: str,
-        when: str,
-        function: Callable[str, str, str, "App"],
+        self, instrument: str, name: str, when: str, function: Callable, args: List
     ):
         """Adds a hook to a parameter or command."""
 
@@ -277,7 +273,21 @@ class App(QApplication):
             )
             return
 
-        self.parameters[instrument][name][when].append(function)
+        self.parameters[instrument][name][when].append([function, args])
+
+    @ensure_instrument_exists
+    @ensure_parameter_in_instrument
+    def add_widget(self, instrument: str, name: str, widget):
+        """Adds a widget to a parameter.
+
+        This enables automatic updating if the value changes
+        """
+        update = getattr(widget, "update", None)
+        if not callable(update):
+            logger.error(
+                f"Widget {widget.name} has no update function and cannot be added for automatic updates"
+            )
+        self.parameters[instrument][name]["widgets"].append(widget)
 
     def add_save_format(
         self, name: str, format: Callable[[Dataset, str], None]

@@ -11,9 +11,9 @@ from PyQt5.QtWidgets import (
     QGroupBox,
     QSpacerItem,
     QSizePolicy,
+    QGroupBox,
 )
 
-from ..base import Instrument
 from ...utility import remove_end_carriage_return
 from ..widgets import setButtonState, load_icon, QControl, QIndicator
 
@@ -24,7 +24,7 @@ LABEL_MIN_WIDTH = 15
 DISP_DECIMAL_PLACES = 1
 
 
-class MultiPowerSupply(Instrument):
+class MultiPowerSupply(QGroupBox):
     """A GUI for a multi channel power supply.
 
     Example of a 3 channel power supply:
@@ -287,7 +287,7 @@ class PowerSupplyChannel(QWidget):
     def __init__(
         self,
         channel: int,
-        main_widget: Instrument,
+        main_widget,
         show_VI_limits: bool = False,
         show_custom_labels: bool = False,
         show_status_panel: bool = False,

@@ -9,10 +9,10 @@ from PyQt5.QtWidgets import (
     QWidget,
     QFormLayout,
     QGridLayout,
+    QGroupBox,
     QComboBox,
 )
 
-from ..base import Instrument, Comm
 from ..widgets import setButtonState, load_icon
 from ..widgets import QControl, QControlCombo
 
@@ -20,7 +20,7 @@ from ..widgets import QControl, QControlCombo
 logger = logging.getLogger(__name__)
 
 
-class FunctionGenerator(Instrument):
+class FunctionGenerator(QGroupBox):
     """A GUI for Function/Waveform generators.
 
     Example of a two channel function generator:
@@ -67,73 +67,144 @@ class FunctionGenerator(Instrument):
             self,
             "CH1_WAVEFORM",
             "CH1 Waveform",
-            ["Square", "Sine", "Triangle", "Ramp", "Pulse", "Noise", "PRBS", "Arbitrary", "DC"],
+            [
+                "Square",
+                "Sine",
+                "Triangle",
+                "Ramp",
+                "Pulse",
+                "Noise",
+                "PRBS",
+                "Arbitrary",
+                "DC",
+            ],
         )
         self.burst_mode = QControlCombo(
-            self, "CH1_BURS_MODE", "CH1 Burst Mode", ["TRIG", "GAT"],
+            self,
+            "CH1_BURS_MODE",
+            "CH1 Burst Mode",
+            ["TRIG", "GAT"],
         )
         self.burst_enable = QControlCombo(
-            self, "CH1_BURS_STAT", "CH1 Burst Enable/State", ["1", "0"],
+            self,
+            "CH1_BURS_STAT",
+            "CH1 Burst Enable/State",
+            ["1", "0"],
         )
-        self.num_pulse = QControl(self, "CH1_BURS_NCYC", "CH1 Num Burst Pulses",)
-        self.burst_period = QControl(self, "CH1_BURS_PER", "CH1 Burst Period (s)",)
+        self.num_pulse = QControl(
+            self,
+            "CH1_BURS_NCYC",
+            "CH1 Num Burst Pulses",
+        )
+        self.burst_period = QControl(
+            self,
+            "CH1_BURS_PER",
+            "CH1 Burst Period (s)",
+        )
         self.enable = QControlCombo(
-            self, "CH1_ENABLE", "CH1 Enable Output On/Off", ["True", "False"],
+            self,
+            "CH1_ENABLE",
+            "CH1 Enable Output On/Off",
+            ["True", "False"],
         )
         self.trigger = QControlCombo(
-            self, "CH1_TRIGGER_CHANNEL", "CH1 Trigger Channel", [
-                "EXT", "IMM", "TIM", "BUS"],
+            self,
+            "CH1_TRIGGER_CHANNEL",
+            "CH1 Trigger Channel",
+            ["EXT", "IMM", "TIM", "BUS"],
         )
         self.delay = QControl(self, "CH1_TRIGGER_DELAY", "CH1 Trigger Delay (s)")
         self.impedance = QControlCombo(
-            self, "CH1_IMPEDANCE", "CH1 Impedance", ["HiZ", "50 (OHM)"],
+            self,
+            "CH1_IMPEDANCE",
+            "CH1 Impedance",
+            ["HiZ", "50 (OHM)"],
         )
         self.polarity = QControlCombo(
-            self, "CH1_POLARITY", "CH1 Polarity", ["NORM", "INV"],
+            self,
+            "CH1_POLARITY",
+            "CH1 Polarity",
+            ["NORM", "INV"],
         )
         if self.num_channels >= 2:
-            self.frequency2 = QControl(
-                self, "CH2_FREQUENCY", "CH2 Frequency (MHz)")
-            self.amplitude2 = QControl(
-                self, "CH2_AMPLITUDE", "CH2 Amplitude (Vpp)")
+            self.frequency2 = QControl(self, "CH2_FREQUENCY", "CH2 Frequency (MHz)")
+            self.amplitude2 = QControl(self, "CH2_AMPLITUDE", "CH2 Amplitude (Vpp)")
             self.offset2 = QControl(self, "CH2_OFFSET", "CH2 Offset (V)")
             self.waveform2 = QControlCombo(
                 self,
                 "CH2_WAVEFORM",
                 "CH2 Waveform",
-            ["Square", "Sine", "Triangle", "Ramp", "Pulse", "Noise", "PRBS", "Arbitrary", "DC"],
+                [
+                    "Square",
+                    "Sine",
+                    "Triangle",
+                    "Ramp",
+                    "Pulse",
+                    "Noise",
+                    "PRBS",
+                    "Arbitrary",
+                    "DC",
+                ],
             )
             self.burst_mode2 = QControlCombo(
-                self, "CH2_BURS_MODE", "CH2 Burst Mode", ["TRIG", "GAT"],
+                self,
+                "CH2_BURS_MODE",
+                "CH2 Burst Mode",
+                ["TRIG", "GAT"],
             )
             self.burst_enable2 = QControlCombo(
-                self, "CH2_BURS_STAT", "CH2 Burst Enable/State", ["1", "0"],
+                self,
+                "CH2_BURS_STAT",
+                "CH2 Burst Enable/State",
+                ["1", "0"],
             )
             self.num_pulse2 = QControl(
-                self, "CH2_BURS_NCYC", "CH2 Num Burst Pulses",)
+                self,
+                "CH2_BURS_NCYC",
+                "CH2 Num Burst Pulses",
+            )
             self.burst_period2 = QControl(
-                self, "CH2_BURS_PER", "CH2 Burst Period (s)",)
+                self,
+                "CH2_BURS_PER",
+                "CH2 Burst Period (s)",
+            )
             self.enable2 = QControlCombo(
-                self, "CH2_ENABLE", "CH2 Enable Output On/Off", ["True", "False"],
+                self,
+                "CH2_ENABLE",
+                "CH2 Enable Output On/Off",
+                ["True", "False"],
             )
             self.trigger2 = QControlCombo(
-                self, "CH2_TRIGGER_CHANNEL", "CH2 Trigger Channel", [
-                    "EXT", "IMM", "TIM", "BUS"],
+                self,
+                "CH2_TRIGGER_CHANNEL",
+                "CH2 Trigger Channel",
+                ["EXT", "IMM", "TIM", "BUS"],
             )
-            self.delay2 = QControl(
-                self, "CH2_TRIGGER_DELAY", "CH2 Trigger Delay (s)")
+            self.delay2 = QControl(self, "CH2_TRIGGER_DELAY", "CH2 Trigger Delay (s)")
             self.impedance2 = QControlCombo(
-                self, "CH2_IMPEDANCE", "CH2 Impedance", ["HiZ", "50 (OHM)"],
+                self,
+                "CH2_IMPEDANCE",
+                "CH2 Impedance",
+                ["HiZ", "50 (OHM)"],
             )
             self.polarity2 = QControlCombo(
-                self, "CH2_POLARITY", "CH2 Polarity", ["NORM", "INV"],
+                self,
+                "CH2_POLARITY",
+                "CH2 Polarity",
+                ["NORM", "INV"],
             )
             self.track2 = QControlCombo(
-                self, "CH2_TRACK", "CH1 Track CH2", ["OFF", "ON", "INV"],
+                self,
+                "CH2_TRACK",
+                "CH1 Track CH2",
+                ["OFF", "ON", "INV"],
             )
             self.track2.pre_update_hook.append(self.set_tracking_hook)
             self.track1 = QControlCombo(
-                self, "CH1_TRACK", "CH2 Track CH1", ["OFF", "ON", "INV"],
+                self,
+                "CH1_TRACK",
+                "CH2 Track CH1",
+                ["OFF", "ON", "INV"],
             )
             self.track1.pre_update_hook.append(self.set_tracking_hook)
         self.widgets = [
@@ -177,7 +248,7 @@ class FunctionGenerator(Instrument):
     def default_state(self):
 
         default = {}
-        for i in range(1, self.num_channels+1):
+        for i in range(1, self.num_channels + 1):
             default[f"CH{i}_AMPLITUDE"] = "1"
             default[f"CH{i}_FREQUENCY"] = "12"
             default[f"CH{i}_OFFSET"] = "0"
@@ -214,10 +285,10 @@ class FunctionGenerator(Instrument):
             settings_list = self.widgets2
             # Don't want to remove tracking buttons
             if self.track2 in settings_list:
-                settings_list.remove(self.track2) 
+                settings_list.remove(self.track2)
                 settings_list.remove(self.track1)
-        else: 
-            print('Unknown setting being called',flush=True)
+        else:
+            print("Unknown setting being called", flush=True)
 
         for w in settings_list:
             if value == "OFF":

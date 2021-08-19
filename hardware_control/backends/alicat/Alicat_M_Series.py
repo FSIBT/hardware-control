@@ -10,7 +10,7 @@ See class definition for details.
 import logging
 import random
 
-from ..base import Backend, ensure_online
+from ...base import Instrument
 from ..utility import (
     converter_ulong_to_IEEE754,
     converter_IEEE754_to_ulong,
@@ -19,7 +19,7 @@ from ..utility import (
 logger = logging.getLogger(__name__)
 
 
-class Alicat_M_Series(Backend):
+class Alicat_M_Series(Instrument):
     """A driver for Alicat M-Series flow controllers.
 
     Instrument home page: https://www.alicat.com/product/mass-flow-meters
@@ -38,7 +38,6 @@ class Alicat_M_Series(Backend):
         self.connection_type = Backend.MODBUS
         self.error_count = 0
 
-    @ensure_online
     def update_setting(self, setting: str, value):
 
         if self.dummy:
@@ -72,7 +71,6 @@ class Alicat_M_Series(Backend):
             pressure = self.query(address=1202)
             return f"PRESSURE={pressure}"
 
-    @ensure_online
     def query(self, address: int):
         if self.dummy:
             return random.randint(0, 10)

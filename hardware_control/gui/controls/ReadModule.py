@@ -5,14 +5,13 @@ it provides a simple UI.
 import logging
 
 from PyQt5.QtCore import QTimer
-from PyQt5.QtWidgets import QLabel, QWidget, QGridLayout, QLCDNumber
+from PyQt5.QtWidgets import QLabel, QWidget, QGridLayout, QLCDNumber, QGroupBox
 
-from ..base import Instrument, Comm
 
 logger = logging.getLogger(__name__)
 
 
-class Read(Instrument):
+class Read(QGroupBox):
     """A simple UI for read-only modules"""
 
     def __init__(

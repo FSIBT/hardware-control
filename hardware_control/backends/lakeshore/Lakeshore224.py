@@ -16,13 +16,13 @@ import random
 
 import numpy as np
 
-from ..base import Backend, ensure_online
+from ...base import Instrument
 from ..utility import ensure_float, get_channel_from_command
 
 logger = logging.getLogger(__name__)
 
 
-class Lakeshore_224(Backend):
+class Lakeshore_224(Instrument):
     """
     A driver for the Lakeshore 224 Temp Monitor
     Instrument home page:

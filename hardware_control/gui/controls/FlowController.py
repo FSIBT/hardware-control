@@ -3,15 +3,22 @@ import logging
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QDoubleValidator
-from PyQt5.QtWidgets import QLineEdit, QLabel, QFormLayout, QGridLayout, QComboBox
+from PyQt5.QtWidgets import (
+    QLineEdit,
+    QLabel,
+    QFormLayout,
+    QGridLayout,
+    QComboBox,
+    QGroupBox,
+)
 
-from ..base import Instrument
+
 from ..widgets import QControlCombo, QIndicator, QControl
 
 logger = logging.getLogger(__name__)
 
 
-class FlowController(Instrument):
+class FlowController(QGroupBox):
     """A GUI for a gas flow controller.
 
     Implements setting the gas flow and the type of gas used. As well

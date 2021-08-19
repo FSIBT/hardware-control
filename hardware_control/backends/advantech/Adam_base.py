@@ -6,12 +6,12 @@ A base class for connecting to ADAM modules.
 """
 import logging
 
-from ..base import Backend
+from ...base import Instrument
 
 logger = logging.getLogger(__name__)
 
 
-class AdamBackend(Backend):
+class AdamBackend(Instrument):
     """Common try connect and init parts for all ADAM modules"""
 
     def __init__(self, instrument_name, connection_addr, default_port=1025):

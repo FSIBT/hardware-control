@@ -11,15 +11,16 @@ import logging
 
 import numpy as np
 
-from ..base import Backend, ensure_online
+from ...base import Instrument
 from ..utility import get_channel_from_command, regex_compare
 
 logger = logging.getLogger(__name__)
 
 
-class Rigol_DS1000Z(Backend):
+class Rigol_DS1000Z(Instrument):
     def __init__(
-        self, connection_addr,
+        self,
+        connection_addr,
     ):
         super().__init__(
             instrument_name="RIGOL-DS1000Z", connection_addr=connection_addr
@@ -29,7 +30,6 @@ class Rigol_DS1000Z(Backend):
         self.use_avg = False
         self.measurements = ["", "", "", "", ""]
 
-    @ensure_online
     def update_setting(self, setting: str, value):
 
         if self.dummy:
@@ -167,7 +167,6 @@ class Rigol_DS1000Z(Backend):
                 if meas != "":
                     self.write(f":MEAS:STAT:ITEM {meas}")
 
-    @ensure_online
     def command(self, cmd: str):
 
         add_asterisk = False

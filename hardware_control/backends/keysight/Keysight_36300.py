@@ -10,17 +10,15 @@ See class definition for deails.
 import logging
 import random
 
-from ..base import Backend
+from ...base import Instrument
 from ..utility import ensure_float, get_channel_from_command
 
 
 logger = logging.getLogger(__name__)
 
 
-class Keysight_36300(Backend):
-    """Control the KeysightE36300 Series Triple Output Power Supply.
-
-    """
+class Keysight_36300(Instrument):
+    """Control the KeysightE36300 Series Triple Output Power Supply."""
 
     def __init__(self, connection_addr: str):
         super().__init__(instrument_name="Key36300", connection_addr=connection_addr)

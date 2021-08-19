@@ -10,21 +10,20 @@ See class definition for details.
 import logging
 import random
 
-from ..base import Backend, ensure_online
+from ...base import Instrument
 from ..utility import get_channel_from_command
 
 
 logger = logging.getLogger(__name__)
 
 
-class TDKL_GenH(Backend):
+class TDKL_GenH(Instrument):
     def __init__(self, connection_addr: str):
         super().__init__(instrument_name="TDKL-GenH", connection_addr=connection_addr)
 
         # This specifies the max number of channels the user can request
         self.num_channels = 1
 
-    @ensure_online
     def update_setting(self, setting: str, value):
 
         if self.dummy:
@@ -51,7 +50,6 @@ class TDKL_GenH(Backend):
             rval = self.query(":SOUR:VOLT:LEV:IMM:AMPL?")
             return f"{setting}={rval}"
 
-    @ensure_online
     def command(self, cmd: str):
 
         if self.dummy:

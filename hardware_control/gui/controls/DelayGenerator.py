@@ -13,13 +13,18 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-from ..base import Instrument
-from ..widgets import load_icon, QControl, QControlCombo
+from ..widgets import (
+    load_icon,
+    QControl,
+    QControlCombo,
+    QControlDoubleSpinBox,
+    QControlPushButton,
+)
 
 logger = logging.getLogger(__name__)
 
 
-class DelayGenerator(Instrument):
+class DelayGenerator(QGroupBox):
     """A GUI for delay generators.
 
     This implements all front panel functions of a SRS DG535 and has
@@ -38,191 +43,152 @@ class DelayGenerator(Instrument):
     def __init__(
         self,
         app,
-        backend,
-        name: str = "Pulse Generator Control",
-        lock_until_sync=False,
-        channels: int = 4,
+        instrument: str,
     ):
 
-        super().__init__(app, name, backend, lock_until_sync)
+        super().__init__()
 
-        self.channels = channels
-        self.settings = self.default_state()
+        self.app = app
+        self.instrument = instrument
 
-        self.update_settings_hooks["TRIGGER_MODE"].append(self.enableDisableWidgets)
+        self.channels = 4
 
         # Create GUI
         self.trig_mode = QControlCombo(
-            self,
-            "TRIGGER_MODE",
-            "Trigger Mode",
-            ["Internal", "External", "Single", "Burst"],
+            self.app,
+            self.instrument,
+            parameter="TRIGGER_MODE",
+            label="Trigger Mode",
+            label_align="right",
+            items=["Internal", "External", "Single", "Burst"],
         )
-        self.trig_mode.label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
         self.trig_edge = QControlCombo(
-            self, "TRIGGER_EDGE", "Trigger Edge", ["Positive", "Negative"]
+            self.app,
+            self.instrument,
+            parameter="TRIGGER_EDGE",
+            label="Trigger Edge",
+            label_align="right",
+            items=["Positive", "Negative"],
         )
-        self.trig_edge.label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
         self.trig_impedance = QControlCombo(
-            self, "EXT_TRIG_ZIN", "Ext. Trigger Zin", ["50 Ohms", "Hi-Z"],
-        )
-        self.trig_impedance.label.setAlignment(
-            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
+            self.app,
+            self.instrument,
+            parameter="EXT_TRIG_ZIN",
+            label="Ext. Trigger Zin",
+            label_align="right",
+            items=["50 Ohms", "Hi-Z"],
         )
 
-        self.trig_lev_label = QLabel("Ext Trig Level (V):")
-        self.trig_lev_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-
-        self.trig_lev_edit = QDoubleSpinBox()
-        self.trig_lev_edit.editingFinished.connect(
-            lambda: self.update_setting("TRIGGER_LEVEL", self.trig_lev_edit.text())
+        self.trig_level = QControlDoubleSpinBox(
+            self.app,
+            self.instrument,
+            "TRIGGER_LEVEL",
+            label="Ext Trig Level (V):",
+            label_align="right",
         )
-        self.trig_lev_edit.setDecimals(3)
-        self.trig_lev_edit.setSingleStep(0.05)
-        if hasattr(backend, "ExternalTriggerThreshold"):
-            self.trig_lev_edit.setRange(
-                -backend.ExternalTriggerThreshold, backend.ExternalTriggerThreshold,
-            )
-        self.trig_lev_edit.setValue(float(self.settings["TRIGGER_LEVEL"]))
+        self.trig_level.setDecimals(3)
+        self.trig_level.setSingleStep(0.05)
 
-        self.single_trig_but = QPushButton()
-        self.single_trig_but.setText("Single Trigger")
+        self.single_trig_but = QControlPushButton(
+            self.app, self.instrument, "SINGLE_TRIGGER", label="Single Trigger"
+        )
         self.single_trig_but.setIcon(QIcon(load_icon("pulse.png")))
         self.single_trig_but.setCheckable(False)
-        self.single_trig_but.clicked.connect(lambda: self.command("SINGLE_TRIGGER"))
-        self.single_trig_but.setEnabled(self.trig_mode.currentText() == "Single")
 
-        self.pulse_label = QLabel("Pulses per Burst:")
-        self.pulse_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-
-        self.pulse_edit = QSpinBox()
-        self.pulse_edit.editingFinished.connect(
-            lambda: self.update_setting("PULSES_PER_BURST", self.pulse_edit.text())
+        self.app.add_hook(
+            "post_read_hook",
+            self.instrument,
+            "TRIGGER_MODE",
+            hook=self.enable_disable_hook,
+            args=[self],
         )
-        if hasattr(backend, "PulsesPerBurst"):
-            self.pulse_edit.setRange(2, backend.PulsesPerBurst)
-        self.pulse_edit.setValue(int(self.settings["PULSES_PER_BURST"]))
 
-        self.period_label = QLabel("Triggers per Burst:")
-        self.period_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-
-        self.period_edit = QSpinBox()
-        self.period_edit.setMinimum(1)
-        self.period_edit.editingFinished.connect(
-            lambda: self.update_setting("TRIGGER_PERIOD", self.period_edit.text())
-        )
-        self.period_edit.setSingleStep(1)
-        self.period_edit.setValue(int(self.settings["TRIGGER_PERIOD"]))
-
-        widget_col = 0
-        self.channel_widgets = []
-        self.channel_box = QGroupBox()
-        self.channel_box_layout = QGridLayout()
-        if channels == 4:
-            for i in range(1, 5):
-                self.channel_widgets.append(DelayChannelWidget(self, i))
-                self.channel_box_layout.addWidget(
-                    self.channel_widgets[-1], 0, widget_col
-                )
-                widget_col += 1
-
-            self.channel_widgets.append(DelayChannelWidget(self, 12))
-            self.channel_box_layout.addWidget(self.channel_widgets[-1], 0, widget_col)
-            widget_col += 1
-
-            self.channel_widgets.append(DelayChannelWidget(self, 34))
-            self.channel_box_layout.addWidget(self.channel_widgets[-1], 0, widget_col)
-            widget_col += 1
-        if channels == 2:
-            for i in range(1, 3):
-                self.channel_widgets.append(DelayChannelWidget(self, i))
-                self.channel_box_layout.addWidget(
-                    self.channel_widgets[-1], 0, widget_col
-                )
-                widget_col += 1
-
-            self.channel_widgets.append(DelayChannelWidget(self, 12))
-            self.channel_box_layout.addWidget(self.channel_widgets[-1], 0, widget_col)
-            widget_col += 1
-
-        self.channel_box.setLayout(self.channel_box_layout)
-
+        #        self.pulse_label = QLabel("Pulses per Burst:")
+        #        self.pulse_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        #
+        #        self.pulse_edit = QSpinBox()
+        #        self.pulse_edit.editingFinished.connect(
+        #            lambda: self.update_setting("PULSES_PER_BURST", self.pulse_edit.text())
+        #        )
+        #        if hasattr(backend, "PulsesPerBurst"):
+        #            self.pulse_edit.setRange(2, backend.PulsesPerBurst)
+        #        self.pulse_edit.setValue(int(self.settings["PULSES_PER_BURST"]))
+        #
+        #        self.period_label = QLabel("Triggers per Burst:")
+        #        self.period_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        #
+        #        self.period_edit = QSpinBox()
+        #        self.period_edit.setMinimum(1)
+        #        self.period_edit.editingFinished.connect(
+        #            lambda: self.update_setting("TRIGGER_PERIOD", self.period_edit.text())
+        #        )
+        #        self.period_edit.setSingleStep(1)
+        #        self.period_edit.setValue(int(self.settings["TRIGGER_PERIOD"]))
+        #
+        #        widget_col = 0
+        #        self.channel_widgets = []
+        #        self.channel_box = QGroupBox()
+        #        self.channel_box_layout = QGridLayout()
+        #        if channels == 4:
+        #            for i in range(1, 5):
+        #                self.channel_widgets.append(DelayChannelWidget(self, i))
+        #                self.channel_box_layout.addWidget(
+        #                    self.channel_widgets[-1], 0, widget_col
+        #                )
+        #                widget_col += 1
+        #
+        #            self.channel_widgets.append(DelayChannelWidget(self, 12))
+        #            self.channel_box_layout.addWidget(self.channel_widgets[-1], 0, widget_col)
+        #            widget_col += 1
+        #
+        #            self.channel_widgets.append(DelayChannelWidget(self, 34))
+        #            self.channel_box_layout.addWidget(self.channel_widgets[-1], 0, widget_col)
+        #            widget_col += 1
+        #        if channels == 2:
+        #            for i in range(1, 3):
+        #                self.channel_widgets.append(DelayChannelWidget(self, i))
+        #                self.channel_box_layout.addWidget(
+        #                    self.channel_widgets[-1], 0, widget_col
+        #                )
+        #                widget_col += 1
+        #
+        #            self.channel_widgets.append(DelayChannelWidget(self, 12))
+        #            self.channel_box_layout.addWidget(self.channel_widgets[-1], 0, widget_col)
+        #            widget_col += 1
+        #
+        #        self.channel_box.setLayout(self.channel_box_layout)
+        #
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.trig_mode.label, 0, 0)
-        self.master_layout.addWidget(self.trig_mode.value, 0, 1)
+        self.master_layout.addWidget(self.trig_mode, 0, 1)
         self.master_layout.addWidget(self.trig_impedance.label, 0, 2)
-        self.master_layout.addWidget(self.trig_impedance.value, 0, 3)
+        self.master_layout.addWidget(self.trig_impedance, 0, 3)
 
         self.master_layout.addWidget(self.trig_edge.label, 1, 0)
-        self.master_layout.addWidget(self.trig_edge.value, 1, 1)
-        self.master_layout.addWidget(self.trig_lev_label, 1, 2)
-        self.master_layout.addWidget(self.trig_lev_edit, 1, 3)
+        self.master_layout.addWidget(self.trig_edge, 1, 1)
+        self.master_layout.addWidget(self.trig_level.label, 1, 2)
+        self.master_layout.addWidget(self.trig_level, 1, 3)
 
         self.master_layout.addWidget(self.single_trig_but, 2, 3)
 
-        self.master_layout.addWidget(self.pulse_label, 3, 0)
-        self.master_layout.addWidget(self.pulse_edit, 3, 1)
-
-        self.master_layout.addWidget(self.period_label, 3, 2)
-        self.master_layout.addWidget(self.period_edit, 3, 3)
-
-        self.master_layout.addWidget(self.channel_box, 4, 0, 1, 4)
+        # self.master_layout.addWidget(self.pulse_label, 3, 0)
+        # self.master_layout.addWidget(self.pulse_edit, 3, 1)
+        #
+        # self.master_layout.addWidget(self.period_label, 3, 2)
+        # self.master_layout.addWidget(self.period_edit, 3, 3)
+        #
+        # self.master_layout.addWidget(self.channel_box, 4, 0, 1, 4)
 
         self.setLayout(self.master_layout)
 
-        # Write state to scope - synch scope with GUI
-        self.send_state()
-
-    def enableDisableWidgets(self, setting: str, value: str):
-
+    def enable_disable_hook(self, value, widget):
         if value == "SINGLE":
-            self.single_trig_but.setEnabled(True)
+            widget.single_trig_but.setEnabled(True)
         else:
-            self.single_trig_but.setEnabled(False)
+            widget.single_trig_but.setEnabled(False)
         return value
-
-    def default_state(self):
-        """Create the defualt state variable"""
-
-        default = {}
-
-        default["TRIGGER_MODE"] = "INTERNAL"
-        default["TRIGGER_EDGE"] = "POS"
-        default["EXT_TRIG_ZIN"] = "HI-Z"
-        default["BURST_COUNT"] = "2"
-        default["BURST_PERIOD"] = "4"
-        default["DIRECT_COMMAND"] = ""
-        default["PULSES_PER_BURST"] = "2"
-        default["TRIGGER_PERIOD"] = "4"
-        default["TRIGGER_LEVEL"] = "0"
-        for c in range(1, self.channels + 1):
-            default[f"CH{c}_DELAY"] = "1"
-            default[f"CH{c}_RELATIVE"] = "TRIG"
-            default[f"CH{c}_OUTPUT_MODE"] = "TTL"
-            default[f"CH{c}_OUTPUT_AMPLITUDE"] = "5"
-        if self.channels == 4:
-            default["CH12_OUTPUT_MODE"] = "TTL"
-            default["CH12_OUTPUT_AMPLITUDE"] = "5"
-            default["CH34_OUTPUT_MODE"] = "TTL"
-            default["CH34_OUTPUT_AMPLITUDE"] = "5"
-        if self.channels == 2:
-            default["CH12_OUTPUT_MODE"] = "TTL"
-            default["CH12_OUTPUT_AMPLITUDE"] = "5"
-
-        return default
-
-    def settings_to_UI(self):
-        self.trig_mode.settings_to_UI()
-        self.trig_edge.settings_to_UI()
-        self.trig_impedance.settings_to_UI()
-        self.trig_lev_edit.setValue(float(self.settings["TRIGGER_LEVEL"]))
-        self.pulse_edit.setValue(int(self.settings["PULSES_PER_BURST"]))
-        self.period_edit.setValue(int(self.settings["TRIGGER_PERIOD"]))
-
-        for cw in self.channel_widgets:
-            cw.settings_to_UI()
 
 
 class DelayChannelWidget(QWidget):
@@ -268,18 +234,25 @@ class DelayChannelWidget(QWidget):
 
         if channel not in [12, 34]:
             self.time_delay = QControl(
-                self.main_widget, f"CH{self.channel}_DELAY", "t_offset [s]",
+                self.main_widget,
+                f"CH{self.channel}_DELAY",
+                "t_offset [s]",
             )
 
         rels = ["Trig", "A", "B", "C", "D", "T0"]
         if channel not in [12, 34]:
             rels.remove(channel_str.title())
             self.relative = QControlCombo(
-                self.main_widget, f"CH{self.channel}_RELATIVE", "Relative to", rels,
+                self.main_widget,
+                f"CH{self.channel}_RELATIVE",
+                "Relative to",
+                rels,
             )
 
         self.volt = QControl(
-            self.main_widget, f"CH{self.channel}_OUTPUT_AMPLITUDE", "High Level (V)",
+            self.main_widget,
+            f"CH{self.channel}_OUTPUT_AMPLITUDE",
+            "High Level (V)",
         )
         self.volt.setEnabled(False)
 

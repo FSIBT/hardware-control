@@ -16,11 +16,11 @@ from PyQt5.QtWidgets import (
     QLineEdit,
     QPushButton,
     QSizePolicy,
+    QGroupBox,
 )
 
 from ...utility import remove_end_carriage_return
 from ..widgets import load_icon, setButtonState, QControl, QIndicator
-from ..base import Instrument
 
 
 logger = logging.getLogger(__name__)
@@ -42,7 +42,7 @@ def read_channel_file(filename: str):
     return data
 
 
-class IOModule(Instrument):
+class IOModule(QGroupBox):
     """A GUI for generic Input/Output(IO) module.
 
     See Also

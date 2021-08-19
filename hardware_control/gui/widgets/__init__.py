@@ -16,6 +16,8 @@ from .utility import (
     icon_filename,
     QControl,
     QControlCombo,
+    QControlPushButton,
+    QControlDoubleSpinBox,
     QIndicator,
     QHeader,
 )

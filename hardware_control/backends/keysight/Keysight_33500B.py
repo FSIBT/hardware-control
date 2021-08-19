@@ -9,7 +9,7 @@ See class definition for deails.
 
 import logging
 
-from ..base import Backend, ensure_online
+from ...base import Instrument
 from ..utility import get_channel_from_command
 
 logger = logging.getLogger(__name__)
@@ -29,8 +29,8 @@ waveform_lookup = {
 }
 
 
-class Keysight_33500B(Backend):
-    """ Backend for Keysight 33500B arbitrary waveform generator.
+class Keysight_33500B(Instrument):
+    """Backend for Keysight 33500B arbitrary waveform generator.
 
     Instrument home page: https://www.keysight.com/us/en/products/waveform-and-function-generators/trueform-series-waveform-and-function-generators.html
 
@@ -51,9 +51,8 @@ class Keysight_33500B(Backend):
 
         self.check_connection_commands = "*IDN?"
 
-    @ensure_online
     def update_setting(self, setting: str, value):
-        """ Called by hc.Comm object. Updates a setting in the instrument.
+        """Called by hc.Comm object. Updates a setting in the instrument.
 
         Parameters
         ----------
@@ -234,10 +233,6 @@ class Keysight_33500B(Backend):
 
         if setting_X == "CHX_TRACK":
             self.write(f"SOUR{channel}:TRAC {value}")
-            #rval = self.query(f"SOUR{channel}:TRAC?")
+            # rval = self.query(f"SOUR{channel}:TRAC?")
             rval = self.query("TRAC?")
             return f"{setting}={rval}"
-
-    @ensure_online
-    def command(self, cmd: str):
-        pass

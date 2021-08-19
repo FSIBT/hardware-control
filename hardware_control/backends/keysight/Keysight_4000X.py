@@ -11,21 +11,22 @@ import logging
 
 import numpy as np
 
-from ..base import Backend
+from ...base import Instrument
+
 from ..utility import get_channel_from_command
 
 
 logger = logging.getLogger(__name__)
 
 
-class Keysight_4000X(Backend):
-    """ A backend to control the Keysight 4000X Series oscilloscopes
-    """
+class Keysight_4000X(Instrument):
+    """A backend to control the Keysight 4000X Series oscilloscopes"""
 
     # sigReturnWaves = pyqtSignal(int, list, list)
 
     def __init__(
-        self, connection_addr: str,
+        self,
+        connection_addr: str,
     ):
         super().__init__(
             instrument_name="KEYSIGHT-4000X",
@@ -36,7 +37,7 @@ class Keysight_4000X(Backend):
         self.check_connection_commands = "*IDN?"
 
     def update_setting(self, setting: str, value):
-        """ Changes a specified setting to the specied value
+        """Changes a specified setting to the specied value
 
         Parameters
         ----------
@@ -161,7 +162,7 @@ class Keysight_4000X(Backend):
             return f"{setting}={rval}"
 
     def command(self, cmd: str):
-        """ Executes an action specified by 'cmd'.
+        """Executes an action specified by 'cmd'.
 
         Parameters
         ----------
@@ -188,7 +189,7 @@ class Keysight_4000X(Backend):
             self.write(":STOP")
 
     def command_listdata(self, cmd: str):
-        """ Executes an action specified by 'cmd', returns a tuple with a string and two lists
+        """Executes an action specified by 'cmd', returns a tuple with a string and two lists
 
         Parameters
         ----------

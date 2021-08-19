@@ -11,7 +11,6 @@ from PyQt5.QtWidgets import (
     QGroupBox,
 )
 
-from ..base import Instrument
 
 logger = logging.getLogger(__name__)
 

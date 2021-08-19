@@ -14,14 +14,14 @@ See class definition for details.
 import logging
 import random
 
-from ..base import Backend
+from ...base import Instrument
 from ..utility import ensure_float, get_channel_from_command
 
 
 logger = logging.getLogger(__name__)
 
 
-class Caen_14xxET(Backend):
+class Caen_14xxET(Instrument):
     """CAEN high voltage power supplies.
 
     This backend provides controls for CAEN power supplies.
@@ -30,7 +30,8 @@ class Caen_14xxET(Backend):
     """
 
     def __init__(
-        self, connection_addr,
+        self,
+        connection_addr,
     ):
 
         super().__init__(instrument_name="CAEN14xxET", connection_addr=connection_addr)

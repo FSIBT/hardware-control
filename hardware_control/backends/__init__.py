@@ -1,7 +1,6 @@
 from .advantech import Adam_6015
 from .advantech import Adam_6024
 from .alicat import Alicat_M_Series
-from .base import Backend
 from .caen import Caen_14xxET
 from .keysight import Keysight_33500B
 from .keysight import Keysight_36300

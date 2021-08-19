@@ -24,13 +24,13 @@ if os.name == "nt":
     import nidaqmx
 from nidaqmx.constants import TerminalConfiguration
 
-from ..base import Backend
+from ...base import Instrument
 from ..utility import get_channel_from_command, ensure_float
 
 logger = logging.getLogger(__name__)
 
 
-class Ni_9000(Backend):
+class Ni_9000(Instrument):
     def __init__(self, connection_addr: str = ""):
 
         # need to set a default port for this instrument

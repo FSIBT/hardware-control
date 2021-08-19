@@ -11,7 +11,6 @@ import logging
 import random
 import socket
 
-from ..base import ensure_online
 from ..utility import get_channel_from_command
 from .Adam_base import AdamBackend
 
@@ -27,10 +26,10 @@ class Adam_6015(AdamBackend):
 
     def __init__(self, connection_addr):
         super().__init__(
-            instrument_name="Advantac_ADAM-6015", connection_addr=connection_addr,
+            instrument_name="Advantac_ADAM-6015",
+            connection_addr=connection_addr,
         )
 
-    @ensure_online
     def command(self, cmd: str):
         """Query the temperature of a channel.
 

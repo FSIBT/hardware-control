@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import (
     QGridLayout,
 )
 
-from ..base import Instrument
+from ...base import Instrument
 from .utility import load_icon
 
 logger = logging.getLogger(__name__)

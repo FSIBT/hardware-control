@@ -13,13 +13,13 @@ import random
 
 import numpy as np
 
-from ..base import Backend, ensure_online
+from ...base import Instrument
 from ..utility import ensure_float, get_channel_from_command
 
 logger = logging.getLogger(__name__)
 
 
-class GP_356(Backend):
+class GP_356(Instrument):
     """
     A driver for the Grandville Phillips Ion Gauge
     """

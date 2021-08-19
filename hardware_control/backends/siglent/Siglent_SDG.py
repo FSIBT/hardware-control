@@ -9,14 +9,14 @@ See class definition for details.
 
 import logging
 
-from ..base import Backend, ensure_online
+from ...base import Instrument
 from ..utility import get_channel_from_command
 
 
 logger = logging.getLogger(__name__)
 
 
-class Siglent_SDG(Backend):
+class Siglent_SDG(Instrument):
     """A driver for the Siglent SDG Series.
 
     Instrument home page: https://www.siglent.eu/waveform-generators
@@ -26,7 +26,6 @@ class Siglent_SDG(Backend):
     def __init__(self, connection_addr: str):
         super().__init__(instrument_name="SIGLENT-SDG", connection_addr=connection_addr)
 
-    @ensure_online
     def update_setting(self, setting: str, value):
 
         channel, setting_X = get_channel_from_command(setting)
@@ -84,7 +83,3 @@ class Siglent_SDG(Backend):
             rval = self.query(f"C{channel}:OUTP?")
             rval = rval[:-1]
             return f"{setting}={rval}"
-
-    @ensure_online
-    def command(self, cmd: str):
-        pass
