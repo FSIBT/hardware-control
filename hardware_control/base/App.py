@@ -38,14 +38,14 @@ def call_hooks(hooks_list, value):
 
 
 def ensure_instrument_exists(f):
-    """Error check to make sure that instrument is in app.parameters."""
+    """Error check to make sure that instrument is in app._data."""
 
     @wraps(f)
     def wrapped(*args, **kwargs):
         self = args[0]
         instrument = args[1]
 
-        if instrument not in self.parameters:
+        if instrument not in self._data:
             logger.error(f"Cannot find instrument '{instrument}' in app")
             return
 
@@ -63,7 +63,7 @@ def ensure_parameter_in_instrument(f):
         instrument = args[1]
         name = args[2]
 
-        if name not in self.parameters[instrument]:
+        if name not in self._data[instrument]:
             logger.error(
                 f"Cannot find parameter/command '{name}' for instrument '{instrument}' in app"
             )
@@ -90,7 +90,7 @@ class App(QApplication):
 
         self.threads = []
         self.stop_threads_event = threading.Event()
-        self.parameters = {}
+        self._data = {}
         self.zmq_subscribers = {}
 
         # publisher that announces commands for instruments
@@ -120,7 +120,7 @@ class App(QApplication):
 
     def add_instrument(self, instrument: Instrument):
 
-        if instrument.name in self.parameters:
+        if instrument.name in self._data:
             logging.error(
                 f"Instrument {instrument.name} already exists... instruments names need to be unique"
             )
@@ -147,8 +147,8 @@ class App(QApplication):
         # register all possible read/write operations
         read, set, commands = zmq_instrument.instrument.list_parameters()
 
-        if zmq_instrument.instrument.name not in self.parameters:
-            self.parameters[zmq_instrument.instrument.name] = {}
+        if zmq_instrument.instrument.name not in self._data:
+            self._data[zmq_instrument.instrument.name] = {}
 
         for r in read:
             p = {
@@ -158,13 +158,13 @@ class App(QApplication):
                 "pre_set_hooks": [],
                 "widgets": [],
             }
-            self.parameters[zmq_instrument.name][r] = p
+            self._data[zmq_instrument.name][r] = p
         for c in commands:
             p = {
                 "pre_call_hooks": [],
                 "widgets": [],
             }
-            self.parameters[zmq_instrument.name][c] = p
+            self._data[zmq_instrument.name][c] = p
 
         # start thread
         self.threads.append(zmq_instrument)
@@ -186,17 +186,17 @@ class App(QApplication):
             # would need error checking here
             parameter, value = msg.split()
 
-            post_read_hooks = self.parameters[name][parameter]["post_read_hooks"]
+            post_read_hooks = self._data[name][parameter]["post_read_hooks"]
             value = call_hooks(post_read_hooks, value)
             if value is not None:
-                self.parameters[name][parameter]["read_value"] = value
-                for w in self.parameters[name][parameter]["widgets"]:
+                self._data[name][parameter]["read_value"] = value
+                for w in self._data[name][parameter]["widgets"]:
                     w.update()
 
     @ensure_instrument_exists
     @ensure_parameter_in_instrument
     def set_instrument_parameter(
-        self, instrument: str, parameter: str, value: Any, raw=False
+        self, instrument: str, parameter: str, value: Any, skip_hooks=False
     ) -> None:
         """Send the value to the instrument thread via ZMQ.
 
@@ -216,12 +216,14 @@ class App(QApplication):
            loading settings from a file for example
 
         """
-        if not raw:
-            pre_set_hooks = self.parameters[instrument][parameter]["pre_set_hooks"]
+        if not skip_hooks:
+            pre_set_hooks = self._data[instrument][parameter]["pre_set_hooks"]
             value = call_hooks(pre_set_hooks, value)
         if value is not None:
-            self.parameters[instrument][parameter]["set_value"] = value
+            self._data[instrument][parameter]["set_value"] = value
             self.zmq_publisher.send_string(f"{instrument} {parameter} {value}")
+        else:
+            logger.info(f"Hook blocked setting of parameter '{instrument}-{parameter}'")
 
     @ensure_instrument_exists
     @ensure_parameter_in_instrument
@@ -232,7 +234,7 @@ class App(QApplication):
         execute if none of the hooks returns None.
 
         """
-        pre_call_hooks = self.parameters[instrument][command]["pre_call_hooks"]
+        pre_call_hooks = self._data[instrument][command]["pre_call_hooks"]
         value = call_hooks(pre_call_hooks, command)
         if value:
             self.zmq_publisher.send_string(f"{instrument} command {command}")
@@ -246,7 +248,7 @@ class App(QApplication):
 
         This function does not communicate with the instrument.
         """
-        return self.parameters[instrument][parameter]["read_value"]
+        return self._data[instrument][parameter]["read_value"]
 
     @ensure_instrument_exists
     @ensure_parameter_in_instrument
@@ -258,7 +260,7 @@ class App(QApplication):
         This function does not communicate with the instrument.
         """
 
-        return self.parameters[instrument][parameter]["set_value"]
+        return self._data[instrument][parameter]["set_value"]
 
     @ensure_instrument_exists
     @ensure_parameter_in_instrument
@@ -273,7 +275,7 @@ class App(QApplication):
             )
             return
 
-        self.parameters[instrument][name][when].append([function, args])
+        self._data[instrument][name][when].append([function, args])
 
     @ensure_instrument_exists
     @ensure_parameter_in_instrument
@@ -287,13 +289,13 @@ class App(QApplication):
             logger.error(
                 f"Widget {widget.name} has no update function and cannot be added for automatic updates"
             )
-        self.parameters[instrument][name]["widgets"].append(widget)
+        self._data[instrument][name]["widgets"].append(widget)
 
     def add_save_format(
         self, name: str, format: Callable[[Dataset, str], None]
     ) -> None:
         """
-        The callback function must accept two parameters:
+        The callback function must accept two _data:
             1st: Dataset object
             2nd: Filename
         """
@@ -316,12 +318,12 @@ class App(QApplication):
     def list_instruments(self) -> None:
         """Prints a list of all instruments."""
 
-        if not self.parameters:
+        if not self._data:
             print("No known instruments")
             return
 
         print("Known instruments:")
-        for i in self.parameters:
+        for i in self._data:
             print(f"  {i}")
 
     def close(self) -> None:
@@ -341,21 +343,21 @@ class App(QApplication):
     def save_settings(self, filename: Union[str, Path]) -> None:
         """Save all settings as JSON.
 
-        Parses out all `set_value` entries from app.parameters. The
+        Parses out all `set_value` entries from app._data. The
         dictionary is then saved to a JSON file.
 
         Parameters
         ----------
         filename : str or Path
-            Name of file to save parameters to
+            Name of file to save _data to
 
         """
 
         app_settings = {}
-        for instrument in self.parameters:
+        for instrument in self._data:
             app_settings[instrument] = {}
-            for parameter in self.parameters[instrument]:
-                value = self.parameters[instrument][parameter]["set_value"]
+            for parameter in self._data[instrument]:
+                value = self._data[instrument][parameter]["set_value"]
                 if value is not None:
                     app_settings[instrument][parameter] = value
 
@@ -397,7 +399,7 @@ class App(QApplication):
 
         # try to set all settings
         for instrument in all_settings:
-            if instrument not in self.parameters:
+            if instrument not in self._data:
                 logger.error(f"{instrument} not found in app")
                 continue
             for parameter in all_settings[instrument]:
