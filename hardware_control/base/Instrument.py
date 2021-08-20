@@ -28,6 +28,32 @@ from pymodbus.client.sync import ModbusTcpClient as ModbusClient
 logger = logging.getLogger(__name__)
 
 
+def call_hooks(hooks_list, value):
+    """Call a list of function.
+
+    If any of the functions returns None, the final value will be
+    ignored and the no further hooks will be called.
+
+    Every hook function must take a single parameter: the value of the
+    parameter to be set (set to None for commands)
+
+    If a hook needs several parameter, one should pass these in when
+    defining the hook using lambda functions, e.g.:
+
+    app.add_hook(instrument, parameter, 'pre_set_hooks', lambda x: change_ui(app, x, widget)
+
+    where app and widget are defined in the enironment where add_hook
+    is called.
+
+    """
+    for hook in hooks_list:
+        if callable(func):
+            value = func(value)
+            if value is None:
+                return None
+    return str(value)
+
+
 def ensure_online(f):
     @wraps(f)
     def wrapped(*args, **kwargs):
@@ -109,10 +135,11 @@ class Instrument:
         self.set_commands = {}  # e.g. a voltage that can be set
         self.read_commands = {}  # e.g. a voltage that can be read and return a value
         self.commands = {}  # e.g. a trigger command that does not return a value
+
         self.dummy_returns = {}
-        self.convert_read = {}
-        self.convert_set = {}
-        self.validator = {}
+
+        self.pre_hooks = {}
+        self.post_hooks = {}
 
         # This can be set to a single command or list of commands
         # which will enable automatic checks using these commands to
@@ -184,8 +211,8 @@ class Instrument:
         name: str,
         read_command: str,
         set_command: Optional[str] = None,
-        converter: Optional[Dict] = None,
-        validator: Optional[Callable[[Any], Any]] = None,
+        pre_hoooks: Optional[Dict] = None,
+        post_hoooks: Optional[Dict] = None,
         dummy_return: Optional[Any] = None,
     ) -> None:
         """Adds a new parameter to the instrument.
@@ -231,30 +258,23 @@ class Instrument:
 
             self.set_commands[name] = set_command
 
-        if converter is not None:
-            if name in self.convert_set:
+        if pre_hooks is not None:
+            if name in self.pre_hooks:
                 logger.error(
-                    f"converter {name} already exists in instrument {self.name}"
-                )
-                return
-            if name in self.convert_read:
-                logger.error(
-                    f"converter {name} already exists in instrument {self.name}"
+                    f"pre_hooks {name} already exists in instrument {self.name}"
                 )
                 return
 
-            self.convert_set[name] = converter
-            # invert dictionary
-            converter_inverse = {b: a for a, b in converter.items()}
-            self.convert_read[name] = converter_inverse
+            self.pre_hooks[name] = pre_hooks
 
-        if validator is not None:
-            if name in self.validator:
+        if post_hooks is not None:
+            if name in self.post_hooks:
                 logger.error(
-                    f"validator {name} already exists in instrument {self.name}"
+                    f"post_hooks {name} already exists in instrument {self.name}"
                 )
                 return
-            self.validator[name] = validator
+
+            self.post_hooks[name] = post_hooks
 
         if dummy_return is not None:
             if name in self.dummy_returns:
@@ -273,6 +293,18 @@ class Instrument:
             logger.error(f"command {name} already exists in instrument {self.name}")
             return
         self.commands[name] = command
+
+    def add_pre_hook(self, name: str, function: Callable):
+        if name in self.pre_hooks:
+            self.pre_hooks[name].append(function)
+        else:
+            self.pre_hooks[name] = [function]
+
+    def add_post_hook(self, name: str, function: Callable):
+        if name in self.post_hooks:
+            self.post_hooks[name].append(function)
+        else:
+            self.post_hooks[name] = [function]
 
     def list_parameters(self):
         """Return all names of all commands.
@@ -318,13 +350,9 @@ class Instrument:
         # talk to the instrument
         if name in self.read_commands:
             value = self.query(self.read_commands[name])
-            if name in self.convert_read:
-                if value not in self.convert_read[name]:
-                    logger.errro(
-                        f"'{value}' not defined in converter for instrument '{self.name}'"
-                    )
-                    return
-                value = self.convert_read[name][value]
+            if name in self.post_hooks:
+                hooks = self.post_hooks[name]
+                value = call_hooks(hooks, value)
             return value
 
     def __getitem__(self, name: str):
@@ -354,15 +382,12 @@ class Instrument:
 
     def set_value(self, name, value):
         if name in self.set_commands:
-            if name in self.convert_set:
-                if value not in self.convert_set[name]:
-                    logger.error(
-                        f"{value} not defined in converter for instrument '{self.name}'"
-                    )
-                    return
-                value = self.convert_set[name][value]
-            if name in self.validator:
-                value = self.validator[name](value)
+            if name in self.pre_hooks:
+                hooks = self.pre_hooks[name]
+                value = call_hooks(hooks, value)
+            if value is None:
+                return
+
             self.write(self.set_commands[name].format(value))
             return
         logger.error(f"{name} not available in instrument {self.name}")
@@ -387,8 +412,8 @@ class Instrument:
         # need to check if 'set_commands' is in self.__dict__ to avoid an invinite loop
         if (
             "set_commands" in self.__dict__
-            and "convert_set" in self.__dict__
-            and "validator" in self.__dict__
+            and "pre_hooks" in self.__dict__
+            and "post_hooks" in self.__dict__
             and name in self.set_commands
         ):
             self.set_values(name, value)
