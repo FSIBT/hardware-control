@@ -28,10 +28,16 @@ class SRS_DG535(Instrument):
 
     """
 
-    # 12: combined output for ch1 and ch2
-    # 34: combined output for ch3 and ch4
-    SRS_channel_number_scheme = {1: 2, 2: 3, 3: 5, 4: 6, 12: 4, 34: 7}
-    SRS_trigger_names = {"Trig": 0, "T0": 1, "A": 2, "B": 3, "C": 5, "D": 6}
+    CHANNEL_NAMES = {
+        "Trig": 0,
+        "T0": 1,
+        "A": 2,
+        "B": 3,
+        "AB": 4,
+        "C": 5,
+        "D": 6,
+        "CD": 7,
+    }
 
     def __init__(self, name, connection_addr):
 
@@ -59,12 +65,7 @@ class SRS_DG535(Instrument):
             "TRIGGER_MODE",
             read_command="TM",
             set_command="TM{}",
-            converter={
-                "INTERNAL": "0",
-                "EXTERNAL": "1",
-                "SINGLE": "2",
-                "BURST": "3",
-            },
+            converter={"INTERNAL": "0", "EXTERNAL": "1", "SINGLE": "2", "BURST": "3",},
             dummy_return="",
         )
         self.add_parameter(
@@ -81,27 +82,28 @@ class SRS_DG535(Instrument):
             converter={"50 OHMS": "0", "HI-Z": "1"},
             dummy_return="",
         )
-        for channel, inst_ch_name in SRS_DG535.SRS_channel_number_scheme.items():
+        for channel, inst_ch_name in SRS_DG535.CHANNEL_NAMES.items():
+            if channel in ["Trig0", "T0"]:
+                continue
             self.add_parameter(
                 f"CH{channel}_OUTPUT_MODE",
                 read_command=f"OM {inst_ch_name}",
                 set_command=f"OM {inst_ch_name},{{}}",
-                converter={
-                    "TTL": "0",
-                    "NIM": "1",
-                    "ECL": "2",
-                    "VAR": "3",
-                },
+                converter={"TTL": "0", "NIM": "1", "ECL": "2", "VAR": "3",},
                 dummy_return="",
             )
-        for channel, inst_ch_name in SRS_DG535.SRS_channel_number_scheme.items():
+        for channel, inst_ch_name in SRS_DG535.CHANNEL_NAMES.items():
+            if channel in ["Trig0", "T0"]:
+                continue
             self.add_parameter(
                 f"CH{channel}_OUTPUT_OFFSET",
                 read_command=f"OO {inst_ch_name}",
                 set_command=f"OO {inst_ch_name},{{}}",
                 dummy_return="",
             )
-        for channel, inst_ch_name in SRS_DG535.SRS_channel_number_scheme.items():
+        for channel, inst_ch_name in SRS_DG535.CHANNEL_NAMES.items():
+            if channel in ["Trig0", "T0"]:
+                continue
             self.add_parameter(
                 f"CH{channel}_OUTPUT_AMPLITUDE",
                 read_command=f"OA {inst_ch_name}",
@@ -109,14 +111,20 @@ class SRS_DG535(Instrument):
                 validator=lambda x: min(max(x, 0.1), 4),
                 dummy_return="",
             )
-        for channelA, inst_ch_nameA in SRS_DG535.SRS_trigger_names.items():
-            for channelB, inst_ch_nameB in SRS_DG535.SRS_trigger_names.items():
-                if inst_ch_nameA >= inst_ch_nameB:
+        for channel1, channel1_int in SRS_DG535.CHANNEL_NAMES.items():
+            if channel1 in ["Trig0", "T0"]:
+                continue
+            for channel2, channel2_int in SRS_DG535.CHANNEL_NAMES.items():
+                if channel1_int <= channel2_int:
+                    continue
+                if channel1 in ["AB", "CD"]:
+                    continue
+                if channel2 in ["AB", "CD"]:
                     continue
                 self.add_parameter(
-                    f"CH{channelA}_{channelB}_DELAY",
-                    read_command=f"DT {inst_ch_nameA}",
-                    set_command=f"DT {inst_ch_nameA},{inst_ch_nameB},{{}}",
+                    f"CH{channel1}_{channel2}_DELAY",
+                    read_command=f"DT {channel1_int}",
+                    set_command=f"DT {channel1_int},{channel2_int},{{}}",
                     dummy_return="",
                 )
         self.add_parameter(
