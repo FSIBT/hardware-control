@@ -83,8 +83,6 @@ class Instrument:
     SOCKET = "socket"
     MODBUS = "modbus"
 
-    SUPPORTED_CONNECTION_TYPES = [VISA, SOCKET, MODBUS]
-
     def __init__(
         self, instrument_name: str, connection_addr: str, default_port: int = None
     ):
@@ -314,6 +312,7 @@ class Instrument:
                 else:
                     return val
             else:
+                logger.debug(f"No dummy defined for {name} in instrument '{self.name}'")
                 return
 
         # talk to the instrument
@@ -360,7 +359,7 @@ class Instrument:
                     logger.error(
                         f"{value} not defined in converter for instrument '{self.name}'"
                     )
-                return
+                    return
                 value = self.convert_set[name][value]
             if name in self.validator:
                 value = self.validator[name](value)
@@ -456,9 +455,7 @@ class Instrument:
                 )
             except Exception:
                 self.online = False
-                logger.debug(
-                    f"\t({self.name}) ERROR connecting with visa.",
-                )
+                logger.debug(f"\t({self.name}) ERROR connecting with visa.",)
                 logger.debug(f"{self.name} is offline")
             else:
                 self.online = True
@@ -525,8 +522,8 @@ class Instrument:
         while True:
             part = sock.recv(BUFF_SIZE)
             data += part
-            t_str = str(part)
-            if t_str[len(t_str) - 3 : len(t_str) - 1] == "\\n":
+            data_str = str(part)
+            if data_str[-3:-1] == "\\n":
                 break
         return data
 
