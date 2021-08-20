@@ -24,6 +24,7 @@ from typing import Optional, Any, Dict, Callable
 import pyvisa
 from pymodbus.client.sync import ModbusTcpClient as ModbusClient
 
+from .hooks import create_converter
 
 logger = logging.getLogger(__name__)
 
@@ -305,6 +306,17 @@ class Instrument:
             self.post_hooks[name].append(function)
         else:
             self.post_hooks[name] = [function]
+
+    def add_converter_hooks(name, lookuptable):
+        """Adds a pre and a post hook to convert values according to the lookuptable.
+
+        The lookuptable will be used in the pre-hook and an inverse one will be created for the post-hook.
+        """
+
+        self.add_pre_hook(create_converter(lookuptable))
+
+        inverse_lookuptable = {b: a for a, b in lookuptable.items()}
+        self.add_post_hook(create_converter(inverse_lookuptable))
 
     def list_parameters(self):
         """Return all names of all commands.
