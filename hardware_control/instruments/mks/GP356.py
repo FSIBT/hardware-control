@@ -25,8 +25,7 @@ class GP_356(Instrument):
     """
 
     def __init__(
-        self,
-        connection_addr: str,
+        self, connection_addr: str,
     ):
         super().__init__(
             instrument_name="GrandvillePhillips_356",

@@ -19,8 +19,7 @@ logger = logging.getLogger(__name__)
 
 class Rigol_DS1000Z(Instrument):
     def __init__(
-        self,
-        connection_addr,
+        self, connection_addr,
     ):
         super().__init__(
             instrument_name="RIGOL-DS1000Z", connection_addr=connection_addr

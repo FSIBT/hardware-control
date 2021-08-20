@@ -30,8 +30,7 @@ class Caen_14xxET(Instrument):
     """
 
     def __init__(
-        self,
-        connection_addr,
+        self, connection_addr,
     ):
 
         super().__init__(instrument_name="CAEN14xxET", connection_addr=connection_addr)

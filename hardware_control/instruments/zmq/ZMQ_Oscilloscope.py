@@ -23,8 +23,7 @@ class ZMQ_Oscilloscope(Instrument):
     """
 
     def __init__(
-        self,
-        connection_addr: str,
+        self, connection_addr: str,
     ):
         super().__init__(
             instrument_name="ZMQ-Oscilloscope", connection_addr=connection_addr

@@ -26,8 +26,7 @@ class Adam_6015(AdamBackend):
 
     def __init__(self, connection_addr):
         super().__init__(
-            instrument_name="Advantac_ADAM-6015",
-            connection_addr=connection_addr,
+            instrument_name="Advantac_ADAM-6015", connection_addr=connection_addr,
         )
 
     def command(self, cmd: str):

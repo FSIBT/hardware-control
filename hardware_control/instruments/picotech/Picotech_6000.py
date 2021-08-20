@@ -29,8 +29,7 @@ class Picotech_6000(Instrument):
     """
 
     def __init__(
-        self,
-        connection_addr,
+        self, connection_addr,
     ):
         super().__init__(instrument_name="Pico-6000", connection_addr=connection_addr)
 
@@ -208,8 +207,7 @@ class Picotech_6000(Instrument):
 
         except Exception:
             logger.error(
-                "An error occured in Picoscope6000.",
-                exc_info=True,
+                "An error occured in Picoscope6000.", exc_info=True,
             )
 
     def command(self, cmd: str):

@@ -25,8 +25,7 @@ class Adam_6024(AdamBackend):
 
     def __init__(self, connection_addr):
         super().__init__(
-            instrument_name="Advantac_ADAM-6025",
-            connection_addr=connection_addr,
+            instrument_name="Advantac_ADAM-6025", connection_addr=connection_addr,
         )
 
         # This specifies the max number of channels the user can request

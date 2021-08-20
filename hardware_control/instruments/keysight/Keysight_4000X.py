@@ -25,8 +25,7 @@ class Keysight_4000X(Instrument):
     # sigReturnWaves = pyqtSignal(int, list, list)
 
     def __init__(
-        self,
-        connection_addr: str,
+        self, connection_addr: str,
     ):
         super().__init__(
             instrument_name="KEYSIGHT-4000X",

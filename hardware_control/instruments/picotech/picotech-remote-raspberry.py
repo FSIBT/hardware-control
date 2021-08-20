@@ -7,7 +7,6 @@ TODO: this is legacy code and should be rewritten using the backend class.
 
 """
 
-from __future__ import print_function
 
 import zmq
 import sys
