@@ -103,7 +103,7 @@ class HCMixin:
         self.app.add_widget(self.instrument, self.parameter, self)
 
 
-class QIndicator(HCMixin, QLabel):
+class HCLabel(HCMixin, QLabel):
     """A simpel indicator widget for a label(QLabel) and a value (QLabel)."""
 
     def __init__(
@@ -149,7 +149,7 @@ class QIndicator(HCMixin, QLabel):
         super().setText(text)
 
 
-class QControl(HCMixin, QLineEdit):
+class HCLineEdit(HCMixin, QLineEdit):
     """A simple control widget with a label (QLabel) and an input box (QLineEdit).
 
     The control widget can be connected to a generic function, or
@@ -194,7 +194,7 @@ class QControl(HCMixin, QLineEdit):
         self.setText(value)
 
 
-class QControlDoubleSpinBox(HCMixin, QDoubleSpinBox):
+class HCDoubleSpinBox(HCMixin, QDoubleSpinBox):
     """A simple control widget with a label (QLabel) and an input box (QLineEdit).
 
     The control widget can be connected to a generic function, or
@@ -207,12 +207,7 @@ class QControlDoubleSpinBox(HCMixin, QDoubleSpinBox):
     """
 
     def __init__(
-        self,
-        app,
-        instrument: str,
-        parameter: str,
-        label: str,
-        label_align="left",
+        self, app, instrument: str, parameter: str, label: str, label_align="left",
     ):
         super().__init__(
             app=app,
@@ -237,7 +232,7 @@ class QControlDoubleSpinBox(HCMixin, QDoubleSpinBox):
         self.setValue(value)
 
 
-class QControlPushButton(HCMixin, QPushButton):
+class HCPushButton(HCMixin, QPushButton):
     """A simple control widget with a label (QLabel) and an input box (QLineEdit).
 
     The control widget can be connected to a generic function, or
@@ -250,12 +245,7 @@ class QControlPushButton(HCMixin, QPushButton):
     """
 
     def __init__(
-        self,
-        app,
-        instrument: str,
-        parameter: str,
-        label: str,
-        label_align="left",
+        self, app, instrument: str, parameter: str, label: str, label_align="left",
     ):
         super().__init__(
             app=app,
@@ -272,7 +262,7 @@ class QControlPushButton(HCMixin, QPushButton):
         self.app.call_instrument_command(self.instrument, self.parameter)
 
 
-class QControlCombo(HCMixin, QComboBox):
+class HCComboBox(HCMixin, QComboBox):
     """A simple control widget with a label (QLabel) and an input box (QComboBox).
 
     The control widget can be connected to a generic function, or
@@ -319,7 +309,7 @@ class QControlCombo(HCMixin, QComboBox):
             logger.error(f"QControlCombo: could not find '{value}' in item list")
 
 
-class QHeader(QLabel):
+class HCHeader(QLabel):
     """Display an image as a header"""
 
     def __init__(self, icon_name):
