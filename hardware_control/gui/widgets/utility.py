@@ -67,7 +67,7 @@ class HCMixin:
     """Connect a Qt element to a setting or command in the app.
 
     This mixin sets the app, instrument, parameter values, connects to
-    the app and also defines an update function. The update function
+    the app and also defines an hc_update function. The hc_update function
     still needs to be overwritten to connect to the actual widget,
     since there might be custom code needed to do this.
 
@@ -130,7 +130,7 @@ class HCLabel(HCMixin, QLabel):
         self.use_prefix = use_prefix
         self.min_width = min_width
 
-    def update(self):
+    def hc_update(self):
         value = self.app.get_instrument_parameter(self.instrument, self.parameter)
         self.setText(value)
 
@@ -189,7 +189,7 @@ class HCLineEdit(HCMixin, QLineEdit):
         value = self.text()
         self.app.set_instrument_parameter(self.instrument, self.parameter, value)
 
-    def update(self) -> None:
+    def hc_update(self) -> None:
         value = self.app.get_instrument_parameter(self.instrument, self.parameter)
         self.setText(value)
 
@@ -225,7 +225,7 @@ class HCDoubleSpinBox(HCMixin, QDoubleSpinBox):
         value = self.text()
         self.app.set_instrument_parameter(self.instrument, self.parameter, value)
 
-    def update(self) -> None:
+    def hc_update(self) -> None:
         value = float(
             self.app.get_instrument_parameter(self.instrument, self.parameter)
         )
@@ -299,7 +299,7 @@ class HCComboBox(HCMixin, QComboBox):
         value = self.currentText().upper()
         self.app.set_instrument_parameter(self.instrument, self.parameter, value)
 
-    def update(self) -> None:
+    def hc_update(self) -> None:
         value = self.app.get_instrument_parameter(self.instrument, self.parameter)
         for i in self.items:
             if value.casefold() == i.casefold():

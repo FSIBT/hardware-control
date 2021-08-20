@@ -22,16 +22,21 @@ def call_hooks(hooks_list, value):
     If any of the functions returns None, the final value will be
     ignored and the no further hooks will be called.
 
-    Every hook function must take the following parameter:
-    * the value of the parameter to be set (set to None for commands)
-    * the app (so that one can do for example interlocks and access other values)
-    * the name of a widget that should be changed
+    Every hook function must take a single parameter: the value of the
+    parameter to be set (set to None for commands)
+
+    If a hook needs several parameter, one should pass these in when
+    defining the hook using lambda functions, e.g.:
+
+    app.add_hook(instrument, parameter, 'pre_set_hooks', lambda x: change_ui(app, x, widget)
+
+    where app and widget are defined in the enironment where add_hook
+    is called.
 
     """
     for hook in hooks_list:
-        func, args = hook
         if callable(func):
-            value = func(value, *args)
+            value = func(value)
             if value is None:
                 return None
     return str(value)
@@ -191,7 +196,7 @@ class App(QApplication):
             if value is not None:
                 self._data[name][parameter]["read_value"] = value
                 for w in self._data[name][parameter]["widgets"]:
-                    w.update()
+                    w.hc_update()
 
     @ensure_instrument_exists
     @ensure_parameter_in_instrument
@@ -265,9 +270,22 @@ class App(QApplication):
     @ensure_instrument_exists
     @ensure_parameter_in_instrument
     def add_hook(
-        self, instrument: str, name: str, when: str, function: Callable, args: List
+        self, instrument: str, name: str, when: str, function: Callable[[Any], Any],
     ):
-        """Adds a hook to a parameter or command."""
+        """Adds a hook to a parameter or command.
+
+        Every hook function must take a single parameter: the value of the
+        parameter to be set (set to None for commands)
+
+        If a hook needs several parameter, one should pass these in
+        when defining the hook using lambda functions, e.g.:
+
+        app.add_hook(instrument, parameter, 'pre_set_hooks', lambda x: change_ui(app, x, widget)
+
+        where app and widget are defined in the enironment where
+        add_hook is called.
+
+        """
 
         if when not in ["post_read_hook", "pre_set_hooks", "pre_call_hooks"]:
             logger.error(
@@ -275,7 +293,7 @@ class App(QApplication):
             )
             return
 
-        self._data[instrument][name][when].append([function, args])
+        self._data[instrument][name][when].append(function)
 
     @ensure_instrument_exists
     @ensure_parameter_in_instrument
@@ -284,8 +302,8 @@ class App(QApplication):
 
         This enables automatic updating if the value changes
         """
-        update = getattr(widget, "update", None)
-        if not callable(update):
+        hc_update = getattr(widget, "hc_update", None)
+        if not callable(hc_update):
             logger.error(
                 f"Widget {widget.name} has no update function and cannot be added for automatic updates"
             )
