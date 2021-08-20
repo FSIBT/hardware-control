@@ -15,10 +15,10 @@ from PyQt5.QtWidgets import (
 
 from ..widgets import (
     load_icon,
-    QControl,
-    QControlCombo,
-    QControlDoubleSpinBox,
-    QControlPushButton,
+    HCLineEdit,
+    HCComboBox,
+    HCDoubleSpinBox,
+    HCPushButton,
 )
 
 logger = logging.getLogger(__name__)
@@ -41,9 +41,7 @@ class DelayGenerator(QGroupBox):
     """
 
     def __init__(
-        self,
-        app,
-        instrument: str,
+        self, app, instrument: str,
     ):
 
         super().__init__()
@@ -54,7 +52,7 @@ class DelayGenerator(QGroupBox):
         self.channels = 4
 
         # Create GUI
-        self.trig_mode = QControlCombo(
+        self.trig_mode = HCComboBox(
             self.app,
             self.instrument,
             parameter="TRIGGER_MODE",
@@ -63,7 +61,7 @@ class DelayGenerator(QGroupBox):
             items=["Internal", "External", "Single", "Burst"],
         )
 
-        self.trig_edge = QControlCombo(
+        self.trig_edge = HCComboBox(
             self.app,
             self.instrument,
             parameter="TRIGGER_EDGE",
@@ -72,7 +70,7 @@ class DelayGenerator(QGroupBox):
             items=["Positive", "Negative"],
         )
 
-        self.trig_impedance = QControlCombo(
+        self.trig_impedance = HCComboBox(
             self.app,
             self.instrument,
             parameter="EXT_TRIG_ZIN",
@@ -81,7 +79,7 @@ class DelayGenerator(QGroupBox):
             items=["50 Ohms", "Hi-Z"],
         )
 
-        self.trig_level = QControlDoubleSpinBox(
+        self.trig_level = HCDoubleSpinBox(
             self.app,
             self.instrument,
             "TRIGGER_LEVEL",
@@ -91,18 +89,17 @@ class DelayGenerator(QGroupBox):
         self.trig_level.setDecimals(3)
         self.trig_level.setSingleStep(0.05)
 
-        self.single_trig_but = QControlPushButton(
+        self.single_trig_but = HCPushButton(
             self.app, self.instrument, "SINGLE_TRIGGER", label="Single Trigger"
         )
         self.single_trig_but.setIcon(QIcon(load_icon("pulse.png")))
         self.single_trig_but.setCheckable(False)
 
         self.app.add_hook(
-            "post_read_hook",
             self.instrument,
             "TRIGGER_MODE",
-            hook=self.enable_disable_hook,
-            args=[self],
+            "post_read_hook",
+            hook=lambda x: self.enable_disable_hook(x),
         )
 
         self.pulse_label = QLabel("Pulses per Burst:")
@@ -193,11 +190,11 @@ class DelayGenerator(QGroupBox):
 
         self.setLayout(self.master_layout)
 
-    def enable_disable_hook(self, value, widget):
+    def enable_disable_hook(self, value):
         if value == "SINGLE":
-            widget.single_trig_but.setEnabled(True)
+            self.single_trig_but.setEnabled(True)
         else:
-            widget.single_trig_but.setEnabled(False)
+            self.single_trig_but.setEnabled(False)
         return value
 
 
@@ -244,7 +241,7 @@ class DelayChannelWidget(QWidget):
         self.channel_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
 
         if channel not in [12, 34]:
-            self.time_delay = QControl(
+            self.time_delay = HCLineEdit(
                 self.app,
                 self.instrument,
                 f"CH{self.channel}_DELAY",
@@ -254,7 +251,7 @@ class DelayChannelWidget(QWidget):
         rels = ["Trig", "A", "B", "C", "D", "T0"]
         if channel not in [12, 34]:
             rels.remove(channel_str.title())
-            self.relative = QControlCombo(
+            self.relative = HCComboBox(
                 self.app,
                 self.instrument,
                 f"CH{self.channel}_RELATIVE",
@@ -262,7 +259,7 @@ class DelayChannelWidget(QWidget):
                 items=rels,
             )
 
-        self.volt = QControl(
+        self.volt = HCLineEdit(
             self.app,
             self.instrument,
             f"CH{self.channel}_OUTPUT_AMPLITUDE",
@@ -270,7 +267,7 @@ class DelayChannelWidget(QWidget):
         )
         self.volt.setEnabled(False)
 
-        self.level = QControlCombo(
+        self.level = HCComboBox(
             self.app,
             self.instrument,
             f"CH{self.channel}_OUTPUT_MODE",
@@ -281,8 +278,7 @@ class DelayChannelWidget(QWidget):
             self.instrument,
             f"CH{self.channel}_OUTPUT_MODE",
             when="pre_set_hooks",
-            function=self.set_output_level_hook,
-            args=[self],
+            function=lambda x: self.set_output_level_hook(x),
         )
 
         self.channel_layout = QGridLayout()
@@ -304,8 +300,8 @@ class DelayChannelWidget(QWidget):
             return
 
         if value == "VOLTAGE":
-            widget.volt.setEnabled(True)
+            self.volt.setEnabled(True)
             value = "VAR"
         else:
-            widget.volt.setEnabled(False)
+            self.volt.setEnabled(False)
         return value
