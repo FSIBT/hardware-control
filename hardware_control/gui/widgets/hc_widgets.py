@@ -309,6 +309,36 @@ class HCComboBox(HCMixin, QComboBox):
             logger.error(f"QControlCombo: could not find '{value}' in item list")
 
 
+class HCSpinBox(HCMixin, QSpinBox):
+    """A simple control widget with a label (QLabel) and an input box (QSpinBox)."""
+
+    def __init__(
+        self,
+        app,
+        instrument: str,
+        parameter: str,
+        label: str,
+        label_align: str = "left",
+    ):
+        super().__init__(
+            app=app,
+            instrument=instrument,
+            parameter=parameter,
+            label=label,
+            label_align=label_align,
+        )
+
+        self.calueChanged.connect(self.value_change)
+
+    def value_change(self) -> None:
+        value = self.value()
+        self.app.set_instrument_parameter(self.instrument, self.parameter, value)
+
+    def hc_update(self) -> None:
+        value = self.app.get_instrument_parameter(self.instrument, self.parameter)
+        self.setValue(value)
+
+
 class HCHeader(QLabel):
     """Display an image as a header"""
 
