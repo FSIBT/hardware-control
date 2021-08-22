@@ -102,28 +102,24 @@ class DelayGenerator(QGroupBox):
             hook=lambda x: self.enable_disable_hook(x),
         )
 
-        self.pulse_label = QLabel("Pulses per Burst:")
-        self.pulse_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        #
-        #        self.pulse_edit = QSpinBox()
-        #        self.pulse_edit.editingFinished.connect(
-        #            lambda: self.update_setting("PULSES_PER_BURST", self.pulse_edit.text())
-        #        )
-        #        if hasattr(backend, "PulsesPerBurst"):
-        #            self.pulse_edit.setRange(2, backend.PulsesPerBurst)
-        #        self.pulse_edit.setValue(int(self.settings["PULSES_PER_BURST"]))
-        #
-        self.period_label = QLabel("Triggers per Burst:")
-        self.period_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        #
-        #        self.period_edit = QSpinBox()
-        #        self.period_edit.setMinimum(1)
-        #        self.period_edit.editingFinished.connect(
-        #            lambda: self.update_setting("TRIGGER_PERIOD", self.period_edit.text())
-        #        )
-        #        self.period_edit.setSingleStep(1)
-        #        self.period_edit.setValue(int(self.settings["TRIGGER_PERIOD"]))
-        #
+        self.pulse = HCSpinBox(
+            self.app,
+            self.instrument,
+            "PULSES_PER_BURST",
+            label="Pulses per Burst:",
+            label_align="right",
+        )
+
+        self.period.HCSpinBox(
+            self.app,
+            self.instrment,
+            "TRIGGER_PERIOD",
+            label="Triggers per Burst:",
+            label_align="right",
+        )
+        self.period.setSingleStep(1)
+        self.period.setMinimum(1)
+
         widget_col = 0
         self.channel_widgets = []
         self.channel_box = QGroupBox()
@@ -180,13 +176,13 @@ class DelayGenerator(QGroupBox):
 
         self.master_layout.addWidget(self.single_trig_but, 2, 3)
 
-        self.master_layout.addWidget(self.pulse_label, 3, 0)
-        # self.master_layout.addWidget(self.pulse_edit, 3, 1)
-        #
-        self.master_layout.addWidget(self.period_label, 3, 2)
-        # self.master_layout.addWidget(self.period_edit, 3, 3)
-        #
-        # self.master_layout.addWidget(self.channel_box, 4, 0, 1, 4)
+        self.master_layout.addWidget(self.pulse.label, 3, 0)
+        self.master_layout.addWidget(self.pulse, 3, 1)
+
+        self.master_layout.addWidget(self.period.label, 3, 2)
+        self.master_layout.addWidget(self.period, 3, 3)
+
+        self.master_layout.addWidget(self.channel_box, 4, 0, 1, 4)
 
         self.setLayout(self.master_layout)
 
