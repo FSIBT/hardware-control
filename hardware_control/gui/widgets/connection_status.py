@@ -4,7 +4,7 @@ from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QGroupBox, QLabel, QGridLayout
 
-from .utility import load_icon
+from .hc_widgets import load_icon
 
 logger = logging.getLogger(__name__)
 
@@ -21,11 +21,8 @@ class StatusTool(QGroupBox):
 
         super().__init__(name)
 
-        self.settings = self.default_state()
-        self.name = name
         self.app = app
-        self.ignore = True
-        self.ignore_control = True
+        self.name = name
         self.instrument_names = {}
 
         if short_indicators:
@@ -69,14 +66,16 @@ class StatusTool(QGroupBox):
             self.instrument_grid.itemAt(i).widget().setParent(None)
         self.instrument_names = {}
 
-        for row, inst in enumerate(self.app.instruments):
-            if inst.ignore:
+        for row, inst in enumerate(self.app.get_instruments()):
+            if inst.hasattr("ignore") and inst.ignore:
                 continue
 
             # save the row to make updating the instrument later easier
-            self.instrument_names[inst.name] = row
+            self.instrument_names[inst] = row
 
-            label = QLabel(inst.name)
+            self.app.add_widget(instrument, "online", self)
+
+            label = QLabel(inst)
             indicator = QLabel()
             indicator.setPixmap(self.grey_indicator)
             indicator.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
@@ -84,7 +83,7 @@ class StatusTool(QGroupBox):
             self.instrument_grid.addWidget(label, row, 0)
             self.instrument_grid.addWidget(indicator, row, 1)
 
-    def update_status(self):
+    def hc_update(self):
         """Check if instrument is online/offline.
 
         This updates the icons to represent the online/offline
@@ -92,16 +91,17 @@ class StatusTool(QGroupBox):
         QtTimer.
 
         """
-        for instrument in self.app.instruments:
+        for instrument in self.app.get_instruments():
 
-            row = self.instrument_names.get(instrument.name, None)
+            row = self.instrument_names.get(instrument, None)
             if row is None:
                 continue
 
             if self.instrument_grid.itemAtPosition(row, 1) is None:
                 continue
 
-            if instrument.online:
+            online = self.app.get_instrument_parameter(instrument, "online")
+            if online:
                 self.instrument_grid.itemAtPosition(row, 1).widget().setPixmap(
                     self.blue_indicator
                     if instrument.online_color == "Blue"
@@ -113,13 +113,3 @@ class StatusTool(QGroupBox):
                     if instrument.online_color == "Blue"
                     else self.red_indicator
                 )
-
-    def default_state(self):
-        return {
-            "values": "",
-            "instrument": "----------",
-            "parameter": "----------",
-            "action_instrument": "----------",
-            "action_parameter": "----------",
-            "progress": 0,
-        }

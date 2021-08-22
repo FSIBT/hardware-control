@@ -9,15 +9,15 @@ from .plot import PlotTool, MiniPlotTool
 from .scan_widget import ScanWidget
 from .zmq_connection import ZMQConnectionTool
 from .qtconsole import Qtconsole
-from .on_off import QOnOffButton, QOnOffIndicator
-from .utility import (
+from .hc_on_off import HCOnOffButton, HCOnOffIndicator
+from .hc_widgets import (
     setButtonState,
     load_icon,
     icon_filename,
-    QControl,
-    QControlCombo,
-    QControlPushButton,
-    QControlDoubleSpinBox,
-    QIndicator,
-    QHeader,
+    HCLineEdit,
+    HCComboBox,
+    HCPushButton,
+    HCDoubleSpinBox,
+    HCLabel,
+    HCHeader,
 )

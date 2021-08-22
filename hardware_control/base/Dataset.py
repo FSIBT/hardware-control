@@ -272,23 +272,9 @@ class Dataset(QObject):
 
         self.data["time:time"].append(str(time.time()))
 
-        for instrument, parameters in self.instruments:
-            name = instrument.name
-
-            vkeys = instrument.get_value_keys(parameters, False)
-            logger.debug(f"Logging data for instrument: {name}. Keys: {vkeys}")
-
-            for vk in vkeys:
-                # Check that parameter exists
-                if vk not in instrument.values:
-                    self.data[f"{name}:{vk}"].append(None)
-                    logger.debug(f"Adding data: data[{name}:{vk}] = None")
-                    continue
-
-                # add raw data
-                nd = instrument.values[vk]
-                self.data[f"{name}:{vk}"].append(nd)
-                logger.debug(f"Adding data: data[{name}:{vk}]='{nd}'")
+        for instrument, parameter in self.instruments:
+            value = self.app.get_instrument_parameter(instrument, parameter)
+            self.data[f"{instrument}:{parameter}"].append(value)
 
     def get_columns(self, columns: list) -> Dict:
         """Return a subset of columns.
@@ -313,9 +299,7 @@ class Dataset(QObject):
         return out
 
     def to_pandas(
-        self,
-        columns: Optional[list] = None,
-        cleanup: bool = True,
+        self, columns: Optional[list] = None, cleanup: bool = True,
     ) -> pd.DataFrame:
         """Return a subset of columns as a pandas dataframe and optionally clean it up.
 

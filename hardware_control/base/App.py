@@ -307,7 +307,10 @@ class App(QApplication):
             logger.error(
                 f"Widget {widget.name} has no update function and cannot be added for automatic updates"
             )
-        self._data[instrument][name]["widgets"].append(widget)
+
+        # don't add a widget twice
+        if widget not in self._data[instrument][name]["widgets"]:
+            self._data[instrument][name]["widgets"].append(widget)
 
     def add_save_format(
         self, name: str, format: Callable[[Dataset, str], None]
@@ -332,6 +335,9 @@ class App(QApplication):
             )
 
         self.additional_save_formats[name] = format
+
+    def get_instruments(self) -> List[str]:
+        return [instrument for instrument in self._data]
 
     def list_instruments(self) -> None:
         """Prints a list of all instruments."""
