@@ -1,4 +1,5 @@
 import logging
+from typing import Callable
 
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
@@ -26,7 +27,7 @@ class FunctionRunnerTool(QGroupBox):
         app,
         name: str,
         button_label: str,
-        call_function,
+        call_function: Callable,
         countdown: int = 0,
         countdown_callback=None,
     ):
