@@ -1,10 +1,17 @@
 import logging
 import pkg_resources
 
-from PyQt5.QtWidgets import QPushButton, QLabel, QLineEdit, QComboBox, QDoubleSpinBox
+from PyQt5.QtWidgets import (
+    QPushButton,
+    QLabel,
+    QLineEdit,
+    QComboBox,
+    QDoubleSpinBox,
+    QSpinBox,
+)
 from PyQt5.QtGui import QPixmap, QDoubleValidator
 from PyQt5 import QtCore
-from typing import List, Any
+from typing import List
 
 
 logger = logging.getLogger(__name__)
