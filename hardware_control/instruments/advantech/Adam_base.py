@@ -5,6 +5,7 @@ A base class for connecting to ADAM modules.
 
 """
 import logging
+import socket
 
 from ...base import Instrument
 
@@ -23,16 +24,27 @@ class AdamBackend(Instrument):
 
         self.termination = "\r"
         self.encoding = "ascii"
-        self.bug = 200
+        self.buffer_length = 200
 
         self.addr = (self.ip_addr, self.port_no)
 
-        if self.connection_type != Backend.SOCKET:
+        if self.connection_type != Instrument.SOCKET:
             logger.error(
                 "Wrong instrument address. Needs to be socket type (ip or ip:port)."
             )
 
         self.try_connect()
+
+    def write(self, command: str):
+        self.device.sendto((command + self.termination).encode(self.encode), self.addr)
+        # check return code
+        indata, inaddr = self.device.recvfrom(self.buf)
+        output = indata.decode("ascii")
+        if output == "?01\r":
+            print("Adam: Last command invalid")
+            return
+        if output == ">\r":
+            return
 
     def try_connect(self):
         """Force the use of sockets with different option (DGRAM instead of STREAM)."""
@@ -56,7 +68,3 @@ class AdamBackend(Instrument):
                 logger.debug("exception during try connect", exc_info=True)
                 self.online = False
                 return self.online
-
-        # Independent of the state, try to receive data, if nothing is
-        # returned, then the device is offline
-        self.online = self.check_connection()

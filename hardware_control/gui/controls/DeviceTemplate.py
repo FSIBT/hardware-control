@@ -52,7 +52,7 @@ class DeviceType(QGroupBox):
         # Create timer to query
         self.readout_timer = QTimer(self)
         self.readout_timer.timeout.connect(self.update_readout)
-        self.readout_timer.start(self.globalRefreshRate)
+        self.readout_timer.start(self.app.globalRefreshRate)
 
     def update_readout(self):
         """Code that reads certain settings on a regular basis"""
