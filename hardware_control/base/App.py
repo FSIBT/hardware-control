@@ -216,7 +216,7 @@ class App(QApplication):
            The name of the parameter
         value
            The value to be set (needs to be able to be converted to a string)
-        raw
+        skip_hooks
            If True, don't call the available hooks (usefull when
            loading settings from a file for example
 
