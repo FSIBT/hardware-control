@@ -19,7 +19,7 @@ connect function.
 from functools import wraps
 import logging
 import socket
-from typing import Optional, Any, Dict, Callable
+from typing import Optional, Any, Callable, List
 
 import pyvisa
 from pymodbus.client.sync import ModbusTcpClient as ModbusClient
@@ -48,8 +48,8 @@ def call_hooks(hooks_list, value):
 
     """
     for hook in hooks_list:
-        if callable(func):
-            value = func(value)
+        if callable(hook):
+            value = hook(value)
             if value is None:
                 return None
     return str(value)
@@ -212,8 +212,8 @@ class Instrument:
         name: str,
         read_command: str,
         set_command: Optional[str] = None,
-        pre_hoooks: Optional[Dict] = None,
-        post_hoooks: Optional[Dict] = None,
+        pre_hooks: Optional[List] = None,
+        post_hooks: Optional[List] = None,
         dummy_return: Optional[Any] = None,
     ) -> None:
         """Adds a new parameter to the instrument.
@@ -265,8 +265,8 @@ class Instrument:
                     f"pre_hooks {name} already exists in instrument {self.name}"
                 )
                 return
-
-            self.pre_hooks[name] = pre_hooks
+            for hook in pre_hooks:
+                self.add_pre_hook(name, hook)
 
         if post_hooks is not None:
             if name in self.post_hooks:
@@ -274,8 +274,8 @@ class Instrument:
                     f"post_hooks {name} already exists in instrument {self.name}"
                 )
                 return
-
-            self.post_hooks[name] = post_hooks
+            for hook in post_hooks:
+                self.add_post_hook(name, hook)
 
         if dummy_return is not None:
             if name in self.dummy_returns:
