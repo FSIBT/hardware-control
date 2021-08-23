@@ -113,6 +113,9 @@ class App(QApplication):
         self.update_timer.timeout.connect(self.parse_message_from_instruments)
         self.update_timer.start(100)
 
+        # default refresh rate used by many GUI elements
+        self.globalRefreshRate = 1000
+
     def stop(self):
         """Stop all threads and wait until they return"""
 
@@ -288,7 +291,11 @@ class App(QApplication):
     @ensure_instrument_exists
     @ensure_parameter_in_instrument
     def add_hook(
-        self, instrument: str, name: str, when: str, function: Callable[[Any], Any],
+        self,
+        instrument: str,
+        name: str,
+        when: str,
+        function: Callable[[Any], Any],
     ):
         """Adds a hook to a parameter or command.
 
