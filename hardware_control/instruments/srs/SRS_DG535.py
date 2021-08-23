@@ -62,20 +62,34 @@ class SRS_DG535(Instrument):
 
         self.add_command("SINGLE_TRIGGER", "SS")
         self.add_parameter(
-            "TRIGGER_MODE", read_command="TM", set_command="TM{}", dummy_return="",
+            "TRIGGER_MODE",
+            read_command="TM",
+            set_command="TM{}",
+            dummy_return="",
         )
         self.add_converter_hooks(
             "TRIGGER_MODE",
-            {"INTERNAL": "0", "EXTERNAL": "1", "SINGLE": "2", "BURST": "3",},
+            {
+                "INTERNAL": "0",
+                "EXTERNAL": "1",
+                "SINGLE": "2",
+                "BURST": "3",
+            },
         )
 
         self.add_parameter(
-            "TRIGGER_EDGE", read_command="TS", set_command="TS{}", dummy_return="",
+            "TRIGGER_EDGE",
+            read_command="TS",
+            set_command="TS{}",
+            dummy_return="",
         )
         self.add_converter_hooks("TRIGGER_EDGE", {"POSITIVE": "1", "NEGATIVE": "0"})
 
         self.add_parameter(
-            "EXT_TRIG_ZIN", read_command="TZ", set_command="TZ{}", dummy_return="",
+            "EXT_TRIG_ZIN",
+            read_command="TZ",
+            set_command="TZ{}",
+            dummy_return="",
         )
         self.add_converter_hooks("EXT_TRIG_ZIN", {"50 OHMS": "0", "HI-Z": "1"})
 
@@ -90,7 +104,12 @@ class SRS_DG535(Instrument):
             )
             self.add_converter_hooks(
                 f"CH{channel}_OUTPUT_MODE",
-                {"TTL": "0", "NIM": "1", "ECL": "2", "VAR": "3",},
+                {
+                    "TTL": "0",
+                    "NIM": "1",
+                    "ECL": "2",
+                    "VAR": "3",
+                },
             )
 
         for channel, inst_ch_name in SRS_DG535.CHANNEL_NAMES.items():
@@ -109,7 +128,7 @@ class SRS_DG535(Instrument):
                 f"CH{channel}_OUTPUT_AMPLITUDE",
                 read_command=f"OA {inst_ch_name}",
                 set_command=f"OA {inst_ch_name},{{}}",
-                pre_hoooks=[range_validator(0.1, 4)],
+                pre_hooks=[range_validator(0.1, 4)],
                 dummy_return="",
             )
 
