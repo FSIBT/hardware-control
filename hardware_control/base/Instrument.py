@@ -308,16 +308,16 @@ class Instrument:
         else:
             self.post_hooks[name] = [function]
 
-    def add_converter_hooks(name, lookuptable):
+    def add_lookup(self, name, lookuptable):
         """Adds a pre and a post hook to convert values according to the lookuptable.
 
         The lookuptable will be used in the pre-hook and an inverse one will be created for the post-hook.
         """
 
-        self.add_pre_hook(create_converter(lookuptable))
+        self.add_pre_hook(name, create_converter(lookuptable))
 
         inverse_lookuptable = {b: a for a, b in lookuptable.items()}
-        self.add_post_hook(create_converter(inverse_lookuptable))
+        self.add_post_hook(name, create_converter(inverse_lookuptable))
 
     def list_parameters(self):
         """Return all names of all commands.
@@ -493,7 +493,9 @@ class Instrument:
                 )
             except Exception:
                 self.online = False
-                logger.debug(f"\t({self.name}) ERROR connecting with visa.",)
+                logger.debug(
+                    f"\t({self.name}) ERROR connecting with visa.",
+                )
                 logger.debug(f"{self.name} is offline")
             else:
                 self.online = True
