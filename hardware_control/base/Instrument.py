@@ -17,6 +17,7 @@ connect function.
 
 
 from functools import wraps
+import json
 import logging
 import socket
 from typing import Optional, Any, Callable, List
@@ -547,6 +548,23 @@ class Instrument:
             if self.connection_type == Instrument.SOCKET:
                 self.device.sendall(bytes(command + self.termination, self.encoding))
                 return command
+            if self.connection_type == Instrument.MODBUS:
+                # modbus commands must be formatted in the following way:
+                # command:address:value:unit, e.g. 4 colon separated values
+                # since we are getting a string, we will parse the 'value' using json
+                # back into a python object
+                command, address, value, unit = command.split(":")
+
+                address = int(address)
+                value = json.loads(value)
+                unit = int(unit)
+
+                if command == "write_coil":
+                    self.device.write_coil(address=address, values=value, unit=unit)
+                else:
+                    logger.error(
+                        f"modbus command for {command} currently not implemented for instrument '{self.name}'"
+                    )
         except Exception:
             logger.debug(f"ERROR: Write {command} failed in {self.name}", exc_info=True)
             self.online = False
@@ -581,6 +599,22 @@ class Instrument:
                 reply = str(reply_bytes)
                 reply = reply[2 : len(reply) - 1 - 2 * len(self.termination)]
                 logger.debug(f'\t{self.name}< "{command}"')
+            elif self.connection_type == Instrument.MODBUS:
+                # modbus commands must be formatted in the following way:
+                # command:address:nr_bytes:unit, e.g. 4 colon separated values
+                command, address, nr, unit = command.split(":")
+                address = int(address)
+                nr = int(nr)
+                unit = int(unit)
+                if command == "read_input_registers":
+                    reply = self.device.read_input_registers(
+                        count=nr, address=address, unit=unit
+                    )
+                else:
+                    logger.error(
+                        f"modbus command for {command} currently not implemented for instrument '{self.name}'"
+                    )
+
             return reply
         except Exception:
             logger.debug(f"ERROR: Query {command} failed in {self.name}", exc_info=True)
