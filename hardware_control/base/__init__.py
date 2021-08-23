@@ -7,4 +7,4 @@ from .App import App
 from .Instrument import Instrument
 from .MainWindow import MainWindow
 from .logging import setup_logging
-import hooks
+from . import hooks
