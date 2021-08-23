@@ -232,6 +232,24 @@ class App(QApplication):
 
     @ensure_instrument_exists
     @ensure_parameter_in_instrument
+    def update_instrument_parameter(self, instrument: str, parameter: str) -> None:
+        """Sends request to the instrument thread via ZMQ to query the parameter value.
+
+        Any pre_set_hooks will be called and the value will only be
+        set if none of them returns None.
+
+        Parameters
+        ----------
+        instrument
+           The name of the instrument
+        paramter
+           The name of the parameter
+
+        """
+        self.zmq_publisher.send_string(f"{instrument} get {parameter}")
+
+    @ensure_instrument_exists
+    @ensure_parameter_in_instrument
     def call_instrument_command(self, instrument: str, command: str) -> None:
         """Sends a command to the instrument via ZMQ.
 

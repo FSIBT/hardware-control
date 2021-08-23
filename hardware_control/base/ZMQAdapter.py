@@ -66,5 +66,17 @@ class ZMQAdapter(threading.Thread):
                 if msg[1] == "command":
                     self.instrument.command(msg[2])
                     continue
+                if msg[1] == "get":
+                    if msg[2] not in self.instrument.read_commands:
+                        logger.error(
+                            f"{msg[2]} read command not availabel in instrument '{self.name}'"
+                        )
+                        continue
+                    value = self.instrument.get_value(msg[2])
+                    if value is not None:
+                        self.zmq_publisher.send_string(
+                            f"{self.instrument.name} {msg[2]} {value}"
+                        )
+                    continue
                 # if it is not a command, we are trying to set a value
                 self.instrument[msg[0]] = msg[1]

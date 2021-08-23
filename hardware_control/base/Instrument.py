@@ -240,9 +240,9 @@ class Instrument:
            These can also easily be overwritten in an actual app to customize this.
 
         """
-        if name in ["online", "command"]:
+        if name in ["online", "command", "get"]:
             logger.error(
-                f"command 'online' and 'command' a special command and cannot be used in instrument {self.name}"
+                f"command 'online','get', and 'command' a special command and cannot be used in instrument {self.name}"
             )
             return
 
