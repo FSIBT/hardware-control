@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import (
 )
 
 
-from ..widgets import QControlCombo, QIndicator, QControl
+from ..widgets import HCComboBox, HCLabel, HCLineEdit
 
 logger = logging.getLogger(__name__)
 
@@ -36,80 +36,76 @@ class FlowController(QGroupBox):
     def __init__(
         self,
         app,
-        backend,
+        instrument: str,
         name: str = "Flow Controller",
         lock_until_sync=False,
     ):
-        super().__init__(app, name, backend, lock_until_sync)
+        super().__init__()
+        self.app = app
+        self.instrument = instrument
+        self.name = name
 
-        self.settings = self.default_state()
-
-        # *************************Create GUI************************
-
-        # ****** DEFINE TEXT BOXES
-        self.rate = QControl(self, "RATE", "Flow rate (sccm)")
-
-        # ******* DEFINE DROPDOWNS + READOUT
-        self.gas = QControlCombo(
-            self,
-            "GAS",
-            "Gas",
-            ["Argon", "Helium", "Hydrogen", "Air"],
-            label_align="right",
+        self.rate = HCLineEdit(
+            self.app, self.instrument, "RATE", label="Flow rate (sccm)"
         )
 
-        self.pressure = QIndicator(
-            self,
-            "Pressure",
+        # TODO: gas selection not implemented
+        # self.gas = HCComboBox(
+        #    self.app,
+        #    self.instrument,
+        #    parameter="GAS",
+        #    label="Gas",
+        #    items=["Argon", "Helium", "Hydrogen", "Air"],
+        #    label_align="right",
+        # )
+
+        self.pressure = HCLabel(
+            self.app,
+            self.instrument,
+            parameter="PRESSURE",
+            label="Pressure",
             unit="Torr",
             use_prefix=False,
             label_align="right",
         )
-        self.flow = QIndicator(
-            self,
-            "Flow",
+        self.flow = HCLabel(
+            self.app,
+            self.instrument,
+            parameter="RATE",
+            label="Flow",
             unit="sccm",
             use_prefix=False,
             label_align="right",
         )
 
-        self.autolayout_grid()
+        self.layout = QGridLayout()
+        self.layout.addWidget(self.rate.label, 0, 0)
+        self.layout.addWidget(self.rate, 0, 1)
 
-        # Write state to scope - synch scope with GUI
-        self.send_state()
+        self.layout.addWidget(self.gas.label, 1, 0)
+        self.layout.addWidget(self.gas, 1, 1)
 
-        # Create timer to query voltages
+        self.layout.addWidget(self.pressure.label, 2, 0)
+        self.layout.addWidget(self.pressure, 2, 1)
+
+        self.layout.addWidget(self.flow.label, 3, 0)
+        self.layout.addWidget(self.flow, 3, 1)
+
+        self.setLayout(self.layout)
+
+        # Create timer to query instrument
         self.readout_timer = QTimer(self)
         self.readout_timer.timeout.connect(self.update_readout)
-        self.readout_timer.start(self.globalRefreshRate)
+        self.readout_timer.start(self.app.globalRefreshRate)
 
-        logger.debug("Initalized")
-
-        self.values["RATE"] = "-"
-        self.values["PRESSURE"] = "-"
+        logger.debug(f"Initalized {self.name}")
 
     def close(self):
         self.readout_timer.stop()
         super().close()
 
     def update_readout(self):
-        """Queries the instrument for current readout data, then reads the most
-        recent readout data from the inbox and pushes it to the GUI"""
+        """Queries the instrument for current readout data."""
 
-        # Request updated readout data
-        self.command("RATE?")
-        self.command("PRESSURE?")
-
-        # Update labels
-        self.pressure.setText(self.values.get("PRESSURE"))
-        self.flow.setText(self.values.get("RATE"))
-
-    def default_state(self):
-        return {
-            "GAS": "ARGON",
-            "RATE": "0.0",
-        }
-
-    def settings_to_UI(self):
-        self.rate.settings_to_UI()
-        self.gas.settings_to_UI()
+        for parameter in ["RATE", "PRESSURE"]:
+            self.app.update_instrument_parameter(self.instrument, parameter)

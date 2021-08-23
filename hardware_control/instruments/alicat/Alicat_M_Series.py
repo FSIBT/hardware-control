@@ -19,6 +19,20 @@ from ..utility import (
 logger = logging.getLogger(__name__)
 
 
+def IEEE754_converter_to_ulong_pair(value):
+    i = converter_IEEE754_to_ulong(float(value))
+    a = i >> 16
+    b = i & ((1 << 16) - 1)
+    return [a, b]
+
+
+def modbus_registers_to_float(r):
+    a, b = r.registers
+    value = (a << 16) + b
+    value = converter_ulong_to_IEEE754(value)
+    return value
+
+
 class Alicat_M_Series(Instrument):
     """A driver for Alicat M-Series flow controllers.
 
@@ -35,55 +49,21 @@ class Alicat_M_Series(Instrument):
             connection_addr=connection_addr,
             default_port=0,  # modbus instrument need to set a default_port to an integer
         )
-        self.connection_type = Backend.MODBUS
+        self.connection_type = Instrument.MODBUS
         self.error_count = 0
+        self.unit = 0
 
-    def update_setting(self, setting: str, value):
-
-        if self.dummy:
-            return f"{setting}={value}"
-
-        try:
-            if setting in ["RATE", "FLOW"]:
-                i = converter_IEEE754_to_ulong(float(value))
-                a = i >> 16
-                b = i & ((1 << 16) - 1)
-                r = self.device.write_registers(address=1009, values=[a, b], unit=0)
-
-                self.error_count = 0
-                return f"{setting}={value}"
-        except Exception:
-            logger.error(
-                f"An error occured in Alicat flowmeter when sending command"
-                f" {setting}={value} to the instrument.",
-                exc_info=True,
-            )
-            self.error_count += 1
-
-        if self.error_count > 4:
-            self.online = False
-
-    def command(self, cmd: str):
-        if cmd == "RATE?":
-            flow = self.query(address=1208)
-            return f"RATE={flow}"
-        if cmd == "PRESSURE?":
-            pressure = self.query(address=1202)
-            return f"PRESSURE={pressure}"
-
-    def query(self, address: int):
-        if self.dummy:
-            return random.randint(0, 10)
-
-        try:
-            r = self.device.read_input_registers(count=2, address=address, unit=0)
-            a, b = r.registers
-            value = (a << 16) + b
-            value = converter_ulong_to_IEEE754(value)
-            return value
-        except Exception:
-            logger.error(
-                f"An error occured in {self.ID} when querying the modbus addres {address}.",
-                exc_info=True,
-            )
-            self.online = False
+        self.add_parameter(
+            "RATE",
+            read_command=f"read_input_registers:1208:2:{self.unit}",
+            set_command=f"write_coil:1009:{{}}:{self.unit}",
+            pre_hooks=[IEEE754_converter_to_ulong_pair],
+            post_hooks=[modbus_registers_to_float],
+            dummy_return=random.randint(0, 10),
+        )
+        self.add_parameter(
+            "PRESSURE",
+            read_command=f"read_input_registers:1202:2:{self.unit}",
+            post_hooks=[modbus_registers_to_float],
+            dummy_return=random.randint(0, 10),
+        )
