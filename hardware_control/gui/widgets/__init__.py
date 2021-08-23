@@ -18,6 +18,7 @@ from .hc_widgets import (
     HCComboBox,
     HCPushButton,
     HCDoubleSpinBox,
+    HCSpinBox,
     HCLabel,
     HCHeader,
 )
