@@ -8,13 +8,28 @@ See class definition for details.
 """
 
 import logging
-import random
-import socket
-
-from ..utility import get_channel_from_command
 from .Adam_base import AdamBackend
 
 logger = logging.getLogger(__name__)
+
+
+def create_channel_parser(channel):
+    """The instruments responds with information for all channels.
+
+    We need to pick the correct one.
+
+    The answer is something like >+0025.9237+0150.0000+0150.0000+0150.0000+0150.0000+0150.0000+0150.0000-0050.0000
+
+    """
+
+    def parse_channel(value):
+        # remove ">"
+        value = value.decode("ascii")[1:]
+        # pick channel
+        value = value[channel * 10 : channel * 10 + 10]
+        return value
+
+    return parse_channel
 
 
 class Adam_6015(AdamBackend):
@@ -24,47 +39,21 @@ class Adam_6015(AdamBackend):
 
     """
 
-    def __init__(self, connection_addr):
+    def __init__(self, name, connection_addr):
         super().__init__(
-            instrument_name="Advantac_ADAM-6015", connection_addr=connection_addr,
+            instrument_name=name, connection_addr=connection_addr,
         )
+        self.manufacturer = "Advantech"
+        self.model = "Adam 6015"
 
-    def command(self, cmd: str):
-        """Query the temperature of a channel.
+        for i in range(1, 6 + 1):
+            self.add_parameter(
+                f"CH{i}_READ_TEMPERATURE",
+                read_command="#01",
+                post_hooks=[create_channel_parser(i)],
+            )
 
-        Use Convention "CH<#>_TEMP?".
-
-        This will query all channels,
-        the answer is like >+0025.9237+0150.0000+0150.0000+0150.0000+0150.0000+0150.0000+0150.0000-0050.0000
-        and then pick out the correct channel
-
-        """
-
-        if self.dummy:
-            return cmd[:-1] + "=" + str(random.randint(0, 10000) / 10)
-
-        if self.online:
-            channel, cmd_X = get_channel_from_command(cmd)
-
-            if channel < 0 or channel > 7:
-                logger.error("Wrong channel number")
-                return "Unexpected Command"
-
-            try:
-                self.device.sendall(b"#01\r")
-
-                indata = self.device.recv(self.buf)
-                # cut off ">"
-                data = indata.decode("ascii")[1:]
-                data = data[channel * 10 : channel * 10 + 10]
-                return f"CH{channel}_TEMP={data}"
-            except:
-                logger.error(
-                    self.ID + " online status : " + str(self.try_connect()),
-                    exc_info=True,
-                )
-                return "Unexpected Command"
-
-    def update_setting(self, setting: str, value: str):
-        """Device has no Settings"""
-        pass
+    def query(self, cmd: str):
+        self.device.sendall(b"#01\r")
+        value = self.device.recv(self.buffer_length)
+        return value
