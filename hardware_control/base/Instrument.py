@@ -247,11 +247,11 @@ class Instrument:
             )
             return
 
-        if name in self.read_commands:
-            logger.error(f"command {name} already exists in instrument {self.name}")
-            return
-
-        self.read_commands[name] = read_command
+        if read_command is not None:
+            if name in self.read_commands:
+                logger.error(f"command {name} already exists in instrument {self.name}")
+                return
+            self.read_commands[name] = read_command
 
         if set_command is not None:
             if name in self.set_commands:
