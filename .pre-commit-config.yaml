@@ -1,19 +1,18 @@
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.1.0
+    rev: v4.0.1
     hooks:
     -   id: trailing-whitespace
     -   id: requirements-txt-fixer
     -   id: debug-statements
     -   id: check-merge-conflict
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v2.4.4
+    rev: v2.24.0
     hooks:
     -   id: pyupgrade
         args: ["--py36-plus"]
--   repo: https://github.com/ambv/black
-    rev: 19.10b0
+-   repo: https://github.com/psf/black
+    rev: 21.7b0
     hooks:
-    -   id: black
-    default_language_version:
-        python: python3
+      - id: black
+        language_version: python3
