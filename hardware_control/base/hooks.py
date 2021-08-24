@@ -34,11 +34,9 @@ def scaling_converter(scale_val):
     return converter
 
 
-def floater(type):
-    if type == "6E":
-
-        def converter(value):
-            return f"{float(value):.6E}"
+def format_float(format_type):
+    def converter(value):
+        return f"{float(value):{format_type}}"
 
     return converter
 
@@ -73,14 +71,3 @@ def expected_input_validator(types: List, default_val=None):
             return value
 
     return validator
-
-
-# Other post_hook functions
-def create_return_value(setting, unit: Optional[str] = None):
-    def return_value(value):
-        if unit == None:
-            return f"{setting}={value}"
-        else:
-            return f"{setting}={value} {unit}"
-
-    return return_value
