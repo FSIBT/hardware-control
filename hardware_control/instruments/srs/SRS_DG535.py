@@ -67,7 +67,7 @@ class SRS_DG535(Instrument):
             set_command="TM{}",
             dummy_return="",
         )
-        self.add_converter_hooks(
+        self.add_lookup(
             "TRIGGER_MODE",
             {
                 "INTERNAL": "0",
@@ -83,7 +83,7 @@ class SRS_DG535(Instrument):
             set_command="TS{}",
             dummy_return="",
         )
-        self.add_converter_hooks("TRIGGER_EDGE", {"POSITIVE": "1", "NEGATIVE": "0"})
+        self.add_lookup("TRIGGER_EDGE", {"POSITIVE": "1", "NEGATIVE": "0"})
 
         self.add_parameter(
             "EXT_TRIG_ZIN",
@@ -91,7 +91,7 @@ class SRS_DG535(Instrument):
             set_command="TZ{}",
             dummy_return="",
         )
-        self.add_converter_hooks("EXT_TRIG_ZIN", {"50 OHMS": "0", "HI-Z": "1"})
+        self.add_lookup("EXT_TRIG_ZIN", {"50 OHMS": "0", "HI-Z": "1"})
 
         for channel, inst_ch_name in SRS_DG535.CHANNEL_NAMES.items():
             if channel in ["Trig0", "T0"]:
@@ -102,7 +102,7 @@ class SRS_DG535(Instrument):
                 set_command=f"OM {inst_ch_name},{{}}",
                 dummy_return="",
             )
-            self.add_converter_hooks(
+            self.add_lookup(
                 f"CH{channel}_OUTPUT_MODE",
                 {
                     "TTL": "0",
