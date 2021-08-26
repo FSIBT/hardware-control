@@ -17,7 +17,7 @@ import sys
 from PyQt5.QtWidgets import QWidget, QGridLayout
 from docopt import docopt
 
-import hardware_control.backends as hc_back
+import hardware_control.instruments as hc_instr
 import hardware_control.gui as hc
 import hardware_control
 
@@ -40,7 +40,7 @@ class Demo(hardware_control.base.MainWindow):
 
         # create a backend and a GUI control for the backend
         self.app.add_instrument(
-            hc_back.SRS_DG535(name="dg5353", connection_addr="GPIB0::15::INSTR")
+            hc_instr.SRS_DG535(name="dg5353", connection_addr="GPIB0::15::INSTR")
         )
 
         self.trigger_ctrl = hc.controls.DelayGenerator(self.app, "dg5353")
