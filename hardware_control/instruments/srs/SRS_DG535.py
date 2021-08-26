@@ -10,7 +10,6 @@ See class definition for details.
 import logging
 
 from ...base import Instrument, hooks
-from ..utility import ensure_float, get_channel_from_command
 
 logger = logging.getLogger(__name__)
 
