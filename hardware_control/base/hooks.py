@@ -41,6 +41,20 @@ def format_float(format_type):
     return converter
 
 
+def format_int():
+    def converter(value):
+        return f"{int(float(value))}"
+
+    return converter
+
+
+def make_negative():
+    def converter(value):
+        return f"{-1*(value)}"
+
+    return converter
+
+
 def uppercase():
     def converter(value):
         return value.upper()

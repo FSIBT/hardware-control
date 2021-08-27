@@ -87,8 +87,28 @@ class Keysight_36300(Instrument):
                 dummy_return="",
             )
 
-            self.add_command("CHX_V_OUT?", f"MEAS:VOLT? (@{channel})")
-            self.add_command("CHX_I_OUT?", f"MEAS:CURR? (@{channel})")
-            self.add_command("CHX_I_SET?", f":SOURCE:CURR? (@{channel})")
-            self.add_command("CHX_V_SET?", f":SOURCE:VOLT? (@{channel})")
-            self.add_command("CHX_ENABLE?", f":OUTPUT:STATE? (@{channel})")
+            self.add_parameter(
+                "CH{channel}_V_OUT?",
+                read_command=f"MEAS:VOLT? (@{channel})",
+                dummy_return="",
+            )
+            self.add_parameter(
+                "CH{channel}_I_OUT?",
+                read_command=f"MEAS:CURR? (@{channel})",
+                dummy_return="",
+            )
+            self.add_parameter(
+                "CH{channel}_I_SET?",
+                read_command=f":SOURCE:CURR? (@{channel})",
+                dummy_return="",
+            )
+            self.add_parameter(
+                "CH{channel}_V_SET?",
+                read_command=f":SOURCE:VOLT? (@{channel})",
+                dummy_return="",
+            )
+            self.add_parameter(
+                "CH{channel}_ENABLE?",
+                read_command=f":OUTPUT:STATE? (@{channel})",
+                dummy_return="",
+            )
