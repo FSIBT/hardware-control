@@ -192,7 +192,7 @@ class Keysight_33500B(Instrument):
             "CH1_IMPEDANCE",
             read_command="OUTP1:LOAD?",
             set_command="OUTP1:LOAD {}",
-            pre_hooks=[lambda x: "50" if value == "50 (OHM)" else "INF"],
+            pre_hooks=[lambda value: "50" if value == "50 (OHM)" else "INF"],
             dummy_return="",
         )
 
@@ -200,8 +200,8 @@ class Keysight_33500B(Instrument):
             "CH1_ENABLE",
             read_command=":OUTP1?",
             set_command=":OUTP1 {}",
-            pre_hooks=[lambda x: "ON" if value == True else "OFF"],
-            post_hooks=[lambda x: True if value == "1\n" else False],
+            pre_hooks=[lambda value: "ON" if value == True else "OFF"],
+            post_hooks=[lambda value: True if value == "1\n" else False],
             dummy_return="",
         )
 
