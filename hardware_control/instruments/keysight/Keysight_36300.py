@@ -88,27 +88,27 @@ class Keysight_36300(Instrument):
             )
 
             self.add_parameter(
-                "CH{channel}_V_OUT?",
+                "CH{channel}_V_OUT",
                 read_command=f"MEAS:VOLT? (@{channel})",
                 dummy_return="",
             )
             self.add_parameter(
-                "CH{channel}_I_OUT?",
+                "CH{channel}_I_OUT",
                 read_command=f"MEAS:CURR? (@{channel})",
                 dummy_return="",
             )
             self.add_parameter(
-                "CH{channel}_I_SET?",
+                "CH{channel}_I_SET",
                 read_command=f":SOURCE:CURR? (@{channel})",
                 dummy_return="",
             )
             self.add_parameter(
-                "CH{channel}_V_SET?",
+                "CH{channel}_V_SET",
                 read_command=f":SOURCE:VOLT? (@{channel})",
                 dummy_return="",
             )
             self.add_parameter(
-                "CH{channel}_ENABLE?",
+                "CH{channel}_ENABLE",
                 read_command=f":OUTPUT:STATE? (@{channel})",
                 dummy_return="",
             )

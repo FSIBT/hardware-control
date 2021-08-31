@@ -105,7 +105,7 @@ class Keysight_33500B(Instrument):
             dummy_return="",
         )
 
-        """    BURSt Subsystem    """
+        """    Burst Subsystem    """
         self.add_parameter(
             "CH1_BURS_MODE",
             read_command="SOUR1:BURS:MODE?",
@@ -134,7 +134,7 @@ class Keysight_33500B(Instrument):
             dummy_return="",
         )
 
-        """    DISPlay Subsystem    """
+        """    Display Subsystem    """
         self.add_parameter(
             "CH1_ACTIVE",
             read_command="CHAN1:DISP?",
@@ -143,7 +143,7 @@ class Keysight_33500B(Instrument):
         )
         self.add_lookup("CH1_ACTIVE", {"True": "1", "False": "0"})
 
-        """    FREQuency Subsystem    """
+        """    Frequency Subsystem    """
         self.add_parameter(
             "CH1_FREQUENCY",
             read_command="SOUR1:FREQ?",
@@ -155,7 +155,7 @@ class Keysight_33500B(Instrument):
             dummy_return="",
         )
 
-        """    FUNCtion Subsystem    """
+        """    Function Subsystem    """
         # FUNCtion:NOISe:BANDwidth - bandwidth for NOISe waveform
         self.add_parameter(
             "CH1_BW_LIM",
@@ -212,7 +212,7 @@ class Keysight_33500B(Instrument):
             dummy_return="",
         )
 
-        """    TRIGger Subsystem    """
+        """    Trigger Subsystem    """
         self.add_parameter(
             "TRIGGER_LEVEL",
             read_command="TRIG:EDGE:LEV?",
