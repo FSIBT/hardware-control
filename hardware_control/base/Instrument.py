@@ -213,8 +213,8 @@ class Instrument:
     def add_parameter(
         self,
         name: str,
-        read_command: str,
-        set_command: Optional[str] = None,
+        read_command: str or Callable,
+        set_command: Optional[str] = None or Optional[Callable],
         pre_hooks: Optional[List] = None,
         post_hooks: Optional[List] = None,
         dummy_return: Optional[Any] = None,
@@ -364,7 +364,10 @@ class Instrument:
 
         # talk to the instrument
         if name in self.read_commands:
-            value = self.query(self.read_commands[name])
+            if callable(self.read_commands[name]):
+                self.read_commands[name]
+            else:
+                value = self.query(self.read_commands[name])
             if name in self.post_hooks:
                 hooks = self.post_hooks[name]
                 value = call_hooks(hooks, value)
@@ -402,8 +405,10 @@ class Instrument:
                 value = call_hooks(hooks, value)
             if value is None:
                 return
-
-            self.write(self.set_commands[name].format(value))
+            if callable(self.set_commands[name]):
+                self.set_commands[name]
+            else:
+                self.write(self.set_commands[name].format(value))
             return
         logger.error(f"{name} not available in instrument {self.name}")
 
@@ -424,7 +429,7 @@ class Instrument:
 
         """
 
-        # need to check if 'set_commands' is in self.__dict__ to avoid an invinite loop
+        # need to check if 'set_commands' is in self.__dict__ to avoid an infinite loop
         if (
             "set_commands" in self.__dict__
             and "pre_hooks" in self.__dict__
@@ -446,7 +451,10 @@ class Instrument:
             if self.dummy:
                 logger.debug(f"{self.name}: Would call {name} -> {self.commands[name]}")
                 return
-            self.write(self.commands[name])
+            if callable(self.commands[name]):
+                self.commands[name]
+            else:
+                self.write(self.commands[name])
             return
 
         logger.error(f"{name} not available in instrument {self.name}")
