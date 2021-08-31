@@ -132,6 +132,8 @@ class Instrument:
         self.port_no = default_port
         self.termination: str = "\n"
         self.encoding: str = "utf-8"
+        self.write_termination = None
+        self.read_termination = None
 
         # We save all possible commands and settings in several dictionaries
         self.set_commands = {}  # e.g. a voltage that can be set
@@ -486,8 +488,16 @@ class Instrument:
             try:
                 rm = pyvisa.ResourceManager("@py")
                 self.device = rm.open_resource(self.connection_addr)
-                self.device.read_termination = self.termination
-                self.device.write_termination = self.termination
+                self.device.read_termination = (
+                    self.termination
+                    if not self.read_termination
+                    else self.read_termination
+                )
+                self.device.write_termination = (
+                    self.termination
+                    if not self.write_termination
+                    else self.write_termination
+                )
                 logger.debug(
                     f"opened pyvisa connection to {self.name} at {self.connection_addr}"
                 )
@@ -534,6 +544,24 @@ class Instrument:
                 self.online = False
 
         return self.online
+
+    def config_serial(
+        self,
+        baud_rate=None,
+        stop_bits=None,
+        data_bits=None,
+        parity=None,
+    ):
+        if self.connection_type == Instrument.VISA:
+            self.device.encoding = "ascii"
+            if baud_rate:
+                self.device.baud_rate = baud_rate
+            if stop_bits:
+                self.device.stop_bits = stop_bits
+            if data_bits:
+                self.device.data_bits = data_bits
+            if parity:
+                self.device.parity = parity
 
     @ensure_online
     def write(self, command: str):
