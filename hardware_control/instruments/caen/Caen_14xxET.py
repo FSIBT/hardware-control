@@ -12,11 +12,8 @@ See class definition for details.
 """
 
 import logging
-import random
 
 from ...base import Instrument
-from ..utility import ensure_float, get_channel_from_command
-
 
 logger = logging.getLogger(__name__)
 
@@ -25,161 +22,324 @@ class Caen_14xxET(Instrument):
     """CAEN high voltage power supplies.
 
     This backend provides controls for CAEN power supplies.
-    Tested instruments include: R14xxET and R803x.
+    Tested instruments include: .
 
     """
 
     def __init__(
-        self, connection_addr,
+        self,
+        instrument_name,
+        connection_addr,
     ):
 
-        super().__init__(instrument_name="CAEN14xxET", connection_addr=connection_addr)
+        super().__init__(
+            instrument_name=instrument_name, connection_addr=connection_addr
+        )
 
-        # This specifies the max number of channels the user can request
-        self.num_channels = 8
-
-        self.max_V = [None] * self.num_channels
-        self.max_I = [None] * self.num_channels
-
-    def update_setting(self, setting: str, value):
-
-        channel, setting_X = get_channel_from_command(setting)
-        value_original = value
-        value = ensure_float(value)
+        # The instrument has channels 1-8
+        self.chan_nums = range(1, 9)
+        self.max_V = [None] * len(self.num_channels)
+        self.max_I = [None] * len(self.num_channels)
 
         logger.info(
             f"CAEN u_s received {setting}, {value} and interpreted chan={channel}, setting_X={setting_X}, value={value}"
         )
 
-        # These settings return valid values even in dummy mode or while offline.
-        # That's why we check for self.online after these if-statements
-        if setting_X == "CHX_I_MAX":
-            self.max_I[channel - 1] = float(value)
-            return f"{setting}={value}"
+        for channel in self.chan_nums:
 
-        if setting_X == "CHX_V_MAX":
-            self.max_V[channel - 1] = float(value)
-            return f"{setting}={value}"
+            def set_V_max():
+                def setter(value):
+                    self.max_V[channel - 1] = float(value)
 
-        if not self.online:
-            logger.info("CAEN")
-            return f"{self.ID}-Offline"
+            self.add_parameter(
+                f"CH{channel}_V_MAX",
+                read_command=None,
+                set_command=None,
+                post_hooks=[set_V_max()],
+                dummy_return="",
+            )
 
-        if self.dummy:
-            return f"{setting}={value}"
+            def set_I_max():
+                def setter(value):
+                    self.max_I[channel - 1] = float(value)
 
-        if setting_X == "CHX_ENABLE":
-            if value_original == "True":
-                self.query(f"$BD:00,CMD:SET,CH:{channel},PAR:ON")
-            else:
-                self.query(f"$BD:00,CMD:SET,CH:{channel},PAR:OFF")
-            status = self.read_status(channel)
+            self.add_parameter(
+                f"CH{channel}_I_MAX",
+                read_command=None,
+                set_command=None,
+                post_hooks=[set_I_max()],
+                dummy_return="",
+            )
 
-            if status is None:
-                return "None"
-            rval = bool(status["ON_OFF"])
-            return f"{setting}={rval}"
+            self.add_parameter(
+                f"CH{channel}_ENABLE",
+                read_command=f"CH{channel}_ENABLE?",
+                set_command=f"$BD:00,CMD:SET,CH:{channel},PAR:{{}}",
+                dummy_return="",
+            )
+            self.add_lookup(f"CH{channel}_ENABLE", {"True": "ON", "False": "OFF"})
 
-        if setting_X == "CHX_I_SET":
-            logger.debug(f"Iset called with value {value}")
+            self.add_parameter(
+                "CH{channel}_I_SET",
+                read_command=f"$BD:00,CMD:SET,CH:{channel},PAR:ISET,VAL:{{}}",
+                pre_hook=[
+                    write_to_log(f"Iset called with value {value}"),
+                    lambda value: min(value, self.max_I[channel - 1])
+                    if self.max_I[channel - 1] is not None
+                    else None,
+                    format_float(),
+                    scaling_converter(1e6),
+                ],
+                dummy_return="",
+            )
 
-            if self.max_I[channel - 1] is not None:
-                value = min(value, self.max_I[channel - 1])
-                logger.debug(f"Iset value changed to {value} because it exceeded limit")
+            self.add_parameter(
+                "CH{channel}_V_SET",
+                read_command=f"$BD:00,CMD:SET,CH:{channel},PAR:VSET,VAL:{{}}",
+                pre_hook=[
+                    write_to_log(f"Vset called with value {value}"),
+                    lambda value: min(value, self.max_V[channel - 1])
+                    if self.max_V[channel - 1] is not None
+                    else None,
+                ],
+                dummy_return="",
+            )
 
-            # the CAEN uses values in uA
-            value = float(value) * 1e6
-            self.query(f"$BD:00,CMD:SET,CH:{channel},PAR:ISET,VAL:{value}")
-            result = self.query(f"$BD:00,CMD:MON,CH:{channel},PAR:ISET")
+            self.add_parameter(
+                "CH{channel}_V_OUT",
+                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:VMON",
+                post_hook=[
+                    lambda value: value[value.find("VAL:") + 4 :],
+                    lambda value: value.strip("\\nr"),
+                ],
+            )
 
-            if result is None:
-                return "None"
-            rval = result[-7:]
-            return f"{setting}={rval}"
+            self.add_parameter(
+                "CH{channel}_I_OUT",
+                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:IMON",
+                post_hook=[
+                    lambda value: value[value.find("VAL:") + 4 :],
+                    lambda value: value.strip("\\nr"),
+                    format_float(),
+                    scaling_converter(1e6),
+                ],
+            )
 
-        if setting_X == "CHX_V_SET":
-            logger.debug(f"Vset called with value {value}")
+            self.add_parameter(
+                "CH{channel}_I_SET",
+                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:ISET",
+                post_hook=[
+                    lambda value: value[value.find("VAL:") + 4 :],
+                    lambda value: value.strip("\\nr"),
+                    format_float(),
+                    scaling_converter(1e6),
+                ],
+            )
 
-            if self.max_V[channel - 1] is not None:
-                value = min(value, self.max_V[channel - 1])
-                logger.debug(f"Vset value changed to {value} because it exceeded limit")
+            self.add_parameter(
+                "CH{channel}_V_SET",
+                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:VSET",
+                post_hook=[
+                    lambda value: value[value.find("VAL:") + 4 :],
+                    lambda value: value.strip("\\nr"),
+                ],
+            )
 
-            self.query(f"$BD:00,CMD:SET,CH:{channel},PAR:VSET,VAL:{value}")
-            result = self.query(f"$BD:00,CMD:MON,CH:{channel},PAR:VSET")
+            self.add_parameter(
+                "CH{channel}_STATUS",
+                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
+                post_hook=[
+                    lambda value: value.strip(r"\r"),
+                    lambda value: None if value.endswith("CMD:OK") else value,
+                    lambda value: value[value.find("VAL:") + 4 :],
+                    format_int(),
+                    lambda value: self.return_status(value),
+                ],
+            )
 
-            if result is None:
-                return "None"
-            rval = result[-6:]
-            return f"{setting}={value}"
+            self.add_parameter(
+                "CH{channel}_ON_OFF",
+                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
+                post_hook=[
+                    lambda value: value.strip(r"\r"),
+                    lambda value: None if value.endswith("CMD:OK") else value,
+                    lambda value: value[value.find("VAL:") + 4 :],
+                    format_int(),
+                    lambda value: self.return_status(value),
+                    lambda value: value & 1,
+                ],
+            )
 
-    def command(self, cmd: str):
-        channel, command_X = get_channel_from_command(cmd)
+            self.add_parameter(
+                "CH{channel}_RAMPING_UP",
+                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
+                post_hook=[
+                    lambda value: value.strip(r"\r"),
+                    lambda value: None if value.endswith("CMD:OK") else value,
+                    lambda value: value[value.find("VAL:") + 4 :],
+                    format_int(),
+                    lambda value: self.return_status(value),
+                    lambda value: value & 2,
+                ],
+            )
 
-        if command_X == "CHX_I_MAX?":
-            rval = self.max_I[channel - 1]
-            return f"{cmd[:-1]}={rval}"
+            self.add_parameter(
+                "CH{channel}_RAMPING_DOWN",
+                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
+                post_hook=[
+                    lambda value: value.strip(r"\r"),
+                    lambda value: None if value.endswith("CMD:OK") else value,
+                    lambda value: value[value.find("VAL:") + 4 :],
+                    format_int(),
+                    lambda value: self.return_status(value),
+                    lambda value: value & 4,
+                ],
+            )
 
-        if command_X == "CHX_V_MAX?":
-            rval = self.max_V[channel - 1]
-            return f"{cmd[:-1]}={rval}"
+            self.add_parameter(
+                "CH{channel}_OVER_CURRENT",
+                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
+                post_hook=[
+                    lambda value: value.strip(r"\r"),
+                    lambda value: None if value.endswith("CMD:OK") else value,
+                    lambda value: value[value.find("VAL:") + 4 :],
+                    format_int(),
+                    lambda value: self.return_status(value),
+                    lambda value: value & 8,
+                ],
+            )
 
-        if not self.online:
-            return f"{self.ID}-Offline"
+            self.add_parameter(
+                "CH{channel}_OVER_VOLTAGE",
+                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
+                post_hook=[
+                    lambda value: value.strip(r"\r"),
+                    lambda value: None if value.endswith("CMD:OK") else value,
+                    lambda value: value[value.find("VAL:") + 4 :],
+                    format_int(),
+                    lambda value: self.return_status(value),
+                    lambda value: value & 16,
+                ],
+            )
 
-        if self.dummy:
-            num = random.random() * 10
-            return f"{cmd.strip('?')}={num}"
+            self.add_parameter(
+                "CH{channel}_UNDER_VOLTAGE",
+                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
+                post_hook=[
+                    lambda value: value.strip(r"\r"),
+                    lambda value: None if value.endswith("CMD:OK") else value,
+                    lambda value: value[value.find("VAL:") + 4 :],
+                    format_int(),
+                    lambda value: self.return_status(value),
+                    lambda value: value & 32,
+                ],
+            )
 
-        if command_X == "CHX_V_OUT?":
-            command = "VMON"
-        elif command_X == "CHX_I_OUT?":
-            command = "IMON"
-        elif command_X == "CHX_I_SET?":
-            command = "ISET"
-        elif command_X == "CHX_V_SET?":
-            command = "VSET"
-        elif command_X == "CHX_ENABLE?":
-            result = self.read_status(channel)
+            self.add_parameter(
+                "CH{channel}_MAX_VOLTAGE",
+                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
+                post_hook=[
+                    lambda value: value.strip(r"\r"),
+                    lambda value: None if value.endswith("CMD:OK") else value,
+                    lambda value: value[value.find("VAL:") + 4 :],
+                    format_int(),
+                    lambda value: self.return_status(value),
+                    lambda value: value & 64,
+                ],
+            )
 
-            if result is None:
-                return "False"
+            self.add_parameter(
+                "CH{channel}_TRIPPED",
+                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
+                post_hook=[
+                    lambda value: value.strip(r"\r"),
+                    lambda value: None if value.endswith("CMD:OK") else value,
+                    lambda value: value[value.find("VAL:") + 4 :],
+                    format_int(),
+                    lambda value: self.return_status(value),
+                    lambda value: value & 128,
+                ],
+            )
 
-            if result["ON_OFF"]:
-                rval = "True"
-            else:
-                rval = "False"
-            return f"{cmd[:-1]}={rval}"
-        else:
-            logging.debug(f"Unknown CAEN command {cmd}")
+            self.add_parameter(
+                "CH{channel}_OVER_POWER",
+                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
+                post_hook=[
+                    lambda value: value.strip(r"\r"),
+                    lambda value: None if value.endswith("CMD:OK") else value,
+                    lambda value: value[value.find("VAL:") + 4 :],
+                    format_int(),
+                    lambda value: self.return_status(value),
+                    lambda value: value & 256,
+                ],
+            )
 
-        result = self.query(f"$BD:00,CMD:MON,CH:{channel},PAR:{command}")
-        if result is None:
-            return "None"
+            self.add_parameter(
+                "CH{channel}_OVER_TEMPERATURE",
+                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
+                post_hook=[
+                    lambda value: value.strip(r"\r"),
+                    lambda value: None if value.endswith("CMD:OK") else value,
+                    lambda value: value[value.find("VAL:") + 4 :],
+                    format_int(),
+                    lambda value: self.return_status(value),
+                    lambda value: value & 512,
+                ],
+            )
 
-        rval = result[result.find("VAL:") + 4 :]
-        rval = rval.strip("\\nr")
+            self.add_parameter(
+                "CH{channel}_DISABLED",
+                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
+                post_hook=[
+                    lambda value: value.strip(r"\r"),
+                    lambda value: None if value.endswith("CMD:OK") else value,
+                    lambda value: value[value.find("VAL:") + 4 :],
+                    format_int(),
+                    lambda value: self.return_status(value),
+                    lambda value: value & 1024,
+                ],
+            )
 
-        if command_X in ["CHX_I_OUT?", "CHX_I_SET?"]:
-            # Current is read in uA
-            rval = float(rval) * 1e-6
+            self.add_parameter(
+                "CH{channel}_KILL",
+                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
+                post_hook=[
+                    lambda value: value.strip(r"\r"),
+                    lambda value: None if value.endswith("CMD:OK") else value,
+                    lambda value: value[value.find("VAL:") + 4 :],
+                    format_int(),
+                    lambda value: self.return_status(value),
+                    lambda value: value & 2048,
+                ],
+            )
 
-        return f"{cmd[:-1]}={rval}"
+            self.add_parameter(
+                "CH{channel}_INTERLOCKED",
+                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
+                post_hook=[
+                    lambda value: value.strip(r"\r"),
+                    lambda value: None if value.endswith("CMD:OK") else value,
+                    lambda value: value[value.find("VAL:") + 4 :],
+                    format_int(),
+                    lambda value: self.return_status(value),
+                    lambda value: value & 4096,
+                ],
+            )
 
-    def read_status(self, channel):
-        """See table on page 24 of manual"""
-        if self.dummy:
-            outputs = [1 + 128 + 1024, 128, 1, 1024]
-            value = random.choice(outputs)
-        else:
-            result = self.query(f"$BD:00,CMD:MON,CH:{channel},PAR:STAT")
-            if result is None:
-                return None
-            result = result.strip(r"\r")
-            print(result, flush=True)
-            if result.endswith("CMD:OK"):
-                return None
-            value = int(result[result.find("VAL:") + 4 :])
+            self.add_parameter(
+                "CH{channel}_CALIBRATION_ERROR",
+                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
+                post_hook=[
+                    lambda value: value.strip(r"\r"),
+                    lambda value: None if value.endswith("CMD:OK") else value,
+                    lambda value: value[value.find("VAL:") + 4 :],
+                    format_int(),
+                    lambda value: self.return_status(value),
+                    lambda value: value & 8192,
+                ],
+            )
 
+    def return_status(value):
         status = {
             "ON_OFF": value & 1,
             "RAMPING_UP": value & 2,
@@ -196,4 +356,5 @@ class Caen_14xxET(Instrument):
             "INTERLOCKED": value & 4096,
             "CALIBRATION_ERROR": value & 8192,
         }
+
         return status
