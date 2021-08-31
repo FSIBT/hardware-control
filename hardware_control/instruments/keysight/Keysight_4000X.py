@@ -12,9 +12,13 @@ import logging
 import numpy as np
 
 from ...base import Instrument
-
-from ..utility import get_channel_from_command
-
+from ...base.hooks import (
+    format_float,
+    format_int,
+    expected_input_validator,
+    make_negative,
+    min_len_converter,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -22,30 +26,13 @@ logger = logging.getLogger(__name__)
 class Keysight_4000X(Instrument):
     """A backend to control the Keysight 4000X Series oscilloscopes"""
 
-    # sigReturnWaves = pyqtSignal(int, list, list)
-
     def __init__(
-        self, connection_addr: str,
+        self,
+        connection_addr: str,
+        instrument_name="KEYSIGHT-4000X",
     ):
-        super().__init__(
-            instrument_name="KEYSIGHT-4000X",
-            connection_addr=connection_addr,
-            default_port=5025,
-        )
-        self.num_vert_divisions = 8
-        self.check_connection_commands = "*IDN?"
-
-    def update_setting(self, setting: str, value):
-        """Changes a specified setting to the specied value
-
-        Parameters
-        ----------
-        setting : str
-            Setting to change
-
-        Notes
-        --------
-        Available settings (<X> indicates a number, values in parethesis show acceptable values):
+        """List of available settings
+        (<X> indicates a number, values in parethesis show acceptable values):
 
         * timebase: horizontal resolution in time per division (float)
         * time_offset: time offset from trigger (float)
@@ -64,172 +51,159 @@ class Keysight_4000X(Instrument):
         * CH<X>_invert: Enables or disables inverting for channel 'X' (bool)
         * CH<X>_probe_atten: Sets the probe attenuation for channel 'X'. For example, providing the value '10' would indicate a 10x or 10:1 probe. (float)
         * CH<X>_coupling: Sets the coupling mode for the speicied channel (AC, DC)
-        """
 
-        if self.dummy:
-            return value
-
-        if setting == "TIMEBASE":
-            self.write(f":TIM:SCAL {float(value):.6E}")
-            rval = self.query(":TIM:SCAL?")
-            return f"{setting}={rval}"
-        if setting == "TIME_OFFSET":
-            self.write(f":TIM:POS {float(value):.6E}")
-            rval = self.query(":TIM:POS?")
-            return f"{setting}={rval}"
-        if setting == "NUM_POINTS":
-            self.write(f":WAV:POIN {int(float(value)):}")
-            rval = self.query(":WAV:POIN?")
-            return f"{setting}={rval}"
-        if setting == "LABELS_ENABLED":
-            self.write(f"DISP:LAB {int(value=='True')}")
-            rval = self.query("DISP:LAB?")
-            return f"{setting}={rval}"
-        if setting == "TRIGGER_LEVEL":
-            self.write(f"TRIG:EDGE:LEV {float(value):.6E}")
-            rval = self.query("TRIG:EDGE:LEV?")
-            return f"{setting}={rval}"
-        if setting == "TRIGGER_COUPLING":
-            # Make sure valid option given
-            if value not in ["AC", "DC", "LFReject"]:
-                value = "DC"
-            self.write(f"TRIG:COUP {value}")
-            rval = self.query("TRIG:COUP?")
-            return f"{setting}={rval}"
-        if setting == "TRIGGER_EDGE":
-            # Make sure valid option given
-            if value not in ["BOTH", "NEG", "POS", "ALT"]:
-                value = "POS"
-            self.write(f"TRIG:EDGE:SLOP {value}")
-            rval = self.query("TRIG:EDGE:SLOP?")
-            return f"{setting}={rval}"
-        if setting == "TRIGGER_CHANNEL":
-            self.write(f"TRIG:SOUR CHAN{int(value)}")
-            rval = self.query("TRIG:SOUR?")
-            return f"{setting}={rval}"
-
-        channel, setting_X = get_channel_from_command(setting)
-
-        if setting_X == "CHX_VOLTS_DIV":
-            self.write(f":CHAN{channel}:SCAL {float(value):.6E}")
-            rval = self.query(f":CHAN{channel}:SCAL?")
-            return f"{setting}={rval}"
-        if setting_X == "CHX_OFFSET":
-            self.write(f"CHAN{channel}:OFFS {-float(value):.6E}")
-            rval = self.query(f"CHAN{channel}:OFFS?")
-            return f"{setting}={rval}"
-        if setting_X == "CHX_BW_LIM":
-            self.write(f"CHAN{channel}:BWL {int(value=='True')}")
-            rval = self.query(f"CHAN{channel}:BWL?")
-            return f"{setting}={rval}"
-        if setting_X == "CHX_ACTIVE":
-            self.write(f"CHAN{channel}:DISP {int(value=='True')}")
-            ret = self.query(f"CHAN{channel}:DISP?")
-            if ret in ["0", "1"]:
-                rval = str(bool(int(ret)))
-                return f"{setting}={rval}"
-            else:
-                return ret
-        if setting_X == "CHX_IMPEDANCE":
-            if value == "50":
-                self.write(f"CHAN{channel}:IMP FIFT")
-            else:
-                self.write(f"CHAN{channel}:IMP ONEM")
-            rval = self.query(f"CHAN{channel}:IMP?")
-            return f"{setting}={rval}"
-        if setting_X == "CHX_LABEL":
-            # Length is capped at 32 characters
-            if len(value) > 32:
-                value = value[0:32]
-            self.write(f"CHAN{channel}:LAB {value}")
-            rval = self.query(f"CHAN{channel}:LAB?")
-            return f"{setting}={rval}"
-        if setting_X == "CHX_INVERT":
-            self.write(f"CHAN{channel}:INV {int(value=='True')}")
-            rval = self.query(f"CHAN{channel}:INV?")
-            return f"{setting}={rval}"
-        if setting_X == "CHX_PROBE_ATTEN":
-            self.write(f"CHAN{channel}:PROB {float(value):.6E}")
-            rval = self.query(f"CHAN{channel}:PROB?")  # ie. 10 gives x10 or 10:1 probe
-            return f"{setting}={rval}"
-        if setting_X == "CHX_COUPLING":
-            # Make sure valid value provided
-            if value not in ["AC", "DC"]:
-                value = "DC"
-            self.write(f"CHAN{channel}:COUP {value}")
-            rval = self.query(f"CHAN{channel}:COUP?")
-            return f"{setting}={rval}"
-
-    def command(self, cmd: str):
-        """Executes an action specified by 'cmd'.
-
-        Parameters
-        ----------
-        cmd
-            Name of command to execute
-
-        Notes
-        -----
         Available commands:
-
         * SINGLE_TRIGGER: Set the instrument to trigger once and retain the data
         * RUN: Set the instrument to continuously trigger
         * CONFIG_READ_WAVE: Configure oscilloscope settings to prepare for reading waveforms
         * STOP: Prevent the instrument from triggering
         """
+        super().__init__(
+            instrument_name=instrument_name,
+            connection_addr=connection_addr,
+            default_port=5025,
+        )
+        # The instrument has channels 1, 2, 3, and 4
+        self.chan_nums = range(1, 5)
 
-        if cmd == "SINGLE_TRIGGER":
-            self.write(":SING")
-        elif cmd == "RUN":
-            self.write(":RUN")
-        elif cmd == "CONFIG_READ_WAVE":
-            self.configure_read_waveform()
-        elif cmd == "STOP":
-            self.write(":STOP")
+        self.num_vert_divisions = 8
+        self.check_connection_commands = "*IDN?"
 
-    def command_listdata(self, cmd: str):
-        """Executes an action specified by 'cmd', returns a tuple with a string and two lists
+        self.add_parameter(
+            "TIMEBASE",
+            read_command=":TIM:SCAL?",
+            set_command=":TIM:SCAL {}",
+            pre_hooks=[format_float(".6E")],
+            dummy_return="",
+        )
 
-        Parameters
-        ----------
-        cmd
-            Name of command to execute
+        self.add_parameter(
+            "TIME_OFFSET",
+            read_command=":TIM:POS?",
+            set_command=":TIM:POS {}",
+            pre_hooks=[format_float(".6E")],
+            dummy_return="",
+        )
 
-        Notes
-        -----
-        Available commands (<X> indicates a number):
+        self.add_parameter(
+            "NUM_POINTS",
+            read_command=":WAV:POIN?",
+            set_command=":WAV:POIN {}",
+            pre_hooks=[format_int()],
+            dummy_return="",
+        )
 
-        * CH<X>_WVFM?: Reads the waveform for channel 'X'
-        * CH<X>_CLEAR: Clears the waveform for channel 'X' and returns two empty lists
-        * RUN: Set the instrument to continuously trigger
-        * CONFIG_READ_WAVE: Configure oscilloscope settings to prepare for reading waveforms
-        * STOP: Prevent the instrument from triggering
-        """
+        self.add_parameter(
+            "LABELS_ENABLED",
+            read_command="DISP:LAB?",
+            set_command="DISP:LAB {}",
+            dummy_return="",
+        )
+        self.add_lookup("LABELS_ENABLED", {"True": "1", "False": "0"})
 
-        if not self.online:
-            return "", [], []
+        self.add_parameter(
+            "TRIGGER_LEVEL",
+            read_command="TRIG:EDGE:LEV?",
+            set_command="TRIG:EDGE:LEV {}",
+            pre_hooks=[format_float(".6E")],
+            dummy_return="",
+        )
 
-        channel, cmd_X = get_channel_from_command(cmd)
+        self.add_parameter(
+            "TRIGGER_COUPLING",
+            read_command="TRIG:COUP?",
+            set_command="TRIG:COUP {}",
+            pre_hooks=[expected_input_validator(["AC", "DC", "LFReject"], "DC")],
+            dummy_return="",
+        )
 
-        if cmd_X == "CHX_WVFM?":
-            # Returns a tuple (str, list, list)
-            return self.read_waveform(channel)
-        if cmd_X == "CHX_CLEAR":
-            return f"CH{channel}_WVFM", [], []
-        else:
-            return "", [], []
+        self.add_parameter(
+            "TRIGGER_EDGE",
+            read_command="TRIG:EDGE:SLOP?",
+            set_command="TRIG:EDGE:SLOP {}",
+            pre_hooks=[expected_input_validator(["BOTH", "NEG", "POS", "ALT"], "POS")],
+            dummy_return="",
+        )
 
-    def digitize(self):
-        """Similar to single trigger.
+        self.add_parameter(
+            "TRIGGER_CHANNEL",
+            read_command="TRIG:SOUR?",
+            set_command="TRIG:SOUR CHAN{}",
+            pre_hooks=[format_int()],
+            dummy_return="",
+        )
 
-        Aquires waveform according to :ACQ command subsystem. Stops
-        instrument when aquisition is complete. Acquires channels
-        currently displayed (can change this with arguments to do more
-        or less).
+        for channel in self.chan_nums:
+            self.add_parameter(
+                "CH{channel}_VOLTS_DIV",
+                read_command=f":CHAN{channel}:SCAL?",
+                set_command=f":CHAN{channel}:SCAL {{}}",
+                pre_hooks=[format_float(".6E")],
+                dummy_return="",
+            )
 
-        """
-        if not self.dummy:
-            self.write(":DIG")
+            self.add_parameter(
+                "CH{channel}_OFFSET",
+                read_command=f"CHAN{channel}:OFFS?",
+                set_command=f"CHAN{channel}:OFFS {{}}",
+                pre_hooks=[format_float(".6E"), make_negative()],
+                dummy_return="",
+            )
+
+            self.add_parameter(
+                "CH{channel}_BW_LIM",
+                read_command=f"CHAN{channel}:BWL?",
+                set_command=f"CHAN{channel}:BWL {{}}",
+                dummy_return="",
+            )
+            self.add_lookup("CH{channel}_BW_LIM", {"True": "1", "False": "0"})
+
+            self.add_parameter(
+                "CH{channel}_ACTIVE",
+                read_command=f"CHAN{channel}:DISP?",
+                set_command=f"CHAN{channel}:DISP {{}}",
+                dummy_return="",
+            )
+            self.add_lookup("CH{channel}_ACTIVE", {"True": "1", "False": "0"})
+
+            self.add_parameter(
+                "CH{channel}_IMPEDANCE",
+                read_command=f"CHAN{channel}:IMP?",
+                set_command=f"CHAN{channel}:IMP {{}}",
+                pre_hooks=[lambda x: "FIFT" if value == "50" else "ONEM"],
+                dummy_return="",
+            )
+
+            self.add_parameter(
+                "CH{channel}_LABEL",
+                read_command=f"CHAN{channel}:LAB?",
+                set_command=f"CHAN{channel}:LAB {{}}",
+                pre_hooks=[min_len_converter(32)],
+                dummy_return="",
+            )
+
+            self.add_parameter(
+                "CH{channel}_PROBE_ATTEN",
+                read_command=f"CHAN{channel}:PROB?",
+                set_command=f"CHAN{channel}:PROB {{}}",
+                pre_hooks=[format_float(".6E")],
+                dummy_return="",
+            )
+
+            self.add_parameter(
+                "CH{channel}_COUPLING",
+                read_command=f"CHAN{channel}:COUP?",
+                set_command=f"CHAN{channel}:COUP {{}}",
+                pre_hooks=[expected_input_validator(["AC", "DC"], "DC")],
+                dummy_return="",
+            )
+
+            self.add_command("CH{channel}_READ_WAVE", self.read_waveform(channel))
+
+        self.add_command("SINGLE_TRIGGER", ":SING")
+        self.add_command("RUN", ":RUN")
+        self.add_command("STOP", ":STOP")
+        self.add_command("DIGITIZE", ":DIG")
 
     def read_waveform(self, channel: int):
         """Reads a waveform from the oscilloscope.
@@ -249,17 +223,6 @@ class Keysight_4000X(Instrument):
             List of the function values in Volts
 
         """
-
-        if self.dummy or not self.online:
-            t = np.linspace(0, 1e-3, 100, False)
-            noise = 0.02 * np.random.rand(1, 100)
-
-            # in the line below we have to take index 0 of 'noise' because noise
-            # is 2D array w/ 1 row and we need a 1D array
-            v = np.sin(t * 5e3 * float(channel)) + noise[0]
-
-            return f"CH{channel}_WVFM", t.tolist(), v.tolist()
-
         # Check if we have data and read it from oscilloscope
         try:
             data_length = int(self.query(":WAV:POINTS?"))
@@ -269,15 +232,16 @@ class Keysight_4000X(Instrument):
             return "", [], []
 
         try:
-            self.write(f":WAV:SOUR CHAN{channel}")
             # Set the source channel
-            raw_data = self.query(":WAV:DATA?")
+            self.write(f":WAV:SOUR CHAN{channel}")
             # Read waveform data
+            raw_data = self.query(":WAV:DATA?")
         except:
-            self.digitize()
+            # Digitize
+            self.write(":DIG")
             self.configure_read_waveform()
-            raw_data = self.query(":WAV:DATA?")
             # Read waveform data
+            raw_data = self.query(":WAV:DATA?")
 
         # Read X Origin
         x_orig = self.query(":WAV:XOR?")
