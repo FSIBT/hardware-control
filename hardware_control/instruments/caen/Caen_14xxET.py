@@ -80,7 +80,7 @@ class Caen_14xxET(Instrument):
             self.add_lookup(f"CH{channel}_ENABLE", {"True": "ON", "False": "OFF"})
 
             self.add_parameter(
-                "CH{channel}_I_SET",
+                f"CH{channel}_I_SET",
                 read_command=f"$BD:00,CMD:SET,CH:{channel},PAR:ISET,VAL:{{}}",
                 pre_hook=[
                     write_to_log(f"Iset called with value {value}"),
@@ -94,7 +94,7 @@ class Caen_14xxET(Instrument):
             )
 
             self.add_parameter(
-                "CH{channel}_V_SET",
+                f"CH{channel}_V_SET",
                 read_command=f"$BD:00,CMD:SET,CH:{channel},PAR:VSET,VAL:{{}}",
                 pre_hook=[
                     write_to_log(f"Vset called with value {value}"),
@@ -106,16 +106,17 @@ class Caen_14xxET(Instrument):
             )
 
             self.add_parameter(
-                "CH{channel}_V_OUT",
+                f"CH{channel}_V_OUT",
                 read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:VMON",
                 post_hook=[
                     lambda value: value[value.find("VAL:") + 4 :],
                     lambda value: value.strip("\\nr"),
                 ],
+                dummy_return="",
             )
 
             self.add_parameter(
-                "CH{channel}_I_OUT",
+                f"CH{channel}_I_OUT",
                 read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:IMON",
                 post_hook=[
                     lambda value: value[value.find("VAL:") + 4 :],
@@ -123,10 +124,11 @@ class Caen_14xxET(Instrument):
                     format_float(),
                     scaling_converter(1e6),
                 ],
+                dummy_return="",
             )
 
             self.add_parameter(
-                "CH{channel}_I_SET",
+                f"CH{channel}_I_SET",
                 read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:ISET",
                 post_hook=[
                     lambda value: value[value.find("VAL:") + 4 :],
@@ -134,19 +136,21 @@ class Caen_14xxET(Instrument):
                     format_float(),
                     scaling_converter(1e6),
                 ],
+                dummy_return="",
             )
 
             self.add_parameter(
-                "CH{channel}_V_SET",
+                f"CH{channel}_V_SET",
                 read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:VSET",
                 post_hook=[
                     lambda value: value[value.find("VAL:") + 4 :],
                     lambda value: value.strip("\\nr"),
                 ],
+                dummy_return="",
             )
 
             self.add_parameter(
-                "CH{channel}_STATUS",
+                f"CH{channel}_STATUS",
                 read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
                 post_hook=[
                     lambda value: value.strip(r"\r"),
@@ -155,6 +159,7 @@ class Caen_14xxET(Instrument):
                     format_int(),
                     lambda value: self.return_status(value),
                 ],
+                dummy_return="",
             )
 
             self.add_parameter(
@@ -168,6 +173,7 @@ class Caen_14xxET(Instrument):
                     lambda value: self.return_status(value),
                     lambda value: value & 1,
                 ],
+                dummy_return="",
             )
 
             self.add_parameter(
@@ -181,6 +187,7 @@ class Caen_14xxET(Instrument):
                     lambda value: self.return_status(value),
                     lambda value: value & 2,
                 ],
+                dummy_return="",
             )
 
             self.add_parameter(
@@ -194,6 +201,7 @@ class Caen_14xxET(Instrument):
                     lambda value: self.return_status(value),
                     lambda value: value & 4,
                 ],
+                dummy_return="",
             )
 
             self.add_parameter(
@@ -207,6 +215,7 @@ class Caen_14xxET(Instrument):
                     lambda value: self.return_status(value),
                     lambda value: value & 8,
                 ],
+                dummy_return="",
             )
 
             self.add_parameter(
@@ -220,6 +229,7 @@ class Caen_14xxET(Instrument):
                     lambda value: self.return_status(value),
                     lambda value: value & 16,
                 ],
+                dummy_return="",
             )
 
             self.add_parameter(
@@ -233,6 +243,7 @@ class Caen_14xxET(Instrument):
                     lambda value: self.return_status(value),
                     lambda value: value & 32,
                 ],
+                dummy_return="",
             )
 
             self.add_parameter(
@@ -246,6 +257,7 @@ class Caen_14xxET(Instrument):
                     lambda value: self.return_status(value),
                     lambda value: value & 64,
                 ],
+                dummy_return="",
             )
 
             self.add_parameter(
@@ -259,6 +271,7 @@ class Caen_14xxET(Instrument):
                     lambda value: self.return_status(value),
                     lambda value: value & 128,
                 ],
+                dummy_return="",
             )
 
             self.add_parameter(
@@ -272,6 +285,7 @@ class Caen_14xxET(Instrument):
                     lambda value: self.return_status(value),
                     lambda value: value & 256,
                 ],
+                dummy_return="",
             )
 
             self.add_parameter(
@@ -285,6 +299,7 @@ class Caen_14xxET(Instrument):
                     lambda value: self.return_status(value),
                     lambda value: value & 512,
                 ],
+                dummy_return="",
             )
 
             self.add_parameter(
@@ -298,6 +313,7 @@ class Caen_14xxET(Instrument):
                     lambda value: self.return_status(value),
                     lambda value: value & 1024,
                 ],
+                dummy_return="",
             )
 
             self.add_parameter(
@@ -311,6 +327,7 @@ class Caen_14xxET(Instrument):
                     lambda value: self.return_status(value),
                     lambda value: value & 2048,
                 ],
+                dummy_return="",
             )
 
             self.add_parameter(
@@ -324,6 +341,7 @@ class Caen_14xxET(Instrument):
                     lambda value: self.return_status(value),
                     lambda value: value & 4096,
                 ],
+                dummy_return="",
             )
 
             self.add_parameter(
@@ -337,6 +355,7 @@ class Caen_14xxET(Instrument):
                     lambda value: self.return_status(value),
                     lambda value: value & 8192,
                 ],
+                dummy_return="",
             )
 
     def return_status(value):
