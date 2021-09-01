@@ -19,7 +19,7 @@ from ..utility import ensure_float, get_channel_from_command
 logger = logging.getLogger(__name__)
 
 
-class GP_356(Instrument):
+class VQM835(Instrument):
     """
     A driver for the Grandville Phillips Ion Gauge
     """
