@@ -25,117 +25,52 @@ class GP_356(Instrument):
     """
 
     def __init__(
-        self, connection_addr: str,
+        self,
+        connection_addr: str,
     ):
         super().__init__(
-            instrument_name="GrandvillePhillips_356",
-            connection_addr=connection_addr,
+            connection_addr,
             default_port=7777,
         )
+
+        self.manufacturer = "MKS"
+        self.model = "GP365"
+
         self.ins_add = "#02"  # The address setting on the instrument
-        self.check_connection_commands = (
-            self.ins_add + "IGS"
-        )  # different command for connection checking
+        self.check_connection_commands = [self.ins_add + "IGS"]
 
-        # self.termination = "\r"
-        self.read_termination = "\r"
-        self.write_termination = "\r"
+        self.termination = "\r"
 
-    def update_setting(self, setting: str, value):
-        """
-        Changes a specified setting to the specied value
-
-        Parameters
-        ----------
-        setting : str
-            Setting to change
-
-        Notes
-        --------
-        Available settings (<X> indicates a number, values in parethesis show acceptable values):
-
-        * CH<X>_CHANGE_CURVE: select calibration curve for channel X
-        """
-
-        channel, setting_X = get_channel_from_command(setting)
-        value_original = value
-        value = ensure_float(value)
-
-        logger.info(
-            f"Lakeshore u_s received {setting}, {value} and interpreted chan={channel}, setting_X={setting_X}, value={value}"
+        self.add_parameter(
+            "Read_State",
+            read_command="{self.ins_add}IGS",
+            set_command="",
+            dummy_return="",
+        )
+        self.add_parameter(
+            "Read_Pressure",
+            read_command="{self.ins_add}RD",
+            set_command="",
+            dummy_return="",
         )
 
-        # These settings return valid values even in dummy mode or while offline.
-        # That's why we check for self.online after these if-statements
+        self.add_parameter(
+            "Read_Emission",
+            read_command="{self.ins_add}RE",
+            set_command="",
+            dummy_return="",
+        )
 
-        if not self.online:
-            logger.info("GrandvillePhillips")
-            return f"{self.ID}-Offline"
+        self.add_parameter(
+            "Read_Filament",
+            read_command="{self.ins_add}RF",
+            set_command="",
+            dummy_return="",
+        )
 
-        if self.dummy:
-            return f"{setting}={value}"
-
-        if setting_X == "RD":
-            self.query(f"{self.ins_add}RD")
-
-        if setting_X == "CHX_CHANGE_NAME":
-            if value_original == 0:
-                self.query(f"INNAME {channel} {channel}")
-                return f"{channel} is named as default"
-            else:
-                self.query(f"INCRV {channel} {value}")
-                return f"{channel} is named {value}"
-
-    def command(self, cmd: str):
-        """
-        Executes an action specified by 'cmd'.
-
-        Parameters
-        ----------
-        cmd
-            Name of command to execute
-
-        Notes
-        -----
-        CHX_READ_PRS:  Read the temperature for channel [A, B, C1-C5, D1-D5], 0 is all online channels
-        """
-
-        if self.dummy:
-            return f"{cmd[:-1]}={np.random.uniform()*100}"
-
-        channel, cmd_X = get_channel_from_command(cmd)
-        print("debug", cmd, cmd_X, channel)
-
-        if cmd_X == "CHX_READ_PRS?":
-
-            prs = self.query(f"{self.ins_add}RD")
-            self.write(f"Pressure: {prs}")
-
-            return prs
-
-        if cmd_X == "CHX_READ_REC?":
-
-            REC = self.query(f"{self.ins_add}RE")
-            self.write(f"Pressure: {REC}")
-
-            return REC
-
-    def read_status(self, channel):
-        """
-        Read all settings of the instrument
-
-        Parameters
-        ----------
-        setting : str
-            Setting to change
-        """
-        if self.dummy:
-            outputs = [1 + 128 + 1024, 128, 1, 1024]
-            value = random.choice(outputs)
-        else:
-            status = {}
-            status["PRS"] = self.query(f"{self.ins_add}RD")
-            status["STS"] = self.query(f"{self.ins_add}IGS")
-            status["Fliment"] = self.query(f"{self.ins_add}RF")
-
-        return status
+        self.add_parameter(
+            "Read_Unit",
+            read_command="{self.ins_add}SU",
+            set_command="",
+            dummy_return="",
+        )
