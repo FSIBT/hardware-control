@@ -50,20 +50,82 @@ class SRS_CIS200(Instrument):
 
         self.check_connection_commands = ["ID?", "IN0"]
 
-        self.add_command("SINGLE_TRIGGER", "SS")
+        self.add_command("CA", "CL")
+
+        # Setting the ionizer parameters
         self.add_parameter(
-            "TRIGGER_MODE",
-            read_command="TM",
-            set_command="TM{}",
+            "Filament_Emission",
+            read_command="FL?",
+            set_command="FL{}",
+            dummy_return="",
+        )
+        self.add_parameter(
+            "Extract_Voltage",
+            read_command="VF?",
+            set_command="VF{}",
+            dummy_return="",
+        )
+        self.add_parameter(
+            "Electron_Energy",
+            read_command="EE?",
+            set_command="EE{}",
+            dummy_return="",
+        )
+        self.add_parameter(
+            "Ion_Energy",
+            read_command="IE?",
+            set_command="IE{}",
             dummy_return="",
         )
 
+        # Setting up the Detectors
         self.add_parameter(
-            "PULSES_PER_BURST", read_command="BC", set_command="BC{}", dummy_return=""
+            "EM_voltage",
+            read_command="HV?",
+            set_command="HV{}",
+            dummy_return="",
+        )
+
+        # Setting up the Scans
+        self.add_parameter(
+            "Initial_Mass",
+            read_command="",
+            set_command="MI{}",
+            dummy_return="",
         )
         self.add_parameter(
-            "TRIGGER_LEVEL", read_command="TL", set_command="TL{}", dummy_return=""
+            "Final_Mass",
+            read_command="",
+            set_command="MF{}",
+            dummy_return="",
         )
         self.add_parameter(
-            "TRIGGER_PERIOD", read_command="BP", set_command="BP{}", dummy_return=""
-        )
+            "Scan_Rate",
+            read_command="",
+            set_command="NF{}",
+            dummy_return="",
+        )  # Noise floor too
+        self.add_parameter(
+            "Scan_Steps",
+            read_command="SA?",
+            set_command="SA{}",
+            dummy_return="",
+        )  # followed by the steps/amu
+        self.add_parameter(
+            "Analog_Scans",
+            read_command="",
+            set_command="SC{}",
+            dummy_return="",
+        )  # followed by the scan times
+        self.add_parameter(
+            "Histogram_Scans",
+            read_command="",
+            set_command="HS{}",
+            dummy_return="",
+        )  # followed by the Scan times
+        self.add_parameter(
+            "Single_Measurement",
+            read_command="",
+            set_command="MR{}",
+            dummy_return="",
+        )  # followed by the mass of the measurement

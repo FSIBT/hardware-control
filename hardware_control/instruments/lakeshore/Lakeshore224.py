@@ -30,15 +30,18 @@ class Lakeshore_224(Instrument):
     """
 
     def __init__(
-        self, connection_addr: str,
+        self,
+        connection_addr: str,
     ):
         super().__init__(
-            instrument_name="Lakeshore_224",
-            connection_addr=connection_addr,
+0            connection_addr=connection_addr,
             default_port=7777,
         )
+
+        self.manufacturer = "Lakeshore"
+        self.model = "224"
+
         self.num_channels = 12
-        self.check_connection_commands = "*IDN?"
         self.active_channels = [
             "A",
             "B",
@@ -54,8 +57,8 @@ class Lakeshore_224(Instrument):
             "D5",
         ]
         self.termination = "\r\n"
-        # self.read_termination = '\r\n'
-        # self.write_termination ='\n'
+
+        self.check_connection_commands = ["*IDN?"]
 
     def update_setting(self, setting: str, value):
         """
