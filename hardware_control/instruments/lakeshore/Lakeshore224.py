@@ -34,7 +34,7 @@ class Lakeshore_224(Instrument):
         connection_addr: str,
     ):
         super().__init__(
-0            connection_addr=connection_addr,
+            connection_addr=connection_addr,
             default_port=7777,
         )
 
