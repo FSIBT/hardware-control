@@ -42,34 +42,34 @@ class GP_356(Instrument):
         self.termination = "\r"
 
         self.add_parameter(
-            "Read_State",
+            "READ_STATE",
             read_command="{self.ins_add}IGS",
             set_command="",
             dummy_return="",
         )
         self.add_parameter(
-            "Read_Pressure",
+            "READ_PRESSURE",
             read_command="{self.ins_add}RD",
             set_command="",
             dummy_return="",
         )
 
         self.add_parameter(
-            "Read_Emission",
+            "READ_EMISSION",
             read_command="{self.ins_add}RE",
             set_command="",
             dummy_return="",
         )
 
         self.add_parameter(
-            "Read_Filament",
+            "READ_FILAMENT",
             read_command="{self.ins_add}RF",
             set_command="",
             dummy_return="",
         )
 
         self.add_parameter(
-            "Read_Unit",
+            "READ_UNIT",
             read_command="{self.ins_add}SU",
             set_command="",
             dummy_return="",
