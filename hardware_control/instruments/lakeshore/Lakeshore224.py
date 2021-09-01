@@ -60,107 +60,33 @@ class Lakeshore_224(Instrument):
 
         self.check_connection_commands = ["*IDN?"]
 
-    def update_setting(self, setting: str, value):
-        """
-        Changes a specified setting to the specied value
+        for channel in self.chan_nums:
+            self.add_command("SET_CH{channel}_OFF", f"INCRV {channel} 0")
+            self.add_command(f"READ_CH{channel}_STATUS", self.read_status(channel))
 
-        Parameters
-        ----------
-        setting : str
-            Setting to change
+            self.add_parameter(
+                f"CH{channel}_CURVE",
+                read_command=f"INCRV? {channel}",
+                set_command=f"INCRV {channel} {{}}",
+                post_hooks=[lambda value: value if value != "00" else None],
+                dummy_return="",
+            )
 
-        Notes
-        --------
-        Available settings (<X> indicates a number, values in parethesis show acceptable values):
+            self.add_parameter(
+                f"CH{channel}_READ_TEMP?",
+                read_command=f"KRDG? {channel}",
+                set_command="",
+                post_hooks=[lambda value: value if value != "00" else None],
+                dummy_return="",
+            )
 
-        * CH<X>_CHANGE_CURVE: select calibration curve for channel X
-        """
-
-        channel, setting_X = get_channel_from_command(setting)
-        value_original = value
-        value = ensure_float(value)
-
-        logger.info(
-            f"Lakeshore u_s received {setting}, {value} and interpreted chan={channel}, setting_X={setting_X}, value={value}"
-        )
-
-        # These settings return valid values even in dummy mode or while offline.
-        # That's why we check for self.online after these if-statements
-
-        if not self.online:
-            logger.info("Lakeshore")
-            return f"{self.ID}-Offline"
-
-        if self.dummy:
-            return f"{setting}={value}"
-
-        if setting_X == "CHX_CHANGE_CURVE":
-            if value_original == 0:
-                self.query(f"INCRV {channel} 0")
-                self.active_channels.remove(channel)
-                return f"{channel} is OFF"
-            else:
-                self.query(f"INCRV {channel} {value}")
-                self.active_channels.append(channel)
-
-                if self.read_status()["CURVE"] == value:
-                    # remove dupilicate item in channal list
-                    self.active_channels = list(set(self.active_channels))
-                    return f"{channel}={value}"
-
-                elif self.read_status()["CURVE"] == "00":
-                    # remove this channel from active channel list
-                    self.active_channels.remove(channel)
-                    raise Exception(f"{channel} is not using any curve")
-
-                else:
-                    raise Exception(f"setting curve {value} to {channel} is failure")
-
-        if setting_X == "CHX_CHANGE_NAME":
-            if value_original == 0:
-                self.query(f"INNAME {channel} {channel}")
-                return f"{channel} is named as default"
-            else:
-                self.query(f"INCRV {channel} {value}")
-                return f"{channel} is named {value}"
-
-    def command(self, cmd: str):
-        """
-        Executes an action specified by 'cmd'.
-
-        Parameters
-        ----------
-        cmd
-            Name of command to execute
-
-        Notes
-        -----
-        CHX_READ_TEMP:  Read the temperature for channel [A, B, C1-C5, D1-D5], 0 is all online channels
-        """
-
-        if self.dummy:
-            return f"{cmd[:-1]}={np.random.uniform()*100}"
-
-        channel, cmd_X = get_channel_from_command(cmd)
-        print("debug", cmd, cmd_X, channel)
-
-        if cmd_X == "CHX_READ_TEMP?":
-            if channel == 0:
-                temps = {}
-                for chan in self.active_channels:
-                    temp = self.query(f"KRDG? {chan}")
-                    temps[f"{chan}"] = f"{temp}"
-                return temps
-
-            elif channel in self.active_channels:
-                temp = self.query(f"KRDG? {channel}")
-                print("debug return", f"{cmd}={temp}")
-                return f"{cmd[:-1]}={temp}"
-
-            else:
-                raise Exception(f"Sorry, channel {channel} is Offline")
-
-            return temps
+            # self.add_parameter(
+            #     f"CH{channel}_NAME",
+            #     read_command=f"INNAME? {channel}",
+            #     set_command=f"INCRV {channel} {{}}",
+            #     post_hooks=[lambda value: channel if value == 0 else value],
+            #     dummy_return="",
+            # )
 
     def read_status(self, channel):
         """

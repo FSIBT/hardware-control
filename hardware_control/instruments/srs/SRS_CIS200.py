@@ -50,7 +50,8 @@ class SRS_CIS200(Instrument):
 
         self.check_connection_commands = ["ID?", "IN0"]
 
-        self.add_command("CA", "CL")
+        self.add_command("Calibration_All", "CA")
+        self.add_command("Calibration", "CL")
 
         # Setting the ionizer parameters
         self.add_parameter(
