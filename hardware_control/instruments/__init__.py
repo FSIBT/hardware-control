@@ -11,6 +11,7 @@ from .rigol import Rigol_DP832
 from .rigol import Rigol_DS1000Z
 from .siglent import Siglent_SDG
 from .srs import SRS_DG535
+from .srs import SRS_CIS200
 from .tdkl import TDKL_GenH
 from .template import Device_Backend
 from .zmq import ZMQ_Oscilloscope
