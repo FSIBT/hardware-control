@@ -14,7 +14,7 @@ from PyQt5.QtWidgets import (
 )
 
 from ..widgets import setButtonState, load_icon
-from ..widgets import QControl, QControlCombo
+from ..widgets.hc_widgets import HCLineEdit, HCComboBox
 
 
 logger = logging.getLogger(__name__)
@@ -60,10 +60,10 @@ class FunctionGenerator(QGroupBox):
         self.send_state()
 
     def setup_UI(self):
-        self.frequency = QControl(self, "CH1_FREQUENCY", "CH1 Frequency (MHz)")
-        self.amplitude = QControl(self, "CH1_AMPLITUDE", "CH1 Amplitude (Vpp)")
-        self.offset = QControl(self, "CH1_OFFSET", "CH1 Offset (V)")
-        self.waveform = QControlCombo(
+        self.frequency = HCLineEdit(self, "CH1_FREQUENCY", "CH1 Frequency (MHz)")
+        self.amplitude = HCLineEdit(self, "CH1_AMPLITUDE", "CH1 Amplitude (Vpp)")
+        self.offset = HCLineEdit(self, "CH1_OFFSET", "CH1 Offset (V)")
+        self.waveform = HCComboBox(
             self,
             "CH1_WAVEFORM",
             "CH1 Waveform",
@@ -79,58 +79,58 @@ class FunctionGenerator(QGroupBox):
                 "DC",
             ],
         )
-        self.burst_mode = QControlCombo(
+        self.burst_mode = HCComboBox(
             self,
             "CH1_BURS_MODE",
             "CH1 Burst Mode",
             ["TRIG", "GAT"],
         )
-        self.burst_enable = QControlCombo(
+        self.burst_enable = HCComboBox(
             self,
             "CH1_BURS_STAT",
             "CH1 Burst Enable/State",
             ["1", "0"],
         )
-        self.num_pulse = QControl(
+        self.num_pulse = HCLineEdit(
             self,
             "CH1_BURS_NCYC",
             "CH1 Num Burst Pulses",
         )
-        self.burst_period = QControl(
+        self.burst_period = HCLineEdit(
             self,
             "CH1_BURS_PER",
             "CH1 Burst Period (s)",
         )
-        self.enable = QControlCombo(
+        self.enable = HCComboBox(
             self,
             "CH1_ENABLE",
             "CH1 Enable Output On/Off",
             ["True", "False"],
         )
-        self.trigger = QControlCombo(
+        self.trigger = HCComboBox(
             self,
             "CH1_TRIGGER_CHANNEL",
             "CH1 Trigger Channel",
             ["EXT", "IMM", "TIM", "BUS"],
         )
-        self.delay = QControl(self, "CH1_TRIGGER_DELAY", "CH1 Trigger Delay (s)")
-        self.impedance = QControlCombo(
+        self.delay = HCLineEdit(self, "CH1_TRIGGER_DELAY", "CH1 Trigger Delay (s)")
+        self.impedance = HCComboBox(
             self,
             "CH1_IMPEDANCE",
             "CH1 Impedance",
             ["HiZ", "50 (OHM)"],
         )
-        self.polarity = QControlCombo(
+        self.polarity = HCComboBox(
             self,
             "CH1_POLARITY",
             "CH1 Polarity",
             ["NORM", "INV"],
         )
         if self.num_channels >= 2:
-            self.frequency2 = QControl(self, "CH2_FREQUENCY", "CH2 Frequency (MHz)")
-            self.amplitude2 = QControl(self, "CH2_AMPLITUDE", "CH2 Amplitude (Vpp)")
-            self.offset2 = QControl(self, "CH2_OFFSET", "CH2 Offset (V)")
-            self.waveform2 = QControlCombo(
+            self.frequency2 = HCLineEdit(self, "CH2_FREQUENCY", "CH2 Frequency (MHz)")
+            self.amplitude2 = HCLineEdit(self, "CH2_AMPLITUDE", "CH2 Amplitude (Vpp)")
+            self.offset2 = HCLineEdit(self, "CH2_OFFSET", "CH2 Offset (V)")
+            self.waveform2 = HCComboBox(
                 self,
                 "CH2_WAVEFORM",
                 "CH2 Waveform",
@@ -146,61 +146,61 @@ class FunctionGenerator(QGroupBox):
                     "DC",
                 ],
             )
-            self.burst_mode2 = QControlCombo(
+            self.burst_mode2 = HCComboBox(
                 self,
                 "CH2_BURS_MODE",
                 "CH2 Burst Mode",
                 ["TRIG", "GAT"],
             )
-            self.burst_enable2 = QControlCombo(
+            self.burst_enable2 = HCComboBox(
                 self,
                 "CH2_BURS_STAT",
                 "CH2 Burst Enable/State",
                 ["1", "0"],
             )
-            self.num_pulse2 = QControl(
+            self.num_pulse2 = HCLineEdit(
                 self,
                 "CH2_BURS_NCYC",
                 "CH2 Num Burst Pulses",
             )
-            self.burst_period2 = QControl(
+            self.burst_period2 = HCLineEdit(
                 self,
                 "CH2_BURS_PER",
                 "CH2 Burst Period (s)",
             )
-            self.enable2 = QControlCombo(
+            self.enable2 = HCComboBox(
                 self,
                 "CH2_ENABLE",
                 "CH2 Enable Output On/Off",
                 ["True", "False"],
             )
-            self.trigger2 = QControlCombo(
+            self.trigger2 = HCComboBox(
                 self,
                 "CH2_TRIGGER_CHANNEL",
                 "CH2 Trigger Channel",
                 ["EXT", "IMM", "TIM", "BUS"],
             )
-            self.delay2 = QControl(self, "CH2_TRIGGER_DELAY", "CH2 Trigger Delay (s)")
-            self.impedance2 = QControlCombo(
+            self.delay2 = HCLineEdit(self, "CH2_TRIGGER_DELAY", "CH2 Trigger Delay (s)")
+            self.impedance2 = HCComboBox(
                 self,
                 "CH2_IMPEDANCE",
                 "CH2 Impedance",
                 ["HiZ", "50 (OHM)"],
             )
-            self.polarity2 = QControlCombo(
+            self.polarity2 = HCComboBox(
                 self,
                 "CH2_POLARITY",
                 "CH2 Polarity",
                 ["NORM", "INV"],
             )
-            self.track2 = QControlCombo(
+            self.track2 = HCComboBox(
                 self,
                 "CH2_TRACK",
                 "CH1 Track CH2",
                 ["OFF", "ON", "INV"],
             )
             self.track2.pre_update_hook.append(self.set_tracking_hook)
-            self.track1 = QControlCombo(
+            self.track1 = HCComboBox(
                 self,
                 "CH1_TRACK",
                 "CH2 Track CH1",

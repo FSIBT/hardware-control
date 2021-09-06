@@ -39,7 +39,7 @@ class FunctionRunnerTool(QGroupBox):
         app :
             The main app
         name : str
-            Name of the QGrouBox
+            Name of the QGroupBox
         button_label : str
             Label of the Pushbutton that will trigger the function call
         call_function : Callable

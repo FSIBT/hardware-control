@@ -15,7 +15,7 @@ from PyQt5.QtWidgets import (
 )
 
 from ...utility import remove_end_carriage_return
-from ..widgets import setButtonState, load_icon, QControl, QIndicator
+from ..widgets import setButtonState, load_icon, HCLineEdit, HCLabel
 
 
 logger = logging.getLogger(__name__)
@@ -322,27 +322,27 @@ class PowerSupplyChannel(QWidget):
             self.channel_label.setAlignment(align_left_center)
 
         # ****** DEFINE READOUTS
-        self.Voltage_set = QIndicator(
+        self.Voltage_set = HCLabel(
             self.main_widget, "Vset", unit="V", label_align="right", remote=False
         )
-        self.Current_set = QIndicator(
+        self.Current_set = HCLabel(
             self.main_widget, "Iset", unit="A", label_align="right", remote=False
         )
-        self.Voltage_out = QIndicator(
+        self.Voltage_out = HCLabel(
             self.main_widget, "Vout", unit="V", label_align="right", remote=False
         )
-        self.Current_out = QIndicator(
+        self.Current_out = HCLabel(
             self.main_widget, "Iout", unit="A", label_align="right", remote=False
         )
-        self.Power_out = QIndicator(
+        self.Power_out = HCLabel(
             self.main_widget, "Pout", unit="W", label_align="right", remote=False
         )
 
         if self.show_VI_limits:
-            self.Voltage_max = QIndicator(
+            self.Voltage_max = HCLabel(
                 self.main_widget, "Vmax", unit="V", label_align="right", remote=False
             )
-            self.Current_max = QIndicator(
+            self.Current_max = HCLabel(
                 self.main_widget, "Imax", unit="A", label_align="right", remote=False
             )
 
@@ -369,14 +369,14 @@ class PowerSupplyChannel(QWidget):
 
         # ****** DEFINE CONTROLS
         #
-        self.Voltage = QControl(
+        self.Voltage = HCLineEdit(
             self.main_widget,
             f"CH{self.channel}_V_SET",
             "Voltage (V)",
             label_align="right",
         )
 
-        self.Current = QControl(
+        self.Current = HCLineEdit(
             self.main_widget,
             f"CH{self.channel}_I_SET",
             "Current (A)",

@@ -16,11 +16,10 @@ from PyQt5.QtWidgets import (
     QLineEdit,
     QPushButton,
     QSizePolicy,
-    QGroupBox,
 )
 
 from ...utility import remove_end_carriage_return
-from ..widgets import load_icon, setButtonState, QControl, QIndicator
+from ..widgets import load_icon, setButtonState, HCLineEdit, HCLabel
 
 
 logger = logging.getLogger(__name__)
@@ -246,7 +245,7 @@ class AnalogInputChannel(QGroupBox):
             label = ""
         self.units = units
 
-        self.input = QIndicator(self.control, label, units, use_prefix=use_prefix)
+        self.input = HCLabel(self.control, label, units, use_prefix=use_prefix)
 
         self.main_layout = QGridLayout()
         self.main_layout.addWidget(self.input.label, 0, 0)
@@ -297,7 +296,7 @@ class AnalogOutputChannel(QGroupBox):
             10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
         )
 
-        self.edit = QControl(
+        self.edit = HCLineEdit(
             self.control,
             f"CH{self.channel}_ANALOG_WRITE",
             label,

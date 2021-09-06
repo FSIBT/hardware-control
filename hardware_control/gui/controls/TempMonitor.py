@@ -16,7 +16,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import QTimer
 
-from ..widgets import load_icon, QControl, QControlCombo, QIndicator
+from ..widgets import load_icon, HCLineEdit, HCLabel
 
 logger = logging.getLogger(__name__)
 
@@ -55,53 +55,53 @@ class TempMonitor(QGroupBox):
         self.settings = self.default_state()
         # Create GUI
 
-        self.TempA = QIndicator(
+        self.TempA = HCLabel(
             self,
             "A_TEMP",
             unit="K",
             use_prefix=False,
             label_align="right",
         )
-        self.Acurve = QControl(
+        self.Acurve = HCLineEdit(
             self,
             "CHA_CHANGE_CURVE",
             label="A_CURVE",
             label_align="right",
         )
-        self.TempB = QIndicator(
+        self.TempB = HCLabel(
             self,
             "B_TEMP",
             unit="K",
             use_prefix=False,
             label_align="right",
         )
-        self.Bcurve = QControl(
+        self.Bcurve = HCLineEdit(
             self,
             "CHB_CHANGE_CURVE",
             label="B_CURVE:",
             label_align="right",
         )
-        self.TempC1 = QIndicator(
+        self.TempC1 = HCLabel(
             self,
             "C1_TEMP",
             unit="K",
             use_prefix=False,
             label_align="right",
         )
-        self.C1curve = QControl(
+        self.C1curve = HCLineEdit(
             self,
             "CHC1_CHANGE_CURVE",
             label="C1_CURVE",
             label_align="right",
         )
-        self.TempD1 = QIndicator(
+        self.TempD1 = HCLabel(
             self,
             "D1_TEMP",
             unit="K",
             use_prefix=False,
             label_align="right",
         )
-        self.D1curve = QControl(
+        self.D1curve = HCLineEdit(
             self,
             "CHD1_CHANGE_CURVE",
             label="D1_CURVE",

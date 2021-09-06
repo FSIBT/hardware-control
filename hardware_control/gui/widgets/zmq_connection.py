@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import (
 )
 
 from ...base import Instrument
-from .utility import load_icon
+from .hc_widgets import load_icon
 
 logger = logging.getLogger(__name__)
 
