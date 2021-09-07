@@ -4,12 +4,8 @@ from PyQt5 import QtCore
 from PyQt5.QtGui import QIcon, QFont, QDoubleValidator
 from PyQt5.QtWidgets import (
     QGroupBox,
-    QPushButton,
     QLabel,
     QGridLayout,
-    QComboBox,
-    QSpinBox,
-    QDoubleSpinBox,
     QWidget,
 )
 

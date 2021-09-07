@@ -18,7 +18,7 @@ from PyQt5.QtWidgets import (
 )
 
 from ...utility import get_channel_from_command
-from ..widgets import setButtonState, load_icon, QOnOffButton
+from ..widgets import setButtonState, load_icon, HCOnOffButton
 
 
 logger = logging.getLogger(__name__)

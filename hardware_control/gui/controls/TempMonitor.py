@@ -1,15 +1,18 @@
+from hardware_control import instruments
 import logging
 
 from PyQt5 import QtCore
 from PyQt5.QtGui import QIcon, QFont, QDoubleValidator
 from PyQt5.QtWidgets import (
     QGroupBox,
+    QHBoxLayout,
     QPushButton,
     QLabel,
     QGridLayout,
     QComboBox,
     QSpinBox,
     QDoubleSpinBox,
+    QVBoxLayout,
     QWidget,
     QLineEdit,
     QLabel,
@@ -29,95 +32,52 @@ class TempMonitor(QGroupBox):
     def __init__(
         self,
         app,
-        backend,
-        name: str = "Lakeshore 224 Temperature Monitor",
-        lock_until_sync=False,
-        channels: int = 4,
+        instrument: str,
+        channel_list,
     ):
 
-        super().__init__(app, name, backend, lock_until_sync)
+        super().__init__(instrument)
+        self.app = app
+        self.instrument = instrument
 
-        self.channels = channels
-        self.channel_list = [
-            "A",
-            "B",
-            "C1",
-            "C2",
-            "C3",
-            "C4",
-            "C5",
-            "D1",
-            "D2",
-            "D3",
-            "D4",
-            "D5",
-        ]
-        self.settings = self.default_state()
-        # Create GUI
+        self.channel_list = channel_list
 
-        self.TempA = HCLabel(
-            self,
-            "A_TEMP",
-            unit="K",
-            use_prefix=False,
-            label_align="right",
-        )
-        self.Acurve = HCLineEdit(
-            self,
-            "CHA_CHANGE_CURVE",
-            label="A_CURVE",
-            label_align="right",
-        )
-        self.TempB = HCLabel(
-            self,
-            "B_TEMP",
-            unit="K",
-            use_prefix=False,
-            label_align="right",
-        )
-        self.Bcurve = HCLineEdit(
-            self,
-            "CHB_CHANGE_CURVE",
-            label="B_CURVE:",
-            label_align="right",
-        )
-        self.TempC1 = HCLabel(
-            self,
-            "C1_TEMP",
-            unit="K",
-            use_prefix=False,
-            label_align="right",
-        )
-        self.C1curve = HCLineEdit(
-            self,
-            "CHC1_CHANGE_CURVE",
-            label="C1_CURVE",
-            label_align="right",
-        )
-        self.TempD1 = HCLabel(
-            self,
-            "D1_TEMP",
-            unit="K",
-            use_prefix=False,
-            label_align="right",
-        )
-        self.D1curve = HCLineEdit(
-            self,
-            "CHD1_CHANGE_CURVE",
-            label="D1_CURVE",
-            label_align="right",
-        )
-        self.autolayout_grid()
+        self.widgets = []
+        for channel in self.channel_list:
+            temperature = HCLabel(
+                self.app,
+                self.instrument,
+                parameter=f"{channel}_TEMP",
+                label=f"{channel} temperature",
+                unit="K",
+                use_prefix=False,
+                label_align="right",
+            )
+            curve = HCLineEdit(
+                self.app,
+                self.instrument, 
+                parameter=f"CH{channel}_CHANGE_CURVE",
+                label=f"{channel}_CURVE",
+                label_align="right",
+            )
+            self.widgets.append(temperature)
+            self.widgets.append(curve)
+
+        self.vbox = QVBoxLayout()
+        for widget in self.widgets:
+            tmp = QHBoxLayout()
+            tmp.addWidget(widget.label)
+            tmp.addWidget(widget)
+            self.vbox.addLayout(tmp)
+        
+        self.setLayout(self.vbox)
 
         # Create timer to query voltages
         self.readout_timer = QTimer(self)
         self.readout_timer.timeout.connect(self.update_readout)
-        self.readout_timer.start(self.globalRefreshRate)
+        self.readout_timer.start(1000)
 
         logger.debug("Initalized")
-
-        self.values["CHA_READ_TEMP"] = "-"
-        self.values["CHB_READ_TEMP"] = "-"
 
     def close(self):
         self.readout_timer.stop()
@@ -128,28 +88,5 @@ class TempMonitor(QGroupBox):
         recent readout data from the inbox and pushes it to the GUI"""
 
         # Request updated readout data
-        self.command("CHA_READ_TEMP?")
-        self.command("CHB_READ_TEMP?")
-        self.command("CHC1_READ_TEMP?")
-        self.command("CHD1_READ_TEMP?")
-
-        print("debug", self.values, flush=True)
-
-        # Update labels
-        self.TempA.setText(self.values.get("CHA_READ_TEMP"))
-        self.TempB.setText(self.values.get("CHB_READ_TEMP"))
-        self.TempC1.setText(self.values.get("CHC1_READ_TEMP"))
-        self.TempD1.setText(self.values.get("CHD1_READ_TEMP"))
-
-    def settings_to_UI(self):
-        print("Need to Add?")
-
-    def default_state(self):
-        """Create the defualt state variable"""
-
-        return {
-            "CHA_CHANGE_CURVE": "06",
-            "CHB_CHANGE_CURVE": "21",
-            "CHC1_CHANGE_CURVE": "32",
-            "CHD1_CHANGE_CURVE": "20",
-        }
+        for parameter in ["CHA_READ_TEMP", "CHB_READ_TEMP","CHC1_READ_TEMP", "CHD1_READ_TEMP"]:
+            self.app.update_instrument_parameter(self.instrument, parameter)

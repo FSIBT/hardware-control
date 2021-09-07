@@ -17,8 +17,7 @@ import sys
 from PyQt5.QtWidgets import QMainWindow, QWidget, QGridLayout
 from docopt import docopt
 
-import hardware_control.backends as hc_back
-import hardware_control.gui as hc
+import hardware_control as hc
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
@@ -27,10 +26,10 @@ logger = logging.getLogger(__name__)
 hc.setup_logging(logger, commands, "hardware_control.log")
 
 
-class TemperatureMonitor(QMainWindow):
+class TemperatureMonitor(hc.base.MainWindow):
     def __init__(self, app):
 
-        super().__init__()
+        super().__init__(app)
 
         self.app = app
 
@@ -41,13 +40,13 @@ class TemperatureMonitor(QMainWindow):
         self.main_widget = QWidget(self)
 
         # create a backend and a GUI control for the backend
-        self.temp_backend = hc_back.Lakeshore_224("TCPIP::192.168.0.12::7777::SOCKET")
-        self.temp_wdgt = hc.TempMonitor(app, self.temp_backend)
+        self.app.add_instrument(hc.instruments.Lakeshore_224("lakeshore", "TCPIP::192.168.0.12::7777::SOCKET"))
+        self.temp_wdgt = hc.gui.TempMonitor(app, instrument="lakeshore", channel_list=["A", "B", "C1", "D1"])
 
         # Create data_sets
         self.app.data_sets["Temps"] = hc.Dataset("Temps", self.app)
         self.app.data_sets["Temps"].add_instrument(self.temp_wdgt)
-        self.app.data_sets["Temps"].start_asynch(3)
+        self.app.data_sets["Temps"].start_updates(3)
         self.app.data_sets["Temps"].start_autosave()
 
         # Add control to the main Widget
@@ -55,7 +54,7 @@ class TemperatureMonitor(QMainWindow):
         self.grid.addWidget(self.temp_wdgt, 1, 0)
         self.main_widget.setLayout(self.grid)
 
-        self.plot_wdgt = hc.PlotTool(app, "Temperature Plot")
+        self.plot_wdgt = hc.gui.PlotTool(app, "Temperature Plot")
         self.plot_wdgt.set_dataset("Temps")  # Could add
         self.grid.addWidget(self.plot_wdgt, 0, 0)
 
@@ -76,15 +75,12 @@ class TemperatureMonitor(QMainWindow):
         self.show()
 
     def close(self):
-        self.temp_gui.close()
+        self.app.close()
 
 
-def main():
+if __name__ =="__main__":
     app = hc.App(dummy=dummy)
     app.print_close_info = True
     ex = TemperatureMonitor(app)
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())
-
-
-main()

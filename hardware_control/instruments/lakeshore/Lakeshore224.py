@@ -31,9 +31,11 @@ class Lakeshore_224(Instrument):
 
     def __init__(
         self,
+        name,
         connection_addr: str,
     ):
         super().__init__(
+            instrument_name=name,
             connection_addr=connection_addr,
             default_port=7777,
         )
@@ -60,7 +62,7 @@ class Lakeshore_224(Instrument):
 
         self.check_connection_commands = ["*IDN?"]
 
-        for channel in self.chan_nums:
+        for channel in self.active_channels:
             self.add_command("SET_CH{channel}_OFF", f"INCRV {channel} 0")
             self.add_command(f"READ_CH{channel}_STATUS", self.read_status(channel))
 
@@ -73,7 +75,7 @@ class Lakeshore_224(Instrument):
             )
 
             self.add_parameter(
-                f"CH{channel}_READ_TEMP?",
+                f"CH{channel}_READ_TEMP",
                 read_command=f"KRDG? {channel}",
                 set_command="",
                 post_hooks=[lambda value: value if value != "00" else None],
