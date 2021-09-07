@@ -196,7 +196,6 @@ class Instrument:
            True if the instrument is reachable or no test have been done, False if not.
 
         """
-
         if not self.online:
             return False
 
@@ -545,21 +544,24 @@ class Instrument:
                 self.online = False
                 logger.debug(f"\t({self.name}) ERROR connecting with modbus.")
                 logger.debug(f"{self.name} is offline")
-
         # If connection purportedly successful, verify connection
         if self.online:
             if not self.check_connection():
                 self.online = False
-
+        
         return self.online
 
     def config_serial(
         self,
-        baud_rate=None,
-        stop_bits=None,
-        data_bits=None,
-        parity=None,
+        baud_rate: int=None,
+        stop_bits: int=None,
+        data_bits:int =None,
+        parity:int=None,
     ):
+        if self.device is None:
+            logger.error(f"No visa device for '{self.name}'")
+            self.online = False
+            return
         if self.connection_type == Instrument.VISA:
             self.device.encoding = "ascii"
             if baud_rate:
