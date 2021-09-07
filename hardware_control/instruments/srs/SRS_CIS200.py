@@ -32,48 +32,49 @@ class SRS_CIS200(Instrument):
         self.model = "CIS200"
 
         # Connection Specific Setting
-        # self.config_serial(baud_rate=28800, stop_bits=20,data_bits=8,parity=0)
-        self.baud_rate = 28800
-        self.stop_bits = 20
-        self.data_bits = 8
-        self.parity = 0
-
+        self.encoding = "ascii"
+        
         # set the terminator
         self.read_termination = "\n\r"
         self.write_termination = "\r"
 
-        self.command_str = ""  # string used to trigger
-        #   Device Specific Values
+        self.try_connect()
+        self.config_serial(baud_rate=28800, stop_bits=20,data_bits=8,parity=0)
 
-        self.channels_relative = {}
-        self.channels_ampl = {}
-
+        # a bit of hack, this seems to work, but there seems to be some issue with already buffered data or something like this
+        # Without it, the first query always got a timedout exception. For some reason adding the \r helps here, although we do
+        # get a warning that the \r is already added by the driver.
+        for i in range(3):
+            try:
+                self.device.query('ID?\r')
+            except:
+                pass
         self.check_connection_commands = ["ID?", "IN0"]
 
-        self.add_command("Calibration_All", "CA")
-        self.add_command("Calibration", "CL")
+        self.add_command("CALIBRATION_ALL", "CA")
+        self.add_command("CALIBRATION", "CL")
 
         # Setting the ionizer parameters
         self.add_parameter(
-            "Filament_Emission",
+            "FILAMENT_EMISSION",
             read_command="FL?",
             set_command="FL{}",
             dummy_return="",
         )
         self.add_parameter(
-            "Extract_Voltage",
+            "EXTRACT_VOLTAGE",
             read_command="VF?",
             set_command="VF{}",
             dummy_return="",
         )
         self.add_parameter(
-            "Electron_Energy",
+            "ELECTRON_ENERGY",
             read_command="EE?",
             set_command="EE{}",
             dummy_return="",
         )
         self.add_parameter(
-            "Ion_Energy",
+            "ION_ENERGY",
             read_command="IE?",
             set_command="IE{}",
             dummy_return="",
@@ -81,7 +82,7 @@ class SRS_CIS200(Instrument):
 
         # Setting up the Detectors
         self.add_parameter(
-            "EM_voltage",
+            "EM_VOLTAGE",
             read_command="HV?",
             set_command="HV{}",
             dummy_return="",
@@ -89,43 +90,43 @@ class SRS_CIS200(Instrument):
 
         # Setting up the Scans
         self.add_parameter(
-            "Initial_Mass",
+            "INITIAL_MASS",
             read_command="",
             set_command="MI{}",
             dummy_return="",
         )
         self.add_parameter(
-            "Final_Mass",
+            "FINAL_MASS",
             read_command="",
             set_command="MF{}",
             dummy_return="",
         )
         self.add_parameter(
-            "Scan_Rate",
+            "SCAN_RATE",
             read_command="",
             set_command="NF{}",
             dummy_return="",
         )  # Noise floor too
         self.add_parameter(
-            "Scan_Steps",
+            "SCAN_STEPS",
             read_command="SA?",
             set_command="SA{}",
             dummy_return="",
         )  # followed by the steps/amu
         self.add_parameter(
-            "Analog_Scans",
+            "ANALOG_SCANS",
             read_command="",
             set_command="SC{}",
             dummy_return="",
         )  # followed by the scan times
         self.add_parameter(
-            "Histogram_Scans",
+            "HISTOGRAM_SCANS",
             read_command="",
             set_command="HS{}",
             dummy_return="",
         )  # followed by the Scan times
         self.add_parameter(
-            "Single_Measurement",
+            "SINGLE_MEASUREMENT",
             read_command="",
             set_command="MR{}",
             dummy_return="",
