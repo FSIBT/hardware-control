@@ -133,7 +133,7 @@ class App(QApplication):
     def add_instrument(self, instrument: Instrument):
 
         if instrument.name in self._data:
-            logging.error(
+            logger.error(
                 f"Instrument {instrument.name} already exists... instruments names need to be unique"
             )
             return
@@ -186,7 +186,7 @@ class App(QApplication):
 
     def add_remote_instrument(self, name, ipaddress, port):
         if name in self._data:
-            logging.error(
+            logger.error(
                 f"Instrument {instrument.name} already exists... instruments names need to be unique"
             )
             return
@@ -239,10 +239,11 @@ class App(QApplication):
                 msg = sub.recv_string(flags=zmq.NOBLOCK)
             except zmq.ZMQError:
                 continue
-            print(f"App got {msg} from {name}")
+            logger.debug(f"App got '{msg}' from '{name}'")
 
             # would need error checking here
-            parameter, value = msg.split()
+            inst_name, parameter, value = msg.split()
+            assert inst_name == name
 
             post_read_hooks = self._data[name][parameter]["post_read_hooks"]
             value = call_hooks(post_read_hooks, value)
@@ -277,11 +278,12 @@ class App(QApplication):
         if not skip_hooks:
             pre_set_hooks = self._data[instrument][parameter]["pre_set_hooks"]
             value = call_hooks(pre_set_hooks, value)
-        if value is not None:
-            self._data[instrument][parameter]["set_value"] = value
-            self.zmq_publisher.send_string(f"{instrument} {parameter} {value}")
-        else:
+        if value is None:
             logger.info(f"Hook blocked setting of parameter '{instrument}-{parameter}'")
+            return
+
+        self._data[instrument][parameter]["set_value"] = value
+        self.zmq_publisher.send_string(f"{instrument} {parameter} {value}")
 
     @ensure_instrument_exists
     @ensure_parameter_in_instrument
@@ -318,12 +320,14 @@ class App(QApplication):
     @ensure_instrument_exists
     @ensure_parameter_in_instrument
     def get_instrument_parameter(
-        self, instrument: str, parameter: str
+        self, instrument: str, parameter: str, return_set_value: bool = False
     ) -> Union[str, None]:
         """Return the last read back value.
 
         This function does not communicate with the instrument.
         """
+        if return_set_value:
+            return self._data[instrument][parameter]["set_value"]
         return self._data[instrument][parameter]["read_value"]
 
     @ensure_instrument_exists
