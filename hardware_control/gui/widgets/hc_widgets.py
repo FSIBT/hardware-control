@@ -197,7 +197,12 @@ class HCLineEdit(HCMixin, QLineEdit):
         self.app.set_instrument_parameter(self.instrument, self.parameter, value)
 
     def hc_update(self) -> None:
-        value = self.app.get_instrument_parameter(self.instrument, self.parameter)
+        if self.hasFocus():
+            logger.debug(f"'{self.name}' has focus, not updating")
+            return
+        value = self.app.get_instrument_parameter(
+            self.instrument, self.parameter, return_set_value=True
+        )
         self.setText(value)
 
 
@@ -214,7 +219,12 @@ class HCDoubleSpinBox(HCMixin, QDoubleSpinBox):
     """
 
     def __init__(
-        self, app, instrument: str, parameter: str, label: str, label_align="left",
+        self,
+        app,
+        instrument: str,
+        parameter: str,
+        label: str,
+        label_align="left",
     ):
         super().__init__(
             app=app,
@@ -252,7 +262,12 @@ class HCPushButton(HCMixin, QPushButton):
     """
 
     def __init__(
-        self, app, instrument: str, parameter: str, label: str, label_align="left",
+        self,
+        app,
+        instrument: str,
+        parameter: str,
+        label: str,
+        label_align="left",
     ):
         super().__init__(
             app=app,
