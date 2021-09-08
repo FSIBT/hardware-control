@@ -46,7 +46,6 @@ def setup_logging(logger, commands, logfile_name=None):
         print(f"Logger configured:\n\tLevel: {loglevelname}\n\tOutput: File")
 
     # Clear all other handlers
-    loggers = [logging.getLogger(name) for name in logging.root.manager.loggerDict]
     for name in logging.root.manager.loggerDict:
 
         lgr = logging.getLogger(name)
