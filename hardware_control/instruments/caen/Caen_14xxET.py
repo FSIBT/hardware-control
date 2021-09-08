@@ -12,10 +12,31 @@ See class definition for details.
 """
 
 import logging
+from typing import Union
 
 from ...base import Instrument
 
 logger = logging.getLogger(__name__)
+
+
+def parse_instrument_response(value: str) -> Union[str, None]:
+    value = value.strip(r"\r")
+    if value.endswith("CMD:OK"):
+        return None
+    return value[value.find("VAL:") + 4 :]
+
+
+def create_parse_status(bitmask):
+    """Create a function that parses the CAEN status."""
+
+    def parse_status(value: str) -> int:
+        value = parse_instrument_response(value)
+        if value is None:
+            return None
+        value = int(float(value))
+        return value & bitmask
+
+    return parse_status
 
 
 class Caen_14xxET(Instrument):
@@ -37,37 +58,41 @@ class Caen_14xxET(Instrument):
         )
 
         # The instrument has channels 1-8
-        self.chan_nums = range(1, 9)
-        self.max_V = [None] * len(self.num_channels)
-        self.max_I = [None] * len(self.num_channels)
+        self.chan_nums = list(range(1, 9))
+        self.max_V = [None] * len(self.chan_nums)
+        self.max_I = [None] * len(self.chan_nums)
 
-        logger.info(
-            f"CAEN u_s received {setting}, {value} and interpreted chan={channel}, setting_X={setting_X}, value={value}"
-        )
+        self.status_bits = {
+            "ON_OFF": 1,
+            "RAMPING_UP": 2,
+            "RAMPING_DOWN": 4,
+            "OVER_CURRENT": 8,
+            "OVER_VOLTAGE": 16,
+            "UNDER_VOLTAGE": 32,
+            "MAX_VOLTAGE": 64,
+            "TRIPPED": 128,
+            "OVER_POWER": 256,
+            "OVER_TEMPERATURE": 512,
+            "DISABLED": 1024,
+            "KILL": 2048,
+            "INTERLOCKED": 4096,
+            "CALIBRATION_ERROR": 8192,
+        }
 
         for channel in self.chan_nums:
-
-            def set_V_max():
-                def setter(value):
-                    self.max_V[channel - 1] = float(value)
-
             self.add_parameter(
                 f"CH{channel}_V_MAX",
                 read_command=None,
                 set_command=None,
-                post_hooks=[set_V_max()],
+                post_hooks=[lambda x: self.set_V_max(channel, x)],
                 dummy_return="",
             )
-
-            def set_I_max():
-                def setter(value):
-                    self.max_I[channel - 1] = float(value)
 
             self.add_parameter(
                 f"CH{channel}_I_MAX",
                 read_command=None,
                 set_command=None,
-                post_hooks=[set_I_max()],
+                post_hooks=[lambda x: self.set_I_max(channel, x)],
                 dummy_return="",
             )
 
@@ -109,7 +134,7 @@ class Caen_14xxET(Instrument):
                 f"CH{channel}_V_OUT",
                 read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:VMON",
                 post_hook=[
-                    lambda value: value[value.find("VAL:") + 4 :],
+                    parse_instrument_response,
                     lambda value: value.strip("\\nr"),
                 ],
                 dummy_return="",
@@ -119,7 +144,7 @@ class Caen_14xxET(Instrument):
                 f"CH{channel}_I_OUT",
                 read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:IMON",
                 post_hook=[
-                    lambda value: value[value.find("VAL:") + 4 :],
+                    parse_instrument_response,
                     lambda value: value.strip("\\nr"),
                     format_float(),
                     scaling_converter(1e6),
@@ -131,7 +156,7 @@ class Caen_14xxET(Instrument):
                 f"CH{channel}_I_SET",
                 read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:ISET",
                 post_hook=[
-                    lambda value: value[value.find("VAL:") + 4 :],
+                    parse_instrument_response,
                     lambda value: value.strip("\\nr"),
                     format_float(),
                     scaling_converter(1e6),
@@ -143,7 +168,7 @@ class Caen_14xxET(Instrument):
                 f"CH{channel}_V_SET",
                 read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:VSET",
                 post_hook=[
-                    lambda value: value[value.find("VAL:") + 4 :],
+                    parse_instrument_response,
                     lambda value: value.strip("\\nr"),
                 ],
                 dummy_return="",
@@ -153,210 +178,26 @@ class Caen_14xxET(Instrument):
                 f"CH{channel}_STATUS",
                 read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
                 post_hook=[
-                    lambda value: value.strip(r"\r"),
-                    lambda value: None if value.endswith("CMD:OK") else value,
-                    lambda value: value[value.find("VAL:") + 4 :],
+                    parse_instrument_response,
                     format_int(),
                     lambda value: self.return_status(value),
                 ],
                 dummy_return="",
             )
 
-            self.add_parameter(
-                "CH{channel}_ON_OFF",
-                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
-                post_hook=[
-                    lambda value: value.strip(r"\r"),
-                    lambda value: None if value.endswith("CMD:OK") else value,
-                    lambda value: value[value.find("VAL:") + 4 :],
-                    format_int(),
-                    lambda value: self.return_status(value),
-                    lambda value: value & 1,
-                ],
-                dummy_return="",
-            )
+            for bit_name, bit in self.status.items():
+                self.add_parameter(
+                    "CH{channel}_{bit_name}",
+                    read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
+                    post_hook=[create_parse_status(bit)],
+                    dummy_return="",
+                )
 
-            self.add_parameter(
-                "CH{channel}_RAMPING_UP",
-                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
-                post_hook=[
-                    lambda value: value.strip(r"\r"),
-                    lambda value: None if value.endswith("CMD:OK") else value,
-                    lambda value: value[value.find("VAL:") + 4 :],
-                    format_int(),
-                    lambda value: self.return_status(value),
-                    lambda value: value & 2,
-                ],
-                dummy_return="",
-            )
+    def set_V_max(self, channel, value):
+        self.max_V[channel - 1] = float(value)
 
-            self.add_parameter(
-                "CH{channel}_RAMPING_DOWN",
-                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
-                post_hook=[
-                    lambda value: value.strip(r"\r"),
-                    lambda value: None if value.endswith("CMD:OK") else value,
-                    lambda value: value[value.find("VAL:") + 4 :],
-                    format_int(),
-                    lambda value: self.return_status(value),
-                    lambda value: value & 4,
-                ],
-                dummy_return="",
-            )
-
-            self.add_parameter(
-                "CH{channel}_OVER_CURRENT",
-                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
-                post_hook=[
-                    lambda value: value.strip(r"\r"),
-                    lambda value: None if value.endswith("CMD:OK") else value,
-                    lambda value: value[value.find("VAL:") + 4 :],
-                    format_int(),
-                    lambda value: self.return_status(value),
-                    lambda value: value & 8,
-                ],
-                dummy_return="",
-            )
-
-            self.add_parameter(
-                "CH{channel}_OVER_VOLTAGE",
-                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
-                post_hook=[
-                    lambda value: value.strip(r"\r"),
-                    lambda value: None if value.endswith("CMD:OK") else value,
-                    lambda value: value[value.find("VAL:") + 4 :],
-                    format_int(),
-                    lambda value: self.return_status(value),
-                    lambda value: value & 16,
-                ],
-                dummy_return="",
-            )
-
-            self.add_parameter(
-                "CH{channel}_UNDER_VOLTAGE",
-                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
-                post_hook=[
-                    lambda value: value.strip(r"\r"),
-                    lambda value: None if value.endswith("CMD:OK") else value,
-                    lambda value: value[value.find("VAL:") + 4 :],
-                    format_int(),
-                    lambda value: self.return_status(value),
-                    lambda value: value & 32,
-                ],
-                dummy_return="",
-            )
-
-            self.add_parameter(
-                "CH{channel}_MAX_VOLTAGE",
-                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
-                post_hook=[
-                    lambda value: value.strip(r"\r"),
-                    lambda value: None if value.endswith("CMD:OK") else value,
-                    lambda value: value[value.find("VAL:") + 4 :],
-                    format_int(),
-                    lambda value: self.return_status(value),
-                    lambda value: value & 64,
-                ],
-                dummy_return="",
-            )
-
-            self.add_parameter(
-                "CH{channel}_TRIPPED",
-                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
-                post_hook=[
-                    lambda value: value.strip(r"\r"),
-                    lambda value: None if value.endswith("CMD:OK") else value,
-                    lambda value: value[value.find("VAL:") + 4 :],
-                    format_int(),
-                    lambda value: self.return_status(value),
-                    lambda value: value & 128,
-                ],
-                dummy_return="",
-            )
-
-            self.add_parameter(
-                "CH{channel}_OVER_POWER",
-                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
-                post_hook=[
-                    lambda value: value.strip(r"\r"),
-                    lambda value: None if value.endswith("CMD:OK") else value,
-                    lambda value: value[value.find("VAL:") + 4 :],
-                    format_int(),
-                    lambda value: self.return_status(value),
-                    lambda value: value & 256,
-                ],
-                dummy_return="",
-            )
-
-            self.add_parameter(
-                "CH{channel}_OVER_TEMPERATURE",
-                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
-                post_hook=[
-                    lambda value: value.strip(r"\r"),
-                    lambda value: None if value.endswith("CMD:OK") else value,
-                    lambda value: value[value.find("VAL:") + 4 :],
-                    format_int(),
-                    lambda value: self.return_status(value),
-                    lambda value: value & 512,
-                ],
-                dummy_return="",
-            )
-
-            self.add_parameter(
-                "CH{channel}_DISABLED",
-                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
-                post_hook=[
-                    lambda value: value.strip(r"\r"),
-                    lambda value: None if value.endswith("CMD:OK") else value,
-                    lambda value: value[value.find("VAL:") + 4 :],
-                    format_int(),
-                    lambda value: self.return_status(value),
-                    lambda value: value & 1024,
-                ],
-                dummy_return="",
-            )
-
-            self.add_parameter(
-                "CH{channel}_KILL",
-                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
-                post_hook=[
-                    lambda value: value.strip(r"\r"),
-                    lambda value: None if value.endswith("CMD:OK") else value,
-                    lambda value: value[value.find("VAL:") + 4 :],
-                    format_int(),
-                    lambda value: self.return_status(value),
-                    lambda value: value & 2048,
-                ],
-                dummy_return="",
-            )
-
-            self.add_parameter(
-                "CH{channel}_INTERLOCKED",
-                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
-                post_hook=[
-                    lambda value: value.strip(r"\r"),
-                    lambda value: None if value.endswith("CMD:OK") else value,
-                    lambda value: value[value.find("VAL:") + 4 :],
-                    format_int(),
-                    lambda value: self.return_status(value),
-                    lambda value: value & 4096,
-                ],
-                dummy_return="",
-            )
-
-            self.add_parameter(
-                "CH{channel}_CALIBRATION_ERROR",
-                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
-                post_hook=[
-                    lambda value: value.strip(r"\r"),
-                    lambda value: None if value.endswith("CMD:OK") else value,
-                    lambda value: value[value.find("VAL:") + 4 :],
-                    format_int(),
-                    lambda value: self.return_status(value),
-                    lambda value: value & 8192,
-                ],
-                dummy_return="",
-            )
+    def set_I_max(self, channel, value):
+        self.max_I[channel - 1] = float(value)
 
     def return_status(value):
         status = {
