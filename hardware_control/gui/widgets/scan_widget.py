@@ -4,13 +4,14 @@ import time
 
 import numpy as np
 
-import pyqtgraph as pg  # For some reason, without this line QPushButton won't import
 from PyQt5 import QtCore
-from PyQt5.QtCore import QTimer, QObject
-from PyQt5.QtGui import QProgressBar, QIcon, QApplication, QIntValidator, QGroupBox
+from PyQt5.QtCore import QTimer
+from PyQt5.QtGui import QIcon, QIntValidator
 from PyQt5.QtWidgets import (
+    QApplication,
     QGroupBox,
     QLineEdit,
+    QProgressBar,
     QPushButton,
     QLabel,
     QGridLayout,
