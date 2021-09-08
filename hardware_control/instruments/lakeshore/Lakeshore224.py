@@ -64,7 +64,9 @@ class Lakeshore_224(Instrument):
 
         for channel in self.active_channels:
             self.add_command("SET_CH{channel}_OFF", f"INCRV {channel} 0")
-            self.add_command(f"READ_CH{channel}_STATUS", self.read_status(channel))
+            self.add_command(
+                f"READ_CH{channel}_STATUS", lambda: self.read_status(channel)
+            )
 
             self.add_parameter(
                 f"CH{channel}_CURVE",

@@ -8,9 +8,9 @@ The QT instrument frontend for this virtual instrument can be found in hardware_
 
 
 import logging
+import random
 
 from ...base import Instrument
-from ..utility import get_channel_from_command
 
 logger = logging.getLogger(__name__)
 
@@ -22,19 +22,19 @@ class DemoA(Instrument):
         )
         self.encoding = "ascii"
 
-    def update_setting(self, setting: str, value):
+        self.channels = [1, 2, 3]
 
-        channel, setting_X = get_channel_from_command(setting)
+        for ch in self.channels:
+            self.add_parameter(
+                f"CH{channel}_ENABLE",
+                read_command=None,
+                set_command=None,
+                dummy_return=lambda: random.random() > 0.5,
+            )
 
-        if setting_X == "CHX_ENABLE":
-            self.write(f"CH{channel}:{value}")
-            rval = self.query(f"CH{channel}?")
-            return f"{setting}={rval}"
-
-    def command(self, cmd: str):
-        channel, cmd_X = get_channel_from_command(cmd)
-        print(cmd_X, channel)
-
-        if cmd_X == "CHX_ENABLE?":
-            rval = self.query(f"CH{channel}?")
-            return f"{cmd}={rval}"
+            self.add_parameter(
+                f"CH{channel}_VALUE",
+                read_command=None,
+                set_command=None,
+                dummy_return=lambda: random.random() * 5,
+            )

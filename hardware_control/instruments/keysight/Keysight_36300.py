@@ -24,33 +24,25 @@ class Keysight_36300(Instrument):
         )
 
         # The instrument has channels 1, 2, and 3
-        self.chan_nums = range(1, 4)
+        self.chan_nums = list(range(1, 4))
         self.max_V = [None] * len(self.chan_nums)
         self.max_I = [None] * len(self.chan_nums)
 
         for channel in self.chan_nums:
 
-            def set_V_max():
-                def setter(value):
-                    self.max_V[channel - 1] = value
-
             self.add_parameter(
                 f"CH{channel}_V_MAX",
                 read_command=None,
                 set_command=None,
-                post_hooks=[set_V_max()],
+                post_hooks=[lambda x: set_V_max(channel, x)],
                 dummy_return="",
             )
-
-            def set_I_max():
-                def setter(value):
-                    self.max_I[channel - 1] = value
 
             self.add_parameter(
                 f"CH{channel}_I_MAX",
                 read_command=None,
                 set_command=None,
-                post_hooks=[set_I_max()],
+                post_hooks=[lambda x: set_I_max(channel, x)],
                 dummy_return="",
             )
 
@@ -112,3 +104,9 @@ class Keysight_36300(Instrument):
                 read_command=f":OUTPUT:STATE? (@{channel})",
                 dummy_return="",
             )
+
+    def set_V_max(self, channel, value):
+        self.max_V[channel - 1] = float(value)
+
+    def set_I_max(self, channel, value):
+        self.max_I[channel - 1] = float(value)

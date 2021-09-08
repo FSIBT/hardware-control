@@ -31,14 +31,14 @@ class TDKL_GenH(Instrument):
         self.add_parameter(
             "I_SET",
             read_command=":SOUR:CURR:LEV:IMM:AMPL?",
-            set_command=f":SOUR:CURR:LEV:IMM:AMPL {{}}",
+            set_command=":SOUR:CURR:LEV:IMM:AMPL {}",
             dummy_return="",
         )
 
         self.add_parameter(
             "V_SET",
             read_command=":SOUR:VOLT:LEV:IMM:AMPL?",
-            set_command=f":SOUR:VOLT:LEV:IMM:AMPL {{}}",
+            set_command=":SOUR:VOLT:LEV:IMM:AMPL {}",
             dummy_return="",
         )
 

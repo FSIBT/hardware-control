@@ -198,7 +198,9 @@ class Keysight_4000X(Instrument):
                 dummy_return="",
             )
 
-            self.add_command("CH{channel}_READ_WAVE", self.read_waveform(channel))
+            self.add_command(
+                "CH{channel}_READ_WAVE", lambda: self.read_waveform(channel)
+            )
 
         self.add_command("SINGLE_TRIGGER", ":SING")
         self.add_command("RUN", ":RUN")
