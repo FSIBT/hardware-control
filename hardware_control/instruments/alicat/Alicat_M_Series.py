@@ -7,7 +7,6 @@ See class definition for details.
 
 """
 
-import logging
 import random
 
 from ...base import Instrument
@@ -15,8 +14,6 @@ from ..utility import (
     converter_ulong_to_IEEE754,
     converter_IEEE754_to_ulong,
 )
-
-logger = logging.getLogger(__name__)
 
 
 def IEEE754_converter_to_ulong_pair(value):
