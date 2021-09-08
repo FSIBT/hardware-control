@@ -382,7 +382,7 @@ class Instrument:
         val = self.get_value(name)
         if val is not None:
             return val
-        logger.error(f"{name} not available in instrument {self.name}")
+        logger.error(f"'{name}' not available in instrument '{self.name}'")
 
     def __getattr__(self, name: str):
         """Allow values to be easily accessed.
@@ -409,7 +409,7 @@ class Instrument:
             else:
                 self.write(self.set_commands[name].format(value))
             return
-        logger.error(f"{name} not available in instrument {self.name}")
+        logger.error(f"'{name}' not available in instrument '{self.name}'")
 
     def __setitem__(self, name, value):
         """Allow values to be easily accessed.
@@ -548,15 +548,15 @@ class Instrument:
         if self.online:
             if not self.check_connection():
                 self.online = False
-        
+
         return self.online
 
     def config_serial(
         self,
-        baud_rate: int=None,
-        stop_bits: int=None,
-        data_bits:int =None,
-        parity:int=None,
+        baud_rate: int = None,
+        stop_bits: int = None,
+        data_bits: int = None,
+        parity: int = None,
     ):
         if self.device is None:
             logger.error(f"No visa device for '{self.name}'")
