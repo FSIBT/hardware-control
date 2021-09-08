@@ -1,21 +1,10 @@
 from hardware_control import instruments
 import logging
 
-from PyQt5 import QtCore
-from PyQt5.QtGui import QIcon, QFont, QDoubleValidator
 from PyQt5.QtWidgets import (
     QGroupBox,
     QHBoxLayout,
-    QPushButton,
-    QLabel,
-    QGridLayout,
-    QComboBox,
-    QSpinBox,
-    QDoubleSpinBox,
     QVBoxLayout,
-    QWidget,
-    QLineEdit,
-    QLabel,
 )
 from PyQt5.QtCore import QTimer
 
@@ -26,7 +15,9 @@ logger = logging.getLogger(__name__)
 
 class TempMonitor(QGroupBox):
     """
-    A GUI for Lakeshore Temperature Monitor
+    A GUI for Lakeshore Temperature Monitor.
+
+    It only includes channels listed in `channel_list`.
     """
 
     def __init__(
@@ -55,7 +46,7 @@ class TempMonitor(QGroupBox):
             )
             curve = HCLineEdit(
                 self.app,
-                self.instrument, 
+                self.instrument,
                 parameter=f"CH{channel}_CHANGE_CURVE",
                 label=f"{channel}_CURVE",
                 label_align="right",
@@ -69,13 +60,13 @@ class TempMonitor(QGroupBox):
             tmp.addWidget(widget.label)
             tmp.addWidget(widget)
             self.vbox.addLayout(tmp)
-        
+
         self.setLayout(self.vbox)
 
-        # Create timer to query voltages
+        # Create timer to query temperatures
         self.readout_timer = QTimer(self)
         self.readout_timer.timeout.connect(self.update_readout)
-        self.readout_timer.start(1000)
+        self.readout_timer.start(self.app.globalRefreshRate)
 
         logger.debug("Initalized")
 
@@ -87,6 +78,7 @@ class TempMonitor(QGroupBox):
         """Queries the instrument for current readout data, then reads the most
         recent readout data from the inbox and pushes it to the GUI"""
 
-        # Request updated readout data
-        for parameter in ["CHA_READ_TEMP", "CHB_READ_TEMP","CHC1_READ_TEMP", "CHD1_READ_TEMP"]:
-            self.app.update_instrument_parameter(self.instrument, parameter)
+        for channel in self.channel_list:
+            self.app.update_instrument_parameter(
+                self.instrument, f"CH{channel}_READ_TEMP"
+            )
