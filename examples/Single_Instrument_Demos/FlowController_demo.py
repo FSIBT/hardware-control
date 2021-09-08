@@ -17,10 +17,9 @@ import sys
 
 from docopt import docopt
 
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QGridLayout
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QGridLayout, QTabWidget
 
-import hardware_control.backends as hc_back
-import hardware_control.gui as hc
+import hardware_control as hc
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
@@ -36,20 +35,23 @@ class Demo(QMainWindow):
 
         self.setWindowTitle("Flow Controller Demo")
 
-        self.main_widget = QWidget(self)
+        self.tabs = QTabWidget()
 
-        self.instr = hc_back.Alicat_M_Series("192.168.0.15")
-        self.instr_ctrl = hc.FlowController(app, self.instr, "Flow Controller", True)
+        self.app.add_instrument(
+            hc.instruments.Alicat_M_Series("alicat", "192.168.0.15")
+        )
+        self.instr_ctrl = hc.gui.FlowController(app, "alicat", "Flow Controller", True)
 
-        self.grid = QGridLayout()
-        self.grid.addWidget(self.instr_ctrl, 0, 0)
-        self.main_widget.setLayout(self.grid)
+        self.ipython = hc.gui.Qtconsole(self.app)
 
-        self.setCentralWidget(self.main_widget)
+        self.tabs.addTab(self.instr_ctrl, "Instruments")
+        self.tabs.addTab(self.ipython, "Interactive")
+
+        self.setCentralWidget(self.tabs)
         self.show()
 
     def close(self):
-        self.instr_ctrl.close()
+        self.app.close()
 
 
 app = hc.App(dummy=dummy)
