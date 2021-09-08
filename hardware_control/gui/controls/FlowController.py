@@ -40,7 +40,7 @@ class FlowController(QGroupBox):
         name: str = "Flow Controller",
         lock_until_sync=False,
     ):
-        super().__init__()
+        super().__init__(name)
         self.app = app
         self.instrument = instrument
         self.name = name
@@ -82,8 +82,8 @@ class FlowController(QGroupBox):
         self.layout.addWidget(self.rate.label, 0, 0)
         self.layout.addWidget(self.rate, 0, 1)
 
-        self.layout.addWidget(self.gas.label, 1, 0)
-        self.layout.addWidget(self.gas, 1, 1)
+        # self.layout.addWidget(self.gas.label, 1, 0)
+        # self.layout.addWidget(self.gas, 1, 1)
 
         self.layout.addWidget(self.pressure.label, 2, 0)
         self.layout.addWidget(self.pressure, 2, 1)
