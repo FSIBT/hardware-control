@@ -1,7 +1,10 @@
+import logging
 import threading
 import time
 
 import zmq
+
+logger = logging.getLogger(__name__)
 
 
 class ZMQAdapter(threading.Thread):
@@ -30,10 +33,15 @@ class ZMQAdapter(threading.Thread):
         )  # +1 for extra whitespace after topic name
 
         # create our own publisher
-        self.zmq_publisher_address = self.get_address(publisher)
+        self.zmq_publisher_address = "tcp://" + self.get_address(publisher)
         self.zmq_publisher = context.socket(zmq.PUB)
         self.zmq_publisher_port = self.zmq_publisher.bind_to_random_port(
             self.zmq_publisher_address, min_port=4000, max_port=8000
+        )
+
+        logger.info(
+            f"Set up ZMQ adapter for '{self.name}'"
+            f"listen to: {publisher} publishing at: {self.zmq_publisher_address}:{self.zmq_publisher_port}"
         )
 
     def get_address(self, ip_and_port):
@@ -69,20 +77,23 @@ class ZMQAdapter(threading.Thread):
                 self.zmq_publisher.send_string(f"{self.instrument.name} {msg[0]} {ret}")
                 continue
             elif len(msg) == 2:
-                if msg[1] == "command":
-                    self.instrument.command(msg[2])
+                if msg[0] == "command":
+                    logger.debug(f"'{self.name}' got command '{msg[1]}'")
+                    self.instrument.command(msg[1])
                     continue
-                if msg[1] == "get":
-                    if msg[2] not in self.instrument.read_commands:
+                if msg[0] == "get":
+                    logger.debug(f"'{self.name}' got get request '{msg[1]}'")
+                    if msg[1] not in self.instrument.read_commands:
                         logger.error(
-                            f"{msg[2]} read command not availabel in instrument '{self.name}'"
+                            f"'{msg[1]}' read command not available in instrument '{self.name}'"
                         )
                         continue
-                    value = self.instrument.get_value(msg[2])
+                    value = self.instrument.get_value(msg[1])
                     if value is not None:
                         self.zmq_publisher.send_string(
-                            f"{self.instrument.name} {msg[2]} {value}"
+                            f"{self.instrument.name} {msg[1]} {value}"
                         )
                     continue
                 # if it is not a command, we are trying to set a value
+                logger.debug(f"'{self.name}' setting '{msg[0]}' to '{msg[1]}'")
                 self.instrument[msg[0]] = msg[1]
