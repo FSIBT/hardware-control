@@ -42,10 +42,10 @@ class Alicat_M_Series(Instrument):
 
     """
 
-    def __init__(self, connection_addr):
+    def __init__(self, instrument_name, connection_addr):
 
         super().__init__(
-            instrument_name="AlicatMSeries",
+            instrument_name=instrument_name,
             connection_addr=connection_addr,
             default_port=0,  # modbus instrument need to set a default_port to an integer
         )
@@ -59,11 +59,11 @@ class Alicat_M_Series(Instrument):
             set_command=f"write_coil:1009:{{}}:{self.unit}",
             pre_hooks=[IEEE754_converter_to_ulong_pair],
             post_hooks=[modbus_registers_to_float],
-            dummy_return=random.randint(0, 10),
+            dummy_return=lambda: random.randint(0, 10),
         )
         self.add_parameter(
             "PRESSURE",
             read_command=f"read_input_registers:1202:2:{self.unit}",
             post_hooks=[modbus_registers_to_float],
-            dummy_return=random.randint(0, 10),
+            dummy_return=lambda: random.randint(0, 10),
         )
