@@ -88,7 +88,7 @@ class App(QApplication):
 
     """
 
-    def __init__(self, dummy: bool = False) -> None:
+    def __init__(self, ipaddress=None, dummy: bool = False) -> None:
         # QApplication can take a list of strings, e.g. from sys.argv
         # we currently don't use this
         super().__init__([])
@@ -99,7 +99,11 @@ class App(QApplication):
         self.zmq_subscribers = {}
 
         # publisher that announces commands for instruments
-        self.zmq_publisher_address = "tcp://127.0.0.1:1234"
+        if ipaddress is None:
+            self.ipaddress = "127.0.0.1"
+        else:
+            self.ipaddress = ipaddress
+        self.zmq_publisher_address = f"tcp://{self.ipaddress}:1234"
         self.zmq_context = zmq.Context()
         self.zmq_publisher = self.zmq_context.socket(zmq.PUB)
         self.zmq_publisher.bind(self.zmq_publisher_address)
@@ -148,7 +152,9 @@ class App(QApplication):
         # subscribe to multiple publisher for now we create multiple
         # subscribers
         subscriber = self.zmq_context.socket(zmq.SUB)
-        subscriber.connect(f"tcp://127.0.0.1:{zmq_instrument.zmq_publisher_port}")
+        subscriber.connect(
+            f"tcp://{self.ipaddress}:{zmq_instrument.zmq_publisher_port}"
+        )
         subscriber.subscribe("")
         self.zmq_subscribers[instrument.name] = subscriber
 
@@ -177,6 +183,50 @@ class App(QApplication):
         # start thread
         self.threads.append(zmq_instrument)
         zmq_instrument.start()
+
+    def add_remote_instrument(self, name, ipaddress, port):
+        if name in self._data:
+            logging.error(
+                f"Instrument {instrument.name} already exists... instruments names need to be unique"
+            )
+            return
+
+        zmq_instrument = ZMQRemoteInstrument(
+            name, ipaddress, port, self.zmq_context, self.zmq_publisher_port
+        )
+
+        subscriber = self.zmq_context.socket(zmq.SUB)
+        subscriber.connect(
+            f"tcp://{zmq_instrument.instrument_address}:{zmq_instrument.instrument_port}"
+        )
+        subscriber.subscribe("")
+        self.zmq_subscribers[zmq_instrument.name] = subscriber
+
+        read, set, commands = zmq_instrument.list_parameters()
+
+        if zmq_instrument.name not in self._data:
+            self._data[zmq_instrument.name] = {}
+
+        # add parameters into _data
+        for r in read:
+            p = {
+                "read_value": None,
+                "set_value": None,
+                "post_read_hooks": [],
+                "pre_set_hooks": [],
+                "widgets": [],
+            }
+            self._data[zmq_instrument.name][r] = p
+        for c in commands:
+            p = {
+                "pre_call_hooks": [],
+                "widgets": [],
+            }
+            self._data[zmq_instrument.name][c] = p
+
+        # save somewhere to be able to call close, this works, since
+        # we add a .join() method to the ZMQ remote instrument
+        self.threads.append(zmq_instrument)
 
     def parse_message_from_instruments(self):
         """Check for message from the instruments.

@@ -30,11 +30,17 @@ class ZMQAdapter(threading.Thread):
         )  # +1 for extra whitespace after topic name
 
         # create our own publisher
-        self.zmq_publisher_address = "tcp://127.0.0.1"
+        self.zmq_publisher_address = self.get_address(publisher)
         self.zmq_publisher = context.socket(zmq.PUB)
         self.zmq_publisher_port = self.zmq_publisher.bind_to_random_port(
             self.zmq_publisher_address, min_port=4000, max_port=8000
         )
+
+    def get_address(self, ip_and_port):
+        # strip 'tcp://'
+        ip_and_port = ip_and_port[6:]
+        ip, _ = ip_and_port.split(":")
+        return ip
 
     def remove_topic(self, msg):
         """Remove the ZMQ topic from a message.
