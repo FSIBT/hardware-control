@@ -20,8 +20,7 @@ import sys
 from PyQt5.QtWidgets import QMainWindow, QWidget, QGridLayout
 from docopt import docopt
 
-import hardware_control.backends as hc_back
-import hardware_control.gui as hc
+import hardware_control as hc
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
@@ -35,17 +34,19 @@ logger = logging.getLogger(__name__)
 hc.setup_logging(logger, commands, "hardware_control.log")
 
 
-class Demo(QMainWindow):
+class Demo(hc.MainWindow):
     def __init__(self, app):
-        super().__init__()
+        super().__init__(app)
         self.app = app
 
         self.setWindowTitle("Wave Gen Demo")
 
         self.main_widget = QWidget(self)
 
-        awg = hc_back.Keysight_33500B(address)
-        self.awg_ctrl = hc.FunctionGenerator(app, awg, "RF Generator")
+        self.app.add_instrument(
+            hc.instruments.Keysight_33500B("keysight", address, number_of_channels=2)
+        )
+        self.awg_ctrl = hc.gui.FunctionGenerator(app, "keysight", num_channels=2)
 
         self.grid = QGridLayout()
         self.grid.addWidget(self.awg_ctrl, 1, 1)
@@ -55,14 +56,11 @@ class Demo(QMainWindow):
         self.show()
 
     def close(self):
-        self.awg_ctrl.close()
+        self.app.close()
 
 
-def main():
+if __name__ == "__main__":
     app = hc.App(dummy=dummy)
     ex = Demo(app)
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())
-
-
-main()

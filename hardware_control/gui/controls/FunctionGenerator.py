@@ -42,28 +42,35 @@ class FunctionGenerator(QGroupBox):
     def __init__(
         self,
         app,
-        backend,
+        instrument: str,
         name: str = "AWG Control",
         num_channels: int = 2,
-        lock_until_sync=False,
     ):
 
-        super().__init__(app, name, backend, lock_until_sync)
+        super().__init__(name)
+        self.instrument = instrument
+        self.app = app
 
         self.num_channels = num_channels
 
         self.setup_UI()
-        self.autolayout_grid(ncols=2)
 
     def setup_UI(self):
-        self.frequency = HCLineEdit(self, "CH1_FREQUENCY", "CH1 Frequency (MHz)")
-        self.amplitude = HCLineEdit(self, "CH1_AMPLITUDE", "CH1 Amplitude (Vpp)")
-        self.offset = HCLineEdit(self, "CH1_OFFSET", "CH1 Offset (V)")
+        self.frequency = HCLineEdit(
+            self.app, self.instrument, "CH1_FREQUENCY", label="CH1 Frequency (MHz)"
+        )
+        self.amplitude = HCLineEdit(
+            self.app, self.instrument, "CH1_AMPLITUDE", label="CH1 Amplitude (Vpp)"
+        )
+        self.offset = HCLineEdit(
+            self.app, self.instrument, "CH1_OFFSET", label="CH1 Offset (V)"
+        )
         self.waveform = HCComboBox(
-            self,
+            self.app,
+            self.instrument,
             "CH1_WAVEFORM",
-            "CH1 Waveform",
-            [
+            label="CH1 Waveform",
+            items=[
                 "Square",
                 "Sine",
                 "Triangle",
@@ -76,58 +83,75 @@ class FunctionGenerator(QGroupBox):
             ],
         )
         self.burst_mode = HCComboBox(
-            self,
+            self.app,
+            self.instrument,
             "CH1_BURS_MODE",
             "CH1 Burst Mode",
             ["TRIG", "GAT"],
         )
         self.burst_enable = HCComboBox(
-            self,
+            self.app,
+            self.instrument,
             "CH1_BURS_STAT",
             "CH1 Burst Enable/State",
             ["1", "0"],
         )
         self.num_pulse = HCLineEdit(
-            self,
+            self.app,
+            self.instrument,
             "CH1_BURS_NCYC",
             "CH1 Num Burst Pulses",
         )
         self.burst_period = HCLineEdit(
-            self,
+            self.app,
+            self.instrument,
             "CH1_BURS_PER",
             "CH1 Burst Period (s)",
         )
         self.enable = HCComboBox(
-            self,
+            self.app,
+            self.instrument,
             "CH1_ENABLE",
             "CH1 Enable Output On/Off",
             ["True", "False"],
         )
         self.trigger = HCComboBox(
-            self,
+            self.app,
+            self.instrument,
             "CH1_TRIGGER_CHANNEL",
             "CH1 Trigger Channel",
             ["EXT", "IMM", "TIM", "BUS"],
         )
-        self.delay = HCLineEdit(self, "CH1_TRIGGER_DELAY", "CH1 Trigger Delay (s)")
+        self.delay = HCLineEdit(
+            self.app, self.instrument, "CH1_TRIGGER_DELAY", "CH1 Trigger Delay (s)"
+        )
         self.impedance = HCComboBox(
-            self,
+            self.app,
+            self.instrument,
             "CH1_IMPEDANCE",
             "CH1 Impedance",
-            ["HiZ", "50 (OHM)"],
+            ["Hi-Z", "50-OHM"],
         )
         self.polarity = HCComboBox(
-            self,
+            self.app,
+            self.instrument,
             "CH1_POLARITY",
             "CH1 Polarity",
             ["NORM", "INV"],
         )
         if self.num_channels >= 2:
-            self.frequency2 = HCLineEdit(self, "CH2_FREQUENCY", "CH2 Frequency (MHz)")
-            self.amplitude2 = HCLineEdit(self, "CH2_AMPLITUDE", "CH2 Amplitude (Vpp)")
-            self.offset2 = HCLineEdit(self, "CH2_OFFSET", "CH2 Offset (V)")
+            self.frequency2 = HCLineEdit(
+                self.app, self.instrument, "CH2_FREQUENCY", "CH2 Frequency (MHz)"
+            )
+            self.amplitude2 = HCLineEdit(
+                self.app, self.instrument, "CH2_AMPLITUDE", "CH2 Amplitude (Vpp)"
+            )
+            self.offset2 = HCLineEdit(
+                self.app, self.instrument, "CH2_OFFSET", "CH2 Offset (V)"
+            )
             self.waveform2 = HCComboBox(
-                self,
+                self.app,
+                self.instrument,
                 "CH2_WAVEFORM",
                 "CH2 Waveform",
                 [
@@ -143,66 +167,91 @@ class FunctionGenerator(QGroupBox):
                 ],
             )
             self.burst_mode2 = HCComboBox(
-                self,
+                self.app,
+                self.instrument,
                 "CH2_BURS_MODE",
                 "CH2 Burst Mode",
                 ["TRIG", "GAT"],
             )
             self.burst_enable2 = HCComboBox(
-                self,
+                self.app,
+                self.instrument,
                 "CH2_BURS_STAT",
                 "CH2 Burst Enable/State",
                 ["1", "0"],
             )
             self.num_pulse2 = HCLineEdit(
-                self,
+                self.app,
+                self.instrument,
                 "CH2_BURS_NCYC",
                 "CH2 Num Burst Pulses",
             )
             self.burst_period2 = HCLineEdit(
-                self,
+                self.app,
+                self.instrument,
                 "CH2_BURS_PER",
                 "CH2 Burst Period (s)",
             )
             self.enable2 = HCComboBox(
-                self,
+                self.app,
+                self.instrument,
                 "CH2_ENABLE",
                 "CH2 Enable Output On/Off",
                 ["True", "False"],
             )
             self.trigger2 = HCComboBox(
-                self,
+                self.app,
+                self.instrument,
                 "CH2_TRIGGER_CHANNEL",
                 "CH2 Trigger Channel",
                 ["EXT", "IMM", "TIM", "BUS"],
             )
-            self.delay2 = HCLineEdit(self, "CH2_TRIGGER_DELAY", "CH2 Trigger Delay (s)")
+            self.delay2 = HCLineEdit(
+                self.app, self.instrument, "CH2_TRIGGER_DELAY", "CH2 Trigger Delay (s)"
+            )
             self.impedance2 = HCComboBox(
-                self,
+                self.app,
+                self.instrument,
                 "CH2_IMPEDANCE",
                 "CH2 Impedance",
-                ["HiZ", "50 (OHM)"],
+                ["Hi-Z", "50-OHM"],
             )
             self.polarity2 = HCComboBox(
-                self,
+                self.app,
+                self.instrument,
                 "CH2_POLARITY",
                 "CH2 Polarity",
                 ["NORM", "INV"],
             )
             self.track2 = HCComboBox(
-                self,
+                self.app,
+                self.instrument,
                 "CH2_TRACK",
                 "CH1 Track CH2",
                 ["OFF", "ON", "INV"],
             )
-            self.track2.pre_update_hook.append(self.set_tracking_hook)
+            self.app.add_hook(
+                self.instrument,
+                "CH2_TRACK",
+                "pre_set_hooks",
+                lambda x: self.set_tracking_hook("CH2_TRACK", x),
+            )
+
             self.track1 = HCComboBox(
-                self,
+                self.app,
+                self.instrument,
                 "CH1_TRACK",
                 "CH2 Track CH1",
                 ["OFF", "ON", "INV"],
             )
-            self.track1.pre_update_hook.append(self.set_tracking_hook)
+            self.app.add_hook(
+                self.instrument,
+                "CH1_TRACK",
+                "pre_set_hooks",
+                lambda x: self.set_tracking_hook("CH1_TRACK", x),
+            )
+
+        self.grid = QGridLayout()
 
         self.widgets = [
             self.frequency,
@@ -219,6 +268,9 @@ class FunctionGenerator(QGroupBox):
             self.impedance,
             self.polarity,
         ]
+        for i, w in enumerate(self.widgets):
+            self.grid.addWidget(w.label, i, 0)
+            self.grid.addWidget(w, i, 1)
 
         if self.num_channels >= 2:
             self.widgets2 = [
@@ -238,6 +290,11 @@ class FunctionGenerator(QGroupBox):
                 self.track2,
                 self.track1,
             ]
+            for i, w in enumerate(self.widgets2):
+                self.grid.addWidget(w.label, i, 2)
+                self.grid.addWidget(w, i, 3)
+
+        self.setLayout(self.grid)
 
     def set_tracking_hook(self, setting, value):
         if value is None:
