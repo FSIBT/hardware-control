@@ -34,20 +34,196 @@ class Keysight_33500B(Instrument):
         Address of instrument. Can use Visa address or socket and port.
     """
 
-    def __init__(self, name, connection_addr):
+    def __init__(self, name, connection_addr, number_of_channels=1):
         super().__init__(name, connection_addr, 5025)
 
         self.num_vert_divisions = 8
         self.check_connection_commands = "*IDN?"
 
-        self.add_parameter(
-            "CH1_VOLTS_DIV",
-            read_command=":CHAN1:SCAL?",
-            set_command=":CHAN1:SCAL {}",
-            pre_hooks=[format_float(".6E")],
-            dummy_return="",
-        )
-        self.add_lookup("CH1_VOLTS_DIV", {"POSITIVE": "1", "NEGATIVE": "0"})
+        for ch in range(1, number_of_channels + 1):
+            self.add_parameter(
+                f"CH{ch}_VOLTS_DIV",
+                read_command="f:CHAN{ch}:SCAL?",
+                set_command=f":CHAN{ch}:SCAL {{}}",
+                pre_hooks=[format_float(".6E")],
+                dummy_return="",
+            )
+            self.add_lookup(f"CH{ch}_VOLTS_DIV", {"POSITIVE": "1", "NEGATIVE": "0"})
+            self.add_parameter(
+                f"CH{ch}_LABEL",
+                read_command=f"CHAN{ch}:LAB?",
+                set_command=f"CHAN{ch}:LAB {{}}",
+                pre_hooks=[min_len_converter(32)],
+                dummy_return="",
+            )
+            self.add_parameter(
+                f"CH{ch}_INVERT",
+                read_command=f"CHAN{ch}:INV?",
+                set_command=f"CHAN{ch}:INV {{}}",
+                dummy_return="",
+            )
+            self.add_lookup(f"CH{ch}_INVERT", {"True": "1", "False": "0"})
+
+            self.add_parameter(
+                f"CH{ch}_PROBE_ATTEN",
+                read_command=f"CHAN{ch}:PROB?",
+                set_command=f"CHAN{ch}:PROB {{}}",
+                pre_hooks=[format_float(".6E")],
+                dummy_return="",
+            )
+
+            self.add_parameter(
+                f"CH{ch}_COUPLING",
+                read_command=f"CHAN{ch}:COUP?",
+                set_command=f"CHAN{ch}:COUP {{}}",
+                pre_hooks=[expected_input_validator(["AC", "DC"], "DC")],
+                dummy_return="",
+            )
+
+            """    Burst Subsystem    """
+            self.add_parameter(
+                f"CH{ch}_BURS_MODE",
+                read_command=f"SOUR{ch}:BURS:MODE?",
+                set_command=f"SOUR{ch}:BURS:MODE {{}}",
+                dummy_return="",
+            )
+
+            self.add_parameter(
+                f"CH{ch}_BURS_STAT",
+                read_command=f"SOUR{ch}:BURS:STAT?",
+                set_command=f"SOUR{ch}:BURS:STAT {{}}",
+                dummy_return="",
+            )
+
+            self.add_parameter(
+                f"CH{ch}_BURS_NCYC",
+                read_command=f"SOUR{ch}:BURS:NCYC?",
+                set_command=f"SOUR{ch}:BURS:NCYC {{}}",
+                dummy_return="",
+            )
+
+            self.add_parameter(
+                f"CH{ch}_BURS_PER",
+                read_command=f"SOUR{ch}:BURS:INT:PER?",
+                set_command=f"SOUR{ch}:BURS:INT:PER {{}}",
+                dummy_return="",
+            )
+
+            """    Display Subsystem    """
+            self.add_parameter(
+                f"CH{ch}_ACTIVE",
+                read_command=f"CHAN{ch}:DISP?",
+                set_command=f"CHAN{ch}:DISP {{}}",
+                dummy_return="",
+            )
+            self.add_lookup(f"CH{ch}_ACTIVE", {"True": "1", "False": "0"})
+
+            """    Frequency Subsystem    """
+            self.add_parameter(
+                f"CH{ch}_FREQUENCY",
+                read_command=f"SOUR{ch}:FREQ?",
+                set_command=f"SOUR{ch}:FREQ {{}}",
+                pre_hooks=[scaling_converter(1e6), format_float(".6E")],
+                post_hooks=[
+                    parse_converter(0, -1),
+                ],
+                dummy_return="",
+            )
+
+            """    Function Subsystem    """
+            # FUNCtion:NOISe:BANDwidth - bandwidth for NOISe waveform
+            self.add_parameter(
+                f"CH{ch}_BW_LIM",
+                read_command=f"CHAN{ch}:BWL?",
+                set_command=f"CHAN{ch}:BWL {{}}",
+                dummy_return="",
+            )
+            self.add_lookup(f"CH{ch}_BW_LIM", {"True": "1", "False": "0"})
+
+            self.add_parameter(
+                f"CH{ch}_WAVEFORM",
+                read_command=f":SOUR{ch}:FUNC?",
+                set_command=f":SOUR{ch}:FUNC {{}}",
+                pre_hooks=[uppercase()],
+                dummy_return="",
+            )
+            self.add_lookup(
+                f"CH{ch}_WAVEFORM",
+                {
+                    "SINE": "SIN",
+                    "SQUARE": "SQU",
+                    "TRIANGLE": "TRI",
+                    "RAMP": "RAMP",
+                    "PULSE": "PULS",
+                    "PRBS": "PRBS",
+                    "NOISE": "NOIS",
+                    "ARBITRARY": "ARB",
+                    "DC": "DC",
+                },
+            )
+
+            """    OUTPut Subsystem    """
+            self.add_parameter(
+                f"CH{ch}_IMPEDANCE",
+                read_command=f"OUTP{ch}:LOAD?",
+                set_command=f"OUTP{ch}:LOAD {{}}",
+                pre_hooks=[lambda value: "50" if value == "50-OHM" else "INF"],
+                dummy_return="",
+            )
+
+            self.add_parameter(
+                f"CH{ch}_ENABLE",
+                read_command=f":OUTP{ch}?",
+                set_command=f":OUTP{ch} {{}}",
+                pre_hooks=[lambda value: "ON" if value == True else "OFF"],
+                post_hooks=[lambda value: True if value == "1\n" else False],
+                dummy_return="",
+            )
+
+            self.add_parameter(
+                f"CH{ch}_POLARITY",
+                read_command=f"OUTP{ch}:POL?",
+                set_command=f":OUTP{ch}:POL {{}}",
+                dummy_return="",
+            )
+            self.add_parameter(
+                f"CH{ch}_TRIGGER_CHANNEL",
+                read_command=f"TRIG{ch}:SOUR?",
+                set_command=f"TRIG{ch}:SOUR {{}}",
+                dummy_return="",
+            )
+
+            self.add_parameter(
+                f"CH{ch}_TRIGGER_DELAY",
+                read_command="TRIG1:DEL?",
+                set_command="TRIG1:DEL {}",
+                pre_hooks=[format_float(".6E")],
+                dummy_return="",
+            )
+
+            """    VOLT Subsystem    """
+            self.add_parameter(
+                f"CH{ch}_AMPLITUDE",
+                read_command=f"SOUR{ch}:VOLT?",
+                set_command=f"SOUR{ch}:VOLT {{}}",
+                pre_hooks=[format_float(".6E")],
+                dummy_return="",
+            )
+
+            self.add_parameter(
+                f"CH{ch}_OFFSET",
+                read_command=f"SOUR{ch}:VOLT?",
+                set_command=f"SOUR{ch}:VOLT:OFFS {{}}",
+                pre_hooks=[format_float(".6E")],
+                dummy_return="",
+            )
+
+            self.add_parameter(
+                f"CH{ch}_TRACK",
+                read_command="TRAC?",
+                set_command="SOUR1:TRAC {}",
+                dummy_return="",
+            )
 
         self.add_parameter(
             "TIMEBASE",
@@ -66,151 +242,12 @@ class Keysight_33500B(Instrument):
         )
 
         self.add_parameter(
-            "CH1_LABEL",
-            read_command="CHAN1:LAB?",
-            set_command="CHAN1:LAB {}",
-            pre_hooks=[min_len_converter(32)],
-            dummy_return="",
-        )
-
-        self.add_parameter(
             "LABELS_ENABLED",
             read_command="DISP:LAB?",
             set_command="DISP:LAB {}",
             dummy_return="",
         )
         self.add_lookup("LABELS_ENABLED", {"True": "1", "False": "0"})
-
-        self.add_parameter(
-            "CH1_INVERT",
-            read_command="CHAN1:INV?",
-            set_command="CHAN1:INV {}",
-            dummy_return="",
-        )
-        self.add_lookup("CH1_INVERT", {"True": "1", "False": "0"})
-
-        self.add_parameter(
-            "CH1_PROBE_ATTEN",
-            read_command="CHAN1:PROB?",
-            set_command="CHAN1:PROB {}",
-            pre_hooks=[format_float(".6E")],
-            dummy_return="",
-        )
-
-        self.add_parameter(
-            "CH1_COUPLING",
-            read_command="CHAN1:COUP?",
-            set_command="CHAN1:COUP {}",
-            pre_hooks=[expected_input_validator(["AC", "DC"], "DC")],
-            dummy_return="",
-        )
-
-        """    Burst Subsystem    """
-        self.add_parameter(
-            "CH1_BURS_MODE",
-            read_command="SOUR1:BURS:MODE?",
-            set_command="SOUR1:BURS:MODE {}",
-            dummy_return="",
-        )
-
-        self.add_parameter(
-            "CH1_BURS_STAT",
-            read_command="SOUR1:BURS:STAT?",
-            set_command="SOUR1:BURS:STAT {}",
-            dummy_return="",
-        )
-
-        self.add_parameter(
-            "CH1_BURS_NCYC",
-            read_command="SOUR1:BURS:NCYC?",
-            set_command="SOUR1:BURS:NCYC {}",
-            dummy_return="",
-        )
-
-        self.add_parameter(
-            "CH1_BURS_PER",
-            read_command="SOUR1:BURS:INT:PER?",
-            set_command="SOUR1:BURS:INT:PER {}",
-            dummy_return="",
-        )
-
-        """    Display Subsystem    """
-        self.add_parameter(
-            "CH1_ACTIVE",
-            read_command="CHAN1:DISP?",
-            set_command="CHAN1:DISP {}",
-            dummy_return="",
-        )
-        self.add_lookup("CH1_ACTIVE", {"True": "1", "False": "0"})
-
-        """    Frequency Subsystem    """
-        self.add_parameter(
-            "CH1_FREQUENCY",
-            read_command="SOUR1:FREQ?",
-            set_command="SOUR1:FREQ {}",
-            pre_hooks=[scaling_converter(1e6), format_float(".6E")],
-            post_hooks=[
-                parse_converter(0, -1),
-            ],
-            dummy_return="",
-        )
-
-        """    Function Subsystem    """
-        # FUNCtion:NOISe:BANDwidth - bandwidth for NOISe waveform
-        self.add_parameter(
-            "CH1_BW_LIM",
-            read_command="CHAN1:BWL?",
-            set_command="CHAN1:BWL {}",
-            dummy_return="",
-        )
-        self.add_lookup("CH1_BW_LIM", {"True": "1", "False": "0"})
-
-        self.add_parameter(
-            "CH1_WAVEFORM",
-            read_command=":SOUR1:FUNC?",
-            set_command=":SOUR1:FUNC {}",
-            pre_hooks=[uppercase()],
-            dummy_return="",
-        )
-        self.add_lookup(
-            "CH1_WAVEFORM",
-            {
-                "SINE": "SIN",
-                "SQUARE": "SQU",
-                "TRIANGLE": "TRI",
-                "RAMP": "RAMP",
-                "PULSE": "PULS",
-                "PRBS": "PRBS",
-                "NOISE": "NOIS",
-                "ARBITRARY": "ARB",
-                "DC": "DC",
-            },
-        )
-
-        """    OUTPut Subsystem    """
-        self.add_parameter(
-            "CH1_IMPEDANCE",
-            read_command="OUTP1:LOAD?",
-            set_command="OUTP1:LOAD {}",
-            pre_hooks=[lambda value: "50" if value == "50 (OHM)" else "INF"],
-            dummy_return="",
-        )
-
-        self.add_parameter(
-            "CH1_ENABLE",
-            read_command=":OUTP1?",
-            set_command=":OUTP1 {}",
-            pre_hooks=[lambda value: "ON" if value == True else "OFF"],
-            post_hooks=[lambda value: True if value == "1\n" else False],
-            dummy_return="",
-        )
-
-        self.add_parameter(
-            "CH1_POLARITY",
-            read_command="OUTP1:POL?",
-            set_command=":OUTP1:POL {}",
-            dummy_return="",
-        )
 
         """    Trigger Subsystem    """
         self.add_parameter(
@@ -234,44 +271,5 @@ class Keysight_33500B(Instrument):
             read_command="TRIG:EDGE:SLOP?",
             set_command="TRIG:EDGE:SLOP {}",
             pre_hooks=[expected_input_validator(["BOTH", "NEG", "POS", "ALT"], "POS")],
-            dummy_return="",
-        )
-
-        self.add_parameter(
-            "CH1_TRIGGER_CHANNEL",
-            read_command="TRIG1:SOUR?",
-            set_command="TRIG1:SOUR {}",
-            dummy_return="",
-        )
-
-        self.add_parameter(
-            "CH1_TRIGGER_DELAY",
-            read_command="TRIG1:DEL?",
-            set_command="TRIG1:DEL {}",
-            pre_hooks=[format_float(".6E")],
-            dummy_return="",
-        )
-
-        """    VOLT Subsystem    """
-        self.add_parameter(
-            "CH1_AMPLITUDE",
-            read_command=":VOLT?",
-            set_command="SOUR1:VOLT {}",
-            pre_hooks=[format_float(".6E")],
-            dummy_return="",
-        )
-
-        self.add_parameter(
-            "CH1_OFFSET",
-            read_command=":VOLT?",
-            set_command="SOUR1:VOLT:OFFS {}",
-            pre_hooks=[format_float(".6E")],
-            dummy_return="",
-        )
-
-        self.add_parameter(
-            "CH1_TRACK",
-            read_command="TRAC?",
-            set_command="SOUR1:TRAC {}",
             dummy_return="",
         )
