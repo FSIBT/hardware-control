@@ -64,7 +64,7 @@ class SRS_DG535(Instrument):
             "TRIGGER_MODE",
             read_command="TM",
             set_command="TM{}",
-            dummy_return="",
+            dummy_return="SINGLE",
         )
         self.add_lookup(
             "TRIGGER_MODE",
@@ -80,7 +80,7 @@ class SRS_DG535(Instrument):
             "TRIGGER_EDGE",
             read_command="TS",
             set_command="TS{}",
-            dummy_return="",
+            dummy_return="POSITIVE",
         )
         self.add_lookup("TRIGGER_EDGE", {"POSITIVE": "1", "NEGATIVE": "0"})
 
@@ -88,9 +88,9 @@ class SRS_DG535(Instrument):
             "EXT_TRIG_ZIN",
             read_command="TZ",
             set_command="TZ{}",
-            dummy_return="",
+            dummy_return="50-OHMS",
         )
-        self.add_lookup("EXT_TRIG_ZIN", {"50 OHMS": "0", "HI-Z": "1"})
+        self.add_lookup("EXT_TRIG_ZIN", {"50-OHMS": "0", "HI-Z": "1"})
 
         for channel, inst_ch_name in SRS_DG535.CHANNEL_NAMES.items():
             if channel in ["Trig0", "T0"]:
@@ -99,7 +99,7 @@ class SRS_DG535(Instrument):
                 f"CH{channel}_OUTPUT_MODE",
                 read_command=f"OM {inst_ch_name}",
                 set_command=f"OM {inst_ch_name},{{}}",
-                dummy_return="",
+                dummy_return="TTL",
             )
             self.add_lookup(
                 f"CH{channel}_OUTPUT_MODE",
@@ -118,7 +118,7 @@ class SRS_DG535(Instrument):
                 f"CH{channel}_OUTPUT_OFFSET",
                 read_command=f"OO {inst_ch_name}",
                 set_command=f"OO {inst_ch_name},{{}}",
-                dummy_return="",
+                dummy_return="0.2",
             )
         for channel, inst_ch_name in SRS_DG535.CHANNEL_NAMES.items():
             if channel in ["Trig0", "T0"]:
@@ -127,8 +127,8 @@ class SRS_DG535(Instrument):
                 f"CH{channel}_OUTPUT_AMPLITUDE",
                 read_command=f"OA {inst_ch_name}",
                 set_command=f"OA {inst_ch_name},{{}}",
-                pre_hooks=[range_validator(0.1, 4)],
-                dummy_return="",
+                pre_hooks=[hooks.range_validator(0.1, 4)],
+                dummy_return="3.2",
             )
 
         for channel1, channel1_int in SRS_DG535.CHANNEL_NAMES.items():
@@ -145,14 +145,17 @@ class SRS_DG535(Instrument):
                     f"CH{channel1}_{channel2}_DELAY",
                     read_command=f"DT {channel1_int}",
                     set_command=f"DT {channel1_int},{channel2_int},{{}}",
-                    dummy_return="",
+                    dummy_return="0.1",
                 )
         self.add_parameter(
-            "PULSES_PER_BURST", read_command="BC", set_command="BC{}", dummy_return=""
+            "PULSES_PER_BURST",
+            read_command="BC",
+            set_command="BC{}",
+            dummy_return=500,
         )
         self.add_parameter(
-            "TRIGGER_LEVEL", read_command="TL", set_command="TL{}", dummy_return=""
+            "TRIGGER_LEVEL", read_command="TL", set_command="TL{}", dummy_return="1"
         )
         self.add_parameter(
-            "TRIGGER_PERIOD", read_command="BP", set_command="BP{}", dummy_return=""
+            "TRIGGER_PERIOD", read_command="BP", set_command="BP{}", dummy_return="1"
         )
