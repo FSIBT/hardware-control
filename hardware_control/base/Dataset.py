@@ -109,11 +109,26 @@ class Dataset(QObject):
         self.data = defaultdict(list)
         self.autosave_next_row = 0
 
-    def add_instrument(self, instrument, parameters=None) -> None:
-        self.instruments.append((instrument, parameters))
+    def add_instrument(self, instrument, parameter=None) -> None:
+        """Add a parameter from an instrument to the dataset.
+
+        If parameter is `None`, all parameters that can be read are
+        included.
+
+        """
+        if parameter is None:
+            for p in instrument.read_command.keys():
+                self.instruments.append((instrument, p))
+        else:
+            self.instruments.append((instrument, parameter))
 
     def name_channel(self, channel: str, name: str) -> None:
         """Channel must be a key in self.data and name is the replacement string."""
+
+        instrument, parameter = channel.split(":")
+        if (instrument, parameter) not in self.instruments:
+            logger.warning(f"'{channel}' is not available in dataset '{self.name}'.")
+            return
 
         self.channel_names[channel] = name
 
@@ -299,7 +314,9 @@ class Dataset(QObject):
         return out
 
     def to_pandas(
-        self, columns: Optional[list] = None, cleanup: bool = True,
+        self,
+        columns: Optional[list] = None,
+        cleanup: bool = True,
     ) -> pd.DataFrame:
         """Return a subset of columns as a pandas dataframe and optionally clean it up.
 
