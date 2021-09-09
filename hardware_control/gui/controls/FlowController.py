@@ -38,7 +38,6 @@ class FlowController(QGroupBox):
         app,
         instrument: str,
         name: str = "Flow Controller",
-        lock_until_sync=False,
     ):
         super().__init__(name)
         self.app = app
