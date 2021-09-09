@@ -40,12 +40,21 @@ class TemperatureMonitor(hc.base.MainWindow):
         self.main_widget = QWidget(self)
 
         # create a backend and a GUI control for the backend
-        self.app.add_instrument(hc.instruments.Lakeshore_224("lakeshore", "TCPIP::192.168.0.12::7777::SOCKET"))
-        self.temp_wdgt = hc.gui.TempMonitor(app, instrument="lakeshore", channel_list=["A", "B", "C1", "D1"])
+        self.app.add_instrument(
+            hc.instruments.Lakeshore_224(
+                "lakeshore", "TCPIP::192.168.0.12::7777::SOCKET"
+            )
+        )
+        self.temp_wdgt = hc.gui.TempMonitor(
+            app, instrument="lakeshore", channel_list=["A", "B", "C1", "D1"]
+        )
 
         # Create data_sets
         self.app.data_sets["Temps"] = hc.Dataset("Temps", self.app)
-        self.app.data_sets["Temps"].add_instrument(self.temp_wdgt)
+        for ch in ["A", "B", "C1", "D1"]:
+            self.app.data_sets["Temps"].add_instrument(
+                self.temp_wdgt.instrument, f"CH{ch}_READ_TEMP"
+            )
         self.app.data_sets["Temps"].start_updates(3)
         self.app.data_sets["Temps"].start_autosave()
 
@@ -58,18 +67,10 @@ class TemperatureMonitor(hc.base.MainWindow):
         self.plot_wdgt.set_dataset("Temps")  # Could add
         self.grid.addWidget(self.plot_wdgt, 0, 0)
 
-        self.app.data_sets["Temps"].name_channel(
-            "Lakeshore 224 Temperature Monitor:CHA_READ_TEMP", "Temp A"
-        )
-        self.app.data_sets["Temps"].name_channel(
-            "Lakeshore 224 Temperature Monitor:CHB_READ_TEMP", "Temp B"
-        )
-        self.app.data_sets["Temps"].name_channel(
-            "Lakeshore 224 Temperature Monitor:CHC1_READ_TEMP", "Temp C1"
-        )
-        self.app.data_sets["Temps"].name_channel(
-            "Lakeshore 224 Temperature Monitor:CHD1_READ_TEMP", "Temp D1"
-        )
+        self.app.data_sets["Temps"].name_channel("lakeshore:CHA_READ_TEMP", "Temp A")
+        self.app.data_sets["Temps"].name_channel("lakeshore:CHB_READ_TEMP", "Temp B")
+        self.app.data_sets["Temps"].name_channel("lakeshore:CHC1_READ_TEMP", "Temp C1")
+        self.app.data_sets["Temps"].name_channel("lakeshore:CHD1_READ_TEMP", "Temp D1")
 
         self.setCentralWidget(self.main_widget)
         self.show()
@@ -78,7 +79,7 @@ class TemperatureMonitor(hc.base.MainWindow):
         self.app.close()
 
 
-if __name__ =="__main__":
+if __name__ == "__main__":
     app = hc.App(dummy=dummy)
     app.print_close_info = True
     ex = TemperatureMonitor(app)

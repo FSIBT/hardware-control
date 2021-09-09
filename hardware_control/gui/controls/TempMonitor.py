@@ -38,7 +38,7 @@ class TempMonitor(QGroupBox):
             temperature = HCLabel(
                 self.app,
                 self.instrument,
-                parameter=f"{channel}_TEMP",
+                parameter=f"CH{channel}_READ_TEMP",
                 label=f"{channel} temperature",
                 unit="K",
                 use_prefix=False,
@@ -47,7 +47,7 @@ class TempMonitor(QGroupBox):
             curve = HCLineEdit(
                 self.app,
                 self.instrument,
-                parameter=f"CH{channel}_CHANGE_CURVE",
+                parameter=f"CH{channel}_CURVE",
                 label=f"{channel}_CURVE",
                 label_align="right",
             )

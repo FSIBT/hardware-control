@@ -63,7 +63,7 @@ class Lakeshore_224(Instrument):
         self.check_connection_commands = ["*IDN?"]
 
         for channel in self.active_channels:
-            self.add_command("SET_CH{channel}_OFF", f"INCRV {channel} 0")
+            self.add_command(f"SET_CH{channel}_OFF", f"INCRV {channel} 0")
             self.add_command(
                 f"READ_CH{channel}_STATUS", lambda: self.read_status(channel)
             )
@@ -81,7 +81,7 @@ class Lakeshore_224(Instrument):
                 read_command=f"KRDG? {channel}",
                 set_command="",
                 post_hooks=[lambda value: value if value != "00" else None],
-                dummy_return="",
+                dummy_return=lambda: random.random() * 200 + 200,
             )
 
             # self.add_parameter(
