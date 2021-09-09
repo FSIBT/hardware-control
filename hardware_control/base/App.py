@@ -35,8 +35,8 @@ def call_hooks(hooks_list, value):
 
     """
     for hook in hooks_list:
-        if callable(func):
-            value = func(value)
+        if callable(hook):
+            value = hook(value)
             if value is None:
                 return None
     return str(value)
@@ -366,7 +366,7 @@ class App(QApplication):
 
         """
 
-        if when not in ["post_read_hook", "pre_set_hooks", "pre_call_hooks"]:
+        if when not in ["post_read_hooks", "pre_set_hooks", "pre_call_hooks"]:
             logger.error(
                 'wrong hook type. Needs to be one of "post_read_hook", "pre_set_hooks", "pre_call_hooks"'
             )
@@ -384,7 +384,7 @@ class App(QApplication):
         hc_update = getattr(widget, "hc_update", None)
         if not callable(hc_update):
             logger.error(
-                f"Widget {widget.name} has no update function and cannot be added for automatic updates"
+                f"Widget '{widget.instrument}:{widget.parameter}' has no update function and cannot be added for automatic updates"
             )
 
         # don't add a widget twice
