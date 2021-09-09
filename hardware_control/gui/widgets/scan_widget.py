@@ -1,6 +1,12 @@
 import json
 import logging
 import time
+import random
+
+from GPy.kern import Matern32, Bias
+from GPy.models import GPRegression
+from GPy.core.parameterization.priors import Gamma
+from scipy.stats import rv_discrete
 
 import numpy as np
 
@@ -22,6 +28,7 @@ from PyQt5.QtWidgets import (
     QSizePolicy,
 )
 
+from ...base import Instrument
 from .hc_widgets import load_icon
 
 logger = logging.getLogger(__name__)
