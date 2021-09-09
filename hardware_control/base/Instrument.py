@@ -248,6 +248,12 @@ class Instrument:
             )
             return
 
+        if " " in name:
+            logger.error(
+                f"command '{name}' uses a whitespace in its name. This is not allowed."
+            )
+            return
+
         if read_command is not None:
             if name in self.read_commands:
                 logger.error(f"command {name} already exists in instrument {self.name}")
