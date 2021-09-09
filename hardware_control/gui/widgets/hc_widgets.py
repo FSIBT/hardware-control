@@ -283,6 +283,9 @@ class HCPushButton(HCMixin, QPushButton):
     def value_change(self) -> None:
         self.app.call_instrument_command(self.instrument, self.parameter)
 
+    def hc_update(self) -> None:
+        pass
+
 
 class HCComboBox(HCMixin, QComboBox):
     """A simple control widget with a label (QLabel) and an input box (QComboBox).
@@ -350,14 +353,16 @@ class HCSpinBox(HCMixin, QSpinBox):
             label_align=label_align,
         )
 
-        self.calueChanged.connect(self.value_change)
+        self.valueChanged.connect(self.value_change)
 
     def value_change(self) -> None:
         value = self.value()
         self.app.set_instrument_parameter(self.instrument, self.parameter, value)
 
     def hc_update(self) -> None:
-        value = self.app.get_instrument_parameter(self.instrument, self.parameter)
+        value = float(
+            self.app.get_instrument_parameter(self.instrument, self.parameter)
+        )
         self.setValue(value)
 
 
