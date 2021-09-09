@@ -1,9 +1,11 @@
 import logging
 
 from PyQt5 import QtCore
+from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QIcon, QFont, QDoubleValidator
 from PyQt5.QtWidgets import (
     QGroupBox,
+    QComboBox,
     QLabel,
     QGridLayout,
     QWidget,
@@ -15,6 +17,7 @@ from ..widgets import (
     HCComboBox,
     HCDoubleSpinBox,
     HCPushButton,
+    HCSpinBox,
 )
 
 logger = logging.getLogger(__name__)
@@ -37,7 +40,9 @@ class DelayGenerator(QGroupBox):
     """
 
     def __init__(
-        self, app, instrument: str,
+        self,
+        app,
+        instrument: str,
     ):
 
         super().__init__()
@@ -72,7 +77,7 @@ class DelayGenerator(QGroupBox):
             parameter="EXT_TRIG_ZIN",
             label="Ext. Trigger Zin",
             label_align="right",
-            items=["50 Ohms", "Hi-Z"],
+            items=["50-Ohms", "Hi-Z"],
         )
 
         self.trig_level = HCDoubleSpinBox(
@@ -94,8 +99,8 @@ class DelayGenerator(QGroupBox):
         self.app.add_hook(
             self.instrument,
             "TRIGGER_MODE",
-            "post_read_hook",
-            hook=lambda x: self.enable_disable_hook(x),
+            "post_read_hooks",
+            lambda x: self.enable_disable_hook(x),
         )
 
         self.pulse = HCSpinBox(
@@ -106,9 +111,9 @@ class DelayGenerator(QGroupBox):
             label_align="right",
         )
 
-        self.period.HCSpinBox(
+        self.period = HCSpinBox(
             self.app,
-            self.instrment,
+            self.instrument,
             "TRIGGER_PERIOD",
             label="Triggers per Burst:",
             label_align="right",
@@ -121,7 +126,7 @@ class DelayGenerator(QGroupBox):
         self.channel_box = QGroupBox()
         self.channel_box_layout = QGridLayout()
         if self.channels == 4:
-            for i in range(1, 5):
+            for i in ["A", "B", "C", "D", "AB", "CD"]:
                 self.channel_widgets.append(
                     DelayChannelWidget(self.app, self.instrument, i)
                 )
@@ -130,19 +135,8 @@ class DelayGenerator(QGroupBox):
                 )
                 widget_col += 1
 
-            self.channel_widgets.append(
-                DelayChannelWidget(self.app, self.instrument, 12)
-            )
-            self.channel_box_layout.addWidget(self.channel_widgets[-1], 0, widget_col)
-            widget_col += 1
-
-            self.channel_widgets.append(
-                DelayChannelWidget(self.app, self.instrument, 34)
-            )
-            self.channel_box_layout.addWidget(self.channel_widgets[-1], 0, widget_col)
-            widget_col += 1
         if self.channels == 2:
-            for i in range(1, 3):
+            for i in ["A", "B", "AB"]:
                 self.channel_widgets.append(
                     DelayChannelWidget(self.app, self.instrument, i)
                 )
@@ -150,12 +144,6 @@ class DelayGenerator(QGroupBox):
                     self.channel_widgets[-1], 0, widget_col
                 )
                 widget_col += 1
-
-            self.channel_widgets.append(
-                DelayChannelWidget(self.app, self.instrument, 12)
-            )
-            self.channel_box_layout.addWidget(self.channel_widgets[-1], 0, widget_col)
-            widget_col += 1
 
         self.channel_box.setLayout(self.channel_box_layout)
 
@@ -182,12 +170,38 @@ class DelayGenerator(QGroupBox):
 
         self.setLayout(self.master_layout)
 
+        # Create timer to query instrument
+        self.readout_timer = QTimer(self)
+        self.readout_timer.timeout.connect(self.update_readout)
+        self.readout_timer.start(self.app.globalRefreshRate)
+
     def enable_disable_hook(self, value):
         if value == "SINGLE":
             self.single_trig_but.setEnabled(True)
         else:
             self.single_trig_but.setEnabled(False)
         return value
+
+    def update_readout(self):
+        """Queries the instrument for current readout data."""
+
+        for parameter in [
+            "TRIGGER_MODE",
+            "TRIGGE_EDGE",
+            "EXT_TRIG_ZIN",
+            "TRIGGER_LEVEL",
+            "PULSES_PER_BURST",
+            "TRIGGER_PERIOD",
+        ]:
+            self.app.update_instrument_parameter(self.instrument, parameter)
+
+        for ch in self.channel_widgets:
+            if getattr(ch, "time_delay", None):
+                self.app.update_instrument_parameter(
+                    self.instrument, ch.time_delay.parameter
+                )
+            self.app.update_instrument_parameter(self.instrument, ch.volt.parameter)
+            self.app.update_instrument_parameter(self.instrument, ch.level.parameter)
 
 
 class DelayChannelWidget(QWidget):
@@ -204,17 +218,13 @@ class DelayChannelWidget(QWidget):
 
     main_widget : DelayGenerator
         The main widget where this is used in
-    channel : int
-        The channel this widget controls. Normally 1, 2, 3, or 4, but 12 and 34 are also
+    channel : str
+        The channel this widget controls. Normally A, B, C, or D, but AB and CD are also
         allowed for combined channels that, for example, exist in the SRS DG533.
-    use_alpha : bool
-        Replace the numbers in the labels with A, B, C, D (or AB, CD).
 
     """
 
-    num_to_alpha = {1: "A", 2: "B", 3: "C", 4: "D", 12: "AB", 34: "CD"}
-
-    def __init__(self, app, instrument, channel: int, use_alpha: bool = True):
+    def __init__(self, app, instrument, channel: str):
 
         super().__init__()
 
@@ -222,33 +232,27 @@ class DelayChannelWidget(QWidget):
         self.app = app
         self.instrument = instrument
 
-        if use_alpha:
-            channel_str = DelayChannelWidget.num_to_alpha.get(channel, "?")
-        else:
-            channel_str = str(self.channel)
-
-        self.channel_label = QLabel()
-        self.channel_label.setText(f"Channel {channel_str}")
+        self.channel = channel
+        self.channel_label = QLabel(f"Channel {channel}")
         self.channel_label.setFont(QFont("Arial", 20))
         self.channel_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
 
-        if channel not in [12, 34]:
+        if channel not in ["AB", "CD"]:
             self.time_delay = HCLineEdit(
                 self.app,
                 self.instrument,
-                f"CH{self.channel}_DELAY",
+                f"CH{self.channel}_T0_DELAY",
                 label="t_offset [s]",
             )
 
-        rels = ["Trig", "A", "B", "C", "D", "T0"]
-        if channel not in [12, 34]:
-            rels.remove(channel_str.title())
-            self.relative = HCComboBox(
-                self.app,
-                self.instrument,
-                f"CH{self.channel}_RELATIVE",
-                label="Relative to",
-                items=rels,
+        rels = ["Trig0", "T0", "A", "B", "C", "D"]
+        if channel not in ["AB", "CD"]:
+            rels = rels[: rels.index(self.channel)]
+            self.relative_label = QLabel("Relative to")
+            self.relative = QComboBox()
+            self.relative.addItems(rels)
+            self.relative.currentIndexChanged.connect(
+                lambda: self.update_relative_channel(self.relative)
             )
 
         self.volt = HCLineEdit(
@@ -275,10 +279,10 @@ class DelayChannelWidget(QWidget):
 
         self.channel_layout = QGridLayout()
         self.channel_layout.addWidget(self.channel_label, 0, 0, 1, 2)
-        if self.channel not in [12, 34]:
+        if self.channel not in ["AB", "CD"]:
             self.channel_layout.addWidget(self.time_delay.label, 1, 0)
             self.channel_layout.addWidget(self.time_delay, 1, 1)
-            self.channel_layout.addWidget(self.relative.label, 2, 0)
+            self.channel_layout.addWidget(self.relative_label, 2, 0)
             self.channel_layout.addWidget(self.relative, 2, 1)
 
         self.channel_layout.addWidget(self.level.label, 3, 0)
@@ -286,6 +290,11 @@ class DelayChannelWidget(QWidget):
         self.channel_layout.addWidget(self.volt.label, 4, 0)
         self.channel_layout.addWidget(self.volt, 4, 1)
         self.setLayout(self.channel_layout)
+
+    def update_relative_channel(self, widget):
+        value = widget.currentText()
+        self.time_delay.parameter = f"CH{self.channel}_{value}_DELAY"
+        logger.debug(f"updating delay CH{self.channel}->{value}")
 
     def set_output_level_hook(self, value, widget):
         if value is None:

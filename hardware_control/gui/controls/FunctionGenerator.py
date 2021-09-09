@@ -52,12 +52,8 @@ class FunctionGenerator(QGroupBox):
 
         self.num_channels = num_channels
 
-        self.settings = self.default_state()
         self.setup_UI()
         self.autolayout_grid(ncols=2)
-
-        # Write state to scope - synch scope with GUI
-        self.send_state()
 
     def setup_UI(self):
         self.frequency = HCLineEdit(self, "CH1_FREQUENCY", "CH1 Frequency (MHz)")
@@ -207,6 +203,7 @@ class FunctionGenerator(QGroupBox):
                 ["OFF", "ON", "INV"],
             )
             self.track1.pre_update_hook.append(self.set_tracking_hook)
+
         self.widgets = [
             self.frequency,
             self.amplitude,
@@ -241,40 +238,6 @@ class FunctionGenerator(QGroupBox):
                 self.track2,
                 self.track1,
             ]
-
-    def initialize_gui_instrument(self):
-        return self.default_state()
-
-    def default_state(self):
-
-        default = {}
-        for i in range(1, self.num_channels + 1):
-            default[f"CH{i}_AMPLITUDE"] = "1"
-            default[f"CH{i}_FREQUENCY"] = "12"
-            default[f"CH{i}_OFFSET"] = "0"
-            default[f"CH{i}_WAVEFORM"] = "SINE"
-            default[f"CH{i}_MODULATE"] = "FALSE"
-            default[f"CH{i}_BURS_MODE"] = "TRIG"
-            default[f"CH{i}_BURS_STAT"] = "1"
-            default[f"CH{i}_IMPEDANCE"] = "HiZ"
-            default[f"CH{i}_POLARITY"] = "NORM"
-            default[f"CH{i}_ENABLE"] = "TRUE"
-            default[f"CH{i}_BURS_NCYC"] = "500"
-            default[f"CH{i}_BURS_PER"] = "1"
-            default[f"CH{i}_TRIG_SOUR"] = "EXT"
-            default[f"CH{i}_TRIGGER_CHANNEL"] = "EXT"
-            default[f"CH{i}_TRIGGER_DELAY"] = "10e-6"
-            default[f"CH{i}_TRACK"] = "OFF"
-
-        return default
-
-    def settings_to_UI(self):
-        for w in self.widgets:
-            w.settings_to_UI()
-        if self.num_channels >= 2:
-            for w in self.widgets2:
-                w.settings_to_UI()
-        return
 
     def set_tracking_hook(self, setting, value):
         if value is None:

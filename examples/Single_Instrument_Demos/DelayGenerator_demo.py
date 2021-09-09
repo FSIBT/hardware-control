@@ -17,18 +17,16 @@ import sys
 from PyQt5.QtWidgets import QWidget, QGridLayout
 from docopt import docopt
 
-import hardware_control.instruments as hc_instr
-import hardware_control.gui as hc
-import hardware_control
+import hardware_control as hc
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
 
 logger = logging.getLogger(__name__)
-hardware_control.base.setup_logging(logger, commands, "hardware_control.log")
+hc.setup_logging(logger, commands, "hardware_control.log")
 
 
-class Demo(hardware_control.base.MainWindow):
+class Demo(hc.MainWindow):
     def __init__(self, app):
         super().__init__(app)
         self.app = app
@@ -40,10 +38,10 @@ class Demo(hardware_control.base.MainWindow):
 
         # create a backend and a GUI control for the backend
         self.app.add_instrument(
-            hc_instr.SRS_DG535(name="dg5353", connection_addr="GPIB0::15::INSTR")
+            hc.instruments.SRS_DG535(name="dg5353", connection_addr="GPIB0::15::INSTR")
         )
 
-        self.trigger_ctrl = hc.controls.DelayGenerator(self.app, "dg5353")
+        self.trigger_ctrl = hc.gui.DelayGenerator(self.app, "dg5353")
 
         # Add control to the main Widget
         self.grid = QGridLayout()
@@ -54,11 +52,11 @@ class Demo(hardware_control.base.MainWindow):
         self.show()
 
     def close(self):
-        self.trigger_ctrl.close()
+        self.app.close()
 
 
 def main():
-    app = hardware_control.base.App(dummy=dummy)
+    app = hc.App(dummy=dummy)
     ex = Demo(app)
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())
