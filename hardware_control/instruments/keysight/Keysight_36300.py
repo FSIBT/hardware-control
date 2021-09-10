@@ -33,16 +33,14 @@ class Keysight_36300(Instrument):
             self.add_parameter(
                 f"CH{channel}_V_MAX",
                 read_command=None,
-                set_command=None,
-                post_hooks=[lambda x: set_V_max(channel, x)],
+                set_command=[lambda x: set_V_max(channel, x)],
                 dummy_return="",
             )
 
             self.add_parameter(
                 f"CH{channel}_I_MAX",
                 read_command=None,
-                set_command=None,
-                post_hooks=[lambda x: set_I_max(channel, x)],
+                set_command=[lambda x: set_I_max(channel, x)],
                 dummy_return="",
             )
 
@@ -84,24 +82,10 @@ class Keysight_36300(Instrument):
                 read_command=f"MEAS:VOLT? (@{channel})",
                 dummy_return="",
             )
+
             self.add_parameter(
                 "CH{channel}_I_OUT",
                 read_command=f"MEAS:CURR? (@{channel})",
-                dummy_return="",
-            )
-            self.add_parameter(
-                "CH{channel}_I_SET",
-                read_command=f":SOURCE:CURR? (@{channel})",
-                dummy_return="",
-            )
-            self.add_parameter(
-                "CH{channel}_V_SET",
-                read_command=f":SOURCE:VOLT? (@{channel})",
-                dummy_return="",
-            )
-            self.add_parameter(
-                "CH{channel}_ENABLE",
-                read_command=f":OUTPUT:STATE? (@{channel})",
                 dummy_return="",
             )
 

@@ -15,6 +15,12 @@ import logging
 from typing import Union
 
 from ...base import Instrument
+from ...base.hooks import (
+    format_float,
+    write_to_log,
+    scaling_converter,
+    format_int,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +68,7 @@ class Caen_14xxET(Instrument):
         self.max_V = [None] * len(self.chan_nums)
         self.max_I = [None] * len(self.chan_nums)
 
-        self.status_bits = {
+        self.status = {
             "ON_OFF": 1,
             "RAMPING_UP": 2,
             "RAMPING_DOWN": 4,
@@ -83,16 +89,14 @@ class Caen_14xxET(Instrument):
             self.add_parameter(
                 f"CH{channel}_V_MAX",
                 read_command=None,
-                set_command=None,
-                post_hooks=[lambda x: self.set_V_max(channel, x)],
+                set_command=[lambda x: self.set_V_max(channel, x)],
                 dummy_return="",
             )
 
             self.add_parameter(
                 f"CH{channel}_I_MAX",
                 read_command=None,
-                set_command=None,
-                post_hooks=[lambda x: self.set_I_max(channel, x)],
+                set_command=[lambda x: self.set_I_max(channel, x)],
                 dummy_return="",
             )
 
@@ -107,8 +111,10 @@ class Caen_14xxET(Instrument):
             self.add_parameter(
                 f"CH{channel}_I_SET",
                 read_command=f"$BD:00,CMD:SET,CH:{channel},PAR:ISET,VAL:{{}}",
-                pre_hook=[
-                    write_to_log(f"Iset called with value {value}"),
+                pre_hooks=[
+                    lambda value: write_to_log(
+                        f"Iset called with value {value}", "info"
+                    ),
                     lambda value: min(value, self.max_I[channel - 1])
                     if self.max_I[channel - 1] is not None
                     else None,
@@ -121,8 +127,10 @@ class Caen_14xxET(Instrument):
             self.add_parameter(
                 f"CH{channel}_V_SET",
                 read_command=f"$BD:00,CMD:SET,CH:{channel},PAR:VSET,VAL:{{}}",
-                pre_hook=[
-                    write_to_log(f"Vset called with value {value}"),
+                pre_hooks=[
+                    lambda value: write_to_log(
+                        f"Vset called with value {value}", "info"
+                    ),
                     lambda value: min(value, self.max_V[channel - 1])
                     if self.max_V[channel - 1] is not None
                     else None,
@@ -133,7 +141,7 @@ class Caen_14xxET(Instrument):
             self.add_parameter(
                 f"CH{channel}_V_OUT",
                 read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:VMON",
-                post_hook=[
+                post_hooks=[
                     parse_instrument_response,
                     lambda value: value.strip("\\nr"),
                 ],
@@ -143,7 +151,7 @@ class Caen_14xxET(Instrument):
             self.add_parameter(
                 f"CH{channel}_I_OUT",
                 read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:IMON",
-                post_hook=[
+                post_hooks=[
                     parse_instrument_response,
                     lambda value: value.strip("\\nr"),
                     format_float(),
@@ -155,7 +163,7 @@ class Caen_14xxET(Instrument):
             self.add_parameter(
                 f"CH{channel}_I_SET",
                 read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:ISET",
-                post_hook=[
+                post_hooks=[
                     parse_instrument_response,
                     lambda value: value.strip("\\nr"),
                     format_float(),
@@ -167,7 +175,7 @@ class Caen_14xxET(Instrument):
             self.add_parameter(
                 f"CH{channel}_V_SET",
                 read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:VSET",
-                post_hook=[
+                post_hooks=[
                     parse_instrument_response,
                     lambda value: value.strip("\\nr"),
                 ],
@@ -177,7 +185,7 @@ class Caen_14xxET(Instrument):
             self.add_parameter(
                 f"CH{channel}_STATUS",
                 read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
-                post_hook=[
+                post_hooks=[
                     parse_instrument_response,
                     format_int(),
                     lambda value: self.return_status(value),
@@ -189,7 +197,7 @@ class Caen_14xxET(Instrument):
                 self.add_parameter(
                     "CH{channel}_{bit_name}",
                     read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
-                    post_hook=[create_parse_status(bit)],
+                    post_hooks=[create_parse_status(bit)],
                     dummy_return="",
                 )
 

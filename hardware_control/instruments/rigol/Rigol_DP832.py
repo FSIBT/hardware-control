@@ -25,25 +25,23 @@ class Rigol_DP832(Instrument):
         super().__init__(instrument_name="RigolDP832", connection_addr=connection_addr)
 
         # The instrument has 3 channels
-        self.num_channels = list(range(1, 4))
+        self.chan_nums = list(range(1, 4))
 
-        self.max_V = [None] * len(self.num_channels)
-        self.max_I = [None] * len(self.num_channels)
+        self.max_V = [None] * len(self.chan_nums)
+        self.max_I = [None] * len(self.chan_nums)
 
-        for channel in self.num_channels:
+        for channel in self.chan_nums:
             self.add_parameter(
                 f"CH{channel}_V_MAX",
                 read_command=None,
-                set_command=None,
-                post_hooks=[lambda x: self.set_V_max(channel, x)],
+                set_command=[lambda x: self.set_V_max(channel, x)],
                 dummy_return="",
             )
 
             self.add_parameter(
                 f"CH{channel}_I_MAX",
                 read_command=None,
-                set_command=None,
-                post_hooks=[lambda x: self.set_I_max(channel, x)],
+                set_command=[lambda x: self.set_I_max(channel, x)],
                 dummy_return="",
             )
 

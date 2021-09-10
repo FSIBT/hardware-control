@@ -34,8 +34,12 @@ class Keysight_33500B(Instrument):
         Address of instrument. Can use Visa address or socket and port.
     """
 
-    def __init__(self, name, connection_addr, number_of_channels=1):
-        super().__init__(name, connection_addr, 5025)
+    def __init__(self, connection_addr, number_of_channels=1):
+        super().__init__(
+            instrument_name="KEYSIGHT-33500B",
+            connection_addr=connection_addr,
+            default_port=5025,
+        )
 
         self.num_vert_divisions = 8
         self.check_connection_commands = "*IDN?"

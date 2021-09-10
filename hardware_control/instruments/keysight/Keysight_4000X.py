@@ -30,6 +30,7 @@ class Keysight_4000X(Instrument):
         self,
         connection_addr: str,
         instrument_name="KEYSIGHT-4000X",
+        settings_file=None,
     ):
         """List of available settings
         (<X> indicates a number, values in parethesis show acceptable values):
@@ -63,6 +64,7 @@ class Keysight_4000X(Instrument):
             connection_addr=connection_addr,
             default_port=5025,
         )
+
         # The instrument has channels 1, 2, 3, and 4
         self.chan_nums = range(1, 5)
 
@@ -206,6 +208,9 @@ class Keysight_4000X(Instrument):
         self.add_command("RUN", ":RUN")
         self.add_command("STOP", ":STOP")
         self.add_command("DIGITIZE", ":DIG")
+
+        if settings_file != None:
+            self.load_state(settings_file)
 
     def read_waveform(self, channel: int):
         """Reads a waveform from the oscilloscope.
