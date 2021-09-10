@@ -89,18 +89,15 @@ def expected_input_validator(types: List, default_val=None):
 
 # Other hooks
 def write_to_log(statement: str, log_type: str):
-    def prehook_fxn(value):
-        if log_type == "debug":
-            logger.debug(statement)
-        elif log_type == "info":
-            logger.info(statement)
-        elif log_type == "error":
-            logger.error(statement)
-        elif log_type == "trace":
-            logger.trace(statement)
-        elif log_type == "warn":
-            logger.warn(statement)
-        elif log_type == "fatal":
-            logger.fatal(statement)
-
-    return prehook_fxn
+    if log_type == "debug":
+        logger.debug(statement)
+    elif log_type == "info":
+        logger.info(statement)
+    elif log_type == "error":
+        logger.error(statement)
+    elif log_type == "trace":
+        logger.trace(statement)
+    elif log_type == "warn":
+        logger.warn(statement)
+    elif log_type == "fatal":
+        logger.fatal(statement)
