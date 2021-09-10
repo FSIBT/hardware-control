@@ -666,3 +666,19 @@ class Instrument:
             logger.debug(f"ERROR: Query {command} failed in {self.name}", exc_info=True)
             self.online = False
             return f"{self.name}-Offline"
+
+    def load_state(self, filename: str):
+        """Reads and sets instrument settings from a json dictionary"""
+        try:
+            with open(filename) as file:
+                default_settings = json.load(file)
+                logger.info(f"settings for {self.name} read from file '{filename}'")
+        except:
+            logger.error(
+                f"Failed to read file '{filename}'. Using defualt case.", exc_info=True
+            )
+            return
+
+        for key in default_settings:
+            if key in list(self.set_commands.keys()):
+                self.__setitem__(key, default_settings[key])
