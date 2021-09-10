@@ -40,11 +40,10 @@ class TemperatureMonitor(hc.base.MainWindow):
         self.main_widget = QWidget(self)
 
         # create a backend and a GUI control for the backend
-        self.app.add_instrument(
-            hc.instruments.Lakeshore_224(
-                "lakeshore", "TCPIP::192.168.0.12::7777::SOCKET"
-            )
+        self.L224 = hc.instruments.Lakeshore_224(
+            "lakeshore", "TCPIP::192.168.0.12::7777::SOCKET"
         )
+        self.app.add_instrument(self.L224)
         self.temp_wdgt = hc.gui.TempMonitor(
             app, instrument="lakeshore", channel_list=["A", "B", "C1", "D1"]
         )
@@ -83,5 +82,6 @@ if __name__ == "__main__":
     app = hc.App(dummy=dummy)
     app.print_close_info = True
     ex = TemperatureMonitor(app)
+    ex.L224.try_connect()
     app.aboutToQuit.connect(ex.close)
     sys.exit(app.exec_())
