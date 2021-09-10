@@ -30,12 +30,13 @@ class FunctionGenerator(QGroupBox):
 
     Note
     ----
-    Not all settings and command of the instrument below are supported.
+    Not all settings and commands of the instruments listed below are supported.
 
     See Also
     --------
-    hardware_control.backends.keysight.Keysight_36300.Keysight_36300
-    hardware_control.backends.siglent.Siglent_SDG.Siglent_SDG
+    hardware_control.instruments.keysight.Keysight_33500B
+    hardware_control.instruments.keysight.Keysight_36300
+    hardware_control.instruments.siglent.Siglent_SDG
 
     """
 
@@ -46,11 +47,9 @@ class FunctionGenerator(QGroupBox):
         name: str = "AWG Control",
         num_channels: int = 2,
     ):
-
         super().__init__(name)
-        self.instrument = instrument
         self.app = app
-
+        self.instrument = instrument
         self.num_channels = num_channels
 
         self.setup_UI()

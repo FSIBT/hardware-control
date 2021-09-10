@@ -1,8 +1,7 @@
 import logging
 
 from PyQt5 import QtCore
-from PyQt5.QtCore import QTimer
-from PyQt5.QtGui import QDoubleValidator, QFont
+from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
     QPushButton,
     QLabel,
@@ -11,12 +10,10 @@ from PyQt5.QtWidgets import (
     QGroupBox,
     QSpacerItem,
     QSizePolicy,
-    QGroupBox,
 )
 
 from ...utility import remove_end_carriage_return
 from ..widgets import setButtonState, load_icon, HCLineEdit, HCLabel
-
 
 logger = logging.getLogger(__name__)
 
@@ -34,10 +31,10 @@ class MultiPowerSupply(QGroupBox):
 
     See Also
     --------
-    hardware_control.backends.caen.Caen_14xxET.Caen_14xxET
-    hardware_control.backends.keysight.Keysight_36300.Keysight_36300
-    hardware_control.backends.rigol.Rigol_DP832.RigolDP832
-
+    hardware_control.instruments.caen.Caen_14xxET
+    hardware_control.instruments.keysight.Keysight_36300
+    hardware_control.instruments.rigol.Rigol_DP832
+    hardware_control.instruments.tdkl.TDKL_GenH
     """
 
     ADD = "Add"
@@ -46,54 +43,45 @@ class MultiPowerSupply(QGroupBox):
 
     def __init__(
         self,
-        app,
-        backend,
+        instrument,
         channels: list,
         name: str = "Multi-Channel PSU",
         show_VI_limits=False,
         show_custom_labels=False,
         show_status_panel=False,
         all_enable_button=None,
-        lock_until_sync=False,
     ):
+        super().__init__(name)
+        self.instrument = instrument
+
         if all_enable_button is None:
             all_enable_button = MultiPowerSupply.HIDE
-
-        super().__init__(app, name, backend, lock_until_sync)
-
         self.all_enable_button = all_enable_button
 
-        # Check that the user provided valid channel request...
-        if (len(channels) > backend.num_channels) or (
-            max(channels) > self.backend.num_channels
-        ):
+        # Add all the requested channels that are in the instrument
+        self.channels = []
+        for channel in channels:
+            if channel not in self.instrument.chan_nums:
+                self.channels.append(channel)
+                self.values[f"CH{c}_V_OUT"] = "-"
+                self.values[f"CH{c}_I_OUT"] = "-"
+                self.values[f"CH{c}_V_SET"] = "-"
+                self.values[f"CH{c}_I_SET"] = "-"
+        self.init_values()
+        if not (set(channels) <= set(instrument.chan_nums)):
             logger.warning(
                 "WARNING: Requested channel not available on instrument."
                 " Ignoring extra channels."
             )
 
-        # Add channels that are within range and not repeats
-        self.channels = []
-        for c in channels:
-            if (c <= self.backend.num_channels) and (not c in self.channels):
-                self.channels.append(c)
-                self.values[f"CH{c}_V_OUT"] = "-"
-                self.values[f"CH{c}_I_OUT"] = "-"
-                self.values[f"CH{c}_V_SET"] = "-"
-                self.values[f"CH{c}_I_SET"] = "-"
-
-        self.init_values()
-        self.settings = self.default_state()
-
         # Create GUI
-        #
         # Automatically create channel widgets and push them into a row
         self.channel_widgets = []
         self.channel_panel = QGridLayout()
-        for idx, c in enumerate(self.channels):
+        for idx, channel in enumerate(self.channels):
             self.channel_widgets.append(
                 PowerSupplyChannel(
-                    c,
+                    channel,
                     self,
                     show_VI_limits,
                     show_custom_labels,
@@ -123,22 +111,19 @@ class MultiPowerSupply(QGroupBox):
         #
         self.setLayout(self.master_layout)
 
-        # Write state to scope - synch scope with GUI
-        self.send_state()
-
         # Create timer to query voltages
-        self.readout_timer = QTimer(self)
+        self.readout_timer = QtCore.QTimer(self)
         self.readout_timer.timeout.connect(self.update_readout)
-        self.readout_timer.start(self.globalRefreshRate)
+        self.readout_timer.start(1000)  # ms refresh
 
-        self.read_state_from_backend()
+        # Send a query to the backend for every possible value
+        for name in self.instrument.read_commands:
+            self.instrument.__getitem__(name)
 
     def all_on_off(self):
-
         # IF channel buttons are displayed, check their status to determine if
         # all need to be turned on vs off.
         if self.all_enable_button != MultiPowerSupply.ONLY:
-
             logger.debug(
                 "All channels on/off button pressed."
                 " Will check other channels' button states"
@@ -152,10 +137,10 @@ class MultiPowerSupply(QGroupBox):
 
             for c in self.channel_widgets:
                 if any_on:
-                    self.update_setting(f"CH{c.channel}_ENABLE", str(False))
+                    self.instrument.__setitem__(f"CH{c.channel}_ENABLE", "False")
                     setButtonState(c.enabled_but, False)
                 else:
-                    self.update_setting(f"CH{c.channel}_ENABLE", str(True))
+                    self.instrument.__setitem__(f"CH{c.channel}_ENABLE", "True")
                     setButtonState(c.enabled_but, True)
 
         else:
@@ -164,7 +149,7 @@ class MultiPowerSupply(QGroupBox):
             )
 
             for c in self.channel_widgets:
-                self.update_setting(
+                self.instrument.__setitem__(
                     f"CH{c.channel}_ENABLE", str(self.all_enable_but.isChecked())
                 )
 
@@ -176,28 +161,18 @@ class MultiPowerSupply(QGroupBox):
         """Queries the instrument for current readout data, then reads the most
         recent readout data from the inbox and pushes it to the GUI"""
 
-        # Request updated readout data
-        for idx, c in enumerate(self.channels):  # For each channel...
-            self.command(f"CH{c}_V_OUT?")
-            self.command(f"CH{c}_I_OUT?")
-            self.command(f"CH{c}_V_SET?")
-            self.command(f"CH{c}_I_SET?")
-            if self.channel_widgets[idx].show_VI_limits:
-                self.command(f"CH{c}_V_MAX?")
-                self.command(f"CH{c}_I_MAX?")
-            if self.channel_widgets[idx].show_status_panel:
-                self.command(f"CH{c}_ENABLE?")
-
+        # Update readout data
+        for idx, channel in enumerate(self.channels):
             # Get latest inbox entries for readout data...
-            Vout = remove_end_carriage_return(self.values.get(f"CH{c}_V_OUT"))
-            Iout = remove_end_carriage_return(self.values.get(f"CH{c}_I_OUT"))
-            Vset = remove_end_carriage_return(self.values.get(f"CH{c}_V_SET"))
-            Iset = remove_end_carriage_return(self.values.get(f"CH{c}_I_SET"))
+            Vout = self.instrument.__getitem__(f"CH{channel}_V_OUT")
+            Iout = self.instrument.__getitem__(f"CH{channel}_I_OUT")
+            Vset = self.instrument.__getitem__(f"CH{channel}_V_SET")
+            Iset = self.instrument.__getitem__(f"CH{channel}_I_SET")
             if self.channel_widgets[idx].show_VI_limits:
-                Vmax = remove_end_carriage_return(self.values.get(f"CH{c}_V_MAX"))
-                Imax = remove_end_carriage_return(self.values.get(f"CH{c}_I_MAX"))
+                Vmax = self.instrument.__getitem__(f"CH{channel}_V_MAX")
+                Imax = self.instrument.__getitem__(f"CH{channel}_I_MAX")
             if self.channel_widgets[idx].show_status_panel:
-                enabled = remove_end_carriage_return(self.values.get(f"CH{c}_ENABLE"))
+                enabled = self.instrument.__getitem__(f"CH{channel}_ENABLE")
             else:
                 enabled = None
 
@@ -222,23 +197,13 @@ class MultiPowerSupply(QGroupBox):
 
     def set_maxI(self, channel: int, maxI: float):
         """Sets an internal limit for the current from channel 'n'."""
-
-        try:
-            channel = int(channel)
-        except:
-            return
-
-        self.update_setting(f"CH{channel}_I_MAX", str(maxI))
+        channel = int(channel)
+        self.instrument.__setitem__(f"CH{channel}_I_MAX", str(maxI))
 
     def set_maxV(self, channel: int, maxV: float):
         """Sets an internal limit for the voltage from channel 'n'."""
-
-        try:
-            channel = int(channel)
-        except:
-            return
-
-        self.update_setting(f"CH{channel}_V_MAX", str(maxV))
+        channel = int(channel)
+        self.instrument.__setitem__(f"CH{channel}_V_MAX", str(maxV))
 
     def set_channel_label(self, channel: int, label: str):
         """Sets a channel label to a new custom value"""
@@ -253,36 +218,22 @@ class MultiPowerSupply(QGroupBox):
 
     def init_values(self):
         self.values = {}
-        for c in self.channels:
-            self.values[f"CH{c}_V_OUT"] = ""
-            self.values[f"CH{c}_I_OUT"] = ""
-            self.values[f"CH{c}_V_MAX"] = ""
-            self.values[f"CH{c}_I_MAX"] = ""
-            self.values[f"CH{c}_V_SET"] = ""
-            self.values[f"CH{c}_I_SET"] = ""
-            self.values[f"CH{c}_ENABLE"] = ""
-
-    def default_state(self):
-        """Create a default state object if can't get state from a file."""
-
-        default = {}
-        for c in self.channels:
-            default[f"CH{c}_ENABLE"] = "False"
-            default[f"CH{c}_V_SET"] = "0"
-            default[f"CH{c}_I_SET"] = "0.5"
-
-        return default
+        for channel in self.channels:
+            self.values[f"CH{channel}_V_OUT"] = ""
+            self.values[f"CH{channel}_I_OUT"] = ""
+            self.values[f"CH{channel}_V_MAX"] = ""
+            self.values[f"CH{channel}_I_MAX"] = ""
+            self.values[f"CH{channel}_V_SET"] = ""
+            self.values[f"CH{channel}_I_SET"] = ""
+            self.values[f"CH{channel}_ENABLE"] = ""
 
     def settings_to_UI(self):
-        for c in self.channel_widgets:
-            c.settings_to_UI()
+        for cw in self.channel_widgets:
+            cw.settings_to_UI()
 
 
 class PowerSupplyChannel(QWidget):
-    """A Qt-widget that implements controls for a single channel of a power supply.
-
-    Used together with :py:class:`MulitPowerSupply`.
-    """
+    """A Qt-widget that implements controls for a single channel of a power supply"""
 
     def __init__(
         self,
@@ -457,6 +408,9 @@ class PowerSupplyChannel(QWidget):
             try:
                 pwr = float(Vout) * float(Iout)
             except:
+                logger.error(
+                    f"Failed to set calculate power from volate ({Vout}) and current ({Iout})."
+                )
                 pwr = "----"
 
             self.Power_out.setText(pwr)
@@ -482,6 +436,7 @@ class PowerSupplyChannel(QWidget):
                     self.enabled_indic.setPixmap(self.disabled_ind)
                     self.enabled_but.setChecked(False)
 
+            """
             if (
                 self.main_widget.ramp_timer.isActive()
                 and f"CH{self.channel}_V_SET" in self.main_widget.active_ramps
@@ -495,6 +450,7 @@ class PowerSupplyChannel(QWidget):
                     self.ramp_indic.setPixmap(self.rampdn_ind)
             else:
                 self.ramp_indic.setPixmap(self.steady_ind)
+            """
 
     def set_label(self, label: str):
         align_left_center = QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
@@ -513,5 +469,6 @@ class PowerSupplyChannel(QWidget):
         self.Voltage.settings_to_UI()
         self.Current.settings_to_UI()
         setButtonState(
-            self.enabled_but, self.main_widget.settings[f"CH{self.channel}_ENABLE"]
+            self.enabled_but,
+            self.main_widget.instrument.__getitem__(f"CH{self.channel}_ENABLE"),
         )
