@@ -59,6 +59,7 @@ class Lakeshore_224(Instrument):
             "D5",
         ]
         self.termination = "\r\n"
+        self.try_connect()
 
         self.check_connection_commands = ["*IDN?"]
 
