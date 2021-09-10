@@ -2,7 +2,6 @@ import logging
 
 import pyqtgraph as pg
 from PyQt5 import QtCore
-from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QDoubleValidator, QIcon
 from PyQt5.QtWidgets import (
     QComboBox,
@@ -43,44 +42,48 @@ class Oscilloscope(QGroupBox):
 
     See Also
     --------
-    hardware_control.backends.keysight.Keysight_4000X.Keysight_4000X
-    hardware_control.backends.picotech.Picotech_6000.Picotech_6000
-    hardware_control.backends.rigol.Rigol_DS1000Z.Rigol_DS1000Z
+    hardware_control.instruments.keysight.Keysight_4000X.Keysight_4000X
+    hardware_control.instruments.picotech.Picotech_6000.Picotech_6000
+    hardware_control.instruments.rigol.Rigol_DS1000Z.Rigol_DS1000Z
 
     """
 
     def __init__(
         self,
         app,
-        backend,
+        instrument,
         name: str = "Oscilloscope Control",
         lock_until_sync=False,
         right_axis=None,
     ):
 
-        super().__init__(app, name, backend, lock_until_sync)
+        super().__init__(name)
 
         self.channels = 4
+        self.app = app
+        self.instrument = instrument
         self.right_axis = right_axis
 
         self.settings = self.default_state()
         self.values = self.default_state()
 
         # Create GUI
-        self.disp = OscilloscopeDisplayWidget(self, True, right_axis=self.right_axis)
+        self.disp = OscilloscopeDisplayWidget(
+            self.instrument, True, right_axis=self.right_axis
+        )
 
-        self.horiz = OscilloscopeHorizontalWidget(self)
+        self.horiz = OscilloscopeHorizontalWidget(self.instrument)
 
-        self.meas = OscilloscopeMeasurementWidget(self)
+        self.meas = OscilloscopeMeasurementWidget()
 
         self.top_panel = QGridLayout()
-        self.trig = OscilloscopeTriggerWidget(self, self.disp)
+        self.trig = OscilloscopeTriggerWidget(self.instrument, self.disp)
         self.top_panel.addWidget(self.trig, 0, 0)
 
-        self.ch1 = OscillscopeChannelWidget(1, self)
-        self.ch2 = OscillscopeChannelWidget(2, self)
-        self.ch3 = OscillscopeChannelWidget(3, self)
-        self.ch4 = OscillscopeChannelWidget(4, self)
+        self.ch1 = OscillscopeChannelWidget(self.app, 1, self.instrument)
+        self.ch2 = OscillscopeChannelWidget(self.app, 2, self.instrument)
+        self.ch3 = OscillscopeChannelWidget(self.app, 3, self.instrument)
+        self.ch4 = OscillscopeChannelWidget(self.app, 4, self.instrument)
         self.channel_panel = QGridLayout()
         self.channel_panel.addWidget(self.ch1, 0, 0)
         self.channel_panel.addWidget(self.ch2, 0, 1)
@@ -96,9 +99,6 @@ class Oscilloscope(QGroupBox):
 
         self.setLayout(self.master_layout)
 
-        # Write state to scope - synch scope with GUI
-        self.send_state()
-
     def get_last_waveform(self):
 
         return (
@@ -108,7 +108,7 @@ class Oscilloscope(QGroupBox):
             self.disp.CH4_data,
         )
 
-    def backend_return_listdata(self, descr: str, data1: list, data2: list):
+    def instrument_return_listdata(self, descr: str, data1: list, data2: list):
 
         channel, cmd_X = get_channel_from_command(descr)
 
@@ -149,7 +149,6 @@ class Oscilloscope(QGroupBox):
 
     def settings_to_UI(self):
 
-        # self.disp.settings_to_UI()
         self.horiz.settings_to_UI()
         self.meas.settings_to_UI()
         self.trig.settings_to_UI()
@@ -163,138 +162,120 @@ class Oscilloscope(QGroupBox):
 class OscillscopeChannelWidget(QWidget):
     """Defines a UI for oscilloscope channels"""
 
-    def __init__(self, channel: int, instrument):
+    def __init__(self, app, channel: int, instrument):
         super().__init__()
 
         self.channel = channel
+        self.app = app
         self.instrument = instrument
 
-        # ************** DEFINE UI *********************#
-
         self.channel_label = QLabel()
-        if channel == 1:
+        if self.channel == 1:
             self.channel_label.setPixmap(load_icon("channel1_yellow.png"))
-        elif channel == 2:
+        elif self.channel == 2:
             self.channel_label.setPixmap(load_icon("channel2_green.png"))
-        elif channel == 3:
+        elif self.channel == 3:
             self.channel_label.setPixmap(load_icon("channel3_blue.png"))
-        elif channel == 4:
+        elif self.channel == 4:
             self.channel_label.setPixmap(load_icon("channel4_red.png"))
         else:
-            self.channel_label.setText(f"Channel {channel}")
+            self.channel_label.setText(f"Channel {self.channel}")
 
-        # ****** DEFINE TEXT BOXES
+        # Define UI textboxes, buttons, and dropdowns
         self.v_div_edit = QDoubleSpinBox()
-        self.v_div_edit.editingFinished.connect(
-            lambda: instrument.update_setting(
-                f"CH{channel}_VOLTS_DIV", self.v_div_edit.text()
-            )
-        )
-        try:
-            self.v_div_edit.setValue(
-                float(instrument.settings[f"CH{channel}_VOLTS_DIV"])
-            )
-        except:
-            self.v_div_edit.setValue(0)
-        self.v_div_edit.setDecimals(2)
-        # self.v_div_edit.setRange()
-        self.v_div_edit.setSingleStep(0.05)
-
         self.offset_edit = QDoubleSpinBox()
-        self.offset_edit.editingFinished.connect(
-            lambda: instrument.update_setting(
-                f"CH{channel}_OFFSET", self.offset_edit.text()
-            )
-        )
-        try:
-            self.offset_edit.setValue(float(instrument.settings[f"CH{channel}_OFFSET"]))
-        except:
-            self.offset_edit.setValue(0)
-        self.offset_edit.setDecimals(2)
-        # self.offset_edit.setRange()
-        self.offset_edit.setSingleStep(0.05)
-
         self.label_edit = QLineEdit()
-        self.label_edit.editingFinished.connect(
-            lambda: instrument.update_setting(
-                f"CH{channel}_LABEL", self.label_edit.text()
-            )
-        )
-        self.label_edit.setText(instrument.settings[f"CH{channel}_LABEL"])
-
         self.form = QFormLayout()
         self.form.addRow("Volts/Div (V):", self.v_div_edit)
         self.form.addRow("Vert. Offset (V):", self.offset_edit)
         self.form.addRow("Label:", self.label_edit)
 
-        self.lower_grid = QGridLayout()
-
-        # ******* DEFINE BUTTONS + DROPDOWNS
-        self.active_but = QOnOffButton(instrument, f"CH{channel}_ACTIVE")
-
+        self.active_but = HCOnOffButton(
+            self.app, self.instrument, f"CH{self.channel}_ACTIVE"
+        )
         self.BW_but = QPushButton()
         self.BW_but.setText("BW Limit")
         self.BW_but.setIcon(QIcon(load_icon("BWlim.png")))
         self.BW_but.setCheckable(True)
-        self.BW_but.clicked.connect(
-            lambda: instrument.update_setting(
-                f"CH{channel}_BW_LIM", str(self.BW_but.isChecked())
-            )
-        )
-        setButtonState(self.BW_but, instrument.settings[f"CH{channel}_BW_LIM"])
-
         self.Inv_but = QPushButton()
         self.Inv_but.setText("Invert")
-        self.Inv_but.setCheckable(True)
         self.Inv_but.setIcon(QIcon(load_icon("invert.png")))
-        self.Inv_but.clicked.connect(
-            lambda: instrument.update_setting(
-                f"CH{channel}_INVERT", str(self.Inv_but.isChecked())
-            )
-        )
-        setButtonState(self.Inv_but, instrument.settings[f"CH{channel}_INVERT"])
+        self.Inv_but.setCheckable(True)
 
         self.coupling_label = QLabel("Coupling:")
         self.coupling_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-
         self.coupling_drop = QComboBox()
         self.coupling_drop.addItems(["DC", "AC"])
-        self.coupling_drop.currentIndexChanged.connect(
-            lambda: instrument.update_setting(
-                f"CH{channel}_COUPLING", self.coupling_drop.currentText()
-            )
-        )
-        self.coupling_drop.setCurrentText(instrument.settings[f"CH{channel}_COUPLING"])
-
         self.impedance_label = QLabel("Impedance:")
         self.impedance_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-
         self.impedance_drop = QComboBox()
         self.impedance_drop.addItems(["1e6", "50"])
-        self.impedance_drop.currentIndexChanged.connect(
-            lambda: instrument.update_setting(
-                f"CH{channel}_IMPEDANCE", self.impedance_drop.currentText()
-            )
-        )
-        self.impedance_drop.setCurrentText(
-            str(instrument.settings[f"CH{channel}_IMPEDANCE"])
-        )
-
         self.probe_label = QLabel("Probe attenutation: ")
         self.probe_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-
         self.probe_drop = QComboBox()
         self.probe_drop.addItems([".001", ".01", ".1", "1", "10", "100", "1000"])
-        self.probe_drop.currentIndexChanged.connect(
-            lambda: instrument.update_setting(
-                f"CH{channel}_PROBE_ATTEN", self.probe_drop.currentText()
+
+        # Connect each gui element to keysight instrument parameter
+        try:
+            self.v_div_edit.editingFinished.connect(
+                lambda: self.instrument.__setitem__(
+                    f"CH{self.channel}_VOLTS_DIV", self.v_div_edit.text()
+                )
+            )
+        except ValueError:
+            self.v_div_edit.editingFinished.connect(
+                lambda: self.instrument.__setitem__(f"CH{self.channel}_VOLTS_DIV", 0.0)
+            )
+        try:
+            self.offset_edit.editingFinished.connect(
+                lambda: self.instrument.__setitem__(
+                    f"CH{self.channel}_OFFSET", self.offset_edit.text()
+                )
+            )
+        except ValueError:
+            self.offset_edit.editingFinished.connect(
+                lambda: self.instrument.__setitem__(f"CH{self.channel}_OFFSET", 0.0)
+            )
+        self.label_edit.editingFinished.connect(
+            lambda: self.instrument.__setitem__(
+                f"CH{self.channel}_LABEL", self.label_edit.text()
             )
         )
-        self.probe_drop.setCurrentText(
-            str(instrument.settings[f"CH{channel}_PROBE_ATTEN"])
+        self.BW_but.clicked.connect(
+            lambda: self.instrument.__setitem__(
+                f"CH{self.channel}_BW_LIM", str(self.BW_but.isChecked())
+            )
         )
+        self.Inv_but.clicked.connect(
+            lambda: self.instrument.__setitem__(
+                f"CH{self.channel}_INVERT", str(self.Inv_but.isChecked())
+            )
+        )
+        self.coupling_drop.currentIndexChanged.connect(
+            lambda: self.instrument.__setitem__(
+                f"CH{self.channel}_COUPLING", self.coupling_drop.currentText()
+            )
+        )
+        self.impedance_drop.currentIndexChanged.connect(
+            lambda: self.instrument.__setitem__(
+                f"CH{self.channel}_IMPEDANCE", self.impedance_drop.currentText()
+            )
+        )
+        self.probe_drop.currentIndexChanged.connect(
+            lambda: self.instrument.__setitem__(
+                f"CH{self.channel}_PROBE_ATTEN", self.probe_drop.currentText()
+            )
+        )
+        # Set initial values of gui elements
+        self.settings_to_UI()
+
+        self.v_div_edit.setDecimals(2)
+        self.v_div_edit.setSingleStep(0.05)
+        self.offset_edit.setDecimals(2)
+        self.offset_edit.setSingleStep(0.05)
 
         # Add widgets to grid layout
+        self.lower_grid = QGridLayout()
         self.lower_grid.addWidget(self.active_but, 0, 0)
         self.lower_grid.addWidget(self.BW_but, 1, 0)
         self.lower_grid.addWidget(self.Inv_but, 1, 1)
@@ -313,39 +294,64 @@ class OscillscopeChannelWidget(QWidget):
         self.setLayout(self.master_layout)
 
     def settings_to_UI(self):
-
         try:
             self.v_div_edit.setValue(
-                float(self.instrument.settings[f"CH{self.channel}_VOLTS_DIV"])
+                self.app.get_instrument_parameter(
+                    self.instrument, f"CH{self.channel}_VOLTS_DIV"
+                )
             )
-        except:
+        except TypeError:
             self.v_div_edit.setValue(0)
-
         try:
             self.offset_edit.setValue(
-                float(self.instrument.settings[f"CH{self.channel}_OFFSET"])
+                self.app.get_instrument_parameter(
+                    self.instrument, f"CH{self.channel}_OFFSET"
+                )
             )
-        except:
+        except TypeError:
             self.offset_edit.setValue(0)
 
-        self.label_edit.setText(self.instrument.settings[f"CH{self.channel}_LABEL"])
-        setButtonState(
-            self.active_but, self.instrument.settings[f"CH{self.channel}_ACTIVE"]
+        self.label_edit.setText(
+            self.app.get_instrument_parameter(
+                self.instrument, f"CH{self.channel}_LABEL"
+            )
         )
         setButtonState(
-            self.BW_but, self.instrument.settings[f"CH{self.channel}_BW_LIM"]
+            self.active_but,
+            self.app.get_instrument_parameter(
+                self.instrument, f"CH{self.channel}_ACTIVE"
+            ),
         )
         setButtonState(
-            self.Inv_but, self.instrument.settings[f"CH{self.channel}_INVERT"]
+            self.BW_but,
+            self.app.get_instrument_parameter(
+                self.instrument, f"CH{self.channel}_BW_LIM"
+            ),
+        )
+        setButtonState(
+            self.Inv_but,
+            self.app.get_instrument_parameter(
+                self.instrument, f"CH{self.channel}_INVERT"
+            ),
         )
         self.coupling_drop.setCurrentText(
-            self.instrument.settings[f"CH{self.channel}_COUPLING"]
+            self.app.get_instrument_parameter(
+                self.instrument, f"CH{self.channel}_COUPLING"
+            )
         )
         self.impedance_drop.setCurrentText(
-            str(self.instrument.settings[f"CH{self.channel}_IMPEDANCE"])
+            str(
+                self.app.get_instrument_parameter(
+                    self.instrument, f"CH{self.channel}_IMPEDANCE"
+                )
+            )
         )
         self.probe_drop.setCurrentText(
-            str(self.instrument.settings[f"CH{self.channel}_PROBE_ATTEN"])
+            str(
+                self.app.get_instrument_parameter(
+                    self.instrument, f"CH{self.channel}_PROBE_ATTEN"
+                )
+            )
         )
 
 
@@ -356,7 +362,7 @@ class OscilloscopeTriggerWidget(QWidget):
         Parameters
         ----------
         instrument
-            hc.Oscilloscope instance to connect widget to
+            hc.base.instrument instance to connect widget to
         display_widget
             Optional OscilloscopeDisplayWidget to connect widget with. Every time
             a single trigger is called, this display widget will be told to refresh
@@ -379,11 +385,11 @@ class OscilloscopeTriggerWidget(QWidget):
         # ****** DEFINE TEXT BOXES
         self.level_edit = QDoubleSpinBox()
         self.level_edit.editingFinished.connect(
-            lambda: instrument.update_setting(
-                "TRIGGER_LEVEL", str(self.level_edit.value())
+            lambda: self.instrument.__setitem__(
+                ("TRIGGER_LEVEL", str(self.level_edit.value()))
             )
         )
-        self.level_edit.setValue(float(instrument.settings["TRIGGER_LEVEL"]))
+        self.level_edit.setValue(float(self.instrument.__getitem__("TRIGGER_LEVEL")))
         self.level_edit.setSingleStep(0.01)
         self.level_edit.setDecimals(2)
         self.level_edit.setMinimum(-50.0)
@@ -399,11 +405,13 @@ class OscilloscopeTriggerWidget(QWidget):
         self.trig_chan_drop = QComboBox()
         self.trig_chan_drop.addItems(["None", "1", "2", "3", "4"])
         self.trig_chan_drop.currentIndexChanged.connect(
-            lambda: instrument.update_setting(
-                "TRIGGER_CHANNEL", self.trig_chan_drop.currentText()
+            lambda: self.instrument.__setitem__(
+                ("TRIGGER_CHANNEL", self.trig_chan_drop.currentText())
             )
         )
-        self.trig_chan_drop.setCurrentText(str(instrument.settings["TRIGGER_CHANNEL"]))
+        self.trig_chan_drop.setCurrentText(
+            str(self.instrument.__getitem__("TRIGGER_CHANNEL"))
+        )
 
         self.coupling_label = QLabel("Coupling:")
         self.coupling_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
@@ -411,11 +419,13 @@ class OscilloscopeTriggerWidget(QWidget):
         self.coupling_drop = QComboBox()
         self.coupling_drop.addItems(["DC", "AC", "LFReject", "HFReject"])
         self.coupling_drop.currentIndexChanged.connect(
-            lambda: instrument.update_setting(
+            lambda: self.instrument.__setitem__(
                 "TRIGGER_COUPLING", self.coupling_drop.currentText()
             )
         )
-        self.coupling_drop.setCurrentText(instrument.settings["TRIGGER_COUPLING"])
+        self.coupling_drop.setCurrentText(
+            self.instrument.__getitem__("TRIGGER_COUPLING")
+        )
 
         self.edge_label = QLabel("Edge:")
         self.edge_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
@@ -423,11 +433,11 @@ class OscilloscopeTriggerWidget(QWidget):
         self.edge_drop = QComboBox()
         self.edge_drop.addItems(["POS", "NEG", "EITH", "ALT"])
         self.edge_drop.currentIndexChanged.connect(
-            lambda: instrument.update_setting(
+            lambda: self.instrument.__setitem__(
                 "TRIGGER_EDGE", self.edge_drop.currentText()
             )
         )
-        self.edge_drop.setCurrentText(str(instrument.settings["TRIGGER_EDGE"]))
+        self.edge_drop.setCurrentText(str(self.instrument.__getitem__("TRIGGER_EDGE")))
 
         self.single_but = QPushButton()
         self.single_but.setText("Single")
@@ -435,11 +445,11 @@ class OscilloscopeTriggerWidget(QWidget):
 
         self.run_but = QPushButton()
         self.run_but.setText("Run")
-        self.run_but.clicked.connect(lambda: instrument.command("RUN"))
+        self.run_but.clicked.connect(lambda: self.instrument.commands["RUN"])
 
         self.stop_but = QPushButton()
         self.stop_but.setText("Stop")
-        self.stop_but.clicked.connect(lambda: instrument.command("STOP"))
+        self.stop_but.clicked.connect(lambda: self.instrument.commands["STOP"])
 
         # Add widgets to grid layout
         self.lower_grid.addWidget(self.trig_chan_label, 0, 0)
@@ -460,31 +470,28 @@ class OscilloscopeTriggerWidget(QWidget):
         self.setLayout(self.master_layout)
 
     def single_trigger(self):
-        self.instrument.command("SINGLE_TRIGGER")
-
-        QTimer.singleShot(self.refresh_delay_time_ms, self.display_refresh)
+        self.instrument.commands["SINGLE_TRIGGER"]
+        QtCore.QTimer.singleShot(self.refresh_delay_time_ms, self.display_refresh)
 
     def display_refresh(self):
-
         # Continue if display widget is present
         if self.display_widget is None:
             return
-
         # Continue if display widget is in single trigger mode
         if not self.display_widget.single_trig_mode:
             return
-
         # Refresh display
         self.display_widget.query_waveforms()
 
     def settings_to_UI(self):
-
-        self.level_edit.setValue(float(self.instrument.settings["TRIGGER_LEVEL"]))
+        self.level_edit.setValue(float(self.instrument.__getitem__("TRIGGER_LEVEL")))
         self.trig_chan_drop.setCurrentText(
-            str(self.instrument.settings["TRIGGER_CHANNEL"])
+            str(self.instrument.__getitem__("TRIGGER_CHANNEL"))
         )
-        self.coupling_drop.setCurrentText(self.instrument.settings["TRIGGER_COUPLING"])
-        self.edge_drop.setCurrentText(str(self.instrument.settings["TRIGGER_EDGE"]))
+        self.coupling_drop.setCurrentText(
+            self.instrument.__getitem__("TRIGGER_COUPLING")
+        )
+        self.edge_drop.setCurrentText(str(self.instrument.__getitem__("TRIGGER_EDGE")))
 
 
 class OscilloscopeHorizontalWidget(QWidget):
@@ -505,14 +512,14 @@ class OscilloscopeHorizontalWidget(QWidget):
         # ****** DEFINE TEXT BOXES
         self.timebase_edit = QDoubleSpinBox()
         try:
-            self.timebase_edit.setValue(float(instrument.settings["TIMEBASE"]))
+            self.timebase_edit.setValue(float(self.instrument.__getitem__("TIMEBASE")))
         except:
             self.timebase_edit.setValue(1e-3)
         self.timebase_edit.setSingleStep(1)
         self.timebase_edit.setDecimals(3)
         self.timebase_edit.setMaximum(1e6)
         self.timebase_edit.editingFinished.connect(
-            lambda: instrument.update_setting(
+            lambda: self.instrument.__setitem__(
                 "TIMEBASE",
                 str(
                     float(self.timebase_edit.text())
@@ -520,13 +527,15 @@ class OscilloscopeHorizontalWidget(QWidget):
                 ),
             )
         )
-        self.timebase_edit.setValue(float(instrument.settings["TIMEBASE"]) * 1e3)
+        self.timebase_edit.setValue(
+            float(self.instrument.__getitem__("TIMEBASE")) * 1e3
+        )
 
         self.timebase_edit_units = QComboBox()
         self.timebase_edit_units.addItems(self.units.keys())
         self.timebase_edit_units.setCurrentText("ms")
         self.timebase_edit_units.currentIndexChanged.connect(
-            lambda: instrument.update_setting(
+            lambda: self.instrument.__setitem__(
                 "TIMEBASE",
                 str(
                     float(self.timebase_edit.text())
@@ -543,9 +552,11 @@ class OscilloscopeHorizontalWidget(QWidget):
         self.time_offset_edit.setSingleStep(1)
         self.time_offset_edit.setDecimals(3)
         self.time_offset_edit.setMaximum(1e6)
-        self.time_offset_edit.setValue(float(instrument.settings["TIME_OFFSET"]) * 1e3)
+        self.time_offset_edit.setValue(
+            float(self.instrument.__getitem__("TIME_OFFSET")) * 1e3
+        )
         self.time_offset_edit.editingFinished.connect(
-            lambda: instrument.update_setting(
+            lambda: self.instrument.__setitem__(
                 "TIME_OFFSET",
                 str(
                     float(self.time_offset_edit.text())
@@ -555,7 +566,6 @@ class OscilloscopeHorizontalWidget(QWidget):
         )
 
         self.time_offset_edit_units = QComboBox()
-        # self.time_offset_edit_units.currentIndexChanged.connect(lambda: instrument.update_setting("time_offset", str(float(self.time_offset_edit.text()) * self.units[self.timebase_edit_units.currentText()])))
         self.time_offset_edit_units.addItems(self.units.keys())
         self.time_offset_edit_units.setCurrentText("ms")
 
@@ -567,9 +577,11 @@ class OscilloscopeHorizontalWidget(QWidget):
         self.number_points_edit.setSingleStep(1)
         self.number_points_edit.setDecimals(0)
         self.number_points_edit.setMaximum(4e6)
-        self.number_points_edit.setValue(float(instrument.settings["NUM_POINTS"]))
+        self.number_points_edit.setValue(
+            float(self.instrument.__getitem__("NUM_POINTS"))
+        )
         self.number_points_edit.editingFinished.connect(
-            lambda: instrument.update_setting(
+            lambda: self.instrument.__setitem__(
                 "NUM_POINTS",
                 str(float(self.number_points_edit.text())),
             )
@@ -592,13 +604,13 @@ class OscilloscopeHorizontalWidget(QWidget):
 
         try:
             self.timebase_edit.setValue(
-                1e3 * float(self.instrument.settings["TIMEBASE"])
+                1e3 * float(self.instrument.__getitem__("TIMEBASE"))
             )
         except:
             self.timebase_edit.setValue(1e-3)
 
         self.time_offset_edit.setValue(
-            float(self.instrument.settings["TIME_OFFSET"]) * 1e3
+            float(self.instrument.__getitem__("TIME_OFFSET")) * 1e3
         )
 
 
@@ -618,7 +630,7 @@ class OscilloscopeDisplayWidget(QGroupBox):
     Parameters
     ----------
     instrument
-        hc.Oscilloscope instance to connect display to.
+        hc.base.instrument instance to connect display to.
     show_controls : bool
         Allows user to show or hide display refresh controls
     refresh : float
@@ -719,7 +731,7 @@ class OscilloscopeDisplayWidget(QGroupBox):
 
             self.refresh_mode_label = QLabel("Refresh Mode: ")
 
-            self.update_timer = QTimer(self)
+            self.update_timer = QtCore.QTimer(self)
             self.update_timer.timeout.connect(self.query_waveforms)
             self.update_timer.start(1000 * refresh)
 
@@ -781,26 +793,17 @@ class OscilloscopeDisplayWidget(QGroupBox):
             self.CH4_data = (t, wave)
 
     def query_waveforms(self):
-
         for c in range(1, 5):
-            if self.instrument.settings[f"CH{c}_ACTIVE"] == "True":
-                self.instrument.command_listdata(
-                    f"CH{c}_WVFM?"
-                )  # Ask for waveform data
-            else:
-                self.instrument.command_listdata(
-                    f"CH{c}_CLEAR"
-                )  # Tell backend to send empty data
+            if self.instrument.__getitem__(f"CH{c}_ACTIVE") == "True":
+                self.instrument.commands["CH{channel}_READ_WAVE"]
 
 
 class OscilloscopeMeasurementWidget(QWidget):
-    def __init__(self, instrument):
+    def __init__(self):
 
         super().__init__()
 
         self.master_layout = QGridLayout()
-
-        self.instrument = instrument
 
         # ******************** DEFINE UI ***************************
         self.measurement_label = QLabel()
@@ -810,7 +813,6 @@ class OscilloscopeMeasurementWidget(QWidget):
 
         self.channel_drop = QComboBox()
         self.channel_drop.addItems(["CH 1", "CH 2", "CH 3", "CH 4"])
-        # self.channel_drop.currentIndexChanged.connect(lambda: self.set_refresh_mode(self.refresh_mode_drop.currentText()))
         self.channel_drop.setCurrentText("CH 1")
 
         self.meas_label = QLabel("Measurement: ")
@@ -821,53 +823,13 @@ class OscilloscopeMeasurementWidget(QWidget):
         )
         self.meas_drop.setCurrentText("Vpp")
 
-        self.add_but = QPushButton()
-        self.add_but.setText("Add Measurement")
-        self.add_but.clicked.connect(self.add_measurement)
-
-        self.clear_but = QPushButton()
-        self.clear_but.setText("Clear")
-        self.clear_but.clicked.connect(self.clear_measurements)
-
         self.master_layout.addWidget(self.measurement_label, 0, 0, 1, 2)
         self.master_layout.addWidget(self.channel_label, 1, 0, 1, 1)
         self.master_layout.addWidget(self.channel_drop, 2, 0, 1, 1)
         self.master_layout.addWidget(self.meas_label, 1, 1, 1, 1)
         self.master_layout.addWidget(self.meas_drop, 2, 1, 1, 1)
-        self.master_layout.addWidget(self.clear_but, 3, 0, 1, 1)
-        self.master_layout.addWidget(self.add_but, 3, 1, 1, 1)
 
         self.setLayout(self.master_layout)
 
-        self.next_slot = 1
-
-    def add_measurement(self):
-
-        # Get parameter string from dropdown. Convert values to correct format for
-        # backend to understand.
-
-        add_channel = True
-        meas_string = self.meas_drop.currentText().upper()
-        if meas_string == "PERIOD":
-            meas_string = "PER"
-        elif meas_string == "Phase 1->2":
-            meas_string = "RPH"
-            add_channel = False
-
-        if add_channel:
-            meas_string = meas_string + ",CHAN" + self.channel_drop.currentText()[3]
-
-        self.instrument.update_setting(f"MEAS_SLOT{self.next_slot}", meas_string)
-
-        # Update next slot
-        self.next_slot += 1
-        if self.next_slot > 5:
-            self.next_slot = 1
-
-    # TODO: Make this delete measurements in internal settings variables
-    def clear_measurements(self):
-        self.instrument.command("CLEAR_MEAS")
-
     def settings_to_UI(self):
-
         pass
