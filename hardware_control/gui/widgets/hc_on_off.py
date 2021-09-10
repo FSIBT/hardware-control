@@ -29,7 +29,7 @@ class HCOnOffButton(HCPushButton):
         app,
         instrument: str,
         parameter: str,
-        label: str,
+        label: str = "",
         label_align: str = "left",
     ):
         super().__init__(
@@ -47,17 +47,18 @@ class HCOnOffButton(HCPushButton):
         self.on_icon = QIcon(load_icon("button-power-on.svg"))
         self.off_icon = QIcon(load_icon("button-power-off.svg"))
 
-        self.update_status(
-            self.app.get_instrument_parameter(self.app, self.instrument, self.parameter)
-        )
+        self.update()
         self.setIconSize(QtCore.QSize(30, 30))
         self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
     def update(self):
-        value = float(
-            self.app.get_instrument_parameter(self.instrument, self.parameter)
-        )
-        self.setValue(value)
+        if not self.app.dummy:
+            value = float(
+                self.app.get_instrument_parameter(self.instrument, self.parameter)
+            )
+            self.setValue(value)
+        else:
+            value = "False"
 
         if value == "True":
             self.setChecked(True)

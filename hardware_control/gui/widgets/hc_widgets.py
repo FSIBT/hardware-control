@@ -266,14 +266,14 @@ class HCPushButton(HCMixin, QPushButton):
         app,
         instrument: str,
         parameter: str,
-        label: str,
-        label_align="left",
+        label: str = "",
+        label_align: str = "left",
     ):
         super().__init__(
             app=app,
             instrument=instrument,
             parameter=parameter,
-            label="",
+            label=label,
             label_align=label_align,
             text=label,
         )
