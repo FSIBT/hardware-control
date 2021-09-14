@@ -13,6 +13,7 @@ Options:
 
 import logging
 import sys
+from pathlib import Path
 
 from PyQt5.QtWidgets import QMainWindow, QWidget, QGridLayout
 from docopt import docopt
@@ -56,7 +57,7 @@ class TemperatureMonitor(hc.HCMainWindow):
             )
         )
         self.temp_wdgt = hc.gui.TempMonitor(
-            app, instrument="lakeshore", channel_list=["A", "B", "C1", "D1"]
+            self.app, instrument="lakeshore", channel_list=["A", "B", "C1", "D1"]
         )
 
         # Create data_sets
@@ -73,7 +74,7 @@ class TemperatureMonitor(hc.HCMainWindow):
         self.grid.addWidget(self.temp_wdgt, 1, 0)
         self.main_widget.setLayout(self.grid)
 
-        self.plot_wdgt = hc.gui.PlotTool(app, "Temperature Plot")
+        self.plot_wdgt = hc.gui.PlotTool(self.app, "Temperature Plot")
         self.plot_wdgt.set_dataset("Temps")  # Could add
         self.grid.addWidget(self.plot_wdgt, 0, 0)
 
