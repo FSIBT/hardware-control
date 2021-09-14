@@ -40,7 +40,7 @@ class ZMQAdapter(threading.Thread):
         )
 
         logger.info(
-            f"Set up ZMQ adapter for '{self.name}'"
+            f"Set up ZMQ adapter for '{self.name}'. "
             f"listen to: {publisher} publishing at: {self.zmq_publisher_address}:{self.zmq_publisher_port}"
         )
 

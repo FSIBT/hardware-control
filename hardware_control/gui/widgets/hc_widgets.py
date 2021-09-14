@@ -91,7 +91,7 @@ class HCMixin:
         for arg in [app, instrument, parameter, label, label_align]:
             if arg is None:
                 logger.error(
-                    f"Widget {self.name} does not get correct arguments (app, instrument, parameter)"
+                    f"Widget '{self.name}' does not get correct arguments (app, instrument, parameter)"
                 )
 
         self.app = app
@@ -331,7 +331,7 @@ class HCComboBox(HCMixin, QComboBox):
                 self.setCurrentText(i)
                 break
         else:
-            logger.error(f"QControlCombo: could not find '{value}' in item list")
+            logger.error(f"HCControlCombo: could not find '{value}' in item list")
 
 
 class HCSpinBox(HCMixin, QSpinBox):
