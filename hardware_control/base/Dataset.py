@@ -109,7 +109,7 @@ class Dataset(QObject):
         self.data = defaultdict(list)
         self.autosave_next_row = 0
 
-    def add_instrument(self, instrument, parameter=None) -> None:
+    def track_instrument(self, instrument, parameter=None) -> None:
         """Add a parameter from an instrument to the dataset.
 
         If parameter is `None`, all parameters that can be read are
@@ -122,7 +122,7 @@ class Dataset(QObject):
         else:
             self.instruments.append((instrument, parameter))
 
-    def name_channel(self, channel: str, name: str) -> None:
+    def define_alias(self, channel: str, name: str) -> None:
         """Channel must be a key in self.data and name is the replacement string."""
 
         instrument, parameter = channel.split(":")
@@ -178,7 +178,7 @@ class Dataset(QObject):
             self.save(self.autosave_filename, self.autosave_format)
 
     def save_txt(self, filename: Path, header: Optional[str] = None) -> None:
-        """Appends data if the file already exists.
+        r"""Appends data if the file already exists.
 
         Parameters
         ----------
@@ -248,15 +248,18 @@ class Dataset(QObject):
         np.save(filename, self.data)
 
     def save(self, filename: Path, format: str):
-        """Saves the dataset to a file. Format specifies the file format. The
-        file format specifier is not case sensitive.
+        """Saves the dataset to a file. Format specifies the file format.
+
+        The file format specifier is not case sensitive.
 
         File Formats:
            JSON
            Pickle
            NPY
            TXT
+
         """
+
         format = format.upper()
 
         if format == "JSON":
@@ -281,6 +284,7 @@ class Dataset(QObject):
         """Logs values from the specified instruments to the datasets.
 
         Normally called by the internal timer.
+
         """
 
         logger.debug(f"Dataset {self.name} updating data")
@@ -303,6 +307,7 @@ class Dataset(QObject):
         -------
         dict
             dictionay of requested columns
+
         """
 
         out = {}

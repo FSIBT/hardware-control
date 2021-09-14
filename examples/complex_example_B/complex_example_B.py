@@ -561,15 +561,30 @@ class CustomControlWidget(hc.Instrument):
             self,
             "FIL_AMP",
             "Filament amplitude (a.u.)",
-            remote=[self.filament, "CH12_OUTPUT_AMPLITUDE",],
+            remote=[
+                self.filament,
+                "CH12_OUTPUT_AMPLITUDE",
+            ],
         )
 
         self.arc_delay = hc.QControl(
-            self, "ARC_DELAY", "Arc delay (sec)", remote=[self.filament, "CH3_DELAY",]
+            self,
+            "ARC_DELAY",
+            "Arc delay (sec)",
+            remote=[
+                self.filament,
+                "CH3_DELAY",
+            ],
         )
 
         self.arc_duration = hc.QControl(
-            self, "ARC_DURATION", "Arc duration (sec)", remote=[self.arc, "CH4_DELAY",],
+            self,
+            "ARC_DURATION",
+            "Arc duration (sec)",
+            remote=[
+                self.arc,
+                "CH4_DELAY",
+            ],
         )
 
         self.master_layout = QGridLayout()
@@ -655,11 +670,18 @@ class STS50Demo(hc.MainWindow):
         ######## Tab 2
 
         # usb pyvisa address is # "USB0::0x0957::0x2907::MY52500624::INSTR"
-        awg = hc_back.Keysight_33500B("TCPIP0::192.168.0.18::INSTR",)
+        awg = hc_back.Keysight_33500B(
+            "TCPIP0::192.168.0.18::INSTR",
+        )
         self.awg_ctrl = hc.FunctionGenerator(app, awg, "RF Generator", 1)
 
         self.psu = hc_back.TDKL_GenH("TCPIP0::192.168.1.19::INSTR")
-        self.psu_ctrl = hc.MultiPowerSupply(app, self.psu, [1], "TDK Lambda (RF Vin)",)
+        self.psu_ctrl = hc.MultiPowerSupply(
+            app,
+            self.psu,
+            [1],
+            "TDK Lambda (RF Vin)",
+        )
 
         self.psu_caen = hc_back.Caen_14xxET("192.168.0.1:1470")
         self.psu_caen_wdgt = hc.MultiPowerSupply(
@@ -765,7 +787,7 @@ class STS50Demo(hc.MainWindow):
 
         # Create Datasets
         self.app.data_sets["High Voltage"] = hc.Dataset("High Voltage", self.app)
-        self.app.data_sets["High Voltage"].add_instrument(self.iomod_usb_wdgt)
+        self.app.data_sets["High Voltage"].track_instrument(self.iomod_usb_wdgt)
         self.app.data_sets["High Voltage"].start_asynch(3)
 
         self.app.data_sets["Shots"] = hc.Dataset("Shots", self.app)
@@ -774,8 +796,8 @@ class STS50Demo(hc.MainWindow):
         self.app.data_sets["Shots"].data["Keysight_waveform"] = []
 
         self.app.data_sets["Continuous"] = hc.Dataset("Continuous", self.app)
-        self.app.data_sets["Continuous"].add_instrument(self.iomod_usb_wdgt)
-        self.app.data_sets["Continuous"].add_instrument(self.iomod_float_wdgt)
+        self.app.data_sets["Continuous"].track_instrument(self.iomod_usb_wdgt)
+        self.app.data_sets["Continuous"].track_instrument(self.iomod_float_wdgt)
         self.app.data_sets["Continuous"].start_autosave(
             10, "STS50", get_output_dir() / "continuous.txt"
         )
@@ -795,25 +817,25 @@ class STS50Demo(hc.MainWindow):
         self.app.data_sets["Demo"].channel_names[":Voltage"] = "Vtest"
         self.app.data_sets["Demo"].channel_names[":Current"] = "Itest"
 
-        self.app.data_sets["High Voltage"].name_channel(
+        self.app.data_sets["High Voltage"].define_alias(
             "Power Supplies:CHMod2/ai0_ANALOG_READ", "V float"
         )
-        self.app.data_sets["High Voltage"].name_channel(
+        self.app.data_sets["High Voltage"].define_alias(
             "Power Supplies:CHMod2/ai1_ANALOG_READ", "I float"
         )
-        self.app.data_sets["High Voltage"].name_channel(
+        self.app.data_sets["High Voltage"].define_alias(
             "Power Supplies:CHMod2/ai2_ANALOG_READ", "I grid"
         )
-        self.app.data_sets["High Voltage"].name_channel(
+        self.app.data_sets["High Voltage"].define_alias(
             "Power Supplies:CHMod2/ai3_ANALOG_READ", "V grid"
         )
-        self.app.data_sets["High Voltage"].name_channel(
+        self.app.data_sets["High Voltage"].define_alias(
             "Power Supplies:CHMod2/ai4_ANALOG_READ", "Pressure"
         )
-        self.app.data_sets["High Voltage"].name_channel(
+        self.app.data_sets["High Voltage"].define_alias(
             "Power Supplies:CHMod6/ai7_ANALOG_READ", "V extract"
         )
-        self.app.data_sets["High Voltage"].name_channel(
+        self.app.data_sets["High Voltage"].define_alias(
             "Power Supplies:CHMod6/ai6_ANALOG_READ", "I extract"
         )
 
