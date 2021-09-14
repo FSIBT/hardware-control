@@ -4,6 +4,8 @@ import time
 
 import zmq
 
+from .zmq_helper import handle_zmq_message_from_app
+
 logger = logging.getLogger(__name__)
 
 
@@ -50,15 +52,6 @@ class ZMQAdapter(threading.Thread):
         ip, _ = ip_and_port.split(":")
         return ip
 
-    def remove_topic(self, msg):
-        """Remove the ZMQ topic from a message.
-
-        In ZMQ pub/sub a subscriber can listen only to messages that
-        start with a certain set of characters, called a topic.
-
-        """
-        return msg[self.zmq_topic_length :]
-
     def run(self):
         while not self.stop.is_set():
 
@@ -69,31 +62,5 @@ class ZMQAdapter(threading.Thread):
             except zmq.ZMQError:
                 time.sleep(0.1)
                 continue
-            msg = self.remove_topic(msg)
-            msg = msg.split()
-            if len(msg) == 1:
-                # requesting a value
-                ret = self.instrument[msg[0]]
-                self.zmq_publisher.send_string(f"{self.instrument.name} {msg[0]} {ret}")
-                continue
-            elif len(msg) == 2:
-                if msg[0] == "command":
-                    logger.debug(f"'{self.name}' got command '{msg[1]}'")
-                    self.instrument.command(msg[1])
-                    continue
-                if msg[0] == "get":
-                    logger.debug(f"'{self.name}' got get request '{msg[1]}'")
-                    if msg[1] not in self.instrument.read_commands:
-                        logger.error(
-                            f"'{msg[1]}' read command not available in instrument '{self.name}'"
-                        )
-                        continue
-                    value = self.instrument.get_value(msg[1])
-                    if value is not None:
-                        self.zmq_publisher.send_string(
-                            f"{self.instrument.name} {msg[1]} {value}"
-                        )
-                    continue
-                # if it is not a command, we are trying to set a value
-                logger.debug(f"'{self.name}' setting '{msg[0]}' to '{msg[1]}'")
-                self.instrument[msg[0]] = msg[1]
+
+            handle_zmq_message_from_app(self, msg, logger)

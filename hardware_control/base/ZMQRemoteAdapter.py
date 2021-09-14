@@ -2,6 +2,8 @@ import json
 
 import zmq
 
+from .zmq_helper import handle_zmq_message_from_app
+
 
 class ZMQSingleInstrument:
     """Wraps an instrument so that another app can connect to it.
@@ -56,33 +58,8 @@ class ZMQSingleInstrument:
                     except zmq.ZMQError:
                         time.sleep(0.1)
                         continue
-                    msg = self.remove_topic(msg)
-                    msg = msg.split()
-                    if len(msg) == 1:
-                        # requesting a value
-                        ret = self.instrument[msg[0]]
-                        self.zmq_publisher.send_string(
-                            f"{self.instrument.name} {msg[0]} {ret}"
-                        )
-                        continue
-                    elif len(msg) == 2:
-                        if msg[1] == "command":
-                            self.instrument.command(msg[2])
-                            continue
-                        if msg[1] == "get":
-                            if msg[2] not in self.instrument.read_commands:
-                                logger.error(
-                                    f"{msg[2]} read command not availabel in instrument '{self.name}'"
-                                )
-                                continue
-                            value = self.instrument.get_value(msg[2])
-                            if value is not None:
-                                self.zmq_publisher.send_string(
-                                    f"{self.instrument.name} {msg[2]} {value}"
-                                )
-                            continue
-                        # if it is not a command, we are trying to set a value
-                        self.instrument[msg[0]] = msg[1]
+
+                    handle_zmq_message_from_app(self, msg, logger)
 
                     # check if we should stop
                     try:
@@ -97,15 +74,6 @@ class ZMQSingleInstrument:
                         read_set_commands = self.instruments.list_parameters()
                         out = json.dumps(read_set_commands)
                         self.zmq_new.send_string(out)
-
-    def remove_topic(self, msg):
-        """Remove the ZMQ topic from a message.
-
-        In ZMQ pub/sub a subscriber can listen only to messages that
-        start with a certain set of characters, called a topic.
-
-        """
-        return msg[self.zmq_topic_length :]
 
 
 class ZMQRemoteInstrument:
