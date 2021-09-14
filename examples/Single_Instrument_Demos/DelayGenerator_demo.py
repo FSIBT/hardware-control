@@ -22,8 +22,20 @@ import hardware_control as hc
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
 
+if commands["--debug"]:
+    loglevel = logging.DEBUG
+elif commands["--info"]:
+    loglevel = logging.INFO
+else:
+    loglevel = logging.WARNING
+
+if commands["--console"]:
+    logoutput = None
+else:
+    logoutput = Path("hardware-control.log")
+
 logger = logging.getLogger(__name__)
-hc.setup_logging(logger, commands, "hardware_control.log")
+hc.setup_logging(logger, logoutput, loglevel)
 
 
 class Demo(hc.HCMainWindow):

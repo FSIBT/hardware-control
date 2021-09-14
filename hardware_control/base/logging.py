@@ -1,8 +1,14 @@
 import logging
+from pathlib import Path
 import sys
+from typing import Optional
 
 
-def setup_logging(logger, commands, logfile_name=None):
+def setup_logging(
+    logger,
+    logoutput: Optional[Path] = None,
+    loglevel: Optional[str] = None,
+):
     """Setup the loglevel and direct to console or file.
 
     Parameters
@@ -10,20 +16,17 @@ def setup_logging(logger, commands, logfile_name=None):
     logger :
         A logger needs to be defined in the main instance, e.g. using
         logging.getLogger(__name__)
-    commands : dict
-        A dictionary (e.g. from docopt). The following keys need to have
-        a boolean value set: "--info", "--debug", "--console". The first two
-        control the debug level and the last one either logs to the console or
-        to a file (in which case a `logfile_name` needs to be defined
-    logfile_name : str
-        A filename that will be used by the logger
+    logoutput :
+        "console" creates a loghandler that logs to stdout. Otherwise
+        if path is given a filehandler is created
+    loglevel :
+        The loglevel requested
+
     """
 
-    if commands["--debug"]:
-        loglevel = logging.DEBUG
+    if loglevel == logging.DEBUG:
         loglevelname = "Debug"
-    elif commands["--info"]:
-        loglevel = logging.INFO
+    elif loglevel == logging.INFO:
         loglevelname = "Info"
     else:
         loglevel = logging.WARNING
@@ -31,19 +34,14 @@ def setup_logging(logger, commands, logfile_name=None):
 
     # Create file or stream handler
     format_str = "[%(asctime)s] %(name)s - %(levelname)s: %(message)s"
-    if commands["--console"]:
-        handler = logging.StreamHandler(sys.stdout)
-        handler.setFormatter(logging.Formatter(format_str))
-        handler.setLevel(loglevel)
-        print(f"Logger configured:\n\tLevel: {loglevelname}\n\tOutput: Console")
-    else:
-        if logfile_name is None:
-            print("Error: No logfilename defined")
-            sys.exit()
-        handler = logging.FileHandler(logfile_name)
-        handler.setFormatter(logging.Formatter(format_str))
-        handler.setLevel(loglevel)
+    if logoutput:
+        handler = logging.FileHandler(logoutput)
         print(f"Logger configured:\n\tLevel: {loglevelname}\n\tOutput: File")
+    else:
+        handler = logging.StreamHandler(sys.stdout)
+        print(f"Logger configured:\n\tLevel: {loglevelname}\n\tOutput: Console")
+    handler.setFormatter(logging.Formatter(format_str))
+    handler.setLevel(loglevel)
 
     # Clear all other handlers
     for name in logging.root.manager.loggerDict:
