@@ -53,6 +53,7 @@ class ZMQAdapter(threading.Thread):
         return ip
 
     def run(self):
+        i = 0
         while not self.stop.is_set():
 
             # would add test here to call instrument.connect iff offline
@@ -62,5 +63,8 @@ class ZMQAdapter(threading.Thread):
             except zmq.ZMQError:
                 time.sleep(0.1)
                 continue
+            if i % 50 == 0:
+                self.instrument.try_connect()
 
             handle_zmq_message_from_app(self, msg, logger)
+            i += 1
