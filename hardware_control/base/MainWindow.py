@@ -3,6 +3,7 @@ import json
 import logging
 import os
 from sys import platform
+from typing import Optional
 
 from PyQt5.QtWidgets import (
     QMainWindow,
@@ -10,18 +11,41 @@ from PyQt5.QtWidgets import (
     QFileDialog,
 )
 
+from .App import App
+
 logger = logging.getLogger(__name__)
 
 
-class MainWindow(QMainWindow):
-    def __init__(self, app):
+class HCMainWindow(QMainWindow):
+    def __init__(self, app: Optional[App] = None, dummy: bool = False):
+        """Create a QMainWindow with some additional menu.
+
+        If no app is given an instance will be created.
+
+        Parameters
+        ----------
+        app :
+           The main app that will store all instrument data, etc.
+        dummy :
+           Should the app run in dummy mode. Only used here, if app is
+           None and a new app needs to be created.
+
+        """
+
+        if app is None:
+            app = App(dummy=dummy)
+        self.app = app
 
         super().__init__()
 
-        self.app = app
         self.app.main_window = self
 
         self.add_menu()
+
+        self.app.aboutToQuit.connect(self.close)
+
+    def close(self):
+        self.app.close()
 
     def add_menu(self):
 
