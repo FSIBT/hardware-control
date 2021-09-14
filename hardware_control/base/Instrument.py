@@ -134,6 +134,8 @@ class Instrument:
         self.encoding: str = "utf-8"
         self.write_termination = None
         self.read_termination = None
+        self.delay = None
+        self.timeout = None
 
         # We save all possible commands and settings in several dictionaries
         self.set_commands = {}  # e.g. a voltage that can be set
@@ -511,6 +513,8 @@ class Instrument:
                     if not self.write_termination
                     else self.write_termination
                 )
+                if self.timeout:
+                    self.device.timeout = self.timeout
                 logger.debug(
                     f"opened pyvisa connection to {self.name} at {self.connection_addr}"
                 )
@@ -629,7 +633,7 @@ class Instrument:
         return data
 
     @ensure_online
-    def query(self, command: str):
+    def query(self, command: str, delay:Optional[float]=None):
 
         if self.dummy:
             logger.info(f"{self.name} sending query command {command}")
@@ -638,7 +642,12 @@ class Instrument:
         try:
             logger.debug(f"INFO: Sending query {command} in {self.name}")
             if self.connection_type == Instrument.VISA:
-                reply = self.device.query(command)
+                if delay:
+                    reply = self.device.query(command, delay=delay)
+                elif self.delay is not None:
+                    reply = self.device.query(command, delay=self.delay)
+                else:
+                    reply = self.device.query(command)
             elif self.connection_type == Instrument.SOCKET:
                 self.device.sendall(bytes(command + self.termination, self.encoding))
                 reply_bytes = Instrument.recvall(self.device)

@@ -37,6 +37,7 @@ class SRS_CIS200(Instrument):
         # set the terminator
         self.read_termination = "\n\r"
         self.write_termination = "\r"
+        self.delay = 2  # the RGA needs a long delay when setting values
 
         self.try_connect()
         self.config_serial(baud_rate=28800, stop_bits=20,data_bits=8,parity=0)
@@ -49,7 +50,7 @@ class SRS_CIS200(Instrument):
                 self.device.query('ID?\r')
             except:
                 pass
-        self.check_connection_commands = ["ID?", "IN0"]
+        #self.check_connection_commands = ["ID?", "IN0"]
 
         self.add_command("CALIBRATION_ALL", "CA")
         self.add_command("CALIBRATION", "CL")
