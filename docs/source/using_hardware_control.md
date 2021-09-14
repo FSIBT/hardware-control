@@ -1,6 +1,6 @@
 # Write a Control Program
 
-Hardware Control supplies a collection of widgets and backends for controlling
+Hardware Control supplies a collection of widgets and instrument driver for controlling
 instruments. This guide will walk you through setting up a simple control
 program using Hardware Control.
 
@@ -9,49 +9,51 @@ program using Hardware Control.
 Once installed (see installation instruction if you need help), you can import
 Hardware Control with only two lines:
 
-<pre><code>import hardware_control.backends as hc_back
-import hardware_control.gui as hc</pre></code>
+<pre><code>import hardware_control as hc</pre></code>
 
-Now you can access any backend with `hc_back.<backend_class_name>` and all other
-classes, including the user interfaces, with `hc.<class_name>`.
+Now you can access any instruments with `hc_back.instruments.<instrument_class_name>` and all other
+classes, including the user interfaces, with `hc.gui.<class_name>`.
 
 ### 2. Create an App Class
 
 Hardware Control uses Qt to create windows and graphics. Qt applications expect
 the user to create a class which inherits from QMainWindow. To create your
 Hardware Control program, you must also create a class and inherit from
-MainWindow, Hardware Control's window class which inherits from QMainWindow. The
+HCMainWindow, Hardware Control's window class which inherits from QMainWindow. The
 class would start off looking like:
 
-<pre><code>class DemoProgram (hc.MainWindow):
+<pre><code>class DemoProgram (hc.HCMainWindow):
     def __init__(self, app):
 
-		super().__init__([])
+		super().__init__(app)
 </code></pre>
 
 ### 3. Create and Add Instruments
 
-The focus of your program will be on creating backends to communicate with the
-instrument, frontends or interfaces which contain the widgets and GUI elements
+The focus of your program will be on using instruments drivers to communicate with the
+instrument, and use frontends/GUI interfaces which contain the widgets and GUI elements
 to let you interact with your instrument, and adding them to your window.
 
-1. Create a Backend
+1. Create an instrument driver
 
-	To create a backend, find the appropriate backend class and initialize it with
-	the address of your instrument. Depending on the backend class, the type of
-	address can change. Most backends accept IP addresses, but others might use
-	alternative protocols such as USB, MODBUS or GPIB. You'll need to check your
-	backend's documentation to make sure you configure it correctly.
+	To create an instrument driver, find the appropriate instrument
+	class and initialize it with the address of your instrument and
+	give it a name. Depending on the instrument class, the type of
+	address can change. Most instrument drivers accept IP addresses, but others
+	might use alternative protocols such as USB, MODBUS or
+	GPIB. You'll need to check your instrument's documentation to make
+	sure you configure it correctly. We then connect the instrument to
+	the main app.
 
-	`scope_be = hc_back.Keysight_4000X("192.168.0.2")`
+	`self.app.add_instrument(hc.instruments.Keysight_4000X("scope", "192.168.0.2"))`
 
 2. Create a Control Widget
 
-	The control widget or frontend will communicate with your backend. To create the
+	The control widget or frontend will communicate with instrument. To create the
 	control widget, create an object of the control widget class and pass the
-	backend you want it to control as an argument.
+	app and the name of the instrument to it.
 
-	`self.scope_wdgt = hc.Oscilloscope(scope_be, self, "Oscilloscope")`
+	`self.scope_wdgt = hc.gui.Oscilloscope(app, "scope")`
 
 3. Add Widget to Layout
 
@@ -99,25 +101,7 @@ demo_prog = DemoProgram(app)
 </pre></code>
 
 
-### 6. Prepare for Clean Close
-
-When your window closes, it needs to call `App.close()` to ensure your the
-connections to your instruments close properly and that any unsaved data has a
-chance to save. You can connect your window's close button to a close function
-which will ensure your program exists safely.
-
-<pre><code># Defined in your program class
-
-def close(self):
-	print("Closing")
-	self.app.close()
-</pre></code>
-
-<pre><code># Called where you create your instance of 'ProgramDemo'
-app.aboutToQuit.connect(demo_prog.close)
-</pre></code>
-
-### 7. Execute Program
+### 6. Execute Program
 
 To run your program, just call `sys.exit(app.exec_())`!
 
@@ -127,20 +111,19 @@ A complete sample program could look like this:
 from PyQt5.QtWidgets import QGridLayout, QWidget
 import sys
 
-import hardware_control.backends as hc_back
-import hardware_control.gui as hc
+import hardware_control as hc
 
 # Create class for program
-class DemoProgram (hc.MainWindow):
+class DemoProgram (hc.HCMainWindow):
     def __init__(self, app):
 
         super().__init__(app)
 
-		# Create an oscilloscope backend
-        scope_be = hc_back.Keysight_4000X("192.168.0.2")
+        # Create an oscilloscope instrument driver
+        self.app.add_instrument(hc.instruments.Keysight_4000X("scope", "192.168.0.2"))
 
-		# Create an oscilloscope control widget with the backend
-        self.scope_wdgt = hc.Oscilloscope(scope_be, self, "Oscilloscope")
+		# Create an oscilloscope control widget for the instrument
+        self.scope_wdgt = hc.gui.Oscilloscope(self.app, "scope")
 
         # Create layout, add oscilloscope to row=0, column=0
         self.main_layout = QGridLayout()
@@ -154,26 +137,15 @@ class DemoProgram (hc.MainWindow):
 		# Indicate the window is ready to show
         self.show()
 
-	#This function guarantees a safe close
-    def close(self):
-        print("Closing")
-        self.app.close()
-
 #This function will create and run the program class
-def main():
-
+if __name__ == "__main__":
 	# Create a Hardware Control App
-    app = hc.App(dummy=True)
+    app = hc.App(dummy=True)  # will always run in dummy mode and not connect to any instrument
 
 	# Create an instance of my class using 'App'
     demo_prog = DemoProgram(app)
 
-	# Connect the window close buttons to the safe close function
-    app.aboutToQuit.connect(demo_prog.close)
-
 	# Execute the program
     sys.exit(app.exec_())
 
-#Call the 'main' function
-main()
 </pre></code>

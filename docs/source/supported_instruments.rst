@@ -11,7 +11,7 @@ List of supported instruments
      :header-rows: 0
      :align: left
 
-     * - Included backends:
+     * - Included instruments:
        -
      * - `Stanford Research Systems DG535 <https://www.thinksrs.com/products/DG535.htm>`_ (GPIB, via usb adaptor)
        - .. image:: /images/DG535.jpg
@@ -26,7 +26,7 @@ List of supported instruments
      :header-rows: 0
      :align: left
 
-     * - Included backends:
+     * - Included instruments:
        -
      * - `Alicat M-Series <https://www.alicat.com/product/mass-flow-meters/>`_ (LAN & Modbus)
        - .. image:: /images/Alicat_M-Series.jpg
@@ -45,7 +45,7 @@ List of supported instruments
      :header-rows: 0
      :align: left
 
-     * - Included backends:
+     * - Included instruments:
        -
      * - `Keysight 33500B <https://www.keysight.com/us/en/products/waveform-and-function-generators/trueform-series-waveform-and-function-generators.html>`_ (LAN)
        - .. image:: /images/Keysight33500B.png
@@ -65,7 +65,7 @@ List of supported instruments
      :header-rows: 0
      :align: left
 
-     * - Included backends:
+     * - Included instruments:
        -
      * - `National Instruments 9000 <https://www.ni.com/en-us/shop/compactdaq.html>`_ (LAN & USB)
        - .. image:: /images/NI9000.jpeg
@@ -89,7 +89,7 @@ List of supported instruments
      :header-rows: 0
      :align: left
 
-     * - Included backends:
+     * - Included instruments:
        -
      * - `Keysight 4000X <https://www.keysight.com/en/pcx-x205209/infiniivision-4000-x-series-oscilloscopes?cc=US&lc=eng>`_ (LAN)
        - .. image:: /images/Keysight4000X.jpeg
@@ -109,7 +109,7 @@ List of supported instruments
      :header-rows: 0
      :align: left
 
-     * - Included backends:
+     * - Included instruments:
        -
      * - `CAEN series R803x <https://www.caen.it/subfamilies/up-to-6-kv-family-r803x/>`_
        - .. image:: /images/CAENR803x.jpg
