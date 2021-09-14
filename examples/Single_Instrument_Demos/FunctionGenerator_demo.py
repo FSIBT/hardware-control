@@ -34,10 +34,9 @@ logger = logging.getLogger(__name__)
 hc.setup_logging(logger, commands, "hardware_control.log")
 
 
-class Demo(hc.MainWindow):
-    def __init__(self, app):
-        super().__init__(app)
-        self.app = app
+class Demo(hc.HCMainWindow):
+    def __init__(self, dummy):
+        super().__init__(dummy=dummy)
 
         self.setWindowTitle("Wave Gen Demo")
 
@@ -46,7 +45,7 @@ class Demo(hc.MainWindow):
         self.app.add_instrument(
             hc.instruments.Keysight_33500B("keysight", address, number_of_channels=2)
         )
-        self.awg_ctrl = hc.gui.FunctionGenerator(app, "keysight", num_channels=2)
+        self.awg_ctrl = hc.gui.FunctionGenerator(self.app, "keysight", num_channels=2)
 
         self.grid = QGridLayout()
         self.grid.addWidget(self.awg_ctrl, 1, 1)
@@ -55,12 +54,7 @@ class Demo(hc.MainWindow):
         self.setCentralWidget(self.main_widget)
         self.show()
 
-    def close(self):
-        self.app.close()
-
 
 if __name__ == "__main__":
-    app = hc.App(dummy=dummy)
-    ex = Demo(app)
-    app.aboutToQuit.connect(ex.close)
-    sys.exit(app.exec_())
+    main_widget = Demo(dummy=dummy)
+    sys.exit(main_widget.app.exec_())

@@ -26,10 +26,9 @@ logger = logging.getLogger(__name__)
 hc.setup_logging(logger, commands, "hardware_control.log")
 
 
-class Demo(hc.MainWindow):
-    def __init__(self, app):
-        super().__init__(app)
-        self.app = app
+class Demo(hc.HCMainWindow):
+    def __init__(self, dummy):
+        super().__init__(dummy=dummy)
 
         self.setWindowTitle("Demo")
 
@@ -51,15 +50,7 @@ class Demo(hc.MainWindow):
         self.setCentralWidget(self.main_widget)
         self.show()
 
-    def close(self):
-        self.app.close()
 
-
-def main():
-    app = hc.App(dummy=dummy)
-    ex = Demo(app)
-    app.aboutToQuit.connect(ex.close)
-    sys.exit(app.exec_())
-
-
-main()
+if __name__ == "__main__":
+    main_window = Demo(dummy=dummy)
+    sys.exit(main_window.app.exec_())

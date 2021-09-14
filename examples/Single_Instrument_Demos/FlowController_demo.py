@@ -17,7 +17,7 @@ import sys
 
 from docopt import docopt
 
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QGridLayout, QTabWidget
+from PyQt5.QtWidgets import QGridLayout, QTabWidget
 
 import hardware_control as hc
 
@@ -28,10 +28,9 @@ logger = logging.getLogger(__name__)
 hc.setup_logging(logger, commands, "hardware_control.log")
 
 
-class Demo(QMainWindow):
-    def __init__(self, app):
-        super().__init__()
-        self.app = app
+class Demo(hc.HCMainWindow):
+    def __init__(self, dummy):
+        super().__init__(dummy=dummy)
 
         self.setWindowTitle("Flow Controller Demo")
 
@@ -40,7 +39,7 @@ class Demo(QMainWindow):
         self.app.add_instrument(
             hc.instruments.Alicat_M_Series("alicat", "192.168.0.15")
         )
-        self.instr_ctrl = hc.gui.FlowController(app, "alicat", "Flow Controller", True)
+        self.instr_ctrl = hc.gui.FlowController(self.app, "alicat", "Flow Controller")
 
         self.ipython = hc.gui.Qtconsole(self.app)
 
@@ -50,11 +49,6 @@ class Demo(QMainWindow):
         self.setCentralWidget(self.tabs)
         self.show()
 
-    def close(self):
-        self.app.close()
 
-
-app = hc.App(dummy=dummy)
-ex = Demo(app)
-app.aboutToQuit.connect(ex.close)
-sys.exit(app.exec_())
+main_window = Demo(dummy=dummy)
+sys.exit(main_window.app.exec_())

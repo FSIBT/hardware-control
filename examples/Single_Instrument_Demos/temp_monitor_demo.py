@@ -26,12 +26,10 @@ logger = logging.getLogger(__name__)
 hc.setup_logging(logger, commands, "hardware_control.log")
 
 
-class TemperatureMonitor(hc.base.MainWindow):
-    def __init__(self, app):
+class TemperatureMonitor(hc.HCMainWindow):
+    def __init__(self, dummy):
 
-        super().__init__(app)
-
-        self.app = app
+        super().__init__(dummy=dummy)
 
         # set title of window
         self.setWindowTitle("Temperature Monitor")
@@ -40,10 +38,11 @@ class TemperatureMonitor(hc.base.MainWindow):
         self.main_widget = QWidget(self)
 
         # create a backend and a GUI control for the backend
-        self.L224 = hc.instruments.Lakeshore_224(
-            "lakeshore", "TCPIP::192.168.0.12::7777::SOCKET"
+        self.app.add_instrument(
+            hc.instruments.Lakeshore_224(
+                "lakeshore", "TCPIP::192.168.0.12::7777::SOCKET"
+            )
         )
-        self.app.add_instrument(self.L224)
         self.temp_wdgt = hc.gui.TempMonitor(
             app, instrument="lakeshore", channel_list=["A", "B", "C1", "D1"]
         )
@@ -74,14 +73,7 @@ class TemperatureMonitor(hc.base.MainWindow):
         self.setCentralWidget(self.main_widget)
         self.show()
 
-    def close(self):
-        self.app.close()
-
 
 if __name__ == "__main__":
-    app = hc.App(dummy=dummy)
-    app.print_close_info = True
-    ex = TemperatureMonitor(app)
-    ex.L224.try_connect()
-    app.aboutToQuit.connect(ex.close)
-    sys.exit(app.exec_())
+    main_window = TemperatureMonitor(dummy=dummy)
+    sys.exit(main_window.app.exec_())

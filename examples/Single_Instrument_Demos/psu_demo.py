@@ -18,10 +18,9 @@ import sys
 
 from docopt import docopt
 
-from PyQt5.QtWidgets import QMainWindow, QWidget, QGridLayout
+from PyQt5.QtWidgets import QWidget, QGridLayout
 
-import hardware_control.backends as hc_back
-import hardware_control.gui as hc
+import hardware_control as hc
 
 
 commands = docopt(__doc__)
@@ -31,18 +30,18 @@ logger = logging.getLogger(__name__)
 hc.setup_logging(logger, commands, "hardware_control.log")
 
 
-class Demo(QMainWindow):
-    def __init__(self, app):
-        super().__init__()
-        self.app = app
+class Demo(hc.HCMainWindow):
+    def __init__(self, dummy):
+        super().__init__(dummy=dummy)
 
         self.setWindowTitle("PSU Demo")
 
         self.main_widget = QWidget(self)
 
-        psu = hc_back.Caen_14xxET("192.168.1.20:1470")
-        self.psu_ctrl = hc.MultiPowerSupply(
-            app, psu, [1, 2, 3], "Power Supply Unit", "DEFAULT"
+        self.app.add_instrument(hc.instruments.Caen_14xxET("caen", "192.168.1.20:1470"))
+
+        self.psu_ctrl = hc.gui.MultiPowerSupply(
+            self.app, "caen", "Caen", [1, 2, 3], "Power Supply Unit", "DEFAULT"
         )
 
         self.grid = QGridLayout()
@@ -52,15 +51,7 @@ class Demo(QMainWindow):
         self.setCentralWidget(self.main_widget)
         self.show()
 
-    def close(self):
-        self.psu_ctrl.close()
 
-
-def main():
-    app = hc.App(dummy=dummy)
-    ex = Demo(app)
-    app.aboutToQuit.connect(ex.close)
-    sys.exit(app.exec_())
-
-
-main()
+if __name__ == "__main__":
+    main_window = Demo(dummy=dummy)
+    sys.exit(main_window.app.exec_())
