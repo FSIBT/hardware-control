@@ -3,17 +3,6 @@ GUI elements
 
 .. toctree::
    :maxdepth: 1
-   :caption: Basics:
-
-   gui/base/App
-   gui/base/Comm
-   gui/base/Instrument
-   gui/base/MainWindow
-   gui/base/Dataset
-   gui/base/logging
-
-.. toctree::
-   :maxdepth: 1
    :caption: Controls:
 
    gui/controls/DelayGenerator
@@ -30,9 +19,9 @@ GUI elements
    gui/widgets/connection_status
    gui/widgets/data_widget
    gui/widgets/function_runner
-   gui/widgets/on_off
+   gui/widgets/hc_on_off
+   gui/widgets/hc_widgets
    gui/widgets/plot
    gui/widgets/qtconsole
-   gui/widgets/scan
-   gui/widgets/utility
+   gui/widgets/scan_widget
    gui/widgets/zmq_connection

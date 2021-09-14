@@ -15,6 +15,6 @@ The package is split into two parts:
    :maxdepth: 1
    :caption: Main elements:
 
+   base_index
    gui_index
    instrument_index
-

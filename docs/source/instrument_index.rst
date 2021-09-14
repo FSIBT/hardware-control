@@ -5,7 +5,6 @@ Instrument Drivers
    :maxdepth: 2
    :caption: Supported instrument drivers by company:
 
-   instruments/base
    instruments/advantech
    instruments/alicat
    instruments/caen
