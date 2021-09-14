@@ -252,28 +252,28 @@ class RootsDemo(hc.MainWindow):
 
         self.app.data_sets["Autolog"] = hc.Dataset("Autolog")
         self.app.data_sets["Autolog"].start_asynch(3)
-        self.app.data_sets["Autolog"].add_instrument(self.keysight_wdgt)
+        self.app.data_sets["Autolog"].track_instrument(self.keysight_wdgt)
 
         self.app.data_sets["Keysight"] = hc.Dataset("Keysight")
         self.app.data_sets["Keysight"].start_asynch(1)
-        self.app.data_sets["Keysight"].add_instrument(self.keysight_wdgt)
+        self.app.data_sets["Keysight"].track_instrument(self.keysight_wdgt)
 
         self.app.data_sets["ADAM"] = hc.Dataset("ADAM")
         self.app.data_sets["ADAM"].start_asynch(1)
-        self.app.data_sets["ADAM"].add_instrument(
+        self.app.data_sets["ADAM"].track_instrument(
             self.adam_wdgt, ["CH2_V_meas", "CH3_V_meas"]
         )
-        self.app.data_sets["ADAM"].name_channel("ADAM:CH2_V_meas", "HV Current")
-        self.app.data_sets["ADAM"].name_channel("ADAM:CH3_V_meas", "High Voltage")
+        self.app.data_sets["ADAM"].define_alias("ADAM:CH2_V_meas", "HV Current")
+        self.app.data_sets["ADAM"].define_alias("ADAM:CH3_V_meas", "High Voltage")
 
         self.app.data_sets["HEATER"] = hc.Dataset("HEATER")
         self.app.data_sets["HEATER"].start_asynch(1)
-        self.app.data_sets["HEATER"].add_instrument(self.keysight_wdgt, ["CH1_I_out"])
-        self.app.data_sets["HEATER"].add_instrument(self.adam_wdgt, ["CH1_V_meas"])
-        self.app.data_sets["HEATER"].name_channel(
+        self.app.data_sets["HEATER"].track_instrument(self.keysight_wdgt, ["CH1_I_out"])
+        self.app.data_sets["HEATER"].track_instrument(self.adam_wdgt, ["CH1_V_meas"])
+        self.app.data_sets["HEATER"].define_alias(
             "Keysight Power Supply:CH1_I_out", "Heater Current"
         )
-        self.app.data_sets["HEATER"].name_channel("ADAM:CH1_V_meas", "Pressure")
+        self.app.data_sets["HEATER"].define_alias("ADAM:CH1_V_meas", "Pressure")
 
         self.logtool.update_groups()
         self.logtool.set_group("Autolog")

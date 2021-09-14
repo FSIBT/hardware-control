@@ -109,7 +109,7 @@ class Dataset(QObject):
         self.data = defaultdict(list)
         self.autosave_next_row = 0
 
-    def add_instrument(self, instrument, parameter=None) -> None:
+    def track_instrument(self, instrument, parameter=None) -> None:
         """Add a parameter from an instrument to the dataset.
 
         If parameter is `None`, all parameters that can be read are
@@ -122,7 +122,7 @@ class Dataset(QObject):
         else:
             self.instruments.append((instrument, parameter))
 
-    def name_channel(self, channel: str, name: str) -> None:
+    def define_alias(self, channel: str, name: str) -> None:
         """Channel must be a key in self.data and name is the replacement string."""
 
         instrument, parameter = channel.split(":")

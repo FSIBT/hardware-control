@@ -63,7 +63,7 @@ class TemperatureMonitor(hc.HCMainWindow):
         # Create data_sets
         self.app.data_sets["Temps"] = hc.Dataset("Temps", self.app)
         for ch in ["A", "B", "C1", "D1"]:
-            self.app.data_sets["Temps"].add_instrument(
+            self.app.data_sets["Temps"].track_instrument(
                 self.temp_wdgt.instrument, f"CH{ch}_READ_TEMP"
             )
         self.app.data_sets["Temps"].start_updates(3)
@@ -78,10 +78,10 @@ class TemperatureMonitor(hc.HCMainWindow):
         self.plot_wdgt.set_dataset("Temps")  # Could add
         self.grid.addWidget(self.plot_wdgt, 0, 0)
 
-        self.app.data_sets["Temps"].name_channel("lakeshore:CHA_READ_TEMP", "Temp A")
-        self.app.data_sets["Temps"].name_channel("lakeshore:CHB_READ_TEMP", "Temp B")
-        self.app.data_sets["Temps"].name_channel("lakeshore:CHC1_READ_TEMP", "Temp C1")
-        self.app.data_sets["Temps"].name_channel("lakeshore:CHD1_READ_TEMP", "Temp D1")
+        self.app.data_sets["Temps"].define_alias("lakeshore:CHA_READ_TEMP", "Temp A")
+        self.app.data_sets["Temps"].define_alias("lakeshore:CHB_READ_TEMP", "Temp B")
+        self.app.data_sets["Temps"].define_alias("lakeshore:CHC1_READ_TEMP", "Temp C1")
+        self.app.data_sets["Temps"].define_alias("lakeshore:CHD1_READ_TEMP", "Temp D1")
 
         self.setCentralWidget(self.main_widget)
         self.show()
