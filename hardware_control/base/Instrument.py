@@ -62,7 +62,7 @@ def ensure_online(f):
         self = args[0]
 
         if not self.online:
-            return f"{self.name}-Offline"
+            return None
 
         return f(*args, **kwargs)
 
@@ -591,7 +591,7 @@ class Instrument:
             return
 
         try:
-            logger.debug(f'\t{self.name} < "{command}"')
+            logger.debug(f"write: '{command}' to '{self.name}'")
             if self.connection_type == Instrument.VISA:
                 self.device.write(command)
                 return command
@@ -618,7 +618,7 @@ class Instrument:
         except Exception:
             logger.debug(f"ERROR: Write {command} failed in {self.name}", exc_info=True)
             self.online = False
-            return f"{self.name}-Offline"
+            return None
 
     @staticmethod
     def recvall(sock):
@@ -674,7 +674,7 @@ class Instrument:
         except Exception:
             logger.debug(f"ERROR: Query {command} failed in {self.name}", exc_info=True)
             self.online = False
-            return f"{self.name}-Offline"
+            return None
 
     def load_state(self, filename: str):
         """Reads and sets instrument settings from a json dictionary"""

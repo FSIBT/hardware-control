@@ -11,6 +11,7 @@ def handle_zmq_message_from_app(adapter, msg, logger):
     """
 
     # remove topic
+    logger.debug(f"in ZMQ parsing: {msg}")
     msg = msg[adapter.zmq_topic_length :]
 
     msg = msg.split()
@@ -31,6 +32,7 @@ def handle_zmq_message_from_app(adapter, msg, logger):
                 )
                 return
             value = adapter.instrument.get_value(msg[1])
+            logger.debug(f"sending value '{value}' back for {msg[1]}")
             if value is not None:
                 adapter.zmq_publisher.send_string(
                     f"{adapter.instrument.name} {msg[1]} {value}"

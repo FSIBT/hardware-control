@@ -1,8 +1,14 @@
+import logging
 from typing import Optional, List
+
+logger = logging.getLogger(__name__)
 
 # Converters
 def create_converter(lookuptable):
     def converter(value):
+        if value not in lookuptable:
+            logger.error(f"Value '{value}'' not in lookuptable '{lookuptable}'")
+            return None
         return lookuptable[value]
 
     return converter
@@ -63,10 +69,10 @@ def uppercase():
 
 
 # Validators
-def range_validator(min, max):
+def range_validator(min_val, max_val):
     def validator(value):
         value = float(value)
-        return max(min(value, max), min)
+        return max(min(value, max_val), min_val)
 
     return validator
 
