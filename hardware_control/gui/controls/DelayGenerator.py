@@ -84,7 +84,7 @@ class DelayGenerator(QGroupBox):
             self.app,
             self.instrument,
             "TRIGGER_LEVEL",
-            label="Ext Trig Level (V):",
+            label="Ext Trig Level (V)",
             label_align="right",
         )
         self.trig_level.setDecimals(3)
@@ -107,7 +107,7 @@ class DelayGenerator(QGroupBox):
             self.app,
             self.instrument,
             "PULSES_PER_BURST",
-            label="Pulses per Burst:",
+            label="Pulses per Burst",
             label_align="right",
         )
 
@@ -115,7 +115,7 @@ class DelayGenerator(QGroupBox):
             self.app,
             self.instrument,
             "TRIGGER_PERIOD",
-            label="Triggers per Burst:",
+            label="Triggers per Bursts",
             label_align="right",
         )
         self.period.setSingleStep(1)
@@ -187,7 +187,7 @@ class DelayGenerator(QGroupBox):
 
         for parameter in [
             "TRIGGER_MODE",
-            "TRIGGE_EDGE",
+            "TRIGGER_EDGE",
             "EXT_TRIG_ZIN",
             "TRIGGER_LEVEL",
             "PULSES_PER_BURST",
@@ -296,7 +296,7 @@ class DelayChannelWidget(QWidget):
         self.time_delay.parameter = f"CH{self.channel}_{value}_DELAY"
         logger.debug(f"updating delay CH{self.channel}->{value}")
 
-    def set_output_level_hook(self, value, widget):
+    def set_output_level_hook(self, value):
         if value is None:
             return
 

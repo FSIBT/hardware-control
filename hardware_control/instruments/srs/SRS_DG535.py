@@ -63,7 +63,7 @@ class SRS_DG535(Instrument):
         self.add_parameter(
             "TRIGGER_MODE",
             read_command="TM",
-            set_command="TM{}",
+            set_command="TM {}",
             dummy_return="SINGLE",
         )
         self.add_lookup(
@@ -79,15 +79,15 @@ class SRS_DG535(Instrument):
         self.add_parameter(
             "TRIGGER_EDGE",
             read_command="TS",
-            set_command="TS{}",
+            set_command="TS {}",
             dummy_return="POSITIVE",
         )
         self.add_lookup("TRIGGER_EDGE", {"POSITIVE": "1", "NEGATIVE": "0"})
 
         self.add_parameter(
             "EXT_TRIG_ZIN",
-            read_command="TZ",
-            set_command="TZ{}",
+            read_command=f"TZ0",
+            set_command="TZ0,{}",
             dummy_return="50-OHMS",
         )
         self.add_lookup("EXT_TRIG_ZIN", {"50-OHMS": "0", "HI-Z": "1"})
@@ -127,7 +127,7 @@ class SRS_DG535(Instrument):
                 f"CH{channel}_OUTPUT_AMPLITUDE",
                 read_command=f"OA {inst_ch_name}",
                 set_command=f"OA {inst_ch_name},{{}}",
-                pre_hooks=[hooks.range_validator(0.1, 4)],
+                pre_hooks=[hooks.range_validator(0.1, 4.0)],
                 dummy_return="3.2",
             )
 
@@ -150,12 +150,12 @@ class SRS_DG535(Instrument):
         self.add_parameter(
             "PULSES_PER_BURST",
             read_command="BC",
-            set_command="BC{}",
+            set_command="BC {}",
             dummy_return=500,
         )
         self.add_parameter(
             "TRIGGER_LEVEL", read_command="TL", set_command="TL{}", dummy_return="1"
         )
         self.add_parameter(
-            "TRIGGER_PERIOD", read_command="BP", set_command="BP{}", dummy_return="1"
+            "TRIGGER_PERIOD", read_command="BP", set_command="BP {}", dummy_return="1"
         )
