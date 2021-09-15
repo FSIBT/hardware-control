@@ -13,6 +13,7 @@ Options:
 
 import logging
 import sys
+from pathlib import Path
 
 from PyQt5.QtWidgets import QWidget, QGridLayout
 from docopt import docopt
