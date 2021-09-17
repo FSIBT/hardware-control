@@ -17,6 +17,7 @@ import logging
 import sys
 
 from docopt import docopt
+from pathlib import Path
 
 from PyQt5.QtWidgets import QWidget, QGridLayout
 
@@ -53,7 +54,10 @@ class Demo(hc.HCMainWindow):
         self.app.add_instrument(hc.instruments.Caen_14xxET("caen", "192.168.1.20:1470"))
 
         self.psu_ctrl = hc.gui.MultiPowerSupply(
-            self.app, "caen", "Caen", [1, 2, 3], "Power Supply Unit", "DEFAULT"
+            self.app,
+            "caen",
+            [1, 2, 3],
+            "Power Supply Unit",
         )
 
         self.grid = QGridLayout()

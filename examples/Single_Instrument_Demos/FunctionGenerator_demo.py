@@ -19,6 +19,7 @@ import sys
 
 from PyQt5.QtWidgets import QMainWindow, QWidget, QGridLayout
 from docopt import docopt
+from pathlib import Path
 
 import hardware_control as hc
 
