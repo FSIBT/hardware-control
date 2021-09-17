@@ -17,7 +17,7 @@ class Read(QGroupBox):
     def __init__(
         self,
         app,
-        backend,
+        instrument,
         channels: list,  # just a list of numbers
         channelNames: list,  # and their names
         readCommand: str,  # command for reading e.g. TEMP / VOLT / CURR
@@ -26,7 +26,7 @@ class Read(QGroupBox):
         showLCD=True,
     ):
         # initalizing
-        super().__init__(app, name, backend)
+        super().__init__(app, name, instrument)
 
         self.channels = channels
         self.channelNames = channelNames

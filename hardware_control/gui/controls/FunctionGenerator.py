@@ -43,13 +43,13 @@ class FunctionGenerator(QGroupBox):
     def __init__(
         self,
         app,
-        instrument: str,
+        instrument_name: str,
         name: str = "AWG Control",
         num_channels: int = 2,
     ):
         super().__init__(name)
         self.app = app
-        self.instrument = instrument
+        self.instrument = instrument_name
         self.num_channels = num_channels
 
         self.setup_UI()

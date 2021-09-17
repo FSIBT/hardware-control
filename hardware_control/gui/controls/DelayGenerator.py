@@ -42,14 +42,13 @@ class DelayGenerator(QGroupBox):
     def __init__(
         self,
         app,
-        instrument: str,
+        instrument_name: str,
     ):
 
-        super().__init__()
+        super().__init__(instrument_name)
 
         self.app = app
-        self.instrument = instrument
-
+        self.instrument = instrument_name
         self.channels = 4
 
         # Create GUI
@@ -224,13 +223,13 @@ class DelayChannelWidget(QWidget):
 
     """
 
-    def __init__(self, app, instrument, channel: str):
+    def __init__(self, app, instrument_name: str, channel: str):
 
         super().__init__()
 
         self.channel = channel
         self.app = app
-        self.instrument = instrument
+        self.instrument = instrument_name
 
         self.channel = channel
         self.channel_label = QLabel(f"Channel {channel}")

@@ -17,13 +17,16 @@ class DeviceType(QGroupBox):
     def __init__(
         self,
         app,
-        instrument: str,
+        instrument_name: str,
         channels: list,
         name: str = "TemplateDevice",
         initialize_with: str = "INSTRUMENT",
         lock_until_sync=False,
     ):
         super().__init__()
+
+        self.app = app
+        self.instrument = instrument_name
 
         # Create UI - example
         self.lineEdit = HCLineEdit(

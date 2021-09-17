@@ -36,12 +36,12 @@ class FlowController(QGroupBox):
     def __init__(
         self,
         app,
-        instrument: str,
+        instrument_name: str,
         name: str = "Flow Controller",
     ):
         super().__init__(name)
         self.app = app
-        self.instrument = instrument
+        self.instrument = instrument_name
         self.name = name
 
         self.rate = HCLineEdit(

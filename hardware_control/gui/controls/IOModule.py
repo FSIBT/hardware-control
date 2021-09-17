@@ -46,16 +46,16 @@ class IOModule(QGroupBox):
 
     See Also
     --------
-    hardware_control.backends.advantech.Adam_6015.Adam_6015
-    hardware_control.backends.advantech.Adam_6024.Adam_6024
-    hardware_control.backends.ni.Ni_9000.Ni_9000
+    hardware_control.instruments.advantech.Adam_6015.Adam_6015
+    hardware_control.instruments.advantech.Adam_6024.Adam_6024
+    hardware_control.instruments.ni.Ni_9000.Ni_9000
 
     """
 
     def __init__(
         self,
         app,
-        backend,
+        instrument,
         channel_data: Union[dict, str],
         name: str = "IO Module",
         lock_until_sync=False,
@@ -68,8 +68,8 @@ class IOModule(QGroupBox):
         ----------
         app : hardware_control.App
             The main app instance
-        backend : hardware_control.backends.base.Backend
-            An instrument backend that will be controlled using this instrument
+        instrument : hardware_control.base.Instrument
+            An instrument that will be controlled using this instrument
         channel_data : dict or json-file
             A dictionary that contains that contains data for each channel used (see example below)
         lock_until_sync : bool
@@ -93,7 +93,7 @@ class IOModule(QGroupBox):
                 }
         """
 
-        super().__init__(app, name, backend, lock_until_sync)
+        super().__init__(app, name, instrument, lock_until_sync)
 
         if isinstance(channel_data, str):
             self.channel_data = read_channel_file(channel_data)

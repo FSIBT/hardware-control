@@ -11,6 +11,7 @@ from PyQt5.QtWidgets import (
     QSpacerItem,
     QSizePolicy,
 )
+from typing import List
 
 from ...utility import remove_end_carriage_return
 from ..widgets import setButtonState, load_icon, HCLineEdit, HCLabel
@@ -43,16 +44,18 @@ class MultiPowerSupply(QGroupBox):
 
     def __init__(
         self,
-        instrument,
-        channels: list,
-        name: str = "Multi-Channel PSU",
+        app,
+        instrument_name,
+        channels: List,
+        name: str = "Multi_Channel_PSU",
         show_VI_limits=False,
         show_custom_labels=False,
         show_status_panel=False,
         all_enable_button=None,
     ):
         super().__init__(name)
-        self.instrument = instrument
+        self.app = app
+        self.instrument = instrument_name
 
         if all_enable_button is None:
             all_enable_button = MultiPowerSupply.HIDE
