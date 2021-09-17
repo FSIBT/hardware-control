@@ -28,8 +28,8 @@ class Keysight_4000X(Instrument):
 
     def __init__(
         self,
-        connection_addr: str,
-        instrument_name="KEYSIGHT-4000X",
+        instrument_name: str = "KEYSIGHT-4000X",
+        connection_addr: str = "",
         settings_file=None,
     ):
         """List of available settings
@@ -76,7 +76,7 @@ class Keysight_4000X(Instrument):
             read_command=":TIM:SCAL?",
             set_command=":TIM:SCAL {}",
             pre_hooks=[format_float(".6E")],
-            dummy_return="",
+            dummy_return="0.0002",
         )
 
         self.add_parameter(
@@ -84,7 +84,7 @@ class Keysight_4000X(Instrument):
             read_command=":TIM:POS?",
             set_command=":TIM:POS {}",
             pre_hooks=[format_float(".6E")],
-            dummy_return="",
+            dummy_return="0.",
         )
 
         self.add_parameter(
@@ -92,14 +92,14 @@ class Keysight_4000X(Instrument):
             read_command=":WAV:POIN?",
             set_command=":WAV:POIN {}",
             pre_hooks=[format_int()],
-            dummy_return="",
+            dummy_return="2",
         )
 
         self.add_parameter(
             "LABELS_ENABLED",
             read_command="DISP:LAB?",
             set_command="DISP:LAB {}",
-            dummy_return="",
+            dummy_return="False",
         )
         self.add_lookup("LABELS_ENABLED", {"True": "1", "False": "0"})
 
@@ -108,7 +108,7 @@ class Keysight_4000X(Instrument):
             read_command="TRIG:EDGE:LEV?",
             set_command="TRIG:EDGE:LEV {}",
             pre_hooks=[format_float(".6E")],
-            dummy_return="",
+            dummy_return="8.",
         )
 
         self.add_parameter(
@@ -116,7 +116,7 @@ class Keysight_4000X(Instrument):
             read_command="TRIG:COUP?",
             set_command="TRIG:COUP {}",
             pre_hooks=[expected_input_validator(["AC", "DC", "LFReject"], "DC")],
-            dummy_return="",
+            dummy_return="DC",
         )
 
         self.add_parameter(
@@ -124,7 +124,7 @@ class Keysight_4000X(Instrument):
             read_command="TRIG:EDGE:SLOP?",
             set_command="TRIG:EDGE:SLOP {}",
             pre_hooks=[expected_input_validator(["BOTH", "NEG", "POS", "ALT"], "POS")],
-            dummy_return="",
+            dummy_return="POS",
         )
 
         self.add_parameter(
@@ -132,85 +132,82 @@ class Keysight_4000X(Instrument):
             read_command="TRIG:SOUR?",
             set_command="TRIG:SOUR CHAN{}",
             pre_hooks=[format_int()],
-            dummy_return="",
+            dummy_return="1",
         )
 
         for channel in self.chan_nums:
             self.add_parameter(
-                "CH{channel}_VOLTS_DIV",
+                f"CH{channel}_VOLTS_DIV",
                 read_command=f":CHAN{channel}:SCAL?",
                 set_command=f":CHAN{channel}:SCAL {{}}",
                 pre_hooks=[format_float(".6E")],
-                dummy_return="",
+                dummy_return="0.05",
             )
 
             self.add_parameter(
-                "CH{channel}_OFFSET",
+                f"CH{channel}_OFFSET",
                 read_command=f"CHAN{channel}:OFFS?",
                 set_command=f"CHAN{channel}:OFFS {{}}",
                 pre_hooks=[format_float(".6E"), make_negative()],
-                dummy_return="",
+                dummy_return="0.",
             )
 
             self.add_parameter(
-                "CH{channel}_BW_LIM",
-                read_command=f"CHAN{channel}:BWL?",
-                set_command=f"CHAN{channel}:BWL {{}}",
-                dummy_return="",
-            )
-            self.add_lookup("CH{channel}_BW_LIM", {"True": "1", "False": "0"})
-
-            self.add_parameter(
-                "CH{channel}_ACTIVE",
-                read_command=f"CHAN{channel}:DISP?",
-                set_command=f"CHAN{channel}:DISP {{}}",
-                dummy_return="",
-            )
-            self.add_lookup("CH{channel}_ACTIVE", {"True": "1", "False": "0"})
-
-            self.add_parameter(
-                "CH{channel}_IMPEDANCE",
-                read_command=f"CHAN{channel}:IMP?",
-                set_command=f"CHAN{channel}:IMP {{}}",
-                pre_hooks=[lambda x: "FIFT" if value == "50" else "ONEM"],
-                dummy_return="",
-            )
-
-            self.add_parameter(
-                "CH{channel}_LABEL",
+                f"CH{channel}_LABEL",
                 read_command=f"CHAN{channel}:LAB?",
                 set_command=f"CHAN{channel}:LAB {{}}",
                 pre_hooks=[min_len_converter(32)],
-                dummy_return="",
+                dummy_return="2.",
             )
 
             self.add_parameter(
-                "CH{channel}_PROBE_ATTEN",
-                read_command=f"CHAN{channel}:PROB?",
-                set_command=f"CHAN{channel}:PROB {{}}",
-                pre_hooks=[format_float(".6E")],
-                dummy_return="",
-            )
-
-            self.add_parameter(
-                "CH{channel}_COUPLING",
+                f"CH{channel}_COUPLING",
                 read_command=f"CHAN{channel}:COUP?",
                 set_command=f"CHAN{channel}:COUP {{}}",
                 pre_hooks=[expected_input_validator(["AC", "DC"], "DC")],
-                dummy_return="",
+                dummy_return="DC",
+            )
+
+            self.add_parameter(
+                f"CH{channel}_IMPEDANCE",
+                read_command=f"CHAN{channel}:IMP?",
+                set_command=f"CHAN{channel}:IMP {{}}",
+                pre_hooks=[lambda value: "FIFT" if value == "50" else "ONEM"],
+                dummy_return="1e6",
+            )
+
+            self.add_parameter(
+                f"CH{channel}_PROBE_ATTEN",
+                read_command=f"CHAN{channel}:PROB?",
+                set_command=f"CHAN{channel}:PROB {{}}",
+                pre_hooks=[format_float(".6E")],
+                dummy_return="1",
+            )
+
+            self.add_parameter(
+                f"CH{channel}_WAVEFORM",
+                read_command=lambda: self.read_waveform(channel),
             )
 
             self.add_command(
-                "CH{channel}_READ_WAVE", lambda: self.read_waveform(channel)
+                f"CH{channel}_ON-OFF", lambda: self.on_off_command(channel)
             )
+            self.add_command(
+                f"CH{channel}_BW_LIM", lambda: self.BW_lim_command(channel)
+            )
+            self.add_command(f"CH{channel}_INVERT", lambda: self.inv_command(channel))
 
         self.add_command("SINGLE_TRIGGER", ":SING")
         self.add_command("RUN", ":RUN")
         self.add_command("STOP", ":STOP")
         self.add_command("DIGITIZE", ":DIG")
 
+        # Load initial state
         if settings_file != None:
             self.load_state(settings_file)
+
+        # Initial configure call
+        self.write("CONFIG_READ_WAVE")
 
     def read_waveform(self, channel: int):
         """Reads a waveform from the oscilloscope.
@@ -234,9 +231,17 @@ class Keysight_4000X(Instrument):
         try:
             data_length = int(self.query(":WAV:POINTS?"))
             if data_length == 0:
-                return "", [], []
+                logger.error(
+                    "Cannot read scope trace because scope is not sending any data.",
+                    exc_info=True,
+                )
+                return "[[], []]"
         except ValueError:
-            return "", [], []
+            logger.error(
+                "Cannot read scope trace because scope is not sending any data.",
+                exc_info=True,
+            )
+            return "[[], []]"
 
         try:
             # Set the source channel
@@ -262,19 +267,19 @@ class Keysight_4000X(Instrument):
             x_orig = float(x_orig)
         except ValueError:
             logger.error("Received bad origin from scope.", exc_info=True)
-            return "", [], []
+            return "[[], []]"
         try:
             # Convert X Reference
             x_ref = float(x_ref)
         except ValueError:
             logger.error("Received bad reference from scope.", exc_info=True)
-            return "", [], []
+            return "[[], []]"
         try:
             # Convert X Increment
             x_incr = float(x_incr)
         except ValueError:
             logger.error("Received bad increment from scope.", exc_info=True)
-            return "", [], []
+            return "[[], []]"
 
         try:
             # Trim block header from packet & remove newline character from end
@@ -288,9 +293,9 @@ class Keysight_4000X(Instrument):
             t = t.tolist()
         except Exception:
             logger.error("Failed to calculate V & t.", exc_info=True)
-            return "", [], []
+            return "[[], []]"
 
-        return f"CH{channel}_WVFM", t, fmt
+        return f"[{t}, {fmt}]"
 
     def configure_read_waveform(self):
         """Sets the data transfer mode of the oscilloscope.
@@ -306,3 +311,15 @@ class Keysight_4000X(Instrument):
         self.write(":WAV:POIN:MODE NORM")
         # Set aquisition mode to normal
         self.write(":ACQ:TYPE NORM")
+
+    def on_off_command(self, channel):
+        value = not self.query(f"CHAN{channel}:DISP?")
+        self.write(f"CHAN{channel}:DISP {value}")
+
+    def BW_lim_command(self, channel):
+        value = not self.query(f"CHAN{channel}:BWL?")
+        self.write(f"CHAN{channel}:BWL {value}")
+
+    def inv_command(self, channel):
+        value = not self.query(f"CHAN{channel}:INV?")
+        self.write(f"CHAN{channel}:INV {value}")

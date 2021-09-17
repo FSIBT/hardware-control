@@ -38,7 +38,7 @@ class SRS_DG535(Instrument):
         "CD": 7,
     }
 
-    def __init__(self, name, connection_addr):
+    def __init__(self, name, connection_addr, settings_file=None):
 
         super().__init__(name, connection_addr)
 
@@ -159,3 +159,6 @@ class SRS_DG535(Instrument):
         self.add_parameter(
             "TRIGGER_PERIOD", read_command="BP", set_command="BP {}", dummy_return="1"
         )
+
+        if settings_file != None:
+            self.load_state(settings_file)
