@@ -20,7 +20,7 @@ from functools import wraps
 import json
 import logging
 import socket
-from typing import Optional, Any, Callable, List
+from typing import Optional, Any, Callable, List, Union
 
 import pyvisa
 from pymodbus.client.sync import ModbusTcpClient as ModbusClient
@@ -266,7 +266,6 @@ class Instrument:
             if name in self.set_commands:
                 logger.error(f"command {name} already exists in instrument {self.name}")
                 return
-
             self.set_commands[name] = set_command
 
         if pre_hooks is not None:
@@ -294,12 +293,7 @@ class Instrument:
 
             self.dummy_returns[name] = dummy_return
 
-    def add_command(self, name: str, command: str):
-        if name == "online":
-            logger.error(
-                f"command 'online' is a special command and cannot be used in instrument {self.name}"
-            )
-            return
+    def add_command(self, name: str, command: Union[str | Callable]):
         if name in self.commands:
             logger.error(f"command {name} already exists in instrument {self.name}")
             return
@@ -372,7 +366,7 @@ class Instrument:
         # talk to the instrument
         if name in self.read_commands:
             if callable(self.read_commands[name]):
-                self.read_commands[name]
+                self.read_commands[name]()
             else:
                 value = self.query(self.read_commands[name])
             if name in self.post_hooks:
@@ -405,7 +399,7 @@ class Instrument:
 
         raise AttributeError
 
-    def set_value(self, name, value):
+    def set_value(self, name: str, value) -> None:
         if name in self.set_commands:
             if name in self.pre_hooks:
                 hooks = self.pre_hooks[name]
@@ -419,7 +413,7 @@ class Instrument:
             return
         logger.error(f"'{name}' not available in instrument '{self.name}'")
 
-    def __setitem__(self, name, value):
+    def __setitem__(self, name, value) -> None:
         """Allow values to be easily accessed.
 
         b = certain_instrument()
@@ -428,7 +422,7 @@ class Instrument:
         """
         self.set_value(name, value)
 
-    def __setattr__(self, name: str, value):
+    def __setattr__(self, name: str, value) -> None:
         """Allow values to be easily accessed.
 
         b = certain_instrument()
@@ -446,8 +440,10 @@ class Instrument:
             self.set_values(name, value)
         super().__setattr__(name, value)
 
-    def command(self, name: str):
-        """Allow values to be easily accessed.
+    def command(self, name: str) -> None:
+        """Allow commands to be executed.
+
+        These are actions that do not fall into simple read/write categories.
 
         b = certain_instrument()
         b.command('trigger')
@@ -459,14 +455,14 @@ class Instrument:
                 logger.debug(f"{self.name}: Would call {name} -> {self.commands[name]}")
                 return
             if callable(self.commands[name]):
-                self.commands[name]
+                self.commands[name]()
             else:
                 self.write(self.commands[name])
             return
 
         logger.error(f"{name} not available in instrument {self.name}")
 
-    def close(self):
+    def close(self) -> None:
         """Close connection to instrument."""
 
         if self.dummy:
@@ -479,7 +475,7 @@ class Instrument:
 
         self.device.close()
 
-    def try_connect(self):
+    def try_connect(self) -> bool:
         """Checks if the instrument is in communication with the object, if it is
         not, it tries to re-establish communication."""
 
@@ -563,11 +559,11 @@ class Instrument:
 
     def config_serial(
         self,
-        baud_rate: int = None,
-        stop_bits: int = None,
-        data_bits: int = None,
-        parity: int = None,
-    ):
+        baud_rate: Optional[int] = None,
+        stop_bits: Optional[int] = None,
+        data_bits: Optional[int] = None,
+        parity: Optional[int] = None,
+    ) -> None:
         if self.device is None:
             logger.error(f"No visa device for '{self.name}'")
             self.online = False
@@ -584,7 +580,7 @@ class Instrument:
                 self.device.parity = parity
 
     @ensure_online
-    def write(self, command: str):
+    def write(self, command: str) -> None:
 
         if self.dummy:
             logger.info(f"{self.name} sending write command {command}")
@@ -594,10 +590,10 @@ class Instrument:
             logger.debug(f"write: '{command}' to '{self.name}'")
             if self.connection_type == Instrument.VISA:
                 self.device.write(command)
-                return command
+                return
             if self.connection_type == Instrument.SOCKET:
                 self.device.sendall(bytes(command + self.termination, self.encoding))
-                return command
+                return
             if self.connection_type == Instrument.MODBUS:
                 # modbus commands must be formatted in the following way:
                 # command:address:value:unit, e.g. 4 colon separated values
@@ -618,7 +614,7 @@ class Instrument:
         except Exception:
             logger.debug(f"ERROR: Write {command} failed in {self.name}", exc_info=True)
             self.online = False
-            return None
+            return
 
     @staticmethod
     def recvall(sock):
@@ -633,7 +629,7 @@ class Instrument:
         return data
 
     @ensure_online
-    def query(self, command: str, delay:Optional[float]=None):
+    def query(self, command: str, delay: Optional[float] = None):
 
         if self.dummy:
             logger.info(f"{self.name} sending query command {command}")
