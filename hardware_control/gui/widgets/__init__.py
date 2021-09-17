@@ -21,4 +21,5 @@ from .hc_widgets import (
     HCSpinBox,
     HCLabel,
     HCHeader,
+    HCDoubleSpinComboBox,
 )

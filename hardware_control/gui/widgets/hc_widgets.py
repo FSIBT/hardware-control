@@ -1,5 +1,6 @@
 import logging
 import pkg_resources
+from typing import Dict
 
 from PyQt5.QtWidgets import (
     QPushButton,
@@ -332,6 +333,64 @@ class HCComboBox(HCMixin, QComboBox):
                 break
         else:
             logger.error(f"HCControlCombo: could not find '{value}' in item list")
+
+
+class HCDoubleSpinComboBox(HCMixin):
+    """A simple control widget with a label (QLabel) and two input boxes (QSpinBox, QComboBox).
+
+    The control widget can be connected to a generic function, or
+    directly to an instrument and a specific setting.
+
+    When used directly inside an instrument the ``remote`` should be set to False.
+
+    """
+
+    def __init__(
+        self,
+        app,
+        instrument: str,
+        parameter: str,
+        label: str,
+        units: Dict[str, float],
+        label_align: str = "left",
+    ):
+        super().__init__(
+            app=app,
+            instrument=instrument,
+            parameter=parameter,
+            label=label,
+            label_align=label_align,
+        )
+
+        self.units = units
+        self.spin = QDoubleSpinBox()
+        self.combo = QComboBox()
+
+        # Set spinbox value
+        self.spin.setValue(0)
+
+        # Set combobox values
+        self.combo.addItems(self.units.keys())
+
+        # Connect spinbox and combobox to the function that sets the instrument parameter
+        self.spin.editingFinished.connect(self.value_change)
+        self.combo.currentIndexChanged.connect(self.value_change)
+
+    def value_change(self) -> None:
+        combo_value = self.units[self.combo.currentText()]
+        spin_value = float(self.spin.text())
+        value = spin_value * combo_value
+
+        self.app.set_instrument_parameter(self.instrument, self.parameter, value)
+
+    def hc_update(self) -> None:
+        value = float(
+            self.app.get_instrument_parameter(self.instrument, self.parameter)
+        )
+        combo_value = self.units[self.combo.currentText()]
+        value *= combo_value
+
+        self.spin.setValue(value)
 
 
 class HCSpinBox(HCMixin, QSpinBox):
