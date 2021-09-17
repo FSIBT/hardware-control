@@ -5,6 +5,6 @@
 from .Dataset import Dataset
 from .App import App
 from .Instrument import Instrument
-from .MainWindow import HCMainWindow
+from .HCMainWindow import HCMainWindow
 from .logging import setup_logging
 from . import hooks

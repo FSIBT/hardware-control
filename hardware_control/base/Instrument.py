@@ -214,8 +214,8 @@ class Instrument:
     def add_parameter(
         self,
         name: str,
-        read_command: str or Callable,
-        set_command: Optional[str] = None or Optional[Callable],
+        read_command: Union[str, Callable],
+        set_command: Union[Optional[str], Optional[Callable]] = None,
         pre_hooks: Optional[List] = None,
         post_hooks: Optional[List] = None,
         dummy_return: Optional[Any] = None,
@@ -293,7 +293,7 @@ class Instrument:
 
             self.dummy_returns[name] = dummy_return
 
-    def add_command(self, name: str, command: Union[str | Callable]):
+    def add_command(self, name: str, command: Union[str, Callable]):
         if name in self.commands:
             logger.error(f"command {name} already exists in instrument {self.name}")
             return
