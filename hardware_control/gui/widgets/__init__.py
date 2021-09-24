@@ -17,6 +17,7 @@ from .hc_widgets import (
     HCLineEdit,
     HCComboBox,
     HCPushButton,
+    HCToggleButton,
     HCDoubleSpinBox,
     HCSpinBox,
     HCLabel,

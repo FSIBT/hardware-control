@@ -1,6 +1,6 @@
 import logging
 import pkg_resources
-from typing import Dict
+from typing import Dict, Optional
 
 from PyQt5.QtWidgets import (
     QPushButton,
@@ -86,10 +86,14 @@ class HCMixin:
         app = kwargs.pop("app")
         instrument = kwargs.pop("instrument")
         parameter = kwargs.pop("parameter")
-        label = kwargs.pop("label")
-        label_align = kwargs.pop("label_align")
+        if "label" in kwargs:
+            label = kwargs.pop("label")
+            label_align = kwargs.pop("label_align")
+            self.add_label = True
+        else:
+            self.add_label = False
 
-        for arg in [app, instrument, parameter, label, label_align]:
+        for arg in [app, instrument, parameter]:
             if arg is None:
                 logger.error(
                     f"Widget '{self.name}' does not get correct arguments (app, instrument, parameter)"
@@ -102,10 +106,11 @@ class HCMixin:
         super().__init__(**kwargs)
 
         # create an optional label
-        self.name = label
-        self.label = QLabel(f"{label}: ")
-        if label_align == "right":
-            self.label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        if self.add_label:
+            self.name = label
+            self.label = QLabel(f"{label}: ")
+            if label_align == "right":
+                self.label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
         # connect to app
         self.app.add_widget(self.instrument, self.parameter, self)
@@ -285,6 +290,57 @@ class HCPushButton(HCMixin, QPushButton):
         self.app.call_instrument_command(self.instrument, self.parameter)
 
     def hc_update(self) -> None:
+        pass
+
+
+class HCToggleButton(HCMixin, QPushButton):
+    """A simple control widget with a label (QLabel), a button (QPushButton), and an optional indicator (QLabel).
+
+    The control widget can be connected to a generic function, or
+    directly to an instrument and a specific setting.
+
+    """
+
+    def __init__(
+        self,
+        app,
+        instrument: str,
+        parameter: str,
+        button_label: str = "",
+        show_indicator: bool = False,
+        icon_1: Optional[str] = None,
+        icon_2: Optional[str] = None,
+    ):
+        super().__init__(
+            app=app,
+            instrument=instrument,
+            parameter=parameter,
+            text=button_label,
+        )
+
+        self.show_indicator = show_indicator
+        if self.show_indicator:
+            self.icon_1 = load_icon(icon_1)
+            self.icon_2 = load_icon(icon_2)
+            self.indic_label = QLabel()
+            self.indic_label.setPixmap(load_icon("na_label.svg"))
+
+        self.clicked.connect(self.value_change)
+        self.setCheckable(True)
+        setButtonState(self, False)
+
+    def value_change(self) -> None:
+        self.app.set_instrument_parameter(
+            self.instrument, self.parameter, self.isChecked()
+        )
+
+        if self.show_indicator:
+            if self.isChecked():
+                self.indic_label.setPixmap(self.icon_1)
+            else:
+                self.indic_label.setPixmap(self.icon_2)
+
+    def hc_update(self):
         pass
 
 
