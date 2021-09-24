@@ -173,6 +173,15 @@ class App(QApplication):
                 "widgets": [],
             }
             self._data[zmq_instrument.name][r] = p
+        for s in set:
+            p = {
+                "read_value": None,
+                "set_value": None,
+                "post_read_hooks": [],
+                "pre_set_hooks": [],
+                "widgets": [],
+            }
+            self._data[zmq_instrument.name][s] = p
         for c in commands:
             p = {
                 "pre_call_hooks": [],
