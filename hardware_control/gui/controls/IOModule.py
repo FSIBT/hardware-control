@@ -4,7 +4,7 @@ it provides a simple UI.
 """
 import json
 import logging
-from typing import Union
+from typing import Union, Optional
 
 from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QDoubleValidator
@@ -19,8 +19,7 @@ from PyQt5.QtWidgets import (
 )
 
 from ...utility import remove_end_carriage_return
-from ..widgets import load_icon, setButtonState, HCLineEdit, HCLabel
-
+from ..widgets import load_icon, setButtonState, HCLineEdit, HCLabel, HCToggleButton
 
 logger = logging.getLogger(__name__)
 
@@ -28,37 +27,23 @@ LABEL_MIN_WIDTH = -15
 DISP_DECIMAL_PLACES = 1
 
 
-def read_channel_file(filename: str):
-    """
-    Reads channel parameters from a JSON file. Returns a dictionary for
-    initializing an hc.IOModule class.
-    """
-
-    # Read data from file
-    with open(filename) as file:
-        data = json.load(file)
-
-    return data
-
-
 class IOModule(QGroupBox):
     """A GUI for generic Input/Output(IO) module.
 
     See Also
     --------
-    hardware_control.instruments.advantech.Adam_6015.Adam_6015
-    hardware_control.instruments.advantech.Adam_6024.Adam_6024
-    hardware_control.instruments.ni.Ni_9000.Ni_9000
+    hardware_control.instruments.advantech.Adam_6015
+    hardware_control.instruments.advantech.Adam_6024
+    hardware_control.instruments.ni.Ni_9000
 
     """
 
     def __init__(
         self,
         app,
-        instrument,
+        instrument_name,
         channel_data: Union[dict, str],
         name: str = "IO Module",
-        lock_until_sync=False,
         num_columns: int = 1,
         show_ID_labels=False,
     ):
@@ -72,7 +57,6 @@ class IOModule(QGroupBox):
             An instrument that will be controlled using this instrument
         channel_data : dict or json-file
             A dictionary that contains that contains data for each channel used (see example below)
-        lock_until_sync : bool
         num_columns : integer
         show_ID_labels : bool
 
@@ -93,48 +77,67 @@ class IOModule(QGroupBox):
                 }
         """
 
-        super().__init__(app, name, instrument, lock_until_sync)
+        super().__init__(name)
 
-        if isinstance(channel_data, str):
-            self.channel_data = read_channel_file(channel_data)
-        else:
-            self.channel_data = channel_data
+        self.app = app
+        self.instrument = instrument_name
+        self.read_channel_data(channel_data)
 
         self.channel_panel = QGridLayout()
         self.an_in_channels = []
         self.an_out_channels = []
         self.dig_in_channels = []
         self.dig_out_channels = []
+        self.channel_names = []
 
         for load_idx, c_dict in enumerate(self.channel_data.values()):
-
+            c_dict_key = list(self.channel_data.keys())[load_idx]
             if not isinstance(c_dict, dict):
+                logger.error(
+                    f"{self.instrument}: Value of key {c_dict_key} is not a dictionary."
+                )
                 continue
 
-            c_dict = self.ensure_all_fields(c_dict)
+            if self.ensure_all_fields(c_dict, c_dict_key) == False:
+                continue
+
             kwargs = {}
             if c_dict["DIR"] == "OUTPUT":
                 if c_dict["TYPE"] == "DIGITAL":
                     create_widget_function = DigitalOutputChannel
                     list_of_widgets = self.dig_out_channels
-                else:
+                elif c_dict["TYPE"] == "ANALOG":
                     create_widget_function = AnalogOutputChannel
                     list_of_widgets = self.an_out_channels
-            else:  # "INPUT"
+            elif c_dict["DIR"] == "INPUT":
                 if c_dict["TYPE"] == "DIGITAL":
                     create_widget_function = DigitalInputChannel
                     list_of_widgets = self.dig_in_channels
-                else:
+                elif c_dict["TYPE"] == "ANALOG":
                     create_widget_function = AnalogInputChannel
                     list_of_widgets = self.an_in_channels
                     if "use_prefix" in c_dict:
                         kwargs["use_prefix"] = c_dict["use_prefix"]
+            else:
+                logger.error(
+                    f"{self.instrument}: 'Dir' field in channel data mus be set to OUTPUT or INPUT."
+                )
+
+            # Remove input/output status from channel name since all
+            # parameters are required to have both input and output fields
+            chan_name = c_dict["ID_STR"]
+            chan_name = chan_name.replace("ao", "a-")
+            chan_name = chan_name.replace("ai", "a-")
+            chan_name = chan_name.replace("do", "d-")
+            chan_name = chan_name.replace("di", "d-")
+            self.channel_names.append(chan_name)
 
             last_wdgt = create_widget_function(
-                self,
-                c_dict["ID_STR"],
-                c_dict["UNITS"],
+                self.app,
+                self.instrument,
+                chan_name,
                 c_dict["LABEL"],
+                c_dict["UNITS"],
                 show_ID_labels=show_ID_labels,
                 **kwargs,
             )
@@ -146,15 +149,14 @@ class IOModule(QGroupBox):
                 (load_idx) % num_columns,
             )
 
-            if "OPTIONS" in c_dict and c_dict["OPTIONS"] is not None:
-                for opt in c_dict["OPTIONS"]:
+            for opt_name in c_dict["OPTIONS"]:
+                if opt_name.startswith("CHX_"):
+                    param = f"CH{chan_name}" + opt_name[3:]
+                else:
+                    param = opt_name
 
-                    opt_name = opt
-                    if opt_name.startswith("CHX_"):
-                        chan_name = c_dict["ID_STR"]
-                        opt_name = f"CH{chan_name}" + opt_name[3:]
-                        valstr = c_dict["OPTIONS"][opt]
-                    self.update_setting(opt_name, c_dict["OPTIONS"][opt])
+                value = c_dict["OPTIONS"][opt_name]
+                self.app.set_instrument_parameter(self.instrument, param, value)
 
         self.channel_spacer = QSpacerItem(
             10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
@@ -164,9 +166,6 @@ class IOModule(QGroupBox):
             1 + (int((load_idx - 1) / num_columns)),
             (load_idx - 1) % num_columns,
         )
-
-        self.init_values()
-        self.settings = self.default_state()
 
         self.bottom_spacer = QSpacerItem(
             10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
@@ -178,55 +177,54 @@ class IOModule(QGroupBox):
         # Create timer to query voltages
         self.readout_timer = QTimer(self)
         self.readout_timer.timeout.connect(self.update_readout)
-        self.readout_timer.start(self.globalRefreshRate)
+        self.readout_timer.start(self.app.globalRefreshRate)
 
-    def ensure_all_fields(self, x: dict):
-        """Test for certain fields that need to be present in a channel_data dict."""
-        required_fields = ["ID_STR", "UNITS", "LABEL", "OPTIONS"]
+    def read_channel_data(self, channel_data):
+        """
+        Sets the channel parameters from a JSON file or a dictionary.
+        """
+
+        self.channel_data = channel_data
+        if isinstance(self.channel_data, str):
+            with open(self.channel_data) as file:
+                self.channel_data = json.load(file)
+        else:
+            self.channel_data = channel_data
+
+    def ensure_all_fields(self, channel_data_dict: dict, channel_data_key=""):
+        """Test for certain fields that need to be present in a channel_data dict item."""
+        required_fields = ["DIR", "TYPE", "ID_STR", "UNITS", "LABEL", "OPTIONS"]
 
         for field_name in required_fields:
-            if field_name not in x:
-                x[field_name] = None
+            if field_name not in channel_data_dict.keys():
+                logger.error(
+                    f"{self.instrument}: {field_name} is missing in {channel_data_key} channel data dictionary."
+                )
 
-        return x
+                return False
+
+        return True
 
     def update_readout(self) -> None:
-        for ic in self.an_in_channels:
-            ic.update_readout()
-        for ic in self.dig_in_channels:
-            ic.update_readout()
-
-    def settings_to_UI(self) -> None:
-        for c in self.an_out_channels:
-            c.settings_to_UI()
-        for c in self.dig_out_channels:
-            c.settings_to_UI()
-
-    def default_state(self):
-        default = {}
-        for c in self.an_in_channels:
-            default[f"CH{c.channel}_ANALOG_READ"] = "0"
-            default[f"CH{c.channel}_TERMINAL_CONFIG"] = ""
-        for c in self.an_out_channels:
-            default[f"CH{c.channel}_ANALOG_WRITE"] = "0"
-            default[f"CH{c.channel}_TERMINAL_CONFIG"] = ""
-        for c in self.dig_in_channels:
-            default[f"CH{c.channel}_DIGITAL_READ"] = "0"
-            default[f"CH{c.channel}_TERMINAL_CONFIG"] = ""
-        for c in self.dig_out_channels:
-            default[f"CH{c.channel}_DIGITAL_READ"] = "0"
-            default[f"CH{c.channel}_TERMINAL_CONFIG"] = ""
-
-        return default
+        for channel in self.channel_names:
+            if "/a" in channel:
+                self.app.update_instrument_parameter(
+                    self.instrument, "CH" + channel + "_ANALOG"
+                )
+            if "/d" in channel:
+                self.app.update_instrument_parameter(
+                    self.instrument, "CH" + channel + "_DIGITAL"
+                )
 
 
 class AnalogInputChannel(QGroupBox):
     def __init__(
         self,
-        control,
-        channel,
-        units="V",
-        label="Voltage",
+        app,
+        instrument_name: str,
+        channel: str,
+        label: str = "",
+        units: str = "",
         show_ID_labels=True,
         use_prefix=True,
     ):
@@ -236,43 +234,30 @@ class AnalogInputChannel(QGroupBox):
         else:
             super().__init__()
 
-        self.control = control
-        self.channel = channel
-
-        if units is None:
-            units = ""
-        if label is None:
-            label = ""
-        self.units = units
-
-        self.input = HCLabel(self.control, label, units, use_prefix=use_prefix)
+        self.input = HCLabel(
+            app,
+            instrument_name,
+            f"CH{channel}_ANALOG",
+            label,
+            units,
+            use_prefix=use_prefix,
+        )
 
         self.main_layout = QGridLayout()
         self.main_layout.addWidget(self.input.label, 0, 0)
-        self.main_layout.addWidget(self.input.value, 0, 1)
+        self.main_layout.addWidget(self.input, 0, 1)
 
         self.setLayout(self.main_layout)
-
-    def update_readout(self):
-        self.control.command(f"CH{self.channel}_ANALOG_READ?")
-
-        try:
-            V_meas = remove_end_carriage_return(
-                self.control.values.get(f"CH{self.channel}_ANALOG_READ")
-            )
-        except Exception:
-            V_meas = "----"
-        self.input.setText(V_meas)
 
 
 class AnalogOutputChannel(QGroupBox):
     def __init__(
         self,
-        control,
-        channel,
-        units="V",
-        label="Voltage (set)",
-        set_to_zero_button=False,
+        app,
+        instrument_name: str,
+        channel: str,
+        label: str = "",
+        units: str = "",
         show_ID_labels=True,
     ):
 
@@ -280,59 +265,35 @@ class AnalogOutputChannel(QGroupBox):
             super().__init__(channel)
         else:
             super().__init__()
-
-        self.control = control
-        self.channel = channel
-
-        if units is None:
-            units = ""
-        if label is None:
-            label = ""
-        self.units = units
-
-        self.set_to_zero_button = set_to_zero_button
 
         self.edit_spacer = QSpacerItem(
             10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
         )
 
         self.edit = HCLineEdit(
-            self.control,
-            f"CH{self.channel}_ANALOG_WRITE",
+            app,
+            instrument_name,
+            f"CH{channel}_ANALOG",
             label,
         )
 
-        self.unit_label = QLabel(f" {self.units}")
-
-        if self.set_to_zero_button:
-            self.to_zero_but = QPushButton(f"Set to 0 {self.units}")
-            self.to_zero_but.setCheckable(False)
-            self.to_zero_but.clicked.connect(lambda: self.set_to_zero())
+        self.unit_label = QLabel(f" {units}")
 
         self.main_layout = QGridLayout()
         self.main_layout.addWidget(self.edit.label, 0, 0)
-        self.main_layout.addWidget(self.edit.value, 0, 1)
+        self.main_layout.addWidget(self.edit, 0, 1)
         self.main_layout.addWidget(self.unit_label, 0, 2)
-        if self.set_to_zero_button:
-            self.main_layout.addWidget(self.to_zero_but, 1, 1, 1, 2)
-
         self.setLayout(self.main_layout)
-
-    def set_to_zero(self):
-        self.edit.setText("0")
-        self.control.update_setting(f"CH{self.channel}_ANALOG_WRITE", "0")
-
-    def settings_to_UI(self):
-        self.edit.settings_to_UI()
 
 
 class DigitalInputChannel(QGroupBox):
     def __init__(
         self,
-        control,
-        channel,
-        units="",
-        label="Digital: ",
+        app,
+        instrument_name: str,
+        channel: str,
+        label: str = "",
+        units: str = "",
         show_ID_labels=True,
     ):
 
@@ -341,25 +302,17 @@ class DigitalInputChannel(QGroupBox):
         else:
             super().__init__()
 
+        self.app = app
+        self.instrument_name = instrument_name
+        self.channel = channel
+
         self.high_indicator = load_icon("high_label.svg")
         self.low_indicator = load_icon("low_label.svg")
         self.error_indicator = load_icon("error_label.svg")
         self.na_indicator = load_icon("na_label.svg")
 
-        self.control = control
-        self.channel = channel
-
-        if units is None:
-            units = ""
-        if label is None:
-            label = ""
-        self.units = units
-
-        self.label_str = label
-        self.param_label = QLabel(self.label_str)
-        if not self.label_str.endswith(": "):
-            self.label_str = self.label_str + ": "
-            self.param_label.setText(self.label_str)
+        label += ":"
+        self.param_label = QLabel(label)
 
         self.measurement_label = QLabel()
         self.measurement_label.setPixmap(self.na_indicator)
@@ -371,37 +324,37 @@ class DigitalInputChannel(QGroupBox):
 
         self.setLayout(self.main_layout)
 
-    def update_readout(self):
-        # Query value
-        self.control.command(f"CH{self.channel}_DIGITAL_READ?")
+        self.app.add_widget(self.instrument_name, f"CH{self.channel}_DIGITAL", self)
 
+    def hc_update(self):
         try:
-
-            # Read return value
-            V_meas = remove_end_carriage_return(
-                self.control.values.get(f"CH{self.channel}_DIGITAL_READ")
+            # Query value
+            truth_val = self.app.get_instrument_parameter(
+                self.instrument_name, f"CH{self.channel}_DIGITAL"
             )
 
             # Update label
-            if V_meas:
+            if truth_val:
                 self.measurement_label.setPixmap(self.high_indicator)
             else:
                 self.measurement_label.setPixmap(self.low_indicator)
 
         except Exception:
-            logger.debug("Failed to read digital input from IOModule")
+            logger.debug(
+                f"{self.instrument}: Failed to read digital input from IOModule"
+            )
             self.measurement_label.setPixmap(self.error_indicator)
-            # self.measurement_label.setText(f"---- {self.units}")
 
 
 class DigitalOutputChannel(QGroupBox):
     def __init__(
         self,
-        control,
-        channel,
-        units="V",
-        label="Set voltage: ",
-        show_ID_labels=True,
+        app,
+        instrument_name: str,
+        channel: str,
+        label: str,
+        units: str,
+        show_ID_labels: bool = True,
     ):
 
         if show_ID_labels:
@@ -409,57 +362,22 @@ class DigitalOutputChannel(QGroupBox):
         else:
             super().__init__()
 
-        self.high_indicator = load_icon("high_label.svg")
-        self.low_indicator = load_icon("low_label.svg")
-
-        self.control = control
-        self.channel = channel
-
-        if units is None:
-            units = ""
-        if label is None:
-            label = ""
-        self.units = units
+        self.togg_but = HCToggleButton(
+            app,
+            instrument_name,
+            f"CH{channel}_DIGITAL",
+            label,
+            show_indicator=True,
+            icon_1="high_label.svg",
+            icon_2="low_label.svg",
+        )
 
         self.edit_spacer = QSpacerItem(
             10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
         )
 
-        self.ctrl_but = QPushButton("On/Off")
-        self.ctrl_but.setCheckable(True)
-        self.ctrl_but.clicked.connect(lambda: self.ctrl())
-
-        self.edit_label = QLabel(label)
-        self.ind_label = QLabel()
-        if self.ctrl_but.isChecked():
-            self.ind_label.setPixmap(self.high_indicator)
-        else:
-            self.ind_label.setPixmap(self.low_indicator)
-
         self.main_layout = QGridLayout()
-        self.main_layout.addWidget(self.edit_label, 0, 0)
-        self.main_layout.addWidget(self.ind_label, 0, 1)
-        self.main_layout.addWidget(self.ctrl_but, 0, 2)
+        self.main_layout.addWidget(self.togg_but, 0, 0)
+        self.main_layout.addWidget(self.togg_but.indic_label, 0, 1)
 
         self.setLayout(self.main_layout)
-
-    def ctrl(self):
-
-        if self.ctrl_but.isChecked():
-            self.ind_label.setPixmap(self.high_indicator)
-        else:
-            self.ind_label.setPixmap(self.low_indicator)
-
-        self.control.update_setting(
-            f"CH{self.channel}_digital_write", str(self.ctrl_but.isChecked())
-        )
-
-    def settings_to_UI(self):
-        setButtonState(
-            self.ctrl_but, self.control.settings[f"CH{self.channel}_DIGITAL_WRITE"]
-        )
-
-        if self.ctrl_but.isChecked():
-            self.ind_label.setPixmap(self.high_indicator)
-        else:
-            self.ind_label.setPixmap(self.low_indicator)

@@ -1,0 +1,74 @@
+{
+    "Analog_Floating_rack_voltage_out": {
+        "DIR": "OUTPUT",
+        "TYPE": "ANALOG",
+        "ID_STR": "Mod1/ao0",
+        "LABEL": "Analog Parameter 1 (set)",
+        "UNITS": "V",
+        "OPTIONS": {}
+    },
+    "Digital_Floating_rack_voltage_out": {
+        "DIR": "OUTPUT",
+        "TYPE": "DIGITAL",
+        "ID_STR": "Mod1/do0",
+        "LABEL": "Digital Parameter 1 (set)",
+        "UNITS": "V",
+        "OPTIONS": {}
+    },
+    "Analog_Grid_voltage_out": {
+        "DIR": "OUTPUT",
+        "TYPE": "ANALOG",
+        "ID_STR": "Mod1/ao1",
+        "LABEL": "Analog Parameter 2 (set)",
+        "UNITS": "V",
+        "OPTIONS": {}
+    },
+    "Digital_Grid_voltage_out": {
+        "DIR": "OUTPUT",
+        "TYPE": "DIGITAL",
+        "ID_STR": "Mod1/do1",
+        "LABEL": "Digital Parameter 2 (set)",
+        "UNITS": "V",
+        "OPTIONS": {}
+    },
+    "Analog_Floating_rack_vmon_in": {
+        "DIR": "INPUT",
+        "TYPE": "ANALOG",
+        "ID_STR": "Mod2/ai0",
+        "LABEL": "Analog Read Out",
+        "UNITS": "V",
+        "OPTIONS": {
+            "CHX_TERMINAL_CONFIG": "DIFF"
+        }
+    },
+    "Digital_Floating_rack_vmon_in": {
+        "DIR": "INPUT",
+        "TYPE": "DIGITAL",
+        "ID_STR": "Mod2/di0",
+        "LABEL": "Digital Read Out",
+        "UNITS": "V",
+        "OPTIONS": {
+            "CHX_TERMINAL_CONFIG": "DIFF"
+        }
+    },
+    "Analog_Grid_vmon_in": {
+        "DIR": "INPUT",
+        "TYPE": "ANALOG",
+        "ID_STR": "Mod2/ai3",
+        "LABEL": "Analog Read Out",
+        "UNITS": "V",
+        "OPTIONS": {
+            "CHX_TERMINAL_CONFIG": "DIFF"
+        }
+    },
+    "Digital_Grid_vmon_in": {
+        "DIR": "INPUT",
+        "TYPE": "DIGITAL",
+        "ID_STR": "Mod2/di3",
+        "LABEL": "Digital Read Out",
+        "UNITS": "V",
+        "OPTIONS": {
+            "CHX_TERMINAL_CONFIG": "DIFF"
+        }
+    }
+}
