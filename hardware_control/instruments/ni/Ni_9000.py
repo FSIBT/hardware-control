@@ -9,227 +9,164 @@ connection works over proprietary driver, with "tasks"
 https://nidaqmx-python.readthedocs.io/en/latest/index.html for further info
 and check the Gdocs manual!
 
-NI-DaQ's will curently not work on Unix based OS.
-
 """
 
 import logging
 import os
 import random
 import time
-
-# import nidaqmx happens in a method below, which reports the status
-
-if os.name == "nt":
-    import nidaqmx
 from nidaqmx.constants import TerminalConfiguration
 
 from ...base import Instrument
-from ..utility import get_channel_from_command, ensure_float
+from ..utility import ensure_float
 
 logger = logging.getLogger(__name__)
 
 
 class Ni_9000(Instrument):
-    def __init__(self, connection_addr: str = ""):
+    def __init__(self, instrument_name: str = "NI-9000", connection_addr: str = ""):
 
         # need to set a default port for this instrument
         super().__init__(
-            instrument_name="NI-9000", connection_addr=connection_addr, default_port=0
+            instrument_name=instrument_name,
+            connection_addr=connection_addr,
+            default_port=0,
         )
 
-        self.num_channels = 1
-        self.num_channels = 22
+        # NEED TO FIGURE OUT HOW MANY MODs AND AIs ARE PRESENT IN Instrument
+        # THIS SCRIPT IS CURRENTLY BROKEN
+        # Numeric list of all modules
+        self.n_mods = list(range(1, 3))
+        # Numeric list of all channels (analog input, analog output, digital input, digital output)
+        self.n_analogs = list(range(0, 6))
+        self.n_digitals = list(range(0, 6))
 
         self.term_config_modes = {}
-        self.term_mins = {}
-        self.term_maxes = {}
+        self.V_mins = {}
+        self.V_maxes = {}
 
-        self.channel_data = None
+        for mod in self.n_mods:
+            for chan in self.n_analogs:
+                self.initialize_params(mod, chan, "a")
+            for chan in self.n_digitals:
+                self.initialize_params(mod, chan, "d")
 
-        # Check import
-        if not nidaxmxTest():
-            self.dummy = True
-            logger.error(f"{self.ID}: import of nidaqmx failed, changing to dummy mode")
+        self.add_command("DISPLAY_CONFIGURATION", lambda: self.display_configuration())
 
-    def try_connect(self):
-        if not self.dummy and os.name == "nt":
-            try:
-                with nidaqmx.Task() as task:
-                    if task.name:
-                        self.online = True
-            except nidaqmx.errors.DaqError:
-                self.online = False
-                logger.error(
-                    "Connection failed due to DaqError."
-                    " This could mean the NIDAQ must be reserved"
-                    " in NI-Max Application."
-                )
-            except Exception:
-                self.online = False
-                logger.error("Connect failed.", exc_info=True)
-        else:
-            self.online = True
-        return self.online
-
-    def update_setting(self, setting: str, value):
-
-        channel, setting_X = get_channel_from_command(setting)
-
-        value_orig = value
-        value = ensure_float(value)
-
-        if setting_X == "CHX_V_MAX":
-
-            if not isinstance(value, float):
-                logger.warning(
-                    f"Failed to set CH{channel} V Max to '{value_orig}'."
-                    f" Failed to convert to float"
-                )
-
-            self.term_maxes[channel] = value
-            return f"{setting}={value_orig}"
-        if setting_X == "CHX_V_MIN":
-
-            if not isinstance(value, float):
-                logger.warning(
-                    f"Failed to set CH{channel} V Min to '{value_orig}'."
-                    f" Failed to convert to float"
-                )
-
-            self.term_mins[channel] = value
-            return f"{setting}={value_orig}"
-        if setting_X == "CHX_TERMINAL_CONFIG":
-
-            if value_orig == "DIFF":
-                config_mode = TerminalConfiguration.DIFFERENTIAL
-            elif value_orig == "NRSE":
-                config_mode = TerminalConfiguration.NRSE
-            else:
-                config_mode = TerminalConfiguration.RSE
-
-            self.term_config_modes[channel] = config_mode
-
-            return f"{setting}={value_orig}"
-
-        if not self.online:
-            return f"{self.ID}-Offline"
-
-        if self.dummy:
-            return f"{setting}={value_orig}"
-
-        try:
-            if setting_X == "CHX_ANALOG_WRITE":
-
-                with nidaqmx.Task() as task:
-                    channel_min = self.term_mins.get(channel, -10)
-                    channel_max = self.term_maxes.get(channel, 10)
-
-                    task.ao_channels.add_ao_voltage_chan(
-                        f"{self.connection_addr}{channel}",
-                        min_val=channel_min,
-                        max_val=channel_max,
-                    )
-                    task.write(value)
-                    time.sleep(0.010)
-                    task.is_task_done()
-                    return
-
-            if setting_X == "CHX_DIGITAL_WRITE":
-
-                with nidaqmx.Task() as task:
-                    task.ao_channels.add_do_chan(f"{self.connection_addr}{channel}")
-                    task.write(value >= 1)
-                    time.sleep(0.010)
-                    task.is_task_done()
-                    return
-        except:
-            logger.error("Error occured in NI9000 command.", exc_info=True)
-
-    def command(self, cmd: str):
-
-        channel, setting_X = get_channel_from_command(cmd)
-
-        if setting_X == "DISPLAY_CONFIGURATION":
-            print(f"--------- Configuration for {self.ID} ---------")
-            print("Terminal Configurations:")
-            for key in self.term_config_modes:
-                val = self.term_config_modes[key]
-                print(f"\t{key}:{val}")
-            print("Minima:")
-            for key in self.term_mins:
-                val = self.term_mins[key]
-                print(f"\t{key}:{val}")
-            print("Maxima:")
-            for key in self.term_maxes:
-                val = self.term_maxes[key]
-                print(f"\t{key}:{val}")
-            return
-        if self.dummy:
-            num = random.random() * 10
-            return f"{cmd.strip('?')}={num}"
-
-        try:
-            if setting_X == "CHX_ANALOG_READ?":
-                with nidaqmx.Task() as task:
-                    if channel in self.term_config_modes:
-                        config_mode = self.term_config_modes[channel]
-                        task.ai_channels.add_ai_voltage_chan(
-                            f"{self.connection_addr}{channel}",
-                            terminal_config=config_mode,
-                        )
-                    else:
-                        task.ai_channels.add_ai_voltage_chan(
-                            f"{self.connection_addr}{channel}"
-                        )
-                    val = str(task.read())
-                return f"{cmd[:-1]}={val}"
-            if setting_X == "CHX_DIGITAL_READ?":
-                with nidaqmx.Task() as task:
-                    task.ai_channels.add_di_chan(f"{self.connection_addr}{channel}")
-                    val = str(task.read())
-                return f"{cmd[:-1]}={val}"
-        except:
-            logger.error("Error occured in NI9000 command.", exc_info=True)
-
-    def close(self):
-        if self.online and not self.dummy:
-            try:  # make sure tasks are done (tasks have an internal timeout)
-                with nidaqmx.Task() as task:
-                    if not task.is_task_done():
-                        time.sleep(0.500)
-                        if not task.is_task_done():
-                            return True
-            except Exception:
-                logger.error("An error occured while trying to close.", exc_info=True)
-        return False
-
-
-def nidaxmxTest():
-    """This method checks that the import goes smooth and reports that so
-    that all functionality can ether be disabled or further checks can
-    happen.
-
-    """
-
-    # We check which OS is calling because nidaqmx only works on
-    # Windows. Importing nidaqmx on macOS or linux will cause pyvisa
-    # and sockets to break.
-
-    if os.name == "nt":
-        try:
-            with nidaqmx.Task() as task:
-                if task.name:
-                    return True
-            return True
-        except Exception:
-            logger.error(
-                "WARNING: Can not acsess NIDAQMX on this system. NIDAQ will not function"
-            )
-            return False
-    else:
-        logger.error(
-            "WARNING: Can not acsess NIDAQMX on this system. NIDAQ will not function"
+    def initialize_params(self, module_num, chan_num, signal_type):
+        channel = f"Mod{module_num}/{signal_type}-{chan_num}"
+        self.add_parameter(
+            f"CH{channel}_V_MAX",
+            read_command=None,
+            set_command=lambda x: self.set_V_max(channel, x),
+            dummy_return="20",
         )
 
-    return False
+        self.add_parameter(
+            f"CH{channel}_V_MIN",
+            read_command=None,
+            set_command=lambda x: self.set_V_min(channel, x),
+            dummy_return="0",
+        )
+
+        self.add_parameter(
+            f"CH{channel}_TERMINAL_CONFIG",
+            read_command=None,
+            set_command=lambda x: self.set_term_config(channel, x),
+            dummy_return="DIFF",
+        )
+        self.add_lookup(
+            f"CH{channel}_TERMINAL_CONFIG",
+            {
+                "DIFF": TerminalConfiguration.DIFFERENTIAL,
+                "NRSE": TerminalConfiguration.NRSE,
+                "RSE": TerminalConfiguration.RSE,
+            },
+        )
+
+        if signal_type == "a":
+            self.add_parameter(
+                f"CH{channel}_ANALOG",
+                read_command=lambda value: self.analog_read(channel),
+                set_command=lambda value: self.analog_write(channel, value),
+                dummy_return="10",
+            )
+
+        elif signal_type == "d":
+            self.add_parameter(
+                f"CH{channel}_DIGITAL",
+                read_command=lambda value: self.digital_read(channel),
+                set_command=lambda value: self.digital_write(channel, value),
+                dummy_return="True",
+            )
+
+    def set_V_max(self, channel, value):
+        self.V_maxs[channel] = float(value)
+
+    def set_V_min(self, channel, value):
+        self.V_mins[channel] = float(value)
+
+    def set_term_config(self, channel, value):
+        self.term_config_modes[channel] = value
+
+    def analog_write(self, channel, value):
+        with nidaqmx.Task() as task:
+            channel_min = self.V_mins.get(channel, -10)
+            channel_max = self.V_maxes.get(channel, 10)
+
+            task.ao_channels.add_ao_voltage_chan(
+                f"{self.connection_addr}{channel.replace('-', 'o')}",
+                min_val=channel_min,
+                max_val=channel_max,
+            )
+            task.write(value)
+            time.sleep(0.010)
+            task.is_task_done()
+
+    def analog_read(self, channel):
+        with nidaqmx.Task() as task:
+            if channel in self.term_config_modes:
+                config_mode = self.term_config_modes[channel]
+                task.ai_channels.add_ai_voltage_chan(
+                    f"{self.connection_addr}{channel.replace('-', 'i')}",
+                    terminal_config=config_mode,
+                )
+            else:
+                task.ai_channels.add_ai_voltage_chan(f"{self.connection_addr}{channel}")
+            value = str(task.read())
+
+        return value
+
+    def digital_write(self, channel, value):
+        with nidaqmx.Task() as task:
+            task.ao_channels.add_do_chan(
+                f"{self.connection_addr}{channel.replace('-', 'o')}"
+            )
+            task.write(value)
+            time.sleep(0.010)
+            task.is_task_done()
+
+    def digital_read(self, channel):
+        with nidaqmx.Task() as task:
+            task.ai_channels.add_di_chan(
+                f"{self.connection_addr}{channel.replace('-', 'i')}"
+            )
+            value = str(task.read())
+
+        return value
+
+    def display_configuration():
+        logger.info(f"--------- Configuration for {self.ID} ---------")
+        logger.info("Terminal Configurations:")
+        for key in self.term_config_modes:
+            val = self.term_config_modes[key]
+            logger.info(f"\t{key}:{val}")
+        logger.info("Minima:")
+        for key in self.term_mins:
+            val = self.term_mins[key]
+            logger.info(f"\t{key}:{val}")
+        logger.info("Maxima:")
+        for key in self.term_maxes:
+            val = self.term_maxes[key]
+            logger.info(f"\t{key}:{val}")
+        return
