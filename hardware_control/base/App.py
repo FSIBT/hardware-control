@@ -321,8 +321,12 @@ class App(QApplication):
         execute if none of the hooks returns None.
 
         """
-        pre_call_hooks = self._data[instrument][command]["pre_call_hooks"]
-        value = call_hooks(pre_call_hooks, command)
+        try:
+            pre_call_hooks = self._data[instrument][command]["pre_call_hooks"]
+            value = call_hooks(pre_call_hooks, command)
+        except KeyError:
+            value = str(command)
+
         if value:
             self.zmq_publisher.send_string(f"{instrument} command {command}")
 
