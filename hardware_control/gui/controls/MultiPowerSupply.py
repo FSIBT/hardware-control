@@ -1,6 +1,7 @@
 import logging
 
 from PyQt5 import QtCore
+from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import (
     QPushButton,
@@ -14,7 +15,14 @@ from PyQt5.QtWidgets import (
 from typing import List
 
 from ...utility import remove_end_carriage_return
-from ..widgets import setButtonState, load_icon, HCLineEdit, HCLabel
+from ..widgets import (
+    setButtonState,
+    load_icon,
+    HCLineEdit,
+    HCLabel,
+    HCOnOffButton,
+    HCHeader,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -30,209 +38,158 @@ class MultiPowerSupply(QGroupBox):
     .. image:: /images/controls/MultiPowerSupply-3ch.png
       :height: 200
 
+    Note: enable_power_buttons parameter accepts one of three argument –
+    "none" (for no enable buttons), "individual" (for one enable button per
+    channel), or "both" (for individual channel enable buttons and an enable
+    button for all channels)
+
     See Also
     --------
     hardware_control.instruments.caen.Caen_14xxET
-    hardware_control.instruments.keysight.Keysight_36300
     hardware_control.instruments.rigol.Rigol_DP832
     hardware_control.instruments.tdkl.TDKL_GenH
     """
 
-    ADD = "Add"
-    ONLY = "Only"
-    HIDE = "Hide"
-
     def __init__(
         self,
         app,
-        instrument_name,
+        instrument_name: str,
         channels: List,
         name: str = "Multi_Channel_PSU",
-        show_VI_limits=False,
-        show_custom_labels=False,
-        show_status_panel=False,
-        all_enable_button=None,
+        show_VI_limits: bool = False,
+        show_status_panel: bool = False,
+        enable_power_buttons: str = "none",
     ):
         super().__init__(name)
+
         self.app = app
         self.instrument = instrument_name
+        self.channels = channels
+        self.show_status_panel = show_status_panel
+        self.enable_power_buttons = enable_power_buttons
 
-        if all_enable_button is None:
-            all_enable_button = MultiPowerSupply.HIDE
-        self.all_enable_button = all_enable_button
-
-        # Add all the requested channels that are in the instrument
-        self.channels = []
-        for channel in channels:
-            if channel not in self.instrument.chan_nums:
-                self.channels.append(channel)
-                self.values[f"CH{c}_V_OUT"] = "-"
-                self.values[f"CH{c}_I_OUT"] = "-"
-                self.values[f"CH{c}_V_SET"] = "-"
-                self.values[f"CH{c}_I_SET"] = "-"
-        self.init_values()
-        if not (set(channels) <= set(instrument.chan_nums)):
-            logger.warning(
-                "WARNING: Requested channel not available on instrument."
-                " Ignoring extra channels."
-            )
-
-        # Create GUI
-        # Automatically create channel widgets and push them into a row
+        # Create a widget for each channel and push them into a row
         self.channel_widgets = []
-        self.channel_panel = QGridLayout()
+        self.channel_box = QGroupBox()
+        self.channel_box_layout = QGridLayout()
         for idx, channel in enumerate(self.channels):
             self.channel_widgets.append(
                 PowerSupplyChannel(
+                    self.app,
+                    self.instrument,
                     channel,
-                    self,
                     show_VI_limits,
-                    show_custom_labels,
-                    show_status_panel,
-                    (all_enable_button == MultiPowerSupply.ONLY),
+                    self.show_status_panel,
+                    self.enable_power_buttons,
                 )
             )
-            self.channel_panel.addWidget(self.channel_widgets[-1], 0, idx)
-        #
-
-        self.all_enable_but = QPushButton("All On/Off")
-        if self.all_enable_button == MultiPowerSupply.ONLY:
-            self.all_enable_but.setCheckable(True)
-        else:
-            self.all_enable_but.setCheckable(False)
-        self.all_enable_but.clicked.connect(self.all_on_off)
-        setButtonState(self.all_enable_but, False)
+            self.channel_box_layout.addWidget(self.channel_widgets[-1], 0, idx)
+        self.channel_box.setLayout(self.channel_box_layout)
 
         self.master_layout = QGridLayout()
-        self.master_layout.addLayout(self.channel_panel, 0, 0, 1, 3)
-        if all_enable_button in [MultiPowerSupply.ADD, MultiPowerSupply.ONLY]:
-            self.enable_all_spacer = QSpacerItem(
+        self.master_layout.addWidget(self.channel_box, 0, 0, 1, 3)
+
+        # Potentially add buttons that can enable/disable all channels
+        # These buttons are placed below the row of channel widgets
+        if self.enable_power_buttons == "both":
+            self.all_enable_but = QPushButton("Enable All")
+            self.all_enable_but.clicked.connect(self.enable_all)
+            self.all_disable_but = QPushButton("Disable All")
+            self.all_disable_but.clicked.connect(self.disable_all)
+
+            self.all_spacer = QSpacerItem(
                 10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
             )
-            self.master_layout.addItem(self.enable_all_spacer, 1, 0, 1, 2)
-            self.master_layout.addWidget(self.all_enable_but, 1, 2)
-        #
+            self.master_layout.addItem(self.all_spacer, 1, 0, 1, 1)
+            self.master_layout.addWidget(self.all_enable_but, 1, 1)
+            self.master_layout.addWidget(self.all_disable_but, 1, 2)
+
         self.setLayout(self.master_layout)
 
-        # Create timer to query voltages
-        self.readout_timer = QtCore.QTimer(self)
+        # Create timer to query instrument
+        self.readout_timer = QTimer(self)
         self.readout_timer.timeout.connect(self.update_readout)
-        self.readout_timer.start(1000)  # ms refresh
+        self.readout_timer.start(self.app.globalRefreshRate)
 
-        # Send a query to the backend for every possible value
-        for name in self.instrument.read_commands:
-            self.instrument.__getitem__(name)
-
-    def all_on_off(self):
-        # IF channel buttons are displayed, check their status to determine if
-        # all need to be turned on vs off.
-        if self.all_enable_button != MultiPowerSupply.ONLY:
-            logger.debug(
-                "All channels on/off button pressed."
-                " Will check other channels' button states"
+    def enable_all(self):
+        """Enables all channels."""
+        for channel in self.channels:
+            self.app.set_instrument_parameter(
+                self.instrument, f"CH{channel}_ENABLE", True
             )
 
-            any_on = False
-            for c in self.channel_widgets:
-                if c.enabled_but.isChecked():
-                    any_on = True
-                    break
-
-            for c in self.channel_widgets:
-                if any_on:
-                    self.instrument.__setitem__(f"CH{c.channel}_ENABLE", "False")
-                    setButtonState(c.enabled_but, False)
-                else:
-                    self.instrument.__setitem__(f"CH{c.channel}_ENABLE", "True")
-                    setButtonState(c.enabled_but, True)
-
-        else:
-            logger.debug(
-                "All channels on/off button pressed. Will set based on button.isChecked()"
+    def disable_all(self):
+        """Disables all channels."""
+        for channel in self.channels:
+            self.app.set_instrument_parameter(
+                self.instrument, f"CH{channel}_ENABLE", False
             )
-
-            for c in self.channel_widgets:
-                self.instrument.__setitem__(
-                    f"CH{c.channel}_ENABLE", str(self.all_enable_but.isChecked())
-                )
-
-    def close(self):
-        super().close()
-        self.readout_timer.stop()
 
     def update_readout(self):
-        """Queries the instrument for current readout data, then reads the most
-        recent readout data from the inbox and pushes it to the GUI"""
+        """Queries the instrument for current readout data and pushes it to the GUI"""
+        # Update readout data for each parameter
+        for cw in self.channel_widgets:
+            self.app.update_instrument_parameter(
+                self.instrument, f"CH{cw.channel}_ENABLE"
+            )
+            self.app.update_instrument_parameter(
+                self.instrument, f"CH{cw.channel}_I_SET"
+            )
+            self.app.update_instrument_parameter(
+                self.instrument, f"CH{cw.channel}_V_SET"
+            )
+            self.app.update_instrument_parameter(
+                self.instrument, f"CH{cw.channel}_V_OUT"
+            )
+            self.app.update_instrument_parameter(
+                self.instrument, f"CH{cw.channel}_I_OUT"
+            )
+            self.app.update_instrument_parameter(
+                self.instrument, f"CH{cw.channel}_V_MAX"
+            )
+            self.app.update_instrument_parameter(
+                self.instrument, f"CH{cw.channel}_I_MAX"
+            )
 
-        # Update readout data
-        for idx, channel in enumerate(self.channels):
-            # Get latest inbox entries for readout data...
-            Vout = self.instrument.__getitem__(f"CH{channel}_V_OUT")
-            Iout = self.instrument.__getitem__(f"CH{channel}_I_OUT")
-            Vset = self.instrument.__getitem__(f"CH{channel}_V_SET")
-            Iset = self.instrument.__getitem__(f"CH{channel}_I_SET")
-            if self.channel_widgets[idx].show_VI_limits:
-                Vmax = self.instrument.__getitem__(f"CH{channel}_V_MAX")
-                Imax = self.instrument.__getitem__(f"CH{channel}_I_MAX")
-            if self.channel_widgets[idx].show_status_panel:
-                enabled = self.instrument.__getitem__(f"CH{channel}_ENABLE")
-            else:
-                enabled = None
-
-            if self.channel_widgets[idx].show_VI_limits:
-                logger.debug(
-                    f"'{self.name}'[{c}] received values: {Vout}, {Iout}, {Vset}, {Iset}, {Vmax}, {Imax}"
-                )
-            else:
-                logger.debug(
-                    f"'{self.name}'[{c}] received values: {Vout}, {Iout}, {Vset}, {Iset}"
+            # Calculate and update the value of the channel's power out
+            V_out_value = self.app.get_instrument_parameter(
+                self.instrument, f"CH{cw.channel}_V_OUT"
+            )
+            I_out_value = self.app.get_instrument_parameter(
+                self.instrument, f"CH{cw.channel}_I_OUT"
+            )
+            if None not in [V_out_value, I_out_value]:
+                cw.Power_out_value.setText(
+                    f"{float(V_out_value) * float(I_out_value)} W"
                 )
 
-            # Send newest data to GUI
-            if self.channel_widgets[idx].show_VI_limits:
-                self.channel_widgets[idx].update_readout(
-                    Vout, Iout, Vset, Iset, Vmax, Imax, enabled
-                )
-            else:
-                self.channel_widgets[idx].update_readout(
-                    Vout, Iout, Vset, Iset, enabled=enabled
-                )
+            # If status panel is enabled, update it
+            if self.show_status_panel:
+                try:
+                    if float(Iout) >= float(Iset) * 0.95:
+                        self.CC_indic.setPixmap(self.ccurr_ind)
+                    else:
+                        self.CC_indic.setPixmap(self.cvolt_ind)
+                except:
+                    logger.error(f"{self.instrument}: Error updating CC Indicator")
 
     def set_maxI(self, channel: int, maxI: float):
         """Sets an internal limit for the current from channel 'n'."""
-        channel = int(channel)
-        self.instrument.__setitem__(f"CH{channel}_I_MAX", str(maxI))
+        self.app.set_instrument_parameter(
+            self.instrument, f"CH{channel}_I_MAX", str(maxI)
+        )
 
     def set_maxV(self, channel: int, maxV: float):
         """Sets an internal limit for the voltage from channel 'n'."""
-        channel = int(channel)
-        self.instrument.__setitem__(f"CH{channel}_V_MAX", str(maxV))
+        self.app.set_instrument_parameter(
+            self.instrument, f"CH{channel}_V_MAX", str(maxV)
+        )
 
     def set_channel_label(self, channel: int, label: str):
         """Sets a channel label to a new custom value"""
-
-        try:
-            for cw in self.channel_widgets:
-                if cw.channel == channel:
-                    cw.set_label(label)
-            # self.channel_widgets[channel].set_label(label)
-        except:
-            logger.error(f"Failed to set channel {channel} label to {label}")
-
-    def init_values(self):
-        self.values = {}
-        for channel in self.channels:
-            self.values[f"CH{channel}_V_OUT"] = ""
-            self.values[f"CH{channel}_I_OUT"] = ""
-            self.values[f"CH{channel}_V_MAX"] = ""
-            self.values[f"CH{channel}_I_MAX"] = ""
-            self.values[f"CH{channel}_V_SET"] = ""
-            self.values[f"CH{channel}_I_SET"] = ""
-            self.values[f"CH{channel}_ENABLE"] = ""
-
-    def settings_to_UI(self):
         for cw in self.channel_widgets:
-            cw.settings_to_UI()
+            if cw.channel == channel:
+                cw.set_label(label)
 
 
 class PowerSupplyChannel(QWidget):
@@ -240,238 +197,180 @@ class PowerSupplyChannel(QWidget):
 
     def __init__(
         self,
+        app,
+        instrument_name: str,
         channel: int,
-        main_widget,
         show_VI_limits: bool = False,
-        show_custom_labels: bool = False,
         show_status_panel: bool = False,
-        hide_power_button: bool = False,
+        power_button: bool = False,
     ) -> None:
+
         super().__init__()
 
+        self.app = app
+        self.instrument = instrument_name
         self.channel = channel
-        self.main_widget = main_widget
 
         # Style options
         self.show_VI_limits = show_VI_limits
-        self.show_custom_labels = show_custom_labels
-        self.show_status_panel = show_status_panel
-        self.custom_labels_colorcoded = False
+
+        if power_button in ["individual", "both"]:
+            self.power_button = True
+        elif power_button != "none":
+            logger.error(
+                f"{self.instrument}: Received the following invalid value for MultiPowerSupply power_button attribute: {power_button}."
+            )
+        else:
+            self.power_button = False
 
         align_left_center = QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
 
-        # ************** DEFINE UI *********************#
-        self.channel_label = QLabel()
-        if self.channel <= 20 and not self.show_custom_labels:
-            self.channel_label.setPixmap(load_icon(f"channel_{self.channel}.png"))
+        # Create a header for the channel widget
+        if self.channel <= 20:
+            self.channel_label = HCHeader(f"channel_{self.channel}.png")
         else:
-            if self.custom_labels_colorcoded:
-                colors = ["yellow", "green", "blue", "red", "violet", "orange"]
-                self.channel_label.setText(
-                    f'<font color="{colors[(channel-1)%6]}">Channel {channel}</font>'
-                )
-            else:
-                self.channel_label.setText(f"Channel {channel}")
-            self.channel_label.setFont(QFont("Arial", 20))
-            self.channel_label.setAlignment(align_left_center)
+            self.set_label(f"Channel {self.channel}")
 
-        # ****** DEFINE READOUTS
+        # Create readout and update parameters for the channel widget
         self.Voltage_set = HCLabel(
-            self.main_widget, "Vset", unit="V", label_align="right", remote=False
+            self.app,
+            self.instrument,
+            f"CH{self.channel}_V_SET",
+            label="V Set",
+            label_align="right",
+            unit="V",
         )
         self.Current_set = HCLabel(
-            self.main_widget, "Iset", unit="A", label_align="right", remote=False
+            self.app,
+            self.instrument,
+            f"CH{self.channel}_I_SET",
+            label="I Set",
+            label_align="right",
+            unit="A",
         )
         self.Voltage_out = HCLabel(
-            self.main_widget, "Vout", unit="V", label_align="right", remote=False
+            self.app,
+            self.instrument,
+            f"CH{self.channel}_V_OUT",
+            label="V Out",
+            label_align="right",
+            unit="V",
         )
         self.Current_out = HCLabel(
-            self.main_widget, "Iout", unit="A", label_align="right", remote=False
-        )
-        self.Power_out = HCLabel(
-            self.main_widget, "Pout", unit="W", label_align="right", remote=False
+            self.app,
+            self.instrument,
+            f"CH{self.channel}_I_OUT",
+            label="I Out",
+            label_align="right",
+            unit="A",
         )
 
+        # Power out is calculated from V_out and I_out. See MultiPowerSupply.update_readout() above.
+        self.Power_out_label = QLabel("P Out:")
+        self.Power_out_value = QLabel("----")
+        self.Power_out_value.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+
+        # Potentially set limits on how hight to set voltage and current
         if self.show_VI_limits:
             self.Voltage_max = HCLabel(
-                self.main_widget, "Vmax", unit="V", label_align="right", remote=False
+                self.app,
+                self.instrument,
+                f"CH{self.channel}_V_MAX",
+                label="V Max",
+                label_align="right",
+                unit="V",
             )
             self.Current_max = HCLabel(
-                self.main_widget, "Imax", unit="A", label_align="right", remote=False
+                self.app,
+                self.instrument,
+                f"CH{self.channel}_I_MAX",
+                label="I Max",
+                label_align="right",
+                unit="A",
             )
 
-        # Layout readout
-        self.readout_grid = QGridLayout()
-        self.readout_grid.addWidget(self.Voltage_set.label, 0, 0)
-        self.readout_grid.addWidget(self.Voltage_set.value, 0, 1)
-        self.readout_grid.addWidget(self.Current_set.label, 1, 0)
-        self.readout_grid.addWidget(self.Current_set.value, 1, 1)
-
-        self.readout_grid.addWidget(self.Voltage_out.label, 0, 2)
-        self.readout_grid.addWidget(self.Voltage_out.value, 0, 3)
-        self.readout_grid.addWidget(self.Current_out.label, 1, 2)
-        self.readout_grid.addWidget(self.Current_out.value, 1, 3)
-
-        self.readout_grid.addWidget(self.Power_out.label, 2, 2)
-        self.readout_grid.addWidget(self.Power_out.value, 2, 3)
-
-        if self.show_VI_limits:
-            self.readout_grid.addWidget(self.Voltage_max.label, 3, 0)
-            self.readout_grid.addWidget(self.Voltage_max.value, 3, 1)
-            self.readout_grid.addWidget(self.Current_max.label, 3, 2)
-            self.readout_grid.addWidget(self.Current_max.value, 3, 3)
-
-        # ****** DEFINE CONTROLS
-        #
         self.Voltage = HCLineEdit(
-            self.main_widget,
+            self.app,
+            self.instrument,
             f"CH{self.channel}_V_SET",
             "Voltage (V)",
             label_align="right",
         )
 
         self.Current = HCLineEdit(
-            self.main_widget,
+            self.app,
+            self.instrument,
             f"CH{self.channel}_I_SET",
             "Current (A)",
             label_align="right",
         )
 
-        self.enabled_but = QPushButton()
-        self.enabled_but.setText("On/Off")
-        self.enabled_but.setCheckable(True)
-        self.enabled_but.clicked.connect(
-            lambda: main_widget.update_setting(
-                f"CH{channel}_ENABLE", str(self.enabled_but.isChecked())
-            )
+        self.enabled_but = HCOnOffButton(
+            self.app,
+            self.instrument,
+            f"CH{self.channel}_ENABLE",
+            on_text="Enabled",
+            off_text="Disabled",
         )
-        setButtonState(self.enabled_but, main_widget.settings[f"CH{channel}_ENABLE"])
 
-        self.controls_grid = QGridLayout()
-        self.controls_grid.addWidget(self.Voltage.label, 0, 0)
-        self.controls_grid.addWidget(self.Voltage.value, 0, 1)
-        self.controls_grid.addWidget(self.Current.label, 1, 0)
-        self.controls_grid.addWidget(self.Current.value, 1, 1)
-        if not hide_power_button:
-            self.controls_grid.addWidget(self.enabled_but, 2, 1)
+        # Qt Layout for a readout and update parameters of the channel widget
+        self.readout_grid = QGridLayout()
+        self.readout_grid.addWidget(self.Voltage_set.label, 0, 0)
+        self.readout_grid.addWidget(self.Voltage_set, 0, 1)
+        self.readout_grid.addWidget(self.Current_set.label, 1, 0)
+        self.readout_grid.addWidget(self.Current_set, 1, 1)
 
-        # Load pix maps
-        self.steady_ind = load_icon("steady_label.svg")
-        self.rampdn_ind = load_icon("rampdn_label.svg")
-        self.rampup_ind = load_icon("rampup_label.svg")
-        self.disabled_ind = load_icon("disabled_label.svg")
-        self.enabled_ind = load_icon("enabled_label.svg")
-        self.ccurr_ind = load_icon("ccurrent_label.svg")
-        self.cvolt_ind = load_icon("cvoltage_label.svg")
-        self.na_ind = load_icon("na_label.svg")
+        self.readout_grid.addWidget(self.Voltage_out.label, 0, 2)
+        self.readout_grid.addWidget(self.Voltage_out, 0, 3)
+        self.readout_grid.addWidget(self.Current_out.label, 1, 2)
+        self.readout_grid.addWidget(self.Current_out, 1, 3)
 
-        self.CC_ind_label = QLabel("CC:")
-        self.CC_ind_label.setAlignment(align_left_center)
-        self.CC_indic = QLabel()
-        self.CC_indic.setPixmap(self.na_ind)
+        self.readout_grid.addWidget(self.Power_out_label, 2, 2)
+        self.readout_grid.addWidget(self.Power_out_value, 2, 3)
 
-        self.enabled_ind_label = QLabel("Output:")
-        self.enabled_ind_label.setAlignment(align_left_center)
-        self.enabled_indic = QLabel()
-        self.enabled_indic.setPixmap(self.na_ind)
-
-        self.ramp_ind_label = QLabel("Ramp:")
-        self.ramp_ind_label.setAlignment(align_left_center)
-        self.ramp_indic = QLabel()
-        self.ramp_indic.setPixmap(self.na_ind)
-
-        self.status_panel = QGroupBox()
-        self.status_grid = QGridLayout()
-        self.status_grid.addWidget(self.CC_ind_label, 0, 1)
-        self.status_grid.addWidget(self.enabled_ind_label, 0, 2)
-        self.status_grid.addWidget(self.ramp_ind_label, 0, 3)
-        self.status_grid.addWidget(self.CC_indic, 1, 1)
-        self.status_grid.addWidget(self.enabled_indic, 1, 2)
-        self.status_grid.addWidget(self.ramp_indic, 1, 3)
-        self.status_panel.setLayout(self.status_grid)
-
-        # ******* DEFINE OVERALL LAYOUT
-        self.master_layout = QGridLayout()
-        self.master_layout.addWidget(self.channel_label, 0, 0)
-        self.master_layout.addLayout(self.readout_grid, 1, 0)
-        self.master_layout.addLayout(self.controls_grid, 2, 0)
-        if self.show_status_panel:
-            self.master_layout.addWidget(self.status_panel, 3, 0)
-        self.setLayout(self.master_layout)
-
-    def update_readout(
-        self, Vout, Iout, Vset, Iset, Vmax=None, Imax=None, enabled=None
-    ):
-        self.Voltage_out.setText(Vout)
-        self.Current_out.setText(Iout)
-        self.Voltage_set.setText(Vset)
-        self.Current_set.setText(Iset)
-
-        if Vout is not None and Iout is not None:
-            try:
-                pwr = float(Vout) * float(Iout)
-            except:
-                logger.error(
-                    f"Failed to set calculate power from volate ({Vout}) and current ({Iout})."
-                )
-                pwr = "----"
-
-            self.Power_out.setText(pwr)
         if self.show_VI_limits:
-            self.Voltage_max.setText(Vmax)
-            self.Current_max.setText(Imax)
+            self.readout_grid.addWidget(self.Voltage_max.label, 3, 0)
+            self.readout_grid.addWidget(self.Voltage_max, 3, 1)
+            self.readout_grid.addWidget(self.Current_max.label, 3, 2)
+            self.readout_grid.addWidget(self.Current_max, 3, 3)
+            added_row = 1
+        else:
+            added_row = 0
 
-        if self.show_status_panel:
-            if Iout is not None and Iset is not None:
-                try:
-                    if float(Iout) >= float(Iset) * 0.95:
-                        self.CC_indic.setPixmap(self.ccurr_ind)
-                    else:
-                        self.CC_indic.setPixmap(self.cvolt_ind)
-                except:
-                    pass
+        self.readout_grid.addWidget(self.Voltage.label, 3 + added_row, 0)
+        self.readout_grid.addWidget(self.Voltage, 3 + added_row, 1)
+        self.readout_grid.addWidget(self.Current.label, 4 + added_row, 0)
+        self.readout_grid.addWidget(self.Current, 4 + added_row, 1)
+        if self.power_button:
+            self.readout_grid.addWidget(self.enabled_but, 5 + added_row, 0)
 
-            if enabled is not None:
-                if enabled == "True":
-                    self.enabled_indic.setPixmap(self.enabled_ind)
-                    self.enabled_but.setChecked(True)
-                else:
-                    self.enabled_indic.setPixmap(self.disabled_ind)
-                    self.enabled_but.setChecked(False)
+        # Combine channel header and readout/update parameters in a master channel layout
+        self.channel_layout = QGridLayout()
+        self.channel_layout.addWidget(self.channel_label, 0, 0)
+        self.channel_layout.addLayout(self.readout_grid, 1, 0)
 
-            """
-            if (
-                self.main_widget.ramp_timer.isActive()
-                and f"CH{self.channel}_V_SET" in self.main_widget.active_ramps
-            ):
+        # Potentially add a status panel to the master channel layout
+        if show_status_panel:
+            self.ccurr_ind = load_icon("ccurrent_label.svg")
+            self.cvolt_ind = load_icon("cvoltage_label.svg")
+            self.na_ind = load_icon("na_label.svg")
 
-                key = f"CH{self.channel}_V_SET"
+            self.CC_ind_label = QLabel("CC:")
+            self.CC_indic = QLabel()
+            self.CC_indic.setPixmap(self.na_ind)
 
-                if self.main_widget.active_ramps[key] < self.main_widget.settings[key]:
-                    self.ramp_indic.setPixmap(self.rampup_ind)
-                else:
-                    self.ramp_indic.setPixmap(self.rampdn_ind)
-            else:
-                self.ramp_indic.setPixmap(self.steady_ind)
-            """
+            self.status_panel = QGroupBox()
+            self.status_grid = QGridLayout()
+            self.status_grid.addWidget(self.CC_ind_label, 0, 1)
+            self.status_grid.addWidget(self.CC_indic, 1, 1)
+            self.status_panel.setLayout(self.status_grid)
+
+            self.channel_layout.addWidget(self.status_panel, 2, 0)
+        self.setLayout(self.channel_layout)
 
     def set_label(self, label: str):
+        """Sets a label header"""
         align_left_center = QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
-
-        if self.custom_labels_colorcoded:
-            colors = ["yellow", "green", "blue", "red", "violet", "orange"]
-            self.channel_label.setText(
-                f'<font color="{colors[(self.channel-1)%6]}">{label}</font>'
-            )
-        else:
-            self.channel_label.setText(f"{label}")
+        self.channel_label.setText(f"{label}")
         self.channel_label.setFont(QFont("Arial", 20))
         self.channel_label.setAlignment(align_left_center)
-
-    def settings_to_UI(self):
-        self.Voltage.settings_to_UI()
-        self.Current.settings_to_UI()
-        setButtonState(
-            self.enabled_but,
-            self.main_widget.instrument.__getitem__(f"CH{self.channel}_ENABLE"),
-        )

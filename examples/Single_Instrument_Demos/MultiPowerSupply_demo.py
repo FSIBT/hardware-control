@@ -47,21 +47,54 @@ class Demo(hc.HCMainWindow):
     def __init__(self, dummy):
         super().__init__(dummy=dummy)
 
-        self.setWindowTitle("PSU Demo")
+        self.setWindowTitle("MultiPowerSupply Demo")
 
         self.main_widget = QWidget(self)
 
+        self.app.add_instrument(
+            hc.instruments.TDKL_GenH("tdkl", "TCPIP0::192.168.1.19::INSTR")
+        )
         self.app.add_instrument(hc.instruments.Caen_14xxET("caen", "192.168.1.20:1470"))
+        # Not the correct address for Rigol
+        self.app.add_instrument(
+            hc.instruments.Rigol_DP832("rigol", "192.168.1.20:1470")
+        )
 
-        self.psu_ctrl = hc.gui.MultiPowerSupply(
+        # When not in dummy mode, these set channel voltage and current maximum values
+        self.app.set_instrument_parameter("caen", f"CH1_V_MAX", 20)
+        self.app.set_instrument_parameter("caen", f"CH1_I_MAX", 25)
+
+        self.tdkl_ctrl = hc.gui.MultiPowerSupply(
+            self.app,
+            "tdkl",
+            [1],
+            "TDKL Power Supply Unit",
+            show_status_panel=True,
+            enable_power_buttons="both",
+        )
+        self.caen_ctrl = hc.gui.MultiPowerSupply(
             self.app,
             "caen",
-            [1, 2, 3],
-            "Power Supply Unit",
+            [2],
+            "Caen Power Supply Unit",
+            show_VI_limits=True,
+            show_status_panel=True,
+            enable_power_buttons="both",
+        )
+        self.rigol_ctrl = hc.gui.MultiPowerSupply(
+            self.app,
+            "rigol",
+            [3],
+            "RigolDP832 Power Supply Unit",
+            show_VI_limits=True,
+            show_status_panel=True,
+            enable_power_buttons="both",
         )
 
         self.grid = QGridLayout()
-        self.grid.addWidget(self.psu_ctrl, 1, 1)
+        self.grid.addWidget(self.tdkl_ctrl, 1, 1)
+        self.grid.addWidget(self.caen_ctrl, 1, 2)
+        self.grid.addWidget(self.rigol_ctrl, 1, 3)
         self.main_widget.setLayout(self.grid)
 
         self.setCentralWidget(self.main_widget)
