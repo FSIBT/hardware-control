@@ -111,6 +111,8 @@ class HCMixin:
             self.label = QLabel(f"{label}: ")
             if label_align == "right":
                 self.label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+            elif label_align == "left":
+                self.label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
 
         # connect to app
         self.app.add_widget(self.instrument, self.parameter, self)
@@ -144,8 +146,8 @@ class HCLabel(HCMixin, QLabel):
         self.min_width = min_width
 
     def hc_update(self):
-        value = self.app.get_instrument_parameter(self.instrument, self.parameter)
-        self.setText(value)
+        self.value = self.app.get_instrument_parameter(self.instrument, self.parameter)
+        self.setText(self.value)
 
     def setText(self, text: str) -> None:
         if self.unit:
@@ -199,17 +201,17 @@ class HCLineEdit(HCMixin, QLineEdit):
         self.editingFinished.connect(self.value_change)
 
     def value_change(self) -> None:
-        value = self.text()
-        self.app.set_instrument_parameter(self.instrument, self.parameter, value)
+        self.value = self.text()
+        self.app.set_instrument_parameter(self.instrument, self.parameter, self.value)
 
     def hc_update(self) -> None:
         if self.hasFocus():
             logger.debug(f"'{self.name}' has focus, not updating")
             return
-        value = self.app.get_instrument_parameter(
+        self.value = self.app.get_instrument_parameter(
             self.instrument, self.parameter, return_set_value=True
         )
-        self.setText(value)
+        self.setText(self.value)
 
 
 class HCDoubleSpinBox(HCMixin, QDoubleSpinBox):
@@ -245,14 +247,14 @@ class HCDoubleSpinBox(HCMixin, QDoubleSpinBox):
         self.editingFinished.connect(self.value_change)
 
     def value_change(self) -> None:
-        value = self.text()
-        self.app.set_instrument_parameter(self.instrument, self.parameter, value)
+        self.value = self.text()
+        self.app.set_instrument_parameter(self.instrument, self.parameter, self.value)
 
     def hc_update(self) -> None:
-        value = float(
+        self.value = float(
             self.app.get_instrument_parameter(self.instrument, self.parameter)
         )
-        self.setValue(value)
+        self.setValue(self.value)
 
 
 class HCPushButton(HCMixin, QPushButton):
@@ -378,17 +380,17 @@ class HCComboBox(HCMixin, QComboBox):
         self.currentIndexChanged.connect(self.value_change)
 
     def value_change(self) -> None:
-        value = self.currentText().upper()
-        self.app.set_instrument_parameter(self.instrument, self.parameter, value)
+        self.value = self.currentText().upper()
+        self.app.set_instrument_parameter(self.instrument, self.parameter, self.value)
 
     def hc_update(self) -> None:
-        value = self.app.get_instrument_parameter(self.instrument, self.parameter)
+        self.value = self.app.get_instrument_parameter(self.instrument, self.parameter)
         for i in self.items:
-            if value.casefold() == i.casefold():
+            if self.value.casefold() == i.casefold():
                 self.setCurrentText(i)
                 break
         else:
-            logger.error(f"HCControlCombo: could not find '{value}' in item list")
+            logger.error(f"HCControlCombo: could not find '{self.value}' in item list")
 
 
 class HCDoubleSpinComboBox(HCMixin):
@@ -435,18 +437,18 @@ class HCDoubleSpinComboBox(HCMixin):
     def value_change(self) -> None:
         combo_value = self.units[self.combo.currentText()]
         spin_value = float(self.spin.text())
-        value = spin_value * combo_value
+        self.value = spin_value * combo_value
 
-        self.app.set_instrument_parameter(self.instrument, self.parameter, value)
+        self.app.set_instrument_parameter(self.instrument, self.parameter, self.value)
 
     def hc_update(self) -> None:
-        value = float(
+        self.value = float(
             self.app.get_instrument_parameter(self.instrument, self.parameter)
         )
         combo_value = self.units[self.combo.currentText()]
-        value *= combo_value
+        self.value *= combo_value
 
-        self.spin.setValue(value)
+        self.spin.setValue(self.value)
 
 
 class HCSpinBox(HCMixin, QSpinBox):
@@ -471,14 +473,14 @@ class HCSpinBox(HCMixin, QSpinBox):
         self.valueChanged.connect(self.value_change)
 
     def value_change(self) -> None:
-        value = self.value()
-        self.app.set_instrument_parameter(self.instrument, self.parameter, value)
+        self.value = self.value()
+        self.app.set_instrument_parameter(self.instrument, self.parameter, self.value)
 
     def hc_update(self) -> None:
-        value = float(
+        self.value = float(
             self.app.get_instrument_parameter(self.instrument, self.parameter)
         )
-        self.setValue(value)
+        self.setValue(self.value)
 
 
 class HCHeader(QLabel):

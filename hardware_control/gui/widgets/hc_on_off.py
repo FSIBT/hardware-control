@@ -31,6 +31,8 @@ class HCOnOffButton(HCPushButton):
         parameter: str,
         label: str = "",
         label_align: str = "left",
+        on_text: str = "On",
+        off_text: str = "Off",
     ):
         super().__init__(
             app=app,
@@ -41,8 +43,8 @@ class HCOnOffButton(HCPushButton):
         )
         self.setCheckable(True)
 
-        self.on_text = "On"
-        self.off_text = "Off"
+        self.on_text = on_text
+        self.off_text = off_text
 
         self.on_icon = QIcon(load_icon("button-power-on.svg"))
         self.off_icon = QIcon(load_icon("button-power-off.svg"))
