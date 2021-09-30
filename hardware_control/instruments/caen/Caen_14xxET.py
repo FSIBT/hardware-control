@@ -55,8 +55,8 @@ class Caen_14xxET(Instrument):
 
     def __init__(
         self,
-        instrument_name,
-        connection_addr,
+        instrument_name: str = "caen",
+        connection_addr: str = "",
     ):
 
         super().__init__(
@@ -88,55 +88,25 @@ class Caen_14xxET(Instrument):
         for channel in self.chan_nums:
             self.add_parameter(
                 f"CH{channel}_V_MAX",
-                read_command=None,
-                set_command=[lambda x: self.set_V_max(channel, x)],
-                dummy_return="",
+                read_command=lambda x: self.read_V_max(channel),
+                set_command=lambda x: self.set_V_max(channel, x),
+                dummy_return="20.0",
             )
 
             self.add_parameter(
                 f"CH{channel}_I_MAX",
-                read_command=None,
-                set_command=[lambda x: self.set_I_max(channel, x)],
-                dummy_return="",
+                read_command=lambda x: self.read_I_max(channel),
+                set_command=lambda x: self.set_I_max(channel, x),
+                dummy_return="25.0",
             )
 
             self.add_parameter(
                 f"CH{channel}_ENABLE",
                 read_command=f"CH{channel}_ENABLE?",
                 set_command=f"$BD:00,CMD:SET,CH:{channel},PAR:{{}}",
-                dummy_return="",
+                dummy_return="False",
             )
             self.add_lookup(f"CH{channel}_ENABLE", {"True": "ON", "False": "OFF"})
-
-            self.add_parameter(
-                f"CH{channel}_I_SET",
-                read_command=f"$BD:00,CMD:SET,CH:{channel},PAR:ISET,VAL:{{}}",
-                pre_hooks=[
-                    lambda value: write_to_log(
-                        f"Iset called with value {value}", "info"
-                    ),
-                    lambda value: min(value, self.max_I[channel - 1])
-                    if self.max_I[channel - 1] is not None
-                    else None,
-                    format_float(),
-                    scaling_converter(1e6),
-                ],
-                dummy_return="",
-            )
-
-            self.add_parameter(
-                f"CH{channel}_V_SET",
-                read_command=f"$BD:00,CMD:SET,CH:{channel},PAR:VSET,VAL:{{}}",
-                pre_hooks=[
-                    lambda value: write_to_log(
-                        f"Vset called with value {value}", "info"
-                    ),
-                    lambda value: min(value, self.max_V[channel - 1])
-                    if self.max_V[channel - 1] is not None
-                    else None,
-                ],
-                dummy_return="",
-            )
 
             self.add_parameter(
                 f"CH{channel}_V_OUT",
@@ -145,7 +115,7 @@ class Caen_14xxET(Instrument):
                     parse_instrument_response,
                     lambda value: value.strip("\\nr"),
                 ],
-                dummy_return="",
+                dummy_return="10.0",
             )
 
             self.add_parameter(
@@ -157,7 +127,17 @@ class Caen_14xxET(Instrument):
                     format_float(),
                     scaling_converter(1e6),
                 ],
-                dummy_return="",
+                dummy_return="15.0",
+            )
+
+            self.add_parameter(
+                f"CH{channel}_V_SET",
+                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:VSET",
+                post_hooks=[
+                    parse_instrument_response,
+                    lambda value: value.strip("\\nr"),
+                ],
+                dummy_return="10.0",
             )
 
             self.add_parameter(
@@ -169,17 +149,7 @@ class Caen_14xxET(Instrument):
                     format_float(),
                     scaling_converter(1e6),
                 ],
-                dummy_return="",
-            )
-
-            self.add_parameter(
-                f"CH{channel}_V_SET",
-                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:VSET",
-                post_hooks=[
-                    parse_instrument_response,
-                    lambda value: value.strip("\\nr"),
-                ],
-                dummy_return="",
+                dummy_return="15.0",
             )
 
             self.add_parameter(
@@ -195,14 +165,20 @@ class Caen_14xxET(Instrument):
 
             for bit_name, bit in self.status.items():
                 self.add_parameter(
-                    "CH{channel}_{bit_name}",
+                    f"CH{channel}_{bit_name}",
                     read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
                     post_hooks=[create_parse_status(bit)],
                     dummy_return="",
                 )
 
+    def read_V_max(self, channel):
+        return self.max_V[channel - 1]
+
     def set_V_max(self, channel, value):
         self.max_V[channel - 1] = float(value)
+
+    def read_I_max(self, channel):
+        return self.max_I[channel - 1]
 
     def set_I_max(self, channel, value):
         self.max_I[channel - 1] = float(value)
