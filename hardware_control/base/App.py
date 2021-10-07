@@ -3,7 +3,7 @@ import json
 import logging
 from pathlib import Path
 import threading
-from typing import Union, Callable, Any, List
+from typing import Union, Optional, Callable, Any, List, Dict
 
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QTimer
@@ -66,11 +66,11 @@ def ensure_parameter_in_instrument(f):
     def wrapped(*args, **kwargs):
         self = args[0]
         instrument = args[1]
-        name = args[2]
+        paramter = args[2]
 
-        if name not in self._data[instrument]:
+        if paramter not in self._data[instrument]:
             logger.error(
-                f"Cannot find parameter/command '{name}' for instrument '{instrument}' in app"
+                f"Cannot find parameter/command '{paramter}' for instrument '{instrument}' in app"
             )
             return
 
@@ -130,7 +130,12 @@ class App(QApplication):
         for t in self.threads:
             t.join()
 
-    def add_instrument(self, instrument: Instrument):
+    def add_instrument(
+        self,
+        instrument: Instrument,
+        ignore_flag: Optional[bool] = False,
+        online_color: Optional[str] = "Green",
+    ):
 
         if instrument.name in self._data:
             logger.error(
@@ -188,6 +193,11 @@ class App(QApplication):
                 "widgets": [],
             }
             self._data[zmq_instrument.name][c] = p
+
+        # register an ignore flag for the instrument
+        self._data[zmq_instrument.name]["ignore"] = ignore_flag
+        # register an online color flag for the instrument
+        self._data[zmq_instrument.name]["online_color"] = online_color
 
         # start thread
         self.threads.append(zmq_instrument)
@@ -339,9 +349,20 @@ class App(QApplication):
 
         This function does not communicate with the instrument.
         """
-        if return_set_value:
-            return self._data[instrument][parameter]["set_value"]
-        return self._data[instrument][parameter]["read_value"]
+
+        # Some parameters are boolean
+        if parameter == "ignore" or parameter == "online_color":
+            return self._data[instrument][parameter]
+
+        # Make sure parameter is not a command
+        # (Commands don't have "set_value" or "read_value" keys.)
+        elif (
+            "set_value" in self._data[instrument][parameter].keys()
+            or "read_value" in self._data[instrument][parameter].keys()
+        ):
+            if return_set_value:
+                return self._data[instrument][parameter]["set_value"]
+            return self._data[instrument][parameter]["read_value"]
 
     @ensure_instrument_exists
     @ensure_parameter_in_instrument
@@ -360,7 +381,7 @@ class App(QApplication):
     def add_hook(
         self,
         instrument: str,
-        name: str,
+        parameter: str,
         when: str,
         function: Callable[[Any], Any],
     ):
@@ -369,27 +390,26 @@ class App(QApplication):
         Every hook function must take a single parameter: the value of the
         parameter to be set (set to None for commands)
 
-        If a hook needs several parameter, one should pass these in
+        If a hook requires several parameters, one should pass these in
         when defining the hook using lambda functions, e.g.:
 
         app.add_hook(instrument, parameter, 'pre_set_hooks', lambda x: change_ui(app, x, widget)
 
-        where app and widget are defined in the enironment where
-        add_hook is called.
+        where app and widget are defined in the enironment where add_hook is called.
 
         """
 
         if when not in ["post_read_hooks", "pre_set_hooks", "pre_call_hooks"]:
             logger.error(
-                'wrong hook type. Needs to be one of "post_read_hook", "pre_set_hooks", "pre_call_hooks"'
+                f"'{instrument}': '{parameter}' has wrong hook type: '{when}'. Needs to be one of 'post_read_hook', 'pre_set_hooks', 'pre_call_hooks'"
             )
             return
 
-        self._data[instrument][name][when].append(function)
+        self._data[instrument][parameter][when].append(function)
 
     @ensure_instrument_exists
     @ensure_parameter_in_instrument
-    def add_widget(self, instrument: str, name: str, widget):
+    def add_widget(self, instrument: str, parameter: str, widget):
         """Adds a widget to a parameter.
 
         This enables automatic updating if the value changes
@@ -401,8 +421,8 @@ class App(QApplication):
             )
 
         # don't add a widget twice
-        if widget not in self._data[instrument][name]["widgets"]:
-            self._data[instrument][name]["widgets"].append(widget)
+        if widget not in self._data[instrument][parameter]["widgets"]:
+            self._data[instrument][parameter]["widgets"].append(widget)
 
     def add_save_format(
         self, name: str, format: Callable[[Dataset, str], None]
@@ -428,19 +448,43 @@ class App(QApplication):
 
         self.additional_save_formats[name] = format
 
-    def get_instruments(self) -> List[str]:
-        return [instrument for instrument in self._data]
+    def get_instrument_read_values(self, instrument) -> Dict:
+        """Return a dictionary of an instrument's read_values"""
+        instrument_dict_reads = {}
+        for parameter in self.list_instrument_parameters(instrument):
+            # Ignore boolean parameters
+            if type(self._data[instrument][parameter]) is dict:
+                # Ignore parameters without read_value functionality
+                if "read_value" in self._data[instrument][parameter].keys():
+                    if "read_value" in self._data[instrument][parameter].keys():
+                        instrument_dict_reads[parameter] = self._data[instrument][
+                            parameter
+                        ]["read_value"]
 
-    def list_instruments(self) -> None:
-        """Prints a list of all instruments."""
+        return instrument_dict_reads
 
+    def get_instrument_set_values(self, instrument) -> Dict:
+        """Return a dictionary of an instrument's set_values"""
+        instrument_dict_sets = {}
+        for parameter in self.list_instrument_parameters(instrument):
+            # Ignore boolean parameters
+            if type(self._data[instrument][parameter]) is dict:
+                # Ignore parameters without set_value functionality
+                if "set_value" in self._data[instrument][parameter].keys():
+                    instrument_dict_sets[parameter] = self._data[instrument][parameter][
+                        "set_value"
+                    ]
+
+        return instrument_dict_sets
+
+    def list_instrument_parameters(self, instrument) -> List[str]:
+        return [parameter for parameter in self._data[instrument]]
+
+    def list_instruments(self) -> List[str]:
+        """Compile a list of all the app's instruments."""
         if not self._data:
-            print("No known instruments")
-            return
-
-        print("Known instruments:")
-        for i in self._data:
-            print(f"  {i}")
+            return []
+        return [instrument for instrument in self._data]
 
     def close(self) -> None:
         """Closes the application
