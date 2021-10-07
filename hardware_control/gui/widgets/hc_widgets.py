@@ -172,8 +172,6 @@ class HCLineEdit(HCMixin, QLineEdit):
 
     A validator can also be set for the QLineEdit widget.
 
-    When used directly inside an instrument the ``remote`` should be set to False.
-
     """
 
     def __init__(
@@ -424,9 +422,6 @@ class HCDoubleSpinComboBox(HCMixin):
         self.spin = QDoubleSpinBox()
         self.combo = QComboBox()
 
-        # Set spinbox value
-        self.spin.setValue(0)
-
         # Set combobox values
         self.combo.addItems(self.units.keys())
 
@@ -469,11 +464,13 @@ class HCSpinBox(HCMixin, QSpinBox):
             label=label,
             label_align=label_align,
         )
+        # Rename QSpinBox method for getting current value to avoid naming conflicts
+        self.get_current_value = self.value
 
         self.valueChanged.connect(self.value_change)
 
     def value_change(self) -> None:
-        self.value = self.value()
+        self.value = self.get_current_value()
         self.app.set_instrument_parameter(self.instrument, self.parameter, self.value)
 
     def hc_update(self) -> None:
