@@ -31,9 +31,15 @@ logger = logging.getLogger(__name__)
 
 
 class Oscilloscope(QGroupBox):
-    def __init__(self, app, instrument_name: str, display_channels=None):
+    def __init__(
+        self,
+        app,
+        instrument_name: str,
+        widget_name: str = "Oscilloscope",
+        display_channels=None,
+    ):
 
-        super().__init__(instrument_name)
+        super().__init__(widget_name)
 
         self.app = app
         self.instrument = instrument_name
@@ -303,12 +309,12 @@ class OscilloscopeHorizontalWidget(QGroupBox):
             self.instrument,
             "TIMEBASE",
             "Time/Div",
-            units={"s": 1, "ms": 1e-3, "us": 1e-6, "ns": 1e-9},
+            units={"s": 1, "ms": 1e3, "us": 1e6, "ns": 1e9},
             label_align="right",
         )
         self.timebase.spin.setSingleStep(1)
         self.timebase.spin.setDecimals(3)
-        self.timebase.spin.setMaximum(1e6)
+        self.timebase.spin.setMaximum(1e9)
         self.timebase.combo.setCurrentText("ms")
 
         self.time_offset = HCDoubleSpinComboBox(
@@ -316,12 +322,12 @@ class OscilloscopeHorizontalWidget(QGroupBox):
             self.instrument,
             "TIME_OFFSET",
             "Offset",
-            units={"s": 1, "ms": 1e-3, "us": 1e-6, "ns": 1e-9},
+            units={"s": 1, "ms": 1e3, "us": 1e6, "ns": 1e9},
             label_align="right",
         )
         self.time_offset.spin.setSingleStep(1)
         self.time_offset.spin.setDecimals(3)
-        self.time_offset.spin.setMaximum(1e6)
+        self.time_offset.spin.setMaximum(1e9)
         self.time_offset.combo.setCurrentText("ms")
 
         self.num_points = HCDoubleSpinBox(
