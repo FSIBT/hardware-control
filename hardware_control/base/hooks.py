@@ -16,11 +16,17 @@ def create_converter(lookuptable):
 
 def min_len_converter(min_length):
     def converter(value):
-        value = float(value)
         if len(value) > min_length:
             return value[0:min_length]
         else:
             return value
+
+    return converter
+
+
+def last_n_values_converter(num_of_values):
+    def converter(value):
+        return value[-num_of_values:]
 
     return converter
 
