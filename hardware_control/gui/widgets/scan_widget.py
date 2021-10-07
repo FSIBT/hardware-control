@@ -1,7 +1,6 @@
-import json
 import logging
 import time
-import random
+from typing import Callable, Optional, Dict
 
 from GPy.kern import Matern32, Bias
 from GPy.models import GPRegression
@@ -23,19 +22,156 @@ from PyQt5.QtWidgets import (
     QGridLayout,
     QComboBox,
     QRadioButton,
-    QCheckBox,
     QFileDialog,
     QSizePolicy,
 )
 
-from ...base import Instrument
 from .hc_widgets import load_icon
 
 logger = logging.getLogger(__name__)
 
 
+class regressor:
+    def __init__(self, x_prescans, y_prescans, stepsize):
+        # Intialize GP regressor object with the prescan measurements
+        self.x_measured = x_prescans
+        self.y_measured = np.array(y_prescans)
+        num_points = int((np.max(self.x_measured) - np.min(self.x_measured)) / stepsize)
+        num_points += 1
+        self.x_potential = np.linspace(
+            np.min(self.x_measured), np.max(self.x_measured), num_points
+        )
+        # Compute a window (called "delta") for neighbor probabilities calculation
+        self.delta = (np.max(self.x_measured) - np.min(self.x_measured)) / len(
+            self.x_measured
+        )
+
+        # Average of lower 10% of data is baseline of Bias kernel
+        self.mean_training_baseline = np.mean(
+            self.y_measured[self.y_measured < np.percentile(self.y_measured, 10)]
+        )
+        # The kernel
+        kernel = Matern32(1) + Bias(1, variance=self.mean_training_baseline)
+        kernel.Mat32.variance.set_prior(
+            Gamma.from_EV(np.max(self.y_measured), 1000.0), warning=False
+        )
+        kernel.Mat32.lengthscale.set_prior(Gamma.from_EV(100.0, 100.0), warning=False)
+
+        # The model
+        model = GPRegression(
+            np.asarray(self.x_measured).reshape(-1, 1),
+            np.asarray(self.y_measured).reshape(-1, 1),
+            kernel,
+        )
+        # force model prediction must go through all points
+        model.Gaussian_noise.fix(0.0)
+        model.optimize()
+        self.model = model
+        self.ypred = None
+        self.std = None
+
+    def neighbor_probability(potential_vals, found_vals, delta):
+        """Return a value proportional to the number of nearby points in new_arr."""
+        found_vals = found_vals.flatten()  # points already measured
+        potential_vals = potential_vals.flatten()  # points that could be measured
+
+        # Create an array of "neighborhoods" around each point that could be measured
+        neighbor_lo = potential_vals - delta
+        neighbor_hi = potential_vals + delta
+        neighborhoods = np.array((neighbor_lo, neighbor_hi)).T
+        prob = np.zeros(neighborhoods.shape[0])
+
+        # Sum up the number of points already measured in each neighborhood
+        for idx, neighborhood in enumerate(neighborhoods):
+            new_prob = (
+                (found_vals > neighborhood[0]) & (found_vals < neighborhood[1])
+            ).sum()
+            prob[idx] = new_prob
+
+        # Sometimes all the points have no "neighbors". In this case, return a probability array of zeros.
+        # Otherwise normalize the probability distribution
+        if np.count_nonzero(prob) != 0:
+            prob /= prob.sum()
+
+            return prob
+
+    def next_query_val(self):
+        # Get the predicted y values and standard deviations according to the current model
+        ypred, std = self.model.predict((self.x_potential).reshape(-1, 1))
+
+        # Form a normalized probability distribution out of the standard deviations
+        pk = std
+        pk = np.where(pk < 0, 0, pk)
+        pk /= pk.sum()
+
+        # Artificially deflate probability of choosing a point to measure that has many trained points next to it
+        neigh_prob = 0.3 * regressor.neighbor_probability(
+            self.x_potential, self.x_measured, self.delta
+        ).reshape(-1, 1)
+        pk -= neigh_prob
+
+        # (By a factor of 2) artificially inflate probability of choosing the higher points in the spectrum
+        pk += ypred / ypred.sum()
+
+        # In case 1) all probabilities are zero or 2) a NaN appears in pk, set all the probabilities to the same value
+        if np.count_nonzero(pk) == 0 or np.isnan(pk).any():
+            pk = np.ones(pk.shape)
+            pk /= pk.sum()
+
+        # Set probability of picking a point that is already in the training set to zero
+        idx_to_zero = np.isin(self.x_potential, self.x_measured)
+        pk[idx_to_zero] = 0
+
+        # Normalize probability distribution...again
+        pk = np.where(pk < 0, 0, pk)
+        pk /= pk.sum()
+
+        # Select x value for next query using the probability distribution
+        S = rv_discrete(values=[self.x_potential.reshape(-1, 1), pk])
+        x_query = S.rvs()
+        self.x_measured = np.append(self.x_measured, x_query).reshape(-1, 1)
+
+    def update_model(self, new_y_val):
+        self.y_measured = np.append(self.y_measured, new_y_val).reshape(-1, 1)
+
+        # Update training sets
+        self.model.set_XY(X=self.x_measured, Y=self.y_measured)
+        self.model.optimize()
+
+        # When measuring a new maximum, clear the kernel parameters and restart optimization.
+        # Hopefully, this prevents the kernel from freaking out over the fact that the most recent point
+        # is so different from the others
+        if (self.y_measured[-1] == np.max(self.y_measured)) & (
+            len(self.y_measured) >= 5
+        ):  # For some reason, GPy doesn't like to do restarts if there are very few points
+            self.model.optimize_restarts(num_restarts=20, verbose=False)
+
+        # Most recent Y-prediction and standard deviations
+        ypred, std = self.model.predict(self.x_potential.reshape(-1, 1))
+        self.ypred = ypred
+        self.std = std
+
+        # Update kernel
+        self.model.kern.Mat32.variance.set_prior(
+            Gamma.from_EV(np.max(self.y_measured), 1000.0), warning=False
+        )  # Matern kernel variance prior is centered around the max y value
+        self.mean_training_baseline = np.mean(
+            self.y_measured[self.y_measured < np.percentile(self.y_measured, 10)]
+        )
+        self.model.kern.bias.variance = self.mean_training_baseline
+
+
 class ScanWidget(QGroupBox):
-    def __init__(self, app, name, actions, regressor=None, measure_value=None):
+    def __init__(
+        self,
+        app,
+        name: str,
+        actions: Dict,
+        GP_option: bool = False,
+        get_measured_values_fxn: Optional[Callable] = None,
+        plot_scan_fxn: Optional[Callable] = None,
+        save_scan_fxn: Optional[Callable] = None,
+    ):
         """
         Parameters
         ----------
@@ -52,6 +188,9 @@ class ScanWidget(QGroupBox):
         self.app = app
 
         self.actions = actions
+        self.get_measured_values = get_measured_values_fxn
+        self.plot_scan = plot_scan_fxn
+        self.save_scan = save_scan_fxn
 
         self.scan_instrument = None
         self.scan_parameter = None
@@ -62,80 +201,93 @@ class ScanWidget(QGroupBox):
         self.val_list = []
         self.count = 0
         self.number_of_values = 0
-        self.GPRegressor = regressor
+        self.GP_option = GP_option
+        self.GP_offset = 0.0
 
-        if self.GPRegressor:
-            self.measure_value = self.app.main_window.tab7.get_measured_values
-
-        # *************************Create GUI************************
-        self.arrow_symbol = QLabel()
-        self.arrow_symbol.setPixmap(load_icon("arrow.png"))
-        self.arrow_symbol.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
-
-        # ****** DEFINE TEXT BOXES
+        # Create scan widget UI elements
+        # UI 1: Indicates instrument and parameter
         self.instrument_label = QLabel("Instrument:")
         self.instrument_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
 
         self.instrument_drop = QComboBox()
         self.instrument_drop.addItems(["----------"])
-        self.instrument_drop.currentIndexChanged.connect(
-            lambda: self.set_instrument(self.instrument_drop.currentText())
-        )
+        self.instrument_drop.currentIndexChanged.connect(self.set_instrument)
+
+        self.arrow_symbol = QLabel()
+        self.arrow_symbol.setPixmap(load_icon("arrow.png"))
+        self.arrow_symbol.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
 
         self.parameter_label = QLabel("Parameter:")
         self.parameter_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
 
         self.parameter_drop = QComboBox()
         self.parameter_drop.addItems(["----------"])
-        self.parameter_drop.currentIndexChanged.connect(
-            lambda: self.set_parameter(self.parameter_drop.currentText())
-        )
+        self.parameter_drop.currentIndexChanged.connect(self.set_parameter)
 
-        self.values_select_frame = QGridLayout()
+        # UI 2: Indicates scan type – Gaussian Process (GP), list of values, a range of values, or values list from a file
         self.use_GP = QRadioButton("GP")
         self.use_list = QRadioButton("List")
-        self.use_space = QRadioButton("Spacing")
+        self.use_range = QRadioButton("Range")
         self.use_file = QRadioButton("File")
-        self.use_space.setChecked(True)
+        # Default scan type is a range of values scan
+        self.use_range.setChecked(True)
 
-        self.n_queries_label = QLabel("GP Queries:")
-        self.n_queries_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-        self.n_queries_edit = QLineEdit()
-        self.n_queries_edit.setText("20")
+        # Option 1: GP scan starting info
+        self.GP_start_label = QLabel("Start:")
+        self.GP_start_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        self.GP_start_edit = QLineEdit()
 
-        self.values_label = QLabel("Values:")
-        self.values_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.GP_end_label = QLabel("End:")
+        self.GP_end_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.GP_end_edit = QLineEdit()
 
-        self.values_edit = QLineEdit()
-        self.values_edit.textChanged.connect(
-            lambda: self.set_values(self.values_edit.text())
-        )
-        self.values_edit.setText(self.values)
+        self.GP_step_label = QLabel("Step:")
+        self.GP_step_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.GP_step_edit = QLineEdit()
 
-        self.spacing_start_label = QLabel("Start:")
-        self.spacing_start_label.setAlignment(
+        self.GP_n_queries_label = QLabel("# of Queries:")
+        self.GP_n_queries_label.setAlignment(
             QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
         )
+        self.GP_n_queries_edit = QLineEdit()
 
-        self.spacing_start_edit = QLineEdit()
+        self.GP_n_prescans_label = QLabel("# of Pre-Scans:")
+        self.GP_n_prescans_label.setAlignment(
+            QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
+        )
+        self.GP_n_prescans_edit = QLineEdit()
 
-        self.spacing_end_label = QLabel("End:")
-        self.spacing_end_label.setAlignment(
-            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
+        # Option 2: Values to start scanning inputted manually into a list
+        self.list_label = QLabel("Values:")
+        self.list_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+
+        self.list_edit = QLineEdit()
+        self.list_edit.textChanged.connect(self.set_list_values)
+        self.list_edit.setText(self.values)
+
+        # Option 3: Range to scan
+        self.range_start_label = QLabel("Start:")
+        self.range_start_label.setAlignment(
+            QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
         )
 
-        self.spacing_end_edit = QLineEdit()
+        self.range_start_edit = QLineEdit()
 
-        self.step_size_label = QLabel("Step:")
-        self.step_size_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.range_end_label = QLabel("End:")
+        self.range_end_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
-        self.step_size_edit = QLineEdit()
+        self.range_end_edit = QLineEdit()
 
-        # self.spacing_log_check = QCheckBox("Log Spacing")
+        self.range_step_label = QLabel("Step:")
+        self.range_step_label.setAlignment(
+            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
+        )
+        self.range_step_edit = QLineEdit()
 
+        # Option 4: Values to scan from file
         self.values_file_label = QLabel("File:")
         self.values_file_label.setAlignment(
-            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
+            QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
         )
 
         self.values_file_edit = QLineEdit()
@@ -145,42 +297,52 @@ class ScanWidget(QGroupBox):
 
         self.values_select_box = QGroupBox()
         self.values_select_box.setStyleSheet("QGroupBox{padding-top:3px}")
-        if self.GPRegressor:
-            self.values_select_frame.addWidget(self.use_GP, 0, 0, 1, 1)
-            self.values_select_frame.addWidget(self.n_queries_label, 0, 1, 1, 1)
-            self.values_select_frame.addWidget(self.n_queries_edit, 0, 2, 1, 1)
-        self.values_select_frame.addWidget(self.use_list, 1, 0, 1, 1)
-        self.values_select_frame.addWidget(self.values_label, 1, 1, 1, 1)
-        self.values_select_frame.addWidget(self.values_edit, 1, 2, 1, 6)
 
-        self.values_select_frame.addWidget(self.use_space, 2, 0, 1, 1)
-        self.values_select_frame.addWidget(self.spacing_start_label, 2, 1, 1, 1)
-        self.values_select_frame.addWidget(self.spacing_start_edit, 2, 2, 1, 1)
-        self.values_select_frame.addWidget(self.spacing_end_label, 2, 3, 1, 1)
-        self.values_select_frame.addWidget(self.spacing_end_edit, 2, 4, 1, 1)
-        self.values_select_frame.addWidget(self.step_size_label, 2, 5, 1, 1)
-        self.values_select_frame.addWidget(self.step_size_edit, 2, 6, 1, 1)
-        # self.values_select_frame.addWidget(self.spacing_log_check, 2, 6, 1, 2)
+        # Create a QT grid for the scan types
+        self.values_select_frame = QGridLayout()
+        self.values_select_frame.addWidget(self.use_range, 0, 0, 1, 1)
+        self.values_select_frame.addWidget(self.range_start_label, 0, 1, 1, 1)
+        self.values_select_frame.addWidget(self.range_start_edit, 0, 2, 1, 1)
+        self.values_select_frame.addWidget(self.range_end_label, 0, 3, 1, 1)
+        self.values_select_frame.addWidget(self.range_end_edit, 0, 4, 1, 1)
+        self.values_select_frame.addWidget(self.range_step_label, 0, 5, 1, 1)
+        self.values_select_frame.addWidget(self.range_step_edit, 0, 6, 1, 1)
 
-        self.values_select_frame.addWidget(self.use_file, 3, 0, 1, 1)
-        self.values_select_frame.addWidget(self.values_file_label, 3, 1, 1, 1)
-        self.values_select_frame.addWidget(self.values_file_edit, 3, 2, 1, 2)
-        self.values_select_frame.addWidget(self.values_file_select_button, 3, 6, 1, 2)
+        if self.GP_option:
+            self.values_select_frame.addWidget(self.use_GP, 1, 0, 1, 1)
+            self.values_select_frame.addWidget(self.GP_start_label, 1, 1, 1, 1)
+            self.values_select_frame.addWidget(self.GP_start_edit, 1, 2, 1, 1)
+
+            self.values_select_frame.addWidget(self.GP_end_label, 1, 3, 1, 1)
+            self.values_select_frame.addWidget(self.GP_end_edit, 1, 4, 1, 1)
+
+            self.values_select_frame.addWidget(self.GP_step_label, 1, 5, 1, 1)
+            self.values_select_frame.addWidget(self.GP_step_edit, 1, 6, 1, 1)
+
+            self.values_select_frame.addWidget(self.GP_n_prescans_label, 2, 1, 1, 2)
+            self.values_select_frame.addWidget(self.GP_n_prescans_edit, 2, 3, 1, 1)
+
+            self.values_select_frame.addWidget(self.GP_n_queries_label, 2, 4, 1, 2)
+            self.values_select_frame.addWidget(self.GP_n_queries_edit, 2, 6, 1, 1)
+
+        self.values_select_frame.addWidget(self.use_list, 3, 0, 1, 1)
+        self.values_select_frame.addWidget(self.list_label, 3, 1, 1, 1)
+        self.values_select_frame.addWidget(self.list_edit, 3, 2, 1, 5)
+
+        self.values_select_frame.addWidget(self.use_file, 4, 0, 1, 1)
+        self.values_select_frame.addWidget(self.values_file_label, 4, 1, 1, 1)
+        self.values_select_frame.addWidget(self.values_file_edit, 4, 2, 1, 2)
+        self.values_select_frame.addWidget(self.values_file_select_button, 4, 5, 1, 2)
 
         self.values_select_box.setLayout(self.values_select_frame)
 
-        self.scan_opt_box = QGroupBox()
-        self.scan_opt_box.setStyleSheet("QGroupBox{padding-top:3px}")
-        self.scan_opt_frame = QGridLayout()
-
+        # UI 3: A QT grid with assorted scanning parameters
         self.macro_label = QLabel("Scan Action:")
         self.macro_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
 
         self.action_drop = QComboBox()
         self.action_drop.addItems(self.actions.keys())
-        self.action_drop.currentIndexChanged.connect(
-            lambda: self.action_changed(self.action_drop.currentText())
-        )
+        self.action_drop.currentIndexChanged.connect(self.action_changed)
 
         self.pause_label_before = QLabel("Pause before (sec):")
         self.pause_label_after = QLabel("Pause after (sec):")
@@ -206,6 +368,7 @@ class ScanWidget(QGroupBox):
         self.pause_edit_after.setText("10")
         self.pause_edit_after.setValidator(QIntValidator())
 
+        self.scan_opt_frame = QGridLayout()
         self.scan_opt_frame.addWidget(self.macro_label, 0, 0)
         self.scan_opt_frame.addWidget(self.action_drop, 0, 1)
         self.scan_opt_frame.addWidget(self.pause_label_before, 1, 0)
@@ -215,22 +378,21 @@ class ScanWidget(QGroupBox):
         self.scan_opt_frame.addWidget(self.pause_timer_label_before, 1, 3)
         self.scan_opt_frame.addWidget(self.pause_timer_label_after, 2, 3)
 
+        self.scan_opt_box = QGroupBox()
+        self.scan_opt_box.setStyleSheet("QGroupBox{padding-top:3px}")
         self.scan_opt_box.setLayout(self.scan_opt_frame)
 
-        self.upper_grid = QGridLayout()
-        self.middle_grid = QGridLayout()
+        # Create main QT grid for the three UIs in the scan_widget
+        self.main_grid = QGridLayout()
+        self.main_grid.addWidget(self.instrument_label, 0, 0, 1, 2)
+        self.main_grid.addWidget(self.instrument_drop, 1, 0, 1, 2)
+        self.main_grid.addWidget(self.arrow_symbol, 1, 2)
+        self.main_grid.addWidget(self.parameter_label, 0, 3)
+        self.main_grid.addWidget(self.parameter_drop, 1, 3)
+        self.main_grid.addWidget(self.values_select_box, 2, 0, 1, 4)
+        self.main_grid.addWidget(self.scan_opt_box, 3, 0, 1, 4)
 
-        # Add widgets to grid layout
-        self.upper_grid.addWidget(self.instrument_label, 0, 0, 1, 2)
-        self.upper_grid.addWidget(self.instrument_drop, 1, 0, 1, 2)
-        self.upper_grid.addWidget(self.arrow_symbol, 1, 2)
-        self.upper_grid.addWidget(self.parameter_label, 0, 3)
-        self.upper_grid.addWidget(self.parameter_drop, 1, 3)
-
-        self.upper_grid.addWidget(self.values_select_box, 2, 0, 1, 4)
-
-        self.upper_grid.addWidget(self.scan_opt_box, 3, 0, 1, 4)
-
+        # Add scanning buttons and a scan progress bar
         self.scan_button = QPushButton()
         self.scan_button.setText("New Scan")
         self.scan_button.setIcon(QIcon(load_icon("scan.png")))
@@ -239,6 +401,7 @@ class ScanWidget(QGroupBox):
         self.scan_button.setSizePolicy(
             QSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
         )
+
         self.continue_scan_button = QPushButton()
         self.continue_scan_button.setText("Continue Scan")
         self.continue_scan_button.setCheckable(False)
@@ -247,6 +410,7 @@ class ScanWidget(QGroupBox):
             QSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
         )
         self.continue_scan_button.setEnabled(False)
+
         self.stop_button = QPushButton()
         self.stop_button.setText("Stop")
         self.stop_button.setIcon(QIcon(load_icon("stop.svg")))
@@ -255,97 +419,87 @@ class ScanWidget(QGroupBox):
             QSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
         )
         self.stop_button.setEnabled(False)
-        self.stop_button.clicked.connect(self.stop_scan)
-
-        self.progress_grid = QGridLayout()
-
-        self.progress_label = QLabel("Scan Progress")
-        self.progress_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-
-        self.progress_bar = QProgressBar()
-
-        self.progress_grid.addWidget(self.progress_label, 0, 0)
-        self.progress_grid.addWidget(self.progress_bar, 0, 1)
+        self.stop_button.clicked.connect(self.button_stop_scan)
 
         self.scan_button_grid = QGridLayout()
         self.scan_button_grid.addWidget(self.scan_button, 0, 0)
         self.scan_button_grid.addWidget(self.continue_scan_button, 0, 1)
-
         self.scan_button_grid.addWidget(
             self.stop_button, 0, 2, alignment=QtCore.Qt.AlignRight
         )
+
+        self.progress_grid = QGridLayout()
+        self.progress_label = QLabel("Scan Progress")
+        self.progress_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.progress_bar = QProgressBar()
+        self.progress_grid.addWidget(self.progress_label, 0, 0)
+        self.progress_grid.addWidget(self.progress_bar, 0, 1)
         self.progress_bar.setValue(float(self.scan_progress))
 
-        # ******* DEFINE OVERALL LAYOUT
+        # Define overall layout of the scan_widget
         self.master_layout = QGridLayout()
-        self.master_layout.addLayout(self.upper_grid, 0, 0, 1, 2)
+        self.master_layout.addLayout(self.main_grid, 0, 0, 1, 2)
         self.master_layout.addLayout(self.progress_grid, 2, 0, 1, 2)
         self.master_layout.addLayout(self.scan_button_grid, 3, 0, 1, 2)
-
         self.setLayout(self.master_layout)
 
-        # might need to call this manually again in the main app, if instruments get defined
-        # after the scan widget
+        # Might need to call this again in the main app if instruments get defined after the scan widget
         self.update_instruments()
 
         # Create timer to do scan
         self.scan_timer = QTimer(self)
 
     def browse_values_files(self) -> None:
+        """Browse files to use for scanning range."""
         # Use file dialog to get save location
         dlg = QFileDialog()
         name_tuple = dlg.getOpenFileName()
         filename = name_tuple[0]
-        if not filename:  # If cancel bttonw as hit, name will be null
+        # If cancel button  was hit, name will be null
+        if not filename:
             return
 
         self.values_file_edit.setText(filename)
 
-    def set_instrument(self, inst: str) -> None:
-        """Update the list of parameterts that can be scanned."""
+    def set_instrument(self) -> None:
+        """When an instrumnet is selected, update the list of parameterts that can be scanned."""
+        if self.instrument_drop.currentText() == "":
+            return
+
         self.parameter_drop.clear()
-        params = []
+        parameters = self.app.list_instrument_parameters(
+            self.instrument_drop.currentText()
+        )
+        self.parameter_drop.addItems(parameters)
 
-        self.scan_instrument = self.app.get_instrument_by_name(inst)
-
-        if self.scan_instrument:
-            params = list(x.name for x in self.scan_instrument.control_UIs)
-            logger.debug(f"Added {len(params)} items to parameter dropdown.")
-        else:
-            logger.error(f"Couldn't find instrument '{inst}'")
-
-        self.parameter_drop.addItems(params)
         self.scan_progress = 0
         self.progress_bar.setValue(self.scan_progress)
 
-    def set_parameter(self, parameter: str) -> None:
-        if self.scan_instrument is None:
-            return
-        for ui in self.scan_instrument.control_UIs:
-            if ui.name == parameter:
-                self.scan_parameter = ui.setting
+    def set_parameter(self) -> None:
+        """When a parameter is selected, designate it as the scan parameter."""
+        self.scan_parameter = self.parameter_drop.currentText()
 
-    def set_values(self, values: str) -> None:
-        self.values = values
+    def set_list_values(self) -> None:
+        """Set scan values to the values inputted in the list field."""
+        self.values = self.list_edit.text()
 
-    def action_changed(self, action: str) -> None:
-        self.scan_action = self.actions[action]
+    def action_changed(self) -> None:
+        """Change the action done at each scanned value."""
+        self.scan_action = self.actions[self.action_drop.currentText()]
 
     def compute_values(self):
-        """Reads the values of the widgets and computes the values for the scan
-        to iterate over."""
-
+        """Reads the values of the widgets and computes the values for the scan to iterate over."""
         if self.use_list.isChecked():
-            new_val_list = [float(x) for x in self.values_edit.text().split(",")]
+            new_val_list = [float(x) for x in self.list_edit.text().split(",")]
             if self.continue_scan:
                 self.val_list += new_val_list
             else:
                 self.val_list = new_val_list
-        elif self.use_space.isChecked():
+        elif self.use_range.isChecked():
             try:
-                start = float(self.spacing_start_edit.text())
-                end = float(self.spacing_end_edit.text())
-                step_size = float(self.step_size_edit.text())
+                start = float(self.range_start_edit.text())
+                end = float(self.range_end_edit.text())
+                step_size = float(self.range_step_edit.text())
             except:
                 logger.error("Invalid values for start, end, or step_size")
                 return False
@@ -372,17 +526,36 @@ class ScanWidget(QGroupBox):
                 self.val_list = new_val_list
 
         elif self.use_GP.isChecked():
-            if self.n_queries_edit.text() == "":
-                self.n_queries_edit.setText("20")
-            self.n_queries = float(self.n_queries_edit.text())
+            # If GP values are not inputted, get them from scan values
+            if self.GP_start_edit.text() == "":
+                self.GP_start_edit.setText(self.spacing_start_edit.text())
+            if self.GP_end_edit.text() == "":
+                self.GP_end_edit.setText(self.spacing_end_edit.text())
+            if self.GP_step_edit.text() == "":
+                self.GP_step_edit.setText(self.spacing_step_edit.text())
+
+            self.GP_n_queries = int(self.GP_n_queries_edit.text())
+            self.GP_n_prescans = int(self.GP_n_prescans_edit.text())
+
+            if self.GP_n_prescans < 2:
+                logger.error("Gaussian Process requires at least 2 prescans.")
+                return False
+
+            self.prescan_vals = np.linspace(
+                int(self.GP_start_edit.text()),
+                int(self.GP_end_edit.text()),
+                self.GP_n_prescans,
+            )
 
             if self.continue_scan:
-                self.number_of_values += self.n_queries
-                self.val_list = np.append(self.val_list, np.zeros(int(self.n_queries)))
-            else:
-                self.number_of_values = self.n_queries + self.GPRegressor.pre_scan_num
+                self.number_of_values += self.GP_n_queries
                 self.val_list = np.append(
-                    self.first_pre_scans, np.zeros(int(self.n_queries))
+                    self.val_list, np.zeros(int(self.GP_n_queries))
+                )
+            else:
+                self.number_of_values = self.GP_n_queries + len(self.prescan_vals)
+                self.val_list = np.append(
+                    self.prescan_vals, np.zeros(int(self.GP_n_queries))
                 )
 
             return True
@@ -392,49 +565,6 @@ class ScanWidget(QGroupBox):
 
         self.number_of_values = len(self.val_list)
         return True
-
-    def set_instrument_setting(self):
-        if self.use_GP.isChecked():
-            # For when the count is past the initial scan, get the measured value from the GP widget
-            if (
-                self.count < self.GPRegressor.pre_scan_num
-                and self.count > 0
-                and not self.continue_scan
-            ):
-                self.measure_value()
-                self.GPRegressor.regressor.teach(
-                    self.val_list[self.count - 1].reshape(1, -1),
-                    self.app.main_window.tab7.faraday_voltage_list[
-                        self.count - 1
-                    ].reshape(1, -1),
-                )
-                self.GPRegressor.plotGP()
-                self.app.main_window.tab7.plotScan()
-            # For once the count is past the pre scans or if it is a continued scan
-            # Get the measured value, and set the next value to scan
-            if self.count >= self.GPRegressor.pre_scan_num or self.continue_scan:
-                self.measure_value()
-                self.GPRegressor.regressor.teach(
-                    self.val_list[self.count - 1].reshape(1, -1),
-                    self.app.main_window.tab7.faraday_voltage_list[
-                        self.count - 1
-                    ].reshape(1, -1),
-                )
-                query_idx, query_instance = self.GPRegressor.regressor.query(
-                    self.val_list.reshape(-1, 1)
-                )
-                self.val_list[self.count] = query_instance  # next to measure
-                self.GPRegressor.plotGP()
-                self.app.main_window.tab7.plotScan()
-        else:  # if not GP
-            if self.count > 0:
-                self.measure_value()
-                self.app.main_window.tab7.plotScan()
-
-        v = self.val_list[self.count]
-        if type(v) == str:
-            v = v.strip()
-        self.scan_instrument.remote_update_setting(self.scan_parameter, str(v))
 
     def pause_before_after(self):
         start_time = time.time()
@@ -460,7 +590,7 @@ class ScanWidget(QGroupBox):
                 if self.pause_before:
                     self.scan()
                 else:
-                    self.start_cycle()
+                    self.operate_cycle()
 
         try:
             self.scan_timer.timeout.disconnect()
@@ -469,20 +599,54 @@ class ScanWidget(QGroupBox):
         self.scan_timer.timeout.connect(pause)
         self.scan_timer.start(100)
 
-    def start_cycle(self):
-        self.count += 1
-        self.scan_progress = str(self.count / self.number_of_values * 100)
+    def operate_cycle(self):
+        if self.use_GP.isChecked() == False:
+            self.GP_n_prescans = np.inf
+        self.measured_yvals = self.get_measured_values()
+
+        if self.count >= self.GP_n_prescans or self.continue_scan:
+            self.GP_regressor.update_model(
+                self.measured_yvals[self.count],
+            )
+        self.plot_scan()
+
+        # Update progress bar
+        self.scan_progress = str((self.count + 1) / self.number_of_values * 100)
         self.progress_bar.setValue(float(self.scan_progress))
         QApplication.processEvents()
+
+        # Move to next scan value
+        self.count += 1
         if self.count == self.number_of_values:
-            logger.debug("Finished scan")
+            logger.debug("Finished scan.")
             self.stop_scan()
-        else:
-            self.set_instrument_setting()
-            self.pause_before = True
-            self.pause_before_after()
+            return
+        if self.count >= self.GP_n_prescans or self.continue_scan:
+            # For first GP query, initialize the GP regressor
+            if self.count == self.GP_n_prescans and not self.continue_scan:
+                logger.info("Finsihed GP Pre-Scan. Starting to GP Query...", flush=True)
+                self.GP_regressor = regressor(
+                    self.val_list[: self.count],
+                    self.measured_yvals[: self.count],
+                    float(self.GP_step_edit.text()),
+                )
+
+            self.GP_regressor.next_query_val()
+            self.val_list[self.count] = self.GP_regressor.x_measured[-1]
+
+        # Update scan instrument with new value
+        v = self.val_list[self.count]
+        if type(v) == str:
+            v = v.strip()
+        self.scan_instrument.remote_update_setting(self.scan_parameter, str(v))
+        # Start the scan
+        self.pause_before = True
+        self.pause_before_after()
 
     def stop_scan(self):
+        self.stop_button.click()
+
+    def button_stop_scan(self):
         self.scan_timer.stop()
         self.pause_timer_label_before.setText("0.0")
         self.pause_timer_label_after.setText("0.0")
@@ -490,8 +654,8 @@ class ScanWidget(QGroupBox):
         self.continue_scan_button.setEnabled(True)
         self.stop_button.setEnabled(False)
         self.progress_bar.setValue(float(self.scan_progress))
-        self.measure_value()
-        self.app.main_window.tab7.save_scan()
+        if self.progress_bar.value() > 0.0:
+            self.save_scan()
 
     def start_scan(self):
         if self.scan_instrument is None:
@@ -501,29 +665,19 @@ class ScanWidget(QGroupBox):
             return
         if not self.compute_values():
             return
-        i = self.instrument_drop.currentText()
-        p = self.parameter_drop.currentText()
-        m = self.action_drop.currentText()
-        logger.debug(
-            f"Starting scan\n\tInstrument: {i}\n\tParameter: {p}\n\tValues:{self.val_list}"
+        instrument = self.instrument_drop.currentText()
+        parameter = self.parameter_drop.currentText()
+        logger.info(
+            f"Starting scan\n\tInstrument: {instrument}\n\tParameter: {parameter}\n\tValues:{self.val_list}"
         )
         self.scan_button.setEnabled(False)
         self.continue_scan_button.setEnabled(False)
         self.stop_button.setEnabled(True)
-        self.set_instrument_setting()
         self.pause_before = True
         self.pause_before_after()
 
     def new_scan(self):
         self.count = 0
-        if self.use_GP.isChecked():
-            self.GPRegressor.initialize_GPR()
-            bias_range = self.GPRegressor.end_bias - self.GPRegressor.start_bias
-            self.first_pre_scans = np.linspace(
-                self.GPRegressor.start_bias,
-                self.GPRegressor.end_bias,
-                self.GPRegressor.pre_scan_num,
-            )
         self.new_scan_time = ""
         self.continue_scan = False
         self.start_scan()
@@ -533,10 +687,10 @@ class ScanWidget(QGroupBox):
         self.start_scan()
 
     def scan(self):
-        m = self.action_drop.currentText()
+        scan_action = self.action_drop.currentText()
         func = self.actions.get(m, None)
         if func is not None:
-            logger.debug(f"\t\tRunning scan function {m}")
+            logger.info(f"\t\tRunning scan function {scan_action}")
             func()
         self.first_run = False
         self.pause_before = False
@@ -544,11 +698,9 @@ class ScanWidget(QGroupBox):
 
     def update_instruments(self):
         self.instrument_drop.clear()
-        names = []
-        for inst in self.app.instruments:
-            if inst.ignore_control:
+        scan_instruments = []
+        for instrument in self.app.list_instruments():
+            if self.app.get_instrument_parameter(instrument, "ignore"):
                 continue
-            if not inst.control_UIs:
-                continue
-            names.append(inst.name)
-        self.instrument_drop.addItems(names)
+            scan_instruments.append(instrument)
+        self.instrument_drop.addItems(scan_instruments)
