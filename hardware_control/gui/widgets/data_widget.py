@@ -1,4 +1,7 @@
 import logging
+from typing import Callable
+from os import getcwd
+from pathlib import Path
 
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
@@ -17,6 +20,7 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QHBoxLayout,
     QAbstractScrollArea,
+    QFileDialog,
 )
 
 logger = logging.getLogger(__name__)
@@ -33,7 +37,11 @@ class DataWidget(QWidget):
 
     """
 
-    def __init__(self, app, name: str = "Data Logger"):
+    def __init__(
+        self,
+        app,
+        name: str = "Data Logger",
+    ):
 
         super().__init__()
         self.app = app
@@ -41,31 +49,18 @@ class DataWidget(QWidget):
 
         self.current_dataset = ""
 
-        # Left column
-        self.data_select_layout = QVBoxLayout()
-
+        # Left dataset selector sidebar
         self.dataset_chooser_label = QLabel("Dataset:")
-        self.dataset_chooser_label.setAlignment(
-            QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
-        )
 
         self.dataset_chooser_drop = QComboBox()
         self.dataset_chooser_drop.addItems(["----------"])
 
-        self.sidebar_v_spacer = QSpacerItem(
-            20, 200, QSizePolicy.Minimum, QSizePolicy.Expanding
-        )
-
-        self.save_all_button = QPushButton()
-        self.save_all_button.setText("Save All Sets")
-        self.save_all_button.clicked.connect(self.save_all_data)
-
+        self.data_select_layout = QVBoxLayout()
         self.data_select_layout.addWidget(self.dataset_chooser_label)
         self.data_select_layout.addWidget(self.dataset_chooser_drop)
-        self.data_select_layout.addItem(self.sidebar_v_spacer)
-        self.data_select_layout.addWidget(self.save_all_button)
+        self.data_select_layout.addStretch()
 
-        # Right column
+        # Data Table
         self.table = QTableWidget()
         self.table.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
         self.table.setRowCount(15)
@@ -85,7 +80,7 @@ class DataWidget(QWidget):
         self.data_disp_box.addWidget(self.save_button, 1, 0)
         self.data_disp_box.addWidget(self.clear_button, 1, 3)
 
-        # host everything in a groupbox
+        # Host all UIs in a groupbox
         self.data_disp_frame = QGroupBox("Data")
         self.data_disp_frame.setLayout(self.data_disp_box)
 
@@ -99,31 +94,40 @@ class DataWidget(QWidget):
         self.grid.addWidget(self.data_disp_frame)
         self.setLayout(self.grid)
 
-        # a timer to update the display of the current table
+        # Add a timer to update the display of the current table
         self.update_table_timer = QTimer(self)
         self.update_table_timer.timeout.connect(self.update_table)
         self.update_table_timer.start(1000)
 
     def save_data(self):
-        self.app.main_window.save_data(self.current_dataset)
+        # File options
+        file_filter = "JSON File (*.json);; Pickle File (*.pickle);; NPY File (*.npy);; Text File (*.txt)"
 
-    def save_all_data(self):
-        self.app.main_window.save_all()
+        # Open QT file dialog widget with save directory as the current working directory (cwd)
+        savefile, __ = QFileDialog.getSaveFileName(
+            parent=self,
+            directory=getcwd(),
+            filter=file_filter,
+            initialFilter="Text File (*.txt)",
+        )
+        file_extension = savefile.split("/")[-1].split(".")[-1]
+
+        # Save file with the Dataset class' "save" method
+        self.app.data_sets[self.current_dataset].save(Path(savefile), file_extension)
 
     def erase_dataset_data(self):
         ds_name = self.current_dataset
 
         msg = QMessageBox()
         msg.setIcon(QMessageBox.Warning)
-        msg.setText("You are about to delete data. Abort?")
+        msg.setText("Are you sure you want to delete the dataset?")
         msg.setInformativeText(
-            f"Continuing will permanently erase all data in Dataset '{ds_name}'"
+            f"Continuing will permanently erase all data in Dataset '{ds_name}'."
         )
-        msg.setWindowTitle("Data Erasure Warning")
-        msg.setStandardButtons(QMessageBox.Ignore | QMessageBox.Abort)
+        msg.setStandardButtons(QMessageBox.No | QMessageBox.Yes)
         buttonReply = msg.exec()
 
-        if buttonReply == QMessageBox.Abort:
+        if buttonReply == QMessageBox.No:
             return
 
         try:
@@ -144,6 +148,7 @@ class DataWidget(QWidget):
         self.dataset_chooser_drop.setCurrentText(self.current_dataset)
         self.update_table()
 
+        # Resize data to fit column contents
         self.table.resizeColumnsToContents()
 
     def update_table(self):
@@ -173,7 +178,7 @@ class DataWidget(QWidget):
 
         self.table.setHorizontalHeaderLabels(header_names)
 
-        # Write indeces along vertical
+        # Write indices along vertical
         indeces_str = [str(x) for x in list(range(num_rows))]
 
         self.table.setVerticalHeaderLabels(indeces_str)
@@ -208,6 +213,9 @@ class DataWidget(QWidget):
                 self.table.setItem(ridx, col, temp_item)
 
             col += 1
+
+        # Resize data to fit column contents
+        self.table.resizeColumnsToContents()
 
     def update_dataset_chooser(self):
         """Updated the drop down menu with the list of all datasets."""
