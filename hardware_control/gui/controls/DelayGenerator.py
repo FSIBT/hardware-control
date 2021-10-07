@@ -39,13 +39,9 @@ class DelayGenerator(QGroupBox):
 
     """
 
-    def __init__(
-        self,
-        app,
-        instrument_name: str,
-    ):
+    def __init__(self, app, instrument_name: str, widget_name: str = "Delay Generator"):
 
-        super().__init__(instrument_name)
+        super().__init__(widget_name)
 
         self.app = app
         self.instrument = instrument_name
@@ -234,7 +230,6 @@ class DelayChannelWidget(QWidget):
         self.channel = channel
         self.channel_label = QLabel(f"Channel {channel}")
         self.channel_label.setFont(QFont("Arial", 20))
-        self.channel_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
 
         if channel not in ["AB", "CD"]:
             self.time_delay = HCLineEdit(
@@ -261,6 +256,7 @@ class DelayChannelWidget(QWidget):
             label="High Level (V)",
         )
         self.volt.setEnabled(False)
+        self.volt.setStyleSheet("background-color: grey")
 
         self.level = HCComboBox(
             self.app,
@@ -277,7 +273,9 @@ class DelayChannelWidget(QWidget):
         )
 
         self.channel_layout = QGridLayout()
-        self.channel_layout.addWidget(self.channel_label, 0, 0, 1, 2)
+        self.channel_layout.addWidget(
+            self.channel_label, 0, 0, 1, 2, QtCore.Qt.AlignBottom
+        )
         if self.channel not in ["AB", "CD"]:
             self.channel_layout.addWidget(self.time_delay.label, 1, 0)
             self.channel_layout.addWidget(self.time_delay, 1, 1)
@@ -300,8 +298,10 @@ class DelayChannelWidget(QWidget):
             return
 
         if value == "VOLTAGE":
-            self.volt.setEnabled(True)
+            self.volt.setDisabled(False)
+            self.volt.setStyleSheet("background-color: white")
             value = "VAR"
         else:
-            self.volt.setEnabled(False)
+            self.volt.setDisabled(True)
+            self.volt.setStyleSheet("background-color: grey")
         return value
