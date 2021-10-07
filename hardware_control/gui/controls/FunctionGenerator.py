@@ -50,11 +50,9 @@ class FunctionGenerator(QGroupBox):
         super().__init__(name)
         self.app = app
         self.instrument = instrument_name
+        self.name = name
         self.num_channels = num_channels
 
-        self.setup_UI()
-
-    def setup_UI(self):
         self.frequency = HCLineEdit(
             self.app, self.instrument, "CH1_FREQUENCY", label="CH1 Frequency (MHz)"
         )
@@ -296,8 +294,6 @@ class FunctionGenerator(QGroupBox):
         self.setLayout(self.grid)
 
     def set_tracking_hook(self, setting, value):
-        if value is None:
-            return
         if setting == "CH2_TRACK":
             settings_list = self.widgets
         elif setting == "CH1_TRACK":
@@ -306,14 +302,15 @@ class FunctionGenerator(QGroupBox):
             if self.track2 in settings_list:
                 settings_list.remove(self.track2)
                 settings_list.remove(self.track1)
-        else:
-            print("Unknown setting being called", flush=True)
 
         for w in settings_list:
             if value == "OFF":
                 w.setEnabled(True)
-            else:
+            elif value == "ON" or value == "INV":
                 w.setEnabled(False)
-            w.settings_to_UI()
+            else:
+                logger.warning(
+                    f"'{self.instrument}': Unrecognized value in '{self.name}' parameter '{setting}'."
+                )
 
         return setting, value
