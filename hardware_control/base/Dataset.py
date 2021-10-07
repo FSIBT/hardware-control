@@ -5,7 +5,7 @@ import logging
 from pathlib import Path
 import pickle
 import time
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 
 import numpy as np
 import pandas as pd
@@ -18,17 +18,17 @@ logger = logging.getLogger(__name__)
 class Dataset(QObject):
     """Collect values from different instruments over time.
 
-    This data structure an be used to track values over time. You give
-    it a list of instruments and parameter names and a time interval and
-    every N seconds it will add a row to an internal data table with
-    the current time stamp and the values for each parameter.
+    This data structure an be used to track values over time. It
+    requires a list of instruments, parameter names, a time interval
+    in order to add a row with the current time stamp and the values
+    for each parameter to an internal data table every N seconds.
 
     The object also automates saving this table to disc in different
     formats and enables other widgets to easily display the whole
     dataset or certain columns vs time.
 
     The idea is that a single datasets can group together certain
-    instrument/parameter combinations that are useful to log into a
+    instrument-parameter combinations that are useful to log into a
     file or display in a single plot.
 
     The length of a Dataset is the number of rows in self.data.
@@ -37,16 +37,16 @@ class Dataset(QObject):
     class provides an easy way to overwrite names when the data is
     output to, for example, disk.
 
-    The internal data is saved as a defaultdict of list where the keys
+    The internal data is saved as a defaultdict of lists where the keys
     have the form 'instrument:parameter' and the list has the
     instrument value for each time stamp.
 
-    The time is stored in a special columns called 'time:time'.
+    The time is stored in a special column called 'time:time'.
 
-    The data is taken from hc.Instruments, that is it is not taken
-    directly from the backend and there is no communication with the
-    actual hardware. It is assumed that the user has set up a timer
-    that pulls new data from the hardware into the Instrument.values
+    The data is taken from hc.Instruments, meaning that it is not taken
+    directly from the backends; a Dataset therefore does not communicate
+    with any actual hardware. It is assumed that the user has set up a
+    timer that pulls new data from the hardware into the Instrument.values
     dictionary periodically.
 
     """
@@ -57,8 +57,8 @@ class Dataset(QObject):
 
         super().__init__()
 
-        self.app = app
         self.name = name
+        self.app = app
 
         self.autosave = False
         self.autosave_interval = 120  # in seconds
@@ -70,7 +70,7 @@ class Dataset(QObject):
         self.autosave_next_row = 0
 
         self.instruments = []
-        self.update_interval = 10  # Seconds
+        self.update_interval = 10  # in seconds
 
         # Dictionary of datapoints. Each key follows the <instrument>:<parameter>
         # naming scheme. Every value is a list and all lists need to have the
@@ -109,20 +109,43 @@ class Dataset(QObject):
         self.data = defaultdict(list)
         self.autosave_next_row = 0
 
-    def track_instrument(self, instrument, parameter=None) -> None:
+    def track_instrument(
+        self,
+        instrument: str,
+        parameter: Optional[str] = None,
+        alias: Optional[str] = None,
+        channels: Optional[List] = None,
+    ) -> None:
         """Add a parameter from an instrument to the dataset.
 
-        If parameter is `None`, all parameters that can be read are
-        included.
+        If parameter is `None`, all parameters that can be read
+        are included. If a list of channels is specified, only
+        the parameters of those channels are included.
+
+        If a parameter is specified, one can provide an alias
+        for the parameter.
 
         """
-        if parameter is None:
-            for p in instrument.read_command.keys():
-                self.instruments.append((instrument, p))
-        else:
-            self.instruments.append((instrument, parameter))
 
-    def define_alias(self, channel: str, name: str) -> None:
+        # If a parameter is specified, only track that parameter
+        if parameter is not None:
+            self.instruments.append((instrument, parameter))
+            # If alias is specified, change parameter name to alias
+            if alias is not None:
+                self.define_alias(instrument + ":" + parameter, alias)
+        else:
+            for p in self.app.list_instrument_parameters(instrument):
+                # If a list of channels is specified, track all parameters of those channels
+                if channels is not None:
+                    for ch in channels:
+                        ch = "CH" + str(ch)
+                        if ch in p:
+                            self.instruments.append((instrument, p))
+                # If neither parameter nor channel is specified, track all the instrument's parameters
+                else:
+                    self.instruments.append((instrument, p))
+
+    def define_alias(self, channel: str, alias: str) -> None:
         """Channel must be a key in self.data and name is the replacement string."""
 
         instrument, parameter = channel.split(":")
@@ -130,7 +153,7 @@ class Dataset(QObject):
             logger.warning(f"'{channel}' is not available in dataset '{self.name}'.")
             return
 
-        self.channel_names[channel] = name
+        self.channel_names[channel] = alias
 
     def start_autosave(
         self, interval: float = 120, format: str = "JSON", filename: str = "autosave"
@@ -144,7 +167,7 @@ class Dataset(QObject):
 
         self.autosave_timer.start(1e3 * self.autosave_interval)
 
-        logger.info(
+        logger.debug(
             f"Dataset {self.name} activated autosave."
             f" Interval: {self.autosave_interval} s"
         )
@@ -156,7 +179,7 @@ class Dataset(QObject):
 
         self.update_timer.start(1e3 * self.update_interval)
 
-        logger.info(
+        logger.debug(
             f"Dataset {self.name} activated asynchronous mode."
             f" Interval: {self.update_interval} s"
         )
@@ -170,7 +193,7 @@ class Dataset(QObject):
         self.update_timer.setInterval(1e3 * self.update_interval)
 
     def timer_autosave(self):
-        logger.info(
+        logger.debug(
             f"Dataset {self.name} autosaveing to" f" file {self.autosave_filename}"
         )
 
@@ -206,16 +229,18 @@ class Dataset(QObject):
                     datastructure = "Time[s] "
                     datastructure += " ".join(
                         [
-                            instrument.get_header(parameters)
-                            for instrument, parameters in self.instruments
+                            instrument_param_tuple[1]
+                            for instrument_param_tuple in self.instruments
                         ]
                     )
 
                     outfile.write(f"{datastructure}\n")
-            else:
-                outfile.write(header)
 
-        # Write file data
+            else:
+                with filename.open("w") as outfile:
+                    outfile.write(header)
+
+        # Write data to file
         with filename.open("a") as outfile:
             length = len(self)
             while self.autosave_next_row < length:
@@ -271,14 +296,9 @@ class Dataset(QObject):
         elif format == "TXT":
             self.save_txt(filename)
         elif self.app is not None and format in self.app.additional_save_formats:
-            try:
-                self.app.additional_save_formats[format](self, filename)
-            except:
-                logger.error(
-                    f"Invalid save function provided for '{format}'.", exc_info=True
-                )
+            self.app.additional_save_formats[format](self, filename)
         else:
-            logger.warning(f"unrecognized file format '{format}'.")
+            logger.warning(f"Unrecognized file format '{format}'.")
 
     def update_data(self) -> None:
         """Logs values from the specified instruments to the datasets.
@@ -287,7 +307,7 @@ class Dataset(QObject):
 
         """
 
-        logger.debug(f"Dataset {self.name} updating data")
+        logger.debug(f"Updating data in Dataset {self.name}.")
 
         self.data["time:time"].append(str(time.time()))
 
@@ -315,12 +335,12 @@ class Dataset(QObject):
             if name in self.data:
                 out[name] = self.data[name]
             else:
-                logger.error(f"{name} does not exist in data set {self.name}")
+                logger.error(f"{name} does not exist in data set {self.name}.")
         return out
 
     def to_pandas(
         self,
-        columns: Optional[list] = None,
+        columns: Optional[List] = None,
         cleanup: bool = True,
     ) -> pd.DataFrame:
         """Return a subset of columns as a pandas dataframe and optionally clean it up.
