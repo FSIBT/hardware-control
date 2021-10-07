@@ -55,16 +55,17 @@ class MultiPowerSupply(QGroupBox):
         app,
         instrument_name: str,
         channels: List,
-        name: str = "Multi_Channel_PSU",
+        widget_name: str = "Multi_Channel_PSU",
         show_VI_limits: bool = False,
         show_status_panel: bool = False,
         enable_power_buttons: str = "none",
     ):
-        super().__init__(name)
+        super().__init__(widget_name)
 
         self.app = app
         self.instrument = instrument_name
         self.channels = channels
+        self.show_VI_limits = show_VI_limits
         self.show_status_panel = show_status_panel
         self.enable_power_buttons = enable_power_buttons
 
@@ -78,7 +79,7 @@ class MultiPowerSupply(QGroupBox):
                     self.app,
                     self.instrument,
                     channel,
-                    show_VI_limits,
+                    self.show_VI_limits,
                     self.show_status_panel,
                     self.enable_power_buttons,
                 )
@@ -144,12 +145,13 @@ class MultiPowerSupply(QGroupBox):
             self.app.update_instrument_parameter(
                 self.instrument, f"CH{cw.channel}_I_OUT"
             )
-            self.app.update_instrument_parameter(
-                self.instrument, f"CH{cw.channel}_V_MAX"
-            )
-            self.app.update_instrument_parameter(
-                self.instrument, f"CH{cw.channel}_I_MAX"
-            )
+            if self.show_VI_limits:
+                self.app.update_instrument_parameter(
+                    self.instrument, f"CH{cw.channel}_V_MAX"
+                )
+                self.app.update_instrument_parameter(
+                    self.instrument, f"CH{cw.channel}_I_MAX"
+                )
 
             # Calculate and update the value of the channel's power out
             V_out_value = self.app.get_instrument_parameter(
@@ -164,14 +166,14 @@ class MultiPowerSupply(QGroupBox):
                 )
 
             # If status panel is enabled, update it
-            if self.show_status_panel:
-                try:
-                    if float(Iout) >= float(Iset) * 0.95:
-                        self.CC_indic.setPixmap(self.ccurr_ind)
-                    else:
-                        self.CC_indic.setPixmap(self.cvolt_ind)
-                except:
-                    logger.error(f"{self.instrument}: Error updating CC Indicator")
+            I_set_value = self.app.get_instrument_parameter(
+                self.instrument, f"CH{cw.channel}_I_SET"
+            )
+            if None not in [I_set_value, I_out_value] and self.show_status_panel:
+                if float(I_out_value) >= float(I_set_value) * 0.95:
+                    cw.CC_indic.setPixmap(cw.ccurr_ind)
+                else:
+                    cw.CC_indic.setPixmap(cw.cvolt_ind)
 
     def set_maxI(self, channel: int, maxI: float):
         """Sets an internal limit for the current from channel 'n'."""
@@ -366,6 +368,8 @@ class PowerSupplyChannel(QWidget):
             self.status_panel.setLayout(self.status_grid)
 
             self.channel_layout.addWidget(self.status_panel, 2, 0)
+
+        self.channel_layout.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignTop)
         self.setLayout(self.channel_layout)
 
     def set_label(self, label: str):
