@@ -29,37 +29,38 @@ class PlotBase(QWidget):
     def __init__(
         self,
         app,
-        name="",
-        width=500,
-        height=500,
-        active=True,
-        time_zone="America/Los_Angeles",
-        dpi=100,
+        name: str = "",
+        width: int = 500,
+        height: int = 500,
+        active: bool = True,
+        time_zone: str = "America/Los_Angeles",
+        dpi: int = 100,
     ):
         super().__init__()
 
         self.app = app
         self.name = name
-        self.normalize = False
-        self.autoscale = True
+        self.active = active
         self.time_zone = time_zone
         self.dpi = dpi
-        self.fmt = "o-"
 
+        # Plotting parameters
+        self.normalize = False
+        self.autoscale = True
+        self.fmt = "o-"
         self.plot_set = None
 
+        # Set up plotting
         self.fig = plt.figure(
             figsize=(width / self.dpi, height / self.dpi), dpi=self.dpi
         )
         self.plot = FigureCanvas(self.fig)
 
-        self.interval = 1000
-        self.active = active
-
+        # Create timer to query instruments
         self.update_timer = QTimer(self)
         self.update_timer.timeout.connect(self.update)
         if self.active:
-            self.update_timer.start(self.interval)
+            self.update_timer.start(self.app.globalRefreshRate)
 
     def set_dataset(self, set_name: str):
         """Specifies which dataset the widget should display
@@ -133,7 +134,7 @@ class PlotBase(QWidget):
             if self.normalize:
                 mymax = np.abs(y_values).max()
                 if mymax > 0:
-                    y_values /= mymax
+                    y_values = y_values / mymax
 
             # Get channel name
             if key in dataset.channel_names:
@@ -173,7 +174,6 @@ class PlotTool(PlotBase):
         self.nav.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
         # custom toolbar
-        self.controls = QHBoxLayout()
         self.normalizebutton = QPushButton("normalize")
         self.normalizebutton.clicked.connect(self.toggle_normalize)
         self.normalizebutton.setCheckable(True)
@@ -186,6 +186,7 @@ class PlotTool(PlotBase):
         self.select_set_drop.addItems([x for x in app.data_sets])
         self.select_set_drop.currentIndexChanged.connect(self.selector_changed)
 
+        self.controls = QHBoxLayout()
         self.controls.addWidget(self.normalizebutton)
         self.controls.addWidget(self.autoscalebutton)
         self.controls.addWidget(self.select_set_label)
@@ -201,7 +202,7 @@ class PlotTool(PlotBase):
         self.setLayout(self.vbox)
 
     def selector_changed(self):
-        """Is automatically called when the dataset dropdown is changed.
+        """Automatically call this function when the dataset dropdown is changed.
 
         This function updates the dataset to plot using the current value of the
         dropdown widget.
