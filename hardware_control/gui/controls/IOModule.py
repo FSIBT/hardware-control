@@ -109,6 +109,10 @@ class IOModule(QGroupBox):
                 elif c_dict["TYPE"] == "ANALOG":
                     create_widget_function = AnalogOutputChannel
                     list_of_widgets = self.an_out_channels
+                else:
+                    logger.error(
+                        f"{self.instrument}: 'TYPE' field in channel data mus be set to DIGITAL or ANALOG."
+                    )
             elif c_dict["DIR"] == "INPUT":
                 if c_dict["TYPE"] == "DIGITAL":
                     create_widget_function = DigitalInputChannel
@@ -118,9 +122,13 @@ class IOModule(QGroupBox):
                     list_of_widgets = self.an_in_channels
                     if "use_prefix" in c_dict:
                         kwargs["use_prefix"] = c_dict["use_prefix"]
+                else:
+                    logger.error(
+                        f"{self.instrument}: 'TYPE' field in channel data mus be set to DIGITAL or ANALOG."
+                    )
             else:
                 logger.error(
-                    f"{self.instrument}: 'Dir' field in channel data mus be set to OUTPUT or INPUT."
+                    f"{self.instrument}: 'DIR' field in channel data mus be set to OUTPUT or INPUT."
                 )
 
             # Remove input/output status from channel name since all
