@@ -23,7 +23,7 @@ class StatusTool(QGroupBox):
 
         self.app = app
         self.name = name
-        self.instrument_names = {}
+        self.instrument_rows = {}
 
         if short_indicators:
             self.green_indicator = load_icon("green_ind.svg")
@@ -46,15 +46,15 @@ class StatusTool(QGroupBox):
         self.instrument_grid = QGridLayout()
 
         # Add a grid layout that will hold all the connection status information
-        #
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.instruments_label, 0, 0, 1, 1)
         self.master_layout.addLayout(self.instrument_grid, 1, 0, 1, 1)
         self.setLayout(self.master_layout)
 
+        # Create timer to query instruments
         self.update_timer = QTimer(self)
-        self.update_timer.timeout.connect(self.update_status)
-        self.update_timer.start(1000)
+        self.update_timer.timeout.connect(self.hc_update)
+        self.update_timer.start(self.app.globalRefreshRate)
 
         self.update_instruments()
 
@@ -64,18 +64,18 @@ class StatusTool(QGroupBox):
         # Clear layout
         for i in reversed(range(self.instrument_grid.count())):
             self.instrument_grid.itemAt(i).widget().setParent(None)
-        self.instrument_names = {}
+        self.instrument_rows = {}
 
-        for row, inst in enumerate(self.app.get_instruments()):
-            if inst.hasattr("ignore") and inst.ignore:
+        for row, instrument in enumerate(self.app.list_instruments()):
+            if self.app.get_instrument_parameter(instrument, "ignore"):
                 continue
 
             # save the row to make updating the instrument later easier
-            self.instrument_names[inst] = row
+            self.instrument_rows[instrument] = row
 
             self.app.add_widget(instrument, "online", self)
 
-            label = QLabel(inst)
+            label = QLabel(instrument)
             indicator = QLabel()
             indicator.setPixmap(self.grey_indicator)
             indicator.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
@@ -91,25 +91,44 @@ class StatusTool(QGroupBox):
         QtTimer.
 
         """
-        for instrument in self.app.get_instruments():
+        for instrument in self.app.list_instruments():
 
-            row = self.instrument_names.get(instrument, None)
+            row = self.instrument_rows.get(instrument, None)
             if row is None:
                 continue
 
             if self.instrument_grid.itemAtPosition(row, 1) is None:
                 continue
 
-            online = self.app.get_instrument_parameter(instrument, "online")
-            if online:
-                self.instrument_grid.itemAtPosition(row, 1).widget().setPixmap(
-                    self.blue_indicator
-                    if instrument.online_color == "Blue"
-                    else self.green_indicator
-                )
+            if self.app.dummy == False:
+                online = self.app.get_instrument_parameter(instrument, "online")
             else:
+                online = False
+            online_color = self.app.get_instrument_parameter(instrument, "online_color")
+            if online:
+                if online_color == "Blue":
+                    online_indicator = self.blue_indicator
+                elif online_color == "Green":
+                    online_indicator = self.green_indicator
+                else:
+                    logger.error(
+                        f"'{instrument}' has invalid online color indicator '{online_color}'"
+                    )
+                    continue
                 self.instrument_grid.itemAtPosition(row, 1).widget().setPixmap(
-                    self.darkgrey_indicator
-                    if instrument.online_color == "Blue"
-                    else self.red_indicator
+                    online_indicator
+                )
+
+            else:
+                if online_color == "Blue":
+                    offline_indicator = self.darkgrey_indicator
+                elif online_color == "Green":
+                    offline_indicator = self.red_indicator
+                else:
+                    logger.error(
+                        f"'{instrument}' has invalid online color indicator '{online_color}'"
+                    )
+                    continue
+                self.instrument_grid.itemAtPosition(row, 1).widget().setPixmap(
+                    offline_indicator
                 )
