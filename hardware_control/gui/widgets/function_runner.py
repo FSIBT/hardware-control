@@ -24,7 +24,6 @@ class FunctionRunnerTool(QGroupBox):
 
     def __init__(
         self,
-        app,
         name: str,
         button_label: str,
         call_function: Callable,
@@ -32,12 +31,8 @@ class FunctionRunnerTool(QGroupBox):
         countdown_callback=None,
     ):
         """
-        The callback functions take one parameter: the main app.
-
         Parameters
         ----------
-        app :
-            The main app
         name : str
             Name of the QGroupBox
         button_label : str
@@ -51,7 +46,6 @@ class FunctionRunnerTool(QGroupBox):
 
         """
         super().__init__(name)
-        self.app = app
         self.button_label = button_label
         self.countdown = countdown
         self.call_function = call_function
@@ -59,26 +53,28 @@ class FunctionRunnerTool(QGroupBox):
         self.countdown_value = float(countdown)
 
         if not callable(self.call_function):
-            raise TypeError("Function in Function Runner must be callable")
+            logger.fatal("Function in Function Runner must be callable")
+            return
 
         if countdown_callback is not None and not callable(self.countdown_callback):
-            raise TypeError("Callback function in Function Runner must be callable")
+            logger.fatal("Callback function in Function Runner must be callable")
+            return
 
-        # *************************Create GUI************************
+        # Create function runner button
         self.main = QGridLayout()
         self.run_button = QPushButton()
         self.run_button.setText(self.button_label)
         self.run_button.setCheckable(False)
         self.run_button.clicked.connect(self.run_function)
 
+        self.main.addWidget(self.run_button, 0, 0)
+
+        # Potentially create a countdown to the right of the function runner button
         if countdown:
             self.countdown_wdgt = QLCDNumber()
             self.countdown_wdgt.setSmallDecimalPoint(True)
             self.countdown_wdgt.display(f"{self.countdown_value:.1f}")
 
-        self.main.addWidget(self.run_button, 0, 0)
-
-        if countdown:
             self.main.addWidget(self.countdown_wdgt, 0, 1)
 
             self.countdown_timer = QTimer()
@@ -94,7 +90,7 @@ class FunctionRunnerTool(QGroupBox):
             self.countdown_timer.stop()
 
             if self.countdown_callback is not None:
-                self.countdown_callback(self.app)
+                self.countdown_callback()
 
         self.countdown_wdgt.display(f"{self.countdown_value:.1f}")
 
@@ -103,4 +99,4 @@ class FunctionRunnerTool(QGroupBox):
             self.countdown_value = float(self.countdown)
             self.countdown_timer.start(100)
 
-        self.call_function(self.app)
+        self.call_function()
