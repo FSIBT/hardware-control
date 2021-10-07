@@ -53,7 +53,7 @@ class Demo(hc.HCMainWindow):
             hc.instruments.SRS_DG535(name="dg5353", connection_addr="GPIB0::15::INSTR")
         )
 
-        self.trigger_ctrl = hc.gui.DelayGenerator(self.app, "dg5353")
+        self.trigger_ctrl = hc.gui.DelayGenerator(self.app, "dg5353", "Delay Generator")
 
         # Add control to the main Widget
         self.grid = QGridLayout()

@@ -54,7 +54,7 @@ class Demo(hc.HCMainWindow):
             hc_inst.Keysight_4000X("Keysight-4000", "TCPIP0::192.168.0.14::INSTR")
         )
         self.scope_ctrl = hc.gui.Oscilloscope(
-            self.app, "Keysight-4000", display_channels=[1]
+            self.app, "Keysight-4000", "Keysight 4000", display_channels=[1]
         )
 
         # Add control to the main Widget
