@@ -12,19 +12,33 @@ and check the Gdocs manual!
 """
 
 import logging
-import os
-import random
 import time
 from nidaqmx.constants import TerminalConfiguration
+from typing import Optional, List, Dict
 
 from ...base import Instrument
-from ..utility import ensure_float
 
 logger = logging.getLogger(__name__)
 
 
 class Ni_9000(Instrument):
-    def __init__(self, instrument_name: str = "NI-9000", connection_addr: str = ""):
+    def __init__(
+        self,
+        instrument_name: str = "NI-9000",
+        connection_addr: str = "",
+        modules: List = [1],
+        analog_channels: Optional[Dict] = {},
+        digital_channels: Optional[Dict] = {},
+    ):
+        """
+        NI class requires a name for the instrument, a connection address for the
+        physical instrument, and a list of modules in the instrument.
+
+        Each module a given number of analog or digital channels. These channels are
+        specied in the analog_channels and digital_channels dictionaries, which have
+        module numbers as keys and a list of channel numbers (either analog or digital)
+        as values.
+        """
 
         # need to set a default port for this instrument
         super().__init__(
@@ -33,23 +47,23 @@ class Ni_9000(Instrument):
             default_port=0,
         )
 
-        # NEED TO FIGURE OUT HOW MANY MODs AND AIs ARE PRESENT IN Instrument
-        # THIS SCRIPT IS CURRENTLY BROKEN
         # Numeric list of all modules
-        self.n_mods = list(range(1, 3))
-        # Numeric list of all channels (analog input, analog output, digital input, digital output)
-        self.n_analogs = list(range(0, 6))
-        self.n_digitals = list(range(0, 6))
+        self.modules = modules
+        # Numeric lists of all analog and digital channels
+        self.analog_channels = analog_channels
+        self.digital_channels = digital_channels
 
         self.term_config_modes = {}
         self.V_mins = {}
         self.V_maxes = {}
 
-        for mod in self.n_mods:
-            for chan in self.n_analogs:
-                self.initialize_params(mod, chan, "a")
-            for chan in self.n_digitals:
-                self.initialize_params(mod, chan, "d")
+        for mod in self.modules:
+            if self.analog_channels.get(mod) != None:
+                for chan in self.analog_channels[mod]:
+                    self.initialize_params(mod, chan, "a")
+            if self.digital_channels.get(mod) != None:
+                for chan in self.digital_channels[mod]:
+                    self.initialize_params(mod, chan, "d")
 
         self.add_command("DISPLAY_CONFIGURATION", lambda: self.display_configuration())
 
@@ -57,14 +71,14 @@ class Ni_9000(Instrument):
         channel = f"Mod{module_num}/{signal_type}-{chan_num}"
         self.add_parameter(
             f"CH{channel}_V_MAX",
-            read_command=None,
+            read_command=lambda x: self.read_V_max(channel),
             set_command=lambda x: self.set_V_max(channel, x),
             dummy_return="20",
         )
 
         self.add_parameter(
             f"CH{channel}_V_MIN",
-            read_command=None,
+            read_command=lambda x: self.read_V_min(channel),
             set_command=lambda x: self.set_V_min(channel, x),
             dummy_return="0",
         )
@@ -105,6 +119,12 @@ class Ni_9000(Instrument):
 
     def set_V_min(self, channel, value):
         self.V_mins[channel] = float(value)
+
+    def read_V_max(self, channel):
+        return self.V_maxs[channel]
+
+    def read_V_min(self, channel):
+        return self.V_mins[channel]
 
     def set_term_config(self, channel, value):
         self.term_config_modes[channel] = value
