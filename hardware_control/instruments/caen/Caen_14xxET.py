@@ -13,6 +13,7 @@ See class definition for details.
 
 import logging
 from typing import Union
+from numpy import Infinity
 
 from ...base import Instrument
 from ...base.hooks import (
@@ -20,6 +21,8 @@ from ...base.hooks import (
     write_to_log,
     scaling_converter,
     format_int,
+    last_n_values_converter,
+    range_validator,
 )
 
 logger = logging.getLogger(__name__)
@@ -133,9 +136,12 @@ class Caen_14xxET(Instrument):
             self.add_parameter(
                 f"CH{channel}_V_SET",
                 read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:VSET",
+                set_command=f"$BD:00,CMD:SET,CH:{channel},PAR:VSET,VAL:{{}}",
+                pre_hooks=[range_validator(-Infinity, self.read_V_max(channel))],
                 post_hooks=[
                     parse_instrument_response,
                     lambda value: value.strip("\\nr"),
+                    last_n_values_converter(6),
                 ],
                 dummy_return="10.0",
             )
@@ -143,9 +149,12 @@ class Caen_14xxET(Instrument):
             self.add_parameter(
                 f"CH{channel}_I_SET",
                 read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:ISET",
+                set_command=f"$BD:00,CMD:SET,CH:{channel},PAR:ISET,VAL:{{}}",
+                pre_hooks=[range_validator(-Infinity, self.read_I_max(channel))],
                 post_hooks=[
                     parse_instrument_response,
                     lambda value: value.strip("\\nr"),
+                    last_n_values_converter(7),
                     format_float(),
                     scaling_converter(1e6),
                 ],

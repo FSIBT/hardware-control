@@ -76,7 +76,7 @@ class Keysight_4000X(Instrument):
             read_command=":TIM:SCAL?",
             set_command=":TIM:SCAL {}",
             pre_hooks=[format_float(".6E")],
-            dummy_return="0.0002",
+            dummy_return="5e-3",
         )
 
         self.add_parameter(
@@ -84,7 +84,7 @@ class Keysight_4000X(Instrument):
             read_command=":TIM:POS?",
             set_command=":TIM:POS {}",
             pre_hooks=[format_float(".6E")],
-            dummy_return="0.",
+            dummy_return="6e-3",
         )
 
         self.add_parameter(
@@ -149,7 +149,7 @@ class Keysight_4000X(Instrument):
                 read_command=f"CHAN{channel}:OFFS?",
                 set_command=f"CHAN{channel}:OFFS {{}}",
                 pre_hooks=[format_float(".6E"), make_negative()],
-                dummy_return="0.",
+                dummy_return="1.",
             )
 
             self.add_parameter(
@@ -187,6 +187,7 @@ class Keysight_4000X(Instrument):
             self.add_parameter(
                 f"CH{channel}_WAVEFORM",
                 read_command=lambda: self.read_waveform(channel),
+                dummy_return="[[], []]",
             )
 
             self.add_command(
