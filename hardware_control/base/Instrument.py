@@ -384,7 +384,9 @@ class Instrument:
         val = self.get_value(name)
         if val is not None:
             return val
-        logger.error(f"'{name}' not available in instrument '{self.name}'")
+        logger.error(
+            f"Error when calling '__getitem__': '{name}' not available in instrument '{self.name}'"
+        )
 
     def __getattr__(self, name: str):
         """Allow values to be easily accessed.
@@ -411,7 +413,9 @@ class Instrument:
             else:
                 self.write(self.set_commands[name].format(value))
             return
-        logger.error(f"'{name}' not available in instrument '{self.name}'")
+        logger.error(
+            f"Error when calling 'set_value': '{name}' not available in instrument '{self.name}'"
+        )
 
     def __setitem__(self, name, value) -> None:
         """Allow values to be easily accessed.
@@ -437,7 +441,7 @@ class Instrument:
             and "post_hooks" in self.__dict__
             and name in self.set_commands
         ):
-            self.set_values(name, value)
+            self.set_value(name, value)
         super().__setattr__(name, value)
 
     def command(self, name: str) -> None:
@@ -460,7 +464,9 @@ class Instrument:
                 self.write(self.commands[name])
             return
 
-        logger.error(f"{name} not available in instrument {self.name}")
+        logger.error(
+            f"Error when calling 'command': {name} not available in instrument {self.name}"
+        )
 
     def close(self) -> None:
         """Close connection to instrument."""
@@ -583,7 +589,7 @@ class Instrument:
     def write(self, command: str) -> None:
 
         if self.dummy:
-            logger.info(f"{self.name} sending write command {command}")
+            logger.debug(f"{self.name} sending write command {command}")
             return
 
         try:
@@ -632,7 +638,7 @@ class Instrument:
     def query(self, command: str, delay: Optional[float] = None):
 
         if self.dummy:
-            logger.info(f"{self.name} sending query command {command}")
+            logger.debug(f"{self.name} sending query command {command}")
             return
 
         try:
