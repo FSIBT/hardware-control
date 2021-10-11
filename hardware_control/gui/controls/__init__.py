@@ -6,3 +6,4 @@ from .MultiPowerSupply import MultiPowerSupply
 from .Oscilloscope import Oscilloscope
 from .ReadModule import Read
 from .TempMonitor import TempMonitor
+from .RGA import RGA
