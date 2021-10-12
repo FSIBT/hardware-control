@@ -102,42 +102,6 @@ class RGA(QGroupBox):
         self.bias.setMinimum(0)
         self.bias.setMaximum(2490)
 
-        ## set the intial scan mass
-        self.MI = HCSpinBox(
-            self.app,
-            self.instrument,
-            "INITIAL_MASS",
-            label="Intial Mass",
-            label_align="right",
-        )
-        self.MI.setSingleStep(1)
-        self.MI.setMinimum(1)
-        self.MI.setMaximum(199)
-
-        ## set the intial scan mass
-        self.MF = HCSpinBox(
-            self.app,
-            self.instrument,
-            "FINAL_MASS",
-            label="Final Mass",
-            label_align="right",
-        )
-        self.MF.setSingleStep(1)
-        self.MF.setMinimum(20)
-        self.MF.setMaximum(200)
-
-        ## set the scan rate
-        self.scan_rate = HCSpinBox(
-            self.app,
-            self.instrument,
-            "SCAN_RATE",
-            label="Scan Rate",
-            label_align="right",
-        )
-        self.scan_rate.setSingleStep(1)
-        self.scan_rate.setMinimum(0)
-        self.scan_rate.setMaximum(7)
-
         self.channel_box.setLayout(self.channel_box_layout)
 
         self.master_layout = QGridLayout()
@@ -151,16 +115,8 @@ class RGA(QGroupBox):
         self.master_layout.addWidget(self.electron_energy.label, 1, 2)
         self.master_layout.addWidget(self.electron_energy, 1, 3)
 
-        self.master_layout.addWidget(self.MI.label, 2, 0)
-        self.master_layout.addWidget(self.MI, 2, 1)
-        self.master_layout.addWidget(self.MF.label, 2, 2)
-        self.master_layout.addWidget(self.MI, 2, 3)
-
-        self.master_layout.addWidget(self.scan_rate.label, 3, 0)
-        self.master_layout.addWidget(self.scan_rate, 3, 1)
-
-        self.master_layout.addWidget(self.bias.label, 3, 2)
-        self.master_layout.addWidget(self.bias, 3, 2)
+        self.master_layout.addWidget(self.bias.label, 3, 0)
+        self.master_layout.addWidget(self.bias, 3, 1)
 
         self.setLayout(self.master_layout)
 
@@ -183,3 +139,92 @@ class RGA(QGroupBox):
             "",
         ]:
             self.app.update_instrument_parameter(self.instrument, parameter)
+
+
+class ScanProcessControlWidget(QWidget):
+    def __init__(self, app, action):
+
+        super().__init__()
+        self.app = app
+        self.action = action
+
+        self.RGA_scan_box = QGroupBox()
+        self.RGA_scan_layout = QGridLayout()
+
+        ## set the intial scan mass
+        self.MI = HCLineEdit(
+            self.app,
+            self.instrument,
+            "INITIAL_MASS",
+            label="Intial Mass",
+            label_align="right",
+        )
+
+        ## set the intial scan mass
+        self.MF = HCLineEdit(
+            self.app,
+            self.instrument,
+            "FINAL_MASS",
+            label="Final Mass",
+            label_align="right",
+        )
+
+        ## set the scan steps
+        self.SA = HCLineEdit(
+            self.app,
+            self.instrument,
+            "SCAN_STEPS",
+            label="steps/amu",
+            label_align="right",
+        )
+
+        ## set the single scan mass
+        self.SM = HCLineEdit(
+            label="Single Mass:",
+            label_align="right",
+        )
+
+        ## repeat how many times for one triggers
+        self.SM_times = HCLineEdit(
+            label="Single scan points",
+            label_align="right",
+        )
+
+        ## set the scan rate
+        self.Scan_rate = HCLineEdit(
+            self.app,
+            self.instrument,
+            "SCAN_RATE",
+            label="Scan Rate",
+            label_align="right",
+        )
+
+        ## repeat how many times for one triggers
+        self.Scan_times = HCLineEdit(
+            label="Num. of Scans",
+            label_align="right",
+        )
+
+        self.integrated_faraday_label = QLabel("Integrated Faraday Voltage:")
+        self.integrated_faraday_drop = QComboBox()
+        self.integrated_faraday_drop.addItems(["Total", "First Peak"])
+
+        self.RGA_scan_layout.addWidget(self.MI.label, 0, 0)
+        self.RGA_scan_layout.addWidget(self.MI, 0, 1)
+        self.RGA_scan_layout.addWidget(self.MF.label, 0, 2)
+        self.RGA_scan_layout.addWidget(self.MF, 0, 3)
+        self.RGA_scan_layout.addWidget(self.SA.label, 0, 4)
+        self.RGA_scan_layout.addWidget(self.SA, 0, 5)
+        self.RGA_scan_layout.addWidget(self.SM.label, 1, 0)
+        self.RGA_scan_layout.addWidget(self.SM, 1, 1)
+        self.RGA_scan_layout.addWidget(self.SM_times.label, 2, 2)
+        self.RGA_scan_layout.addWidget(self.SM_times, 2, 3)
+        self.RGA_scan_layout.addWidget(self.Scan_rate.label, 2, 0)
+        self.RGA_scan_layout.addWidget(self.Scan_rate, 2, 1)
+        self.RGA_scan_layout.addWidget(self.Scan_times.label, 2, 0)
+        self.RGA_scan_layout.addWidget(self.Scan_times, 2, 1)
+
+        self.RGA_scan_box.setLayout(self.RGA_scan_layout)
+
+        self.main_layout = QGridLayout()
+        self.main_layout.addWidget(self.RGA_scan_box, 0, 0)
