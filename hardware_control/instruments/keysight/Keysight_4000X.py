@@ -187,7 +187,7 @@ class Keysight_4000X(Instrument):
             self.add_parameter(
                 f"CH{channel}_WAVEFORM",
                 read_command=lambda: self.read_waveform(channel),
-                dummy_return="[[], []]",
+                dummy_return=lambda: self.read_waveform_dummy(),
             )
 
             self.add_command(
@@ -236,13 +236,13 @@ class Keysight_4000X(Instrument):
                     "Cannot read scope trace because scope is not sending any data.",
                     exc_info=True,
                 )
-                return "[[], []]"
+                return "[[],[]]"
         except ValueError:
             logger.error(
                 "Cannot read scope trace because scope is not sending any data.",
                 exc_info=True,
             )
-            return "[[], []]"
+            return "[[],[]]"
 
         try:
             # Set the source channel
@@ -268,19 +268,19 @@ class Keysight_4000X(Instrument):
             x_orig = float(x_orig)
         except ValueError:
             logger.error("Received bad origin from scope.", exc_info=True)
-            return "[[], []]"
+            return "[[],[]]"
         try:
             # Convert X Reference
             x_ref = float(x_ref)
         except ValueError:
             logger.error("Received bad reference from scope.", exc_info=True)
-            return "[[], []]"
+            return "[[],[]]"
         try:
             # Convert X Increment
             x_incr = float(x_incr)
         except ValueError:
             logger.error("Received bad increment from scope.", exc_info=True)
-            return "[[], []]"
+            return "[[],[]]"
 
         try:
             # Trim block header from packet & remove newline character from end
@@ -294,9 +294,13 @@ class Keysight_4000X(Instrument):
             t = t.tolist()
         except Exception:
             logger.error("Failed to calculate V & t.", exc_info=True)
-            return "[[], []]"
+            return "[[],[]]"
 
         return f"[{t}, {fmt}]"
+
+    def read_waveform_dummy(self):
+        dummy_return = str(np.random.uniform(0.0, 10.0, 10).tolist()).replace(" ", "")
+        return f"[[1,2,3,4,5,6,7,8,9,10],{dummy_return}]"
 
     def configure_read_waveform(self):
         """Sets the data transfer mode of the oscilloscope.
