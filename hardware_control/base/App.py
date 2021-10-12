@@ -261,7 +261,10 @@ class App(QApplication):
             logger.debug(f"App got '{msg}' from '{name}'")
 
             # would need error checking here
-            inst_name, parameter, value = msg.split()
+            try:
+                inst_name, parameter, value = msg.split()
+            except ValueError:
+                logger.error(f"{msg.split()} has too many values (expected 3).")
             assert inst_name == name
 
             post_read_hooks = self._data[name][parameter]["post_read_hooks"]
@@ -425,28 +428,29 @@ class App(QApplication):
             self._data[instrument][parameter]["widgets"].append(widget)
 
     def add_save_format(
-        self, name: str, format: Callable[[Dataset, str], None]
+        self, format_name: str, save_fxn: Callable[[Dataset, str], None]
     ) -> None:
         """
-        The callback function must accept two _data:
-            1st: Dataset object
-            2nd: Filename
+        Add a save format for a dataset.
+
+        The second argument – the save function – must accept two arguments:
+        a Dataset object and a filename.
         """
 
-        if name in Dataset.built_in_save_formats:
+        if format_name in Dataset.built_in_save_formats:
             logger.warning(
-                f"Cannot add save format '{name}'"
+                f"Cannot add save format '{format_name}'"
                 f" because it is already included by default."
             )
             return
 
-        if not callable(format):
+        if not callable(save_fxn):
             logger.warning(
-                f"Cannot add save format '{name}' because"
+                f"Cannot add save format '{format_name}' because"
                 f" the callback function argument is not callable."
             )
 
-        self.additional_save_formats[name] = format
+        self.additional_save_formats[format_name] = save_fxn
 
     def get_instrument_read_values(self, instrument) -> Dict:
         """Return a dictionary of an instrument's read_values"""

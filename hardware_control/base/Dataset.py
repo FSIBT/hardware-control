@@ -289,14 +289,19 @@ class Dataset(QObject):
 
         if format == "JSON":
             self.save_json(filename)
+            logger.debug(f"Saved file {filename} as .json file.")
         elif format == "PICKLE":
             self.save_pickle(filename)
+            logger.debug(f"Saved file {filename} as .pickle file.")
         elif format == "NPY":
             self.save_npy(filename)
+            logger.debug(f"Saved file {filename} as .npy file.")
         elif format == "TXT":
             self.save_txt(filename)
+            logger.debug(f"Saved file {filename} as .txt file.")
         elif self.app is not None and format in self.app.additional_save_formats:
             self.app.additional_save_formats[format](self, filename)
+            logger.debug(f"Saved file {filename} as '{format}' file.")
         else:
             logger.warning(f"Unrecognized file format '{format}'.")
 
