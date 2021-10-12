@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import Callable, Optional, Dict
+from typing import Callable, Optional, Dict, List
 
 from GPy.kern import Matern32, Bias
 from GPy.models import GPRegression
@@ -47,9 +47,14 @@ class regressor:
         )
 
         # Average of lower 10% of data is baseline of Bias kernel
-        self.mean_training_baseline = np.mean(
-            self.y_measured[self.y_measured < np.percentile(self.y_measured, 10)]
-        )
+        if len(set(self.y_measured)) != 1:
+            self.mean_training_baseline = np.mean(
+                self.y_measured[self.y_measured < np.percentile(self.y_measured, 10)]
+            )
+        # If all measured y values are the same value, use that value for the baseline
+        else:
+            self.mean_training_baseline = self.y_measured[0]
+
         # The kernel
         kernel = Matern32(1) + Bias(1, variance=self.mean_training_baseline)
         kernel.Mat32.variance.set_prior(
@@ -63,7 +68,8 @@ class regressor:
             np.asarray(self.y_measured).reshape(-1, 1),
             kernel,
         )
-        # force model prediction must go through all points
+
+        # Force model prediction must go through all points
         model.Gaussian_noise.fix(0.0)
         model.optimize()
         self.model = model
@@ -71,7 +77,7 @@ class regressor:
         self.std = None
 
     def neighbor_probability(potential_vals, found_vals, delta):
-        """Return a value proportional to the number of nearby points in new_arr."""
+        """For each element in potential_vals, return a value proportional to the number of nearby points in found_vals."""
         found_vals = found_vals.flatten()  # points already measured
         potential_vals = potential_vals.flatten()  # points that could be measured
 
@@ -98,7 +104,6 @@ class regressor:
     def next_query_val(self):
         # Get the predicted y values and standard deviations according to the current model
         ypred, std = self.model.predict((self.x_potential).reshape(-1, 1))
-
         # Form a normalized probability distribution out of the standard deviations
         pk = std
         pk = np.where(pk < 0, 0, pk)
@@ -152,12 +157,18 @@ class regressor:
         self.std = std
 
         # Update kernel
+        # Matern kernel variance prior is centered around the max y value
         self.model.kern.Mat32.variance.set_prior(
             Gamma.from_EV(np.max(self.y_measured), 1000.0), warning=False
-        )  # Matern kernel variance prior is centered around the max y value
-        self.mean_training_baseline = np.mean(
-            self.y_measured[self.y_measured < np.percentile(self.y_measured, 10)]
         )
+        # Average of lower 10% of data is baseline of Bias kernel
+        if len(set(self.y_measured.flatten())) != 1:
+            self.mean_training_baseline = np.mean(
+                self.y_measured[self.y_measured < np.percentile(self.y_measured, 10)]
+            )
+        # If all measured y values are the same value, use that value for the baseline
+        else:
+            self.mean_training_baseline = self.y_measured[0]
         self.model.kern.bias.variance = self.mean_training_baseline
 
 
@@ -167,6 +178,7 @@ class ScanWidget(QGroupBox):
         app,
         name: str,
         actions: Dict,
+        scan_parameters: Optional[Dict] = None,
         GP_option: bool = False,
         get_measured_values_fxn: Optional[Callable] = None,
         plot_scan_fxn: Optional[Callable] = None,
@@ -188,6 +200,7 @@ class ScanWidget(QGroupBox):
         self.app = app
 
         self.actions = actions
+        self.scan_parameters = scan_parameters
         self.get_measured_values = get_measured_values_fxn
         self.plot_scan = plot_scan_fxn
         self.save_scan = save_scan_fxn
@@ -196,6 +209,7 @@ class ScanWidget(QGroupBox):
         self.scan_parameter = None
         self.scan_action = None
         self.scan_progress = 0
+        self.scan_finished = False
 
         self.values = ""
         self.val_list = []
@@ -464,14 +478,25 @@ class ScanWidget(QGroupBox):
     def set_instrument(self) -> None:
         """When an instrumnet is selected, update the list of parameterts that can be scanned."""
         if self.instrument_drop.currentText() == "":
+            logger.warning("Scan Instrument dropdown is empty.")
             return
+        else:
+            self.scan_instrument = self.instrument_drop.currentText()
 
         self.parameter_drop.clear()
-        parameters = self.app.list_instrument_parameters(
-            self.instrument_drop.currentText()
-        )
-        self.parameter_drop.addItems(parameters)
+        # If a list of scan_parameters is provided for each instrument,
+        # add those parameters to the parameter dropdown
+        if self.scan_parameters != None:
+            self.parameter_drop.addItems(self.scan_parameters[self.scan_instrument])
+        # If list of scan parameters is not provided, add all the
+        # scan instrument's parameters to the parameter dropdown
+        else:
+            parameters = self.app.list_instrument_parameters(
+                self.instrument_drop.currentText()
+            )
+            self.parameter_drop.addItems(parameters)
 
+        # Set the scan bar progress to 0%
         self.scan_progress = 0
         self.progress_bar.setValue(self.scan_progress)
 
@@ -501,7 +526,9 @@ class ScanWidget(QGroupBox):
                 end = float(self.range_end_edit.text())
                 step_size = float(self.range_step_edit.text())
             except:
-                logger.error("Invalid values for start, end, or step_size")
+                logger.error(
+                    "Scan Widget: Invalid values for Range Scan start, end, or step."
+                )
                 return False
             if self.continue_scan:
                 self.val_list += [
@@ -514,7 +541,7 @@ class ScanWidget(QGroupBox):
         elif self.use_file.isChecked():
             filename = self.values_file_edit.text()
             if filename == "":
-                logger.error("no filename provided for values file")
+                logger.error("Scan Widget: No filename provided for values file")
                 return False
             # Read files
             with open(filename) as file:
@@ -528,17 +555,29 @@ class ScanWidget(QGroupBox):
         elif self.use_GP.isChecked():
             # If GP values are not inputted, get them from scan values
             if self.GP_start_edit.text() == "":
-                self.GP_start_edit.setText(self.spacing_start_edit.text())
+                self.GP_start_edit.setText(self.range_start_edit.text())
             if self.GP_end_edit.text() == "":
-                self.GP_end_edit.setText(self.spacing_end_edit.text())
+                self.GP_end_edit.setText(self.range_end_edit.text())
             if self.GP_step_edit.text() == "":
-                self.GP_step_edit.setText(self.spacing_step_edit.text())
+                self.GP_step_edit.setText(self.range_step_edit.text())
+
+            try:
+                start = float(self.range_start_edit.text())
+                end = float(self.range_end_edit.text())
+                step_size = float(self.range_step_edit.text())
+            except:
+                logger.error(
+                    "Scan Widget: Invalid values for GP Scan start, end, or step."
+                )
+                return False
 
             self.GP_n_queries = int(self.GP_n_queries_edit.text())
             self.GP_n_prescans = int(self.GP_n_prescans_edit.text())
 
             if self.GP_n_prescans < 2:
-                logger.error("Gaussian Process requires at least 2 prescans.")
+                logger.error(
+                    "ValueError: Gaussian Process requires at least 2 prescans."
+                )
                 return False
 
             self.prescan_vals = np.linspace(
@@ -546,6 +585,12 @@ class ScanWidget(QGroupBox):
                 int(self.GP_end_edit.text()),
                 self.GP_n_prescans,
             )
+
+            if np.max(np.diff(self.prescan_vals)) <= int(self.GP_step_edit.text()):
+                logger.error(
+                    "ValueError: The GP minimum stepsize is larger than the prescan values stepsize."
+                )
+                return False
 
             if self.continue_scan:
                 self.number_of_values += self.GP_n_queries
@@ -560,7 +605,7 @@ class ScanWidget(QGroupBox):
 
             return True
         else:
-            logger.error("No mode selected in scan tool")
+            logger.error("Please select a scanning method: Range, GP, List, or File.")
             return False
 
         self.number_of_values = len(self.val_list)
@@ -618,13 +663,15 @@ class ScanWidget(QGroupBox):
         # Move to next scan value
         self.count += 1
         if self.count == self.number_of_values:
-            logger.debug("Finished scan.")
-            self.stop_scan()
+            logger.info(
+                f"Finished scan\n\tInstrument: {self.scan_instrument}\n\tParameter: {self.scan_parameter}\n\tValues:{self.val_list}."
+            )
+            self.end_scan()
             return
         if self.count >= self.GP_n_prescans or self.continue_scan:
             # For first GP query, initialize the GP regressor
             if self.count == self.GP_n_prescans and not self.continue_scan:
-                logger.info("Finsihed GP Pre-Scan. Starting to GP Query...", flush=True)
+                logger.info("Finsihed GP Pre-Scan. Starting GP querying.")
                 self.GP_regressor = regressor(
                     self.val_list[: self.count],
                     self.measured_yvals[: self.count],
@@ -638,12 +685,15 @@ class ScanWidget(QGroupBox):
         v = self.val_list[self.count]
         if type(v) == str:
             v = v.strip()
-        self.scan_instrument.remote_update_setting(self.scan_parameter, str(v))
+        self.app.set_instrument_parameter(
+            self.scan_instrument, self.scan_parameter, str(v)
+        )
         # Start the scan
         self.pause_before = True
         self.pause_before_after()
 
-    def stop_scan(self):
+    def end_scan(self):
+        self.scan_finished = True
         self.stop_button.click()
 
     def button_stop_scan(self):
@@ -653,6 +703,8 @@ class ScanWidget(QGroupBox):
         self.scan_button.setEnabled(True)
         self.continue_scan_button.setEnabled(True)
         self.stop_button.setEnabled(False)
+        if self.scan_finished == False:
+            logger.info("Scan Widget stopped manually by the user.")
         self.progress_bar.setValue(float(self.scan_progress))
         if self.progress_bar.value() > 0.0:
             self.save_scan()
@@ -688,9 +740,9 @@ class ScanWidget(QGroupBox):
 
     def scan(self):
         scan_action = self.action_drop.currentText()
-        func = self.actions.get(m, None)
+        func = self.actions.get(scan_action, None)
         if func is not None:
-            logger.info(f"\t\tRunning scan function {scan_action}")
+            logger.info(f"Running scan function '{scan_action}'")
             func()
         self.first_run = False
         self.pause_before = False
@@ -698,6 +750,15 @@ class ScanWidget(QGroupBox):
 
     def update_instruments(self):
         self.instrument_drop.clear()
+
+        # If a list of scan parameters is provided, add the scanned
+        # instruments to the scan instrument dropdown
+        if self.scan_parameters != None:
+            self.instrument_drop.addItems(self.scan_parameters.keys())
+            return
+
+        # If no scan parameters are provided, add all known instruments
+        # to the scan instrument dropdown
         scan_instruments = []
         for instrument in self.app.list_instruments():
             if self.app.get_instrument_parameter(instrument, "ignore"):
