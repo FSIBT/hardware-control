@@ -1,13 +1,16 @@
 import logging
+import time
 
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
-from PyQt5.QtGui import QIcon, QFont, QDoubleValidator
+from PyQt5.QtGui import QIcon, QFont, QDoubleValidator, QIntValidator
+
 from PyQt5.QtWidgets import (
     QGroupBox,
     QComboBox,
     QLabel,
     QGridLayout,
+    QPushButton,
     QWidget,
 )
 
@@ -180,12 +183,16 @@ class ScanProcessControlWidget(QWidget):
 
         ## set the single scan mass
         self.SM = HCLineEdit(
+            self.app,
+            self.instrument,
             label="Single Mass:",
             label_align="right",
         )
 
         ## repeat how many times for one triggers
         self.SM_times = HCLineEdit(
+            self.app,
+            self.instrument,
             label="Single scan points",
             label_align="right",
         )
@@ -201,14 +208,13 @@ class ScanProcessControlWidget(QWidget):
 
         ## repeat how many times for one triggers
         self.Scan_times = HCLineEdit(
+            self.app,
+            self.instrument,
             label="Num. of Scans",
             label_align="right",
         )
 
-        self.integrated_faraday_label = QLabel("Integrated Faraday Voltage:")
-        self.integrated_faraday_drop = QComboBox()
-        self.integrated_faraday_drop.addItems(["Total", "First Peak"])
-
+        ## add the widgets into the scan_layout
         self.RGA_scan_layout.addWidget(self.MI.label, 0, 0)
         self.RGA_scan_layout.addWidget(self.MI, 0, 1)
         self.RGA_scan_layout.addWidget(self.MF.label, 0, 2)
@@ -224,7 +230,92 @@ class ScanProcessControlWidget(QWidget):
         self.RGA_scan_layout.addWidget(self.Scan_times.label, 2, 0)
         self.RGA_scan_layout.addWidget(self.Scan_times, 2, 1)
 
-        self.RGA_scan_box.setLayout(self.RGA_scan_layout)
+        self.scan_opt_frame = QGridLayout()
+        self.scan_opt_box = QGroupBox()
+        self.pause_before = HCLineEdit(
+            label="Pause Before",
+            label_align="right",
+        )
+        self.pause_before.setText("10")
+        self.pause_before.setValidator(QIntValidator())
 
+        self.pause_after = HCLineEdit(
+            label="Pause After",
+            label_align="right",
+        )
+        self.pause_after.setText("10")
+        self.pause_after.setValidator(QIntValidator())
+
+        self.scans_drop = HCComboBox(
+            self.app,
+            self.instrument,
+            label="Scans",
+            label_align="right",
+            items=["Internal", "External", "Single", "Burst"],
+        )
+
+        self.scan_button = QPushButton()
+        self.scan_button.setIcon(QIcon(load_icon("scan.png")))
+        self.scan_button.setCheckable(False)
+        self.scan_button.clicked.connect(self.scan)
+        # self.scan_button.setSizePolicy(
+        #     QSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)
+        # )
+
+        self.scan_opt_frame.addWidget(self.pause_before.label, 0, 0)
+        self.scan_opt_frame.addWidget(self.pause_after.label, 1, 0)
+        self.scan_opt_frame.addWidget(self.pause_before, 0, 1)
+        self.scan_opt_frame.addWidget(self.pause_after, 1, 1)
+        self.scan_opt_frame.addWidget(self.scans_drop.label, 2, 0)
+        self.scan_opt_frame.addWidget(self.scans_drop, 2, 1)
+        self.scan_opt_frame.addWidget(self.scan_button, 2, 2)
+
+        ## add two parts of scan into the main_layout
         self.main_layout = QGridLayout()
+        self.RGA_scan_box.setLayout(self.RGA_scan_layout)
         self.main_layout.addWidget(self.RGA_scan_box, 0, 0)
+        self.scan_opt_box.setLayout(self.scan_opt_frame)
+        self.main_layout.addWidget(self.scan_opt_frame, 1, 0)
+
+    def scan(self):
+        scan_action = self.action_drop.currentText()
+        func = self.actions.get(m, None)
+        if func is not None:
+            logger.info(f"\t\tRunning scan function {scan_action}")
+            func()
+        self.first_run = False
+        self.pause_before = False
+        self.pause_before_after()
+
+    def pause_before_after(self):
+        start_time = time.time()
+        if self.pause_before:
+            dt = float(self.pause_edit_before.text())
+        else:
+            dt = float(self.pause_edit_after.text())
+        end_time = start_time + dt
+
+        def pause():
+            time_left = end_time - time.time()
+            if time_left > 0:
+                if self.pause_before:
+                    self.pause_timer_label_before.setText(f"{time_left:.1f}")
+                else:
+                    self.pause_timer_label_after.setText(f"{time_left:.1f}")
+            else:
+                if self.pause_before:
+                    self.pause_timer_label_before.setText("0.0")
+                else:
+                    self.pause_timer_label_after.setText("0.0")
+                self.scan_timer.stop()
+                if self.pause_before:
+                    self.scan()
+                else:
+                    self.operate_cycle()
+
+        try:
+            self.scan_timer.timeout.disconnect()
+        except TypeError:
+            pass
+        self.scan_timer.timeout.connect(pause)
+        self.scan_timer.start(100)
