@@ -21,6 +21,7 @@ from ..widgets import (
     HCDoubleSpinBox,
     HCPushButton,
     HCSpinBox,
+    scan_widget,
 )
 
 logger = logging.getLogger(__name__)
@@ -144,12 +145,12 @@ class RGA(QGroupBox):
             self.app.update_instrument_parameter(self.instrument, parameter)
 
 
-class ScanProcessControlWidget(QWidget):
-    def __init__(self, app, action):
+class ScanProcessControlWidget(scan_widget):
+    def __init__(self, app, actions):
 
         super().__init__()
         self.app = app
-        self.action = action
+        self.actions = actions
 
         self.RGA_scan_box = QGroupBox()
         self.RGA_scan_layout = QGridLayout()
@@ -251,7 +252,7 @@ class ScanProcessControlWidget(QWidget):
             self.instrument,
             label="Scans",
             label_align="right",
-            items=["Internal", "External", "Single", "Burst"],
+            items=["Analog", "Single Mass"],
         )
 
         self.scan_button = QPushButton()
@@ -278,44 +279,11 @@ class ScanProcessControlWidget(QWidget):
         self.main_layout.addWidget(self.scan_opt_frame, 1, 0)
 
     def scan(self):
-        scan_action = self.action_drop.currentText()
-        func = self.actions.get(m, None)
+        scan_action = self.scans_drop.currentText()
+        func = self.actions.get(scan_action, None)
         if func is not None:
             logger.info(f"\t\tRunning scan function {scan_action}")
             func()
         self.first_run = False
         self.pause_before = False
         self.pause_before_after()
-
-    def pause_before_after(self):
-        start_time = time.time()
-        if self.pause_before:
-            dt = float(self.pause_edit_before.text())
-        else:
-            dt = float(self.pause_edit_after.text())
-        end_time = start_time + dt
-
-        def pause():
-            time_left = end_time - time.time()
-            if time_left > 0:
-                if self.pause_before:
-                    self.pause_timer_label_before.setText(f"{time_left:.1f}")
-                else:
-                    self.pause_timer_label_after.setText(f"{time_left:.1f}")
-            else:
-                if self.pause_before:
-                    self.pause_timer_label_before.setText("0.0")
-                else:
-                    self.pause_timer_label_after.setText("0.0")
-                self.scan_timer.stop()
-                if self.pause_before:
-                    self.scan()
-                else:
-                    self.operate_cycle()
-
-        try:
-            self.scan_timer.timeout.disconnect()
-        except TypeError:
-            pass
-        self.scan_timer.timeout.connect(pause)
-        self.scan_timer.start(100)
