@@ -1,4 +1,4 @@
-"""Stanford Research Systems DG535.
+"""Stanford Research Systems CIS200.
 
 .. image:: /images/DG535.jpg
   :height: 200
@@ -24,9 +24,16 @@ class SRS_CIS200(Instrument):
     is controlled using the pyvisa library.
     """
 
-    def __init__(self, name, connection_addr):
+    def __init__(
+        self,
+        instrument_name: str = "SRS_CIS200",
+        connection_addr: str = "",
+    ):
 
-        super().__init__(name, connection_addr)
+        super().__init__(
+            instrument_name=instrument_name,
+            connection_addr=connection_addr,
+        )
 
         self.manufacturer = "SRS"
         self.model = "CIS200"

@@ -31,11 +31,11 @@ class Lakeshore_224(Instrument):
 
     def __init__(
         self,
-        name,
-        connection_addr: str,
+        instrument_name: str = "LAKESHORE_224",
+        connection_addr: str = "",
     ):
         super().__init__(
-            instrument_name=name,
+            instrument_name=instrument_name,
             connection_addr=connection_addr,
             default_port=7777,
         )

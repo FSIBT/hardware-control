@@ -9,4 +9,3 @@ hardware_control.base.Dataset module
    :members:
    :undoc-members:
    :show-inheritance:
-

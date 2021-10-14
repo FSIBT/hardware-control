@@ -20,16 +20,16 @@ logger = logging.getLogger(__name__)
 
 
 class VQM835(Instrument):
-    """
-    A driver for the Grandville Phillips Ion Gauge
-    """
+    """Grandville Phillips Ion Gauge instrument class."""
 
     def __init__(
         self,
-        connection_addr: str,
+        instrument_name: str = "VQM835",
+        connection_addr: str = "",
     ):
         super().__init__(
-            connection_addr,
+            instrument_name=instrument_name,
+            connection_addr=connection_addr,
             default_port=7777,
         )
 

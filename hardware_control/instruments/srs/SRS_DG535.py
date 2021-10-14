@@ -8,6 +8,7 @@ See class definition for details.
 """
 
 import logging
+from typing import Optional
 
 from ...base import Instrument, hooks
 
@@ -15,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 class SRS_DG535(Instrument):
-    """A driver for the Stanford Research Systems DG535.
+    """Stanford Research Systems DG535 instrument class.
 
     Instrument home page: https://www.thinksrs.com/products/DG535.htm
     Manual: https://www.thinksrs.com/downloads/pdfs/manuals/DG535m.pdf
@@ -38,9 +39,17 @@ class SRS_DG535(Instrument):
         "CD": 7,
     }
 
-    def __init__(self, name, connection_addr, settings_file=None):
+    def __init__(
+        self,
+        instrument_name: str = "SRS_DG535",
+        connection_addr: str = "",
+        settings_file: Optional[str] = None,
+    ):
 
-        super().__init__(name, connection_addr)
+        super().__init__(
+            instrument_name=instrument_name,
+            connection_addr=connection_addr,
+        )
 
         self.manufacturer = "SRS"
         self.model = "DG535"

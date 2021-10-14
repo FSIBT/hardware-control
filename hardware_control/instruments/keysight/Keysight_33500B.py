@@ -23,15 +23,15 @@ logger = logging.getLogger(__name__)
 
 
 class Keysight_33500B(Instrument):
-    """Backend for Keysight 33500B arbitrary waveform generator.
+    """Keysight 33500B Series Waveform Generator base instrument class.
 
     Instrument home page: https://www.keysight.com/us/en/products/waveform-and-function-generators/trueform-series-waveform-and-function-generators.html
-
 
     Parameters
     ----------
     connection_addr : str
-        Address of instrument. Can use Visa address or socket and port.
+    Address of instrument. Can use Visa address or socket and port.
+
     """
 
     def __init__(

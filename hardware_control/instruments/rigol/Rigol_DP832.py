@@ -21,9 +21,14 @@ logger = logging.getLogger(__name__)
 
 
 class Rigol_DP832(Instrument):
-    def __init__(self, instrument_name="RigolDP832", connection_addr=""):
+    def __init__(
+        self,
+        instrument_name: str = "RIGOL_DP832",
+        connection_addr: str = "",
+    ):
         super().__init__(
-            instrument_name=instrument_name, connection_addr=connection_addr
+            instrument_name=instrument_name,
+            connection_addr=connection_addr,
         )
 
         # The instrument has 3 channels

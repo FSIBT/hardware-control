@@ -15,7 +15,12 @@ logger = logging.getLogger(__name__)
 class AdamBackend(Instrument):
     """Common try connect and init parts for all ADAM modules"""
 
-    def __init__(self, instrument_name, connection_addr, default_port=1025):
+    def __init__(
+        self,
+        instrument_name: str = "ADAM",
+        connection_addr: str = "",
+        default_port=1025,
+    ):
         super().__init__(
             instrument_name=instrument_name,
             connection_addr=connection_addr,

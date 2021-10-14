@@ -17,14 +17,21 @@ logger = logging.getLogger(__name__)
 
 
 class Siglent_SDG(Instrument):
-    """A driver for the Siglent SDG Series.
+    """Siglent SDG Serie instrument class.
 
     Instrument home page: https://www.siglent.eu/waveform-generators
 
     """
 
-    def __init__(self, connection_addr: str):
-        super().__init__(instrument_name="SIGLENT-SDG", connection_addr=connection_addr)
+    def __init__(
+        self,
+        instrument_name: str = "SIGLENT-SDG",
+        connection_addr: str = "",
+    ):
+        super().__init__(
+            instrument_name=instrument_name,
+            connection_addr=connection_addr,
+        )
 
     def update_setting(self, setting: str, value):
 

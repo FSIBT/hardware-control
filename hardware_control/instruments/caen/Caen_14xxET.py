@@ -58,7 +58,7 @@ class Caen_14xxET(Instrument):
 
     def __init__(
         self,
-        instrument_name: str = "caen",
+        instrument_name: str = "CAEN_14xxET",
         connection_addr: str = "",
     ):
 
