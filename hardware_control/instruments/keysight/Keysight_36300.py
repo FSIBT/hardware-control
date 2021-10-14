@@ -16,11 +16,16 @@ logger = logging.getLogger(__name__)
 
 
 class Keysight_36300(Instrument):
-    """Control the KeysightE36300 Series Triple Output Power Supply."""
+    """Keysight E36300 Series Triple Output Power Supply base instrument class."""
 
-    def __init__(self, connection_addr: str, instrument_name="Key36300"):
+    def __init__(
+        self,
+        instrument_name: str = "Keysight_36300",
+        connection_addr: str = "",
+    ):
         super().__init__(
-            instrument_name=instrument_name, connection_addr=connection_addr
+            instrument_name=instrument_name,
+            connection_addr=connection_addr,
         )
 
         # The instrument has channels 1, 2, and 3

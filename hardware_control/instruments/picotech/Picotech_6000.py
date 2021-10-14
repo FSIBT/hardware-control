@@ -29,9 +29,14 @@ class Picotech_6000(Instrument):
     """
 
     def __init__(
-        self, connection_addr,
+        self,
+        instrument_name: str = "PICOTECH_6000",
+        connection_addr: str = "",
     ):
-        super().__init__(instrument_name="Pico-6000", connection_addr=connection_addr)
+        super().__init__(
+            instrument_name=instrument_name,
+            connection_addr=connection_addr,
+        )
 
         self.num_vert_divisions = 8
         self.record_length = 1e6  # Maximum 64 MS
@@ -207,7 +212,8 @@ class Picotech_6000(Instrument):
 
         except Exception:
             logger.error(
-                "An error occured in Picoscope6000.", exc_info=True,
+                "An error occured in Picoscope6000.",
+                exc_info=True,
             )
 
     def command(self, cmd: str):

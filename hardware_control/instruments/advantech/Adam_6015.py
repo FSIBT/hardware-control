@@ -8,6 +8,8 @@ See class definition for details.
 """
 
 import logging
+
+from ...base.hooks import range_validator
 from .Adam_base import AdamBackend
 
 logger = logging.getLogger(__name__)
@@ -39,9 +41,14 @@ class Adam_6015(AdamBackend):
 
     """
 
-    def __init__(self, name, connection_addr):
+    def __init__(
+        self,
+        instrument_name: str = "ADAM_6015",
+        connection_addr: str = "",
+    ):
         super().__init__(
-            instrument_name=name, connection_addr=connection_addr,
+            instrument_name=instrument_name,
+            connection_addr=connection_addr,
         )
         self.manufacturer = "Advantech"
         self.model = "Adam 6015"

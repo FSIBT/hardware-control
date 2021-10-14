@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class ZMQ_Oscilloscope(Instrument):
-    """This backend communicates with a remote computer via ZMQ.
+    """Instrument class that communicates with a remote computer via ZMQ.
 
     This backend acts as a client to the remote computer's ZMQ
     server. The server is connected to a PicoScope oscilloscope via USB
@@ -23,10 +23,13 @@ class ZMQ_Oscilloscope(Instrument):
     """
 
     def __init__(
-        self, connection_addr: str,
+        self,
+        instrument_name: str = "ZMQ_Oscilloscope",
+        connection_addr: str = "",
     ):
         super().__init__(
-            instrument_name="ZMQ-Oscilloscope", connection_addr=connection_addr
+            instrument_name=instrument_name,
+            connection_addr=connection_addr,
         )
 
         # Create context and socket

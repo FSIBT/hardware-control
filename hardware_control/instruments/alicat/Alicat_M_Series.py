@@ -39,7 +39,11 @@ class Alicat_M_Series(Instrument):
 
     """
 
-    def __init__(self, instrument_name, connection_addr):
+    def __init__(
+        self,
+        instrument_name: str = "ALICAT_M",
+        connection_addr: str = "",
+    ):
 
         super().__init__(
             instrument_name=instrument_name,

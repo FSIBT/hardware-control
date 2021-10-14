@@ -10,18 +10,9 @@ See class definition for details.
 import logging
 import random
 
-from ..utility import ensure_float, get_channel_from_command
 from .Adam_base import AdamBackend
 
 logger = logging.getLogger(__name__)
-
-
-def range_validator(value):
-    if value < 0:
-        value = 0
-    if value > 10:
-        value = 10
-    return value
 
 
 def create_channel_parser(channel):
@@ -41,9 +32,14 @@ class Adam_6024(AdamBackend):
 
     """
 
-    def __init__(self, name, connection_addr):
+    def __init__(
+        self,
+        instrument_name: str = "ADAM_6024",
+        connection_addr: str = "",
+    ):
         super().__init__(
-            instrument_name=name, connection_addr=connection_addr,
+            instrument_name=instrument_name,
+            connection_addr=connection_addr,
         )
         self.manufacturer = "Advantech"
         self.model = "Adam 6024"
@@ -63,5 +59,5 @@ class Adam_6024(AdamBackend):
             self.add_parameter(
                 f"CH{i}_SET_VOLTAGE",
                 set_command=f"#01{i:02d}{{:06.3f}}",
-                pre_hooks=[range_validator],
+                pre_hooks=[range_validator(0, 10)],
             )

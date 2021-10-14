@@ -14,9 +14,14 @@ logger = logging.getLogger(__name__)
 
 
 class TDKL_GenH(Instrument):
-    def __init__(self, instrument_name: str = "tdkl", connection_addr: str = ""):
+    def __init__(
+        self,
+        instrument_name: str = "TDKL_GENH",
+        connection_addr: str = "",
+    ):
         super().__init__(
-            instrument_name=instrument_name, connection_addr=connection_addr
+            instrument_name=instrument_name,
+            connection_addr=connection_addr,
         )
 
         self.add_parameter(

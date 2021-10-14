@@ -40,7 +40,7 @@ class Ni_9000(Instrument):
         as values.
         """
 
-        # need to set a default port for this instrument
+        # Need to set a default port for this instrument
         super().__init__(
             instrument_name=instrument_name,
             connection_addr=connection_addr,
