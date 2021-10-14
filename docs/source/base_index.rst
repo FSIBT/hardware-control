@@ -7,6 +7,6 @@ Base Classes
 
    base/App
    base/Instrument
-   base/MainWindow
+   base/HCMainWindow
    base/Dataset
    base/logging
