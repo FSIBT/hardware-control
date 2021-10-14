@@ -4,7 +4,7 @@ Control class to handle Granville Phillips 356 Series Ion gauge for preesure rea
 .. image:: /images/NI9000.jpeg
   :height: 200
 
-Has been tested with GP356 Ion gauge
+Has been tested with VQM835s
 connection works over proprietary driver, with "tasks"
 """
 
@@ -45,3 +45,82 @@ class VQM835(Instrument):
         self.add_command("MSPECTROMETRY", "INST MSP")
         self.add_command("EMULTIPLIER", "INST EMUL")
         self.add_command("ELECTRON_METER", "INST EMEL")
+        self.add_command("CLEAN_ALL", "*CLS")
+
+        # Setting the ionizer parameters
+        self.add_parameter(
+            "FILAMENT_EMISSION",
+            read_command="FL?",
+            set_command="FL{}",
+            dummy_return="",
+        )
+        self.add_parameter(
+            "EXTRACT_VOLTAGE",
+            read_command="VF?",
+            set_command="VF{}",
+            dummy_return="",
+        )
+        self.add_parameter(
+            "ELECTRON_ENERGY",
+            read_command="EE?",
+            set_command="EE{}",
+            dummy_return="",
+        )
+        self.add_parameter(
+            "ION_ENERGY",
+            read_command="IE?",
+            set_command="IE{}",
+            dummy_return="",
+        )
+
+        # Setting up the Detectors
+        self.add_parameter(
+            "EM_VOLTAGE",
+            read_command="HV?",
+            set_command="HV{}",
+            dummy_return="",
+        )
+
+        # Setting up the Scans
+        self.add_parameter(
+            "INITIAL_MASS",
+            read_command="",
+            set_command="MI{}",
+            dummy_return="",
+        )
+        self.add_parameter(
+            "FINAL_MASS",
+            read_command="",
+            set_command="MF{}",
+            dummy_return="",
+        )
+        self.add_parameter(
+            "SCAN_RATE",
+            read_command="",
+            set_command="NF{}",
+            dummy_return="",
+        )  # Noise floor too
+        self.add_parameter(
+            "SCAN_STEPS",
+            read_command="SA?",
+            set_command="SA{}",
+            dummy_return="",
+        )  # followed by the steps/amu
+        self.add_parameter(
+            "ANALOG_SCANS",
+            read_command="",
+            set_command="SC{}",
+            dummy_return="",
+        )  # followed by the scan times
+        self.add_parameter(
+            "HISTOGRAM_SCANS",
+            read_command="",
+            set_command="HS{}",
+            dummy_return="",
+        )  # followed by the Scan times
+        self.add_parameter(
+            "SINGLE_MEASUREMENT",
+            read_command="",
+            set_command="MR{}",
+            dummy_return="",
+        )
