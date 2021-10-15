@@ -82,27 +82,27 @@ class FunctionGenerator(QGroupBox):
         self.burst_mode = HCComboBox(
             self.app,
             self.instrument,
-            "CH1_BURS_MODE",
+            "CH1_BURST_MODE",
             "CH1 Burst Mode",
             ["TRIG", "GAT"],
         )
         self.burst_enable = HCComboBox(
             self.app,
             self.instrument,
-            "CH1_BURS_STAT",
-            "CH1 Burst Enable/State",
+            "CH1_ENABLE_BURST",
+            "CH1 Burst Enable",
             ["1", "0"],
         )
         self.num_pulse = HCLineEdit(
             self.app,
             self.instrument,
-            "CH1_BURS_NCYC",
+            "CH1_BURST_CYCLES",
             "CH1 Num Burst Pulses",
         )
         self.burst_period = HCLineEdit(
             self.app,
             self.instrument,
-            "CH1_BURS_PER",
+            "CH1_BURST_PER",
             "CH1 Burst Period (s)",
         )
         self.enable = HCComboBox(
@@ -166,27 +166,27 @@ class FunctionGenerator(QGroupBox):
             self.burst_mode2 = HCComboBox(
                 self.app,
                 self.instrument,
-                "CH2_BURS_MODE",
+                "CH2_BURST_MODE",
                 "CH2 Burst Mode",
                 ["TRIG", "GAT"],
             )
             self.burst_enable2 = HCComboBox(
                 self.app,
                 self.instrument,
-                "CH2_BURS_STAT",
-                "CH2 Burst Enable/State",
+                "CH2_ENABLE_BURST",
+                "CH2 Burst Enable",
                 ["1", "0"],
             )
             self.num_pulse2 = HCLineEdit(
                 self.app,
                 self.instrument,
-                "CH2_BURS_NCYC",
+                "CH2_BURST_CYCLES",
                 "CH2 Num Burst Pulses",
             )
             self.burst_period2 = HCLineEdit(
                 self.app,
                 self.instrument,
-                "CH2_BURS_PER",
+                "CH2_BURST_PER",
                 "CH2 Burst Period (s)",
             )
             self.enable2 = HCComboBox(

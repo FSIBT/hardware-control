@@ -63,14 +63,14 @@ class DelayGenerator(QGroupBox):
             parameter="TRIGGER_EDGE",
             label="Trigger Edge",
             label_align="right",
-            items=["Positive", "Negative"],
+            items=["POS", "NEG"],
         )
 
         self.trig_impedance = HCComboBox(
             self.app,
             self.instrument,
-            parameter="EXT_TRIG_ZIN",
-            label="Ext. Trigger Zin",
+            parameter="TRIGGER_IMPEDANCE",
+            label="Trigger Impedance",
             label_align="right",
             items=["50-Ohms", "Hi-Z"],
         )
@@ -183,7 +183,7 @@ class DelayGenerator(QGroupBox):
         for parameter in [
             "TRIGGER_MODE",
             "TRIGGER_EDGE",
-            "EXT_TRIG_ZIN",
+            "TRIGGER_IMPEDANCE",
             "TRIGGER_LEVEL",
             "PULSES_PER_BURST",
             "TRIGGER_PERIOD",
@@ -235,7 +235,7 @@ class DelayChannelWidget(QWidget):
             self.time_delay = HCLineEdit(
                 self.app,
                 self.instrument,
-                f"CH{self.channel}_T0_DELAY",
+                f"CH{self.channel}_CHT0_DELAY",
                 label="t_offset [s]",
             )
 
@@ -290,7 +290,7 @@ class DelayChannelWidget(QWidget):
 
     def update_relative_channel(self, widget):
         value = widget.currentText()
-        self.time_delay.parameter = f"CH{self.channel}_{value}_DELAY"
+        self.time_delay.parameter = f"CH{self.channel}_CH{value}_DELAY"
         logger.debug(f"updating delay CH{self.channel}->{value}")
 
     def set_output_level_hook(self, value):

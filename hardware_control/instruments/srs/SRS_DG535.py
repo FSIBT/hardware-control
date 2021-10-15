@@ -1,16 +1,14 @@
-"""Stanford Research Systems DG535.
-
+"""
 .. image:: /images/DG535.jpg
   :height: 200
-
-See class definition for details.
 
 """
 
 import logging
 from typing import Optional
 
-from ...base import Instrument, hooks
+from ...base import Instrument
+from ...base.hooks import range_validator
 
 logger = logging.getLogger(__name__)
 
@@ -18,18 +16,39 @@ logger = logging.getLogger(__name__)
 class SRS_DG535(Instrument):
     """Stanford Research Systems DG535 instrument class.
 
-    Instrument home page: https://www.thinksrs.com/products/DG535.htm
-    Manual: https://www.thinksrs.com/downloads/pdfs/manuals/DG535m.pdf
-
     The instrument uses GPIB (tested with a NI-GPIB-usb adapter) and
-    is controlled using the pyvisa library.
+    is controlled using the pyvisa library. The `DelayGenerator` control
+    implements most of the device's features.
 
-    The `DelayGenerator` frontend implements most of the device's features.
+    PARAMETERS
+        * TRIGGER_MODE (*INTERNAL*, *EXTERNAL*, *SINGLE*, *BURST*)
+            * Trigger mode.
+        * TRIGGER_EDGE (*POS*, *NEG*)
+            * Trigger edge – either falling (POS) or rising (NEG).
+        * TRIGGER_IMPEDANCE (*50-OHMS*, *HI-Z*)
+            * Trigger input impedance.
+        * TRIGGER_LEVEL (*float*)
+            * External trigger voltage.
+        * TRIGGER_PERIOD (*int*)
+            * Period (in milliseconds) of one trigger in a burst (between 2 and 37266).
+        * PULSES_PER_BURST (*int*)
+            * Number of pulses in a burst (between 2 and 32766).
+        * CH<X>_OUTPUT_MODE (*TTL*, *NIM*, *ECL*, *VAR*)
+            * Channel 'X' output mode (transistor-transistor logic, nuclear instrument modules, emitter-coupled logic, or variable)
+        * CH<X>_OUTPUT_OFFSET (*float*)
+            * Voltage output offset of channel 'X'. Only available in variable output mode.
+        * CH<X>_OUTPUT_AMPLITUDE (*float*)
+            * Voltage output amplitude of channel 'X'. Only available in variable output mode.
+        * CH<X>_CH<Y>_DELAY
+            * Delay time (in seconds) of channel 'X' relative to channel 'Y'.
 
+    COMMANDS
+        * SINGLE_TRIGGER
+            * Set the instrument to trigger once.
     """
 
-    CHANNEL_NAMES = {
-        "Trig": 0,
+    _CHANNEL_NAMES = {
+        "TRIG": 0,
         "T0": 1,
         "A": 2,
         "B": 3,
@@ -89,19 +108,19 @@ class SRS_DG535(Instrument):
             "TRIGGER_EDGE",
             read_command="TS",
             set_command="TS {}",
-            dummy_return="POSITIVE",
+            dummy_return="POS",
         )
-        self.add_lookup("TRIGGER_EDGE", {"POSITIVE": "1", "NEGATIVE": "0"})
+        self.add_lookup("TRIGGER_EDGE", {"POS": "1", "NEGATIVE": "0"})
 
         self.add_parameter(
-            "EXT_TRIG_ZIN",
+            "TRIGGER_IMPEDANCE",
             read_command=f"TZ0",
             set_command="TZ0,{}",
             dummy_return="50-OHMS",
         )
-        self.add_lookup("EXT_TRIG_ZIN", {"50-OHMS": "0", "HI-Z": "1"})
+        self.add_lookup("TRIGGER_IMPEDANCE", {"50-OHMS": "0", "HI-Z": "1"})
 
-        for channel, inst_ch_name in SRS_DG535.CHANNEL_NAMES.items():
+        for channel, inst_ch_name in SRS_DG535._CHANNEL_NAMES.items():
             if channel in ["Trig0", "T0"]:
                 continue
             self.add_parameter(
@@ -120,7 +139,7 @@ class SRS_DG535(Instrument):
                 },
             )
 
-        for channel, inst_ch_name in SRS_DG535.CHANNEL_NAMES.items():
+        for channel, inst_ch_name in SRS_DG535._CHANNEL_NAMES.items():
             if channel in ["Trig0", "T0"]:
                 continue
             self.add_parameter(
@@ -129,21 +148,21 @@ class SRS_DG535(Instrument):
                 set_command=f"OO {inst_ch_name},{{}}",
                 dummy_return="0.2",
             )
-        for channel, inst_ch_name in SRS_DG535.CHANNEL_NAMES.items():
+        for channel, inst_ch_name in SRS_DG535._CHANNEL_NAMES.items():
             if channel in ["Trig0", "T0"]:
                 continue
             self.add_parameter(
                 f"CH{channel}_OUTPUT_AMPLITUDE",
                 read_command=f"OA {inst_ch_name}",
                 set_command=f"OA {inst_ch_name},{{}}",
-                pre_hooks=[hooks.range_validator(0.1, 4.0)],
+                pre_hooks=[range_validator(0.1, 4.0)],
                 dummy_return="3.2",
             )
 
-        for channel1, channel1_int in SRS_DG535.CHANNEL_NAMES.items():
+        for channel1, channel1_int in SRS_DG535._CHANNEL_NAMES.items():
             if channel1 in ["Trig0", "T0"]:
                 continue
-            for channel2, channel2_int in SRS_DG535.CHANNEL_NAMES.items():
+            for channel2, channel2_int in SRS_DG535._CHANNEL_NAMES.items():
                 if channel1_int <= channel2_int:
                     continue
                 if channel1 in ["AB", "CD"]:
@@ -151,7 +170,7 @@ class SRS_DG535(Instrument):
                 if channel2 in ["AB", "CD"]:
                     continue
                 self.add_parameter(
-                    f"CH{channel1}_{channel2}_DELAY",
+                    f"CH{channel1}_CH{channel2}_DELAY",
                     read_command=f"DT {channel1_int}",
                     set_command=f"DT {channel1_int},{channel2_int},{{}}",
                     dummy_return="0.1",

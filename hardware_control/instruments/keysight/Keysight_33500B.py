@@ -1,9 +1,6 @@
-"""Keysight 33500 waveform and function generator.
-
+"""
 .. image:: /images/Keysight33500B.png
   :height: 200
-
-See class definition for deails.
 
 """
 
@@ -25,12 +22,63 @@ logger = logging.getLogger(__name__)
 class Keysight_33500B(Instrument):
     """Keysight 33500B Series Waveform Generator base instrument class.
 
-    Instrument home page: https://www.keysight.com/us/en/products/waveform-and-function-generators/trueform-series-waveform-and-function-generators.html
-
-    Parameters
-    ----------
-    connection_addr : str
-    Address of instrument. Can use Visa address or socket and port.
+    PARAMETERS
+        * DISPLAY (*bool*)
+            * Enables and disables the instrument display.
+        * TIMEBASE (*float*)
+            * Horizontal resolution in time per division.
+        * TIME_OFFSET (*float*)
+            * Time offset from trigger.
+        * NUM_POINTS (*int*)
+            * Number of points on the time axis.
+        * LABELS_ENABLED (*bool*)
+            * Enables or disables channel labels on the instrument.
+        * TRIGGER_LEVEL (*float*)
+            * Trigger level.
+        * TRIGGER_COUPLING (*AC*, *DC*, *LFReject*)
+            * Trigger coupling type.
+        * TRIGGER_EDGE (*BOTH*, *NEG*, *POS*, *ALT*)
+            * Edge of waveform that the oscilloscope triggers on.
+        * CH<X>_ENABLE (*bool*)
+            * Enables or disables channel 'X'.
+        * CH<X>_VOLTS_DIV (*float*)
+            * The voltage per division for channel 'X'.
+        * CH<X>_OFFSET (*float*)
+            * The voltage offset for channel 'X'.
+        * CH<X>_IMPEDANCE (*50*, *1e6*)
+            * The imedance for channel 'X'.
+        * CH<X>_LABEL (*str*)
+            * Label for channel 'X'.
+        * CH<X>_PROBE_ATTEN (*float*)
+            * Probe attenuation for channel 'X'. For example, providing the value '10' would indicate a 10x or 10:1 probe.
+        * CH<X>_COUPLING (*AC*, *DC*)
+            * Coupling mode for channel 'X'.
+        * CH<X>_INVERT (*bool*)
+            * Enables or disables inversion of the waveform from channel 'X'.
+        * CH<X>_FREQUENCY (*float*)
+            * Output frequency of the waveform from channel 'X'.
+        * CH<X>_BW_LIM (*float*)
+            * Bandwidth limit of noise function for channel 'X'.
+        * CH<X>_WAVEFORM (*SINE*, *SQUARE*, *TRIANGLE*, *RAMP*, *PULSE*, *PRBS*, *NOISE*, *ARBITRARY*, *DC*)
+            * Shape of the modulating waveform for channel 'X'.
+        * CH<X>_POLARITY (*bool*)
+            * Enables or disables inversion of waveform relative to the offset voltage of channel 'X'.
+        * CH<X>_TRIGGER_DELAY (*float*)
+            * Time (in seconds) from assertion of trigger to occurrence of trigger event for channel 'X'.
+        * CH<X>_AMPLITUDE (*float*)
+            * Voltage amplitude of waveform of channel 'X'.
+        * CH<X>_TRACK (*ON*, *OFF*, *INV*)
+            * Enables or disables all channels to track (or inversely track) the output of channel 'X'.
+        * CH<X>_TRIGGER_CHANNEL (*INT*, *EXT*)
+            * Trigger source.
+        * CH<X>_ENABLE_BURST (*bool*)
+            * Enables or disables burst mode for channel 'X'.
+        * CH<X>_BURST_MODE (*TRIG*, *GAT*)
+            * Triggers bursts internally (TRIG) or externally (GAT) for channel 'X'.
+        * CH<X>_BURST_CYCLES (*float*)
+            * Number of cycles per burst for channel 'X'.
+        * CH<X>_BURST_PER (*float*)
+            * Burst period (in seconds) for channel 'X'.
 
     """
 
@@ -48,6 +96,63 @@ class Keysight_33500B(Instrument):
 
         self.num_vert_divisions = 8
         self.check_connection_commands = "*IDN?"
+
+        self.add_parameter(
+            "DISPLAY",
+            read_command=f"CHAN:DISP?",
+            set_command=f"CHAN:DISP {{}}",
+            dummy_return="True",
+        )
+        self.add_lookup(f"DISPLAY", {"True": "1", "False": "0"})
+
+        self.add_parameter(
+            "TIMEBASE",
+            read_command=":TIM:SCAL?",
+            set_command=":TIM:SCAL {}",
+            pre_hooks=[format_float(".6E")],
+            dummy_return="1",
+        )
+
+        self.add_parameter(
+            "TIME_OFFSET",
+            read_command=":TIM:POS?",
+            set_command=":TIM:POS {}",
+            pre_hooks=[format_float(".6E")],
+            dummy_return="0",
+        )
+
+        self.add_parameter(
+            "LABELS_ENABLED",
+            read_command="DISP:LAB?",
+            set_command="DISP:LAB {}",
+            dummy_return="True",
+        )
+        self.add_lookup("LABELS_ENABLED", {"True": "1", "False": "0"})
+
+        """    Trigger Subsystem    """
+        self.add_parameter(
+            "TRIGGER_LEVEL",
+            read_command="TRIG:EDGE:LEV?",
+            set_command="TRIG:EDGE:LEV {}",
+            pre_hooks=[format_float(".6E")],
+            dummy_return="10",
+        )
+
+        self.add_parameter(
+            "TRIGGER_COUPLING",
+            read_command="TRIG:COUP?",
+            set_command="TRIG:COUP {}",
+            pre_hooks=[expected_input_validator(["AC", "DC", "LFReject"], "DC")],
+            dummy_return="DC",
+        )
+
+        self.add_parameter(
+            "TRIGGER_EDGE",
+            read_command="TRIG:EDGE:SLOP?",
+            set_command="TRIG:EDGE:SLOP {}",
+            pre_hooks=[expected_input_validator(["BOTH", "NEG", "POS", "ALT"], "POS")],
+            dummy_return="POS",
+        )
 
         for ch in range(1, number_of_channels + 1):
             self.add_parameter(
@@ -89,44 +194,42 @@ class Keysight_33500B(Instrument):
                 dummy_return="DC",
             )
 
+            self.add_parameter(
+                f"CH{ch}_TRIGGER_CHANNEL",
+                read_command=f"TRIG{ch}:SOUR?",
+                set_command=f"TRIG{ch}:SOUR {{}}",
+                dummy_return="1",
+            )
+
             """    Burst Subsystem    """
             self.add_parameter(
-                f"CH{ch}_BURS_MODE",
-                read_command=f"SOUR{ch}:BURS:MODE?",
-                set_command=f"SOUR{ch}:BURS:MODE {{}}",
-                dummy_return="False",
-            )
-            self.add_lookup(f"CH{ch}_BURS_MODE", {"True": "1", "False": "0"})
-
-            self.add_parameter(
-                f"CH{ch}_BURS_STAT",
+                f"CH{ch}_ENABLE_BURST",
                 read_command=f"SOUR{ch}:BURS:STAT?",
                 set_command=f"SOUR{ch}:BURS:STAT {{}}",
                 dummy_return="1",
             )
 
             self.add_parameter(
-                f"CH{ch}_BURS_NCYC",
+                f"CH{ch}_BURST_MODE",
+                read_command=f"SOUR{ch}:BURS:MODE?",
+                set_command=f"SOUR{ch}:BURS:MODE {{}}",
+                dummy_return="False",
+            )
+            self.add_lookup(f"CH{ch}_BURST_MODE", {"True": "1", "False": "0"})
+
+            self.add_parameter(
+                f"CH{ch}_BURST_CYCLES",
                 read_command=f"SOUR{ch}:BURS:NCYC?",
                 set_command=f"SOUR{ch}:BURS:NCYC {{}}",
                 dummy_return="1",
             )
 
             self.add_parameter(
-                f"CH{ch}_BURS_PER",
+                f"CH{ch}_BURST_PER",
                 read_command=f"SOUR{ch}:BURS:INT:PER?",
                 set_command=f"SOUR{ch}:BURS:INT:PER {{}}",
                 dummy_return="10",
             )
-
-            """    Display Subsystem    """
-            self.add_parameter(
-                f"CH{ch}_ACTIVE",
-                read_command=f"CHAN{ch}:DISP?",
-                set_command=f"CHAN{ch}:DISP {{}}",
-                dummy_return="True",
-            )
-            self.add_lookup(f"CH{ch}_ACTIVE", {"True": "1", "False": "0"})
 
             """    Frequency Subsystem    """
             self.add_parameter(
@@ -141,7 +244,6 @@ class Keysight_33500B(Instrument):
             )
 
             """    Function Subsystem    """
-            # FUNCtion:NOISe:BANDwidth - bandwidth for NOISe waveform
             self.add_parameter(
                 f"CH{ch}_BW_LIM",
                 read_command=f"CHAN{ch}:BWL?",
@@ -196,12 +298,6 @@ class Keysight_33500B(Instrument):
                 set_command=f":OUTP{ch}:POL {{}}",
                 dummy_return="1",
             )
-            self.add_parameter(
-                f"CH{ch}_TRIGGER_CHANNEL",
-                read_command=f"TRIG{ch}:SOUR?",
-                set_command=f"TRIG{ch}:SOUR {{}}",
-                dummy_return="1",
-            )
 
             self.add_parameter(
                 f"CH{ch}_TRIGGER_DELAY",
@@ -231,55 +327,6 @@ class Keysight_33500B(Instrument):
             self.add_parameter(
                 f"CH{ch}_TRACK",
                 read_command="TRAC?",
-                set_command="SOUR1:TRAC {}",
+                set_command="SOUR{ch}:TRAC {}",
                 dummy_return="1",
             )
-
-        self.add_parameter(
-            "TIMEBASE",
-            read_command=":TIM:SCAL?",
-            set_command=":TIM:SCAL {}",
-            pre_hooks=[format_float(".6E")],
-            dummy_return="1",
-        )
-
-        self.add_parameter(
-            "TIME_OFFSET",
-            read_command=":TIM:POS?",
-            set_command=":TIM:POS {}",
-            pre_hooks=[format_float(".6E")],
-            dummy_return="0",
-        )
-
-        self.add_parameter(
-            "LABELS_ENABLED",
-            read_command="DISP:LAB?",
-            set_command="DISP:LAB {}",
-            dummy_return="True",
-        )
-        self.add_lookup("LABELS_ENABLED", {"True": "1", "False": "0"})
-
-        """    Trigger Subsystem    """
-        self.add_parameter(
-            "TRIGGER_LEVEL",
-            read_command="TRIG:EDGE:LEV?",
-            set_command="TRIG:EDGE:LEV {}",
-            pre_hooks=[format_float(".6E")],
-            dummy_return="10",
-        )
-
-        self.add_parameter(
-            "TRIGGER_COUPLING",
-            read_command="TRIG:COUP?",
-            set_command="TRIG:COUP {}",
-            pre_hooks=[expected_input_validator(["AC", "DC", "LFReject"], "DC")],
-            dummy_return="DC",
-        )
-
-        self.add_parameter(
-            "TRIGGER_EDGE",
-            read_command="TRIG:EDGE:SLOP?",
-            set_command="TRIG:EDGE:SLOP {}",
-            pre_hooks=[expected_input_validator(["BOTH", "NEG", "POS", "ALT"], "POS")],
-            dummy_return="POS",
-        )
