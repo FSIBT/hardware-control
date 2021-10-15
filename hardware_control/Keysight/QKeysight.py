@@ -106,7 +106,7 @@ class KeysightControl(QGroupBox):
         self.input.setText("0")
         self.input.setFixedWidth(100)
         # max 2 amps
-        self.input.setValidator(QDoubleValidator(0, 2, 3))
+        self.input.setValidator(QDoubleValidator(0, 3, 3))
         self.input.returnPressed.connect(self.set)
 
         self.label = QLabel("")

@@ -78,9 +78,9 @@ class E36313A:
         self.write("SYST:PERS:MOD E3631A")
         # set maximum outputs
         if init:
-            self.write("SOURCE:CURR 0.01, (@1); VOLT 3.5, (@1)")
+            self.write("SOURCE:CURR 0.01, (@1); VOLT 6, (@1)")
         else:
-            self.write("SOURCE:VOLT 3.5, (@1)")
+            self.write("SOURCE:VOLT 6.0, (@1)")
         self.write("SOURCE:CURR 0.2, (@2); VOLT 5, (@2)")
         self.write("SOURCE:CURR 0.2, (@3); VOLT -5, (@3)")
 
@@ -98,9 +98,10 @@ class E36313A:
         return out
 
     def set_heater(self, current):
-        if current < 0 or current > 1.8:
+        if current < 0 or current > 3.0:
             return
-        self.write(f"SOURCE:CURR {current}, (@1)")
+        print(f'setting current to {current}', flush=True)
+        self.write(f"SOURCE:CURR {current}, (@1); VOLT 6, (@1)")
 
     def get_version(self):
         return self.query("SYST:VERS?")
