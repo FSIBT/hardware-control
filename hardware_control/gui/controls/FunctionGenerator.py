@@ -313,4 +313,4 @@ class FunctionGenerator(QGroupBox):
                     f"'{self.instrument}': Unrecognized value in '{self.name}' parameter '{setting}'."
                 )
 
-        return setting, value
+        return value

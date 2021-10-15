@@ -43,7 +43,7 @@ hc.setup_logging(logger, logoutput, loglevel)
 
 
 if commands["--socket"]:
-    address = "192.168.0.15"
+    address = "192.168.0.20"
 else:
     address = "USB0::0x0957::0x2907::MY52500624::INSTR"
 

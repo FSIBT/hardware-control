@@ -21,7 +21,7 @@ from ..widgets import (
     HCDoubleSpinBox,
     HCPushButton,
     HCSpinBox,
-    scan_widget,
+    ScanWidget
 )
 
 logger = logging.getLogger(__name__)
@@ -145,7 +145,7 @@ class RGA(QGroupBox):
             self.app.update_instrument_parameter(self.instrument, parameter)
 
 
-class ScanProcessControlWidget(scan_widget):
+class ScanProcessControlWidget(ScanWidget):
     def __init__(self, app, actions):
 
         super().__init__()

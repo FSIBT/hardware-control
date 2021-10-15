@@ -327,6 +327,6 @@ class Keysight_33500B(Instrument):
             self.add_parameter(
                 f"CH{ch}_TRACK",
                 read_command="TRAC?",
-                set_command="SOUR{ch}:TRAC {}",
+                set_command=f"SOUR{ch}:TRAC {{}}",
                 dummy_return="1",
             )
