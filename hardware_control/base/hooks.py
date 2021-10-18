@@ -87,7 +87,7 @@ def expected_input_validator(types: List, default_val=None):
     def validator(value):
         if value not in types and default_val != None:
             logger.info(
-                f"Unfamiliar with input '{value}'. Using '{deault_val}' instead."
+                f"Unfamiliar with input '{value}'. Using '{default_val}' instead."
             )
             return default_val
         elif value not in types:

@@ -79,6 +79,13 @@ class FunctionGenerator(QGroupBox):
                 "DC",
             ],
         )
+        self.burst_enable = HCComboBox(
+            self.app,
+            self.instrument,
+            "CH1_ENABLE_BURST",
+            "CH1 Burst Enable",
+            ["ON", "OFF"],
+        )
         self.burst_mode = HCComboBox(
             self.app,
             self.instrument,
@@ -86,18 +93,11 @@ class FunctionGenerator(QGroupBox):
             "CH1 Burst Mode",
             ["TRIG", "GAT"],
         )
-        self.burst_enable = HCComboBox(
-            self.app,
-            self.instrument,
-            "CH1_ENABLE_BURST",
-            "CH1 Burst Enable",
-            ["1", "0"],
-        )
-        self.num_pulse = HCLineEdit(
+        self.num_cycles = HCLineEdit(
             self.app,
             self.instrument,
             "CH1_BURST_CYCLES",
-            "CH1 Num Burst Pulses",
+            "CH1 Burst # of Cycles",
         )
         self.burst_period = HCLineEdit(
             self.app,
@@ -109,7 +109,7 @@ class FunctionGenerator(QGroupBox):
             self.app,
             self.instrument,
             "CH1_ENABLE",
-            "CH1 Enable Output On/Off",
+            "CH1 Enable Output",
             ["True", "False"],
         )
         self.trigger = HCComboBox(
@@ -117,10 +117,26 @@ class FunctionGenerator(QGroupBox):
             self.instrument,
             "CH1_TRIGGER_CHANNEL",
             "CH1 Trigger Channel",
-            ["EXT", "IMM", "TIM", "BUS"],
+            ["EXT", "IMM", "TIM", "MAN"],
+        )
+        self.level = HCLineEdit(
+            self.app,
+            self.instrument,
+            "CH1_TRIGGER_LEVEL",
+            "CH1 Trigger Level",
+        )
+        self.edge = HCComboBox(
+            self.app,
+            self.instrument,
+            "CH1_TRIGGER_EDGE",
+            "CH1 Trigger Edge",
+            ["POS", "NEG"],
         )
         self.delay = HCLineEdit(
-            self.app, self.instrument, "CH1_TRIGGER_DELAY", "CH1 Trigger Delay (s)"
+            self.app,
+            self.instrument,
+            "CH1_TRIGGER_DELAY",
+            "CH1 Trigger Delay (s)",
         )
         self.impedance = HCComboBox(
             self.app,
@@ -163,6 +179,13 @@ class FunctionGenerator(QGroupBox):
                     "DC",
                 ],
             )
+            self.burst_enable2 = HCComboBox(
+                self.app,
+                self.instrument,
+                "CH2_ENABLE_BURST",
+                "CH2 Burst Enable",
+                ["ON", "OFF"],
+            )
             self.burst_mode2 = HCComboBox(
                 self.app,
                 self.instrument,
@@ -170,18 +193,11 @@ class FunctionGenerator(QGroupBox):
                 "CH2 Burst Mode",
                 ["TRIG", "GAT"],
             )
-            self.burst_enable2 = HCComboBox(
-                self.app,
-                self.instrument,
-                "CH2_ENABLE_BURST",
-                "CH2 Burst Enable",
-                ["1", "0"],
-            )
-            self.num_pulse2 = HCLineEdit(
+            self.num_cycles2 = HCLineEdit(
                 self.app,
                 self.instrument,
                 "CH2_BURST_CYCLES",
-                "CH2 Num Burst Pulses",
+                "CH2 Burst # of Cycles",
             )
             self.burst_period2 = HCLineEdit(
                 self.app,
@@ -201,10 +217,26 @@ class FunctionGenerator(QGroupBox):
                 self.instrument,
                 "CH2_TRIGGER_CHANNEL",
                 "CH2 Trigger Channel",
-                ["EXT", "IMM", "TIM", "BUS"],
+                ["EXT", "IMM", "TIM", "MAN"],
+            )
+            self.level2 = HCLineEdit(
+                self.app,
+                self.instrument,
+                "CH2_TRIGGER_LEVEL",
+                "CH2 Trigger Level",
+            )
+            self.edge2 = HCComboBox(
+                self.app,
+                self.instrument,
+                "CH2_TRIGGER_EDGE",
+                "CH2 Trigger Edge",
+                ["POS", "NEG"],
             )
             self.delay2 = HCLineEdit(
-                self.app, self.instrument, "CH2_TRIGGER_DELAY", "CH2 Trigger Delay (s)"
+                self.app,
+                self.instrument,
+                "CH2_TRIGGER_DELAY",
+                "CH2 Trigger Delay (s)",
             )
             self.impedance2 = HCComboBox(
                 self.app,
@@ -255,12 +287,14 @@ class FunctionGenerator(QGroupBox):
             self.amplitude,
             self.offset,
             self.waveform,
-            self.num_pulse,
-            self.burst_mode,
             self.burst_enable,
+            self.burst_mode,
+            self.num_cycles,
             self.burst_period,
             self.enable,
             self.trigger,
+            self.level,
+            self.edge,
             self.delay,
             self.impedance,
             self.polarity,
@@ -275,12 +309,14 @@ class FunctionGenerator(QGroupBox):
                 self.amplitude2,
                 self.offset2,
                 self.waveform2,
-                self.num_pulse2,
-                self.burst_mode2,
                 self.burst_enable2,
+                self.burst_mode2,
+                self.num_cycles2,
                 self.burst_period2,
                 self.enable2,
                 self.trigger2,
+                self.level2,
+                self.edge2,
                 self.delay2,
                 self.impedance2,
                 self.polarity2,

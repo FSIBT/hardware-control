@@ -129,31 +129,6 @@ class Keysight_33500B(Instrument):
         )
         self.add_lookup("LABELS_ENABLED", {"True": "1", "False": "0"})
 
-        """    Trigger Subsystem    """
-        self.add_parameter(
-            "TRIGGER_LEVEL",
-            read_command="TRIG:EDGE:LEV?",
-            set_command="TRIG:EDGE:LEV {}",
-            pre_hooks=[format_float(".6E")],
-            dummy_return="10",
-        )
-
-        self.add_parameter(
-            "TRIGGER_COUPLING",
-            read_command="TRIG:COUP?",
-            set_command="TRIG:COUP {}",
-            pre_hooks=[expected_input_validator(["AC", "DC", "LFReject"], "DC")],
-            dummy_return="DC",
-        )
-
-        self.add_parameter(
-            "TRIGGER_EDGE",
-            read_command="TRIG:EDGE:SLOP?",
-            set_command="TRIG:EDGE:SLOP {}",
-            pre_hooks=[expected_input_validator(["BOTH", "NEG", "POS", "ALT"], "POS")],
-            dummy_return="POS",
-        )
-
         for ch in range(1, number_of_channels + 1):
             self.add_parameter(
                 f"CH{ch}_VOLTS_DIV",
@@ -201,21 +176,45 @@ class Keysight_33500B(Instrument):
                 dummy_return="1",
             )
 
-            """    Burst Subsystem    """
+            self.add_parameter(
+                f"CH{ch}_TRIGGER_LEVEL",
+                read_command=f"TRIG{ch}:EDGE:LEV?",
+                set_command=f"TRIG{ch}:EDGE:LEV {{}}",
+                pre_hooks=[format_float(".6E")],
+                dummy_return="10",
+            )
+
+            self.add_parameter(
+                f"CH{ch}_TRIGGER_COUPLING",
+                read_command=f"TRIG{ch}:COUP?",
+                set_command=f"TRIG{ch}:COUP {{}}",
+                pre_hooks=[expected_input_validator(["AC", "DC", "LFReject"], "DC")],
+                dummy_return="DC",
+            )
+
+            self.add_parameter(
+                f"CH{ch}_TRIGGER_EDGE",
+                read_command=f"TRIG{ch}:EDGE:SLOP?",
+                set_command=f"TRIG{ch}:EDGE:SLOP {{}}",
+                pre_hooks=[expected_input_validator(["NEG", "POS"], "POS")],
+                dummy_return="POS",
+            )
+
             self.add_parameter(
                 f"CH{ch}_ENABLE_BURST",
                 read_command=f"SOUR{ch}:BURS:STAT?",
                 set_command=f"SOUR{ch}:BURS:STAT {{}}",
-                dummy_return="1",
+                dummy_return="0",
             )
+            self.add_lookup(f"CH{ch}_ENABLE_BURST", {"ON": "1", "OFF": "0"})
 
             self.add_parameter(
                 f"CH{ch}_BURST_MODE",
                 read_command=f"SOUR{ch}:BURS:MODE?",
                 set_command=f"SOUR{ch}:BURS:MODE {{}}",
-                dummy_return="False",
+                pre_hooks=[expected_input_validator(["TRIG", "GAT"])],
+                dummy_return="TRIG",
             )
-            self.add_lookup(f"CH{ch}_BURST_MODE", {"True": "1", "False": "0"})
 
             self.add_parameter(
                 f"CH{ch}_BURST_CYCLES",
@@ -231,7 +230,6 @@ class Keysight_33500B(Instrument):
                 dummy_return="10",
             )
 
-            """    Frequency Subsystem    """
             self.add_parameter(
                 f"CH{ch}_FREQUENCY",
                 read_command=f"SOUR{ch}:FREQ?",
@@ -243,7 +241,6 @@ class Keysight_33500B(Instrument):
                 dummy_return="20",
             )
 
-            """    Function Subsystem    """
             self.add_parameter(
                 f"CH{ch}_BW_LIM",
                 read_command=f"CHAN{ch}:BWL?",
@@ -274,7 +271,6 @@ class Keysight_33500B(Instrument):
                 },
             )
 
-            """    OUTPut Subsystem    """
             self.add_parameter(
                 f"CH{ch}_IMPEDANCE",
                 read_command=f"OUTP{ch}:LOAD?",
@@ -307,7 +303,6 @@ class Keysight_33500B(Instrument):
                 dummy_return="0",
             )
 
-            """    VOLT Subsystem    """
             self.add_parameter(
                 f"CH{ch}_AMPLITUDE",
                 read_command=f"SOUR{ch}:VOLT?",
@@ -326,7 +321,7 @@ class Keysight_33500B(Instrument):
 
             self.add_parameter(
                 f"CH{ch}_TRACK",
-                read_command="TRAC?",
+                read_command=f"SOUR{ch}:TRAC?",
                 set_command=f"SOUR{ch}:TRAC {{}}",
                 dummy_return="1",
             )
