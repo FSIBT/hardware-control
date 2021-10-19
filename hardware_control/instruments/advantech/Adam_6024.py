@@ -10,6 +10,8 @@ See class definition for details.
 import logging
 import random
 
+from ...base.hooks import range_validator
+
 from .Adam_base import AdamBackend
 
 logger = logging.getLogger(__name__)
@@ -57,7 +59,8 @@ class Adam_6024(AdamBackend):
 
         for i in range(1, self.n_output_channels + 1):
             self.add_parameter(
-                f"CH{i}_SET_VOLTAGE",
+                name=f"CH{i}_SET_VOLTAGE",
+                read_command="",
                 set_command=f"#01{i:02d}{{:06.3f}}",
                 pre_hooks=[range_validator(0, 10)],
             )
