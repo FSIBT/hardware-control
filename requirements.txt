@@ -17,6 +17,7 @@ setuptools
 setuptools-scm
 sip
 Sphinx
+sphinx_rtd_theme
 tqdm
 visa
 zmq

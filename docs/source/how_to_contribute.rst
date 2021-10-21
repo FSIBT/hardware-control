@@ -17,9 +17,13 @@ and then run::
 from within the git repository of hardware control, before creating
 any commits that you want to share.
 
+Using pre-commit ensures that the code will be formatted according to
+the styl we expect, i.e., it will run black over the new code and some
+other programs to ensure the code matches the coding style in the
+repository.
+
 Feedback and pull requests are welcome, including PRs for new hardware.
 
-We currently do not have any unit tests, since we find that UIs and
-hardware are more difficult to test. Instead we rely on example
-applications that we run regularly. If you supply new feature, please
-provide an example (or unit tests, if applicable).
+If you supply a new type of instrument driver, please also supply a simple GUI that works with the driver and create an example for it.
+If you supply a new instrument driver of an already existing type, for example, a power supply, then please ensure that it will work with existing GUI.
+

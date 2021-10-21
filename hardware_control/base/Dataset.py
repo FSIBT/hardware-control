@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 class Dataset(QObject):
     """Collect values from different instruments over time.
 
-    This data structure an be used to track values over time. It
+    This data structure can be used to track values over time. It
     requires a list of instruments, parameter names, a time interval
     in order to add a row with the current time stamp and the values
     for each parameter to an internal data table every N seconds.

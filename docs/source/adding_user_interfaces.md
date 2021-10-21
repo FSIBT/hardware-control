@@ -23,12 +23,13 @@ implements that subsection of your UI. This makes it easy to change
 all of the repeated elements in the future or add and remove them to
 the main UI. If you need help with Qt, in addition to the Qt
 documentation and tutorials online, you can look at user interfaces
-defined in Hardware Control.  One big difference it though that we do
-not use Qt's most basic widgets, such as a QPushButton or a
-QLineEdit. Instead we use Hardware Control's equivalent classes called
-HCPushButton and HCLineEdit. These classes extend the standard Qt
-classes by connecting them to a specific instrument and
-parameter/command name. The HCwidgets also register automatically with
-the main app, so that when a new value arrived from an instrument the
-right widgets are automatically updated.
+defined in Hardware Control.  One big difference is though that we do
+not use Qt's most basic widgets, such as a QPushButton or a QLineEdit
+when we want to display an instrument value or control one. Instead we
+use Hardware Control's equivalent classes called HCPushButton and
+HCLineEdit. These classes extend the standard Qt classes by connecting
+them to a specific instrument and parameter/command name. The
+HCwidgets also register automatically with the main app, so that when
+a new value arrived from an instrument the right widgets are
+automatically updated.
 

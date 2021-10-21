@@ -8,16 +8,16 @@ add a command that is not yet implemented, this guide will show you how.
 We distinguish between two different types: commands and parameters. A
 command is something like 'trigger' that doesn't create an output and
 we define a parameter as a value that can be read or written to. For
-any of these cases you need to find what you need to send to the
+either case you need to find what you need to send to the
 instrument from the manual. For socket connections over TCP these are
 normally just ascii strings, which is true for most other cases too.
 
 ### 2. Identify Name in an existing GUI widget
 
 If you want to be able to reuse an existing GUI widget, you need to
-figure out what the name is that this parameter maps to. For example,
+figure out what the name is that this parameter maps to in the GUI. For example,
 for a power supply, we use the name `CH1_V_OUT` to describe the actual
-voltage for CH1. If you write a new GUI, you can come up with a name
+voltage for CH1. If you write a new GUI, you can come up with any name
 you want here. The name needs to be unique for the instrument. Next
 you use the built-in function of an `Instrument` class
 `self.add_parameter` or `self.add_command` to link the name to the

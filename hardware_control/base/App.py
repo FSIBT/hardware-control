@@ -20,7 +20,7 @@ def call_hooks(hooks_list, value):
     """Call a list of function.
 
     If any of the functions returns None, the final value will be
-    ignored and the no further hooks will be called.
+    ignored and no further hooks will be called.
 
     Every hook function must take a single parameter: the value of the
     parameter to be set (set to None for commands)
@@ -33,6 +33,14 @@ def call_hooks(hooks_list, value):
     where app and widget are defined in the enironment where add_hook
     is called.
 
+    Parameters
+    ----------
+    hooks_list :
+       A list of functions or callable objects
+    values :
+       The value to be manipulated
+
+
     """
     for hook in hooks_list:
         if callable(hook):
@@ -43,7 +51,12 @@ def call_hooks(hooks_list, value):
 
 
 def ensure_instrument_exists(f):
-    """Error check to make sure that instrument is in app._data."""
+    """Error check to make sure that instrument is in app._data.
+
+    This decorator assumes that the first argument is the app class
+    and then second argument is the instrument name.
+
+    """
 
     @wraps(f)
     def wrapped(*args, **kwargs):
@@ -59,14 +72,24 @@ def ensure_instrument_exists(f):
     return wrapped
 
 
-def ensure_parameter_in_instrument(f):
-    """Error check to make sure that paramter/command exists."""
+def ensure_parameter_and_instrument_exists(f):
+    """Error check to make sure that parameter/command exists.
+
+    This decorator assumes that the first argument is the app class,
+    the second is the instrument name, and the third is the parameter
+    name.
+
+    """
 
     @wraps(f)
     def wrapped(*args, **kwargs):
         self = args[0]
         instrument = args[1]
         paramter = args[2]
+
+        if instrument not in self._data:
+            logger.error(f"Cannot find instrument '{instrument}' in app")
+            return
 
         if paramter not in self._data[instrument]:
             logger.error(
@@ -274,8 +297,7 @@ class App(QApplication):
                 for w in self._data[name][parameter]["widgets"]:
                     w.hc_update()
 
-    @ensure_instrument_exists
-    @ensure_parameter_in_instrument
+    @ensure_parameter_and_instrument_exists
     def set_instrument_parameter(
         self, instrument: str, parameter: str, value: Any, skip_hooks=False
     ) -> None:
@@ -307,8 +329,7 @@ class App(QApplication):
         self._data[instrument][parameter]["set_value"] = value
         self.zmq_publisher.send_string(f"{instrument} {parameter} {value}")
 
-    @ensure_instrument_exists
-    @ensure_parameter_in_instrument
+    @ensure_parameter_and_instrument_exists
     def update_instrument_parameter(self, instrument: str, parameter: str) -> None:
         """Sends request to the instrument thread via ZMQ to query the parameter value.
 
@@ -319,14 +340,13 @@ class App(QApplication):
         ----------
         instrument
            The name of the instrument
-        paramter
+        parameter
            The name of the parameter
 
         """
         self.zmq_publisher.send_string(f"{instrument} get {parameter}")
 
-    @ensure_instrument_exists
-    @ensure_parameter_in_instrument
+    @ensure_parameter_and_instrument_exists
     def call_instrument_command(self, instrument: str, command: str) -> None:
         """Sends a command to the instrument via ZMQ.
 
@@ -343,8 +363,7 @@ class App(QApplication):
         if value:
             self.zmq_publisher.send_string(f"{instrument} command {command}")
 
-    @ensure_instrument_exists
-    @ensure_parameter_in_instrument
+    @ensure_parameter_and_instrument_exists
     def get_instrument_parameter(
         self, instrument: str, parameter: str, return_set_value: bool = False
     ) -> Union[str, None]:
@@ -367,8 +386,7 @@ class App(QApplication):
                 return self._data[instrument][parameter]["set_value"]
             return self._data[instrument][parameter]["read_value"]
 
-    @ensure_instrument_exists
-    @ensure_parameter_in_instrument
+    @ensure_parameter_and_instrument_exists
     def get_instrument_set_parameter(
         self, instrument: str, parameter: str
     ) -> Union[str, None]:
@@ -379,8 +397,7 @@ class App(QApplication):
 
         return self._data[instrument][parameter]["set_value"]
 
-    @ensure_instrument_exists
-    @ensure_parameter_in_instrument
+    @ensure_parameter_and_instrument_exists
     def add_hook(
         self,
         instrument: str,
@@ -400,6 +417,18 @@ class App(QApplication):
 
         where app and widget are defined in the enironment where add_hook is called.
 
+        Parameters
+        ----------
+        instrument
+           The name of the instrument
+        parameter
+           The name of the parameter
+        when
+           At what time the hook should be called. Possible options are: "post_read_hooks", "pre_set_hooks", "pre_call_hooks".
+        function
+           The hook function to be added.
+
+
         """
 
         if when not in ["post_read_hooks", "pre_set_hooks", "pre_call_hooks"]:
@@ -410,8 +439,7 @@ class App(QApplication):
 
         self._data[instrument][parameter][when].append(function)
 
-    @ensure_instrument_exists
-    @ensure_parameter_in_instrument
+    @ensure_parameter_and_instrument_exists
     def add_widget(self, instrument: str, parameter: str, widget):
         """Adds a widget to a parameter.
 
@@ -512,7 +540,7 @@ class App(QApplication):
 
         Parameters
         ----------
-        filename : str or Path
+        filename
             Name of file to save _data to
 
         """
@@ -547,7 +575,7 @@ class App(QApplication):
 
         Parameters
         ----------
-        filename : str or Path
+        filename
             Name of JSON file to read settings from
 
         """

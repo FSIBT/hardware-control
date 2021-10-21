@@ -9,7 +9,7 @@ instrument drivers for different hardware and pre-defined
 Qt-frontends.  One main goal is to have reusable frontends for similar
 type of instruments to make writing GUIs easy.
 
-The package is split into two parts:
+The package is split into three parts:
 
 .. toctree::
    :maxdepth: 1

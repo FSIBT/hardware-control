@@ -10,7 +10,7 @@ thread, see the ZMQ adapter class.
 Several default connections modes are supported out of the box:
 pyvisa, sockets, and modbus.
 
-For other communications protocles, the user needs to overwrite the
+For other communications protocols, the user needs to overwrite the
 connect function.
 
 """

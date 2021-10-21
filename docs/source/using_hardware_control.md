@@ -7,9 +7,9 @@ program using Hardware Control.
 ### 1. Import Hardware Control
 
 Once installed (see installation instruction if you need help), you can import
-Hardware Control with only two lines:
+Hardware Control with the following statement:
 
-<pre><code>import hardware_control as hc</pre></code>
+    import hardware_control as hc
 
 Now you can access any instruments with `hc_back.instruments.<instrument_class_name>` and all other
 classes, including the user interfaces, with `hc.gui.<class_name>`.
@@ -22,11 +22,13 @@ Hardware Control program, you must also create a class and inherit from
 HCMainWindow, Hardware Control's window class which inherits from QMainWindow. The
 class would start off looking like:
 
-<pre><code>class DemoProgram (hc.HCMainWindow):
-    def __init__(self, app):
+    class DemoProgram(hc.HCMainWindow):
+        def __init__(self, app):
+            super().__init__(app)
+            # code to define the GUI
 
-		super().__init__(app)
-</code></pre>
+
+A MainWindow needs a QT-app class. HCMainWindow will automatically create and app class, but you can also define it explicitly as we will do below.
 
 ### 3. Create and Add Instruments
 
@@ -45,7 +47,7 @@ to let you interact with your instrument, and adding them to your window.
 	sure you configure it correctly. We then connect the instrument to
 	the main app.
 
-	`self.app.add_instrument(hc.instruments.Keysight_4000X("scope", "192.168.0.2"))`
+            self.app.add_instrument(hc.instruments.Keysight_4000X("scope", "192.168.0.2"))
 
 2. Create a Control Widget
 
@@ -53,7 +55,7 @@ to let you interact with your instrument, and adding them to your window.
 	control widget, create an object of the control widget class and pass the
 	app and the name of the instrument to it.
 
-	`self.scope_wdgt = hc.gui.Oscilloscope(app, "scope")`
+            self.scope_wdgt = hc.gui.Oscilloscope(app, "scope")
 
 3. Add Widget to Layout
 
@@ -63,29 +65,29 @@ to let you interact with your instrument, and adding them to your window.
 	object, then use `addWidget()` to add your control widget to the layout
 	at the specified position.
 
-	<pre><code># Create layout, add oscilloscope to row=0, column=0
-self.main_layout = QGridLayout()
-self.main_layout.addWidget(self.scope_wdgt, 0, 0)
-</pre></code>
+             # Create layout, add oscilloscope to row=0, column=0
+             self.main_layout = QGridLayout()
+             self.main_layout.addWidget(self.scope_wdgt, 0, 0)
 
-Putting together all three steps is how you add an instrument to your control
-program. By repeating these steps you can add an indefinite number of
+
+Putting together all three steps is how you add an instrument to your
+control program. By repeating these steps you can add multiple
 instruments and build complicated control programs with minimal code.
 
 ### 4. Prepare your Window to Display
 
 You need to tell your window what to display and when. An easy way to do this is
 to create a new QWidget, Qt's base widget class, and set it to use the layout
-you added your control widgets to. You can then set this new QWidget to be the
-central widget for your window. The last thing you need to do is add a call to
+that contains your control widgets. You can then set this new QWidget to be the
+central widget for your main window. The last thing you need to do is add a call to
 `self.show()` at the end of your `__init__()` function to tell Qt to display the
 window.
 
-<pre><code>self.main_widget = QWidget(self)
-self.main_widget.setLayout(self.main_layout)
-self.setCentralWidget(self.main_widget)
+    self.main_widget = QWidget(self)
+    self.main_widget.setLayout(self.main_layout)
+    self.setCentralWidget(self.main_widget)
 
-self.show()</pre></code>
+    self.show()
 
 
 ### 5. Create Instance of Your Class and App
@@ -96,9 +98,8 @@ facilitates communication between instruments, along with a number of other
 features such as centralized data collection and menu bars. Create an instance
 of App and pass it to the class you defined for your program.
 
-<pre><code>app = hc.App()
-demo_prog = DemoProgram(app)
-</pre></code>
+    app = hc.App()
+    demo_prog = DemoProgram(app)
 
 
 ### 6. Execute Program
@@ -107,45 +108,45 @@ To run your program, just call `sys.exit(app.exec_())`!
 
 A complete sample program could look like this:
 
-<pre><code># Import required modules
-from PyQt5.QtWidgets import QGridLayout, QWidget
-import sys
+    # Import required modules
+    from PyQt5.QtWidgets import QGridLayout, QWidget
+    import sys
 
-import hardware_control as hc
+    import hardware_control as hc
 
-# Create class for program
-class DemoProgram (hc.HCMainWindow):
-    def __init__(self, app):
+    # Create class for program
+    class DemoProgram (hc.HCMainWindow):
+        def __init__(self, app):
 
-        super().__init__(app)
+            super().__init__(app)
 
-        # Create an oscilloscope instrument driver
-        self.app.add_instrument(hc.instruments.Keysight_4000X("scope", "192.168.0.2"))
+            # Create an oscilloscope instrument driver
+            self.app.add_instrument(hc.instruments.Keysight_4000X("scope", "192.168.0.2"))
 
-		# Create an oscilloscope control widget for the instrument
-        self.scope_wdgt = hc.gui.Oscilloscope(self.app, "scope")
+    		# Create an oscilloscope control widget for the instrument
+            self.scope_wdgt = hc.gui.Oscilloscope(self.app, "scope")
 
-        # Create layout, add oscilloscope to row=0, column=0
-        self.main_layout = QGridLayout()
-        self.main_layout.addWidget(self.scope_wdgt, 0, 0)
+            # Create layout, add oscilloscope to row=0, column=0
+            self.main_layout = QGridLayout()
+            self.main_layout.addWidget(self.scope_wdgt, 0, 0)
 
-		# Set 'main_layout' to be displayed
-        self.main_widget = QWidget(self)
-        self.main_widget.setLayout(self.main_layout)
-        self.setCentralWidget(self.main_widget)
+    		# Set 'main_layout' to be displayed
+            self.main_widget = QWidget(self)
+            self.main_widget.setLayout(self.main_layout)
+            self.setCentralWidget(self.main_widget)
 
-		# Indicate the window is ready to show
-        self.show()
+    		# Indicate the window is ready to show
+            self.show()
 
-#This function will create and run the program class
-if __name__ == "__main__":
-	# Create a Hardware Control App
-    app = hc.App(dummy=True)  # will always run in dummy mode and not connect to any instrument
+    #This function will create and run the program class
+    if __name__ == "__main__":
+    	# Create a Hardware Control App
+        app = hc.App(dummy=True)  # will always run in dummy mode and not connect to any instrument
 
-	# Create an instance of my class using 'App'
-    demo_prog = DemoProgram(app)
+    	# Create an instance of my class using 'App'
+        demo_prog = DemoProgram(app)
 
-	# Execute the program
-    sys.exit(app.exec_())
+    	# Execute the program
+        sys.exit(app.exec_())
 
-</pre></code>
+You can find more examples on how to use `hardware control` in the example directory.
