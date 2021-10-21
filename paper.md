@@ -1,5 +1,5 @@
 ---
-title: 'Hardware-Control: Instrument control and automation package'
+title: "Hardware-Control: Instrument control and automation package"
 tags:
   - Python
   - Instrument Control
@@ -15,17 +15,19 @@ authors:
   - name: Brian Mak
     orcid: 0000-0001-7095-8108
     affiliation: 1
+  # - name: Zhihao Qin
+  #   orcid: 0000-0002-5577-1270
+  #   affiliation: 1
   - name: Arun Persaud
     orcid: 0000-0003-3186-8358
     affiliation: 1
 affiliations:
- - name: Lawrence Berkeley National Laboratory, Berkeley, CA 94720, USA
-   index: 1
- - name: Technische Universität Darmstadt, 64289 Darmstadt, Hesse, Germany
-   index: 2
+  - name: Lawrence Berkeley National Laboratory, Berkeley, CA 94720, USA
+    index: 1
+  - name: Technische Universität Darmstadt, 64289 Darmstadt, Hesse, Germany
+    index: 2
 date: 27 August 2020
 bibliography: paper.bib
-
 ---
 
 # Summary
@@ -48,7 +50,6 @@ interfaces. The package also provides means for simplifying data
 collection with automatic data logging, plotting, and many export
 formats. `Hardware-Control` was designed to be a flexible solution for
 a wide variety of experimental challenges.
-
 
 # Statement of need
 
@@ -80,7 +81,6 @@ operate a compact RF particle accelerator. Although our group is using
 `Hardware-Control` specifically in particle physics applications, it can be
 used in almost any field of experimental research because it solves the broadly
 applicable problem of instrument automation.
-
 
 # Acknowledgements
 
