@@ -409,7 +409,7 @@ class Instrument:
             if value is None:
                 return
             if callable(self.set_commands[name]):
-                self.set_commands[name]
+                self.set_commands[name]()
             else:
                 self.write(self.set_commands[name].format(value))
             return
