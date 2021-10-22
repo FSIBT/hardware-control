@@ -6,8 +6,10 @@
 
 import logging
 import random
+from typing import Optional
 
 from ...base import Instrument
+from ...base.hooks import split_string
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +18,10 @@ class Keysight_36300(Instrument):
     """Keysight E36300 Series Triple Output Power Supply base instrument class.
 
     PARAMETERS
+        * VERSION
+            * Present SCPI version and version year.
+        * ERRORS
+            * The last 20 instrument errors.
         * CH<X>_ENABLE (*bool*)
             * Enable and disable the instrument.
         * CH<X>_V_SET (*float*)
@@ -26,10 +32,14 @@ class Keysight_36300(Instrument):
             * Output voltage for channel 'X'. This parameter can be read but cannot be set.
         * CH<X>_I_OUT
             * Output current for channel 'X'. This parameter can be read but cannot be set.
-        * CH<X>_V_MAX (*float*)
-            * Maximum allowed voltage for channel 'X'. This parameter can be set but cannot be read.
-        * CH<X>_I_MAX (*float*)
-            * Maximum allowed current for channel 'X'. This parameter can be set but cannot be read.
+        * CH<X>_V_PROT (*float*)
+            * Level at which overvoltage protection trips for channel 'X'.
+
+    COMMANDS
+        * CLEAR
+            * Clear the internal instrument errors.
+        * ALLOW_NEG_OUTPUT
+            * Allow negative outputs.
 
     """
 
@@ -37,6 +47,7 @@ class Keysight_36300(Instrument):
         self,
         instrument_name: str = "Keysight_36300",
         connection_addr: str = "",
+        settings_file: Optional[str] = None,
     ):
         super().__init__(
             instrument_name=instrument_name,
@@ -48,14 +59,25 @@ class Keysight_36300(Instrument):
         self.max_V = [None] * len(self.chan_nums)
         self.max_I = [None] * len(self.chan_nums)
 
+        self.add_parameter(
+            "VERSION",
+            read_command="SYST:VERS?",
+            post_hooks=[split_string(".")],
+            dummy_return="['YYYY', 'V']",
+        )
+
+        self.add_parameter(
+            "ERRORS",
+            read_command="SYST:ERR?",
+            dummy_return="",
+        )
+
         for channel in self.chan_nums:
             self.add_parameter(
                 f"CH{channel}_ENABLE",
                 read_command="OUTPUT:STATE?",
-                set_command="OUTPUT {}",
-                pre_hooks=[lambda x: "ON" if value == True else "OFF"],
-                post_hooks=[lambda x: True if value == "1" else False],
-                dummy_return="",
+                set_command="OUTPUT:STATE {}",
+                dummy_return="ON",
             )
 
             self.add_parameter(
@@ -67,7 +89,7 @@ class Keysight_36300(Instrument):
                     if self.max_V[channel - 1] is not None
                     else None
                 ],
-                dummy_return="",
+                dummy_return="5",
             )
 
             self.add_parameter(
@@ -79,37 +101,37 @@ class Keysight_36300(Instrument):
                     if self.max_I[channel - 1] is not None
                     else None
                 ],
-                dummy_return="",
+                dummy_return="6",
             )
 
             self.add_parameter(
-                "CH{channel}_V_OUT",
+                f"CH{channel}_V_OUT",
                 read_command=f"MEAS:VOLT? (@{channel})",
-                dummy_return="",
+                dummy_return="4.99",
             )
 
             self.add_parameter(
-                "CH{channel}_I_OUT",
+                f"CH{channel}_I_OUT",
                 read_command=f"MEAS:CURR? (@{channel})",
-                dummy_return="",
+                dummy_return="5.99",
             )
 
             self.add_parameter(
-                f"CH{channel}_V_MAX",
+                f"CH{channel}_V_PROT",
                 read_command=None,
-                set_command=[lambda x: _set_V_max(channel, x)],
-                dummy_return="",
+                set_command=f"SOURCE:VOlTAGE:PROTECTION {{}} (@{channel})",
+                dummy_return="6",
             )
 
             self.add_parameter(
-                f"CH{channel}_I_MAX",
+                f"CH{channel}_I_PROT",
                 read_command=None,
-                set_command=[lambda x: _set_I_max(channel, x)],
-                dummy_return="",
+                set_command=f"SOURCE:CURRENT:PROTECTION {{}} (@{channel})",
+                dummy_return="7",
             )
 
-    def _set_V_max(self, channel, value):
-        self.max_V[channel - 1] = float(value)
+        self.add_command("CLEAR", "*CLS")
+        self.add_command("ALLOW_NEG_OUTPUT", "SYST:PERS:MOD E3631A")
 
-    def _set_I_max(self, channel, value):
-        self.max_I[channel - 1] = float(value)
+        if settings_file != None:
+            self.load_state(settings_file)
