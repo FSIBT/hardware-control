@@ -7,17 +7,13 @@ See class definition for details.
 
 """
 
+import json
 import logging
 import numpy as np
 
 from picoscope.ps6000 import PS6000
 
 from ...base import Instrument
-from ..utility import (
-    regex_compare,
-    ensure_float,
-    get_channel_from_command,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +34,7 @@ class Picotech_6000(Instrument):
             connection_addr=connection_addr,
         )
 
+        self.number_of_channels = 4
         self.num_vert_divisions = 8
         self.record_length = 1e6  # Maximum 64 MS
         self.trigger_channel = 0
@@ -45,6 +42,130 @@ class Picotech_6000(Instrument):
         self.timebase = 10e-3  # time/div * number of divisions
 
         self.measurements = ["", "", "", "", ""]
+
+        self.add_parameter(
+            "TIMEBASE",
+            read_command=get_timebase,
+            set_command=set_timebase,
+        )
+        self.add_parameter(
+            "TIME_OFFSET",
+            read_command=get_timeoffset,
+            set_command=set_timeoffset,
+        )
+        self.add_parameter(
+            "TRIGGER_LEVEL",
+            read_command=None,
+            set_command=set_triggerlevel,
+        )
+        self.add_parameter(
+            "TRIGGER_EDGE",
+            read_command=None,
+            set_command=set_triggeredge,
+        )
+        self.add_lookup(
+            "TRIGGER_EDGE",
+            {"BOTH": "Rising", "NEG": "Falling", "POS": "Rising", "ALT": "Rising"},
+        )
+        self.add_parameter(
+            "TRIGGER_CHANNEL", read_command=None, set_command=set_triggerchannel
+        )
+
+        channels = {0: "A", 1: "B", 2: "C", 3: "D"}
+        for i in range(self.number_of_channels):
+            ch = channels[i]
+            self.add_parameter(
+                f"CH{ch}_VOLTS_DIV",
+                read_command=None,
+                set_commmand=lambda x: self.ps.setChannel(channel=ch, VRange=x),
+            )
+            self.add_parameter(
+                f"CH{ch}_OFFSET",
+                read_command=None,
+                set_commmand=lambda x: self.ps.setChannel(channel=ch, VOffset=x),
+            )
+            self.add_parameter(
+                f"CH{ch}_BW_LIM",
+                read_command=None,
+                set_commmand=lambda x: self.ps.setChannel(channel=ch, BWLimited=x),
+            )
+            self.add_parameter(
+                f"CH{ch}_ACTIVE",
+                read_command=None,
+                set_commmand=lambda x: self.ps.setChannel(channel=ch, enabled=x),
+            )
+            self.add_parameter(
+                f"CH{ch}_PROBE_ATTEN",
+                read_command=None,
+                set_commmand=lambda x: self.ps.setChannel(
+                    channel=ch, probeAttenuation=x
+                ),
+            )
+            # possible values: "AC", "DC"
+            self.add_parameter(
+                f"CH{ch}_COUPLING",
+                read_command=None,
+                set_commmand=lambda x: self.ps.setChannel(channel=ch, coupling=x),
+            )
+
+            self.add_parameter(
+                f"CH{ch}_WVFM",
+                read_command=lambda: self.read_waveform(i),
+                set_command=None,
+            )
+
+        self.add_command("SINGLE_TRIGGER", self.trigger)
+        self.add_command("RUN", self.run)
+        self.add_command("STOP", self.ps.stop)
+
+    def get_timebase(self):
+        return str(self.timebase)
+
+    def set_timebase(self, value):
+        self.timebase = value * 10
+        obs_duration = self.timebase
+        sampling_interval = obs_duration / self.record_length
+
+        if sampling_interval < 1e-9:
+            sampling_interval = 1e-9
+            obs_duration = sampling_interval * int(obs_duration / sampling_interval)
+
+        # could not get normal readout mode to work, so using memory Segments and bulk readout
+        self.ps.memorySegments(1)
+        self.ps.setNoOfCaptures(1)
+
+    def get_timeoffset(self):
+        return str(self.offset_position)
+
+    def set_timeoffset(self, value):
+        self.offset_position = value
+
+    def set_triggerlevel(self, value):
+        if self.trigger_channel != "None":
+            self.ps.setSimpleTrigger(
+                self.trigger_channel, threshold_V=value, enabled=True
+            )
+
+    def set_triggeredge(self, value):
+        if self.trigger_channel != "None":
+            self.ps.setSimpleTrigger(
+                self.trigger_channel, direction=value, enabled=True
+            )
+
+    def set_triggerchannel(self, value):
+        if value == "None":
+            self.trigger_channel = 0
+        else:
+            self.trigger_channel = int(value) - 1
+        self.ps.setSimpleTrigger(self.trigger_channel, enabled=True)
+
+    def trigger(self):
+        self.ps.runBlock(pretrig=self.offset_position / self.timebase)
+        self.ps.waitReady()
+
+    def run(self):
+        self.ps.runBlock(pretrig=self.offset_position / self.timebase)
+        self.ps.waitReady()
 
     def try_connect(self):
         """Checks if the backend is in communication with the object, if it is
@@ -91,175 +212,6 @@ class Picotech_6000(Instrument):
 
         return True
 
-    def update_setting(self, setting: str, value):
-        value_orig = value
-        value = ensure_float(value)
-
-        if self.dummy:
-            return value
-
-        try:
-            # first check for commands that are not channel specific
-            if setting == "LABELS_ENABLED":
-                return "Not available"
-
-            if setting == "TIMEBASE":
-                self.timebase = value * 10  # Time/div * #div
-
-                obs_duration = value
-                sampling_interval = obs_duration / self.record_length
-
-                if sampling_interval < 1e-9:
-                    sampling_interval = 1e-9
-                    obs_duration = sampling_interval * int(
-                        obs_duration / sampling_interval
-                    )
-
-                rval, _, _ = self.ps.setSamplingInterval(
-                    sampling_interval, obs_duration
-                )
-                # could not get normal readout mode to work, so using memory Segments and bulk readout
-                self.ps.memorySegments(1)
-                self.ps.setNoOfCaptures(1)
-                return f"{setting}={rval}"
-            if setting == "TIME_OFFSET":
-                self.offset_position = value
-                return f"{setting}={value}"
-            if setting == "TRIGGER_LEVEL":
-                if self.trigger_channel != "None":
-                    self.ps.setSimpleTrigger(
-                        self.trigger_channel, threshold_V=value, enabled=True
-                    )
-                return f"{setting}={value}"
-            if setting == "TRIGGER_COUPLING":
-                return "Not available"
-            if setting == "TRIGGER_EDGE":
-                # Make sure valid option given
-                if value not in ["BOTH", "NEG", "POS", "ALT"]:
-                    value = "Rising"
-                elif value == "POS":
-                    value = "Rising"
-                elif value == "NEG":
-                    value = "Falling"
-                elif value == "BOTH":
-                    # This model does not support BOTH mode
-                    value = "Rising"
-                elif value == "ALT":
-                    # This model does not support alternating trigger
-                    value = "Rising"
-                if self.trigger_channel != "None":
-                    self.ps.setSimpleTrigger(
-                        self.trigger_channel, direction=value, enabled=True
-                    )
-                return f"{setting}={value}"
-            if setting == "TRIGGER_CHANNEL":
-                if value_orig == "None":
-                    self.trigger_channel = value_orig
-                else:
-                    self.trigger_channel = int(value_orig) - 1
-                if self.trigger_channel == "None":
-                    self.ps.setSimpleTrigger(0, enabled=False)
-                else:
-                    self.ps.setSimpleTrigger(self.trigger_channel, enabled=True)
-                return f"{setting}={value}"
-            if regex_compare("MEAS_SLOT.", setting):
-                return "Not available"
-            if setting == "use_meas_avg":
-                return "Not available"
-            if setting == "meas_stat_enabled":
-                return "Not available"
-
-            # verify channel and check for all channel related commands
-            channel, setting_X = get_channel_from_command(setting)
-            if channel == 1:
-                chan = "A"
-            elif channel == 2:
-                chan = "B"
-            elif channel == 3:
-                chan = "C"
-            elif channel == 4:
-                chan = "D"
-            else:
-                return "Bad channel number"
-
-            if setting_X == "CHX_VOLTS_DIV":
-                self.ps.setChannel(channel=chan, VRange=value)
-                return f"{setting}={value}"
-            if setting_X == "CHX_OFFSET":
-                self.ps.setChannel(channel=chan, VOffset=value)
-                return f"{setting}={value}"
-            if setting_X == "CHX_BW_LIM":
-                self.ps.setChannel(channel=chan, BWLimited=value)
-                return f"{setting}={value}"
-            if setting_X == "CHX_ACTIVE":
-                self.ps.setChannel(channel=chan, enabled=value)
-                return f"CH{channel}={value}"
-            if setting_X == "CHX_IMPEDANCE":
-                return "Not available"
-            if setting_X == "CHX_LABEL":
-                return "Not available"
-            if setting_X == "CHX_INVERT":
-                return "Not availanle"
-            if setting_X == "CHX_PROBE_ATTEN":
-                self.ps.setChannel(channel=chan, probeAttenuation=value)
-                return f"{setting}={value}"
-            if setting_X == "CHX_COUPLING":
-                # Make sure valid value provided
-                if value not in ["AC", "DC"]:
-                    value = "DC"
-                self.ps.setChannel(channel=chan, coupling=value)
-                return f"{setting}={value}"
-
-        except Exception:
-            logger.error(
-                "An error occured in Picoscope6000.",
-                exc_info=True,
-            )
-
-    def command(self, cmd: str):
-
-        ret_str = ""
-
-        add_asterisk = False
-        if cmd[-1] == "*":
-            add_asterisk = True
-            cmd = cmd[0:-1]
-
-        if cmd == "SINGLE_TRIGGER":
-            self.ps.runBlock(pretrig=self.offset_position / self.timebase)
-            self.ps.waitReady()
-        elif cmd == "RUN":
-            self.ps.runBlock(pretrig=self.offset_position / self.timebase)
-            self.ps.waitReady()
-        elif cmd == "STOP":
-            self.ps.stop()
-        elif cmd == "CLEAR_MEAS":
-            return "Not available"
-        elif regex_compare("MEAS_SLOT.", cmd):
-
-            return "Not available"
-
-        elif cmd == "RESET_MEAS_STAT":
-
-            return "Not available"
-
-        return ret_str
-
-    def command_listdata(self, cmd: str):
-
-        channel, cmd_X = get_channel_from_command(cmd)
-
-        if not self.online:
-            return "", [], []
-
-        if cmd_X == "CHX_WVFM?":
-            return self.read_waveform(channel)
-
-        if cmd_X == "CHX_CLEAR":
-            return f"CH{channel}_WVFM", [], []
-
-        return "", [], []
-
     def read_waveform(self, channel: str):
         """Reads a waveform from the oscilloscope.
 
@@ -275,17 +227,6 @@ class Picotech_6000(Instrument):
         """
 
         channel_orig = channel
-        channel = int(channel) - 1
-
-        if self.dummy or not self.online:
-            t = np.linspace(0, 1e-3, 100, False)
-            noise = 0.02 * np.random.rand(1, 100)
-
-            # in the line below we have to take index 0 of 'noise' because noise
-            # is 2D array w/ 1 row and we need a 1D array
-            v = np.sin(t * 5e3 * float(channel)) + noise[0]
-
-            return f"CH{channel_orig}_WVFM", t.tolist(), v.tolist()
 
         try:
             number_samples = min(self.ps.noSamples, self.ps.maxSamples)
@@ -309,7 +250,7 @@ class Picotech_6000(Instrument):
                 logger.error(
                     "ERROR: Failed to read waveform data from scope", exc_info=True
                 )
-            return "", [], []
+            return "[[],[]]"
         except AttributeError as e:
             if "maxSamples" in e.args[0]:
                 logger.error(
@@ -323,6 +264,6 @@ class Picotech_6000(Instrument):
                 logger.error(
                     "ERROR: Failed to read waveform data from scope", exc_info=True
                 )
-            return "", [], []
+            return "[[],[]]"
 
-        return f"CH{channel_orig}_WVFM", t, volts
+        return json.dumps([t, volts])
