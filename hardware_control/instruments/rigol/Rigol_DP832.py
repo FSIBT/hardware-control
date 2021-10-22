@@ -12,10 +12,6 @@ import random
 import pyvisa
 
 from ...base import Instrument
-from ..utility import (
-    ensure_float,
-    get_channel_from_command,
-)
 
 logger = logging.getLogger(__name__)
 

@@ -14,7 +14,6 @@ from PyQt5.QtWidgets import (
 )
 from typing import List
 
-from ...utility import remove_end_carriage_return
 from ..widgets import (
     setButtonState,
     load_icon,

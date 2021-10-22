@@ -18,7 +18,6 @@ from PyQt5.QtWidgets import (
     QSizePolicy,
 )
 
-from ...utility import remove_end_carriage_return
 from ..widgets import load_icon, setButtonState, HCLineEdit, HCLabel, HCToggleButton
 
 logger = logging.getLogger(__name__)

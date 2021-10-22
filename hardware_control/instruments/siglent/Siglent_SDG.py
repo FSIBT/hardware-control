@@ -10,8 +10,6 @@ See class definition for details.
 import logging
 
 from ...base import Instrument
-from ..utility import get_channel_from_command
-
 
 logger = logging.getLogger(__name__)
 

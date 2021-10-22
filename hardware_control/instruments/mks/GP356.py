@@ -14,7 +14,6 @@ import random
 import numpy as np
 
 from ...base import Instrument
-from ..utility import ensure_float, get_channel_from_command
 
 logger = logging.getLogger(__name__)
 
