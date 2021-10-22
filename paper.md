@@ -15,9 +15,9 @@ authors:
   - name: Brian Mak
     orcid: 0000-0001-7095-8108
     affiliation: 1
-  # - name: Zhihao Qin
-  #   orcid: 0000-0002-5577-1270
-  #   affiliation: 1
+  - name: Zhihao Qin
+    orcid: 0000-0002-5577-1270
+    affiliation: 1
   - name: Arun Persaud
     orcid: 0000-0003-3186-8358
     affiliation: 1
@@ -26,7 +26,7 @@ affiliations:
     index: 1
   - name: Technische Universität Darmstadt, 64289 Darmstadt, Hesse, Germany
     index: 2
-date: 27 August 2020
+date: 21 October 2021
 bibliography: paper.bib
 ---
 
