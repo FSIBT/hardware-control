@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""PSU demo
+"""Multi-Channel Power Supply demo
 
 Usage:
-  psu_demo [--dummy] [--debug] [--console] [--info]
+  MultiPowerSupply_demo.py [--dummy] [--debug] [--console] [--info]
 
 Options:
   --dummy    use dummy connection for instruments that return semi-random data

@@ -81,6 +81,11 @@ def uppercase():
     return converter
 
 
+def split_string(delimeter):
+    def converter(value):
+        return value.split(delimeter)
+
+
 # Validators
 def range_validator(min_val, max_val):
     def validator(value):

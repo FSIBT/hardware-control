@@ -287,7 +287,9 @@ class App(QApplication):
             try:
                 inst_name, parameter, value = msg.split()
             except ValueError:
-                logger.error(f"{msg.split()} has too many values (expected 3).")
+                logger.error(
+                    f"{msg.split()} has too few or too many values (expected 3)."
+                )
             assert inst_name == name
 
             post_read_hooks = self._data[name][parameter]["post_read_hooks"]
