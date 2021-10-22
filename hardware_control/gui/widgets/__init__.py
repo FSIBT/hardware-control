@@ -23,4 +23,5 @@ from .hc_widgets import (
     HCLabel,
     HCHeader,
     HCDoubleSpinComboBox,
+    HCFixedLabel,
 )

@@ -9,8 +9,9 @@ from PyQt5.QtWidgets import (
     QComboBox,
     QDoubleSpinBox,
     QSpinBox,
+    QSizePolicy,
 )
-from PyQt5.QtGui import QPixmap, QDoubleValidator
+from PyQt5.QtGui import QPixmap, QDoubleValidator, QFont, QFontMetrics
 from PyQt5 import QtCore
 from typing import List
 
@@ -113,6 +114,8 @@ class HCMixin:
                 self.label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
             elif label_align == "left":
                 self.label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+            elif label_align == "center":
+                self.label.setAlignment(QtCore.Qt.AlignCenter)
 
         # connect to app
         self.app.add_widget(self.instrument, self.parameter, self)
@@ -190,8 +193,9 @@ class HCLineEdit(HCMixin, QLineEdit):
             label=label,
             label_align=label_align,
         )
+        self.validator = validator
 
-        if validator is not None:
+        if self.validator is not None:
             self.setValidator(validator())
 
         self.setText("----")
@@ -308,8 +312,8 @@ class HCToggleButton(HCMixin, QPushButton):
         parameter: str,
         button_label: str = "",
         show_indicator: bool = False,
-        icon_1: Optional[str] = None,
-        icon_2: Optional[str] = None,
+        icon_1: str = "button-power-on.svg",
+        icon_2: str = "button-power-off.svg",
     ):
         super().__init__(
             app=app,
@@ -317,13 +321,12 @@ class HCToggleButton(HCMixin, QPushButton):
             parameter=parameter,
             text=button_label,
         )
-
         self.show_indicator = show_indicator
-        if self.show_indicator:
-            self.icon_1 = load_icon(icon_1)
-            self.icon_2 = load_icon(icon_2)
-            self.indic_label = QLabel()
-            self.indic_label.setPixmap(load_icon("na_label.svg"))
+
+        self.icon_1 = load_icon(icon_1)
+        self.icon_2 = load_icon(icon_2)
+        self.indic_label = QLabel()
+        self.indic_label.setPixmap(load_icon("na_label.svg"))
 
         self.clicked.connect(self.value_change)
         self.setCheckable(True)
@@ -341,7 +344,15 @@ class HCToggleButton(HCMixin, QPushButton):
                 self.indic_label.setPixmap(self.icon_2)
 
     def hc_update(self):
-        pass
+        if self.show_indicator:
+            self.value = self.app.get_instrument_parameter(
+                self.instrument, self.parameter
+            )
+
+            if self.value:
+                self.indic_label.setPixmap(self.icon_1)
+            else:
+                self.indic_label.setPixmap(self.icon_2)
 
 
 class HCComboBox(HCMixin, QComboBox):
@@ -481,9 +492,75 @@ class HCSpinBox(HCMixin, QSpinBox):
 
 
 class HCHeader(QLabel):
-    """Display an image as a header"""
+    """Display an image as a header."""
 
     def __init__(self, icon_name):
         super().__init__()
         self.setPixmap(load_icon(icon_name))
         self.setAlignment(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignHCenter)
+
+
+class HCFixedLabel(HCMixin, QLabel):
+    """A QLabel that fixes its width to the initial string."""
+
+    def __init__(
+        self,
+        app,
+        instrument: str,
+        parameter: str,
+        init_label: str = "",
+        unit: str = "",
+        color: str = None,
+        fontsize: int = 18,
+        bold: bool = False,
+        label_align: str = "center",
+    ):
+        super().__init__(
+            app=app,
+            instrument=instrument,
+            parameter=parameter,
+        )
+
+        self.unit = unit
+        self.value = init_label
+
+        self.setText(self.value + " " + self.unit)
+
+        font = QFont()
+        font.setPointSize(fontsize)
+        font.setBold(bold)
+        self.setFont(font)
+
+        fm = QFontMetrics(self.font())
+        self.setFixedWidth(fm.width(self.text()))
+
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        if color is not None:
+            self.setStyleSheet(
+                f"color: white;background-color:{color}; padding: 5px;border: 1px solid black;"
+            )
+
+        # Align the label
+        if label_align == "right":
+            self.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        elif label_align == "left":
+            self.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        elif label_align == "center":
+            self.setAlignment(QtCore.Qt.AlignCenter)
+
+    def hc_update(self):
+        self.value = self.app.get_instrument_parameter(self.instrument, self.parameter)
+        self.setText(self.value)
+
+    def setText(self, text: str) -> None:
+        if self.unit:
+            try:
+                text = f"{float(text):.3g} {self.unit}"
+            except:
+                text = f"{text} {self.unit}"
+        else:
+            try:
+                text = f"{float(text):.3g}"
+            except:
+                text = f"{text}"
+        super().setText(text)
