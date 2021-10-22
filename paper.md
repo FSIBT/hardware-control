@@ -42,14 +42,20 @@ desirable.
 `Hardware-Control` is a Python package for instrument control and
 automation. It provides reusable user interfaces and instrument
 drivers to simplify writing control programs. `Hardware-Control` uses
-Qt, a GUI framework [@pyqt], to create fast and efficient user
+PyQt5, a GUI framework [@pyqt], to create fast and efficient user
 interfaces compatible with most major operating
 systems. `Hardware-Control` is also designed so that new drivers can
 be easily added for new hardware and used with existing user
 interfaces. The package also provides means for simplifying data
 collection with automatic data logging, plotting, and many export
-formats. `Hardware-Control` was designed to be a flexible solution for
-a wide variety of experimental challenges.
+formats. `Hardware-Control` was designed with the use case of
+experiments in our laboratory in mind. Normally this involves reading
+and setting voltages using power supplies and, for example,
+oscilloscopes and updating these values on external triggers or
+automatically on a timer on a time scale of a second. The program is
+currently not well fitted to do any real-time or near real-time
+communications with instruments or to handle data that is being
+streamed, for example, from a camera.
 
 # Statement of need
 
@@ -60,7 +66,7 @@ binary and code reviews and pull requests on services such as
 bitbucket and github are therefore difficult). Furthermore, although
 backend code can be easily shared between projects, complex user
 interfaces can not easily be reused. The software package presented
-here solves the main issues that we have encountered in the
+here solves these issues that we have encountered in the
 past. Specifically, it makes reusing frontend code easier, integrates
 well with git (pure python code), and provides an easy built-in
 scripting solution (via an optional python REPL that has full access
@@ -69,18 +75,23 @@ during execution make one-off complex parameter scans easy to
 implement. The software also makes it easy to develop and test the
 code without any hardware connected to the system.
 
-A similar package with a slightly different approach can be found at
-Scopefoundry.org [@Barnard]. However, our experiments have a slightly
-different need and we therefore decided to implement the provided
-solution. This software is actively being used in two different research
-projects in our group at Lawrence Berkeley National Laboratory. One
-such project, ROOTS, uses `Hardware-Control` to run a variety of data
-acquisition modules and power supplies to measure carbon content in soil via
-neutron irradiation. Our other project, STS-50, uses `Hardware-Control` to
-operate a compact RF particle accelerator. Although our group is using
-`Hardware-Control` specifically in particle physics applications, it can be
-used in almost any field of experimental research because it solves the broadly
-applicable problem of instrument automation.
+Similar packages already exist, for example Scopefoundry.org
+[@Barnard], pymeasure [@pymeasure], yaq [@yaq], etc. A good overview
+of available python packages can be found at Ref [@overview].
+
+However, for our experiments we had a specific usecase in mind and we
+therefore decided to implement the provided solution. This software is
+currently actively used in our group at Lawrence Berkeley National
+Laboratory.  Although our group is using `Hardware-Control`
+specifically in beam physics applications, we believe that the code
+can be useful for other experiments too.
+
+In principle, we plan to continue to develop the code in the future by
+adding more instrument drivers and custom widgets, since we believe
+that the current solution also provides us several benefits compared
+to prior solution. Therefore, we are also open to community
+contributions. However, we are also open to merge our code into one of
+the pre-existing code bases.
 
 # Acknowledgements
 
