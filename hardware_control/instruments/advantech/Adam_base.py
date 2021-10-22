@@ -40,12 +40,14 @@ class AdamBackend(Instrument):
         self.try_connect()
 
     def write(self, command: str):
-        self.device.sendto((command + self.termination).encode(self.encoding), self.addr)
+        self.device.sendto(
+            (command + self.termination).encode(self.encoding), self.addr
+        )
         # check return code
         indata, inaddr = self.device.recvfrom(self.buffer_length)
         output = indata.decode("ascii")
         if output == "?01\r":
-            logger.debug("Adam: Last command invalid")
+            logger.error("Adam: Last command invalid")
             return
         if output == ">\r":
             return
@@ -65,12 +67,10 @@ class AdamBackend(Instrument):
                 self.device.settimeout(0.950)
                 self.device.connect(self.addr)
                 logger.debug(
-                    f"opened socket connection to {self.name} at"
+                    f"Opened socket connection to {self.ID} at"
                     f" {self.ip_addr}:{self.port_no}"
                 )
-                self.online = True
-                return True
-            except:
-                logger.debug("exception during try connect", exc_info=True)
+            except Exception as e:
+                logger.error(f"During ADAM try_connect: {e}", exc_info=True)
                 self.online = False
                 return self.online
