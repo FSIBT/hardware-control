@@ -60,6 +60,13 @@ def format_int():
     return converter
 
 
+def format_bool():
+    def converter(value):
+        return str(int(value == "True"))
+
+    return converter
+
+
 def make_negative():
     def converter(value):
         return f"{-1*(value)}"
