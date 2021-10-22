@@ -165,6 +165,7 @@ class Rigol_DS1000Z1(Instrument):
         self.add_command("STOP", ":STOP")
 
     def read_waveform(self, channel: int):
+
         self.write(f"WAV:SOUR CHAN{channel}")  # Specify channel to read
         self.write("WAV:MODE NORM")  # Specify to read data displayed on screen
         self.write("WAV:FORM ASCII")  # Specify data format to ASCII
@@ -182,5 +183,5 @@ class Rigol_DS1000Z1(Instrument):
         # Get time values
         t = list(xorigin + np.linspace(0, xincr * (len(volts) - 1), len(volts)))
 
-        out = {"time": t, "data": volts}
+        out = [t, volts]
         return json.dumps(out)
