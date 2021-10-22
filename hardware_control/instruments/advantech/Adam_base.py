@@ -32,7 +32,6 @@ class AdamBackend(Instrument):
         self.buffer_length = 200
 
         self.addr = (self.ip_addr, self.port_no)
-
         if self.connection_type != Instrument.SOCKET:
             logger.error(
                 "Wrong instrument address. Needs to be socket type (ip or ip:port)."
@@ -41,12 +40,12 @@ class AdamBackend(Instrument):
         self.try_connect()
 
     def write(self, command: str):
-        self.device.sendto((command + self.termination).encode(self.encode), self.addr)
+        self.device.sendto((command + self.termination).encode(self.encoding), self.addr)
         # check return code
-        indata, inaddr = self.device.recvfrom(self.buf)
+        indata, inaddr = self.device.recvfrom(self.buffer_length)
         output = indata.decode("ascii")
         if output == "?01\r":
-            print("Adam: Last command invalid")
+            logger.debug("Adam: Last command invalid")
             return
         if output == ">\r":
             return
@@ -66,9 +65,11 @@ class AdamBackend(Instrument):
                 self.device.settimeout(0.950)
                 self.device.connect(self.addr)
                 logger.debug(
-                    f"opened socket connection to {self.ID} at"
+                    f"opened socket connection to {self.name} at"
                     f" {self.ip_addr}:{self.port_no}"
                 )
+                self.online = True
+                return True
             except:
                 logger.debug("exception during try connect", exc_info=True)
                 self.online = False

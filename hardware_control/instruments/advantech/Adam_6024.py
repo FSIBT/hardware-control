@@ -10,7 +10,7 @@ See class definition for details.
 import logging
 import random
 
-from ...base.hooks import range_validator
+from ...base.hooks import range_validator, format_float
 
 from .Adam_base import AdamBackend
 
@@ -47,20 +47,20 @@ class Adam_6024(AdamBackend):
         self.model = "Adam 6024"
 
         # This specifies the max number of channels the user can request
-        self.n_input_channels = 8
-        self.n_output_channels = 4
+        self.n_input_channels = 6
+        self.n_output_channels = 2
 
-        for i in range(1, self.n_input_channels + 1):
+        for i in range(self.n_input_channels):
             self.add_parameter(
                 f"CH{i}_READ_VOLTAGE",
                 read_command="#01",
                 post_hooks=[create_channel_parser(i)],
             )
 
-        for i in range(1, self.n_output_channels + 1):
+        for i in range(self.n_output_channels):
             self.add_parameter(
                 name=f"CH{i}_SET_VOLTAGE",
-                read_command="",
-                set_command=f"#01{i:02d}{{:06.3f}}",
-                pre_hooks=[range_validator(0, 10)],
+                read_command=None,
+                set_command=f"#01{i:02d}{{}}",
+                pre_hooks=[range_validator(0, 10), format_float("06.3f")],
             )
