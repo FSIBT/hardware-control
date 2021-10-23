@@ -18,32 +18,17 @@ import sys
 from os import getcwd
 
 from docopt import docopt
-from pathlib import Path
 
 from PyQt5.QtWidgets import QWidget, QGridLayout
 from PyQt5.QtGui import QDoubleValidator
-
-import pkg_resources
 
 import hardware_control as hc
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
 
-if commands["--debug"]:
-    loglevel = logging.DEBUG
-elif commands["--info"]:
-    loglevel = logging.INFO
-else:
-    loglevel = logging.WARNING
-
-if commands["--console"]:
-    logoutput = None
-else:
-    logoutput = Path("hardware-control.log")
-
 logger = logging.getLogger(__name__)
-hc.setup_logging(logger, logoutput, loglevel)
+hc.setup_logging_docopt(logger, commands)
 
 
 class Demo(hc.HCMainWindow):

@@ -60,3 +60,23 @@ def setup_logging(
     logger.setLevel(loglevel)
     logger.handlers = []
     logger.addHandler(handler)
+
+
+def setup_logging_docopt(logger, commands):
+    """Setup logging by parsing the output of docopt dictionary for certain command line options.
+
+    The function recognizes '--debug', '--info', and '--console' to set the loglevel and the output.
+    """
+    if commands["--debug"]:
+        loglevel = logging.DEBUG
+    elif commands["--info"]:
+        loglevel = logging.INFO
+    else:
+        loglevel = logging.WARNING
+
+    if commands["--console"]:
+        logoutput = None
+    else:
+        logoutput = Path("hardware-control.log")
+
+    setup_logging(logger, logoutput, loglevel)

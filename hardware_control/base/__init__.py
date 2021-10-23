@@ -6,5 +6,5 @@ from .Dataset import Dataset
 from .App import App
 from .Instrument import Instrument
 from .HCMainWindow import HCMainWindow
-from .logging import setup_logging
+from .logging import setup_logging, setup_logging_docopt
 from . import hooks
