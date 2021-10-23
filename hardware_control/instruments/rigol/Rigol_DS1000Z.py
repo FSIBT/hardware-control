@@ -18,7 +18,7 @@ from ...base import Instrument
 logger = logging.getLogger(__name__)
 
 
-class Rigol_DS1000Z1(Instrument):
+class Rigol_DS1000Z(Instrument):
     def __init__(
         self,
         instrument_name: str = "RIGOL_DS1000Z",

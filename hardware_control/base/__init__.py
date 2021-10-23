@@ -7,4 +7,6 @@ from .App import App
 from .Instrument import Instrument
 from .HCMainWindow import HCMainWindow
 from .logging import setup_logging, setup_logging_docopt
+from .ZMQAdapter import ZMQAdapter
+from .ZMQRemoteAdapter import ZMQSingleInstrument, ZMQRemoteInstrument
 from . import hooks

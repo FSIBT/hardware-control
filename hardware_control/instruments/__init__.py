@@ -13,6 +13,5 @@ from .siglent import Siglent_SDG
 from .srs import SRS_DG535
 from .srs import SRS_CIS200
 from .tdkl import TDKL_GenH
-from .zmq import ZMQ_Oscilloscope
 from .lakeshore import Lakeshore_224
 from .mks import GP_356

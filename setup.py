@@ -30,7 +30,6 @@ setuptools.setup(
         "hardware_control.instruments.siglent",
         "hardware_control.instruments.srs",
         "hardware_control.instruments.tdkl",
-        "hardware_control.instruments.zmq",
         "hardware_control.icons",
     ],
     package_data={"hardware_control": [os.path.join("icons", "*svg")]},
