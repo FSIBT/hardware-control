@@ -4,6 +4,8 @@ def handle_zmq_message_from_app(adapter, msg, logger):
     First parse the message and then depending on the content execute
     a command, read or set a value in the instrument.
 
+    Also check the onlnie status of the instrument and report back.
+
     This is one of the main part of handling the ZMQ communications,
     since it is used in ZMQAdapter and ZMQRemoteInstrument, we placed
     the code here in an external function.
@@ -34,6 +36,13 @@ def handle_zmq_message_from_app(adapter, msg, logger):
        the logger to be used for error and debug messages
 
     """
+
+    # check online status
+    if adapter.instrument.online != adapter.online:
+        adapter.online = adapter.instrument.online
+        adapter.zmq_publisher.send_string(
+            f"{adapter.instrument.name} ONLINE {adapter.online}"
+        )
 
     # remove topic
     logger.debug(f"in ZMQ parsing: {msg}")

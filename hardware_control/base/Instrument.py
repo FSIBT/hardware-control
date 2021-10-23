@@ -244,9 +244,9 @@ class Instrument:
            These can also easily be overwritten in an actual app to customize this.
 
         """
-        if name in ["online", "command", "get"]:
+        if name in ["ONLINE"]:
             logger.error(
-                f"command 'online','get', and 'command' a special command and cannot be used in instrument {self.name}"
+                f"command 'online' is a special command and cannot be used in instrument {self.name}"
             )
             return
 
@@ -328,7 +328,7 @@ class Instrument:
         This is mostly used so that the main app can know what commands are available.
         """
         return (
-            list(self.read_commands.keys()),
+            list(self.read_commands.keys()) + ["ONLINE"],
             list(self.set_commands.keys()),
             list(self.commands.keys()),
         )
@@ -344,7 +344,7 @@ class Instrument:
         exists.
 
         """
-        if name == "online":
+        if name == "ONLINE":
             return self.online
 
         if self.dummy:

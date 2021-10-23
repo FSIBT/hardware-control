@@ -25,6 +25,7 @@ class ZMQAdapter(threading.Thread):
         self.instrument = instrument
         self.stop = stopevent
         self.name = instrument.name
+        self.online = False
 
         # subscribe to main app
         self.zmq_subscriber = context.socket(zmq.SUB)
