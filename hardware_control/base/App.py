@@ -12,6 +12,7 @@ import zmq
 from .Dataset import Dataset
 from .Instrument import Instrument
 from .ZMQAdapter import ZMQAdapter
+from .ZMQRemoteAdapter import ZMQRemoteInstrument
 
 logger = logging.getLogger(__name__)
 
@@ -153,6 +154,35 @@ class App(QApplication):
         for t in self.threads:
             t.join()
 
+    def register_parameters_and_commands(
+        self, name, read_parameters, set_parameters, commands
+    ):
+        """Adds the parameter names to the data modell and set defaults values."""
+        for r in read_parameters:
+            p = {
+                "read_value": None,
+                "set_value": None,
+                "post_read_hooks": [],
+                "pre_set_hooks": [],
+                "widgets": [],
+            }
+            self._data[name][r] = p
+        for s in set_parameters:
+            p = {
+                "read_value": None,
+                "set_value": None,
+                "post_read_hooks": [],
+                "pre_set_hooks": [],
+                "widgets": [],
+            }
+            self._data[name][s] = p
+        for c in commands:
+            p = {
+                "pre_call_hooks": [],
+                "widgets": [],
+            }
+            self._data[name][c] = p
+
     def add_instrument(
         self,
         instrument: Instrument,
@@ -187,35 +217,13 @@ class App(QApplication):
         self.zmq_subscribers[instrument.name] = subscriber
 
         # register all possible read/write operations
-        read, set, commands = zmq_instrument.instrument.list_parameters()
-
         if zmq_instrument.instrument.name not in self._data:
             self._data[zmq_instrument.instrument.name] = {}
 
-        for r in read:
-            p = {
-                "read_value": None,
-                "set_value": None,
-                "post_read_hooks": [],
-                "pre_set_hooks": [],
-                "widgets": [],
-            }
-            self._data[zmq_instrument.name][r] = p
-        for s in set:
-            p = {
-                "read_value": None,
-                "set_value": None,
-                "post_read_hooks": [],
-                "pre_set_hooks": [],
-                "widgets": [],
-            }
-            self._data[zmq_instrument.name][s] = p
-        for c in commands:
-            p = {
-                "pre_call_hooks": [],
-                "widgets": [],
-            }
-            self._data[zmq_instrument.name][c] = p
+        reads, sets, commands = zmq_instrument.instrument.list_parameters()
+        self.register_parameters_and_commands(
+            zmq_instrument.name, reads, sets, commands
+        )
 
         # register an ignore flag for the instrument
         self._data[zmq_instrument.name]["ignore"] = ignore_flag
@@ -226,7 +234,25 @@ class App(QApplication):
         self.threads.append(zmq_instrument)
         zmq_instrument.start()
 
-    def add_remote_instrument(self, name, ipaddress, port):
+    def add_remote_instrument(self, name: str, ipaddress: str, port: int):
+        """Connect to a instrument driver on, for example, a different computer.
+
+        This is relative straight forward, since the ZMQ publishers
+        that update the data modell do not care on which computer they
+        are running. The main task is to create subscribers to the
+        already existing publishers(from the app and on the remote
+        side). This task is mostly handled by `ZMQRemoteInstrument`.
+
+        Parameters
+        ----------
+        name
+           The remote instrument name
+        ipaddress
+           The ipaddress where the remote instrument is running
+        port
+           The port number of the remote instrument publisher
+
+        """
         if name in self._data:
             logger.error(
                 f"Instrument {instrument.name} already exists... instruments names need to be unique"
@@ -234,37 +260,26 @@ class App(QApplication):
             return
 
         zmq_instrument = ZMQRemoteInstrument(
-            name, ipaddress, port, self.zmq_context, self.zmq_publisher_port
+            name,
+            ipaddress,
+            port,
+            self.zmq_context,
+            self.zmq_publisher_address,
         )
 
         subscriber = self.zmq_context.socket(zmq.SUB)
         subscriber.connect(
-            f"tcp://{zmq_instrument.instrument_address}:{zmq_instrument.instrument_port}"
+            f"tcp://{zmq_instrument.instrument_ipaddress}:{zmq_instrument.instrument_port}"
         )
         subscriber.subscribe("")
         self.zmq_subscribers[zmq_instrument.name] = subscriber
 
-        read, set, commands = zmq_instrument.list_parameters()
-
         if zmq_instrument.name not in self._data:
             self._data[zmq_instrument.name] = {}
-
-        # add parameters into _data
-        for r in read:
-            p = {
-                "read_value": None,
-                "set_value": None,
-                "post_read_hooks": [],
-                "pre_set_hooks": [],
-                "widgets": [],
-            }
-            self._data[zmq_instrument.name][r] = p
-        for c in commands:
-            p = {
-                "pre_call_hooks": [],
-                "widgets": [],
-            }
-            self._data[zmq_instrument.name][c] = p
+        reads, sets, commands = zmq_instrument.list_parameters()
+        self.register_parameters_and_commands(
+            zmq_instrument.name, reads, sets, commands
+        )
 
         # save somewhere to be able to call close, this works, since
         # we add a .join() method to the ZMQ remote instrument
