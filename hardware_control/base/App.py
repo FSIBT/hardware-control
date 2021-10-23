@@ -292,6 +292,13 @@ class App(QApplication):
                 )
             assert inst_name == name
 
+            if name not in self._data:
+                logger.error(f"{name} not available in data modell")
+                return
+            if parameter not in self._data[name]:
+                logger.error(f"{parameter} not available for instrument {name}")
+                return
+
             post_read_hooks = self._data[name][parameter]["post_read_hooks"]
             value = call_hooks(post_read_hooks, value)
             if value is not None:
@@ -329,7 +336,7 @@ class App(QApplication):
             return
 
         self._data[instrument][parameter]["set_value"] = value
-        self.zmq_publisher.send_string(f"{instrument} {parameter} {value}")
+        self.zmq_publisher.send_string(f"{instrument} set {parameter} {value}")
 
     @ensure_parameter_and_instrument_exists
     def update_instrument_parameter(self, instrument: str, parameter: str) -> None:

@@ -8,37 +8,69 @@ def handle_zmq_message_from_app(adapter, msg, logger):
     since it is used in ZMQAdapter and ZMQRemoteInstrument, we placed
     the code here in an external function.
 
+    The possible messages have the following form:
+
+    <instrument name> command <command name>
+       This triggers a command
+
+    <instrument name> get <parameter>
+       This triggers a read request of the parameter
+
+    <instrument name> set <parameter> <value>
+       Set a parameter to a new value
+
+
+    When reading a value, the return ZMQ message has the form:
+
+    <instrument name> <parameter> <value>
+
+    Parameters
+    ----------
+    adapter
+       the ZMQAdapter for the instrument driver
+    msg
+       the ZMQ message received by the adapter
+    logger
+       the logger to be used for error and debug messages
+
     """
 
     # remove topic
     logger.debug(f"in ZMQ parsing: {msg}")
     msg = msg[adapter.zmq_topic_length :]
 
+    # the different messages are whitespace separated, so we can easily parse them
     msg = msg.split()
     if len(msg) == 1:
-        ret = adapter.instrument[msg[0]]
-        adapter.zmq_publisher.send_string(f"{adapter.instrument.name} {msg[0]} {ret}")
+        logger.debug(f"'{adapter.name}' got invalid message '{msg}'")
         return
     elif len(msg) == 2:
-        if msg[0] == "command":
-            logger.debug(f"'{adapter.name}' got command '{msg[1]}'")
-            adapter.instrument.command(msg[1])
+        command = msg[0]
+        if command == "command":
+            command_name = msg[1]
+            logger.debug(f"'{adapter.name}' got command '{command_name}'")
+            adapter.instrument.command(command_name)
             return
-        if msg[0] == "get":
-            logger.debug(f"'{adapter.name}' got get request '{msg[1]}'")
-            if msg[1] not in adapter.instrument.read_commands:
+        elif command == "get":
+            parameter = msg[1]
+            logger.debug(f"'{adapter.name}' got get request '{parameter}'")
+            if parameter not in adapter.instrument.read_commands:
                 logger.error(
                     f"'{msg[1]}' read command not available in instrument '{adapter.name}'"
                 )
                 return
-            value = adapter.instrument.get_value(msg[1])
-            logger.debug(f"sending value '{value}' back for {msg[1]}")
+            value = adapter.instrument.get_value(parameter)
+            logger.debug(f"sending value '{value}' back for {parameter}")
             if value is not None:
                 adapter.zmq_publisher.send_string(
-                    f"{adapter.instrument.name} {msg[1]} {value}"
+                    f"{adapter.instrument.name} {parameter} {value}"
                 )
                 return
-        # if it is not a command, we are trying to set a value
-        logger.debug(f"'{adapter.name}' setting '{msg[0]}' to '{msg[1]}'")
-        adapter.instrument[msg[0]] = msg[1]
-        return
+    elif len(msg) == 3:
+        command = msg[0]
+        if command == "set":
+            parameter = msg[1]
+            value = msg[2]
+            logger.debug(f"'{adapter.name}' setting '{parameter}' to '{value}'")
+            adapter.instrument[parameter] = value
+            return

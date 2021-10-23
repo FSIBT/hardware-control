@@ -30,9 +30,8 @@ class ZMQAdapter(threading.Thread):
         self.zmq_subscriber = context.socket(zmq.SUB)
         self.zmq_subscriber.connect(publisher)
         self.zmq_subscriber.subscribe(instrument.name)
-        self.zmq_topic_length = (
-            len(instrument.name) + 1
-        )  # +1 for extra whitespace after topic name
+        # +1 for extra whitespace after topic name
+        self.zmq_topic_length = len(instrument.name) + 1
 
         # create our own publisher
         self.zmq_publisher_address = "tcp://" + self.get_address(publisher)
