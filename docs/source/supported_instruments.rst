@@ -1,6 +1,7 @@
 List of supported instruments
 =============================
 
+Note: Not all functions for all instruments are supported. If you need a currently unsuported functionality, feel free to contact us or provide a pull request.
 
 - Delay Generator:
 

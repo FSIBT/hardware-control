@@ -22,8 +22,14 @@ the styl we expect, i.e., it will run black over the new code and some
 other programs to ensure the code matches the coding style in the
 repository.
 
-Feedback and pull requests are welcome, including PRs for new hardware.
+Feedback and pull requests and issues are welcome, including PRs for new hardware.
 
-If you supply a new type of instrument driver, please also supply a simple GUI that works with the driver and create an example for it.
-If you supply a new instrument driver of an already existing type, for example, a power supply, then please ensure that it will work with existing GUI.
+Feel also free to contact one of the authors at apersaud@lbl.gov
+directly to discuss possible changes or ideas.
+
+If you supply a new type of instrument driver, please also supply a
+simple GUI that works with the driver and create an example for it.
+If you supply a new instrument driver of an already existing type, for
+example, a power supply, then please ensure that it will work with
+existing GUI.
 
