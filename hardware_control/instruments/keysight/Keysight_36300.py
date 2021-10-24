@@ -9,7 +9,6 @@ import random
 from typing import Optional
 
 from ...base import Instrument
-from ...base.hooks import split_string
 
 logger = logging.getLogger(__name__)
 
@@ -62,8 +61,7 @@ class Keysight_36300(Instrument):
         self.add_parameter(
             "VERSION",
             read_command="SYST:VERS?",
-            post_hooks=[split_string(".")],
-            dummy_return="['YYYY', 'V']",
+            dummy_return="YYYY.V",
         )
 
         self.add_parameter(

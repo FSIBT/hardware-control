@@ -18,7 +18,6 @@ from numpy import Infinity
 from ...base import Instrument
 from ...base.hooks import (
     format_float,
-    write_to_log,
     scaling_converter,
     format_int,
     last_n_values_converter,

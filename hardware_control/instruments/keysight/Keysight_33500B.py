@@ -9,10 +9,10 @@ import logging
 from ...base import Instrument
 from ...base.hooks import (
     format_float,
-    min_len_converter,
+    max_len_converter,
     expected_input_validator,
     scaling_converter,
-    parse_converter,
+    substring_hook,
     uppercase,
 )
 
@@ -142,7 +142,7 @@ class Keysight_33500B(Instrument):
                 f"CH{ch}_LABEL",
                 read_command=f"CHAN{ch}:LAB?",
                 set_command=f"CHAN{ch}:LAB {{}}",
-                pre_hooks=[min_len_converter(32)],
+                pre_hooks=[max_len_converter(32)],
                 dummy_return="NA",
             )
             self.add_parameter(
@@ -235,9 +235,7 @@ class Keysight_33500B(Instrument):
                 read_command=f"SOUR{ch}:FREQ?",
                 set_command=f"SOUR{ch}:FREQ {{}}",
                 pre_hooks=[scaling_converter(1e6), format_float(".6E")],
-                post_hooks=[
-                    parse_converter(0, -1),
-                ],
+                post_hooks=[substring_hook(0, -1)],
                 dummy_return="20",
             )
 
@@ -253,7 +251,7 @@ class Keysight_33500B(Instrument):
                 f"CH{ch}_WAVEFORM",
                 read_command=f":SOUR{ch}:FUNC?",
                 set_command=f":SOUR{ch}:FUNC {{}}",
-                pre_hooks=[uppercase()],
+                pre_hooks=[uppercase],
                 dummy_return="DC",
             )
             self.add_lookup(

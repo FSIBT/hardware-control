@@ -1,7 +1,6 @@
 Main Window class
 =================
 
-
 hardware_control.base.HCMainWindow module
 -----------------------------------------
 

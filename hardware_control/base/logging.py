@@ -9,7 +9,7 @@ def setup_logging(
     logoutput: Optional[Path] = None,
     loglevel: Optional[str] = None,
 ):
-    """Setup the loglevel and direct to console or file.
+    """Setup the loglevel and direct output to the console or a file.
 
     Parameters
     ----------
@@ -63,7 +63,7 @@ def setup_logging(
 
 
 def setup_logging_docopt(logger, commands):
-    """Setup logging by parsing the output of docopt dictionary for certain command line options.
+    """Setup logging by parsing the output of a docopt dictionary for certain command line options.
 
     The function recognizes '--debug', '--info', and '--console' to set the loglevel and the output.
     """

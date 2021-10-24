@@ -17,20 +17,21 @@ logger = logging.getLogger(__name__)
 
 
 class HCMainWindow(QMainWindow):
+    """Create a QMainWindow with some additional menus.
+
+    If no app is given an instance will be created.
+
+    Parameters
+    ----------
+    app :
+       The main app that will store all instrument data, etc.
+    dummy :
+       Should the app run in dummy mode. Only used here, if app is
+       None and a new app needs to be created.
+
+    """
+
     def __init__(self, app: Optional[App] = None, dummy: bool = False):
-        """Create a QMainWindow with some additional menu.
-
-        If no app is given an instance will be created.
-
-        Parameters
-        ----------
-        app :
-           The main app that will store all instrument data, etc.
-        dummy :
-           Should the app run in dummy mode. Only used here, if app is
-           None and a new app needs to be created.
-
-        """
 
         if app is None:
             app = App(dummy=dummy)
@@ -38,6 +39,7 @@ class HCMainWindow(QMainWindow):
 
         super().__init__()
 
+        # we might want to access the main window through the app objet in some cases
         self.app.main_window = self
 
         self.add_menu()
@@ -45,10 +47,11 @@ class HCMainWindow(QMainWindow):
         self.app.aboutToQuit.connect(self.close)
 
     def close(self):
+        """Also closes the App."""
         self.app.close()
 
     def add_menu(self):
-
+        """Add a File menu with an option to exit and to save all datasets."""
         # self.menuBar() is a function in QMainWindow
         self.bar = self.menuBar()
 
@@ -94,7 +97,6 @@ class HCMainWindow(QMainWindow):
             self.save_all()
 
         elif q.text() == "Exit" or q.text() == "Close Window":
-            self.app.close()
             self.close()
             sys.exit(0)
         else:

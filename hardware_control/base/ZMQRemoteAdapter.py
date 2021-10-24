@@ -1,3 +1,13 @@
+"""Code to enable running and connecting to instruments on a different computer.
+
+Defines `ZMQSingleInstrument` that can wrap an instrument driver, so that it can
+easily run in a separate program and that will have all the ZMQ ports
+required, so that an App object can easily connect to it.
+
+`ZMQRemoteInstrument` is used in the main app to connect to `ZMQSingleInstrument`.
+
+"""
+
 import json
 import logging
 import time

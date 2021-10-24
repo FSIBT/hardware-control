@@ -43,11 +43,15 @@ class Dataset(QObject):
 
     The time is stored in a special column called 'time:time'.
 
-    The data is taken from hc.Instruments, meaning that it is not taken
-    directly from the backends; a Dataset therefore does not communicate
+    The data is taken from app._data, meaning that it is not taken
+    directly from the instrument; a Dataset therefore does not communicate
     with any actual hardware. It is assumed that the user has set up a
     timer that pulls new data from the hardware into the Instrument.values
     dictionary periodically.
+
+    This can create small lags between the actual data and what is
+    recorded in the dataset, but in pratice this hasn't been an issue
+    (at least for our experiments).
 
     """
 
@@ -60,6 +64,7 @@ class Dataset(QObject):
         self.name = name
         self.app = app
 
+        # The autosave option appends the latest data to the output file
         self.autosave = False
         self.autosave_interval = 120  # in seconds
         self.autosave_format = "JSON"
@@ -104,7 +109,7 @@ class Dataset(QObject):
         return len(self.data[first_key])
 
     def clear(self) -> None:
-        """Clears the dataset's contents"""
+        """Clears the dataset's contents."""
 
         self.data = defaultdict(list)
         self.autosave_next_row = 0
@@ -146,7 +151,13 @@ class Dataset(QObject):
                     self.instruments.append((instrument, p))
 
     def define_alias(self, channel: str, alias: str) -> None:
-        """Channel must be a key in self.data and name is the replacement string."""
+        """Define an alias for a <instrument>:<parameter> name.
+
+        The alias will be used when saving and plotting.
+
+        Channel must be a key in self.data and name is the replacement string.
+
+        """
 
         instrument, parameter = channel.split(":")
         if (instrument, parameter) not in self.instruments:
@@ -185,10 +196,12 @@ class Dataset(QObject):
         )
 
     def set_save_interval(self, interval: float):
+        """Set the autosave interval in seconds."""
         self.autosave_interval = interval
         self.autosave_timer.setInterval(1e3 * self.autosave_interval)
 
     def set_update_interval(self, interval: float):
+        """Set the update interval (when a new row is added) in seconds."""
         self.update_interval = interval
         self.update_timer.setInterval(1e3 * self.update_interval)
 
@@ -331,7 +344,7 @@ class Dataset(QObject):
         Returns
         -------
         dict
-            dictionay of requested columns
+            dictionary of requested columns
 
         """
 

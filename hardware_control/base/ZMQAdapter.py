@@ -10,13 +10,14 @@ logger = logging.getLogger(__name__)
 
 
 class ZMQAdapter(threading.Thread):
-    """Wraps a backend into a thread and establishs ZMQ connections.
+    """Wraps an instrument driver into a thread and establishs ZMQ connections to the main app.
 
-    Takes a backend, creates a thread, creates 2 sets of publisher and
-    subscriber to be able to communicate both ways.
+    Takes an instrument driver, creates a thread, creates a
+    ZMQ-publisher to publish any value changes and listen to the
+    ZMQ-app-publisher for requests.
 
-    The run function is what gets execute when calling .start() on a
-    thread.
+    The run function gets execute when calling .start() on the thread
+    and therefore hosts the custom event loop.
 
     """
 
@@ -53,6 +54,13 @@ class ZMQAdapter(threading.Thread):
         return ip
 
     def run(self):
+        """Custom event loop.
+
+        Listens for ZMQ requests from the main app and if the
+        instrument is not online, tries to reconnect to it.
+
+        """
+
         i = 0
         while not self.stop.is_set():
 

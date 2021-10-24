@@ -14,7 +14,7 @@ from ...base.hooks import (
     format_int,
     expected_input_validator,
     make_negative,
-    min_len_converter,
+    max_len_converter,
 )
 
 logger = logging.getLogger(__name__)
@@ -111,7 +111,7 @@ class Keysight_4000X(Instrument):
             "NUM_POINTS",
             read_command=":WAV:POIN?",
             set_command=":WAV:POIN {}",
-            pre_hooks=[format_int()],
+            pre_hooks=[format_int],
             dummy_return="2",
         )
 
@@ -151,7 +151,7 @@ class Keysight_4000X(Instrument):
             "TRIGGER_CHANNEL",
             read_command="TRIG:SOUR?",
             set_command="TRIG:SOUR CHAN{}",
-            pre_hooks=[format_int()],
+            pre_hooks=[format_int],
             dummy_return="1",
         )
 
@@ -168,7 +168,7 @@ class Keysight_4000X(Instrument):
                 f"CH{channel}_OFFSET",
                 read_command=f"CHAN{channel}:OFFS?",
                 set_command=f"CHAN{channel}:OFFS {{}}",
-                pre_hooks=[format_float(".6E"), make_negative()],
+                pre_hooks=[make_negative, format_float(".6E")],
                 dummy_return="1.",
             )
 
@@ -176,7 +176,7 @@ class Keysight_4000X(Instrument):
                 f"CH{channel}_LABEL",
                 read_command=f"CHAN{channel}:LAB?",
                 set_command=f"CHAN{channel}:LAB {{}}",
-                pre_hooks=[min_len_converter(32)],
+                pre_hooks=[max_len_converter(32)],
                 dummy_return="2.",
             )
 

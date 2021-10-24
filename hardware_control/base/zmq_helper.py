@@ -1,14 +1,14 @@
-def handle_zmq_message_from_app(adapter, msg, logger):
+""" Functions that are commen to ZMQ functionality used in `ZMQAdapter` and `ZMQRemoteAdapter`.
+"""
+
+
+def handle_zmq_message_from_app(adapter, msg: str, logger) -> None:
     """Parses and handles the ZMQ messsage from the main app.
 
     First parse the message and then depending on the content execute
     a command, read or set a value in the instrument.
 
-    Also check the onlnie status of the instrument and report back.
-
-    This is one of the main part of handling the ZMQ communications,
-    since it is used in ZMQAdapter and ZMQRemoteInstrument, we placed
-    the code here in an external function.
+    Also check the online status of the instrument and report back.
 
     The possible messages have the following form:
 
@@ -25,11 +25,12 @@ def handle_zmq_message_from_app(adapter, msg, logger):
     When reading a value, the return ZMQ message has the form:
 
     <instrument name> <parameter> <value>
+       Return a parameter value from the instrument
 
     Parameters
     ----------
     adapter
-       the ZMQAdapter for the instrument driver
+       the ZMQAdapter/ZMQRemoteAdapter for the instrument driver
     msg
        the ZMQ message received by the adapter
     logger

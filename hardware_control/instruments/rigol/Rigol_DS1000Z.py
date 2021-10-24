@@ -12,7 +12,7 @@ import logging
 
 import numpy as np
 
-from ...base.hooks import format_float, format_bool, min_len_converter
+from ...base.hooks import format_float, format_bool, max_len_converter
 from ...base import Instrument
 
 logger = logging.getLogger(__name__)
@@ -128,7 +128,7 @@ class Rigol_DS1000Z(Instrument):
                 read_command=f"CHAN{ch}:LAB?",
                 write_command=f"CHAN{ch}:LAB {{}}",
                 dummy_return="label unkown",
-                pre_hooks=[min_len_converter(32)],
+                pre_hooks=[max_len_converter(32)],
             )
 
             self.add_parameter(
