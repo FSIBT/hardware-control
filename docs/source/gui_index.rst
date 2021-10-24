@@ -24,4 +24,3 @@ GUI elements
    gui/widgets/plot
    gui/widgets/qtconsole
    gui/widgets/scan_widget
-   gui/widgets/zmq_connection
