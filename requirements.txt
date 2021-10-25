@@ -1,6 +1,7 @@
 appdirs
 colorama
 docopt
+GPy
 matplotlib
 nidaqmx
 numpy
