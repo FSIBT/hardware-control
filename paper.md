@@ -15,6 +15,9 @@ authors:
   - name: Brian Mak
     orcid: 0000-0001-7095-8108
     affiliation: 1
+  - name: Brian Wynne
+    orcid: 0000-0002-0593-2195
+    affiliation: 1
   - name: Zhihao Qin
     orcid: 0000-0002-5577-1270
     affiliation: 1
