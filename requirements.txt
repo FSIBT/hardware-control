@@ -4,6 +4,7 @@ docopt
 matplotlib
 nidaqmx
 numpy
+pandas
 picoscope
 pymodbus
 pyqt5
