@@ -347,32 +347,32 @@ class Instrument:
         if name == "ONLINE":
             return self.online
 
+        value = None
         if self.dummy:
             if name in self.dummy_returns:
-                val = self.dummy_returns[name]
-                if callable(val):
-                    val = val()
-                    if val is None:
+                value = self.dummy_returns[name]
+                if callable(value):
+                    value = value()
+                    if value is None:
                         logger.error(
                             "User defined function for dummy mode returned None"
                         )
-                    return val
-                else:
-                    return val
             else:
                 logger.debug(f"No dummy defined for {name} in instrument '{self.name}'")
-                return
+        else:
+            # talk to the instrument
+            if name in self.read_commands:
+                if callable(self.read_commands[name]):
+                    value = self.read_commands[name]()
+                else:
+                    value = self.query(self.read_commands[name])
 
-        # talk to the instrument
-        if name in self.read_commands:
-            if callable(self.read_commands[name]):
-                self.read_commands[name]()
-            else:
-                value = self.query(self.read_commands[name])
+            # only handle post_hooks at the instrument level when we are not in dummy mode
+            # since we call hooks such as IEEE754_converter_to_ulong_pair here
             if name in self.post_hooks:
                 hooks = self.post_hooks[name]
                 value = call_hooks(hooks, value)
-            return value
+        return value
 
     def __getitem__(self, name: str):
         """Allow values to be easily accessed.
