@@ -50,10 +50,11 @@ class Demo(hc.HCMainWindow):
             self.app, "alicat2", "Flow Controller B"
         )
 
-        # create a dataset that tracks two parameters from two different instruments
+        # create a dataset
         dataset = hc.Dataset("mydata", self.app)
-        dataset.track_instrument("alicat1", "RATE", "Nitrogen rate")
-        dataset.track_instrument("alicat2", "PRESSURE", "Air pressure")
+        # and then define two parameters of existing instruments to track here
+        dataset.track_instrument("alicat1", "RATE", alias="Nitrogen rate")
+        dataset.track_instrument("alicat2", "PRESSURE", alias="Air pressure")
 
         # automatically update the dataset every 2 seconds
         dataset.start_updates(2)
