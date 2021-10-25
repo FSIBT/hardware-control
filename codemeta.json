@@ -66,6 +66,28 @@
                 "@type": "Organization",
                 "name": "E.O. Lawrence Berkeley National Laboratory: Berkeley, Ca 94720, US"
             }
+        },
+        {
+            "@type": "Person",
+            "@id": "https://orcid.org/0000-0002-0593-2195",
+            "givenName": "Brian",
+            "familyName": "Wynne",
+            "email": "bwynne@lbl.gov",
+            "affiliation": {
+                "@type": "Organization",
+                "name": "E.O. Lawrence Berkeley National Laboratory: Berkeley, Ca 94720, US"
+            }
+        },
+        {
+            "@type": "Person",
+            "@id": "https://orcid.org/0000-0002-5577-1270",
+            "givenName": "Zhihao",
+            "familyName": "Qin",
+            "email": "ZQin@lbl.gov",
+            "affiliation": {
+                "@type": "Organization",
+                "name": "E.O. Lawrence Berkeley National Laboratory: Berkeley, Ca 94720, US"
+            }
         }
     ]
 }
