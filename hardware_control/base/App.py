@@ -183,6 +183,13 @@ class App(QApplication):
             }
             self._data[name][c] = p
 
+    def add_dataset(self, dataset: Dataset) -> None:
+        name = dataset.name
+        if name in self.data_sets:
+            logger.error(f"Dataset {name} already exists... not adding dataset to App.")
+            return
+        self.data_sets[name] = dataset
+
     def add_instrument(
         self,
         instrument: Instrument,

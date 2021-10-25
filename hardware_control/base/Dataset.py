@@ -119,36 +119,44 @@ class Dataset(QObject):
         instrument: str,
         parameter: Optional[str] = None,
         alias: Optional[str] = None,
-        channels: Optional[List] = None,
     ) -> None:
         """Add a parameter from an instrument to the dataset.
 
         If parameter is `None`, all parameters that can be read
-        are included. If a list of channels is specified, only
-        the parameters of those channels are included.
+        are included.
 
-        If a parameter is specified, one can provide an alias
-        for the parameter.
+        If an alias is specified, the name will be used for plotting and saving.
+
+        Parameters
+        ----------
+        instrument
+           The instrument name
+        parameter
+           The parameter that should be tracked. If `None`, all parameters are tracked.
+        alias
+           Use this as an alias when plotting or saving the dataset
+           (only being used if a parameter was given)
 
         """
 
+        if instrument not in self.app._data:
+            logger.error(f"{instrument} not found in App.")
+            return
+
         # If a parameter is specified, only track that parameter
         if parameter is not None:
+            if parameter not in self.app._data[instrument]:
+                logger.error(f"{parameter} not available for {instrument}.")
+                return
+
             self.instruments.append((instrument, parameter))
+
             # If alias is specified, change parameter name to alias
             if alias is not None:
-                self.define_alias(instrument + ":" + parameter, alias)
+                self.define_alias(f"{instrument}:{parameter}", alias)
         else:
             for p in self.app.list_instrument_parameters(instrument):
-                # If a list of channels is specified, track all parameters of those channels
-                if channels is not None:
-                    for ch in channels:
-                        ch = "CH" + str(ch)
-                        if ch in p:
-                            self.instruments.append((instrument, p))
-                # If neither parameter nor channel is specified, track all the instrument's parameters
-                else:
-                    self.instruments.append((instrument, p))
+                self.instruments.append((instrument, p))
 
     def define_alias(self, channel: str, alias: str) -> None:
         """Define an alias for a <instrument>:<parameter> name.
