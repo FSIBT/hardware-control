@@ -17,16 +17,14 @@ The easiest way is to pip install the software:
 
 ## Tests
 
-Currently, we do not provide unit tests, since for the backends tests can
-really only be run with the hardware connected.  Instead of tests, we
-provide example code that can be run after installing the package. All
-examples can be run using a `--dummy` mode which will enable a
-simulation mode that will make the software believe that all
-instruments are connected to the program (some instrument will also
-generate random data).
-
-New controls and backends should therefore always implement a working
-example.
+We use `pytest` to provide some simple tests for some of the
+functionallity of the package. However, to check if an instrument is
+really working, one needs to have the instrument connected, which
+makes testing harder. The best way to do this is to run some of the
+examples.  When the instruments are not available some functionallity,
+such as the Qt layout, can be tested using "--dummy" mode. See the
+examples on how to enable it. In this mode instrument parameters can
+return a predefined value or the result of a function.
 
 ## Contribution guidelines ###
 
