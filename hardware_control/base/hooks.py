@@ -19,18 +19,18 @@ Example
 """
 
 import logging
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Callable
 
 logger = logging.getLogger(__name__)
 
 # Converters
-def create_converter(lookuptable: Dict):
+def create_converter(lookuptable: Dict) -> Callable:
     """Replaces the parameter value with one stored in a dictionary.
 
     The dictionary consists of "old value":"new value" pairs.
     """
 
-    def converter(value):
+    def converter(value: str):
         if value not in lookuptable:
             logger.error(f"Value '{value}'' not in lookuptable '{lookuptable}'")
             return None
@@ -39,7 +39,7 @@ def create_converter(lookuptable: Dict):
     return converter
 
 
-def max_len_converter(max_length):
+def max_len_converter(max_length: int) -> Callable:
     """Ensure that a string is not longer than `max_length`"""
 
     def converter(value):
@@ -51,7 +51,7 @@ def max_len_converter(max_length):
     return converter
 
 
-def last_n_values_converter(num_of_values):
+def last_n_values_converter(num_of_values: int) -> Callable:
     """Assumes `value` is a list and only return the last `num_of_values` entries."""
 
     def converter(value):
