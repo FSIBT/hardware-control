@@ -21,7 +21,7 @@ from ..widgets import (
     HCDoubleSpinBox,
     HCPushButton,
     HCSpinBox,
-    ScanWidget
+    ScanWidget,
 )
 
 logger = logging.getLogger(__name__)
