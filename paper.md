@@ -58,25 +58,40 @@ oscilloscopes and updating these values on external triggers or
 automatically on a timer on a time scale of a second. The program is
 currently not well fitted to do any real-time or near real-time
 communications with instruments or to handle data that is being
-streamed, for example, from a camera.
+streamed, for example, from a camera. The focus of the program is on
+message-based devices or devices already have pythons modules
+available to control them. That is, an instrument driver can either
+send messages to a socket, usb or serial ports, etc. or call a python
+function to read or write a setting or call a command on the
+interface. Most of the drivers rely on the excellent pyvisa [@pyvisa]
+library, but we also have a driver using pymodbus [@pymodbus], or the built-in
+socket library.
+
+For handling the data, we rely on numpy [@numpy], pandas [@pandas],
+and many other libraries that are available on pypi to do data analysis.
+
+For communications within the library we rely on ZMQ [@ZMQ].
 
 # Statement of need
 
 Commercial systems, such as LabVIEW, already exist and they often do
-provide a wide range of instrument drivers. However, we found that the
-resulting code is often hard to version control (LabVIEW files are
-binary and code reviews and pull requests on services such as
-bitbucket and github are therefore difficult). Furthermore, although
-backend code can be easily shared between projects, complex user
-interfaces can not easily be reused. The software package presented
-here solves these issues that we have encountered in the
-past. Specifically, it makes reusing frontend code easier, integrates
-well with git (pure python code), and provides an easy built-in
-scripting solution (via an optional python REPL that has full access
-to the GUI and all backends). Especially the control through python
-during execution make one-off complex parameter scans easy to
+provide a wide range of instrument drivers (either directly or from
+the manufacturer of the devices). However, we found that the resulting
+code is often hard to version control (LabVIEW files are binary and
+code reviews and pull requests on services such as bitbucket and
+github are therefore difficult). Furthermore, although backend code
+can be easily shared between projects, complex user interfaces can not
+easily be reused. The software package presented here treis to address
+these issues. Specifically, it makes reusing frontend code easier,
+integrates well with git (pure python code), and provides an easy
+built-in scripting solution (via an optional python REPL that has full
+access to the GUI and all backends). Especially the control through
+python during execution make one-off complex parameter scans easy to
 implement. The software also makes it easy to develop and test the
-code without any hardware connected to the system.
+code without any hardware connected to the system, by implementing a
+'dummy' mode in which the hardware does not need to be present and the
+user can specify return values for certain opperations to be able to
+test the programs.
 
 Similar packages already exist, for example Scopefoundry.org
 [@Barnard], pymeasure [@pymeasure], yaq [@yaq], etc. A good overview
@@ -94,7 +109,7 @@ adding more instrument drivers and custom widgets, since we believe
 that the current solution also provides us several benefits compared
 to prior solution. Therefore, we are also open to community
 contributions. However, we are also open to merge our code into one of
-the pre-existing code bases.
+the pre-existing code bases and plan to explore these options going forward.
 
 # Acknowledgements
 
