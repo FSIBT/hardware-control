@@ -214,7 +214,7 @@ class Instrument:
     def add_parameter(
         self,
         name: str,
-        read_command: Union[str, Callable],
+        read_command: Union[str, Callable] = None,
         set_command: Union[Optional[str], Optional[Callable]] = None,
         pre_hooks: Optional[List] = None,
         post_hooks: Optional[List] = None,
@@ -409,7 +409,7 @@ class Instrument:
             if value is None:
                 return
             if callable(self.set_commands[name]):
-                self.set_commands[name]()
+                self.set_commands[name](value)
             else:
                 self.write(self.set_commands[name].format(value))
             return

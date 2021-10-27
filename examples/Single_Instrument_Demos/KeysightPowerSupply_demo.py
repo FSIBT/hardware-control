@@ -39,16 +39,16 @@ class Demo(hc.HCMainWindow):
 
         self.main_widget = QWidget(self)
 
-        # Load a settings file with preset values for the instrument parameters
-        cwd = getcwd()
-        keysight_settings = cwd + "/settings_files/keysight_powersupply_init.json"
-
         # Add a keysight power supply to the app
         self.app.add_instrument(
             hc.instruments.Keysight_36300(
                 "Keysight_36300", "192.168.0.3:5025", keysight_settings
             )
         )
+        # Load a settings file with preset values for the instrument parameters
+        cwd = getcwd()
+        keysight_settings = cwd + "/settings_files/keysight_powersupply_init.json"
+        self.app.add_load_settings_hook("Keysight_36300", keysight_settings)
 
         # Create a keysight powersupply control with channels 1,2, and 3
         # with color gold, green, and blue, and the option to set voltage

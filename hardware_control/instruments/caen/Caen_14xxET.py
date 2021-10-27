@@ -90,14 +90,14 @@ class Caen_14xxET(Instrument):
         for channel in self.chan_nums:
             self.add_parameter(
                 f"CH{channel}_V_MAX",
-                read_command=lambda x: self.read_V_max(channel),
+                read_command=lambda: self.read_V_max(channel),
                 set_command=lambda x: self.set_V_max(channel, x),
                 dummy_return="20.0",
             )
 
             self.add_parameter(
                 f"CH{channel}_I_MAX",
-                read_command=lambda x: self.read_I_max(channel),
+                read_command=lambda: self.read_I_max(channel),
                 set_command=lambda x: self.set_I_max(channel, x),
                 dummy_return="25.0",
             )
@@ -165,7 +165,7 @@ class Caen_14xxET(Instrument):
                 read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
                 post_hooks=[
                     parse_instrument_response,
-                    format_int(),
+                    format_int,
                     lambda value: self.return_status(value),
                 ],
                 dummy_return="",
