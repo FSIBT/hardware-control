@@ -24,6 +24,16 @@ from typing import Optional, List, Dict, Callable
 logger = logging.getLogger(__name__)
 
 # Converters
+def add_offset(offset):
+    """Convert `value` to float and add `offset` to it."""
+
+    def converter(value):
+        value = float(value) + float(offset)
+        return value
+
+    return converter
+
+
 def create_converter(lookuptable: Dict) -> Callable:
     """Replaces the parameter value with one stored in a dictionary.
 
@@ -39,48 +49,9 @@ def create_converter(lookuptable: Dict) -> Callable:
     return converter
 
 
-def max_len_converter(max_length: int) -> Callable:
-    """Ensure that a string is not longer than `max_length`"""
-
-    def converter(value):
-        if len(value) > max_length:
-            return value[0:max_length]
-        else:
-            return value
-
-    return converter
-
-
-def last_n_values_converter(num_of_values: int) -> Callable:
-    """Assumes `value` is a list and only return the last `num_of_values` entries."""
-
-    def converter(value):
-        # TODO: should do some type checking here and error logging
-        n = len(value)
-        if n > num_of_values:
-            return value[-num_of_values:]
-        return value
-
-    return converter
-
-
-def substring_hook(min_char, max_char):
-    """Return a substring `value[min_char:max_char]`."""
-
-    def converter(value):
-        value = value[min_char:max_char]
-        return value
-
-    return converter
-
-
-def scaling_converter(scale_val):
-    """Convert `value` to float and scale by `scale_val`."""
-
-    def converter(value):
-        return str(float(value) * scale_val)
-
-    return converter
+def format_bool(value):
+    """Convert True/False string to 1/0"""
+    return str(int(value == "True"))
 
 
 def format_float(format_type=".17"):
@@ -97,14 +68,53 @@ def format_int(value):
     return f"{int(float(value))}"
 
 
-def format_bool(value):
-    """Convert True/False string to 1/0"""
-    return str(int(value == "True"))
+def last_n_values_converter(num_of_values: int) -> Callable:
+    """Assumes `value` is a list and only return the last `num_of_values` entries."""
+
+    def converter(value):
+        # TODO: should do some type checking here and error logging
+        n = len(value)
+        if n > num_of_values:
+            return value[-num_of_values:]
+        return value
+
+    return converter
 
 
 def make_negative(value):
     """Convert to float and multiple by -1."""
     return f"{-1*float(value)}"
+
+
+def max_len_converter(max_length: int) -> Callable:
+    """Ensure that a string is not longer than `max_length`"""
+
+    def converter(value):
+        if len(value) > max_length:
+            return value[0:max_length]
+        else:
+            return value
+
+    return converter
+
+
+def scaling_converter(scale_val):
+    """Convert `value` to float and scale by `scale_val`."""
+
+    def converter(value):
+        return str(float(value) * scale_val)
+
+    return converter
+
+
+def substring_hook(min_char, max_char):
+    """Return a substring `value[min_char:max_char]`."""
+
+    def converter(value):
+        value = value[min_char:max_char]
+        return value
+
+    return converter
 
 
 def uppercase(value):
@@ -113,19 +123,6 @@ def uppercase(value):
 
 
 # Validators
-def range_validator(min_val: float, max_val: float):
-    """Ensure `value` is in a certain numerical range.
-
-    If the value is outside of the range, the value gets replaces by the min/max value.
-    """
-
-    def validator(value):
-        value = float(value)
-        return max(min(value, max_val), min_val)
-
-    return validator
-
-
 def expected_input_validator(types: List, default_val=None):
     """Ensures `value` is in a certain list, returns a default if this is not the case."""
 
@@ -140,5 +137,18 @@ def expected_input_validator(types: List, default_val=None):
             return
         else:
             return value
+
+    return validator
+
+
+def range_validator(min_val: float, max_val: float):
+    """Ensure `value` is in a certain numerical range.
+
+    If the value is outside of the range, the value gets replaces by the min/max value.
+    """
+
+    def validator(value):
+        value = float(value)
+        return max(min(value, max_val), min_val)
 
     return validator
