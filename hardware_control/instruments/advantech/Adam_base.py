@@ -30,6 +30,7 @@ class AdamBackend(Instrument):
         self.termination = "\r"
         self.encoding = "ascii"
         self.buffer_length = 200
+        self.connection_tries = 0
 
         self.addr = (self.ip_addr, self.port_no)
         if self.connection_type != Instrument.SOCKET:
@@ -40,6 +41,10 @@ class AdamBackend(Instrument):
         self.try_connect()
 
     def write(self, command: str):
+        if self.dummy:
+            logger.debug(f"{self.name} sending write command {command}")
+            return
+
         self.device.sendto(
             (command + self.termination).encode(self.encoding), self.addr
         )
@@ -54,11 +59,14 @@ class AdamBackend(Instrument):
 
     def try_connect(self):
         """Force the use of sockets with different option (DGRAM instead of STREAM)."""
+        # Prevent trying to connect while the program is booting up
+        if self.connection_tries < 1:
+            self.connection_tries += 1
+            return False
+
+        # Use normal hc.base.Instrument.py try_connect() when in dummy mode
         if self.dummy:
-            if not self.online:
-                logger.debug(f"Adam: creating dummy connection to {self.addr}")
-            self.online = True
-            return self.online
+            super().try_connect()
 
         # First Check current state
         if not self.online:  # If not online, try to connect
