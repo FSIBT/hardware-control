@@ -6,7 +6,6 @@
 
 import logging
 import numpy as np
-from typing import Optional
 
 from ...base import Instrument
 from ...base.hooks import (
@@ -77,7 +76,6 @@ class Keysight_4000X(Instrument):
         self,
         instrument_name: str = "KEYSIGHT-4000X",
         connection_addr: str = "",
-        settings_file: Optional[str] = None,
     ):
         super().__init__(
             instrument_name=instrument_name,
@@ -222,10 +220,6 @@ class Keysight_4000X(Instrument):
         self.add_command("RUN", ":RUN")
         self.add_command("STOP", ":STOP")
         self.add_command("DIGITIZE", ":DIG")
-
-        # Load initial state
-        if settings_file != None:
-            self.load_state(settings_file)
 
         # Initial configure call
         self.write("CONFIG_READ_WAVE")

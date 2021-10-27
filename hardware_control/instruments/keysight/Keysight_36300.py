@@ -6,7 +6,6 @@
 
 import logging
 import random
-from typing import Optional
 
 from ...base import Instrument
 
@@ -46,7 +45,6 @@ class Keysight_36300(Instrument):
         self,
         instrument_name: str = "Keysight_36300",
         connection_addr: str = "",
-        settings_file: Optional[str] = None,
     ):
         super().__init__(
             instrument_name=instrument_name,
@@ -130,6 +128,3 @@ class Keysight_36300(Instrument):
 
         self.add_command("CLEAR", "*CLS")
         self.add_command("ALLOW_NEG_OUTPUT", "SYST:PERS:MOD E3631A")
-
-        if settings_file != None:
-            self.load_state(settings_file)
