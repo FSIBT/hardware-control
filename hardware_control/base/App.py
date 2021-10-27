@@ -593,7 +593,7 @@ class App(QApplication):
                 f"Failed to write file '{filename}'. State not saved.", exc_info=True
             )
 
-    def load_settings(self, filename: Union[str, Path]) -> None:
+    def load_settings(self, instrument: str, filename: Union[str, Path]) -> None:
         """Reads a JSON file to overwrite instrument's settings dictionaries.
 
         Expectss JSON to be a dictionary of dictionaries. The
@@ -620,11 +620,20 @@ class App(QApplication):
             logger.error(f"Failed to read file '{filename}'.", exc_info=True)
             return
 
-        # try to set all settings
-        for instrument in all_settings:
-            if instrument not in self._data:
-                logger.error(f"{instrument} not found in app")
-                continue
-            for parameter in all_settings[instrument]:
-                value = all_settings[instrument][parameter]
-                self.set_instrument_parameter(instrument, parameter, value, raw=True)
+        # Try to set instrument settings
+        if instrument not in self._data:
+            logger.error(f"{instrument} not found in app.")
+            return
+        for parameter in all_settings:
+            value = all_settings[parameter]
+            self.set_instrument_parameter(instrument, parameter, value, raw=True)
+
+    def add_load_settings_hook(
+        self, instrument: str, filename: Union[str, Path]
+    ) -> None:
+        self.add_hook(
+            instrument,
+            "online",
+            "post_read_hook",
+            lambda x: self.load_settings(instrument, filename),
+        )
