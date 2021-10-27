@@ -10,7 +10,7 @@ from ..widgets import HCFixedLabel, HCLineEdit
 from ...base.hooks import add_offset, scaling_converter
 
 
-class AdamControl(QGroupBox):
+class Adam6024Control(QGroupBox):
     """Control the Adam"""
 
     def __init__(

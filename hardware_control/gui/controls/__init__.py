@@ -1,4 +1,4 @@
-from .AdamControl import AdamControl
+from .Adam6024Control import Adam6024Control
 from .DelayGenerator import DelayGenerator
 from .FlowController import FlowController
 from .FunctionGenerator import FunctionGenerator
