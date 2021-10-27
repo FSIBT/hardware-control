@@ -9,6 +9,9 @@ authors:
   - name: Grant Giesbrecht
     orcid: 0000-0003-2885-4801
     affiliation: 1
+  - name: Ariel Amsellem
+    orcid: 0000-0003-3433-2698
+    affiliation: 1
   - name: Timo Bauer
     orcid: 0000-0003-2094-2612
     affiliation: "1, 2"

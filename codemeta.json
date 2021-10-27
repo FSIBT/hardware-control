@@ -47,6 +47,17 @@
         },
         {
             "@type": "Person",
+            "@id": "https://orcid.org/0000-0003-3433-2698",
+            "givenName": "Ariel",
+            "familyName": "Amsellem",
+            "email": "ajamsellem@lbl.gov",
+            "affiliation": {
+                "@type": "Organization",
+                "name": "E.O. Lawrence Berkeley National Laboratory: Berkeley, Ca 94720, US"
+            }
+        },
+        {
+            "@type": "Person",
             "@id": "https://orcid.org/0000-0003-2094-2612",
             "givenName": "Timo",
             "familyName": "Bauer",
