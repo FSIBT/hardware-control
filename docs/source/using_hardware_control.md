@@ -6,12 +6,12 @@ program using Hardware Control.
 
 ### 1. Import Hardware Control
 
-Once installed (see installation instruction if you need help), you can import
+Once installed (see installation instructions if you need help), you can import
 Hardware Control with the following statement:
 
     import hardware_control as hc
 
-Now you can access any instruments with `hc_back.instruments.<instrument_class_name>` and all other
+Now you can access any instrument with `hc.instruments.<instrument_class_name>` and all other
 classes, including the user interfaces, with `hc.gui.<class_name>`.
 
 ### 2. Create an App Class
