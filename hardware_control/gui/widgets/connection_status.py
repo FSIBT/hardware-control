@@ -104,31 +104,12 @@ class StatusTool(QGroupBox):
                 online = self.app.get_instrument_parameter(instrument, "online")
             else:
                 online = False
-            online_color = self.app.get_instrument_parameter(instrument, "online_color")
-            if online:
-                if online_color == "Blue":
-                    online_indicator = self.blue_indicator
-                elif online_color == "Green":
-                    online_indicator = self.green_indicator
-                else:
-                    logger.error(
-                        f"'{instrument}' has invalid online color indicator '{online_color}'"
-                    )
-                    continue
-                self.instrument_grid.itemAtPosition(row, 1).widget().setPixmap(
-                    online_indicator
-                )
 
-            else:
-                if online_color == "Blue":
-                    offline_indicator = self.darkgrey_indicator
-                elif online_color == "Green":
-                    offline_indicator = self.red_indicator
-                else:
-                    logger.error(
-                        f"'{instrument}' has invalid online color indicator '{online_color}'"
-                    )
-                    continue
+            if online:
                 self.instrument_grid.itemAtPosition(row, 1).widget().setPixmap(
-                    offline_indicator
+                    self.green_indicator
+                )
+            else:
+                self.instrument_grid.itemAtPosition(row, 1).widget().setPixmap(
+                    self.red_indicator
                 )
