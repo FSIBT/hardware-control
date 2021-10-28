@@ -20,7 +20,7 @@ class DemoA(Instrument):
         super().__init__(
             instrument_name="DemoA", connection_addr=connection_addr, default_port=7123
         )
-        self.encoding = "ascii"
+        self._encoding = "ascii"
 
         self.channels = [1, 2, 3]
 

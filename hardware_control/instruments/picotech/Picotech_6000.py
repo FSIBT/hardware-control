@@ -171,43 +171,43 @@ class Picotech_6000(Instrument):
         """Checks if the backend is in communication with the object, if it is
         not, it tries to re-establish communication."""
 
-        if self.dummy:
-            if self.online:
+        if self._dummy:
+            if self._online:
                 return True
 
             logger.debug(
                 f"{self.ID}: creating dummy connection to {self.connection_addr}"
             )
-            self.online = True
+            self._online = True
             return True
 
-        if self.online:
+        if self._online:
             return True
 
         logger.debug(f"{self.ID}: trying to connect")
 
         try:
             self.ps = PS6000()
-            self.online = True
+            self._online = True
         except Exception:
-            self.online = False
+            self._online = False
             logger.debug(
                 f"\t({self.ID}) ERROR connecting with picoscope.", exc_info=True
             )
             logger.debug(f"{self.ID} is offline")
         else:
-            self.online = True
+            self._online = True
 
         # If connection purportedly successful, verify connection
-        if self.online:
+        if self._online:
             if not self.check_connection():
-                self.online = False
+                self._online = False
 
-        return self.online
+        return self._online
 
     def check_connection(self):
         """TODO: could use ps.ping() to test"""
-        if not self.online:
+        if not self._online:
             return False
 
         return True

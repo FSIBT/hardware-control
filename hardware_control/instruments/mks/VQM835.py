@@ -37,7 +37,7 @@ class VQM835(Instrument):
 
         self.check_connection_commands = ["*IDN?"]
 
-        self.termination = "\r"
+        self._termination = "\r"
 
         self.add_command("ENTRY_PLATE", "INST ENTR")
         self.add_command("FILAMENT", "INST FIL")

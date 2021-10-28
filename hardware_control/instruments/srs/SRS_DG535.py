@@ -73,7 +73,7 @@ class SRS_DG535(Instrument):
         self.model = "DG535"
 
         self.num_vert_divisions = 8
-        self.termination = "\r\n"
+        self._termination = "\r\n"
 
         self.command_str = ""  # string used to trigger
         #   Device Specific Values

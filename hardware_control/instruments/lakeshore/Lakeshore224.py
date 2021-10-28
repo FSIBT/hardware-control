@@ -57,7 +57,7 @@ class Lakeshore_224(Instrument):
             "D4",
             "D5",
         ]
-        self.termination = "\r\n"
+        self._termination = "\r\n"
 
         self.check_connection_commands = ["*IDN?"]
 
@@ -100,7 +100,7 @@ class Lakeshore_224(Instrument):
         setting : str
             Setting to change
         """
-        if self.dummy:
+        if self._dummy:
             outputs = [1 + 128 + 1024, 128, 1, 1024]
             value = random.choice(outputs)
         else:

@@ -27,8 +27,8 @@ class AdamBackend(Instrument):
             default_port=default_port,
         )
 
-        self.termination = "\r"
-        self.encoding = "ascii"
+        self._termination = "\r"
+        self._encoding = "ascii"
         self.buffer_length = 200
         self.connection_tries = 0
 
@@ -41,12 +41,12 @@ class AdamBackend(Instrument):
         self.try_connect()
 
     def write(self, command: str):
-        if self.dummy:
+        if self._dummy:
             logger.debug(f"{self.name} sending write command {command}")
             return
 
         self.device.sendto(
-            (command + self.termination).encode(self.encoding), self.addr
+            (command + self._termination).encode(self._encoding), self.addr
         )
         # check return code
         indata, inaddr = self.device.recvfrom(self.buffer_length)
@@ -65,11 +65,11 @@ class AdamBackend(Instrument):
             return False
 
         # Use normal hc.base.Instrument.py try_connect() when in dummy mode
-        if self.dummy:
+        if self._dummy:
             super().try_connect()
 
         # First Check current state
-        if not self.online:  # If not online, try to connect
+        if not self._online:  # If not online, try to connect
             try:
                 self.device = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                 self.device.settimeout(0.950)
@@ -80,5 +80,5 @@ class AdamBackend(Instrument):
                 )
             except Exception as e:
                 logger.error(f"During ADAM try_connect: {e}", exc_info=True)
-                self.online = False
-                return self.online
+                self._online = False
+                return self._online

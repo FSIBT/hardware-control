@@ -194,7 +194,6 @@ class App(QApplication):
         self,
         instrument: Instrument,
         ignore_flag: Optional[bool] = False,
-        online_color: Optional[str] = "Green",
     ):
 
         if instrument.name in self._data:
@@ -203,7 +202,7 @@ class App(QApplication):
             )
             return
 
-        instrument.dummy = self.dummy
+        instrument._dummy = self.dummy
 
         zmq_instrument = ZMQAdapter(
             instrument,
@@ -234,8 +233,6 @@ class App(QApplication):
 
         # register an ignore flag for the instrument
         self._data[zmq_instrument.name]["ignore"] = ignore_flag
-        # register an online color flag for the instrument
-        self._data[zmq_instrument.name]["online_color"] = online_color
 
         # start thread
         self.threads.append(zmq_instrument)
@@ -404,7 +401,7 @@ class App(QApplication):
         """
 
         # Some parameters are boolean
-        if parameter == "ignore" or parameter == "online_color":
+        if parameter == "ignore":
             return self._data[instrument][parameter]
 
         # Make sure parameter is not a command
