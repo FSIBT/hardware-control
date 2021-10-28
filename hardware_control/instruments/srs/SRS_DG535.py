@@ -62,7 +62,6 @@ class SRS_DG535(Instrument):
         self,
         instrument_name: str = "SRS_DG535",
         connection_addr: str = "",
-        settings_file: Optional[str] = None,
     ):
 
         super().__init__(
@@ -74,7 +73,7 @@ class SRS_DG535(Instrument):
         self.model = "DG535"
 
         self.num_vert_divisions = 8
-        self.termination = "\r\n"
+        self._termination = "\r\n"
 
         self.command_str = ""  # string used to trigger
         #   Device Specific Values
@@ -187,6 +186,3 @@ class SRS_DG535(Instrument):
         self.add_parameter(
             "TRIGGER_PERIOD", read_command="BP", set_command="BP {}", dummy_return="1"
         )
-
-        if settings_file != None:
-            self.load_state(settings_file)

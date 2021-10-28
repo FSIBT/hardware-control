@@ -39,7 +39,7 @@ class SRS_CIS200(Instrument):
         self.model = "CIS200"
 
         # Connection Specific Setting
-        self.encoding = "ascii"
+        self._encoding = "ascii"
 
         # set the terminator
         self.read_termination = "\n\r"

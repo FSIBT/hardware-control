@@ -19,8 +19,8 @@ logger = logging.getLogger(__name__)
 
 def create_channel_parser(channel):
     def parse_channel(value):
-        start_idx = (channel - 1) * 7
-        end_idx = channel * 7
+        start_idx = (channel) * 7
+        end_idx = (channel + 1) * 7
         rval = float(value[start_idx:end_idx])
         return rval
 
@@ -47,20 +47,20 @@ class Adam_6024(AdamBackend):
         self.model = "Adam 6024"
 
         # This specifies the max number of channels the user can request
-        self.n_input_channels = 6
-        self.n_output_channels = 2
+        self.n_input_channels = 7
+        self.n_output_channels = 3
 
-        for i in range(self.n_input_channels):
+        for channel in range(self.n_input_channels):
             self.add_parameter(
-                f"CH{i}_READ_VOLTAGE",
+                f"CH{channel}_READ_VOLTAGE",
                 read_command="#01",
-                post_hooks=[create_channel_parser(i)],
+                post_hooks=[create_channel_parser(channel)],
+                dummy_return=f"10.",
             )
 
-        for i in range(self.n_output_channels):
+        for channel in range(self.n_output_channels):
             self.add_parameter(
-                name=f"CH{i}_SET_VOLTAGE",
-                read_command=None,
-                set_command=f"#01{i:02d}{{}}",
+                f"CH{channel}_SET_VOLTAGE",
+                set_command=f"#01{channel:02d}{{}}",
                 pre_hooks=[range_validator(0, 10), format_float("06.3f")],
             )

@@ -1,3 +1,4 @@
+from .Adam6024Control import Adam6024Control
 from .DelayGenerator import DelayGenerator
 from .FlowController import FlowController
 from .FunctionGenerator import FunctionGenerator
@@ -6,5 +7,5 @@ from .KeysightPowerSupply import KeysightPowerSupply
 from .MultiPowerSupply import MultiPowerSupply
 from .Oscilloscope import Oscilloscope
 from .ReadModule import Read
-from .TempMonitor import TempMonitor
 from .RGA import RGA
+from .TempMonitor import TempMonitor

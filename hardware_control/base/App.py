@@ -194,7 +194,6 @@ class App(QApplication):
         self,
         instrument: Instrument,
         ignore_flag: Optional[bool] = False,
-        online_color: Optional[str] = "Green",
     ):
 
         if instrument.name in self._data:
@@ -203,7 +202,7 @@ class App(QApplication):
             )
             return
 
-        instrument.dummy = self.dummy
+        instrument._dummy = self.dummy
 
         zmq_instrument = ZMQAdapter(
             instrument,
@@ -234,8 +233,6 @@ class App(QApplication):
 
         # register an ignore flag for the instrument
         self._data[zmq_instrument.name]["ignore"] = ignore_flag
-        # register an online color flag for the instrument
-        self._data[zmq_instrument.name]["online_color"] = online_color
 
         # start thread
         self.threads.append(zmq_instrument)
@@ -404,7 +401,7 @@ class App(QApplication):
         """
 
         # Some parameters are boolean
-        if parameter == "ignore" or parameter == "online_color":
+        if parameter == "ignore":
             return self._data[instrument][parameter]
 
         # Make sure parameter is not a command
@@ -593,7 +590,7 @@ class App(QApplication):
                 f"Failed to write file '{filename}'. State not saved.", exc_info=True
             )
 
-    def load_settings(self, filename: Union[str, Path]) -> None:
+    def load_settings(self, instrument: str, filename: Union[str, Path]) -> None:
         """Reads a JSON file to overwrite instrument's settings dictionaries.
 
         Expectss JSON to be a dictionary of dictionaries. The
@@ -620,11 +617,20 @@ class App(QApplication):
             logger.error(f"Failed to read file '{filename}'.", exc_info=True)
             return
 
-        # try to set all settings
-        for instrument in all_settings:
-            if instrument not in self._data:
-                logger.error(f"{instrument} not found in app")
-                continue
-            for parameter in all_settings[instrument]:
-                value = all_settings[instrument][parameter]
-                self.set_instrument_parameter(instrument, parameter, value, raw=True)
+        # Try to set instrument settings
+        if instrument not in self._data:
+            logger.error(f"{instrument} not found in app.")
+            return
+        for parameter in all_settings:
+            value = all_settings[parameter]
+            self.set_instrument_parameter(instrument, parameter, value, raw=True)
+
+    def add_load_settings_hook(
+        self, instrument: str, filename: Union[str, Path]
+    ) -> None:
+        self.add_hook(
+            instrument,
+            "online",
+            "post_read_hook",
+            lambda x: self.load_settings(instrument, filename),
+        )

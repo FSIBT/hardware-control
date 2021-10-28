@@ -61,7 +61,7 @@ def ensure_online(f):
     def wrapped(*args, **kwargs):
         self = args[0]
 
-        if not self.online:
+        if not self._online:
             return None
 
         return f(*args, **kwargs)
@@ -116,22 +116,22 @@ class Instrument:
     ):
 
         self.name = instrument_name
-        self.online: bool = False
+        self._online: bool = False
 
         # can be set when defining the instrument
         self.manufacturer = None
         self.model = None
 
         self.device = None  # This is the physical instrument to write to
-        self.dummy: bool = False
+        self._dummy: bool = False
 
         self.connection_addr = connection_addr
         self.connection_type = None
 
         self.ip_addr = None
         self.port_no = default_port
-        self.termination: str = "\n"
-        self.encoding: str = "utf-8"
+        self._termination: str = "\n"
+        self._encoding: str = "utf-8"
         self.write_termination = None
         self.read_termination = None
         self.delay = None
@@ -198,23 +198,23 @@ class Instrument:
            True if the instrument is reachable or no test have been done, False if not.
 
         """
-        if not self.online:
+        if not self._online:
             return False
 
         if self.check_connection_commands is None:
             return True
         if isinstance(self.check_connection_commands, str):
             self.query(self.check_connection_commands)
-            return self.online
+            return self._online
         if isinstance(self.check_connection_commands, (list, tuple)):
             for cmd in self.check_connection_commands:
                 self.query(cmd)
-            return self.online
+            return self._online
 
     def add_parameter(
         self,
         name: str,
-        read_command: Union[str, Callable],
+        read_command: Union[str, Callable] = None,
         set_command: Union[Optional[str], Optional[Callable]] = None,
         pre_hooks: Optional[List] = None,
         post_hooks: Optional[List] = None,
@@ -244,9 +244,9 @@ class Instrument:
            These can also easily be overwritten in an actual app to customize this.
 
         """
-        if name in ["ONLINE"]:
+        if name in ["online", "ignore"]:
             logger.error(
-                f"command 'online' is a special command and cannot be used in instrument {self.name}"
+                f"command '{name}' is a special command and cannot be used in instrument {self.name}"
             )
             return
 
@@ -328,7 +328,7 @@ class Instrument:
         This is mostly used so that the main app can know what commands are available.
         """
         return (
-            list(self.read_commands.keys()) + ["ONLINE"],
+            list(self.read_commands.keys()) + ["online"],
             list(self.set_commands.keys()),
             list(self.commands.keys()),
         )
@@ -344,11 +344,11 @@ class Instrument:
         exists.
 
         """
-        if name == "ONLINE":
-            return self.online
+        if name == "online":
+            return self._online
 
         value = None
-        if self.dummy:
+        if self._dummy:
             if name in self.dummy_returns:
                 value = self.dummy_returns[name]
                 if callable(value):
@@ -409,7 +409,7 @@ class Instrument:
             if value is None:
                 return
             if callable(self.set_commands[name]):
-                self.set_commands[name]()
+                self.set_commands[name](value)
             else:
                 self.write(self.set_commands[name].format(value))
             return
@@ -455,7 +455,7 @@ class Instrument:
         """
 
         if name in self.commands:
-            if self.dummy:
+            if self._dummy:
                 logger.debug(f"{self.name}: Would call {name} -> {self.commands[name]}")
                 return
             if callable(self.commands[name]):
@@ -471,7 +471,7 @@ class Instrument:
     def close(self) -> None:
         """Close connection to instrument."""
 
-        if self.dummy:
+        if self._dummy:
             logger.debug(f"{self.name}: Dummy connection closed")
             return False
 
@@ -485,19 +485,19 @@ class Instrument:
         """Checks if the instrument is in communication with the object, if it is
         not, it tries to re-establish communication."""
 
-        if self.dummy:
-            if self.online:
+        if self._dummy:
+            if self._online:
                 return True
             logger.debug(
                 f"{self.name}: creating dummy connection to {self.connection_addr}"
             )
-            self.online = True
+            self._online = True
             return True
 
-        if self.online:
+        if self._online:
             if self.check_connection():
                 return True
-            self.online = False
+            self._online = False
 
         logger.debug(f"{self.name}: trying to connect")
 
@@ -506,12 +506,12 @@ class Instrument:
                 rm = pyvisa.ResourceManager("@py")
                 self.device = rm.open_resource(self.connection_addr)
                 self.device.read_termination = (
-                    self.termination
+                    self._termination
                     if not self.read_termination
                     else self.read_termination
                 )
                 self.device.write_termination = (
-                    self.termination
+                    self._termination
                     if not self.write_termination
                     else self.write_termination
                 )
@@ -521,13 +521,13 @@ class Instrument:
                     f"opened pyvisa connection to {self.name} at {self.connection_addr}"
                 )
             except Exception:
-                self.online = False
+                self._online = False
                 logger.debug(
                     f"\t({self.name}) ERROR connecting with visa.",
                 )
                 logger.debug(f"{self.name} is offline")
             else:
-                self.online = True
+                self._online = True
         elif self.connection_type == Instrument.SOCKET:
             try:
                 self.device = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -539,29 +539,29 @@ class Instrument:
                     f"opened socket connection to {self.name} at {self.ip_addr}:{self.port_no}"
                 )
             except Exception:
-                self.online = False
+                self._online = False
                 logger.debug(f"\t({self.name}) ERROR connecting with sockets.")
                 logger.debug(f"{self.name} is offline")
             else:
-                self.online = True
+                self._online = True
         elif self.connection_type == Instrument.MODBUS:
             try:
                 self.device = ModbusClient(host=self.connection_addr)
                 if self.device.connect():
-                    self.online = True
+                    self._online = True
                     logger.debug(
                         f"opened modbus connection to {self.name} at {self.connection_addr}"
                     )
             except Exception:
-                self.online = False
+                self._online = False
                 logger.debug(f"\t({self.name}) ERROR connecting with modbus.")
                 logger.debug(f"{self.name} is offline")
         # If connection purportedly successful, verify connection
-        if self.online:
+        if self._online:
             if not self.check_connection():
-                self.online = False
+                self._online = False
 
-        return self.online
+        return self._online
 
     def config_serial(
         self,
@@ -572,7 +572,7 @@ class Instrument:
     ) -> None:
         if self.device is None:
             logger.error(f"No visa device for '{self.name}'")
-            self.online = False
+            self._online = False
             return
         if self.connection_type == Instrument.VISA:
             self.device.encoding = "ascii"
@@ -588,7 +588,7 @@ class Instrument:
     @ensure_online
     def write(self, command: str) -> None:
 
-        if self.dummy:
+        if self._dummy:
             logger.debug(f"{self.name} sending write command {command}")
             return
 
@@ -598,7 +598,7 @@ class Instrument:
                 self.device.write(command)
                 return
             if self.connection_type == Instrument.SOCKET:
-                self.device.sendall(bytes(command + self.termination, self.encoding))
+                self.device.sendall(bytes(command + self._termination, self._encoding))
                 return
             if self.connection_type == Instrument.MODBUS:
                 # modbus commands must be formatted in the following way:
@@ -619,7 +619,7 @@ class Instrument:
                     )
         except Exception:
             logger.debug(f"ERROR: Write {command} failed in {self.name}", exc_info=True)
-            self.online = False
+            self._online = False
             return
 
     @staticmethod
@@ -637,7 +637,7 @@ class Instrument:
     @ensure_online
     def query(self, command: str, delay: Optional[float] = None):
 
-        if self.dummy:
+        if self._dummy:
             logger.debug(f"{self.name} sending query command {command}")
             return
 
@@ -651,10 +651,10 @@ class Instrument:
                 else:
                     reply = self.device.query(command)
             elif self.connection_type == Instrument.SOCKET:
-                self.device.sendall(bytes(command + self.termination, self.encoding))
+                self.device.sendall(bytes(command + self._termination, self._encoding))
                 reply_bytes = Instrument.recvall(self.device)
                 reply = str(reply_bytes)
-                reply = reply[2 : len(reply) - 1 - 2 * len(self.termination)]
+                reply = reply[2 : len(reply) - 1 - 2 * len(self._termination)]
                 logger.debug(f'\t{self.name}< "{command}"')
             elif self.connection_type == Instrument.MODBUS:
                 # modbus commands must be formatted in the following way:
@@ -675,7 +675,7 @@ class Instrument:
             return reply
         except Exception:
             logger.debug(f"ERROR: Query {command} failed in {self.name}", exc_info=True)
-            self.online = False
+            self._online = False
             return None
 
     def load_state(self, filename: str):

@@ -8,7 +8,7 @@ class TestInstrument:
     def test_read_parameters(self):
         # setup
         self.instrument = hc.instruments.Alicat_M_Series("alicat", "127.0.0.1:1111")
-        self.instrument.dummy = True
+        self.instrument._dummy = True
 
         # overwrite dummy output
         for i, name in enumerate(self.instrument.read_commands):

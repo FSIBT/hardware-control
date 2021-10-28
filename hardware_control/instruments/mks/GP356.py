@@ -38,7 +38,7 @@ class GP_356(Instrument):
         self.ins_add = "#02"  # The address setting on the instrument
         self.check_connection_commands = [self.ins_add + "IGS"]
 
-        self.termination = "\r"
+        self._termination = "\r"
 
         self.add_parameter(
             "READ_STATE",

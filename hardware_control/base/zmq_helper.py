@@ -39,8 +39,8 @@ def handle_zmq_message_from_app(adapter, msg: str, logger) -> None:
     """
 
     # check online status
-    if adapter.instrument.online != adapter.online:
-        adapter.online = adapter.instrument.online
+    if adapter.instrument._online != adapter.online:
+        adapter.online = adapter.instrument._online
         adapter.zmq_publisher.send_string(
             f"{adapter.instrument.name} ONLINE {adapter.online}"
         )

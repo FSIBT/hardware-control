@@ -71,23 +71,22 @@ class Ni_9000(Instrument):
         channel = f"Mod{module_num}/{signal_type}-{chan_num}"
         self.add_parameter(
             f"CH{channel}_V_MAX",
-            read_command=lambda x: self.read_V_max(channel),
-            set_command=lambda x: self.set_V_max(channel, x),
+            read_command=lambda: self.read_V_max(channel),
+            set_command=lambda value: self.set_V_max(channel, value),
             dummy_return="20",
         )
 
         self.add_parameter(
             f"CH{channel}_V_MIN",
-            read_command=lambda x: self.read_V_min(channel),
-            set_command=lambda x: self.set_V_min(channel, x),
+            read_command=lambda: self.read_V_min(channel),
+            set_command=lambda value: self.set_V_min(channel, value),
             dummy_return="0",
         )
 
         self.add_parameter(
             f"CH{channel}_TERMINAL_CONFIG",
-            read_command=None,
-            set_command=lambda x: self.set_term_config(channel, x),
-            dummy_return="DIFF",
+            set_command=lambda value: self.set_term_config(channel, value),
+            dummy_return=TerminalConfiguration.DIFFERENTIAL,
         )
         self.add_lookup(
             f"CH{channel}_TERMINAL_CONFIG",
@@ -101,7 +100,7 @@ class Ni_9000(Instrument):
         if signal_type == "a":
             self.add_parameter(
                 f"CH{channel}_ANALOG",
-                read_command=lambda value: self.analog_read(channel),
+                read_command=lambda: self.analog_read(channel),
                 set_command=lambda value: self.analog_write(channel, value),
                 dummy_return="10",
             )
@@ -109,7 +108,7 @@ class Ni_9000(Instrument):
         elif signal_type == "d":
             self.add_parameter(
                 f"CH{channel}_DIGITAL",
-                read_command=lambda value: self.digital_read(channel),
+                read_command=lambda: self.digital_read(channel),
                 set_command=lambda value: self.digital_write(channel, value),
                 dummy_return="True",
             )

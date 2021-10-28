@@ -27,6 +27,6 @@ hc.setup_logging_docopt(logger, commands)
 
 
 flow_controller = hc.instruments.Alicat_M_Series("alicat", "192.168.0.15")
-flow_controller.dummy = dummy
+flow_controller._dummy = dummy
 
 zmqadapter = hc.ZMQSingleInstrument(flow_controller, "127.0.0.1", 4444)
