@@ -3,38 +3,44 @@
 Not all commands are currently implemented in all instruments drivers. If you want to
 add a command that is not yet implemented, this guide will show you how.
 
-### 1. Identify Command Syntax
+### 1. Identify Instrument Syntax
 
-We distinguish between two different types: commands and parameters. A
-command is something like 'trigger' that doesn't create an output and
-we define a parameter as a value that can be read or written to. For
-either case you need to find what you need to send to the
-instrument from the manual. For socket connections over TCP these are
-normally just ascii strings, which is true for most other cases too.
+We distinguish between two different ways of communicating with instruments:
+commands and parameters. A
+command tells the instrument to perform some action, but does not produce a
+value to read back. An example of a command would be triggering an oscilloscope.
+We define a parameter as something that can be read or written, such as
+the output voltage of a power supply. For both sending commands and reading or
+writing parameters, you need to determine the correct syntax for communicating
+with the instrument from the instrument's manual. In most cases, these are just
+ASCII strings, often in the form of SCPI instructions.
 
-### 2. Identify Name in an existing GUI widget
+### 2. Linking to an existing GUI widget
 
-If you want to be able to reuse an existing GUI widget, you need to
-figure out what the name is that this parameter maps to in the GUI. For example,
-for a power supply, we use the name `CH1_V_OUT` to describe the actual
-voltage for CH1. If you write a new GUI, you can come up with any name
-you want here. The name needs to be unique for the instrument. Next
-you use the built-in function of an `Instrument` class
-`self.add_parameter` or `self.add_command` to link the name to the
-actual command. At this point you can also define some function that
-can be added as a hook before setting a value. These can be used, for
-example, to scale a voltage from the real value to a 0-10 V scale. You
-can also define hooks for post-processing a value when it is read to
-go then, for example, from a 0-10 V back to the real applied voltage.
+Once you've added your command or parameter to the instrument driver, you need to
+link it to a control or readout in the GUI widget. The `add_parameter` or `add_command`
+functions used in your instrument driver require a name. That name is what the
+GUI widgets will use to determine which values to set or readback when it interacts
+with the driver. If you want to connect your new backend instruction to an existing
+GUI widget, you need to ensure the name of your parameter/command matches that
+referenced by the GUI. Note that parameter/command names cannot be repeated
+within the same instrument.
 
-These hooks can also be used for validation and to check ranges, etc.
-If a hook returns `None` the value will not be set or returned or a
-command will not be called.
-
-
-### What if the Feature I'm Adding is not Implemented in the GUI?
-
-If the command you're adding to your instrument is not yet implemented in the
+If the command you're adding to your instrument is not yet implemented in a
 corresponding GUI, then you will need to add a widget to the frontend GUI
-which allows you to control your new command. For guidance on this, view the
+which allows you to interface with your new command/parameter. For guidance on this, view the
 instructions on how to create a new user interface.
+
+### 3. Hooks
+
+You can add pre-hooks or post-hooks to operate on values passed from the GUI to
+the backend, or from the backend to the GUI, respectively. This often useful if
+the values shown on the GUI need to be scaled or otherwise translated to
+communicate with the instrument. For example, if a power supply was interfaced
+using a control voltage that was scaled by a factor of 10 from the actual output
+voltage, you could display the output voltage on the widget, then use a pre and
+post hook to translate the display voltage to the scaled control voltage.
+
+Hooks can also be used for validation, such as checking that a value is within a
+specified range. If a hook returns `None`, the value will not be set/returned, or
+the command will not be sent.
