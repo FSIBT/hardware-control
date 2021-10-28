@@ -30,7 +30,7 @@ class Keysight_4000X(Instrument):
         * NUM_POINTS (*int*)
             * Number of points on the time axis.
         * LABELS_ENABLED (*bool*)
-            * Enable or disable channel labels on the instrument.
+            * On/Off status of channel labels on the instrument.
         * TRIGGER_LEVEL (*float*)
             * Trigger level.
         * TRIGGER_COUPLING (*AC*, *DC*, *LFReject*)
