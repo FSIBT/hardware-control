@@ -291,6 +291,12 @@ class Instrument:
                 logger.error(f"dummy {name} already exists in instrument {self.name}")
                 return
 
+            if " " in dummy_return:
+                logger.error(
+                    f"dummy_return '{dummy_return}' for parameter {name} in instrument {self.name} should not include a whitespace. Not adding it."
+                )
+                return
+
             self.dummy_returns[name] = dummy_return
 
     def add_command(self, name: str, command: Union[str, Callable]):
