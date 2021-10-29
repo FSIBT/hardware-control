@@ -73,15 +73,10 @@ class Oscilloscope(QGroupBox):
         self.master_layout.addWidget(self.channel_box, 10, 0, 1, 4)
         self.setLayout(self.master_layout)
 
-        # Create timer to query instrument
-        self.readout_timer = QTimer(self)
-        self.readout_timer.timeout.connect(self.update_readout)
-        self.readout_timer.start(self.app.globalRefreshRate)
+    def default_update_readout(self) -> None:
+        """Register certain parameterts to be automatically udpated every second."""
 
-    def update_readout(self):
-        """Queries the instrument for current readout data."""
-
-        for parameter in [
+        update = [
             "TIMEBASE",
             "TIME_OFFSET",
             "NUM_POINTS",
@@ -90,28 +85,18 @@ class Oscilloscope(QGroupBox):
             "TRIGGER_COUPLING",
             "TRIGGER_EDGE",
             "TRIGGER_CHANNEL",
-        ]:
-            self.app.update_instrument_parameter(self.instrument, parameter)
+        ]
 
         for ch in self.channel_widgets:
-            self.app.update_instrument_parameter(
-                self.instrument, f"CH{ch.channel}_VOLTS_DIV"
-            )
-            self.app.update_instrument_parameter(
-                self.instrument, f"CH{ch.channel}_OFFSET"
-            )
-            self.app.update_instrument_parameter(
-                self.instrument, f"CH{ch.channel}_LABEL"
-            )
-            self.app.update_instrument_parameter(
-                self.instrument, f"CH{ch.channel}_COUPLING"
-            )
-            self.app.update_instrument_parameter(
-                self.instrument, f"CH{ch.channel}_IMPEDANCE"
-            )
-            self.app.update_instrument_parameter(
-                self.instrument, f"CH{ch.channel}_PROBE_ATTEN"
-            )
+            update.append(f"CH{ch.channel}_VOLTS_DIV")
+            update.append(f"CH{ch.channel}_OFFSET")
+            update.append(f"CH{ch.channel}_LABEL")
+            update.append(f"CH{ch.channel}_COUPLING")
+            update.append(f"CH{ch.channel}_IMPEDANCE")
+            update.append(f"CH{ch.channel}_PROBE_ATTEN")
+
+        for parameter in update:
+            self.app.add_auto_update_instrument_parameter(self.instrument, parameter)
 
 
 class OscilloscopeChannelWidget(QWidget):

@@ -86,15 +86,15 @@ def ensure_parameter_and_instrument_exists(f):
     def wrapped(*args, **kwargs):
         self = args[0]
         instrument = args[1]
-        paramter = args[2]
+        paramater = args[2]
 
         if instrument not in self._data:
             logger.error(f"Cannot find instrument '{instrument}' in app")
             return
 
-        if paramter not in self._data[instrument]:
+        if paramater not in self._data[instrument]:
             logger.error(
-                f"Cannot find parameter/command '{paramter}' for instrument '{instrument}' in app"
+                f"Cannot find parameter/command '{paramater}' for instrument '{instrument}' in app"
             )
             return
 
@@ -135,11 +135,22 @@ class App(QApplication):
         self.dummy = dummy
         self.additional_save_formats = {}
 
-        self.data_sets = {}  # Dict of datasets
+        # keep track of datasets, so that we can autosave, etc.
+        self.data_sets = {}
 
-        self.update_timer = QTimer(self)
-        self.update_timer.timeout.connect(self.parse_message_from_instruments)
-        self.update_timer.start(100)
+        # keep a list of parameters that should be updated periodiccaly
+        # This is a set of (<instrument name>,<paramaters>) combinations
+        self.request_updates = set()
+
+        # a timer to check ZMQ messages
+        self.zmq_timer = QTimer(self)
+        self.zmq_timer.timeout.connect(self.parse_message_from_instruments)
+        self.zmq_timer.start(100)
+
+        # a timer to requests updates from instruments
+        self.update_instrument_timer = QTimer(self)
+        self.update_instrument_timer.timeout.connect(self.update_instruments)
+        self.update_instrument_timer.start(1000)
 
         # default refresh rate used by many GUI elements
         self.globalRefreshRate = 1000
@@ -321,6 +332,23 @@ class App(QApplication):
                 self._data[name][parameter]["read_value"] = value
                 for w in self._data[name][parameter]["widgets"]:
                     w.hc_update()
+
+    def update_instruments(self):
+        for name, parameter in self.request_updates:
+            self.app.update_instrument_parameter(name, parameter)
+
+    def add_auto_update_instrument_parameter(self, name, parameter):
+        if name not in self._data:
+            logger.error(f"Cannot find instrument '{instrument}' in app")
+            return
+
+        if parameter not in self._data[name]:
+            logger.error(
+                f"Cannot find parameter/command '{parameter}' for instrument '{instrument}' in app"
+            )
+            return
+
+        self.request_updates.add((name, parameter))
 
     @ensure_parameter_and_instrument_exists
     def set_instrument_parameter(
