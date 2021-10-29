@@ -1,9 +1,6 @@
-"""TDKL GenH AC-DC power systems.
-
+"""
 .. image:: /images/TDKLGenH.jpg
   :height: 200
-
-See class definition for details.
 
 """
 
@@ -14,6 +11,23 @@ logger = logging.getLogger(__name__)
 
 
 class TDKL_GenH(Instrument):
+    """
+    TDKL GenH AC-DC power systems instrument class.
+
+    PARAMETERS
+        * CH1_ENABLE (*bool*)
+            * On/off status.
+        * CH1_V_OUT (*float*)
+            * Current voltage.
+        * CH1_I_OUT (*float*)
+            * Current current.
+        * CH1_V_SET (*float*)
+            * New voltage to set.
+        * CH1_I_SET (*float*)
+            * New current to set.
+
+    """
+
     def __init__(
         self,
         instrument_name: str = "TDKL_GENH",

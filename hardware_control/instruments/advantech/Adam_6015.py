@@ -1,21 +1,17 @@
-"""Advantac ADAM 6015 (4 thermo couple readouts)
-
+"""
 .. image:: /images/ADAM-6015.jpg
   :height: 200
-
-See class definition for details.
 
 """
 
 import logging
 
-from ...base.hooks import range_validator
-from .Adam_base import AdamBackend
+from .Adam_base import AdamBase
 
 logger = logging.getLogger(__name__)
 
 
-def create_channel_parser(channel):
+def _create_channel_parser(channel):
     """The instruments responds with information for all channels.
 
     We need to pick the correct one.
@@ -34,10 +30,12 @@ def create_channel_parser(channel):
     return parse_channel
 
 
-class Adam_6015(AdamBackend):
-    """A driver for the Adam 6015.
+class Adam_6015(AdamBase):
+    """Adam 6015 (4 thermocouple readouts) instrument class.
 
-    Instrument home page: https://www.advantech.com/products/a67f7853-013a-4b50-9b20-01798c56b090/adam-6015/mod_9c835a28-5c91-49fc-9de1-ec7f1dd3a82d
+    PARAMETERS
+        * CH<X>_READ_TEMPERATURE (*float*)
+            * Current temperature readout of channel 'X'.
 
     """
 
@@ -53,14 +51,15 @@ class Adam_6015(AdamBackend):
         self.manufacturer = "Advantech"
         self.model = "Adam 6015"
 
-        for i in range(1, 6 + 1):
+        for channel in range(1, 6 + 1):
             self.add_parameter(
-                f"CH{i}_READ_TEMPERATURE",
+                f"CH{channel}_READ_TEMPERATURE",
                 read_command="#01",
-                post_hooks=[create_channel_parser(i)],
+                post_hooks=[_create_channel_parser(channel)],
             )
 
     def query(self, cmd: str):
+        """Unique 'query' function for querying an Adam 6015."""
         self.device.sendall(b"#01\r")
         value = self.device.recv(self.buffer_length)
         return value

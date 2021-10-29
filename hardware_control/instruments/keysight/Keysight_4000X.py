@@ -52,7 +52,7 @@ class Keysight_4000X(Instrument):
         * CH<X>_COUPLING (*AC*, *DC*)
             * Coupling mode for channel 'X'.
         * CH<X>_WAVEFORM
-            * Most recent waveform measurement from channel 'X'. This parameter can be read but cannot be set.
+            * Most recent waveform measurement from channel 'X'.
 
     COMMANDS
         * SINGLE_TRIGGER

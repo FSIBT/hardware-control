@@ -86,15 +86,15 @@ def ensure_parameter_and_instrument_exists(f):
     def wrapped(*args, **kwargs):
         self = args[0]
         instrument = args[1]
-        paramater = args[2]
+        parameter = args[2]
 
         if instrument not in self._data:
             logger.error(f"Cannot find instrument '{instrument}' in app")
             return
 
-        if paramater not in self._data[instrument]:
+        if parameter not in self._data[instrument]:
             logger.error(
-                f"Cannot find parameter/command '{paramater}' for instrument '{instrument}' in app"
+                f"Cannot find parameter/command '{parameter}' for instrument '{instrument}' in app"
             )
             return
 
@@ -139,7 +139,7 @@ class App(QApplication):
         self.data_sets = {}
 
         # keep a list of parameters that should be updated periodiccaly
-        # This is a set of (<instrument name>,<paramaters>) combinations
+        # This is a set of (<instrument name>,<parameters>) combinations
         self.request_updates = set()
 
         # a timer to check ZMQ messages

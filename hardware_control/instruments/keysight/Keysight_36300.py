@@ -27,9 +27,9 @@ class Keysight_36300(Instrument):
         * CH<X>_I_SET (*float*)
             * Instrument current for channel 'X'.
         * CH<X>_V_OUT
-            * Output voltage for channel 'X'. This parameter can be read but cannot be set.
+            * Output voltage for channel 'X'.
         * CH<X>_I_OUT
-            * Output current for channel 'X'. This parameter can be read but cannot be set.
+            * Output current for channel 'X'.
         * CH<X>_V_PROT (*float*)
             * Level at which overvoltage protection trips for channel 'X'.
 
