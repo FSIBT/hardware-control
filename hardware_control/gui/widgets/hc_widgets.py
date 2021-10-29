@@ -453,6 +453,7 @@ class HCComboBox(HCMixin, QComboBox):
         label: str,
         items,
         label_align: str = "left",
+        lookuptable: Optional[Dict] = None,
     ):
         super().__init__(
             app=app,
@@ -466,14 +467,24 @@ class HCComboBox(HCMixin, QComboBox):
         self.addItems(self.items)
         self.setCurrentText(self.items[0])
 
+        self.lookuptable = lookuptable
+        if self.lookuptable is not None:
+            self.inverse_lookuptable = {
+                value: key for key, value in lookuptable.items()
+            }
+
         self.currentIndexChanged.connect(self.value_change)
 
     def value_change(self) -> None:
-        self.value = self.currentText().upper()
-        self.app.set_instrument_parameter(self.instrument, self.parameter, self.value)
+        value = self.currentText().upper()
+        if self.lookuptable:
+            value = self.lookuptable[value]
+        self.app.set_instrument_parameter(self.instrument, self.parameter, value)
 
     def hc_update(self) -> None:
-        self.value = self.app.get_instrument_parameter(self.instrument, self.parameter)
+        value = self.app.get_instrument_parameter(self.instrument, self.parameter)
+        if self.lookuptable:
+            value = self.inverse_lookuptable[value]
         for i in self.items:
             if self.value.casefold() == i.casefold():
                 self.setCurrentText(i)
