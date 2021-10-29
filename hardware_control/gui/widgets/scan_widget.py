@@ -2,9 +2,16 @@ import logging
 import time
 from typing import Callable, Optional, Dict, List
 
-from GPy.kern import Matern32, Bias
-from GPy.models import GPRegression
-from GPy.core.parameterization.priors import Gamma
+import warnings
+
+with warnings.catch_warnings():
+    # ignore warning in GPy
+    # bug report https://github.com/SheffieldML/GPy/issues/950
+    warnings.simplefilter("ignore", ResourceWarning)
+    from GPy.kern import Matern32, Bias
+    from GPy.models import GPRegression
+    from GPy.core.parameterization.priors import Gamma
+
 from scipy.stats import rv_discrete
 
 import numpy as np

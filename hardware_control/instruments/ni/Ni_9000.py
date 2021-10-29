@@ -13,7 +13,15 @@ and check the Gdocs manual!
 
 import logging
 import time
-from nidaqmx.constants import TerminalConfiguration
+
+import warnings
+
+with warnings.catch_warnings():
+    # ignore
+    warnings.simplefilter("ignore", DeprecationWarning)
+    import nidaqmx
+    from nidaqmx.constants import TerminalConfiguration
+
 from typing import Optional, List, Dict
 
 from ...base import Instrument
