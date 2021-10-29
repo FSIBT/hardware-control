@@ -194,17 +194,19 @@ class HCLineEdit(HCMixin, QLineEdit):
         self.editingFinished.connect(self.value_change)
 
     def value_change(self) -> None:
-        self.value = self.text()
-        self.app.set_instrument_parameter(self.instrument, self.parameter, self.value)
+        value = self.text()
+        self.app.set_instrument_parameter(self.instrument, self.parameter, value)
 
     def hc_update(self) -> None:
+        print(f'hc update for {self.name}')
         if self.hasFocus():
             logger.debug(f"'{self.name}' has focus, not updating")
             return
-        self.value = self.app.get_instrument_parameter(
+        value = self.app.get_instrument_parameter(
             self.instrument, self.parameter, return_set_value=True
         )
-        self.setText(self.value)
+        print("debug ", value)
+        self.setText(value)
 
 
 class HCDoubleSpinBox(HCMixin, QDoubleSpinBox):
@@ -486,11 +488,11 @@ class HCComboBox(HCMixin, QComboBox):
         if self.lookuptable:
             value = self.inverse_lookuptable[value]
         for i in self.items:
-            if self.value.casefold() == i.casefold():
+            if value.casefold() == i.casefold():
                 self.setCurrentText(i)
                 break
         else:
-            logger.error(f"HCControlCombo: could not find '{self.value}' in item list")
+            logger.error(f"HCControlCombo: could not find '{value}' in item list")
 
 
 class HCDoubleSpinComboBox(HCMixin):

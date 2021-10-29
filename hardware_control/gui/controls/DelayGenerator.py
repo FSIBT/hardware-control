@@ -166,9 +166,7 @@ class DelayGenerator(QGroupBox):
         self.setLayout(self.master_layout)
 
         # Create timer to query instrument
-        self.readout_timer = QTimer(self)
-        self.readout_timer.timeout.connect(self.update_readout)
-        self.readout_timer.start(self.app.globalRefreshRate)
+        self.config_auto_update()
 
     def enable_disable_hook(self, value):
         if value == "SINGLE":
@@ -177,7 +175,7 @@ class DelayGenerator(QGroupBox):
             self.single_trig_but.setEnabled(False)
         return value
 
-    def update_readout(self):
+    def config_auto_update(self):
         """Queries the instrument for current readout data."""
 
         for parameter in [
@@ -188,15 +186,15 @@ class DelayGenerator(QGroupBox):
             "PULSES_PER_BURST",
             "TRIGGER_PERIOD",
         ]:
-            self.app.update_instrument_parameter(self.instrument, parameter)
+            self.app.add_auto_update_instrument_parameter(self.instrument, parameter)
 
         for ch in self.channel_widgets:
             if getattr(ch, "time_delay", None):
-                self.app.update_instrument_parameter(
+                self.app.add_auto_update_instrument_parameter(
                     self.instrument, ch.time_delay.parameter
                 )
-            self.app.update_instrument_parameter(self.instrument, ch.volt.parameter)
-            self.app.update_instrument_parameter(self.instrument, ch.level.parameter)
+            self.app.add_auto_update_instrument_parameter(self.instrument, ch.volt.parameter)
+            self.app.add_auto_update_instrument_parameter(self.instrument, ch.level.parameter)
 
 
 class DelayChannelWidget(QWidget):
@@ -241,7 +239,7 @@ class DelayChannelWidget(QWidget):
 
         rels = ["Trig0", "T0", "A", "B", "C", "D"]
         if channel not in ["AB", "CD"]:
-            rels = rels[: rels.index(self.channel)]
+            rels.remove(self.channel)
             self.relative_label = QLabel("Relative to")
             self.relative = QComboBox()
             self.relative.addItems(rels)
@@ -263,7 +261,7 @@ class DelayChannelWidget(QWidget):
             self.instrument,
             f"CH{self.channel}_OUTPUT_MODE",
             label="Output mode",
-            items=["TTL", "Voltage", "NIM", "ECL"],
+            items=["TTL", "VAR", "NIM", "ECL"],
         )
         self.app.add_hook(
             self.instrument,
@@ -297,10 +295,9 @@ class DelayChannelWidget(QWidget):
         if value is None:
             return
 
-        if value == "VOLTAGE":
+        if value == "VAR":
             self.volt.setDisabled(False)
             self.volt.setStyleSheet("background-color: white")
-            value = "VAR"
         else:
             self.volt.setDisabled(True)
             self.volt.setStyleSheet("background-color: grey")

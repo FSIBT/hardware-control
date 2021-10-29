@@ -7,8 +7,10 @@
 import logging
 from typing import Optional
 
+from hardware_control.gui.controls.DelayGenerator import DelayChannelWidget
+
 from ...base import Instrument
-from ...base.hooks import range_validator
+from ...base.hooks import range_validator, substring_hook
 
 logger = logging.getLogger(__name__)
 
@@ -72,17 +74,10 @@ class SRS_DG535(Instrument):
         self.manufacturer = "SRS"
         self.model = "DG535"
 
-        self.num_vert_divisions = 8
-        self._termination = "\r\n"
-
-        self.command_str = ""  # string used to trigger
         #   Device Specific Values
-        self.delayRange = 999.999999999995
-        self.ExternalTriggerThreshold = 2.56
-        self.PulsesPerBurst = 32766
-
-        self.channels_relative = {}
-        self.channels_ampl = {}
+        self.delay = 0.25
+        self.startup_delay = 3.0
+        self._termination = "\r\n"
 
         self.check_connection_commands = ["IS", "ES"]
 
@@ -109,12 +104,12 @@ class SRS_DG535(Instrument):
             set_command="TS {}",
             dummy_return="POS",
         )
-        self.add_lookup("TRIGGER_EDGE", {"POS": "1", "NEGATIVE": "0"})
+        self.add_lookup("TRIGGER_EDGE", {"POS": "1", "NEG": "0"})
 
         self.add_parameter(
             "TRIGGER_IMPEDANCE",
-            read_command=f"TZ0",
-            set_command="TZ0,{}",
+            read_command=f"TZ 0",
+            set_command="TZ 0,{}",
             dummy_return="50-OHMS",
         )
         self.add_lookup("TRIGGER_IMPEDANCE", {"50-OHMS": "0", "HI-Z": "1"})
@@ -158,12 +153,28 @@ class SRS_DG535(Instrument):
                 dummy_return="3.2",
             )
 
+        """
+                for ch in channels:
+                    self.add_parameter(f"CH{ch}_relative_to", read_command="DT {ch}", set_command=lambda x: self.update_relative(ch, x))
+                    self.add_parameter(f"CH{ch}_delay", read_command="DT {ch}",set_command=self.update_delay)
+
+            def update_relative(self, channel, relative):
+                self.rel[channel] = relative
+                self.set_relative_delay()
+            def update_delay
+                self.delay[channel] = delay
+                self.set_relative_delay()
+            def set_relative_delay
+                self.delay
+                self.rel
+                self.write(f"DT  ")
+        """     
+
+
         for channel1, channel1_int in SRS_DG535._CHANNEL_NAMES.items():
             if channel1 in ["Trig0", "T0"]:
                 continue
             for channel2, channel2_int in SRS_DG535._CHANNEL_NAMES.items():
-                if channel1_int <= channel2_int:
-                    continue
                 if channel1 in ["AB", "CD"]:
                     continue
                 if channel2 in ["AB", "CD"]:
@@ -173,6 +184,7 @@ class SRS_DG535(Instrument):
                     read_command=f"DT {channel1_int}",
                     set_command=f"DT {channel1_int},{channel2_int},{{}}",
                     dummy_return="0.1",
+                    post_hooks=[substring_hook(2,None)]
                 )
         self.add_parameter(
             "PULSES_PER_BURST",
@@ -186,3 +198,8 @@ class SRS_DG535(Instrument):
         self.add_parameter(
             "TRIGGER_PERIOD", read_command="BP", set_command="BP {}", dummy_return="1"
         )
+        
+        def try_connect(self):
+            """Need to clear the buffer every time we start the instrument."""
+            super().try_connect()
+            self.device.write("CL")

@@ -20,6 +20,7 @@ from functools import wraps
 import json
 import logging
 import socket
+import time
 from typing import Optional, Any, Callable, List, Union
 
 import pyvisa
@@ -134,6 +135,7 @@ class Instrument:
         self._encoding: str = "utf-8"
         self.write_termination = None
         self.read_termination = None
+        self.startup_delay = 0.0
         self.delay = None
         self.timeout = None
 
@@ -291,7 +293,7 @@ class Instrument:
                 logger.error(f"dummy {name} already exists in instrument {self.name}")
                 return
 
-            if " " in dummy_return:
+            if isinstance(dummy_return, str) and " " in dummy_return:
                 logger.error(
                     f"dummy_return '{dummy_return}' for parameter {name} in instrument {self.name} should not include a whitespace. Not adding it."
                 )
@@ -334,7 +336,7 @@ class Instrument:
         This is mostly used so that the main app can know what commands are available.
         """
         return (
-            list(self.read_commands.keys()) + ["online"],
+            list(self.read_commands.keys()) + ["ONLINE"],
             list(self.set_commands.keys()),
             list(self.commands.keys()),
         )
@@ -342,7 +344,7 @@ class Instrument:
     def get_value(self, name: str):
         """Get a value from an instrument.
 
-        Also handle the special case to query 'online' status and
+        Also handle the special case to query 'ONLINE' status and
         dummy mode.
 
         Note: user defined functions in dummy mode should not return
@@ -350,7 +352,7 @@ class Instrument:
         exists.
 
         """
-        if name == "online":
+        if name == "ONLINE":
             return self._online
 
         value = None
@@ -372,12 +374,12 @@ class Instrument:
                     value = self.read_commands[name]()
                 else:
                     value = self.query(self.read_commands[name])
-
             # only handle post_hooks at the instrument level when we are not in dummy mode
             # since we call hooks such as IEEE754_converter_to_ulong_pair here
             if name in self.post_hooks:
                 hooks = self.post_hooks[name]
                 value = call_hooks(hooks, value)
+                
         return value
 
     def __getitem__(self, name: str):
@@ -562,6 +564,8 @@ class Instrument:
                 self._online = False
                 logger.debug(f"\t({self.name}) ERROR connecting with modbus.")
                 logger.debug(f"{self.name} is offline")
+        
+        time.sleep(self.startup_delay)
         # If connection purportedly successful, verify connection
         if self._online:
             if not self.check_connection():
@@ -644,18 +648,23 @@ class Instrument:
     def query(self, command: str, delay: Optional[float] = None):
 
         if self._dummy:
-            logger.debug(f"{self.name} sending query command {command}")
+            logger.debug(f"'{self.name}' sending query command '{command}'")
             return
 
         try:
-            logger.debug(f"INFO: Sending query {command} in {self.name}")
+            logger.debug(f"'{self.name}' sending query command '{command}'")
             if self.connection_type == Instrument.VISA:
-                if delay:
-                    reply = self.device.query(command, delay=delay)
-                elif self.delay is not None:
-                    reply = self.device.query(command, delay=self.delay)
+                if self.delay is not None:
+                    inst_delay = self.delay
                 else:
-                    reply = self.device.query(command)
+                    inst_delay = 0.0
+
+                if delay is not None:
+                    inst_delay  = delay
+                
+                self.device.write(command)
+                time.sleep(inst_delay)
+                reply = self.device.read(termination=(self.read_termination or self._termination))
             elif self.connection_type == Instrument.SOCKET:
                 self.device.sendall(bytes(command + self._termination, self._encoding))
                 reply_bytes = Instrument.recvall(self.device)

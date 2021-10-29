@@ -111,7 +111,12 @@ def substring_hook(min_char, max_char):
     """Return a substring `value[min_char:max_char]`."""
 
     def converter(value):
-        value = value[min_char:max_char]
+        if min_char is None:
+            value = value[:max_char]
+        elif max_char is None:
+            value = value[min_char:]
+        else: 
+            value = value[min_char:max_char]
         return value
 
     return converter

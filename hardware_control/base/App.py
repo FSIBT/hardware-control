@@ -150,7 +150,7 @@ class App(QApplication):
         # a timer to requests updates from instruments
         self.update_instrument_timer = QTimer(self)
         self.update_instrument_timer.timeout.connect(self.update_instruments)
-        self.update_instrument_timer.start(1000)
+        self.update_instrument_timer.start(5000)
 
         # default refresh rate used by many GUI elements
         self.globalRefreshRate = 1000
@@ -317,6 +317,7 @@ class App(QApplication):
                 logger.error(
                     f"{msg.split()} has too few or too many values (expected 3)."
                 )
+                return
             assert inst_name == name
 
             if name not in self._data:
@@ -335,16 +336,19 @@ class App(QApplication):
 
     def update_instruments(self):
         for name, parameter in self.request_updates:
-            self.app.update_instrument_parameter(name, parameter)
+            online = self.get_instrument_parameter(name, "ONLINE")
+            if online is None or online == "False":
+                return
+            self.update_instrument_parameter(name, parameter)
 
     def add_auto_update_instrument_parameter(self, name, parameter):
         if name not in self._data:
-            logger.error(f"Cannot find instrument '{instrument}' in app")
+            logger.error(f"Cannot find instrument '{name}' in app")
             return
 
         if parameter not in self._data[name]:
             logger.error(
-                f"Cannot find parameter/command '{parameter}' for instrument '{instrument}' in app"
+                f"Cannot find parameter/command '{parameter}' for instrument '{name}' in app"
             )
             return
 
@@ -655,7 +659,7 @@ class App(QApplication):
     ) -> None:
         self.add_hook(
             instrument,
-            "online",
+            "ONLINE",
             "post_read_hook",
             lambda x: self.load_settings(instrument, filename),
         )
