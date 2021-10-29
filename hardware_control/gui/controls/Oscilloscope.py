@@ -58,7 +58,7 @@ class Oscilloscope(QGroupBox):
         self.channel_widgets = []
         self.channel_box = QGroupBox()
         self.channel_box_layout = QGridLayout()
-        for i in ["1", "2", "3", "4"]:
+        for i in range(self.channels):
             self.channel_widgets.append(
                 OscilloscopeChannelWidget(self.app, self.instrument, i)
             )
@@ -127,10 +127,10 @@ class OscilloscopeChannelWidget(QWidget):
         self.app = app
         self.instrument = instrument_name
         self.channel = channel
-        self.colors = {"1": "yellow", "2": "green", "3": "blue", "4": "red"}
+        self.colors = {0: "yellow", 1: "green", 2: "blue", 3: "red"}
 
         self.channel_label = HCHeader(
-            f"channel{self.channel}_{self.colors[str(self.channel)]}.png"
+            f"channel{self.channel+1}_{self.colors[self.channel]}.png"
         )
         self.channel_label.setFont(QFont("Arial", 20))
         self.channel_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
@@ -250,6 +250,7 @@ class OscilloscopeTriggerWidget(QGroupBox):
             label="Channel",
             label_align="right",
             items=["1", "2", "3", "4"],
+            lookuptable={"1": "0", "2": "1", "3": "2", "4": "3"},
         )
 
         self.trig_coupling = HCComboBox(
@@ -375,7 +376,7 @@ class OscilloscopeDisplayWidget(QGroupBox):
     display_name
         Oscilloscope Display Widget name
     display_channels : list or None
-        channels to display
+        channels to display (starting with CH0)
     show_controls : bool
         Allows user to show or hide display refresh controls
     refresh : float
@@ -413,7 +414,7 @@ class OscilloscopeDisplayWidget(QGroupBox):
             self.p2.setXLink(self.p1)
             right_label_items = [f"channel {i}" for i in self.display_channels]
             left_label_items = [
-                f"channel {i}" for i in range(1, 5) if i not in self.display_channels
+                f"channel {i+1}" for i in range(4) if i not in self.display_channels
             ]
             right_label = ", ".join(right_label_items)
             left_label = ", ".join(left_label_items)
@@ -424,22 +425,22 @@ class OscilloscopeDisplayWidget(QGroupBox):
             self.p2 = self.p1
 
         channel_colors = {
-            1: (255, 255, 13),
-            2: (31, 255, 9),
-            3: (0, 0, 254),
-            4: (252, 0, 8),
+            0: (255, 255, 13),
+            1: (31, 255, 9),
+            2: (0, 0, 254),
+            3: (252, 0, 8),
         }
 
+        self.lineCH0 = pg.mkPen(color=channel_colors[0], style=QtCore.Qt.SolidLine)
         self.lineCH1 = pg.mkPen(color=channel_colors[1], style=QtCore.Qt.SolidLine)
         self.lineCH2 = pg.mkPen(color=channel_colors[2], style=QtCore.Qt.SolidLine)
         self.lineCH3 = pg.mkPen(color=channel_colors[3], style=QtCore.Qt.SolidLine)
-        self.lineCH4 = pg.mkPen(color=channel_colors[4], style=QtCore.Qt.SolidLine)
+        self.CH0 = pg.PlotCurveItem(pen=self.lineCH0, symbol=None)
         self.CH1 = pg.PlotCurveItem(pen=self.lineCH1, symbol=None)
         self.CH2 = pg.PlotCurveItem(pen=self.lineCH2, symbol=None)
         self.CH3 = pg.PlotCurveItem(pen=self.lineCH3, symbol=None)
-        self.CH4 = pg.PlotCurveItem(pen=self.lineCH4, symbol=None)
 
-        for i, ch in enumerate([self.CH1, self.CH2, self.CH3, self.CH4]):
+        for i, ch in enumerate([self.CH0, self.CH1, self.CH2, self.CH3]):
             if self.display_channels and i + 1 in self.display_channels:
                 self.p2.addItem(ch)
             else:
@@ -449,10 +450,10 @@ class OscilloscopeDisplayWidget(QGroupBox):
             self.updateViews()
             self.p1.vb.sigResized.connect(self.updateViews)
 
+        self.CH0_data = ([], [])
         self.CH1_data = ([], [])
         self.CH2_data = ([], [])
         self.CH3_data = ([], [])
-        self.CH4_data = ([], [])
 
         # Method of updating display plot data
         self.update_timer = QtCore.QTimer(self)
@@ -512,7 +513,10 @@ class OscilloscopeDisplayWidget(QGroupBox):
                 )
                 t, wave = json.loads(trace_string)
 
-                if channel == 1:
+                if channel == 0:
+                    self.CH0.setData(t, wave)
+                    self.CH0_data = (t, wave)
+                elif channel == 1:
                     self.CH1.setData(t, wave)
                     self.CH1_data = (t, wave)
                 elif channel == 2:
@@ -521,6 +525,3 @@ class OscilloscopeDisplayWidget(QGroupBox):
                 elif channel == 3:
                     self.CH3.setData(t, wave)
                     self.CH3_data = (t, wave)
-                elif channel == 4:
-                    self.CH4.setData(t, wave)
-                    self.CH4_data = (t, wave)
