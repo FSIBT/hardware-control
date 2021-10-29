@@ -38,6 +38,15 @@ and use the config file we provide:
     # cd into repo
     pre-commit install
 
+## Tests
+
+We use pytest to run a small test suite. You can run all tests using:
+
+    python -m pytest
+
+Furthermore it is good practise to run the examples in dummy mode or
+even better with real hardware connected.
+
 ## Who do I talk to? ###
 
 If you have questions, please contact Arun at apersaud@lbl.gov.
