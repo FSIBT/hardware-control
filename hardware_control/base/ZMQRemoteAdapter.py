@@ -39,11 +39,13 @@ class ZMQSingleInstrument:
 
     """
 
-    def __init__(self, instrument, ipaddress, port):
+    def __init__(self, instrument, address):
         self.instrument = instrument
         self.name = instrument.name
 
         self.zmq_context = zmq.Context()
+
+        ipaddress, port = address.split(":")
 
         # socket to receive requests to connect
         logger.info(f"Setting up ZMQ REP/REQ at {ipaddress}:{port}")
@@ -126,9 +128,11 @@ class ZMQRemoteInstrument:
 
     """
 
-    def __init__(self, name, ipaddress, port, context, publisher):
+    def __init__(self, name, address, context, publisher):
 
         self.name = name
+
+        ipaddress, port = address.split(":")
 
         logger.info(f"{name} Connecting to remote {ipaddress}:{port}")
         self.req_rep_socket = context.socket(zmq.REQ)

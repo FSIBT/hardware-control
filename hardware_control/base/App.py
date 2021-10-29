@@ -238,7 +238,7 @@ class App(QApplication):
         self.threads.append(zmq_instrument)
         zmq_instrument.start()
 
-    def add_remote_instrument(self, name: str, ipaddress: str, port: int):
+    def add_remote_instrument(self, name: str, address: str):
         """Connect to a instrument driver on, for example, a different computer.
 
         This is relative straight forward, since the ZMQ publishers
@@ -251,10 +251,8 @@ class App(QApplication):
         ----------
         name
            The remote instrument name
-        ipaddress
-           The ipaddress where the remote instrument is running
-        port
-           The port number of the remote instrument publisher
+        address
+           The ipaddress:port combination where the remote instrument is running
 
         """
         if name in self._data:
@@ -265,8 +263,7 @@ class App(QApplication):
 
         zmq_instrument = ZMQRemoteInstrument(
             name,
-            ipaddress,
-            port,
+            address,
             self.zmq_context,
             self.zmq_publisher_address,
         )

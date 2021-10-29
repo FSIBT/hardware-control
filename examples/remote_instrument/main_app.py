@@ -39,7 +39,7 @@ class Demo(hc.HCMainWindow):
         # to connect to a remote instrument, the remote program needs to be running
         # and we need to know the IP address and port number that we have defined in that
         # progra,. See client.py
-        self.app.add_remote_instrument("alicat", "127.0.0.1", 4444)
+        self.app.add_remote_instrument("alicat", "127.0.0.1:4444")
 
         self.instr_ctrl = hc.gui.FlowController(self.app, "alicat", "Flow Controller")
 
