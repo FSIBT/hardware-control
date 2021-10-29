@@ -1,6 +1,17 @@
+"""HC aware versions of Qt widgets.
+
+Here you find version of Qt widgets, such as QLabel, QPushButton, etc.
+that connect to a certain instrument and parameter and automatic update.
+
+This module also provides some more additional widgets that do not
+have equivalent ones in Qt directly.
+
+"""
+
+
 import logging
 import pkg_resources
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 
 from PyQt5.QtWidgets import (
     QPushButton,
@@ -27,26 +38,6 @@ def load_icon(name: str) -> QPixmap:
 def icon_filename(name: str):
     """Get the icon filename from the installed package location"""
     return pkg_resources.resource_filename("hardware_control", f"icons/{name}")
-
-
-def setButtonState(button: QPushButton, value):
-    """Sets the state of a QPushButton to checked
-    or unchecked, accoridng to 'value'. Only applicable
-    to QPushButtons with field 'checkable' set to true."""
-    if isinstance(value, bool):
-        if value:
-            if not button.isChecked():
-                button.toggle()
-        else:
-            if button.isChecked():
-                button.toggle()
-    elif isinstance(value, str):
-        if value in ["True", "TRUE"]:
-            if not button.isChecked():
-                button.toggle()
-        else:
-            if button.isChecked():
-                button.toggle()
 
 
 def convert_prefix(value: str, decimals: int = 3) -> List[str]:
@@ -297,62 +288,151 @@ class HCPushButton(HCMixin, QPushButton):
         pass
 
 
-class HCToggleButton(HCMixin, QPushButton):
-    """A simple control widget with a label (QLabel), a button (QPushButton), and an optional indicator (QLabel).
-
-    The control widget can be connected to a generic function, or
-    directly to an instrument and a specific setting.
-
-    """
+class HCOnOffButton(HCMixin, QPushButton):
+    """Similar to HCPushButton, but also have graphical indicators for on/off state."""
 
     def __init__(
         self,
         app,
         instrument: str,
         parameter: str,
-        button_label: str = "",
-        show_indicator: bool = False,
-        icon_1: str = "button-power-on.svg",
-        icon_2: str = "button-power-off.svg",
+        label: str = "",
+        show_icon: bool = False,
+        icon_checked: str = "button-power-on.svg",
+        icon_unchecked: str = "button-power-off.svg",
+        show_text: bool = True,
+        text_checked: str = "On",
+        text_unchecked: str = "Off",
     ):
         super().__init__(
             app=app,
             instrument=instrument,
             parameter=parameter,
-            text=button_label,
+            text=label,
         )
-        self.show_indicator = show_indicator
 
-        self.icon_1 = load_icon(icon_1)
-        self.icon_2 = load_icon(icon_2)
-        self.indic_label = QLabel()
-        self.indic_label.setPixmap(load_icon("na_label.svg"))
+        self.icon_checked = load_icon(icon_checked)
+        self.icon_unchecked = load_icon(icon_unchecked)
+        self.icon_unknown = load_icon("button-power-unknown.svg")
 
         self.clicked.connect(self.value_change)
         self.setCheckable(True)
-        setButtonState(self, False)
+
+        # set default to unkown state
+        if show_icon:
+            self.setIcon(self.icon_unknown)
+        if show_text:
+            self.setText("unkown")
+
+    def is_true(self, value: Union[bool, str]) -> bool:
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            if value in ["True", "TRUE"]:
+                return True
+        return False
+
+    def set_state(self, value):
+        if self.show_icon:
+            if value:
+                self.setIcon(self.icon_checked)
+            else:
+                self.setIcon(self.icon_unchecked)
+
+        if self.show_text:
+            if value:
+                self.setText(self.text_checked)
+            else:
+                self.setText(self.text_unchecked)
 
     def value_change(self) -> None:
-        self.app.set_instrument_parameter(
-            self.instrument, self.parameter, self.isChecked()
-        )
+        value = self.isChecked()
+        self.app.set_instrument_parameter(self.instrument, self.parameter, value)
 
-        if self.show_indicator:
-            if self.isChecked():
-                self.indic_label.setPixmap(self.icon_1)
-            else:
-                self.indic_label.setPixmap(self.icon_2)
+        self.set_state(value)
 
     def hc_update(self):
-        if self.show_indicator:
-            self.value = self.app.get_instrument_parameter(
-                self.instrument, self.parameter
-            )
+        value = self.app.get_instrument_parameter(
+            self.instrument,
+            self.parameter,
+        )
 
-            if self.value:
-                self.indic_label.setPixmap(self.icon_1)
+        self.set_state(value)
+
+
+class HCOnOffIndicator(HCMixin, QLabel):
+    """Similar to HCPushbutton, but only indicates an  on/off state."""
+
+    def __init__(
+        self,
+        app,
+        instrument: str,
+        parameter: str,
+        label: str = "",
+        show_icon: bool = False,
+        icon_checked: str = "on-off-indicator-on.svg",
+        icon_unchecked: str = "on-off-indicator-off.svg",
+        show_text: bool = True,
+        text_checked: str = "On",
+        text_unchecked: str = "Off",
+        tooltip: str = "",
+    ):
+        super().__init__(
+            app=app,
+            instrument=instrument,
+            parameter=parameter,
+            text=label,
+        )
+
+        self.icon_checked = load_icon(icon_checked)
+        self.icon_unchecked = load_icon(icon_unchecked)
+        self.icon_unknown = load_icon("on-off-indicator-unknown.svg")
+
+        # set default to unkown state
+        if show_icon:
+            self.setIcon(self.icon_unknown)
+        if show_text:
+            self.setText("unkown")
+
+        self.setMouseTracking(True)
+        self.setToolTip(self.label)
+
+        self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+
+    def sizeHint(self):
+        if self.show_icon and not self.show_text:
+            return QSize(10, 20)
+        else:
+            return super().sizeHint()
+
+    def is_true(self, value: Union[bool, str]) -> bool:
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            if value in ["True", "TRUE"]:
+                return True
+        return False
+
+    def set_state(self, value):
+        if self.show_icon:
+            if value:
+                self.setIcon(self.icon_checked)
             else:
-                self.indic_label.setPixmap(self.icon_2)
+                self.setIcon(self.icon_unchecked)
+
+        if self.show_text:
+            if value:
+                self.setText(self.text_checked)
+            else:
+                self.setText(self.text_unchecked)
+
+    def hc_update(self):
+        value = self.app.get_instrument_parameter(
+            self.instrument,
+            self.parameter,
+        )
+
+        self.set_state(value)
 
 
 class HCComboBox(HCMixin, QComboBox):

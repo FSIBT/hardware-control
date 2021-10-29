@@ -1,7 +1,7 @@
 from typing import List
 from PyQt5.QtWidgets import QGroupBox, QVBoxLayout, QPushButton, QGridLayout
 from PyQt5.QtCore import QTimer
-from ..widgets import HCFixedLabel, HCLineEdit, HCToggleButton
+from ..widgets import HCFixedLabel, HCLineEdit, HCOnOffButton
 
 
 class ChannelDisplay(QVBoxLayout):
@@ -23,12 +23,12 @@ class ChannelDisplay(QVBoxLayout):
         self.set_current_option = set_current_option
 
         # Channel on-off button
-        self.on_off = HCToggleButton(
+        self.on_off = HCOnOffButton(
             self.app,
             self.instrument,
             f"CH{chan_num}_ENABLE",
-            "ON/OFF",
-            show_indicator=True,
+            label="ON/OFF",
+            show_icon=True,
         )
         self.tog_but_layout = QGridLayout()
         self.tog_but_layout.addWidget(self.on_off, 0, 0)

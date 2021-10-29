@@ -13,7 +13,6 @@ from PyQt5.QtWidgets import (
     QComboBox,
 )
 
-from ..widgets import setButtonState, load_icon
 from ..widgets.hc_widgets import HCLineEdit, HCComboBox
 
 

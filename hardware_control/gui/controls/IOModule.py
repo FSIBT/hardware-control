@@ -18,7 +18,7 @@ from PyQt5.QtWidgets import (
     QSizePolicy,
 )
 
-from ..widgets import load_icon, setButtonState, HCLineEdit, HCLabel, HCToggleButton
+from ..widgets import load_icon, HCLineEdit, HCLabel, HCOnOffButton
 
 logger = logging.getLogger(__name__)
 
@@ -369,14 +369,14 @@ class DigitalOutputChannel(QGroupBox):
         else:
             super().__init__()
 
-        self.togg_but = HCToggleButton(
+        self.togg_but = HCOnOffButton(
             app,
             instrument_name,
             f"CH{channel}_DIGITAL",
             label,
-            show_indicator=True,
-            icon_1="high_label.svg",
-            icon_2="low_label.svg",
+            show_icon=True,
+            icon_checked="high_label.svg",
+            icon_unchecked="low_label.svg",
         )
 
         self.edit_spacer = QSpacerItem(

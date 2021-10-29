@@ -15,7 +15,6 @@ from PyQt5.QtWidgets import (
 from typing import List
 
 from ..widgets import (
-    setButtonState,
     load_icon,
     HCLineEdit,
     HCLabel,
