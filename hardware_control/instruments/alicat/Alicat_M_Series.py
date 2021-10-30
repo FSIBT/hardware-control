@@ -21,6 +21,8 @@ def _IEEE754_converter_to_ulong_pair(value):
 
 
 def _modbus_registers_to_float(r):
+    if r is None:
+        return
     a, b = r.registers
     value = (a << 16) + b
     value = converter_ulong_to_IEEE754(value)
