@@ -32,7 +32,9 @@ def ensure_instrument_exists(f):
         instrument = args[1]
 
         if instrument not in self._data:
-            logger.error(f"Cannot find instrument '{instrument}' in app")
+            logger.error(
+                f"Cannot find instrument '{instrument}' in {f.__name__} in app"
+            )
             return
 
         return f(*args, **kwargs)
@@ -56,12 +58,14 @@ def ensure_parameter_and_instrument_exists(f):
         parameter = args[2]
 
         if instrument not in self._data:
-            logger.error(f"Cannot find instrument '{instrument}' in app")
+            logger.error(
+                f"Cannot find instrument '{instrument}'  in {f.__name__} in app"
+            )
             return
 
         if parameter not in self._data[instrument]:
             logger.error(
-                f"Cannot find parameter/command '{parameter}' for instrument '{instrument}' in app"
+                f"Cannot find parameter/command '{parameter}' for instrument '{instrument}'  in {f.__name__} in app"
             )
             return
 
@@ -122,7 +126,7 @@ class App(QApplication):
         # default refresh rate used by many GUI elements
         self.globalRefreshRate = 1000
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop all threads and wait until they return"""
 
         # first set the event which will trigger the while loop in the
@@ -132,9 +136,10 @@ class App(QApplication):
         for t in self.threads:
             t.join()
 
+    @ensure_instrument_exists
     def register_parameters_and_commands(
-        self, name, read_parameters, set_parameters, commands
-    ):
+        self, instrument: str, read_parameters, set_parameters, commands
+    ) -> None:
         """Adds the parameter names to the data modell and set defaults values."""
         for r in read_parameters:
             p = {
@@ -144,7 +149,7 @@ class App(QApplication):
                 "pre_set_hooks": [],
                 "widgets": [],
             }
-            self._data[name][r] = p
+            self._data[instrument][r] = p
         for s in set_parameters:
             p = {
                 "read_value": None,
@@ -153,13 +158,13 @@ class App(QApplication):
                 "pre_set_hooks": [],
                 "widgets": [],
             }
-            self._data[name][s] = p
+            self._data[instrument][s] = p
         for c in commands:
             p = {
                 "pre_call_hooks": [],
                 "widgets": [],
             }
-            self._data[name][c] = p
+            self._data[instrument][c] = p
 
     def add_dataset(self, dataset: Dataset) -> None:
         name = dataset.name
@@ -216,7 +221,7 @@ class App(QApplication):
         self.threads.append(zmq_instrument)
         zmq_instrument.start()
 
-    def add_remote_instrument(self, name: str, address: str):
+    def add_remote_instrument(self, name: str, address: str) -> None:
         """Connect to a instrument driver on, for example, a different computer.
 
         This is relative straight forward, since the ZMQ publishers
@@ -264,7 +269,7 @@ class App(QApplication):
         # we add a .join() method to the ZMQ remote instrument
         self.threads.append(zmq_instrument)
 
-    def parse_message_from_instruments(self):
+    def parse_message_from_instruments(self) -> None:
         """Check for message from the instruments.
 
         Call any defined hooks and update any widgets.
@@ -277,7 +282,6 @@ class App(QApplication):
                 continue
             logger.debug(f"App got '{msg}' from '{name}'")
 
-            # would need error checking here
             try:
                 inst_name, parameter, value = msg.split()
             except ValueError:
@@ -297,29 +301,24 @@ class App(QApplication):
             post_read_hooks = self._data[name][parameter]["post_read_hooks"]
             value = call_hooks(post_read_hooks, value)
             if value is not None:
+                # update value
                 self._data[name][parameter]["read_value"] = value
+                # update widgets
                 for w in self._data[name][parameter]["widgets"]:
                     w.hc_update()
 
-    def update_instruments(self):
+    def update_instruments(self) -> None:
         for name, parameter in self.request_updates:
             online = self.get_instrument_parameter(name, "ONLINE")
             if online is None or online == "False":
                 return
             self.update_instrument_parameter(name, parameter)
 
-    def add_auto_update_instrument_parameter(self, name, parameter):
-        if name not in self._data:
-            logger.error(f"Cannot find instrument '{name}' in app")
-            return
-
-        if parameter not in self._data[name]:
-            logger.error(
-                f"Cannot find parameter/command '{parameter}' for instrument '{name}' in app"
-            )
-            return
-
-        self.request_updates.add((name, parameter))
+    @ensure_parameter_and_instrument_exists
+    def add_auto_update_instrument_parameter(
+        self, instrument: str, parameter: str
+    ) -> None:
+        self.request_updates.add((instrument, parameter))
 
     @ensure_parameter_and_instrument_exists
     def set_instrument_parameter(
@@ -390,7 +389,7 @@ class App(QApplication):
     @ensure_parameter_and_instrument_exists
     def get_instrument_parameter(
         self, instrument: str, parameter: str, return_set_value: bool = False
-    ) -> Union[str, None]:
+    ) -> Optional[str]:
         """Return the last read back value.
 
         This function does not communicate with the instrument.
@@ -413,7 +412,7 @@ class App(QApplication):
     @ensure_parameter_and_instrument_exists
     def get_instrument_set_parameter(
         self, instrument: str, parameter: str
-    ) -> Union[str, None]:
+    ) -> Optional[str]:
         """Return the last set value.
 
         This function does not communicate with the instrument.
@@ -428,7 +427,7 @@ class App(QApplication):
         parameter: str,
         when: str,
         function: Callable[[Any], Any],
-    ):
+    ) -> None:
         """Adds a hook to a parameter or command.
 
         Every hook function must take a single parameter: the value of the
@@ -464,7 +463,7 @@ class App(QApplication):
         self._data[instrument][parameter][when].append(function)
 
     @ensure_parameter_and_instrument_exists
-    def add_widget(self, instrument: str, parameter: str, widget):
+    def add_widget(self, instrument: str, parameter: str, widget) -> None:
         """Adds a widget to a parameter.
 
         This enables automatic updating if the value changes
@@ -504,7 +503,8 @@ class App(QApplication):
 
         self.additional_save_formats[format_name] = save_fxn
 
-    def get_instrument_read_values(self, instrument) -> Dict:
+    @ensure_instrument_exists
+    def get_instrument_read_values(self, instrument: str) -> Optional[Dict]:
         """Return a dictionary of an instrument's read_values"""
         instrument_dict_reads = {}
         for parameter in self.list_instrument_parameters(instrument):
@@ -519,7 +519,8 @@ class App(QApplication):
 
         return instrument_dict_reads
 
-    def get_instrument_set_values(self, instrument) -> Dict:
+    @ensure_instrument_exists
+    def get_instrument_set_values(self, instrument: str) -> Optional[Dict]:
         """Return a dictionary of an instrument's set_values"""
         instrument_dict_sets = {}
         for parameter in self.list_instrument_parameters(instrument):
@@ -533,6 +534,7 @@ class App(QApplication):
 
         return instrument_dict_sets
 
+    @ensure_instrument_exists
     def list_instrument_parameters(self, instrument) -> List[str]:
         return [parameter for parameter in self._data[instrument]]
 
@@ -586,6 +588,7 @@ class App(QApplication):
                 f"Failed to write file '{filename}'. State not saved.", exc_info=True
             )
 
+    @ensure_instrument_exists
     def load_settings(self, instrument: str, filename: Union[str, Path]) -> None:
         """Reads a JSON file to overwrite instrument's settings dictionaries.
 
@@ -621,6 +624,7 @@ class App(QApplication):
             value = all_settings[parameter]
             self.set_instrument_parameter(instrument, parameter, value, raw=True)
 
+    @ensure_instrument_exists
     def add_load_settings_hook(
         self, instrument: str, filename: Union[str, Path]
     ) -> None:

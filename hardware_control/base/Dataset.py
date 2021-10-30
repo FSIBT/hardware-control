@@ -176,7 +176,7 @@ class Dataset(QObject):
 
     def start_autosave(
         self, interval: float = 120, format: str = "JSON", filename: str = "autosave"
-    ):
+    ) -> None:
         """Activates the dataset's autosave feature."""
 
         self.autosave = True
@@ -191,7 +191,7 @@ class Dataset(QObject):
             f" Interval: {self.autosave_interval} s"
         )
 
-    def start_updates(self, interval: float = 10):
+    def start_updates(self, interval: float = 10) -> None:
         """Start automaticaly logging data every `interval` seconds."""
 
         self.update_interval = interval
@@ -203,17 +203,17 @@ class Dataset(QObject):
             f" Interval: {self.update_interval} s"
         )
 
-    def set_save_interval(self, interval: float):
+    def set_save_interval(self, interval: float) -> None:
         """Set the autosave interval in seconds."""
         self.autosave_interval = interval
         self.autosave_timer.setInterval(1e3 * self.autosave_interval)
 
-    def set_update_interval(self, interval: float):
+    def set_update_interval(self, interval: float) -> None:
         """Set the update interval (when a new row is added) in seconds."""
         self.update_interval = interval
         self.update_timer.setInterval(1e3 * self.update_interval)
 
-    def timer_autosave(self):
+    def timer_autosave(self) -> None:
         logger.debug(
             f"Dataset {self.name} autosaveing to" f" file {self.autosave_filename}"
         )
@@ -275,25 +275,25 @@ class Dataset(QObject):
                 # Move pointer to next line
                 self.autosave_next_row += 1
 
-    def save_json(self, filename: Path):
+    def save_json(self, filename: Path) -> None:
         if filename.suffix != ".json":
             filename = filename.with_suffix(".json")
 
         with filename.open("w", encoding="utf-8") as outfile:
             json.dump(self.data, outfile, ensure_ascii=False, indent=4)
 
-    def save_pickle(self, filename: Path):
+    def save_pickle(self, filename: Path) -> None:
         if filename.suffix != ".pickle":
             filename = filename.with_suffix(".pickle")
         with filename.open("wb") as outfile:
             pickle.dump(self.data, outfile)
 
-    def save_npy(self, filename: Path):
+    def save_npy(self, filename: Path) -> None:
         if filename.suffix != ".npy":
             filename = filename.with_suffix(".npy")
         np.save(filename, self.data)
 
-    def save(self, filename: Path, format: str):
+    def save(self, filename: Path, format: str) -> None:
         """Saves the dataset to a file. Format specifies the file format.
 
         The file format specifier is not case sensitive.

@@ -21,7 +21,7 @@ import json
 import logging
 import socket
 import time
-from typing import Optional, Any, Callable, List, Union
+from typing import Optional, Any, Callable, List, Dict, Union
 
 import pyvisa
 from pymodbus.client.sync import ModbusTcpClient as ModbusClient
@@ -88,7 +88,7 @@ class Instrument:
 
     def __init__(
         self, instrument_name: str, connection_addr: str, default_port: int = None
-    ):
+    ) -> None:
 
         self.name = instrument_name
         self._online: bool = False
@@ -131,7 +131,7 @@ class Instrument:
 
         self.parse_connection_addr()
 
-    def parse_connection_addr(self):
+    def parse_connection_addr(self) -> None:
         """Figures out if pyvisa or other methods should be used.
 
         Currently pyvisa addresses are automatically recognised,
@@ -162,7 +162,7 @@ class Instrument:
                 self.ip_addr, self.port_no = values
             self.port_no = int(self.port_no)
 
-    def check_connection(self):
+    def check_connection(self) -> None:
         """Test if the instrument is reachable.
 
         The functions checks `self.check_connection_commands` and runs
@@ -275,25 +275,25 @@ class Instrument:
 
             self.dummy_returns[name] = dummy_return
 
-    def add_command(self, name: str, command: Union[str, Callable]):
+    def add_command(self, name: str, command: Union[str, Callable]) -> None:
         if name in self.commands:
             logger.error(f"command {name} already exists in instrument {self.name}")
             return
         self.commands[name] = command
 
-    def add_pre_hook(self, name: str, function: Callable):
+    def add_pre_hook(self, name: str, function: Callable) -> None:
         if name in self.pre_hooks:
             self.pre_hooks[name].append(function)
         else:
             self.pre_hooks[name] = [function]
 
-    def add_post_hook(self, name: str, function: Callable):
+    def add_post_hook(self, name: str, function: Callable) -> None:
         if name in self.post_hooks:
             self.post_hooks[name].append(function)
         else:
             self.post_hooks[name] = [function]
 
-    def add_lookup(self, name, lookuptable):
+    def add_lookup(self, name: str, lookuptable: Dict) -> None:
         """Adds a pre and a post hook to convert values according to the lookuptable.
 
         The lookuptable will be used in the pre-hook and an inverse one will be created for the post-hook.
@@ -669,7 +669,7 @@ class Instrument:
             self._online = False
             return None
 
-    def load_state(self, filename: str):
+    def load_state(self, filename: str) -> None:
         """Reads and sets instrument settings from a json dictionary"""
         try:
             with open(filename) as file:
