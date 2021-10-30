@@ -198,14 +198,12 @@ class HCLineEdit(HCMixin, QLineEdit):
         self.app.set_instrument_parameter(self.instrument, self.parameter, value)
 
     def hc_update(self) -> None:
-        print(f'hc update for {self.name}')
         if self.hasFocus():
             logger.debug(f"'{self.name}' has focus, not updating")
             return
         value = self.app.get_instrument_parameter(
             self.instrument, self.parameter, return_set_value=True
         )
-        print("debug ", value)
         self.setText(value)
 
 
