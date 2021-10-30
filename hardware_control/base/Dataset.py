@@ -199,7 +199,7 @@ class Dataset(QObject):
         self.update_timer.start(1e3 * self.update_interval)
 
         logger.debug(
-            f"Dataset {self.name} activated asynchronous mode."
+            f"Dataset {self.name} started update mode."
             f" Interval: {self.update_interval} s"
         )
 
