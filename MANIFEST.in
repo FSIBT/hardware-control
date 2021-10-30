@@ -1,0 +1,3 @@
+exclude paper.bib
+exclude paper.md
+exclude codemeta.json
