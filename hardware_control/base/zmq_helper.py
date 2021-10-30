@@ -2,6 +2,15 @@
 """
 
 
+def check_adapter_online(adapter) -> None:
+    """Report change in online status to app."""
+    if adapter.instrument._online != adapter.online:
+        adapter.online = adapter.instrument._online
+        adapter.zmq_publisher.send_string(
+            f"{adapter.instrument.name} ONLINE {adapter.online}"
+        )
+
+
 def handle_zmq_message_from_app(adapter, msg: str, logger) -> None:
     """Parses and handles the ZMQ messsage from the main app.
 
@@ -37,13 +46,6 @@ def handle_zmq_message_from_app(adapter, msg: str, logger) -> None:
        the logger to be used for error and debug messages
 
     """
-
-    # check online status
-    if adapter.instrument._online != adapter.online:
-        adapter.online = adapter.instrument._online
-        adapter.zmq_publisher.send_string(
-            f"{adapter.instrument.name} ONLINE {adapter.online}"
-        )
 
     # remove topic
     logger.debug(f"in ZMQ parsing: {msg}")

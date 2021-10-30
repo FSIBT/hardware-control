@@ -121,7 +121,7 @@ class App(QApplication):
         # a timer to requests updates from instruments
         self.update_instrument_timer = QTimer(self)
         self.update_instrument_timer.timeout.connect(self.update_instruments)
-        self.update_instrument_timer.start(5000)
+        self.update_instrument_timer.start(1000)
 
         # default refresh rate used by many GUI elements
         self.globalRefreshRate = 1000

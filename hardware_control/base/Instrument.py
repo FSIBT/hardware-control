@@ -468,8 +468,6 @@ class Instrument:
         not, it tries to re-establish communication."""
 
         if self._dummy:
-            if self._online:
-                return True
             logger.debug(
                 f"{self.name}: creating dummy connection to {self.connection_addr}"
             )

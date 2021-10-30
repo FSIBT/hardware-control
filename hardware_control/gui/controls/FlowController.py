@@ -92,19 +92,12 @@ class FlowController(QGroupBox):
 
         self.setLayout(self.layout)
 
-        # Create timer to query instrument
-        self.readout_timer = QTimer(self)
-        self.readout_timer.timeout.connect(self.update_readout)
-        self.readout_timer.start(self.app.globalRefreshRate)
+        self.config_auto_update()
 
         logger.debug(f"Initalized {self.name}")
 
-    def close(self):
-        self.readout_timer.stop()
-        super().close()
-
-    def update_readout(self):
+    def config_auto_update(self):
         """Queries the instrument for current readout data."""
 
         for parameter in ["RATE", "PRESSURE"]:
-            self.app.update_instrument_parameter(self.instrument, parameter)
+            self.app.add_auto_update_instrument_parameter(self.instrument, parameter)

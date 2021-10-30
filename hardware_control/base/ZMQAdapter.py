@@ -4,7 +4,7 @@ import time
 
 import zmq
 
-from .zmq_helper import handle_zmq_message_from_app
+from .zmq_helper import handle_zmq_message_from_app, check_adapter_online
 
 logger = logging.getLogger(__name__)
 
@@ -73,6 +73,7 @@ class ZMQAdapter(threading.Thread):
                 continue
             if i % 50 == 0:
                 self.instrument.try_connect()
+                check_adapter_online(self)
 
             handle_zmq_message_from_app(self, msg, logger)
             i += 1
