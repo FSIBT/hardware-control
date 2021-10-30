@@ -2,6 +2,7 @@
 __pycache__
 *.pyc
 hardware-control.egg-info/
+hardware_control/_version.py
 build/
 dist/
 python/.eggs/
@@ -15,3 +16,4 @@ python/.eggs/
 *.txt
 .idea/*
 .directory
+.vscode/
