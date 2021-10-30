@@ -13,42 +13,9 @@ from .Dataset import Dataset
 from .Instrument import Instrument
 from .ZMQAdapter import ZMQAdapter
 from .ZMQRemoteAdapter import ZMQRemoteInstrument
+from .hooks import call_hooks
 
 logger = logging.getLogger(__name__)
-
-
-def call_hooks(hooks_list, value):
-    """Call a list of function.
-
-    If any of the functions returns None, the final value will be
-    ignored and no further hooks will be called.
-
-    Every hook function must take a single parameter: the value of the
-    parameter to be set (set to None for commands)
-
-    If a hook needs several parameter, one should pass these in when
-    defining the hook using lambda functions, e.g.:
-
-    app.add_hook(instrument, parameter, 'pre_set_hooks', lambda x: change_ui(app, x, widget)
-
-    where app and widget are defined in the enironment where add_hook
-    is called.
-
-    Parameters
-    ----------
-    hooks_list :
-       A list of functions or callable objects
-    values :
-       The value to be manipulated
-
-
-    """
-    for hook in hooks_list:
-        if callable(hook):
-            value = hook(value)
-            if value is None:
-                return None
-    return str(value)
 
 
 def ensure_instrument_exists(f):

@@ -26,35 +26,9 @@ from typing import Optional, Any, Callable, List, Union
 import pyvisa
 from pymodbus.client.sync import ModbusTcpClient as ModbusClient
 
-from .hooks import create_converter
+from .hooks import create_converter, call_hooks
 
 logger = logging.getLogger(__name__)
-
-
-def call_hooks(hooks_list, value):
-    """Call a list of function.
-
-    If any of the functions returns None, the final value will be
-    ignored and the no further hooks will be called.
-
-    Every hook function must take a single parameter: the value of the
-    parameter to be set (set to None for commands)
-
-    If a hook needs several parameter, one should pass these in when
-    defining the hook using lambda functions, e.g.:
-
-    app.add_hook(instrument, parameter, 'pre_set_hooks', lambda x: change_ui(app, x, widget)
-
-    where app and widget are defined in the enironment where add_hook
-    is called.
-
-    """
-    for hook in hooks_list:
-        if callable(hook):
-            value = hook(value)
-            if value is None:
-                return None
-    return str(value)
 
 
 def ensure_online(f):
@@ -379,7 +353,7 @@ class Instrument:
             if name in self.post_hooks:
                 hooks = self.post_hooks[name]
                 value = call_hooks(hooks, value)
-                
+
         return value
 
     def __getitem__(self, name: str):
@@ -564,7 +538,7 @@ class Instrument:
                 self._online = False
                 logger.debug(f"\t({self.name}) ERROR connecting with modbus.")
                 logger.debug(f"{self.name} is offline")
-        
+
         time.sleep(self.startup_delay)
         # If connection purportedly successful, verify connection
         if self._online:
@@ -660,11 +634,13 @@ class Instrument:
                     inst_delay = 0.0
 
                 if delay is not None:
-                    inst_delay  = delay
-                
+                    inst_delay = delay
+
                 self.device.write(command)
                 time.sleep(inst_delay)
-                reply = self.device.read(termination=(self.read_termination or self._termination))
+                reply = self.device.read(
+                    termination=(self.read_termination or self._termination)
+                )
             elif self.connection_type == Instrument.SOCKET:
                 self.device.sendall(bytes(command + self._termination, self._encoding))
                 reply_bytes = Instrument.recvall(self.device)

@@ -5,6 +5,33 @@ import hardware_control as hc
 
 
 class TestHooks:
+    def test_call_hooks(self):
+        """check that the call_hooks works as expected"""
+
+        # no hook should leave value as is
+        out = hc.hooks.call_hooks([], "test")
+        assert out == "test"
+
+        # hooks should change value
+        def hook1(value):
+            return "test1"
+
+        def hook2(value):
+            return "test2"
+
+        def hook3(value):
+            return "test3"
+
+        out = hc.hooks.call_hooks([hook1, hook2, hook3], "test")
+        assert out == "test3"
+
+        # a None return value should break the chain of functions called
+        def hook_stop(value):
+            return None
+
+        out = hc.hooks.call_hooks([hook1, hook_stop, hook3], "test")
+        assert out is None
+
     def test_add_offset(self):
         func = hc.hooks.add_offset(3)
 

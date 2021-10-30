@@ -6,6 +6,7 @@ import hardware_control as hc
 
 class TestInstrument:
     def test_read_parameters(self):
+        """make sure we can use attributes and [] to access values in an instrument"""
         # setup
         self.instrument = hc.instruments.Alicat_M_Series("alicat", "127.0.0.1:1111")
         self.instrument._dummy = True
