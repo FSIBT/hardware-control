@@ -61,19 +61,18 @@ class ZMQAdapter(threading.Thread):
 
         """
 
-        i = 0
+        i = -1
         while not self.stop.is_set():
 
             # would add test here to call instrument.connect iff offline
-
+            i += 1
+            if i % 50 == 0:
+                self.instrument.try_connect()
+                check_adapter_online(self)
             try:
                 msg = self.zmq_subscriber.recv_string(flags=zmq.NOBLOCK)
             except zmq.ZMQError:
                 time.sleep(0.1)
                 continue
-            if i % 50 == 0:
-                self.instrument.try_connect()
-                check_adapter_online(self)
 
             handle_zmq_message_from_app(self, msg, logger)
-            i += 1
