@@ -20,10 +20,10 @@ logger = logging.getLogger(__name__)
 
 
 def ensure_instrument_exists(f):
-    """Error check to make sure that instrument is in app._data.
+    """Error check to make sure that an instrument is in app._data.
 
-    This decorator assumes that the first argument is the app class
-    and then second argument is the instrument name.
+    This decorator assumes that the first argument of the decorated function
+    is the app class, and the second argument is the instrument name.
 
     """
 
@@ -44,11 +44,11 @@ def ensure_instrument_exists(f):
 
 
 def ensure_parameter_and_instrument_exists(f):
-    """Error check to make sure that parameter/command exists.
+    """Error check to make sure that a parameter/command exists.
 
-    This decorator assumes that the first argument is the app class,
-    the second is the instrument name, and the third is the parameter
-    name.
+    This decorator assumes that the first argument of the decorated function
+    is the app class, the second argument is the instrument name, and the
+    third is the parameter name.
 
     """
 
@@ -168,6 +168,7 @@ class App(QApplication):
             self._data[instrument][c] = p
 
     def add_dataset(self, dataset: Dataset) -> None:
+        """Add a dataset object to the app. See the Dataset base class for more details."""
         name = dataset.name
         if name in self.data_sets:
             logger.error(f"Dataset {name} already exists... not adding dataset to App.")
@@ -178,7 +179,8 @@ class App(QApplication):
         self,
         instrument: Instrument,
         ignore_flag: Optional[bool] = False,
-    ):
+    ) -> None:
+        """Add an instrument object to the app. See the Instrument base class for more details."""
 
         if instrument.name in self._data:
             logger.error(
@@ -228,11 +230,10 @@ class App(QApplication):
     def add_remote_instrument(self, name: str, address: str) -> None:
         """Connect to a instrument driver on, for example, a different computer.
 
-        This is relative straight forward, since the ZMQ publishers
-        that update the data modell do not care on which computer they
-        are running. The main task is to create subscribers to the
-        already existing publishers(from the app and on the remote
-        side). This task is mostly handled by `ZMQRemoteInstrument`.
+        This is relatively straightforward since the ZMQ publishers that update
+        the data model do not care about which computer they are running. The main
+        task is to create subscribers to the already existing publishers (from the
+        app and on the remote side). This task is mostly handled by ZMQRemoteInstrument.
 
         Parameters
         ----------
@@ -381,13 +382,6 @@ class App(QApplication):
         Any pre_set_hooks will be called and the value will only be
         set if none of them returns None.
 
-        Parameters
-        ----------
-        instrument
-           The name of the instrument
-        parameter
-           The name of the parameter
-
         """
         self.zmq_publisher.send_string(f"{instrument} get {parameter}")
 
@@ -395,7 +389,7 @@ class App(QApplication):
     def call_instrument_command(self, instrument: str, command: str) -> None:
         """Sends a command to the instrument via ZMQ.
 
-        Any pre_call_hooks will be called and the command will only
+        Any pre_call_hooks will be called, and the command will only
         execute if none of the hooks returns None.
 
         """
@@ -452,11 +446,10 @@ class App(QApplication):
     ) -> None:
         """Adds a hook to a parameter or command.
 
-        Every hook function must take a single parameter: the value of the
-        parameter to be set (set to None for commands)
-
-        If a hook requires several parameters, one should pass these in
-        when defining the hook using lambda functions, e.g.:
+        Every hook function takes a single parameter: the value of the
+        parameter to be set (set to None for commands). If a hook requires
+        several parameters, one should pass these in when defining the hook
+        using lambda functions, e.g.:
 
         app.add_hook(instrument, parameter, 'pre_set_hooks', lambda x: change_ui(app, x, widget)
 
@@ -488,7 +481,7 @@ class App(QApplication):
     def add_widget(self, instrument: str, parameter: str, widget) -> None:
         """Adds a widget to a parameter.
 
-        This enables automatic updating if the value changes
+        This enables automatic updating if the value changes.
         """
         hc_update = getattr(widget, "hc_update", None)
         if not callable(hc_update):
@@ -506,8 +499,13 @@ class App(QApplication):
         """
         Add a save format for a dataset.
 
-        The second argument – the save function – must accept two arguments:
-        a Dataset object and a filename.
+        Parameters
+        ----------
+        format_name
+            Name of the new save format
+        save_fxn
+            The function used for the new save format. This function must
+            take a Dataset object and a filename as argument.
         """
 
         if format_name in Dataset.built_in_save_formats:
@@ -518,7 +516,7 @@ class App(QApplication):
             return
 
         if not callable(save_fxn):
-            logger.warning(
+            logger.error(
                 f"Cannot add save format '{format_name}' because"
                 f" the callback function argument is not callable."
             )
@@ -534,10 +532,9 @@ class App(QApplication):
             if type(self._data[instrument][parameter]) is dict:
                 # Ignore parameters without read_value functionality
                 if "read_value" in self._data[instrument][parameter].keys():
-                    if "read_value" in self._data[instrument][parameter].keys():
-                        instrument_dict_reads[parameter] = self._data[instrument][
-                            parameter
-                        ]["read_value"]
+                    instrument_dict_reads[parameter] = self._data[instrument][
+                        parameter
+                    ]["read_value"]
 
         return instrument_dict_reads
 
@@ -558,16 +555,17 @@ class App(QApplication):
 
     @ensure_instrument_exists
     def list_instrument_parameters(self, instrument) -> List[str]:
+        """Compile a list of all the parameters for a specified instrument."""
         return [parameter for parameter in self._data[instrument]]
 
     def list_instruments(self) -> List[str]:
-        """Compile a list of all the app's instruments."""
+        """Compile a list of all the instruments in the app."""
         if not self._data:
             return []
         return [instrument for instrument in self._data]
 
     def close(self) -> None:
-        """Closes the application
+        """Closes the application.
 
         Safely closes the application by disconnecting all instruments and saving
         any data specified to save automatically before close.
@@ -583,7 +581,7 @@ class App(QApplication):
     def save_settings(self, filename: Union[str, Path]) -> None:
         """Save all settings as JSON.
 
-        Parses out all `set_value` entries from app._data. The
+        Parses out all set_value entries from app._data. The
         dictionary is then saved to a JSON file.
 
         Parameters
@@ -614,18 +612,16 @@ class App(QApplication):
     def load_settings(self, instrument: str, filename: Union[str, Path]) -> None:
         """Reads a JSON file to overwrite instrument's settings dictionaries.
 
-        Expectss JSON to be a dictionary of dictionaries. The
-        first-level key in the instrument name, the value for that key
-        is the instrument's settings dictionary. If a parameter in the
-        file does not exist in the instrment's settings dictionary it
-        is ignored. If the file does not specify a parameter held by
-        th instrument's settings dictionary then that parameter is
-        unchanged.
+        The JSON file must be a dictionary where the keys are parameter names while
+        the values are the new settings values. Parameters in the dictionary that
+        do not exist in the instrument's settings dictionary are ignored. If the
+        file does not specify a parameter held by the instrument's settings dictionary
+        then that parameter is unchanged.
 
         Parameters
         ----------
         filename
-            Name of JSON file to read settings from
+            Name of JSON file to read settings from.
 
         """
 
@@ -633,7 +629,9 @@ class App(QApplication):
         try:
             with open(filename) as file:
                 all_settings = json.load(file)
-                logger.info(f"settings for all instruments read from file '{filename}'")
+                logger.info(
+                    f"Settings for all instruments read from file '{filename}.'"
+                )
         except:
             logger.error(f"Failed to read file '{filename}'.", exc_info=True)
             return
@@ -650,6 +648,15 @@ class App(QApplication):
     def add_load_settings_hook(
         self, instrument: str, filename: Union[str, Path]
     ) -> None:
+        """Add a hook that loads a file with a dictionary of instrument settings.
+
+        Parameters
+        ----------
+        filename
+            Name of JSON file to read settings from. See load_settings method
+            for details on the formatting of the JSON file.
+
+        """
         self.add_hook(
             instrument,
             "ONLINE",

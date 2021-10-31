@@ -193,8 +193,12 @@ class DelayGenerator(QGroupBox):
                 self.app.add_auto_update_instrument_parameter(
                     self.instrument, ch.time_delay.parameter
                 )
-            self.app.add_auto_update_instrument_parameter(self.instrument, ch.volt.parameter)
-            self.app.add_auto_update_instrument_parameter(self.instrument, ch.level.parameter)
+            self.app.add_auto_update_instrument_parameter(
+                self.instrument, ch.volt.parameter
+            )
+            self.app.add_auto_update_instrument_parameter(
+                self.instrument, ch.level.parameter
+            )
 
 
 class DelayChannelWidget(QWidget):
@@ -217,6 +221,17 @@ class DelayChannelWidget(QWidget):
 
     """
 
+    _CHANNEL_NAMES = {
+        "TRIG": 0,
+        "T0": 1,
+        "A": 2,
+        "B": 3,
+        "AB": 4,
+        "C": 5,
+        "D": 6,
+        "CD": 7,
+    }
+
     def __init__(self, app, instrument_name: str, channel: str):
 
         super().__init__()
@@ -229,32 +244,39 @@ class DelayChannelWidget(QWidget):
         self.channel_label = QLabel(f"Channel {channel}")
         self.channel_label.setFont(QFont("Arial", 20))
 
+        rels = ["TRIG", "T0", "A", "B", "C", "D"]
+
         if channel not in ["AB", "CD"]:
             self.time_delay = HCLineEdit(
                 self.app,
                 self.instrument,
-                f"CH{self.channel}_CHT0_DELAY",
+                f"CH{self.channel}_DELAY",
                 label="t_offset [s]",
+                return_set_value=False,
+            )
+            self.app.add_hook(
+                self.instrument,
+                f"CH{self.channel}_DELAY",
+                when="pre_set_hooks",
+                function=lambda delay: self.update_delay(delay),
             )
 
-        rels = ["Trig0", "T0", "A", "B", "C", "D"]
-        if channel not in ["AB", "CD"]:
             rels.remove(self.channel)
-            self.relative_label = QLabel("Relative to")
-            self.relative = QComboBox()
-            self.relative.addItems(rels)
-            self.relative.currentIndexChanged.connect(
-                lambda: self.update_relative_channel(self.relative)
+            self.relative = HCComboBox(
+                self.app,
+                self.instrument,
+                f"CH{self.channel}_RELATIVE_TO",
+                label="Relative to",
+                items=rels,
             )
-
-        self.volt = HCLineEdit(
-            self.app,
-            self.instrument,
-            f"CH{self.channel}_OUTPUT_AMPLITUDE",
-            label="High Level (V)",
-        )
-        self.volt.setEnabled(False)
-        self.volt.setStyleSheet("background-color: grey")
+            self.app.add_hook(
+                self.instrument,
+                f"CH{self.channel}_RELATIVE_TO",
+                when="pre_set_hooks",
+                function=lambda relative_channel: self.update_relative_channel(
+                    relative_channel
+                ),
+            )
 
         self.level = HCComboBox(
             self.app,
@@ -270,6 +292,15 @@ class DelayChannelWidget(QWidget):
             function=lambda x: self.set_output_level_hook(x),
         )
 
+        self.volt = HCLineEdit(
+            self.app,
+            self.instrument,
+            f"CH{self.channel}_OUTPUT_AMPLITUDE",
+            label="High Level (V)",
+        )
+        self.volt.setEnabled(False)
+        self.volt.setStyleSheet("background-color: grey")
+
         self.channel_layout = QGridLayout()
         self.channel_layout.addWidget(
             self.channel_label, 0, 0, 1, 2, QtCore.Qt.AlignBottom
@@ -277,7 +308,7 @@ class DelayChannelWidget(QWidget):
         if self.channel not in ["AB", "CD"]:
             self.channel_layout.addWidget(self.time_delay.label, 1, 0)
             self.channel_layout.addWidget(self.time_delay, 1, 1)
-            self.channel_layout.addWidget(self.relative_label, 2, 0)
+            self.channel_layout.addWidget(self.relative.label, 2, 0)
             self.channel_layout.addWidget(self.relative, 2, 1)
 
         self.channel_layout.addWidget(self.level.label, 3, 0)
@@ -286,10 +317,27 @@ class DelayChannelWidget(QWidget):
         self.channel_layout.addWidget(self.volt, 4, 1)
         self.setLayout(self.channel_layout)
 
-    def update_relative_channel(self, widget):
-        value = widget.currentText()
-        self.time_delay.parameter = f"CH{self.channel}_CH{value}_DELAY"
-        logger.debug(f"updating delay CH{self.channel}->{value}")
+    def update_relative_channel(self, relative_channel):
+        """Add a hook to self.relative widget.
+
+        When updating the relative channel, send both the new
+        channel which will signify a delay of 0 and the current delay.
+
+        """
+
+        relative_channel = self._CHANNEL_NAMES[relative_channel]
+        return f"{relative_channel},{self.time_delay.text()}"
+
+    def update_delay(self, delay):
+        """Add a hook to self.time_delay widget.
+
+        When updating a channel's time delay, send both the channel
+        which signifies a delay of 0 and the new delay.
+
+        """
+
+        relative_channel = self._CHANNEL_NAMES[self.relative.currentText()]
+        return f"{relative_channel},{delay}"
 
     def set_output_level_hook(self, value):
         if value is None:

@@ -114,17 +114,17 @@ class SRS_DG535(Instrument):
         )
         self.add_lookup("TRIGGER_IMPEDANCE", {"50-OHMS": "0", "HI-Z": "1"})
 
-        for channel, inst_ch_name in SRS_DG535._CHANNEL_NAMES.items():
-            if channel in ["Trig0", "T0"]:
+        for inst_ch_name, channel in SRS_DG535._CHANNEL_NAMES.items():
+            if inst_ch_name in ["Trig0", "T0"]:
                 continue
             self.add_parameter(
-                f"CH{channel}_OUTPUT_MODE",
-                read_command=f"OM {inst_ch_name}",
-                set_command=f"OM {inst_ch_name},{{}}",
+                f"CH{inst_ch_name}_OUTPUT_MODE",
+                read_command=f"OM {channel}",
+                set_command=f"OM {channel},{{}}",
                 dummy_return="TTL",
             )
             self.add_lookup(
-                f"CH{channel}_OUTPUT_MODE",
+                f"CH{inst_ch_name}_OUTPUT_MODE",
                 {
                     "TTL": "0",
                     "NIM": "1",
@@ -132,65 +132,43 @@ class SRS_DG535(Instrument):
                     "VAR": "3",
                 },
             )
-
-        for channel, inst_ch_name in SRS_DG535._CHANNEL_NAMES.items():
-            if channel in ["Trig0", "T0"]:
-                continue
             self.add_parameter(
-                f"CH{channel}_OUTPUT_OFFSET",
-                read_command=f"OO {inst_ch_name}",
-                set_command=f"OO {inst_ch_name},{{}}",
+                f"CH{inst_ch_name}_OUTPUT_OFFSET",
+                read_command=f"OO {channel}",
+                set_command=f"OO {channel},{{}}",
                 dummy_return="0.2",
             )
-        for channel, inst_ch_name in SRS_DG535._CHANNEL_NAMES.items():
-            if channel in ["Trig0", "T0"]:
-                continue
             self.add_parameter(
-                f"CH{channel}_OUTPUT_AMPLITUDE",
-                read_command=f"OA {inst_ch_name}",
-                set_command=f"OA {inst_ch_name},{{}}",
+                f"CH{inst_ch_name}_OUTPUT_AMPLITUDE",
+                read_command=f"OA {channel}",
+                set_command=f"OA {channel},{{}}",
                 pre_hooks=[range_validator(0.1, 4.0)],
                 dummy_return="3.2",
             )
 
-        """
-                for ch in channels:
-                    self.add_parameter(f"CH{ch}_relative_to", read_command="DT {ch}", set_command=lambda x: self.update_relative(ch, x))
-                    self.add_parameter(f"CH{ch}_delay", read_command="DT {ch}",set_command=self.update_delay)
-
-            def update_relative(self, channel, relative):
-                self.rel[channel] = relative
-                self.set_relative_delay()
-            def update_delay
-                self.delay[channel] = delay
-                self.set_relative_delay()
-            def set_relative_delay
-                self.delay
-                self.rel
-                self.write(f"DT  ")
-        """     
-
-
-        for channel1, channel1_int in SRS_DG535._CHANNEL_NAMES.items():
-            if channel1 in ["Trig0", "T0"]:
+            if inst_ch_name in ["AB", "CD"]:
                 continue
-            for channel2, channel2_int in SRS_DG535._CHANNEL_NAMES.items():
-                if channel1 in ["AB", "CD"]:
-                    continue
-                if channel2 in ["AB", "CD"]:
-                    continue
-                self.add_parameter(
-                    f"CH{channel1}_CH{channel2}_DELAY",
-                    read_command=f"DT {channel1_int}",
-                    set_command=f"DT {channel1_int},{channel2_int},{{}}",
-                    dummy_return="0.1",
-                    post_hooks=[substring_hook(2,None)]
-                )
+            self.add_parameter(
+                f"CH{inst_ch_name}_RELATIVE_TO",
+                read_command="DT {channel}",
+                set_command=f"DT {channel},{{}}",
+                post_hooks=[substring_hook(None, 2)],
+                dummy_return="B",
+            )
+
+            self.add_parameter(
+                f"CH{inst_ch_name}_DELAY",
+                read_command="DT {channel}",
+                set_command=f"DT {channel},{{}}",
+                post_hooks=[substring_hook(2, None)],
+                dummy_return="0.5",
+            )
+
         self.add_parameter(
             "PULSES_PER_BURST",
             read_command="BC",
             set_command="BC {}",
-            dummy_return=500,
+            dummy_return="500",
         )
         self.add_parameter(
             "TRIGGER_LEVEL", read_command="TL", set_command="TL{}", dummy_return="1"
@@ -198,7 +176,7 @@ class SRS_DG535(Instrument):
         self.add_parameter(
             "TRIGGER_PERIOD", read_command="BP", set_command="BP {}", dummy_return="1"
         )
-        
+
         def try_connect(self):
             """Need to clear the buffer every time we start the instrument."""
             super().try_connect()

@@ -37,7 +37,9 @@ class Demo(hc.HCMainWindow):
 
         # create a backend and a GUI control for the backend
         self.app.add_instrument(
-            hc.instruments.SRS_DG535(instrument_name="dg5353", connection_addr="GPIB0::15::INSTR")
+            hc.instruments.SRS_DG535(
+                instrument_name="dg5353", connection_addr="GPIB0::15::INSTR"
+            )
         )
 
         self.trigger_ctrl = hc.gui.DelayGenerator(self.app, "dg5353", "Delay Generator")

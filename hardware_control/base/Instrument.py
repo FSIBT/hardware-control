@@ -1,20 +1,19 @@
-"""Base class and helper function for implementing an instrument backend.
+"""Base class and helper functions for implementing an instrument backend.
 
-A backend for an instrument should be kept very basic, so that one can
-use it in a terminal for example. A backend should not have any GUI
-elements and therefore no references to Qt.
+A backend for an instrument should be very basic, so that one can
+use it in a terminal. A backend should not have any GUI elements and
+therefore no references to Qt.
 
 Hardware control will automatically start each backend in its own
-thread, see the ZMQ adapter class.
+thread. See the ZMQ adapter class for more details.
 
-Several default connections modes are supported out of the box:
+Several default connection modes are supported out of the box:
 pyvisa, sockets, and modbus.
 
 For other communications protocols, the user needs to overwrite the
-connect function.
+try_connect function.
 
 """
-
 
 from functools import wraps
 import json
@@ -304,7 +303,7 @@ class Instrument:
         inverse_lookuptable = {b: a for a, b in lookuptable.items()}
         self.add_post_hook(name, create_converter(inverse_lookuptable))
 
-    def list_parameters(self):
+    def list_parameters(self) -> List[str]:
         """Return all names of all commands.
 
         This is mostly used so that the main app can know what commands are available.
@@ -393,6 +392,8 @@ class Instrument:
             if callable(self.set_commands[name]):
                 self.set_commands[name](value)
             else:
+                # print(value, flush=True)
+                # print(self.set_commands[name])
                 self.write(self.set_commands[name].format(value))
             return
         logger.error(

@@ -179,7 +179,8 @@ class HCLineEdit(HCMixin, QLineEdit):
         instrument: str,
         parameter: str,
         label: str,
-        label_align="left",
+        label_align: str = "left",
+        return_set_value: bool = True,
         validator=QDoubleValidator,
     ):
         super().__init__(
@@ -190,6 +191,7 @@ class HCLineEdit(HCMixin, QLineEdit):
             label_align=label_align,
         )
         self.validator = validator
+        self.return_set_value = return_set_value
 
         if self.validator is not None:
             self.setValidator(validator())
@@ -207,7 +209,9 @@ class HCLineEdit(HCMixin, QLineEdit):
             logger.debug(f"'{self.name}' has focus, not updating")
             return
         value = self.app.get_instrument_parameter(
-            self.instrument, self.parameter, return_set_value=True
+            self.instrument,
+            self.parameter,
+            return_set_value=self.return_set_value,
         )
         self.setText(value)
 
