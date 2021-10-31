@@ -63,6 +63,9 @@ class ZMQSingleInstrument:
             f"Setting up ZMQ publisher at {ipaddress}:{self.zmq_publisher_port}"
         )
 
+        # some time for ZMQ to set up publisher
+        time.sleep(1)
+
         self.instrument.try_connect()
 
         while True:
@@ -79,6 +82,9 @@ class ZMQSingleInstrument:
             self.zmq_subscriber.connect(self.app_publisher)
             self.zmq_subscriber.subscribe(self.name)
             self.zmq_topic_length = len(self.name) + 1
+
+            # some time for ZMQ to set up subscriber
+            time.sleep(1)
 
             # let app know where to subscribe to
             self.zmq_new.send_string(

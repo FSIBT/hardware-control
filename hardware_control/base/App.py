@@ -3,6 +3,7 @@ import json
 import logging
 from pathlib import Path
 import threading
+import time
 from typing import Union, Optional, Callable, Any, List, Dict
 
 from PyQt5.QtWidgets import QApplication
@@ -217,6 +218,9 @@ class App(QApplication):
         # register an ignore flag for the instrument
         self._data[zmq_instrument.name]["ignore"] = ignore_flag
 
+        # some time for ZMQ to set things up
+        time.sleep(1)
+
         # start thread
         self.threads.append(zmq_instrument)
         zmq_instrument.start()
@@ -318,6 +322,7 @@ class App(QApplication):
     def add_auto_update_instrument_parameter(
         self, instrument: str, parameter: str
     ) -> None:
+        logger.debug(f"register {instrument}->{parameter} for auto updates")
         self.request_updates.add((instrument, parameter))
 
     @ensure_parameter_and_instrument_exists
