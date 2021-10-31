@@ -10,6 +10,7 @@ from .scan_widget import ScanWidget
 from .qtconsole import Qtconsole
 from .hc_widgets import (
     load_icon,
+    load_pixmap,
     icon_filename,
     HCLineEdit,
     HCComboBox,

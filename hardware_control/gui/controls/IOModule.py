@@ -18,7 +18,7 @@ from PyQt5.QtWidgets import (
     QSizePolicy,
 )
 
-from ..widgets import load_icon, HCLineEdit, HCLabel, HCOnOffButton
+from ..widgets import load_pixmap, HCLineEdit, HCLabel, HCOnOffButton
 
 logger = logging.getLogger(__name__)
 
@@ -313,10 +313,10 @@ class DigitalInputChannel(QGroupBox):
         self.instrument_name = instrument_name
         self.channel = channel
 
-        self.high_indicator = load_icon("high_label.svg")
-        self.low_indicator = load_icon("low_label.svg")
-        self.error_indicator = load_icon("error_label.svg")
-        self.na_indicator = load_icon("na_label.svg")
+        self.high_indicator = load_pixmap("high_label.svg")
+        self.low_indicator = load_pixmap("low_label.svg")
+        self.error_indicator = load_pixmap("error_label.svg")
+        self.na_indicator = load_pixmap("na_label.svg")
 
         label += ":"
         self.param_label = QLabel(label)
@@ -385,6 +385,6 @@ class DigitalOutputChannel(QGroupBox):
 
         self.main_layout = QGridLayout()
         self.main_layout.addWidget(self.togg_but, 0, 0)
-        self.main_layout.addWidget(self.togg_but.indic_label, 0, 1)
+        self.main_layout.addWidget(self.togg_but.label, 0, 1)
 
         self.setLayout(self.main_layout)

@@ -22,7 +22,7 @@ from PyQt5.QtWidgets import (
     QSpinBox,
     QSizePolicy,
 )
-from PyQt5.QtGui import QPixmap, QDoubleValidator, QFont, QFontMetrics
+from PyQt5.QtGui import QPixmap, QIcon, QDoubleValidator, QFont, QFontMetrics
 from PyQt5 import QtCore
 from typing import List
 
@@ -30,9 +30,14 @@ from typing import List
 logger = logging.getLogger(__name__)
 
 
-def load_icon(name: str) -> QPixmap:
+def load_pixmap(name: str) -> QPixmap:
     """Load an icon from the installed package location as a QPixmap"""
     return QPixmap(icon_filename(name))
+
+
+def load_icon(name: str) -> QPixmap:
+    """Load an icon from the installed package location as a QPixmap"""
+    return QIcon(icon_filename(name))
 
 
 def icon_filename(name: str):
@@ -297,6 +302,7 @@ class HCOnOffButton(HCMixin, QPushButton):
         instrument: str,
         parameter: str,
         label: str = "",
+        label_align: str = "left",
         show_icon: bool = False,
         icon_checked: str = "button-power-on.svg",
         icon_unchecked: str = "button-power-off.svg",
@@ -308,7 +314,8 @@ class HCOnOffButton(HCMixin, QPushButton):
             app=app,
             instrument=instrument,
             parameter=parameter,
-            text=label,
+            label=label,
+            label_align=label_align,
         )
 
         self.icon_checked = load_icon(icon_checked)
@@ -587,7 +594,7 @@ class HCHeader(QLabel):
 
     def __init__(self, icon_name):
         super().__init__()
-        self.setPixmap(load_icon(icon_name))
+        self.setPixmap(load_pixmap(icon_name))
         self.setAlignment(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignHCenter)
 
 

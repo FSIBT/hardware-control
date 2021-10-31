@@ -41,7 +41,7 @@ class Demo(hc.HCMainWindow):
 
         # Add an Adam 6024 to the app
         self.app.add_instrument(hc.instruments.Adam_6024("ADAM_6024", "192.168.0.5"))
-        self.adam_ctrl = hc.gui.AdamControl(self.app, "ADAM_6024")
+        self.adam_ctrl = hc.gui.Adam6024Control(self.app, "ADAM_6024")
 
         self.grid = QGridLayout()
         self.grid.addWidget(self.adam_ctrl, 1, 1)
