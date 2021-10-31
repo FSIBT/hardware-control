@@ -38,7 +38,9 @@ class Demo(hc.HCMainWindow):
         self.main_widget = QWidget(self)
 
         # create a backend and a GUI control for the backend
-        self.app.add_instrument(hc_inst.Ni_9000(connection_addr="cDAQ1"))
+        self.app.add_instrument(
+            hc_inst.Ni_9000(instrument_name="NI-9000", connection_addr="cDAQ1")
+        )
         self.iomodule = hc.gui.IOModule(
             self.app, "NI-9000", "IOModule_channel_data.json", num_columns=4
         )

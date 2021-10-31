@@ -312,16 +312,26 @@ class App(QApplication):
                     w.hc_update()
 
     def update_instruments(self) -> None:
-        for name, parameter in self.request_updates:
+        for name, parameter_or_function in self.request_updates:
             online = self.get_instrument_parameter(name, "ONLINE")
             if online is None or online == "False":
                 return
-            self.update_instrument_parameter(name, parameter)
+            if callable(parameter_or_function):
+                parameter_or_function()
+            else:
+                self.update_instrument_parameter(name, parameter_or_function)
 
-    @ensure_parameter_and_instrument_exists
+    @ensure_instrument_exists
     def add_auto_update_instrument_parameter(
         self, instrument: str, parameter: str
     ) -> None:
+        if not callable(parameter):
+            if parameter not in self._data[instrument]:
+                logger.error(
+                    f"Cannot find parameter/command '{parameter}' for instrument '{instrument}'   in app"
+                )
+                return
+
         logger.debug(f"register {instrument}->{parameter} for auto updates")
         self.request_updates.add((instrument, parameter))
 
@@ -347,7 +357,14 @@ class App(QApplication):
            loading settings from a file for example
 
         """
+
+        logger.debug(f"app: updating value '{value}' for '{instrument}-{parameter}'")
         if not skip_hooks:
+            if "pre_set_hooks" not in self._data[instrument][parameter]:
+                logger.error(
+                    f"'{instrument}-{parameter}' seems to be a command instead of a parameter."
+                )
+            return
             pre_set_hooks = self._data[instrument][parameter]["pre_set_hooks"]
             value = call_hooks(pre_set_hooks, value)
         if value is None:

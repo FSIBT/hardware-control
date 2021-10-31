@@ -318,9 +318,14 @@ class HCOnOffButton(HCMixin, QPushButton):
             label_align=label_align,
         )
 
+        self.show_icon = show_icon
         self.icon_checked = load_icon(icon_checked)
         self.icon_unchecked = load_icon(icon_unchecked)
         self.icon_unknown = load_icon("button-power-unknown.svg")
+
+        self.show_text = show_text
+        self.text_checked = text_checked
+        self.text_unchecked = text_unchecked
 
         self.clicked.connect(self.value_change)
         self.setCheckable(True)

@@ -83,8 +83,7 @@ class Keysight_4000X(Instrument):
             default_port=5025,
         )
 
-        # The instrument has channels 1, 2, 3, and 4
-        self.chan_nums = range(1, 5)
+        self.chan_nums = [0, 1, 2, 3]
 
         self.num_vert_divisions = 8
         self.check_connection_commands = "*IDN?"
@@ -208,13 +207,23 @@ class Keysight_4000X(Instrument):
                 dummy_return=lambda: self._read_waveform_dummy(),
             )
 
-            self.add_command(
-                f"CH{channel}_ON-OFF", lambda: self._on_off_command(channel)
+            self.add_parameter(
+                f"CH{channel}_ON-OFF",
+                read_command=f"CHAN{channel}:DISP?",
+                set_command=f"CHAN{channel}:DISP {{}}",
+                dummy_return="True",
             )
-            self.add_command(
-                f"CH{channel}_BW_LIM", lambda: self._BW_lim_command(channel)
+            self.add_parameter(
+                f"CH{channel}_BW_LIM",
+                read_command=f"CHAN{channel}:BWL?",
+                set_command=f"CHAN{channel}:BWL {{}}",
             )
-            self.add_command(f"CH{channel}_INVERT", lambda: self._inv_command(channel))
+
+            self.add_parameter(
+                f"CH{channel}_INVERT",
+                read_command=f"CHAN{channel}:INV?",
+                set_command=f"CHAN{channel}:INV {{}}",
+            )
 
         self.add_command("SINGLE_TRIGGER", ":SING")
         self.add_command("RUN", ":RUN")
@@ -262,7 +271,14 @@ class Keysight_4000X(Instrument):
         except:
             # Digitize
             self.write(":DIG")
-            self._configure_read_waveform()
+
+            # Sets data format to ASCII text
+            self.write(":WAV:FORM ASC")
+            # Set data record to transfer to 'measurement record'
+            self.write(":WAV:POIN:MODE NORM")
+            # Set aquisition mode to normal
+            self.write(":ACQ:TYPE NORM")
+
             # Read waveform data
             raw_data = self.query(":WAV:DATA?")
 
@@ -319,31 +335,3 @@ class Keysight_4000X(Instrument):
 
         dummy_return = str(np.random.uniform(0.0, 10.0, 10).tolist()).replace(" ", "")
         return f"[[1,2,3,4,5,6,7,8,9,10],{dummy_return}]"
-
-    def _configure_read_waveform(self):
-        """Sets the data transfer mode of the oscilloscope."""
-
-        # Sets data format to ASCII text
-        self.write(":WAV:FORM ASC")
-        # Set data record to transfer to 'measurement record'
-        self.write(":WAV:POIN:MODE NORM")
-        # Set aquisition mode to normal
-        self.write(":ACQ:TYPE NORM")
-
-    def _on_off_command(self, channel):
-        """Turns the oscilloscope on and off."""
-
-        value = not self.query(f"CHAN{channel}:DISP?")
-        self.write(f"CHAN{channel}:DISP {value}")
-
-    def _BW_lim_command(self, channel):
-        """Enables or disables the BW limit."""
-
-        value = not self.query(f"CHAN{channel}:BWL?")
-        self.write(f"CHAN{channel}:BWL {value}")
-
-    def _inv_command(self, channel):
-        """Enables or disables inversion of the waveform."""
-
-        value = not self.query(f"CHAN{channel}:INV?")
-        self.write(f"CHAN{channel}:INV {value}")

@@ -73,6 +73,14 @@ class Oscilloscope(QGroupBox):
         self.master_layout.addWidget(self.channel_box, 10, 0, 1, 4)
         self.setLayout(self.master_layout)
 
+        self.default_update_readout()
+
+    def query_if_enabled(self, parameter):
+        """Only query waveforms if channel is enabled"""
+        for channel in self.display_channels:
+            if self.app.get_instrument_parameter(self.instrument, parameter) == "True":
+                self.app.update_instrument_parameter(self.instrument, parameter)
+
     def default_update_readout(self) -> None:
         """Register certain parameterts to be automatically udpated every second."""
 
@@ -88,12 +96,13 @@ class Oscilloscope(QGroupBox):
         ]
 
         for ch in self.channel_widgets:
-            update.append(f"CH{ch.channel}_VOLTS_DIV")
-            update.append(f"CH{ch.channel}_OFFSET")
-            update.append(f"CH{ch.channel}_LABEL")
-            update.append(f"CH{ch.channel}_COUPLING")
-            update.append(f"CH{ch.channel}_IMPEDANCE")
-            update.append(f"CH{ch.channel}_PROBE_ATTEN")
+            update.append(lambda: self.query_if_enabled(f"CH{ch.channel}_VOLTS_DIV"))
+            update.append(lambda: self.query_if_enabled(f"CH{ch.channel}_OFFSET"))
+            update.append(lambda: self.query_if_enabled(f"CH{ch.channel}_LABEL"))
+            update.append(lambda: self.query_if_enabled(f"CH{ch.channel}_COUPLING"))
+            update.append(lambda: self.query_if_enabled(f"CH{ch.channel}_IMPEDANCE"))
+            update.append(lambda: self.query_if_enabled(f"CH{ch.channel}_PROBE_ATTEN"))
+            update.append(lambda: self.query_if_enabled(f"CH{ch.channel}_WAVEFORM"))
 
         for parameter in update:
             self.app.add_auto_update_instrument_parameter(self.instrument, parameter)
@@ -145,20 +154,31 @@ class OscilloscopeChannelWidget(QWidget):
         )
 
         self.on_off_but = HCOnOffButton(
-            self.app, self.instrument, f"CH{self.channel}_ON-OFF"
+            self.app,
+            self.instrument,
+            f"CH{self.channel}_ON-OFF",
+            label="On/Off",
+            text_checked=" On",
+            text_unchecked="Off",
         )
 
-        self.BW_but = HCPushButton(
-            self.app, self.instrument, f"CH{self.channel}_BW_LIM", label="BW Limit"
+        self.BW_but = HCOnOffButton(
+            self.app,
+            self.instrument,
+            f"CH{self.channel}_BW_LIM",
+            label="BW Limit",
+            text_checked="BW_limit  on",
+            text_unchecked="BW_limit off",
         )
-        self.BW_but.setIcon(QIcon(load_icon("BWlim.png")))
-        self.BW_but.setCheckable(True)
 
-        self.Inv_but = HCPushButton(
-            self.app, self.instrument, f"CH{self.channel}_INVERT", label="Invert"
+        self.Inv_but = HCOnOffButton(
+            self.app,
+            self.instrument,
+            f"CH{self.channel}_INVERT",
+            label="Invert",
+            text_checked="  Inverted  ",
+            text_unchecked="Not Inverted",
         )
-        self.Inv_but.setIcon(QIcon(load_icon("invert.png")))
-        self.Inv_but.setCheckable(True)
 
         self.coupling = HCComboBox(
             self.app,
@@ -259,8 +279,6 @@ class OscilloscopeTriggerWidget(QGroupBox):
         self.trig_single = HCPushButton(
             self.app, self.instrument, "SINGLE_TRIGGER", label="Trigger"
         )
-        if self.display_widget != None:
-            self.trig_single.clicked.connect(self.display_widget.query_waveforms)
         self.trig_run = HCPushButton(self.app, self.instrument, "RUN", label="Run")
         self.trig_stop = HCPushButton(self.app, self.instrument, "STOP", label="Stop")
 
@@ -440,73 +458,29 @@ class OscilloscopeDisplayWidget(QGroupBox):
         self.CH2_data = ([], [])
         self.CH3_data = ([], [])
 
-        # Method of updating display plot data
-        self.update_timer = QtCore.QTimer(self)
-        self.update_timer.timeout.connect(self.query_waveforms)
-        # Default refresh period is set to 5 seconds
-        self.update_timer.start(1000 * 5)
-
-        self.refresh_mode_label = QLabel("Refresh Mode: ")
-        self.refresh_mode_drop = QComboBox()
-        self.refresh_mode_drop.addItems(["Timer", "Single Trig"])
-        self.refresh_mode_drop.currentIndexChanged.connect(
-            lambda: self.set_refresh_mode(self.refresh_mode_drop.currentText())
-        )
-        self.refresh_mode_drop.setCurrentText("Single Trig")
-
-        self.refresh_rate_label = QLabel("Refresh Period (s): ")
-        self.refresh_rate_edit = QLineEdit()
-        self.refresh_rate_edit.setValidator(QDoubleValidator())
-        self.refresh_rate_edit.editingFinished.connect(
-            lambda: self.refresh_period(float(self.refresh_rate_edit.text()))
-        )
-        # Default refresh period is set to 5 seconds
-        self.refresh_rate_edit.setText(str(5))
-
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.display, 0, 0, 1, 20)
-        self.master_layout.addWidget(self.refresh_mode_label, 1, 0)
-        self.master_layout.addWidget(self.refresh_mode_drop, 1, 1)
-        self.master_layout.addWidget(self.refresh_rate_label, 1, 2)
-        self.master_layout.addWidget(self.refresh_rate_edit, 1, 3, 1, 1)
         self.setLayout(self.master_layout)
 
     def updateViews(self):
         self.p2.setGeometry(self.p1.vb.sceneBoundingRect())
         self.p2.linkedViewChanged(self.p1.vb, self.p2.XAxis)
 
-    # Set refresh rate (in ms)
-    def refresh_period(self, period: float):
-        self.update_timer.setInterval(period * 1e3)
+    def update_waveform(self):
+        trace_string = self.app.get_instrument_parameter(
+            self.instrument, f"CH{channel}_WAVEFORM"
+        )
+        t, wave = json.loads(trace_string)
 
-    def set_refresh_mode(self, mode: str):
-        if mode == "Timer":
-            if not self.update_timer.isActive():
-                self.update_timer.start()
-        elif mode == "Single Trig":
-            if self.update_timer.isActive():
-                self.update_timer.stop()
-
-    def query_waveforms(self):
-        for channel in self.display_channels:
-            if self.app.call_instrument_command(self.instrument, f"CH{channel}_ON-OFF"):
-                self.app.update_instrument_parameter(
-                    self.instrument, f"CH{channel}_WAVEFORM"
-                )
-                trace_string = self.app.get_instrument_parameter(
-                    self.instrument, f"CH{channel}_WAVEFORM"
-                )
-                t, wave = json.loads(trace_string)
-
-                if channel == 0:
-                    self.CH0.setData(t, wave)
-                    self.CH0_data = (t, wave)
-                elif channel == 1:
-                    self.CH1.setData(t, wave)
-                    self.CH1_data = (t, wave)
-                elif channel == 2:
-                    self.CH2.setData(t, wave)
-                    self.CH2_data = (t, wave)
-                elif channel == 3:
-                    self.CH3.setData(t, wave)
-                    self.CH3_data = (t, wave)
+        if channel == 0:
+            self.CH0.setData(t, wave)
+            self.CH0_data = (t, wave)
+        elif channel == 1:
+            self.CH1.setData(t, wave)
+            self.CH1_data = (t, wave)
+        elif channel == 2:
+            self.CH2.setData(t, wave)
+            self.CH2_data = (t, wave)
+        elif channel == 3:
+            self.CH3.setData(t, wave)
+            self.CH3_data = (t, wave)
