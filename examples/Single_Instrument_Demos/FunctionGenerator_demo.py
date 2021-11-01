@@ -39,15 +39,22 @@ class Demo(hc.HCMainWindow):
     def __init__(self, dummy):
         super().__init__(dummy=dummy)
 
-        self.setWindowTitle("Wave Gen Demo")
+        self.setWindowTitle("Keysight 33500B Wave Generator Demo")
 
+        # This is the main widget, actual device widgets are added to it
         self.main_widget = QWidget(self)
 
+        # Create an Keysight_33500B instrument backend and add it to the app
+        # One must specify the number of channels for this instrument
         self.app.add_instrument(
             hc.instruments.Keysight_33500B("keysight", address, number_of_channels=2)
         )
+
+        # Create a FunctionGenerator GUI control that connects to the instrument backend
+        # One must specify the number of channels for this control
         self.awg_ctrl = hc.gui.FunctionGenerator(self.app, "keysight", num_channels=2)
 
+        # Add the control to the main widget
         self.grid = QGridLayout()
         self.grid.addWidget(self.awg_ctrl, 1, 1)
         self.main_widget.setLayout(self.grid)

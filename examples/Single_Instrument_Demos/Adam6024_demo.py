@@ -37,12 +37,16 @@ class Demo(hc.HCMainWindow):
 
         self.setWindowTitle("Adam 6024 Demo")
 
+        # This is the main widget, actual device widgets are added to it
         self.main_widget = QWidget(self)
 
-        # Add an Adam 6024 to the app
+        # Create an Adam_6024 instrument backend and add it to the app
         self.app.add_instrument(hc.instruments.Adam_6024("ADAM_6024", "192.168.0.5"))
+
+        # Create a Adam6024Control GUI control that connects to the instrument backend
         self.adam_ctrl = hc.gui.Adam6024Control(self.app, "ADAM_6024")
 
+        # Add the control to the main widget
         self.grid = QGridLayout()
         self.grid.addWidget(self.adam_ctrl, 1, 1)
         self.main_widget.setLayout(self.grid)

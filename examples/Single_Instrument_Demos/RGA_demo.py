@@ -34,11 +34,13 @@ class RGA_CIS(hc.HCMainWindow):
         # set title of window
         self.setWindowTitle("Residual Gas Analyzer")
 
-        # this is the main widget, actual device widgets are added to it
+        # This is the main widget, actual device widgets are added to it
         self.main_widget = QWidget(self)
 
-        # create a backend and a GUI control for the backend
+        # Create an SRS_CIS200 instrument backend and add it to the app
         self.app.add_instrument(hc.instruments.SRS_CIS200("CIS200", ""))
+
+        # Create an RGA GUI control that connects to the instrument backend
         self.rga_wdgt = hc.gui.RGA(self.app, instrument="CIS200")
 
         # # Create data_sets

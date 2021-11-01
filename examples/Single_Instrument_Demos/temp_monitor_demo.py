@@ -44,6 +44,8 @@ class TemperatureMonitor(hc.HCMainWindow):
                 "lakeshore", "TCPIP::192.168.0.12::7777::SOCKET"
             )
         )
+
+        # Create a TempMonitor GUI control that connects to the instrument backend
         self.temp_wdgt = hc.gui.TempMonitor(
             self.app, instrument="lakeshore", channel_list=["A", "B", "C1", "D1"]
         )

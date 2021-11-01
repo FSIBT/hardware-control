@@ -16,6 +16,7 @@ import sys
 
 from PyQt5.QtWidgets import QWidget, QGridLayout
 from docopt import docopt
+from os import getcwd
 
 import hardware_control.instruments as hc_inst
 import hardware_control as hc
@@ -34,18 +35,32 @@ class Demo(hc.HCMainWindow):
 
         self.setWindowTitle("Demo")
 
-        # this is the main widget, actual device widgets are added to it
+        # This is the main widget, actual device widgets are added to it
         self.main_widget = QWidget(self)
 
-        # create a backend and a GUI control for the backend
+        # Create an Ni_9000 instrument backend and add it to the app
         self.app.add_instrument(
-            hc_inst.Ni_9000(instrument_name="NI-9000", connection_addr="cDAQ1")
-        )
-        self.iomodule = hc.gui.IOModule(
-            self.app, "NI-9000", "IOModule_channel_data.json", num_columns=4
+            hc_inst.Ni_9000(
+                instrument_name="NI-9000",
+                connection_addr="cDAQ1",
+                modules=[1, 2],
+                analog_channels={1: [0, 1], 2: [0, 3]},
+                digital_channels={1: [0, 1], 2: [0, 3]},
+            )
         )
 
-        # Add control to the main Widget
+        # Create a IOModule GUI control that connects to the instrument backend.
+        # The control must be given a json file with information about each module
+        # channel. See IOModule.py for more details.
+        cwd = getcwd()
+        self.iomodule = hc.gui.IOModule(
+            self.app,
+            "NI-9000",
+            cwd + "/settings_files/IOModule_channel_data.json",
+            num_columns=4,
+        )
+
+        # Add control to the main widget
         self.grid = QGridLayout()
         self.grid.addWidget(self.iomodule, 0, 0)
         self.main_widget.setLayout(self.grid)

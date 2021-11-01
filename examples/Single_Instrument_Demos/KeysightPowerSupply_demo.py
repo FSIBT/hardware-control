@@ -37,20 +37,22 @@ class Demo(hc.HCMainWindow):
 
         self.setWindowTitle("KeysightPowerSupply Demo")
 
+        # This is the main widget, actual device widgets are added to it
         self.main_widget = QWidget(self)
 
-        # Add a keysight power supply to the app
+        # Create an Keysight_36300 instrument backend and add it to the app
         self.app.add_instrument(
             hc.instruments.Keysight_36300(
                 "Keysight_36300", "192.168.0.3:5025", keysight_settings
             )
         )
+
         # Load a settings file with preset values for the instrument parameters
         cwd = getcwd()
         keysight_settings = cwd + "/settings_files/keysight_powersupply_init.json"
         self.app.add_load_settings_hook("Keysight_36300", keysight_settings)
 
-        # Create a keysight powersupply control with channels 1,2, and 3
+        # Create a keysight powersupply control with channels 1, 2, and 3
         # with color gold, green, and blue, and the option to set voltage
         # and current for each channel
         self.keysight_ctrl = hc.gui.KeysightPowerSupply(
@@ -66,6 +68,7 @@ class Demo(hc.HCMainWindow):
             QDoubleValidator(0, 10.0, 3)
         )
 
+        # Add the control to the main widget
         self.grid = QGridLayout()
         self.grid.addWidget(self.keysight_ctrl, 1, 1)
         self.main_widget.setLayout(self.grid)
