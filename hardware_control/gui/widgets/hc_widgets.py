@@ -90,6 +90,11 @@ class HCMixin:
         else:
             self.add_label = False
 
+        if "colon" in kwargs:
+            self.colon = kwargs.pop("colon")
+        else:
+            self.colon = True
+
         for arg in [app, instrument, parameter]:
             if arg is None:
                 logger.error(
@@ -105,7 +110,10 @@ class HCMixin:
         # create an optional label
         if self.add_label:
             self.name = label
-            self.label = QLabel(f"{label}: ")
+            if self.colon:
+                self.label = QLabel(f"{label}: ")
+            else:
+                self.label = QLabel(f"{label}")
             if label_align == "right":
                 self.label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
             elif label_align == "left":
@@ -320,6 +328,7 @@ class HCOnOffButton(HCMixin, QPushButton):
             parameter=parameter,
             label=label,
             label_align=label_align,
+            colon=False,
         )
 
         self.show_icon = show_icon
