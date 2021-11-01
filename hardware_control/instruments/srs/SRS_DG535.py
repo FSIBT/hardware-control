@@ -41,8 +41,10 @@ class SRS_DG535(Instrument):
             * Voltage output offset of channel 'X'. Only available in variable output mode.
         * CH<X>_OUTPUT_AMPLITUDE (*float*)
             * Voltage output amplitude of channel 'X'. Only available in variable output mode.
-        * CH<X>_CH<Y>_DELAY
-            * Delay time (in seconds) of channel 'X' relative to channel 'Y'.
+        * CH<X>_DELAY
+            * Delay time (in seconds) of channel 'X' with respect to another channel (see 'CH<X>_RELATIVE_TO').
+        * CH<X>_RELATIVE_TO
+            * Channel with respect to which the delay on channel 'X' is applied (see 'CH<X>_DELAY').
 
     COMMANDS
         * SINGLE_TRIGGER
@@ -114,6 +116,21 @@ class SRS_DG535(Instrument):
         )
         self.add_lookup("TRIGGER_IMPEDANCE", {"50-OHMS": "0", "HI-Z": "1"})
 
+        self.add_parameter(
+            "TRIGGER_LEVEL", read_command="TL", set_command="TL{}", dummy_return="1"
+        )
+
+        self.add_parameter(
+            "TRIGGER_PERIOD", read_command="BP", set_command="BP {}", dummy_return="1"
+        )
+
+        self.add_parameter(
+            "PULSES_PER_BURST",
+            read_command="BC",
+            set_command="BC {}",
+            dummy_return="500",
+        )
+
         for inst_ch_name, channel in SRS_DG535._CHANNEL_NAMES.items():
             if inst_ch_name in ["Trig0", "T0"]:
                 continue
@@ -148,14 +165,10 @@ class SRS_DG535(Instrument):
 
             if inst_ch_name in ["AB", "CD"]:
                 continue
-            self.add_parameter(
-                f"CH{inst_ch_name}_RELATIVE_TO",
-                read_command="DT {channel}",
-                set_command=f"DT {channel},{{}}",
-                post_hooks=[substring_hook(None, 2)],
-                dummy_return="B",
-            )
-
+            # DELAY and RELATIVE_TO parameters both return values of the format
+            # {'relative channel'},{'delay time'}. A post-hook is added to both
+            # parameters in order to only read out the delay time for the DELAY
+            # parameter and the relative channel for the RELATIVE_TO parameter
             self.add_parameter(
                 f"CH{inst_ch_name}_DELAY",
                 read_command="DT {channel}",
@@ -164,18 +177,13 @@ class SRS_DG535(Instrument):
                 dummy_return="0.5",
             )
 
-        self.add_parameter(
-            "PULSES_PER_BURST",
-            read_command="BC",
-            set_command="BC {}",
-            dummy_return="500",
-        )
-        self.add_parameter(
-            "TRIGGER_LEVEL", read_command="TL", set_command="TL{}", dummy_return="1"
-        )
-        self.add_parameter(
-            "TRIGGER_PERIOD", read_command="BP", set_command="BP {}", dummy_return="1"
-        )
+            self.add_parameter(
+                f"CH{inst_ch_name}_RELATIVE_TO",
+                read_command="DT {channel}",
+                set_command=f"DT {channel},{{}}",
+                post_hooks=[substring_hook(None, 2)],
+                dummy_return="B",
+            )
 
         def try_connect(self):
             """Need to clear the buffer every time we start the instrument."""
