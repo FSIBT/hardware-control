@@ -369,7 +369,7 @@ class App(QApplication):
                 logger.error(
                     f"'{instrument}-{parameter}' seems to be a command instead of a parameter."
                 )
-            return
+                return
             pre_set_hooks = self._data[instrument][parameter]["pre_set_hooks"]
             value = call_hooks(pre_set_hooks, value)
         if value is None:
