@@ -17,17 +17,16 @@ logger = logging.getLogger(__name__)
 
 
 class HCMainWindow(QMainWindow):
-    """Create a QMainWindow with some additional menus.
+    """Create a QMainWindow with some additional menus unique to hardware control (HC).
 
-    If no app is given an instance will be created.
+    Typically, a new program will inherit from this class.
 
     Parameters
     ----------
     app :
-       The main app that will store all instrument data, etc.
+       The main app that will store all instruments, parameters, commands, etc. This parameter is optional.
     dummy :
-       Should the app run in dummy mode. Only used here, if app is
-       None and a new app needs to be created.
+       If True, then the app runs in dummy mode. Only used if app is None.
 
     """
 
@@ -39,7 +38,8 @@ class HCMainWindow(QMainWindow):
 
         super().__init__()
 
-        # we might want to access the main window through the app objet in some cases
+        # Make the main window object into an app class variable
+        # This allows access to the main window through the app object
         self.app.main_window = self
 
         self.add_menu()
@@ -47,17 +47,19 @@ class HCMainWindow(QMainWindow):
         self.app.aboutToQuit.connect(self.close)
 
     def close(self):
-        """Also closes the App."""
+        """Close the app."""
+
         self.app.close()
 
     def add_menu(self):
-        """Add a File menu with an option to exit and to save all datasets."""
+        """Add a File menu with an option to exit and save all datasets."""
+
         # self.menuBar() is a function in QMainWindow
         self.bar = self.menuBar()
 
         # File menu
         self.file_menu = self.bar.addMenu("File")
-        self.file_menu.triggered[QAction].connect(self.process_file_menu)
+        self.file_menu.triggered[QAction].connect(self._process_file_menu)
 
         self.save_state_act = QAction("Save Instrument States", self)
         self.save_state_act.setShortcut("Ctrl+Shift+S")
@@ -77,7 +79,7 @@ class HCMainWindow(QMainWindow):
             self.close_act.setShortcut("Ctrl+Q")
         self.file_menu.addAction(self.close_act)
 
-    def process_file_menu(self, q):
+    def _process_file_menu(self, q):
 
         if q.text() == "Save Instrument States":
 

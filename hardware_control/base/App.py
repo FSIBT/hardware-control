@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 def ensure_instrument_exists(f):
-    """Error check to make sure that an instrument is in app._data.
+    """Error check to make sure that an instrument is in exists in the app.
 
     This decorator assumes that the first argument of the decorated function
     is the app class, and the second argument is the instrument name.
@@ -44,7 +44,7 @@ def ensure_instrument_exists(f):
 
 
 def ensure_parameter_and_instrument_exists(f):
-    """Error check to make sure that a parameter/command exists.
+    """Error check to make sure that a parameter/command exists in the app.
 
     This decorator assumes that the first argument of the decorated function
     is the app class, the second argument is the instrument name, and the
@@ -141,7 +141,8 @@ class App(QApplication):
     def register_parameters_and_commands(
         self, instrument: str, read_parameters, set_parameters, commands
     ) -> None:
-        """Adds the parameter names to the data modell and set defaults values."""
+        """Adds all parameter names to a data dictionary and set defaults values."""
+
         for r in read_parameters:
             p = {
                 "read_value": None,
@@ -169,6 +170,7 @@ class App(QApplication):
 
     def add_dataset(self, dataset: Dataset) -> None:
         """Add a dataset object to the app. See the Dataset base class for more details."""
+
         name = dataset.name
         if name in self.data_sets:
             logger.error(f"Dataset {name} already exists... not adding dataset to App.")
@@ -305,6 +307,8 @@ class App(QApplication):
 
             post_read_hooks = self._data[name][parameter]["post_read_hooks"]
             value = call_hooks(post_read_hooks, value)
+            if parameter == "CHMod1/a-0_ANALOG":
+                print(value, flush=True)
             if value is not None:
                 # update value
                 self._data[name][parameter]["read_value"] = value
