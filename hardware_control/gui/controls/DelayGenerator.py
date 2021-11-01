@@ -244,7 +244,7 @@ class DelayChannelWidget(QWidget):
         self.channel_label = QLabel(f"Channel {channel}")
         self.channel_label.setFont(QFont("Arial", 20))
 
-        rels = ["TRIG", "T0", "A", "B", "C", "D"]
+        rels = ["T0", "A", "B", "C", "D"]
 
         if channel not in ["AB", "CD"]:
             self.time_delay = HCLineEdit(

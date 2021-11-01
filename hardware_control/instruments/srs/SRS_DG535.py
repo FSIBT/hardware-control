@@ -171,7 +171,7 @@ class SRS_DG535(Instrument):
             # parameter and the relative channel for the RELATIVE_TO parameter
             self.add_parameter(
                 f"CH{inst_ch_name}_DELAY",
-                read_command="DT {channel}",
+                read_command=f"DT {channel}",
                 set_command=f"DT {channel},{{}}",
                 post_hooks=[substring_hook(2, None)],
                 dummy_return="0.5",
@@ -179,7 +179,7 @@ class SRS_DG535(Instrument):
 
             self.add_parameter(
                 f"CH{inst_ch_name}_RELATIVE_TO",
-                read_command="DT {channel}",
+                read_command=f"DT {channel}",
                 set_command=f"DT {channel},{{}}",
                 post_hooks=[substring_hook(None, 2)],
                 dummy_return="B",
