@@ -27,12 +27,14 @@ class SRS_DG535(Instrument):
             * Trigger mode.
         * TRIGGER_EDGE (*POS*, *NEG*)
             * Trigger edge – either falling (POS) or rising (NEG).
-        * TRIGGER_IMPEDANCE (*50-OHMS*, *HI-Z*)
-            * Trigger input impedance.
         * TRIGGER_LEVEL (*float*)
             * External trigger voltage.
         * TRIGGER_PERIOD (*int*)
             * Period (in milliseconds) of one trigger in a burst (between 2 and 37266).
+        * INTERNAL_TRIGGER_RATE (*int*)
+            * Trigger frequency (in Hz) while in internal trigger mode. Only available in Internal mode.
+        * BURST_TRIGGER_RATE (*int*)
+            * Trigger frequency (in Hz) while in burst trigger mode. Only available in Burst mode.
         * PULSES_PER_BURST (*int*)
             * Number of pulses in a burst (between 2 and 32766).
         * CH<X>_OUTPUT_MODE (*TTL*, *NIM*, *ECL*, *VAR*)
@@ -45,6 +47,8 @@ class SRS_DG535(Instrument):
             * Delay time (in seconds) of channel 'X' with respect to another channel (see 'CH<X>_RELATIVE_TO').
         * CH<X>_RELATIVE_TO
             * Channel with respect to which the delay on channel 'X' is applied (see 'CH<X>_DELAY').
+        * CH<X>_TRIGGER_IMPEDANCE (*50-OHMS*, *HI-Z*)
+            * Trigger input impedance of channel 'X'.
 
     COMMANDS
         * SINGLE_TRIGGER
@@ -88,7 +92,7 @@ class SRS_DG535(Instrument):
             "TRIGGER_MODE",
             read_command="TM",
             set_command="TM {}",
-            dummy_return="SINGLE",
+            dummy_return="BURST",
         )
         self.add_lookup(
             "TRIGGER_MODE",
@@ -109,26 +113,32 @@ class SRS_DG535(Instrument):
         self.add_lookup("TRIGGER_EDGE", {"POS": "1", "NEG": "0"})
 
         self.add_parameter(
-            "TRIGGER_IMPEDANCE",
-            read_command=f"TZ 0",
-            set_command="TZ 0,{}",
-            dummy_return="50-OHMS",
-        )
-        self.add_lookup("TRIGGER_IMPEDANCE", {"50-OHMS": "0", "HI-Z": "1"})
-
-        self.add_parameter(
-            "TRIGGER_LEVEL", read_command="TL", set_command="TL{}", dummy_return="1"
+            "TRIGGER_LEVEL", read_command="TL", set_command="TL {}", dummy_return="1.0"
         )
 
         self.add_parameter(
-            "TRIGGER_PERIOD", read_command="BP", set_command="BP {}", dummy_return="1"
+            "TRIGGER_PERIOD", read_command="BP", set_command="BP {}", dummy_return="2.0"
+        )
+
+        self.add_parameter(
+            "INTERNAL_TRIGGER_RATE",
+            read_command="TR 0",
+            set_command="TR 0,{}",
+            dummy_return="3.0",
+        )
+
+        self.add_parameter(
+            "BURST_TRIGGER_RATE",
+            read_command="TR 1",
+            set_command="TR 1,{}",
+            dummy_return="4.0",
         )
 
         self.add_parameter(
             "PULSES_PER_BURST",
             read_command="BC",
             set_command="BC {}",
-            dummy_return="500",
+            dummy_return="500.0",
         )
 
         for inst_ch_name, channel in SRS_DG535._CHANNEL_NAMES.items():
@@ -138,7 +148,7 @@ class SRS_DG535(Instrument):
                 f"CH{inst_ch_name}_OUTPUT_MODE",
                 read_command=f"OM {channel}",
                 set_command=f"OM {channel},{{}}",
-                dummy_return="TTL",
+                dummy_return="VAR",
             )
             self.add_lookup(
                 f"CH{inst_ch_name}_OUTPUT_MODE",
@@ -162,6 +172,13 @@ class SRS_DG535(Instrument):
                 pre_hooks=[range_validator(0.1, 4.0)],
                 dummy_return="3.2",
             )
+            self.add_parameter(
+                f"CH{inst_ch_name}_TRIGGER_IMPEDANCE",
+                read_command=f"TZ {channel}",
+                set_command=f"TZ {channel},{{}}",
+                dummy_return="50-OHMS",
+            )
+            self.add_lookup("TRIGGER_IMPEDANCE", {"50-OHMS": "0", "HI-Z": "1"})
 
             if inst_ch_name in ["AB", "CD"]:
                 continue
@@ -182,7 +199,7 @@ class SRS_DG535(Instrument):
                 read_command=f"DT {channel}",
                 set_command=f"DT {channel},{{}}",
                 post_hooks=[substring_hook(None, 2)],
-                dummy_return="B",
+                dummy_return="T0",
             )
 
         def try_connect(self):

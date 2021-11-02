@@ -54,6 +54,12 @@ class DelayGenerator(QGroupBox):
             label_align="right",
             items=["Internal", "External", "Single", "Burst"],
         )
+        self.app.add_hook(
+            self.instrument,
+            "TRIGGER_MODE",
+            "post_read_hooks",
+            lambda x: self.enable_disable_hook(x),
+        )
 
         self.trig_edge = HCComboBox(
             self.app,
@@ -62,15 +68,6 @@ class DelayGenerator(QGroupBox):
             label="Trigger Edge",
             label_align="right",
             items=["POS", "NEG"],
-        )
-
-        self.trig_impedance = HCComboBox(
-            self.app,
-            self.instrument,
-            parameter="TRIGGER_IMPEDANCE",
-            label="Trigger Impedance",
-            label_align="right",
-            items=["50-Ohms", "Hi-Z"],
         )
 
         self.trig_level = HCDoubleSpinBox(
@@ -89,13 +86,6 @@ class DelayGenerator(QGroupBox):
         self.single_trig_but.setIcon(QIcon(load_icon("pulse.png")))
         self.single_trig_but.setCheckable(False)
 
-        self.app.add_hook(
-            self.instrument,
-            "TRIGGER_MODE",
-            "post_read_hooks",
-            lambda x: self.enable_disable_hook(x),
-        )
-
         self.pulse = HCSpinBox(
             self.app,
             self.instrument,
@@ -103,6 +93,8 @@ class DelayGenerator(QGroupBox):
             label="Pulses per Burst",
             label_align="right",
         )
+        self.pulse.setVisible(False)
+        self.pulse.label.setVisible(False)
 
         self.period = HCSpinBox(
             self.app,
@@ -113,6 +105,26 @@ class DelayGenerator(QGroupBox):
         )
         self.period.setSingleStep(1)
         self.period.setMinimum(1)
+        self.period.setVisible(False)
+        self.period.label.setVisible(False)
+
+        self.burst_rate = HCSpinBox(
+            self.app,
+            self.instrument,
+            "BURST_TRIGGER_RATE",
+            label="Trigger Rate",
+            label_align="right",
+        )
+        self.burst_rate.setVisible(False)
+        self.burst_rate.label.setVisible(False)
+
+        self.internal_rate = HCSpinBox(
+            self.app,
+            self.instrument,
+            "INTERNAL_TRIGGER_RATE",
+            label="Trigger Rate",
+            label_align="right",
+        )
 
         widget_col = 0
         self.channel_widgets = []
@@ -143,19 +155,18 @@ class DelayGenerator(QGroupBox):
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.trig_mode.label, 0, 0)
         self.master_layout.addWidget(self.trig_mode, 0, 1)
-        self.master_layout.addWidget(self.trig_impedance.label, 0, 2)
-        self.master_layout.addWidget(self.trig_impedance, 0, 3)
+        self.master_layout.addWidget(self.trig_level.label, 0, 2)
+        self.master_layout.addWidget(self.trig_level, 0, 3)
+        self.master_layout.addWidget(self.single_trig_but, 1, 1)
+        self.master_layout.addWidget(self.trig_edge.label, 1, 2)
+        self.master_layout.addWidget(self.trig_edge, 1, 3)
 
-        self.master_layout.addWidget(self.trig_edge.label, 1, 0)
-        self.master_layout.addWidget(self.trig_edge, 1, 1)
-        self.master_layout.addWidget(self.trig_level.label, 1, 2)
-        self.master_layout.addWidget(self.trig_level, 1, 3)
-
-        self.master_layout.addWidget(self.single_trig_but, 2, 3)
-
-        self.master_layout.addWidget(self.pulse.label, 3, 0)
-        self.master_layout.addWidget(self.pulse, 3, 1)
-
+        self.master_layout.addWidget(self.burst_rate.label, 2, 0)
+        self.master_layout.addWidget(self.burst_rate, 2, 1)
+        self.master_layout.addWidget(self.internal_rate.label, 2, 0)
+        self.master_layout.addWidget(self.internal_rate, 2, 1)
+        self.master_layout.addWidget(self.pulse.label, 2, 2)
+        self.master_layout.addWidget(self.pulse, 2, 3)
         self.master_layout.addWidget(self.period.label, 3, 2)
         self.master_layout.addWidget(self.period, 3, 3)
 
@@ -169,8 +180,33 @@ class DelayGenerator(QGroupBox):
     def enable_disable_hook(self, value):
         if value == "SINGLE":
             self.single_trig_but.setEnabled(True)
+            self.single_trig_but.setStyleSheet("background-color: white")
         else:
             self.single_trig_but.setEnabled(False)
+            self.single_trig_but.setStyleSheet("background-color: grey")
+
+        if value == "BURST":
+            self.pulse.setVisible(True)
+            self.pulse.label.setVisible(True)
+            self.period.setVisible(True)
+            self.period.label.setVisible(True)
+            self.burst_rate.setVisible(True)
+            self.burst_rate.label.setVisible(True)
+        else:
+            self.pulse.setVisible(False)
+            self.pulse.label.setVisible(False)
+            self.period.setVisible(False)
+            self.period.label.setVisible(False)
+            self.burst_rate.setVisible(False)
+            self.burst_rate.label.setVisible(False)
+
+        if value == "INTERNAL":
+            self.internal_rate.setVisible(True)
+            self.internal_rate.label.setVisible(True)
+        else:
+            self.internal_rate.setVisible(False)
+            self.internal_rate.label.setVisible(False)
+
         return value
 
     def config_auto_update(self):
@@ -179,8 +215,9 @@ class DelayGenerator(QGroupBox):
         for parameter in [
             "TRIGGER_MODE",
             "TRIGGER_EDGE",
-            "TRIGGER_IMPEDANCE",
             "TRIGGER_LEVEL",
+            "INTERNAL_TRIGGER_RATE",
+            "BURST_TRIGGER_RATE",
             "PULSES_PER_BURST",
             "TRIGGER_PERIOD",
         ]:
@@ -191,11 +228,20 @@ class DelayGenerator(QGroupBox):
                 self.app.add_auto_update_instrument_parameter(
                     self.instrument, ch.time_delay.parameter
                 )
+                self.app.add_auto_update_instrument_parameter(
+                    self.instrument, ch.relative.parameter
+                )
             self.app.add_auto_update_instrument_parameter(
                 self.instrument, ch.volt.parameter
             )
             self.app.add_auto_update_instrument_parameter(
                 self.instrument, ch.level.parameter
+            )
+            self.app.add_auto_update_instrument_parameter(
+                self.instrument, ch.offset.parameter
+            )
+            self.app.add_auto_update_instrument_parameter(
+                self.instrument, ch.trig_impedance.parameter
             )
 
 
@@ -250,7 +296,6 @@ class DelayChannelWidget(QWidget):
                 self.instrument,
                 f"CH{self.channel}_DELAY",
                 label="t_offset [s]",
-                return_set_value=False,
             )
             self.app.add_hook(
                 self.instrument,
@@ -299,6 +344,23 @@ class DelayChannelWidget(QWidget):
         self.volt.setEnabled(False)
         self.volt.setStyleSheet("background-color: grey")
 
+        self.offset = HCLineEdit(
+            self.app,
+            self.instrument,
+            f"CH{self.channel}_OUTPUT_OFFSET",
+            label="Output Offset (V)",
+        )
+        self.offset.setEnabled(False)
+        self.offset.setStyleSheet("background-color: grey")
+
+        self.trig_impedance = HCComboBox(
+            self.app,
+            self.instrument,
+            parameter=f"CH{self.channel}_TRIGGER_IMPEDANCE",
+            label="Trigger Impedance",
+            items=["50-Ohms", "Hi-Z"],
+        )
+
         self.channel_layout = QGridLayout()
         self.channel_layout.addWidget(
             self.channel_label, 0, 0, 1, 2, QtCore.Qt.AlignBottom
@@ -313,6 +375,10 @@ class DelayChannelWidget(QWidget):
         self.channel_layout.addWidget(self.level, 3, 1)
         self.channel_layout.addWidget(self.volt.label, 4, 0)
         self.channel_layout.addWidget(self.volt, 4, 1)
+        self.channel_layout.addWidget(self.offset.label, 5, 0)
+        self.channel_layout.addWidget(self.offset, 5, 1)
+        self.channel_layout.addWidget(self.trig_impedance.label, 6, 0)
+        self.channel_layout.addWidget(self.trig_impedance, 6, 1)
         self.setLayout(self.channel_layout)
 
     def update_relative_channel(self, relative_channel):
@@ -344,7 +410,11 @@ class DelayChannelWidget(QWidget):
         if value == "VAR":
             self.volt.setDisabled(False)
             self.volt.setStyleSheet("background-color: white")
+            self.offset.setDisabled(False)
+            self.offset.setStyleSheet("background-color: white")
         else:
             self.volt.setDisabled(True)
             self.volt.setStyleSheet("background-color: grey")
+            self.offset.setDisabled(True)
+            self.offset.setStyleSheet("background-color: grey")
         return value
