@@ -87,9 +87,9 @@ class Instrument:
     """
 
     # class variables for the different supported connection types
-    _VISA = "visa"
-    _SOCKET = "socket"
-    _MODBUS = "modbus"
+    VISA = "visa"
+    SOCKET = "socket"
+    MODBUS = "modbus"
 
     def __init__(
         self, instrument_name: str, connection_addr: str, default_port: int = None
@@ -157,9 +157,9 @@ class Instrument:
             or self.connection_addr.startswith("USB")
             or self.connection_addr.startswith("VXI")
         ):
-            self.connection_type = Instrument._VISA
+            self.connection_type = Instrument.VISA
         else:
-            self.connection_type = Instrument._SOCKET
+            self.connection_type = Instrument.SOCKET
             values = self.connection_addr.rsplit(":", 1)
             if len(values) == 1:
                 self.ip_addr = values[0]
@@ -512,7 +512,7 @@ class Instrument:
 
         logger.debug(f"{self.name}: trying to connect")
 
-        if self.connection_type == Instrument._VISA:
+        if self.connection_type == Instrument.VISA:
             try:
                 rm = pyvisa.ResourceManager("@py")
                 self.device = rm.open_resource(self.connection_addr)
@@ -539,7 +539,7 @@ class Instrument:
                 logger.debug(f"{self.name} is offline")
             else:
                 self._online = True
-        elif self.connection_type == Instrument._SOCKET:
+        elif self.connection_type == Instrument.SOCKET:
             try:
                 self.device = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.device.settimeout(2)
@@ -555,7 +555,7 @@ class Instrument:
                 logger.debug(f"{self.name} is offline")
             else:
                 self._online = True
-        elif self.connection_type == Instrument._MODBUS:
+        elif self.connection_type == Instrument.MODBUS:
             try:
                 self.device = ModbusClient(host=self.connection_addr)
                 if self.device.connect():
@@ -587,7 +587,7 @@ class Instrument:
             logger.error(f"No visa device for '{self.name}'")
             self._online = False
             return
-        if self.connection_type == Instrument._VISA:
+        if self.connection_type == Instrument.VISA:
             self.device.encoding = "ascii"
             if baud_rate:
                 self.device.baud_rate = baud_rate
@@ -608,13 +608,13 @@ class Instrument:
 
         try:
             logger.debug(f"write: '{command}' to '{self.name}'")
-            if self.connection_type == Instrument._VISA:
+            if self.connection_type == Instrument.VISA:
                 self.device.write(command)
                 return
-            if self.connection_type == Instrument._SOCKET:
+            if self.connection_type == Instrument.SOCKET:
                 self.device.sendall(bytes(command + self._termination, self._encoding))
                 return
-            if self.connection_type == Instrument._MODBUS:
+            if self.connection_type == Instrument.MODBUS:
                 # modbus commands must be formatted in the following way:
                 # command:address:value:unit, e.g. 4 colon separated values
                 # since we are getting a string, we will parse the 'value' using json
@@ -658,7 +658,7 @@ class Instrument:
 
         try:
             logger.debug(f"'{self.name}' sending query command '{command}'")
-            if self.connection_type == Instrument._VISA:
+            if self.connection_type == Instrument.VISA:
                 if self.delay is not None:
                     inst_delay = self.delay
                 else:
@@ -672,13 +672,13 @@ class Instrument:
                 reply = self.device.read(
                     termination=(self.read_termination or self._termination)
                 )
-            elif self.connection_type == Instrument._SOCKET:
+            elif self.connection_type == Instrument.SOCKET:
                 self.device.sendall(bytes(command + self._termination, self._encoding))
                 reply_bytes = Instrument._recvall(self.device)
                 reply = str(reply_bytes)
                 reply = reply[2 : len(reply) - 1 - 2 * len(self._termination)]
                 logger.debug(f'\t{self.name}< "{command}"')
-            elif self.connection_type == Instrument._MODBUS:
+            elif self.connection_type == Instrument.MODBUS:
                 # modbus commands must be formatted in the following way:
                 # command:address:nr_bytes:unit, e.g. 4 colon separated values
                 command, address, nr, unit = command.split(":")
