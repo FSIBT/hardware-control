@@ -1,0 +1,14 @@
+image: python:3.9
+
+pipelines:
+  default:
+    - parallel:
+      - step:
+          name: Test
+          caches:
+            - pip
+          script:
+            - apt-get update -y
+            - apt-get install -y libgl1-mesa-glx libsm6 libxext6 libxrender-dev
+            - pip install .
+            - pytest -v tests/* --junitxml=test-reports/report.xml
