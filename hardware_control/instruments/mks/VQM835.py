@@ -19,7 +19,11 @@ logger = logging.getLogger(__name__)
 
 
 class VQM835(Instrument):
-    """Grandville Phillips Ion Gauge instrument class."""
+    """Grandville Phillips Ion Gauge instrument class.
+
+    Instrument home page: https://www.mksinst.com/f/835-vacuum-quality-monitor
+    The instrument uses USB-A and is controlled using the pyvisa library.
+    """
 
     def __init__(
         self,
@@ -46,80 +50,29 @@ class VQM835(Instrument):
         self.add_command("ELECTRON_METER", "INST EMEL")
         self.add_command("CLEAN_ALL", "*CLS")
 
-        # Setting the ionizer parameters
+        ## get the total pressure from the external source (Ion Gauge)
+        self.add_command("TOTAL_PRESSURE", "INST ETPR;OUTP ON;MEAS:PRES?")
+
+        ## Setting the ionizer parameters
         self.add_parameter(
             "FILAMENT_EMISSION",
-            read_command="FL?",
-            set_command="FL{}",
-            dummy_return="",
-        )
-        self.add_parameter(
-            "EXTRACT_VOLTAGE",
-            read_command="VF?",
-            set_command="VF{}",
-            dummy_return="",
-        )
-        self.add_parameter(
-            "ELECTRON_ENERGY",
-            read_command="EE?",
-            set_command="EE{}",
-            dummy_return="",
-        )
-        self.add_parameter(
-            "ION_ENERGY",
-            read_command="IE?",
-            set_command="IE{}",
+            read_command="INST FIL;MEAS:CURR?",
+            set_command="INST FIL;SOUR:MOD ADJ;SOUR:CURR",
             dummy_return="",
         )
 
-        # Setting up the Detectors
+        ## Setting up the Detectors
         self.add_parameter(
             "EM_VOLTAGE",
-            read_command="HV?",
-            set_command="HV{}",
+            read_command="INST EMUL;MEAS:VOLT",
+            set_command="INST EMUL;SOUR:VOLT",
             dummy_return="",
         )
 
-        # Setting up the Scans
-        self.add_parameter(
-            "INITIAL_MASS",
-            read_command="",
-            set_command="MI{}",
-            dummy_return="",
-        )
-        self.add_parameter(
-            "FINAL_MASS",
-            read_command="",
-            set_command="MF{}",
-            dummy_return="",
-        )
-        self.add_parameter(
-            "SCAN_RATE",
-            read_command="",
-            set_command="NF{}",
-            dummy_return="",
-        )  # Noise floor too
-        self.add_parameter(
-            "SCAN_STEPS",
-            read_command="SA?",
-            set_command="SA{}",
-            dummy_return="",
-        )  # followed by the steps/amu
-        self.add_parameter(
-            "ANALOG_SCANS",
-            read_command="",
-            set_command="SC{}",
-            dummy_return="",
-        )  # followed by the scan times
-        self.add_parameter(
-            "HISTOGRAM_SCANS",
-            read_command="",
-            set_command="HS{}",
-            dummy_return="",
-        )  # followed by the Scan times
-        self.add_parameter(
-            "SINGLE_MEASUREMENT",
-            read_command="",
-            set_command="MR{}",
-            dummy_return="",
-        )
+        ## Setting up the Scans
+        self.add_command("SINGLE_MEASUREMENT", "INST MSP;OUTP ON;INIT;FETC?")
+
+        ## Store and load the trap settings
+        self.add_command("STORE_SETTINGS", "MEM:STOR;SYST:ERR:ALL?")
+        self.add_command("LOAD_SETTINGS", "MEM:LOAD;SYST:ERR:ALL?")
+        self.add_command("FACTORY_SETTINGS", "MEM:LOAD FACT;SYST:ERR:ALL?")
