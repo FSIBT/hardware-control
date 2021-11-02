@@ -83,17 +83,12 @@ class HCMixin:
         app = kwargs.pop("app")
         instrument = kwargs.pop("instrument")
         parameter = kwargs.pop("parameter")
-        if "label" in kwargs:
-            label = kwargs.pop("label")
-            label_align = kwargs.pop("label_align")
-            self.add_label = True
-        else:
-            self.add_label = False
 
-        if "colon" in kwargs:
-            self.colon = kwargs.pop("colon")
-        else:
-            self.colon = True
+        label = kwargs.pop("label", "")
+        label_align = kwargs.pop("label_align", "center")
+        colon = kwargs.pop("colon", True)
+        if colon and label:
+            label = f"{label}: "
 
         for arg in [app, instrument, parameter]:
             if arg is None:
@@ -107,19 +102,15 @@ class HCMixin:
 
         super().__init__(**kwargs)
 
-        # create an optional label
-        if self.add_label:
-            self.name = label
-            if self.colon:
-                self.label = QLabel(f"{label}: ")
-            else:
-                self.label = QLabel(f"{label}")
-            if label_align == "right":
-                self.label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-            elif label_align == "left":
-                self.label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
-            elif label_align == "center":
-                self.label.setAlignment(QtCore.Qt.AlignCenter)
+        self.name = label
+        self.label = QLabel(label)
+
+        if label_align == "right":
+            self.label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        elif label_align == "left":
+            self.label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        elif label_align == "center":
+            self.label.setAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
 
         # connect to app
         self.app.add_widget(self.instrument, self.parameter, self)
