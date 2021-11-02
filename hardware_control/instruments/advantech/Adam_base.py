@@ -27,7 +27,7 @@ class AdamBase(Instrument):
         self.connection_tries = 0
 
         self.addr = (self.ip_addr, self.port_no)
-        if self.connection_type != Instrument.SOCKET:
+        if self.connection_type != Instrument._SOCKET:
             logger.error(
                 "Wrong instrument address. Needs to be socket type (ip or ip:port)."
             )

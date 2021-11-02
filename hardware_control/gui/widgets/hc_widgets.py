@@ -14,6 +14,7 @@ import pkg_resources
 from typing import Dict, Optional, Union
 
 from PyQt5.QtWidgets import (
+    QGridLayout,
     QPushButton,
     QLabel,
     QLineEdit,
@@ -68,6 +69,28 @@ def convert_prefix(value: str, decimals: int = 3) -> List[str]:
         return f"{round(value*1e-9, decimals)}", "G"
 
 
+class HCGridLayout(QGridLayout):
+    """Places HCwidgets into a Gridlayout.
+
+    This is a 2 column grid with the label of the HCWidget in the left
+    column and the widget itself in the right column.
+
+    A special case is a HCDoubleSpinComboBox where an additional 3rd
+    column is created.
+
+    """
+
+    def __init__(self, HCwidgets: List, offset: int = 0) -> None:
+        super().__init__()
+        for i, w in enumerate(HCwidgets):
+            self.addWidget(w.label, i + offset, 0)
+            if isinstance(w, HCDoubleSpinComboBox):
+                self.addWidget(w.spin, i + offset, 1)
+                self.addWidget(w.combo, i + offset, 2)
+            else:
+                self.addWidget(w, i + offset, 1)
+
+
 class HCMixin:
     """Connect a Qt element to a setting or command in the app.
 
@@ -83,12 +106,14 @@ class HCMixin:
         app = kwargs.pop("app")
         instrument = kwargs.pop("instrument")
         parameter = kwargs.pop("parameter")
-        if "label" in kwargs:
-            label = kwargs.pop("label")
-            label_align = kwargs.pop("label_align")
-            self.add_label = True
-        else:
-            self.add_label = False
+
+        self._visible = app.is_parameter(instrument, parameter)
+
+        label = kwargs.pop("label", "")
+        label_align = kwargs.pop("label_align", "center")
+        colon = kwargs.pop("colon", True)
+        if colon and label:
+            label = f"{label}: "
 
         for arg in [app, instrument, parameter]:
             if arg is None:
@@ -102,19 +127,29 @@ class HCMixin:
 
         super().__init__(**kwargs)
 
-        # create an optional label
-        if self.add_label:
-            self.name = label
-            self.label = QLabel(f"{label}: ")
-            if label_align == "right":
-                self.label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-            elif label_align == "left":
-                self.label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
-            elif label_align == "center":
-                self.label.setAlignment(QtCore.Qt.AlignCenter)
+        self.name = label
+        self.label = QLabel(label)
 
-        # connect to app
-        self.app.add_widget(self.instrument, self.parameter, self)
+        if label_align == "right":
+            self.label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        elif label_align == "left":
+            self.label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        elif label_align == "center":
+            self.label.setAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
+
+        if self._visible:
+            # connect to app
+            self.app.add_widget(self.instrument, self.parameter, self)
+        else:
+            # hide widget, put parameter on list to skip when auto-updating
+            logger.info(
+                f"widget for {self.instrument}:{self.parameter} does not exist, hiding it."
+            )
+            self.app.add_skip_update_instrument_parameter(
+                self.instrument, self.parameter
+            )
+            self.label.hide()
+            self.hide()
 
 
 class HCLabel(HCMixin, QLabel):
@@ -320,6 +355,7 @@ class HCOnOffButton(HCMixin, QPushButton):
             parameter=parameter,
             label=label,
             label_align=label_align,
+            colon=False,
         )
 
         self.show_icon = show_icon

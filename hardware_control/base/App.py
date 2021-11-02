@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 
 def ensure_instrument_exists(f):
-    """Error check to make sure that an instrument is in app._data.
+    """Error check to make sure that an instrument is in exists in the app.
 
     This decorator assumes that the first argument of the decorated function
     is the app class, and the second argument is the instrument name.
@@ -44,7 +44,7 @@ def ensure_instrument_exists(f):
 
 
 def ensure_parameter_and_instrument_exists(f):
-    """Error check to make sure that a parameter/command exists.
+    """Error check to make sure that a parameter/command exists in the app.
 
     This decorator assumes that the first argument of the decorated function
     is the app class, the second argument is the instrument name, and the
@@ -66,7 +66,7 @@ def ensure_parameter_and_instrument_exists(f):
 
         if parameter not in self._data[instrument]:
             logger.error(
-                f"Cannot find parameter/command '{parameter}' for instrument '{instrument}'  in {f.__name__} in app"
+                f"Cannot find parameter/command '{parameter}' for instrument '{instrument}' in {f.__name__} in app"
             )
             return
 
@@ -113,6 +113,10 @@ class App(QApplication):
         # keep a list of parameters that should be updated periodiccaly
         # This is a set of (<instrument name>,<parameters>) combinations
         self.request_updates = set()
+        # keep a list of parameters that should be skipped. For example
+        # when a parameter it not implemented in an instrument driver,
+        # but does exists in a GUI
+        self.skip_request_updates = set()
 
         # a timer to check ZMQ messages
         self.zmq_timer = QTimer(self)
@@ -141,7 +145,8 @@ class App(QApplication):
     def register_parameters_and_commands(
         self, instrument: str, read_parameters, set_parameters, commands
     ) -> None:
-        """Adds the parameter names to the data modell and set defaults values."""
+        """Adds all parameter names to a data dictionary and set defaults values."""
+
         for r in read_parameters:
             p = {
                 "read_value": None,
@@ -169,6 +174,7 @@ class App(QApplication):
 
     def add_dataset(self, dataset: Dataset) -> None:
         """Add a dataset object to the app. See the Dataset base class for more details."""
+
         name = dataset.name
         if name in self.data_sets:
             logger.error(f"Dataset {name} already exists... not adding dataset to App.")
@@ -313,14 +319,16 @@ class App(QApplication):
                     w.hc_update()
 
     def update_instruments(self) -> None:
-        for name, parameter_or_function in self.request_updates:
-            online = self.get_instrument_parameter(name, "ONLINE")
+        for instrument, parameter_or_function in self.request_updates:
+            if (instrument, parameter_or_function) in self.skip_request_updates:
+                continue
+            online = self.get_instrument_parameter(instrument, "ONLINE")
             if online is None or online == "False":
                 return
             if callable(parameter_or_function):
                 parameter_or_function()
             else:
-                self.update_instrument_parameter(name, parameter_or_function)
+                self.update_instrument_parameter(instrument, parameter_or_function)
 
     @ensure_instrument_exists
     def add_auto_update_instrument_parameter(
@@ -329,12 +337,21 @@ class App(QApplication):
         if not callable(parameter):
             if parameter not in self._data[instrument]:
                 logger.error(
-                    f"Cannot find parameter/command '{parameter}' for instrument '{instrument}'   in app"
+                    f"Cannot find parameter/command '{parameter}' for instrument '{instrument}' in app"
                 )
                 return
 
         logger.debug(f"register {instrument}->{parameter} for auto updates")
         self.request_updates.add((instrument, parameter))
+
+    def add_skip_update_instrument_parameter(
+        self, instrument: str, parameter: str
+    ) -> None:
+        self.skip_request_updates((instrument, parameter))
+
+    @ensure_instrument_exists
+    def is_parameter(self, instrument: str, parameter: str) -> bool:
+        return parameter in self._data[instrument]
 
     @ensure_parameter_and_instrument_exists
     def set_instrument_parameter(
@@ -365,7 +382,7 @@ class App(QApplication):
                 logger.error(
                     f"'{instrument}-{parameter}' seems to be a command instead of a parameter."
                 )
-            return
+                return
             pre_set_hooks = self._data[instrument][parameter]["pre_set_hooks"]
             value = call_hooks(pre_set_hooks, value)
         if value is None:

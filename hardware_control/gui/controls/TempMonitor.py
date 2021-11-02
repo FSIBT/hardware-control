@@ -1,14 +1,8 @@
-from hardware_control import instruments
 import logging
 
-from PyQt5.QtWidgets import (
-    QGroupBox,
-    QHBoxLayout,
-    QVBoxLayout,
-)
-from PyQt5.QtCore import QTimer
+from PyQt5.QtWidgets import QGroupBox
 
-from ..widgets import load_icon, HCLineEdit, HCLabel
+from ..widgets import HCLineEdit, HCLabel, HCGridLayout
 
 logger = logging.getLogger(__name__)
 
@@ -54,31 +48,16 @@ class TempMonitor(QGroupBox):
             self.widgets.append(temperature)
             self.widgets.append(curve)
 
-        self.vbox = QVBoxLayout()
-        for widget in self.widgets:
-            tmp = QHBoxLayout()
-            tmp.addWidget(widget.label)
-            tmp.addWidget(widget)
-            self.vbox.addLayout(tmp)
+        self.grid = HCGridLayout(self.widgets)
+        self.setLayout(self.grid)
 
-        self.setLayout(self.vbox)
-
-        # Create timer to query temperatures
-        self.readout_timer = QTimer(self)
-        self.readout_timer.timeout.connect(self.update_readout)
-        self.readout_timer.start(self.app.globalRefreshRate)
-
+        self.default_update_readout()
         logger.debug("Initalized")
 
-    def close(self):
-        self.readout_timer.stop()
-        super().close()
-
-    def update_readout(self):
-        """Queries the instrument for current readout data, then reads the most
-        recent readout data from the inbox and pushes it to the GUI"""
+    def default_update_readout(self):
+        """Register parameters for automatic updates."""
 
         for channel in self.channel_list:
-            self.app.update_instrument_parameter(
+            self.app.add_auto_update_instrument_parameter(
                 self.instrument, f"CH{channel}_READ_TEMP"
             )
