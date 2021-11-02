@@ -12,6 +12,7 @@ from .hc_widgets import (
     load_icon,
     load_pixmap,
     icon_filename,
+    HCGridLayout,
     HCLineEdit,
     HCComboBox,
     HCPushButton,

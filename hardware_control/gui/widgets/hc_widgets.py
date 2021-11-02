@@ -14,6 +14,7 @@ import pkg_resources
 from typing import Dict, Optional, Union
 
 from PyQt5.QtWidgets import (
+    QGridLayout,
     QPushButton,
     QLabel,
     QLineEdit,
@@ -68,6 +69,28 @@ def convert_prefix(value: str, decimals: int = 3) -> List[str]:
         return f"{round(value*1e-9, decimals)}", "G"
 
 
+class HCGridLayout(QGridLayout):
+    """Places HCwidgets into a Gridlayout.
+
+    This is a 2 column grid with the label of the HCWidget in the left
+    column and the widget itself in the right column.
+
+    A special case is a HCDoubleSpinComboBox where an additional 3rd
+    column is created.
+
+    """
+
+    def __init__(self, HCwidgets: List, offset: int = 0) -> None:
+        super().__init__()
+        for i, w in enumerate(HCwidgets):
+            self.addWidget(w.label, i + offset, 0)
+            if isinstance(w, HCDoubleSpinComboBox):
+                self.addWidget(w.spin, i + offset, 1)
+                self.addWidget(w.combo, i + offset, 2)
+            else:
+                self.addWidget(w, i + offset, 1)
+
+
 class HCMixin:
     """Connect a Qt element to a setting or command in the app.
 
@@ -83,6 +106,8 @@ class HCMixin:
         app = kwargs.pop("app")
         instrument = kwargs.pop("instrument")
         parameter = kwargs.pop("parameter")
+
+        self._visible = app.is_parameter(instrument, parameter)
 
         label = kwargs.pop("label", "")
         label_align = kwargs.pop("label_align", "center")
@@ -112,8 +137,17 @@ class HCMixin:
         elif label_align == "center":
             self.label.setAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
 
-        # connect to app
-        self.app.add_widget(self.instrument, self.parameter, self)
+        if self._visible:
+            # connect to app
+            self.app.add_widget(self.instrument, self.parameter, self)
+        else:
+            # hide widget, put parameter on list to skip when auto-updating
+            logger.info(
+                f"widget for {self.instrument}:{self.parameter} does not exist, hiding it."
+            )
+            self.app.add_skip_autor_update(self.instrument, self.parameter)
+            self.label.hide()
+            self.hide()
 
 
 class HCLabel(HCMixin, QLabel):
