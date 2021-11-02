@@ -42,9 +42,7 @@ class Demo(hc.HCMainWindow):
 
         # Create an Keysight_36300 instrument backend and add it to the app
         self.app.add_instrument(
-            hc.instruments.Keysight_36300(
-                "Keysight_36300", "192.168.0.3:5025", keysight_settings
-            )
+            hc.instruments.Keysight_36300("Keysight_36300", "192.168.0.3:5025")
         )
 
         # Load a settings file with preset values for the instrument parameters

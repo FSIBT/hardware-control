@@ -1,6 +1,5 @@
 from typing import List
 from PyQt5.QtWidgets import QGroupBox, QVBoxLayout, QPushButton, QGridLayout
-from PyQt5.QtCore import QTimer
 from ..widgets import HCFixedLabel, HCLineEdit, HCOnOffButton, HCGridLayout
 
 
@@ -9,7 +8,7 @@ class ChannelDisplay(QVBoxLayout):
         self,
         app,
         instrument_name: str,
-        chan_num: List,
+        channel: int,
         color: str,
         set_voltage_option: bool = False,
         set_current_option: bool = False,
@@ -22,11 +21,10 @@ class ChannelDisplay(QVBoxLayout):
         self.set_voltage_option = set_voltage_option
         self.set_current_option = set_current_option
 
-        # Channel on-off button
         self.on_off = HCOnOffButton(
             self.app,
             self.instrument,
-            f"CH{chan_num}_ENABLE",
+            f"CH{channel}_ENABLE",
             label="ON/OFF",
             show_icon=True,
         )
@@ -37,7 +35,7 @@ class ChannelDisplay(QVBoxLayout):
         self.voltage = HCFixedLabel(
             self.app,
             self.instrument,
-            f"CH{chan_num}_V_OUT",
+            f"CH{channel}_V_OUT",
             init_label="+000.0000 xX",
             unit="V",
             color=self.color,
@@ -49,7 +47,7 @@ class ChannelDisplay(QVBoxLayout):
         self.current = HCFixedLabel(
             self.app,
             self.instrument,
-            f"CH{chan_num}_I_OUT",
+            f"CH{channel}_I_OUT",
             init_label="+000.0000 xX",
             unit="A",
             color=self.color,
@@ -62,7 +60,7 @@ class ChannelDisplay(QVBoxLayout):
             self.set_voltage = HCLineEdit(
                 self.app,
                 self.instrument,
-                f"CH{chan_num}_V_SET",
+                f"CH{channel}_V_SET",
                 "Set Voltage",
             )
             self.set_voltage_layout = HCGridLayout([self.set_voltage])
@@ -73,7 +71,7 @@ class ChannelDisplay(QVBoxLayout):
             self.set_current = HCLineEdit(
                 self.app,
                 self.instrument,
-                f"CH{chan_num}_I_SET",
+                f"CH{channel}_I_SET",
                 "Set Current",
             )
             self.set_current_layout = HCGridLayout([self.set_current])
@@ -106,17 +104,14 @@ class KeysightPowerSupply(QGroupBox):
         # Create a channel widgets for all channels
         self.channel_widgets = []
         for idx, channel in enumerate(channels):
-            set_voltage_option = True if channel in self.set_voltage_channels else False
-            set_current_option = True if channel in self.set_current_channels else False
-
             self.channel_widgets.append(
                 ChannelDisplay(
                     self.app,
                     self.instrument,
                     idx + 1,
                     self.channel_colors[idx],
-                    set_voltage_option,
-                    set_current_option,
+                    set_voltage_option=channel in self.set_voltage_channels,
+                    set_current_option=channel in self.set_current_channels,
                 )
             )
 
@@ -143,10 +138,7 @@ class KeysightPowerSupply(QGroupBox):
         self.hbox.addWidget(self.all_disable_but)
         self.setLayout(self.hbox)
 
-        # Create timer to query instrument
-        self.readout_timer = QTimer(self)
-        self.readout_timer.timeout.connect(self.update_readout)
-        self.readout_timer.start(self.app.globalRefreshRate)
+        self.default_update_readout()
 
     def enable_all(self):
         """Enables all channels."""
@@ -162,18 +154,20 @@ class KeysightPowerSupply(QGroupBox):
                 self.instrument, f"CH{channel}_ENABLE", False
             )
 
-    def update_readout(self):
-        """Queries the instrument for current readout data and pushes it to the GUI"""
-        # Update readout data for each parameter
+    def default_update_readout(self):
+        """Register values for automatic updates."""
         for channel in self.channels:
-            self.app.update_instrument_parameter(self.instrument, f"CH{channel}_ENABLE")
-            self.app.update_instrument_parameter(self.instrument, f"CH{channel}_I_SET")
-            self.app.update_instrument_parameter(self.instrument, f"CH{channel}_V_SET")
+            tmp = [
+                f"CH{channel}_ENABLE",
+                f"CH{channel}_I_SET",
+                f"CH{channel}_V_SET",
+            ]
             if self.channel_widgets[channel - 1].set_voltage_option:
-                self.app.update_instrument_parameter(
-                    self.instrument, f"CH{channel}_V_OUT"
-                )
+                tmp.append(f"CH{channel}_V_OUT")
             if self.channel_widgets[channel - 1].set_current_option:
-                self.app.update_instrument_parameter(
-                    self.instrument, f"CH{channel}_I_OUT"
+                tmp.append(f"CH{channel}_I_OUT")
+
+            for parameter in tmp:
+                self.app.add_auto_update_instrument_parameter(
+                    self.instrument, parameter
                 )
