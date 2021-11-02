@@ -1,7 +1,7 @@
 from typing import List
 from PyQt5.QtWidgets import QGroupBox, QVBoxLayout, QPushButton, QGridLayout
 from PyQt5.QtCore import QTimer
-from ..widgets import HCFixedLabel, HCLineEdit, HCOnOffButton
+from ..widgets import HCFixedLabel, HCLineEdit, HCOnOffButton, HCGridLayout
 
 
 class ChannelDisplay(QVBoxLayout):
@@ -30,9 +30,7 @@ class ChannelDisplay(QVBoxLayout):
             label="ON/OFF",
             show_icon=True,
         )
-        self.tog_but_layout = QGridLayout()
-        self.tog_but_layout.addWidget(self.on_off, 0, 0)
-        self.tog_but_layout.addWidget(self.on_off.indic_label, 0, 1)
+        self.tog_but_layout = HCGridLayout([self.on_off])
         self.addLayout(self.tog_but_layout)
 
         # Channel voltage readout
@@ -67,9 +65,7 @@ class ChannelDisplay(QVBoxLayout):
                 f"CH{chan_num}_V_SET",
                 "Set Voltage",
             )
-            self.set_voltage_layout = QGridLayout()
-            self.set_voltage_layout.addWidget(self.set_voltage.label, 0, 0)
-            self.set_voltage_layout.addWidget(self.set_voltage, 0, 1)
+            self.set_voltage_layout = HCGridLayout([self.set_voltage])
             self.addLayout(self.set_voltage_layout)
 
         # OPTIONAL: Channel current setter
@@ -80,9 +76,7 @@ class ChannelDisplay(QVBoxLayout):
                 f"CH{chan_num}_I_SET",
                 "Set Current",
             )
-            self.set_current_layout = QGridLayout()
-            self.set_current_layout.addWidget(self.set_current.label, 0, 0)
-            self.set_current_layout.addWidget(self.set_current, 0, 1)
+            self.set_current_layout = HCGridLayout([self.set_current])
             self.addLayout(self.set_current_layout)
 
         self.addStretch(1)

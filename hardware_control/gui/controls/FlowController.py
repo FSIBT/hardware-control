@@ -1,19 +1,8 @@
 import logging
 
-from PyQt5 import QtCore
-from PyQt5.QtCore import QTimer
-from PyQt5.QtGui import QDoubleValidator
-from PyQt5.QtWidgets import (
-    QLineEdit,
-    QLabel,
-    QFormLayout,
-    QGridLayout,
-    QComboBox,
-    QGroupBox,
-)
+from PyQt5.QtWidgets import QGroupBox
 
-
-from ..widgets import HCComboBox, HCLabel, HCLineEdit
+from ..widgets import HCLabel, HCLineEdit, HCGridLayout
 
 logger = logging.getLogger(__name__)
 
@@ -77,19 +66,7 @@ class FlowController(QGroupBox):
             label_align="right",
         )
 
-        self.layout = QGridLayout()
-        self.layout.addWidget(self.rate.label, 0, 0)
-        self.layout.addWidget(self.rate, 0, 1)
-
-        # self.layout.addWidget(self.gas.label, 1, 0)
-        # self.layout.addWidget(self.gas, 1, 1)
-
-        self.layout.addWidget(self.pressure.label, 2, 0)
-        self.layout.addWidget(self.pressure, 2, 1)
-
-        self.layout.addWidget(self.flow.label, 3, 0)
-        self.layout.addWidget(self.flow, 3, 1)
-
+        self.layout = HCGridLayout([self.rate, self.pressure, self.flow])
         self.setLayout(self.layout)
 
         self.config_auto_update()

@@ -1,11 +1,9 @@
 import logging
 
 from PyQt5 import QtCore
-from PyQt5.QtCore import QTimer
-from PyQt5.QtGui import QIcon, QFont, QDoubleValidator
+from PyQt5.QtGui import QIcon, QFont
 from PyQt5.QtWidgets import (
     QGroupBox,
-    QComboBox,
     QLabel,
     QGridLayout,
     QWidget,
