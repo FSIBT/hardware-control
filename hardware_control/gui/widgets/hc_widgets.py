@@ -145,7 +145,9 @@ class HCMixin:
             logger.info(
                 f"widget for {self.instrument}:{self.parameter} does not exist, hiding it."
             )
-            self.app.add_skip_autor_update(self.instrument, self.parameter)
+            self.app.add_skip_update_instrument_parameter(
+                self.instrument, self.parameter
+            )
             self.label.hide()
             self.hide()
 
