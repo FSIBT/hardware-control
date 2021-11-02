@@ -113,6 +113,10 @@ class App(QApplication):
         # keep a list of parameters that should be updated periodiccaly
         # This is a set of (<instrument name>,<parameters>) combinations
         self.request_updates = set()
+        # keep a list of parameter that should be skipped. For example
+        # when a parameter it not implemented in an instrument driver,
+        # but does exists in a GUI
+        self.skip_request_updates = set()
 
         # a timer to check ZMQ messages
         self.zmq_timer = QTimer(self)
@@ -317,14 +321,16 @@ class App(QApplication):
                     w.hc_update()
 
     def update_instruments(self) -> None:
-        for name, parameter_or_function in self.request_updates:
-            online = self.get_instrument_parameter(name, "ONLINE")
+        for instrument, parameter_or_function in self.request_updates:
+            if (instrument, parameter_or_function) in self.skip_request_updates:
+                continue
+            online = self.get_instrument_parameter(instrument, "ONLINE")
             if online is None or online == "False":
                 return
             if callable(parameter_or_function):
                 parameter_or_function()
             else:
-                self.update_instrument_parameter(name, parameter_or_function)
+                self.update_instrument_parameter(instrument, parameter_or_function)
 
     @ensure_instrument_exists
     def add_auto_update_instrument_parameter(
@@ -339,6 +345,15 @@ class App(QApplication):
 
         logger.debug(f"register {instrument}->{parameter} for auto updates")
         self.request_updates.add((instrument, parameter))
+
+    def add_skip_update_instrument_parameter(
+        self, instrument: str, parameter: str
+    ) -> None:
+        self.skip_request_updates((instrument, parameter))
+
+    @ensure_instrument_exists
+    def is_parameter(self, instrument: str, parameter: str) -> bool:
+        return parameter in self._data[instrument]
 
     @ensure_parameter_and_instrument_exists
     def set_instrument_parameter(
