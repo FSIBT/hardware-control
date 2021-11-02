@@ -66,7 +66,7 @@ def ensure_parameter_and_instrument_exists(f):
 
         if parameter not in self._data[instrument]:
             logger.error(
-                f"Cannot find parameter/command '{parameter}' for instrument '{instrument}'  in {f.__name__} in app"
+                f"Cannot find parameter/command '{parameter}' for instrument '{instrument}' in {f.__name__} in app"
             )
             return
 
@@ -113,7 +113,7 @@ class App(QApplication):
         # keep a list of parameters that should be updated periodiccaly
         # This is a set of (<instrument name>,<parameters>) combinations
         self.request_updates = set()
-        # keep a list of parameter that should be skipped. For example
+        # keep a list of parameters that should be skipped. For example
         # when a parameter it not implemented in an instrument driver,
         # but does exists in a GUI
         self.skip_request_updates = set()
@@ -311,8 +311,6 @@ class App(QApplication):
 
             post_read_hooks = self._data[name][parameter]["post_read_hooks"]
             value = call_hooks(post_read_hooks, value)
-            if parameter == "CHMod1/a-0_ANALOG":
-                print(value, flush=True)
             if value is not None:
                 # update value
                 self._data[name][parameter]["read_value"] = value
@@ -339,7 +337,7 @@ class App(QApplication):
         if not callable(parameter):
             if parameter not in self._data[instrument]:
                 logger.error(
-                    f"Cannot find parameter/command '{parameter}' for instrument '{instrument}'   in app"
+                    f"Cannot find parameter/command '{parameter}' for instrument '{instrument}' in app"
                 )
                 return
 

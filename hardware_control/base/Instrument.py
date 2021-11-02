@@ -194,7 +194,7 @@ class Instrument:
 
     def add_parameter(
         self,
-        name: str,
+        parameter: str,
         read_command: Union[Optional[str], Optional[Callable]] = None,
         set_command: Union[Optional[str], Optional[Callable]] = None,
         pre_hooks: Optional[List] = None,
@@ -210,8 +210,8 @@ class Instrument:
 
         Parameters
         ----------
-        name
-           This name must be unique and will be used within hardware control to
+        parameter
+           This parameter name must be unique and will be used within hardware control to
            access this setting.
         read_command
            The control characters that need to be send to the instrument
@@ -225,103 +225,107 @@ class Instrument:
            These can also easily be overwritten in an actual app to customize this.
 
         """
-        if name in ["online", "ignore"]:
+        if parameter in ["online", "ignore"]:
             logger.error(
-                f"Command '{name}' is a special command and cannot be used in instrument {self.name}."
+                f"Parameter '{parameter}' is a special command and cannot be used in instrument {self.name}."
             )
             return
 
-        if " " in name:
+        if " " in parameter:
             logger.error(
-                f"Command '{name}' uses a whitespace in its name. This is not allowed."
+                f"Parameter '{parameter}' uses a whitespace in its name. This is not allowed."
             )
             return
 
         if read_command is not None:
-            if name in self.read_commands:
+            if parameter in self.read_commands:
                 logger.error(
-                    f"Command {name} already exists in instrument {self.name}."
+                    f"A read command already exists for parameter '{parameter}' in instrument {self.name}."
                 )
                 return
-            self.read_commands[name] = read_command
+            self.read_commands[parameter] = read_command
 
         if set_command is not None:
-            if name in self.set_commands:
+            if parameter in self.set_commands:
                 logger.error(
-                    f"Command {name} already exists in instrument {self.name}."
+                    f"A set command already exists for parameter '{parameter}' in instrument {self.name}."
                 )
                 return
-            self.set_commands[name] = set_command
+            self.set_commands[parameter] = set_command
 
         if pre_hooks is not None:
-            if name in self.pre_hooks:
+            if parameter in self.pre_hooks:
                 logger.error(
-                    f"Pre_hook {name} already exists in instrument {self.name}."
+                    f"You have specified multiple pre-hooks for parameter '{parameter}' in instrument {self.name}. Please combine all pre-hooks for parameter '{parameter}' into a list."
                 )
                 return
             for hook in pre_hooks:
-                self.add_pre_hook(name, hook)
+                self.add_pre_hook(parameter, hook)
 
         if post_hooks is not None:
-            if name in self.post_hooks:
+            if parameter in self.post_hooks:
                 logger.error(
-                    f"Post_hook {name} already exists in instrument {self.name}."
+                    f"You have specified multiple post-hooks for parameter '{parameter}' in instrument {self.name}. Please combine all post-hooks for parameter '{parameter}' into a list."
                 )
                 return
             for hook in post_hooks:
-                self.add_post_hook(name, hook)
+                self.add_post_hook(parameter, hook)
 
         if dummy_return is not None:
-            if name in self.dummy_returns:
-                logger.error(f"Dummy {name} already exists in instrument {self.name}.")
+            if parameter in self.dummy_returns:
+                logger.error(
+                    f"Dummy return for parameter '{parameter}' already exists in instrument {self.name}."
+                )
                 return
 
             if isinstance(dummy_return, str) and " " in dummy_return:
                 logger.error(
-                    f"dummy_return '{dummy_return}' for parameter {name} in instrument {self.name} should not include a whitespace. Not adding it."
+                    f"Dummy return '{dummy_return}' for parameter '{parameter}' in instrument {self.name} should not include a whitespace. Not adding it."
                 )
                 return
 
-            self.dummy_returns[name] = dummy_return
+            self.dummy_returns[parameter] = dummy_return
 
-    def add_command(self, name: str, command: Union[str, Callable]) -> None:
+    def add_command(self, command_name: str, command: Union[str, Callable]) -> None:
         """Add a command to an instrument."""
 
-        if name in self.commands:
-            logger.error(f"Command {name} already exists in instrument {self.name}.")
+        if command_name in self.commands:
+            logger.error(
+                f"Command {command_name} already exists in instrument {self.name}."
+            )
             return
-        self.commands[name] = command
+        self.commands[command_name] = command
 
-    def add_pre_hook(self, name: str, function: Callable) -> None:
+    def add_pre_hook(self, parameter: str, function: Callable) -> None:
         """Add a 'hook function' to be exectued prior to the setting of a parameter."""
 
-        if name in self.pre_hooks:
-            self.pre_hooks[name].append(function)
+        if parameter in self.pre_hooks:
+            self.pre_hooks[parameter].append(function)
         else:
-            self.pre_hooks[name] = [function]
+            self.pre_hooks[parameter] = [function]
 
-    def add_post_hook(self, name: str, function: Callable) -> None:
+    def add_post_hook(self, parameter: str, function: Callable) -> None:
         """Add a 'hook function' to be exectued after reading a parameter."""
 
-        if name in self.post_hooks:
-            self.post_hooks[name].append(function)
+        if parameter in self.post_hooks:
+            self.post_hooks[parameter].append(function)
         else:
-            self.post_hooks[name] = [function]
+            self.post_hooks[parameter] = [function]
 
-    def add_lookup(self, name: str, lookuptable: Dict) -> None:
+    def add_lookup(self, parameter: str, lookuptable: Dict) -> None:
         """Add a pre- and a post-hook to convert values according to a lookup table.
 
         The lookup table will be used in the pre-hook and an inverse of the
         lookup table will be created for the post-hook.
         """
 
-        self.add_pre_hook(name, create_converter(lookuptable))
+        self.add_pre_hook(parameter, create_converter(lookuptable))
 
         inverse_lookuptable = {b: a for a, b in lookuptable.items()}
-        self.add_post_hook(name, create_converter(inverse_lookuptable))
+        self.add_post_hook(parameter, create_converter(inverse_lookuptable))
 
     def list_parameters(self) -> List[str]:
-        """Return all names of all commands.
+        """Return all parameters of all commands.
 
         This is mostly used so that the main app can know what commands are available.
         """
@@ -332,23 +336,23 @@ class Instrument:
             list(self.commands.keys()),
         )
 
-    def get_value(self, name: str):
+    def get_value(self, parameter: str):
         """Get the value of a parameter from the instrument.
 
         Also handle the special cases of querying the 'ONLINE' status and
         dummy mode.
 
         Note: User-defined functions in dummy mode should not return
-        None, since None indicates that a name does not exist.
+        None, since None indicates that a parameter does not exist.
         """
 
-        if name == "ONLINE":
+        if parameter == "ONLINE":
             return self._online
 
         value = None
         if self._dummy:
-            if name in self.dummy_returns:
-                value = self.dummy_returns[name]
+            if parameter in self.dummy_returns:
+                value = self.dummy_returns[parameter]
                 if callable(value):
                     value = value()
                     if value is None:
@@ -357,24 +361,24 @@ class Instrument:
                         )
             else:
                 logger.debug(
-                    f"No dummy defined for {name} in instrument '{self.name}'."
+                    f"Error when calling 'Instrument.get_value': User requested parameter '{parameter}' in instrument '{self.name}' in dummy mode, but no dummy return was defined."
                 )
         else:
             # talk to the instrument
-            if name in self.read_commands:
-                if callable(self.read_commands[name]):
-                    value = self.read_commands[name]()
+            if parameter in self.read_commands:
+                if callable(self.read_commands[parameter]):
+                    value = self.read_commands[parameter]()
                 else:
-                    value = self.query(self.read_commands[name])
+                    value = self.query(self.read_commands[parameter])
             # only handle post_hooks at the instrument level when we are not in dummy mode
             # since we call hooks such as IEEE754_converter_to_ulong_pair here
-            if name in self.post_hooks:
-                hooks = self.post_hooks[name]
+            if parameter in self.post_hooks:
+                hooks = self.post_hooks[parameter]
                 value = call_hooks(hooks, value)
 
         return value
 
-    def __getitem__(self, name: str):
+    def __getitem__(self, parameter: str):
         """Allow values to be easily accessed.
 
         Example Usage:
@@ -382,14 +386,14 @@ class Instrument:
         volts = b['voltage']
 
         """
-        val = self.get_value(name)
+        val = self.get_value(parameter)
         if val is not None:
             return val
         logger.error(
-            f"Error when calling '__getitem__': '{name}' not available in instrument '{self.name}'"
+            f"Error when calling 'Instrument.__getitem__': '{parameter}' not available in instrument '{self.name}'"
         )
 
-    def __getattr__(self, name: str):
+    def __getattr__(self, parameter: str):
         """Allow values to be easily accessed.
 
         Example Usage:
@@ -397,31 +401,33 @@ class Instrument:
         volts = b.voltage
 
         """
-        val = self.get_value(name)
+        val = self.get_value(parameter)
         if val is not None:
             return val
 
-        raise AttributeError
+        logger.error(
+            f"Error when calling 'Instrument.__getattr__': '{parameter}' not available in instrument '{self.name}'"
+        )
 
-    def set_value(self, name: str, value) -> None:
+    def set_value(self, parameter: str, value) -> None:
         """Call all of an instrument parameter's pre-hooks, then set the value of the parameter."""
 
-        if name in self.set_commands:
-            if name in self.pre_hooks:
-                hooks = self.pre_hooks[name]
+        if parameter in self.set_commands:
+            if parameter in self.pre_hooks:
+                hooks = self.pre_hooks[parameter]
                 value = call_hooks(hooks, value)
             if value is None:
                 return
-            if callable(self.set_commands[name]):
-                self.set_commands[name](value)
+            if callable(self.set_commands[parameter]):
+                self.set_commands[parameter](value)
             else:
-                self.write(self.set_commands[name].format(value))
+                self.write(self.set_commands[parameter].format(value))
             return
         logger.error(
-            f"Error when calling 'set_value': '{name}' not available in instrument '{self.name}'"
+            f"Error when calling 'Instrumentset_value': '{parameter}' not available in instrument '{self.name}'"
         )
 
-    def __setitem__(self, name, value) -> None:
+    def __setitem__(self, parameter, value) -> None:
         """Allow values to be easily accessed.
 
         Example Usage:
@@ -430,9 +436,9 @@ class Instrument:
 
         """
 
-        self.set_value(name, value)
+        self.set_value(parameter, value)
 
-    def __setattr__(self, name: str, value) -> None:
+    def __setattr__(self, parameter: str, value) -> None:
         """Allow values to be easily accessed.
 
         Example Usage:
@@ -446,12 +452,12 @@ class Instrument:
             "set_commands" in self.__dict__
             and "pre_hooks" in self.__dict__
             and "post_hooks" in self.__dict__
-            and name in self.set_commands
+            and parameter in self.set_commands
         ):
-            self.set_value(name, value)
-        super().__setattr__(name, value)
+            self.set_value(parameter, value)
+        super().__setattr__(parameter, value)
 
-    def command(self, name: str) -> None:
+    def command(self, command_name: str) -> None:
         """Execute an instrument command.
 
         Commands do not fall into simple read/write categories of instrument parameters.
@@ -462,18 +468,20 @@ class Instrument:
 
         """
 
-        if name in self.commands:
+        if command_name in self.commands:
             if self._dummy:
-                logger.debug(f"{self.name}: Would call {name} -> {self.commands[name]}")
+                logger.debug(
+                    f"{self.name}: Would call {command_name} -> {self.commands[name]}"
+                )
                 return
-            if callable(self.commands[name]):
-                self.commands[name]()
+            if callable(self.commands[command_name]):
+                self.commands[command_name]()
             else:
-                self.write(self.commands[name])
+                self.write(self.commands[command_name])
             return
 
         logger.error(
-            f"Error when calling 'command': {name} not available in instrument {self.name}"
+            f"Error when calling 'command': {command_name} not available in instrument {self.name}"
         )
 
     def close(self) -> None:
@@ -583,6 +591,8 @@ class Instrument:
         data_bits: Optional[int] = None,
         parity: Optional[int] = None,
     ) -> None:
+        """Configure a serial port."""
+
         if self.device is None:
             logger.error(f"No visa device for '{self.name}'")
             self._online = False
@@ -701,7 +711,7 @@ class Instrument:
             return None
 
     def load_state(self, filename: str) -> None:
-        """Reads and sets instrument settings from a json dictionary."""
+        """Read and set instrument settings from a json dictionary."""
 
         try:
             with open(filename) as file:
