@@ -1,5 +1,9 @@
 """ Functions that are commen to ZMQ functionality used in `ZMQAdapter` and `ZMQRemoteAdapter`.
 """
+import logging
+import time
+
+logger = logging.getLogger(__name__)
 
 
 def check_adapter_online(adapter) -> None:
@@ -11,25 +15,85 @@ def check_adapter_online(adapter) -> None:
         )
 
 
-def handle_zmq_message_from_app(adapter, msg: str, logger) -> None:
+def add_ZMQ_message_to_queue(adapter, msg: str) -> None:
+    """Sort the messages into different queues that have different priorities.
+
+    Since instruments can take a while to respond to a request, it can
+    happen that there will be a large ZMQ queue waiting for the
+    instrument to handle. In principle this queue can also grow over
+    time if the instrument is too slow to catch up. To avoid this we
+    use different priorities for the ZMQ requests. A priority always
+    needs to be defined for a request. The following options are
+    possible:
+
+    Priority options:
+       - '0': if a new request for the same parameter arrives, the old
+         one is dropped from the queue. These can be used for regular
+         update requests of parameters from the instrument.
+       - '1': if a new request for the same parameter arrives, the old
+         one is dropped from the queue. However, these are handled
+         before any '0' priority item. These are used when a a user
+         pushes a button on an UI.
+       - '2': These are handled first and are never dropped from the
+         queue. Usefule for automatted scanning.
+
+    """
+    logger.debug(f"{adapter.name} got ZMQ messages from App: {msg}")
+    msg = msg[adapter.zmq_topic_length :]
+
+    priority, msg_rest = msg.split(maxsplit=1)
+    priority = int(priority)
+
+    msg_compare = msg_rest
+    if msg_rest.startswith("set "):
+        msg_compare, value = msg_rest.rsplit(maxsplit=1)
+
+    if priority == 0:
+        if msg_compare not in adapter.priority_queue[0]:
+            # special check for set where we ignore the value
+            if msg_rest.startswith("set "):
+                for i, m in enumerate(adapter.priority_queue[0]):
+                    if m.startswith(msg_compare):
+                        adapter.priority_queue[0].pop(i)
+                        break
+            adapter.priority_queue[0].append(msg_rest)
+            return
+    if priority == 1:
+        if msg_compare not in adapter.priority_queue[1]:
+            # special check for set where we ignore the value
+            if msg_rest.startswith("set "):
+                for i, m in enumerate(adapter.priority_queue[1]):
+                    if m.startswith(msg_compare):
+                        adapter.priority_queue[1].pop(i)
+                        break
+            adapter.priority_queue[1].append(msg_rest)
+            return
+    if priority == 2:
+        adapter.priority_queue[2].append(msg_rest)
+        return
+
+    logger.error(f"'{adapter.name}' got invalid priority in message '{msg}'")
+
+
+def handle_ZMQ_message_from_app(adapter) -> None:
     """Parses and handles the ZMQ messsage from the main app.
 
     First parse the message and then depending on the content execute
     a command, read or set a value in the instrument.
 
-    Also check the online status of the instrument and report back.
-
     The possible messages have the following form:
 
-    <instrument name> command <command name>
+    <instrument name> <priority> command <command name>
        This triggers a command
 
-    <instrument name> get <parameter>
+    <instrument name> <priority> get <parameter>
        This triggers a read request of the parameter
 
-    <instrument name> set <parameter> <value>
+    <instrument name> <priority> set <parameter> <value>
        Set a parameter to a new value
 
+    When arriving at this function the first two arguments are already
+    taken care of and have been removed from the incoming msg.
 
     When reading a value, the return ZMQ message has the form:
 
@@ -42,33 +106,39 @@ def handle_zmq_message_from_app(adapter, msg: str, logger) -> None:
        the ZMQAdapter/ZMQRemoteAdapter for the instrument driver
     msg
        the ZMQ message received by the adapter
-    logger
-       the logger to be used for error and debug messages
 
     """
 
-    # remove topic
-    logger.debug(f"in ZMQ parsing: {msg}")
-    msg = msg[adapter.zmq_topic_length :]
+    # get a message from the priority queue or return if nothing to do
+    for priority in [2, 1, 0]:
+        if adapter.priority_queue[priority]:
+            msg = adapter.priority_queue[priority].pop(0)
+            break
+    else:
+        # nothing to do, let's sleep a bit
+        time.sleep(0.1)
+        return
 
     # the different messages are whitespace separated, so we can easily parse them
+    logger.debug(f"'{adapter.name}' working on ZMQ message: {msg}")
     msg = msg.split()
-    if len(msg) == 1:
-        logger.debug(f"'{adapter.name}' got invalid message '{msg}'")
-        return
-    elif len(msg) == 2:
+    if len(msg) == 2:
         command = msg[0]
         if command == "command":
             command_name = msg[1]
-            logger.debug(f"'{adapter.name}' got command '{command_name}'")
+            logger.debug(
+                f"'{adapter.name}' got command '{command_name}' [priority={priority}]"
+            )
             adapter.instrument.command(command_name)
             return
         elif command == "get":
             parameter = msg[1]
-            logger.debug(f"'{adapter.name}' got get request '{parameter}'")
+            logger.debug(
+                f"'{adapter.name}' got get request '{parameter}' [priority={priority}]"
+            )
             if parameter not in adapter.instrument.read_commands:
                 logger.error(
-                    f"'{msg[1]}' read command not available in instrument '{adapter.name}'"
+                    f"'{parameter}' read command not available in instrument '{adapter.name}'"
                 )
                 return
             value = adapter.instrument.get_value(parameter)
@@ -83,6 +153,8 @@ def handle_zmq_message_from_app(adapter, msg: str, logger) -> None:
         if command == "set":
             parameter = msg[1]
             value = msg[2]
-            logger.debug(f"'{adapter.name}' setting '{parameter}' to '{value}'")
+            logger.debug(
+                f"'{adapter.name}' setting '{parameter}' to '{value}' [priority={priority}]"
+            )
             adapter.instrument[parameter] = value
             return

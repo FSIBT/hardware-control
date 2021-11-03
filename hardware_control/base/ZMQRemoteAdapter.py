@@ -14,7 +14,11 @@ import time
 
 import zmq
 
-from .zmq_helper import handle_zmq_message_from_app, check_adapter_online
+from .zmq_helper import (
+    handle_ZMQ_message_from_app,
+    check_adapter_online,
+    add_ZMQ_message_to_queue,
+)
 from .Instrument import Instrument
 
 logger = logging.getLogger(__name__)
@@ -35,14 +39,15 @@ class ZMQSingleInstrument:
 
     In the remote app, we use `ZMQRemoteInstrument` to connect to this class.
 
-
-
     """
 
     def __init__(self, instrument: Instrument, address: str):
         self.instrument = instrument
         self.name = instrument.name
         self.online = False
+
+        # priority queues for incoming commands
+        self.priority_queue = {0: [], 1: [], 2: []}
 
         self.zmq_context = zmq.Context()
 
@@ -101,15 +106,19 @@ class ZMQSingleInstrument:
                     self.instrument.try_connect()
                     check_adapter_online(self)
 
-                # check for messages from app
-                try:
-                    msg = self.zmq_subscriber.recv_string(flags=zmq.NOBLOCK)
-                except zmq.ZMQError:
-                    time.sleep(0.1)
-                    print(f"\r{time.time()}", end="")
-                    msg = None
-                if msg is not None:
-                    handle_zmq_message_from_app(self, msg, logger)
+                # get all ZMQ messages
+                get_messages = True
+                while get_messages:
+                    try:
+                        msg = self.zmq_subscriber.recv_string(flags=zmq.NOBLOCK)
+                        add_ZMQ_message_to_queue(self, msg)
+                    except zmq.ZMQError:
+                        get_messages = False
+
+                # handle messages in queue
+                handle_ZMQ_message_from_app(self)
+
+                print(f"\r{time.time()}", end="")
 
                 # check for message on the REQ/REP socket
                 try:

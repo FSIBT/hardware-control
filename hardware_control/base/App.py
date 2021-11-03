@@ -328,7 +328,9 @@ class App(QApplication):
             if callable(parameter_or_function):
                 parameter_or_function()
             else:
-                self.update_instrument_parameter(instrument, parameter_or_function)
+                self.update_instrument_parameter(
+                    instrument, parameter_or_function, priority=0
+                )
 
     @ensure_instrument_exists
     def add_auto_update_instrument_parameter(
@@ -355,7 +357,12 @@ class App(QApplication):
 
     @ensure_parameter_and_instrument_exists
     def set_instrument_parameter(
-        self, instrument: str, parameter: str, value: Any, skip_hooks=False
+        self,
+        instrument: str,
+        parameter: str,
+        value: Any,
+        priority: int = 1,
+        skip_hooks=False,
     ) -> None:
         """Send the value to the instrument thread via ZMQ.
 
@@ -370,6 +377,8 @@ class App(QApplication):
            The name of the parameter
         value
            The value to be set (needs to be able to be converted to a string)
+        priority
+           The priority of the message. See: py:func:`add_ZMQ_message_to_queue`
         skip_hooks
            If True, don't call the available hooks (usefull when
            loading settings from a file for example
@@ -390,20 +399,26 @@ class App(QApplication):
             return
 
         self._data[instrument][parameter]["set_value"] = value
-        self.zmq_publisher.send_string(f"{instrument} set {parameter} {value}")
+        self.zmq_publisher.send_string(
+            f"{instrument} {priority} set {parameter} {value}"
+        )
 
     @ensure_parameter_and_instrument_exists
-    def update_instrument_parameter(self, instrument: str, parameter: str) -> None:
+    def update_instrument_parameter(
+        self, instrument: str, parameter: str, priority: int = 1
+    ) -> None:
         """Sends request to the instrument thread via ZMQ to query the parameter value.
 
         Any pre_set_hooks will be called and the value will only be
         set if none of them returns None.
 
         """
-        self.zmq_publisher.send_string(f"{instrument} get {parameter}")
+        self.zmq_publisher.send_string(f"{instrument} {priority} get {parameter}")
 
     @ensure_parameter_and_instrument_exists
-    def call_instrument_command(self, instrument: str, command: str) -> None:
+    def call_instrument_command(
+        self, instrument: str, command: str, priority: int = 1
+    ) -> None:
         """Sends a command to the instrument via ZMQ.
 
         Any pre_call_hooks will be called, and the command will only
@@ -417,7 +432,7 @@ class App(QApplication):
             value = str(command)
 
         if value:
-            self.zmq_publisher.send_string(f"{instrument} command {command}")
+            self.zmq_publisher.send_string(f"{instrument} {priority} command {command}")
 
     @ensure_parameter_and_instrument_exists
     def get_instrument_parameter(

@@ -4,7 +4,11 @@ import time
 
 import zmq
 
-from .zmq_helper import handle_zmq_message_from_app, check_adapter_online
+from .zmq_helper import (
+    handle_ZMQ_message_from_app,
+    check_adapter_online,
+    add_ZMQ_message_to_queue,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +31,9 @@ class ZMQAdapter(threading.Thread):
         self.stop = stopevent
         self.name = instrument.name
         self.online = False
+
+        # priority queues for incoming commands
+        self.priority_queue = {0: [], 1: [], 2: []}
 
         # subscribe to main app
         self.zmq_subscriber = context.socket(zmq.SUB)
@@ -72,10 +79,14 @@ class ZMQAdapter(threading.Thread):
                 self.instrument.try_connect()
                 check_adapter_online(self)
 
-            try:
-                msg = self.zmq_subscriber.recv_string(flags=zmq.NOBLOCK)
-            except zmq.ZMQError:
-                time.sleep(0.1)
-                continue
+            # get all ZMQ messages
+            get_messages = True
+            while get_messages:
+                try:
+                    msg = self.zmq_subscriber.recv_string(flags=zmq.NOBLOCK)
+                    add_ZMQ_message_to_queue(self, msg)
+                except zmq.ZMQError:
+                    get_messages = False
 
-            handle_zmq_message_from_app(self, msg, logger)
+            # handle messages in queue
+            handle_ZMQ_message_from_app(self)
