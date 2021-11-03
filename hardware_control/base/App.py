@@ -373,12 +373,12 @@ class App(QApplication):
         ----------
         instrument
            The name of the instrument
-        paramter
+        parameter
            The name of the parameter
         value
            The value to be set (needs to be able to be converted to a string)
         priority
-           The priority of the message. See: py:func:`add_ZMQ_message_to_queue`
+           The priority of the message. See: :func:`.base.zmq_helper.add_ZMQ_message_to_queue`
         skip_hooks
            If True, don't call the available hooks (usefull when
            loading settings from a file for example
@@ -412,6 +412,15 @@ class App(QApplication):
         Any pre_set_hooks will be called and the value will only be
         set if none of them returns None.
 
+        Parameters
+        ----------
+        instrument
+           The name of the instrument
+        parameter
+           The name of the parameter
+        priority
+           The priority of the message. See: :func:`.base.zmq_helper.add_ZMQ_message_to_queue`
+
         """
         self.zmq_publisher.send_string(f"{instrument} {priority} get {parameter}")
 
@@ -424,6 +433,14 @@ class App(QApplication):
         Any pre_call_hooks will be called, and the command will only
         execute if none of the hooks returns None.
 
+        Parameters
+        ----------
+        instrument
+           The name of the instrument
+        command
+           The name of the command
+        priority
+           The priority of the message. See: :func:`.base.zmq_helper.add_ZMQ_message_to_queue`
         """
         try:
             pre_call_hooks = self._data[instrument][command]["pre_call_hooks"]
