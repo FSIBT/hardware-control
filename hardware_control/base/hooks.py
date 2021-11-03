@@ -77,7 +77,7 @@ def create_converter(lookuptable: Dict) -> Callable:
 
     def converter(value: str):
         if value not in lookuptable:
-            logger.error(f"Value '{value}'' not in lookuptable '{lookuptable}'")
+            logger.error(f"Value '{value}' not in lookuptable '{lookuptable}'")
             return None
         return lookuptable[value]
 
