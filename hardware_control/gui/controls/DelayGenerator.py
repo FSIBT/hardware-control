@@ -17,6 +17,7 @@ from ..widgets import (
     HCPushButton,
     HCSpinBox,
 )
+from ...base.hooks import format_float
 
 logger = logging.getLogger(__name__)
 
@@ -57,7 +58,7 @@ class DelayGenerator(QGroupBox):
         self.app.add_hook(
             self.instrument,
             "TRIGGER_MODE",
-            "post_read_hooks",
+            "pre_set_hooks",
             lambda x: self.enable_disable_hook(x),
         )
 
@@ -296,12 +297,19 @@ class DelayChannelWidget(QWidget):
                 self.instrument,
                 f"CH{self.channel}_DELAY",
                 label="t_offset [s]",
+                default_txt="0.0",
             )
             self.app.add_hook(
                 self.instrument,
                 f"CH{self.channel}_DELAY",
                 when="pre_set_hooks",
                 function=lambda delay: self.update_delay(delay),
+            )
+            self.app.add_hook(
+                self.instrument,
+                f"CH{self.channel}_DELAY",
+                when="post_read_hooks",
+                function=format_float(),
             )
 
             rels.remove(self.channel)
@@ -356,9 +364,9 @@ class DelayChannelWidget(QWidget):
         self.trig_impedance = HCComboBox(
             self.app,
             self.instrument,
-            parameter=f"CH{self.channel}_TRIGGER_IMPEDANCE",
+            f"CH{self.channel}_TRIGGER_IMPEDANCE",
             label="Trigger Impedance",
-            items=["50-Ohms", "Hi-Z"],
+            items=["50-OHMS", "HI-Z"],
         )
 
         self.channel_layout = QGridLayout()

@@ -215,7 +215,8 @@ class HCLineEdit(HCMixin, QLineEdit):
         parameter: str,
         label: str,
         label_align: str = "left",
-        return_set_value: bool = True,
+        return_set_value: bool = False,
+        default_txt: str = '----',
         validator=QDoubleValidator,
     ):
         super().__init__(
@@ -231,7 +232,7 @@ class HCLineEdit(HCMixin, QLineEdit):
         if self.validator is not None:
             self.setValidator(validator())
 
-        self.setText("----")
+        self.setText(default_txt)
 
         self.editingFinished.connect(self.value_change)
 
@@ -542,7 +543,7 @@ class HCComboBox(HCMixin, QComboBox):
                 self.setCurrentText(i)
                 break
         else:
-            logger.error(f"HCControlCombo: could not find '{value}' in item list")
+            logger.error(f"HCComboBox for '{self.parameter}': could not find '{value}' in item list")
 
 
 class HCDoubleSpinComboBox(HCMixin):
