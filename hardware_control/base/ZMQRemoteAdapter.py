@@ -1,10 +1,13 @@
 """Code to enable running and connecting to instruments on a different computer.
 
-Defines `ZMQSingleInstrument` that can wrap an instrument driver, so that it can
-easily run in a separate program and that will have all the ZMQ ports
-required, so that an App object can easily connect to it.
+Defines :class:`ZMQSingleInstrument` that can wrap an single
+instrument driver. It creates a single REQ/REP channel that a main App
+can use to establish connection. It then creates the standard ZMQ
+publisher and subscriber to talk to the remote App.
 
-`ZMQRemoteInstrument` is used in the main app to connect to `ZMQSingleInstrument`.
+:class:`ZMQRemoteAdapter` is used in the main app to connect to
+:class:`ZMQSingleInstrument` and will handle all the REQ/REP commands
+that are needed.
 
 """
 
@@ -37,7 +40,18 @@ class ZMQSingleInstrument:
     then use this channel to supply this class with the ip address and
     port to be used to listen to commands.
 
-    In the remote app, we use `ZMQRemoteInstrument` to connect to this class.
+    In the remote app, we use :class:`ZMQRemoteAdapter` to connect to this class.
+
+    Currently there is no way to end a :class:`ZMQSingleInstrument`
+    instance and one needs to exit via Ctrl-C.
+
+    Parameters
+    ----------
+    instrument
+        An instrument driver
+    address
+        The ZMQ address for a REQ/REP socket that is used to estable the
+        communication with a remote app. Should be in "<ipaddress>:<portnumber>" format
 
     """
 
@@ -137,7 +151,7 @@ class ZMQSingleInstrument:
                     self.zmq_new.send_string(out)
 
 
-class ZMQRemoteInstrument:
+class ZMQRemoteAdapter:
     """A placeholder for a remote instrument that, for example, could be running on a remote computer.
 
     To be able to connect to an instrument on a remote computer. The
@@ -180,6 +194,7 @@ class ZMQRemoteInstrument:
             )
 
     def list_parameters(self):
+        """Get a list of all available parameters from the remote instrument."""
         logger.info(f"{self.name} requesting parameter list")
         self.req_rep_socket.send_string(f"LIST_PARAMETERS")
         message = self.req_rep_socket.recv_string()
@@ -187,6 +202,7 @@ class ZMQRemoteInstrument:
         return read_set_commands
 
     def join(self):
+        """Have the remote instrument disconnect from the App."""
         logger.info(f"{self.name} stopping remote")
         self.req_rep_socket.send_string("STOP")
         self.req_rep_socket.recv_string()

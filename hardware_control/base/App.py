@@ -13,7 +13,7 @@ import zmq
 from .Dataset import Dataset
 from .Instrument import Instrument
 from .ZMQAdapter import ZMQAdapter
-from .ZMQRemoteAdapter import ZMQRemoteInstrument
+from .ZMQRemoteAdapter import ZMQRemoteAdapter
 from .hooks import call_hooks
 
 logger = logging.getLogger(__name__)
@@ -239,7 +239,7 @@ class App(QApplication):
         This is relatively straightforward since the ZMQ publishers that update
         the data model do not care about which computer they are running. The main
         task is to create subscribers to the already existing publishers (from the
-        app and on the remote side). This task is mostly handled by ZMQRemoteInstrument.
+        app and on the remote side). This task is mostly handled by ZMQRemoteAdapter.
 
         Parameters
         ----------
@@ -255,7 +255,7 @@ class App(QApplication):
             )
             return
 
-        zmq_instrument = ZMQRemoteInstrument(
+        zmq_instrument = ZMQRemoteAdapter(
             name,
             address,
             self.zmq_context,
