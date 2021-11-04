@@ -11,7 +11,7 @@ have equivalent ones in Qt directly.
 
 import logging
 import pkg_resources
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, Union, Callable, Any, List
 
 from PyQt5.QtWidgets import (
     QGridLayout,
@@ -25,7 +25,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtGui import QPixmap, QIcon, QDoubleValidator, QFont, QFontMetrics
 from PyQt5 import QtCore
-from typing import List
+from ...base.hooks import call_hooks
 
 
 logger = logging.getLogger(__name__)
@@ -124,6 +124,7 @@ class HCMixin:
         self.app = app
         self.instrument = instrument
         self.parameter = parameter
+        self.widget_hooks = []
 
         super().__init__(**kwargs)
 
@@ -150,6 +151,24 @@ class HCMixin:
             )
             self.label.hide()
             self.hide()
+
+    def add_widget_hook(
+        self,
+        function: Callable[[Any], Any],
+    ):
+        """Add a hook function to be called on a widget's value."""
+
+        self.widget_hooks.append(function)
+
+    def call_widget_hooks(self, value):
+        """Apply hooks to a widget value.
+
+        This function is meant to be inherited by HC widgets in order to
+        to change the widget's parameter value.
+        """
+
+        value = call_hooks(self.widget_hooks, value)
+        return value
 
 
 class HCLabel(HCMixin, QLabel):
@@ -237,7 +256,7 @@ class HCLineEdit(HCMixin, QLineEdit):
         self.editingFinished.connect(self.value_change)
 
     def value_change(self) -> None:
-        value = self.text()
+        value = super().call_widget_hooks(self.text())
         self.app.set_instrument_parameter(self.instrument, self.parameter, value)
 
     def hc_update(self) -> None:
@@ -285,7 +304,7 @@ class HCDoubleSpinBox(HCMixin, QDoubleSpinBox):
         self.editingFinished.connect(self.value_change)
 
     def value_change(self) -> None:
-        self.value = self.text()
+        value = super().call_widget_hooks(self.text())
         self.app.set_instrument_parameter(self.instrument, self.parameter, self.value)
 
     def hc_update(self) -> None:
@@ -343,12 +362,12 @@ class HCOnOffButton(HCMixin, QPushButton):
         parameter: str,
         label: str = "",
         label_align: str = "left",
-        show_icon: bool = False,
-        icon_checked: str = "button-power-on.svg",
-        icon_unchecked: str = "button-power-off.svg",
         show_text: bool = True,
+        show_icon: bool = False,
         text_checked: str = "On",
         text_unchecked: str = "Off",
+        icon_checked: str = "button-power-on.svg",
+        icon_unchecked: str = "button-power-off.svg",
     ):
         super().__init__(
             app=app,
@@ -360,13 +379,15 @@ class HCOnOffButton(HCMixin, QPushButton):
         )
 
         self.show_icon = show_icon
-        self.icon_checked = load_icon(icon_checked)
-        self.icon_unchecked = load_icon(icon_unchecked)
-        self.icon_unknown = load_icon("button-power-unknown.svg")
+        if self.show_icon:
+            self.icon_checked = load_icon(icon_checked)
+            self.icon_unchecked = load_icon(icon_unchecked)
+            self.icon_unknown = load_icon("button-power-unknown.svg")
 
         self.show_text = show_text
-        self.text_checked = text_checked
-        self.text_unchecked = text_unchecked
+        if self.show_text:
+            self.text_checked = text_checked
+            self.text_unchecked = text_unchecked
 
         self.clicked.connect(self.value_change)
         self.setCheckable(True)
@@ -387,19 +408,22 @@ class HCOnOffButton(HCMixin, QPushButton):
 
     def set_state(self, value):
         if self.show_icon:
-            if value:
+            if value == "True":
+                print("checked", flush=True)
                 self.setIcon(self.icon_checked)
-            else:
+            elif value == "False":
+                print("unchecked", flush=True)
                 self.setIcon(self.icon_unchecked)
 
         if self.show_text:
-            if value:
+            if value == "True":
                 self.setText(self.text_checked)
-            else:
+            elif value == "False":
                 self.setText(self.text_unchecked)
 
     def value_change(self) -> None:
         value = self.isChecked()
+        value = super().call_widget_hooks(value)
         self.app.set_instrument_parameter(self.instrument, self.parameter, value)
 
         self.set_state(value)
@@ -422,12 +446,13 @@ class HCOnOffIndicator(HCMixin, QLabel):
         instrument: str,
         parameter: str,
         label: str = "",
+        label_align: str = "left",
+        show_text: bool = False,
         show_icon: bool = False,
-        icon_checked: str = "on-off-indicator-on.svg",
-        icon_unchecked: str = "on-off-indicator-off.svg",
-        show_text: bool = True,
         text_checked: str = "On",
         text_unchecked: str = "Off",
+        icon_checked: str = "on-off-indicator-on.svg",
+        icon_unchecked: str = "on-off-indicator-off.svg",
         tooltip: str = "",
     ):
         super().__init__(
@@ -437,24 +462,30 @@ class HCOnOffIndicator(HCMixin, QLabel):
             text=label,
         )
 
-        self.icon_checked = load_icon(icon_checked)
-        self.icon_unchecked = load_icon(icon_unchecked)
-        self.icon_unknown = load_icon("on-off-indicator-unknown.svg")
+        self.label = QLabel(label)
+        self.show_icon = show_icon
+        self.show_text = show_text
+        self.text_checked = text_checked
+        self.text_unchecked = text_unchecked
+
+        self.icon_checked = load_pixmap(icon_checked)
+        self.icon_unchecked = load_pixmap(icon_unchecked)
+        self.icon_unknown = load_pixmap("on-off-indicator-unknown.svg")
 
         # set default to unkown state
-        if show_icon:
-            self.setIcon(self.icon_unknown)
-        if show_text:
+        if self.show_icon:
+            self.setPixmap(self.icon_unknown)
+        if self.show_text:
             self.setText("unkown")
 
         self.setMouseTracking(True)
-        self.setToolTip(self.label)
+        self.setToolTip(tooltip)
 
         self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
     def sizeHint(self):
         if self.show_icon and not self.show_text:
-            return QSize(10, 20)
+            return QtCore.QSize(10, 20)
         else:
             return super().sizeHint()
 
@@ -467,16 +498,18 @@ class HCOnOffIndicator(HCMixin, QLabel):
         return False
 
     def set_state(self, value):
+        value = super().call_widget_hooks(value)
+
         if self.show_icon:
-            if value:
-                self.setIcon(self.icon_checked)
-            else:
-                self.setIcon(self.icon_unchecked)
+            if value == "True":
+                self.setPixmap(self.icon_checked)
+            elif value == "False":
+                self.setPixmap(self.icon_unchecked)
 
         if self.show_text:
-            if value:
+            if value == "True":
                 self.setText(self.text_checked)
-            else:
+            elif value == "False":
                 self.setText(self.text_unchecked)
 
     def hc_update(self):
@@ -529,7 +562,7 @@ class HCComboBox(HCMixin, QComboBox):
         self.currentIndexChanged.connect(self.value_change)
 
     def value_change(self) -> None:
-        value = self.currentText().upper()
+        value = super().call_widget_hooks(self.currentText().upper())
         if self.lookuptable:
             value = self.lookuptable[value]
         self.app.set_instrument_parameter(self.instrument, self.parameter, value)
@@ -590,6 +623,7 @@ class HCDoubleSpinComboBox(HCMixin):
         combo_value = self.units[self.combo.currentText()]
         spin_value = float(self.spin.text())
         self.value = spin_value * combo_value
+        value = super().call_widget_hooks(self.value)
 
         self.app.set_instrument_parameter(self.instrument, self.parameter, self.value)
 
@@ -627,7 +661,7 @@ class HCSpinBox(HCMixin, QSpinBox):
         self.valueChanged.connect(self.value_change)
 
     def value_change(self) -> None:
-        self.value = self.get_current_value()
+        self.value = super().call_widget_hooks(self.get_current_value())
         self.app.set_instrument_parameter(self.instrument, self.parameter, self.value)
 
     def hc_update(self) -> None:
@@ -699,6 +733,8 @@ class HCFixedLabel(HCMixin, QLabel):
         self.setText(self.value)
 
     def setText(self, text: str) -> None:
+        text = super().call_widget_hooks(text)
+
         if self.unit:
             try:
                 text = f"{float(text):.3g} {self.unit}"
