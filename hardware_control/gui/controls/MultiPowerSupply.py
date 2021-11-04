@@ -15,12 +15,14 @@ from PyQt5.QtWidgets import (
 from typing import List
 
 from ..widgets import (
-    load_icon,
+    load_pixmap,
     HCLineEdit,
     HCLabel,
     HCOnOffButton,
     HCHeader,
 )
+
+from ...base.hooks import format_float
 
 logger = logging.getLogger(__name__)
 
@@ -160,7 +162,7 @@ class MultiPowerSupply(QGroupBox):
             )
             if None not in [V_out_value, I_out_value]:
                 cw.Power_out_value.setText(
-                    f"{float(V_out_value) * float(I_out_value)} W"
+                    f"{round(float(V_out_value) * float(I_out_value), 3)} W"
                 )
 
             # If status panel is enabled, update it
@@ -232,22 +234,7 @@ class PowerSupplyChannel(QWidget):
             self.set_label(f"Channel {self.channel}")
 
         # Create readout and update parameters for the channel widget
-        self.Voltage_set = HCLabel(
-            self.app,
-            self.instrument,
-            f"CH{self.channel}_V_SET",
-            label="V Set",
-            label_align="right",
-            unit="V",
-        )
-        self.Current_set = HCLabel(
-            self.app,
-            self.instrument,
-            f"CH{self.channel}_I_SET",
-            label="I Set",
-            label_align="right",
-            unit="A",
-        )
+
         self.Voltage_out = HCLabel(
             self.app,
             self.instrument,
@@ -304,22 +291,19 @@ class PowerSupplyChannel(QWidget):
             "Current (A)",
             label_align="right",
         )
+        self.app.add_hook(self.instrument, f"CH{self.channel}_I_SET", "post_read_hooks", format_float(".3e"))
 
         self.enabled_but = HCOnOffButton(
             self.app,
             self.instrument,
             f"CH{self.channel}_ENABLE",
-            on_text="Enabled",
-            off_text="Disabled",
+            text_checked="Enabled",
+            text_unchecked="Disabled",
         )
 
         # Qt Layout for a readout and update parameters of the channel widget
         self.readout_grid = QGridLayout()
-        self.readout_grid.addWidget(self.Voltage_set.label, 0, 0)
-        self.readout_grid.addWidget(self.Voltage_set, 0, 1)
-        self.readout_grid.addWidget(self.Current_set.label, 1, 0)
-        self.readout_grid.addWidget(self.Current_set, 1, 1)
-
+        
         self.readout_grid.addWidget(self.Voltage_out.label, 0, 2)
         self.readout_grid.addWidget(self.Voltage_out, 0, 3)
         self.readout_grid.addWidget(self.Current_out.label, 1, 2)
@@ -351,9 +335,9 @@ class PowerSupplyChannel(QWidget):
 
         # Potentially add a status panel to the master channel layout
         if show_status_panel:
-            self.ccurr_ind = load_icon("ccurrent_label.svg")
-            self.cvolt_ind = load_icon("cvoltage_label.svg")
-            self.na_ind = load_icon("na_label.svg")
+            self.ccurr_ind = load_pixmap("ccurrent_label.svg")
+            self.cvolt_ind = load_pixmap("cvoltage_label.svg")
+            self.na_ind = load_pixmap("na_label.svg")
 
             self.CC_ind_label = QLabel("CC:")
             self.CC_indic = QLabel()
