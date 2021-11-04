@@ -636,7 +636,9 @@ class Instrument:
                 unit = int(unit)
 
                 if command == "write_coil":
-                    self.device.write_coil(address=address, values=value, unit=unit)
+                    self.device.write_coil(address=address, value=value, unit=unit)
+                elif command == "write_registers":
+                    self.device.write_registers(address=address, values=value, unit=unit)
                 else:
                     logger.error(
                         f"modbus command for {command} currently not implemented for instrument '{self.name}'"

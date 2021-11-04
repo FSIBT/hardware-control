@@ -58,7 +58,7 @@ class Alicat_M_Series(Instrument):
         self.add_parameter(
             "RATE",
             read_command=f"read_input_registers:1208:2:{self.unit}",
-            set_command=f"write_coil:1009:{{}}:{self.unit}",
+            set_command=f"write_registers:1009:{{}}:{self.unit}",
             pre_hooks=[_IEEE754_converter_to_ulong_pair],
             post_hooks=[_modbus_registers_to_float],
             dummy_return=lambda: random.randint(0, 10),
