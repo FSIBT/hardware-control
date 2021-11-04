@@ -139,10 +139,10 @@ class Instrument:
     def parse_connection_addr(self) -> None:
         """Figures out if pyvisa or other methods should be used.
 
-        Currently pyvisa addresses are automatically recognised,
-        everything else is assumed to be in the form of either just an
+        Currently pyvisa addresses are automatically recognised;
+        everything else is assumed to be in the form of either an
         IP address or an IP address and a port number seperated by a
-        ":".  For this case sockets are automatically assumed. If
+        ":".  For these cases sockets are automatically assumed. If
         modbus should be used, the user needs to overwrite this in the
         init function of the instrument.
 

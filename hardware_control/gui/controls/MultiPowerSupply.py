@@ -20,6 +20,7 @@ from ..widgets import (
     HCLabel,
     HCOnOffButton,
     HCHeader,
+    HCOnOffIndicator,
 )
 
 from ...base.hooks import format_float
@@ -154,26 +155,16 @@ class MultiPowerSupply(QGroupBox):
                 )
 
             # Calculate and update the value of the channel's power out
-            V_out_value = self.app.get_instrument_parameter(
+            cw.V_out_value = self.app.get_instrument_parameter(
                 self.instrument, f"CH{cw.channel}_V_OUT"
             )
-            I_out_value = self.app.get_instrument_parameter(
+            cw.I_out_value = self.app.get_instrument_parameter(
                 self.instrument, f"CH{cw.channel}_I_OUT"
             )
-            if None not in [V_out_value, I_out_value]:
+            if None not in [cw.V_out_value, cw.I_out_value]:
                 cw.Power_out_value.setText(
-                    f"{round(float(V_out_value) * float(I_out_value), 3)} W"
+                    f"{round(float(cw.V_out_value) * float(cw.I_out_value), 3)} W"
                 )
-
-            # If status panel is enabled, update it
-            I_set_value = self.app.get_instrument_parameter(
-                self.instrument, f"CH{cw.channel}_I_SET"
-            )
-            if None not in [I_set_value, I_out_value] and self.show_status_panel:
-                if float(I_out_value) >= float(I_set_value) * 0.95:
-                    cw.CC_indic.setPixmap(cw.ccurr_ind)
-                else:
-                    cw.CC_indic.setPixmap(cw.cvolt_ind)
 
     def set_maxI(self, channel: int, maxI: float):
         """Sets an internal limit for the current from channel 'n'."""
@@ -240,7 +231,6 @@ class PowerSupplyChannel(QWidget):
             self.instrument,
             f"CH{self.channel}_V_OUT",
             label="V Out",
-            label_align="right",
             unit="V",
         )
         self.Current_out = HCLabel(
@@ -248,14 +238,13 @@ class PowerSupplyChannel(QWidget):
             self.instrument,
             f"CH{self.channel}_I_OUT",
             label="I Out",
-            label_align="right",
             unit="A",
         )
 
         # Power out is calculated from V_out and I_out. See MultiPowerSupply.update_readout() above.
         self.Power_out_label = QLabel("P Out:")
         self.Power_out_value = QLabel("----")
-        self.Power_out_value.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.Power_out_value.setAlignment(QtCore.Qt.AlignLeft)
 
         # Potentially set limits on how hight to set voltage and current
         if self.show_VI_limits:
@@ -264,7 +253,6 @@ class PowerSupplyChannel(QWidget):
                 self.instrument,
                 f"CH{self.channel}_V_MAX",
                 label="V Max",
-                label_align="right",
                 unit="V",
             )
             self.Current_max = HCLabel(
@@ -272,7 +260,6 @@ class PowerSupplyChannel(QWidget):
                 self.instrument,
                 f"CH{self.channel}_I_MAX",
                 label="I Max",
-                label_align="right",
                 unit="A",
             )
 
@@ -281,7 +268,6 @@ class PowerSupplyChannel(QWidget):
             self.instrument,
             f"CH{self.channel}_V_SET",
             "Voltage (V)",
-            label_align="right",
         )
 
         self.Current = HCLineEdit(
@@ -289,28 +275,46 @@ class PowerSupplyChannel(QWidget):
             self.instrument,
             f"CH{self.channel}_I_SET",
             "Current (A)",
-            label_align="right",
         )
-        self.app.add_hook(self.instrument, f"CH{self.channel}_I_SET", "post_read_hooks", format_float(".3e"))
+        self.app.add_hook(
+            self.instrument,
+            f"CH{self.channel}_I_SET",
+            "post_read_hooks",
+            format_float(".3e"),
+        )
 
         self.enabled_but = HCOnOffButton(
             self.app,
             self.instrument,
             f"CH{self.channel}_ENABLE",
-            text_checked="Enabled",
-            text_unchecked="Disabled",
+            label_align="right",
+            text_checked="Disable",
+            text_unchecked="Enable",
+        )
+        self.enabled_but.setCheckable(False)
+
+        self.enabled_ind = HCOnOffIndicator(
+            self.app,
+            self.instrument,
+            f"CH{self.channel}_ENABLE",
+            label_align="right",
+            show_icon=True,
+            icon_checked="green_ind.svg",
+            icon_unchecked="red_ind.svg",
         )
 
         # Qt Layout for a readout and update parameters of the channel widget
         self.readout_grid = QGridLayout()
-        
-        self.readout_grid.addWidget(self.Voltage_out.label, 0, 2)
-        self.readout_grid.addWidget(self.Voltage_out, 0, 3)
+
+        self.readout_grid.addWidget(self.Voltage.label, 0, 0)
+        self.readout_grid.addWidget(self.Voltage, 0, 1)
+        self.readout_grid.addWidget(self.Voltage_out.label, 1, 0)
+        self.readout_grid.addWidget(self.Voltage_out, 1, 1)
+
+        self.readout_grid.addWidget(self.Current.label, 0, 2)
+        self.readout_grid.addWidget(self.Current, 0, 3)
         self.readout_grid.addWidget(self.Current_out.label, 1, 2)
         self.readout_grid.addWidget(self.Current_out, 1, 3)
-
-        self.readout_grid.addWidget(self.Power_out_label, 2, 2)
-        self.readout_grid.addWidget(self.Power_out_value, 2, 3)
 
         if self.show_VI_limits:
             self.readout_grid.addWidget(self.Voltage_max.label, 3, 0)
@@ -321,12 +325,12 @@ class PowerSupplyChannel(QWidget):
         else:
             added_row = 0
 
-        self.readout_grid.addWidget(self.Voltage.label, 3 + added_row, 0)
-        self.readout_grid.addWidget(self.Voltage, 3 + added_row, 1)
-        self.readout_grid.addWidget(self.Current.label, 4 + added_row, 0)
-        self.readout_grid.addWidget(self.Current, 4 + added_row, 1)
+        self.readout_grid.addWidget(self.Power_out_label, 3 + added_row, 2)
+        self.readout_grid.addWidget(self.Power_out_value, 3 + added_row, 3)
+
         if self.power_button:
-            self.readout_grid.addWidget(self.enabled_but, 5 + added_row, 0)
+            self.readout_grid.addWidget(self.enabled_but, 3 + added_row, 0)
+            self.readout_grid.addWidget(self.enabled_ind, 3 + added_row, 1)
 
         # Combine channel header and readout/update parameters in a master channel layout
         self.channel_layout = QGridLayout()
@@ -335,24 +339,41 @@ class PowerSupplyChannel(QWidget):
 
         # Potentially add a status panel to the master channel layout
         if show_status_panel:
-            self.ccurr_ind = load_pixmap("ccurrent_label.svg")
-            self.cvolt_ind = load_pixmap("cvoltage_label.svg")
-            self.na_ind = load_pixmap("na_label.svg")
-
-            self.CC_ind_label = QLabel("CC:")
-            self.CC_indic = QLabel()
-            self.CC_indic.setPixmap(self.na_ind)
+            self.current_ind = HCOnOffIndicator(
+                self.app,
+                self.instrument,
+                f"CH{self.channel}_I_SET",
+                "Constant Current/Voltage:",
+                show_icon=True,
+                icon_checked="ccurrent_label.svg",
+                icon_unchecked="cvoltage_label.svg",
+            )
+            # If the current set value is less than 95% of the current read out,
+            # show the constant current indicator; otherwise, show the constant
+            # voltage indicator
+            self.current_ind.add_widget_hook(
+                lambda value: self.set_current_indicator(value)
+            )
 
             self.status_panel = QGroupBox()
             self.status_grid = QGridLayout()
-            self.status_grid.addWidget(self.CC_ind_label, 0, 1)
-            self.status_grid.addWidget(self.CC_indic, 1, 1)
+            self.status_grid.addWidget(self.current_ind.label, 0, 0)
+            self.status_grid.addWidget(self.current_ind, 0, 1)
             self.status_panel.setLayout(self.status_grid)
 
             self.channel_layout.addWidget(self.status_panel, 2, 0)
 
         self.channel_layout.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignTop)
         self.setLayout(self.channel_layout)
+
+    def set_current_indicator(self, value):
+        """Determine whether the instrument is in constant current or voltage mode"""
+
+        if None not in [self.I_out_value, value]:
+            if float(self.I_out_value) >= float(value) * 0.95:
+                return True
+        else:
+            return False
 
     def set_label(self, label: str):
         """Sets a label header"""

@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 def _parse_instrument_response(value: str) -> Union[str, None]:
     value = value.strip(r"\r")
-    print('debug1',value)
+    print("debug1", value)
     if value.endswith("CMD:OK"):
         return None
     print(value[value.find("VAL:") + 4 :])
@@ -106,7 +106,10 @@ class Caen_14xxET(Instrument):
                 f"CH{channel}_ENABLE",
                 read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
                 set_command=f"$BD:00,CMD:SET,CH:{channel},PAR:{{}}",
-                post_hooks=[_create_parse_status(1), lambda value: "ON" if value == 1 else "OFF"],
+                post_hooks=[
+                    _create_parse_status(1),
+                    lambda value: "ON" if value == 1 else "OFF",
+                ],
                 dummy_return="False",
             )
             self.add_lookup(f"CH{channel}_ENABLE", {"True": "ON", "False": "OFF"})
@@ -150,9 +153,7 @@ class Caen_14xxET(Instrument):
                 read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:VSET",
                 set_command=f"$BD:00,CMD:SET,CH:{channel},PAR:VSET,VAL:{{}}",
                 pre_hooks=[self.range_validator(self.max_V, channel)],
-                post_hooks=[
-                    _parse_instrument_response, format_float(".3e")
-                ],
+                post_hooks=[_parse_instrument_response, format_float(".3e")],
                 dummy_return="10.0",
             )
 
@@ -160,7 +161,10 @@ class Caen_14xxET(Instrument):
                 f"CH{channel}_I_SET",
                 read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:ISET",
                 set_command=f"$BD:00,CMD:SET,CH:{channel},PAR:ISET,VAL:{{}}",
-                pre_hooks=[self.range_validator(self.max_I, channel), scaling_converter(1e6)],
+                pre_hooks=[
+                    self.range_validator(self.max_I, channel),
+                    scaling_converter(1e6),
+                ],
                 post_hooks=[
                     _parse_instrument_response,
                     scaling_converter(1e-6),
@@ -190,29 +194,34 @@ class Caen_14xxET(Instrument):
     def _read_V_max(self, channel):
         def get_value():
             return self.max_V[channel]
+
         return get_value
 
     def _set_V_max(self, channel):
         def set_value(value):
             self.max_V[channel] = float(value)
+
         return set_value
 
     def _read_I_max(self, channel):
         def get_value():
             return self.max_I[channel]
+
         return get_value
 
     def _set_I_max(self, channel):
         def set_value(value):
             self.max_I[channel] = float(value)
+
         return set_value
 
     def range_validator(self, maxlst, channel):
         def validator(value):
             value = float(value)
-            if value <0:
+            if value < 0:
                 return 0
             return min(value, maxlst[channel])
+
         return validator
 
     def _return_status(value):
@@ -236,6 +245,6 @@ class Caen_14xxET(Instrument):
 
         return status
 
-    def write(self, command:str):
+    def write(self, command: str):
         """The write commands on the CAEN always send back a '#CMD:OK' that needs to be read back."""
         self.query(command)
