@@ -57,7 +57,7 @@ def add_ZMQ_message_to_queue(adapter, msg: str) -> None:
                         adapter.priority_queue[0].pop(i)
                         break
             adapter.priority_queue[0].append(msg_rest)
-            return
+        return
     if priority == 1:
         if msg_compare not in adapter.priority_queue[1]:
             # special check for set where we ignore the value
@@ -67,12 +67,14 @@ def add_ZMQ_message_to_queue(adapter, msg: str) -> None:
                         adapter.priority_queue[1].pop(i)
                         break
             adapter.priority_queue[1].append(msg_rest)
-            return
+        return
     if priority == 2:
         adapter.priority_queue[2].append(msg_rest)
         return
 
-    logger.error(f"'{adapter.name}' got invalid priority in message '{msg}'")
+    logger.error(
+        f"'{adapter.name}' got invalid priority '{priority}' in message '{msg}'"
+    )
 
 
 def handle_ZMQ_message_from_app(adapter) -> None:
@@ -142,6 +144,10 @@ def handle_ZMQ_message_from_app(adapter) -> None:
                 )
                 return
             value = adapter.instrument.get_value(parameter)
+            # make sure that there are no spaces in the value string
+            value = f"{value}"
+            value = value.replace(" ", "")
+
             logger.debug(f"sending value '{value}' back for {parameter}")
             if value is not None:
                 adapter.zmq_publisher.send_string(
