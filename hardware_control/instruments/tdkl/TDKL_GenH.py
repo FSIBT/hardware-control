@@ -38,32 +38,38 @@ class TDKL_GenH(Instrument):
             connection_addr=connection_addr,
         )
 
+        # Instrument only returns first letter of the words ON and OFF
+        # But to set the instrument, one must use full words
         self.add_parameter(
             "CH1_ENABLE",
             read_command=":OUTP:STAT?",
             set_command=":OUTP:STAT {}",
-            pre_hooks=[lambda value: "ON" if value == True else "OFF"],
-            post_hooks=[lambda value: True if value == "1\n" else False],
+            pre_hooks=[lambda x: "ON" if x == "True" else "OFF"],
+            post_hooks=[lambda x: "True" if x == "O" else "False"],
             dummy_return="False",
         )
 
+        # Voltage on instrument front panel when "prev" is pressed
         self.add_parameter(
             "CH1_V_SET",
             read_command=":SOUR:VOLT:LEV:IMM:AMPL?",
             set_command=":SOUR:VOLT:LEV:IMM:AMPL {}",
             dummy_return="10.0",
         )
+        # Current on instrument front panel when "prev" is pressed
         self.add_parameter(
             "CH1_I_SET",
             read_command=":SOUR:CURR:LEV:IMM:AMPL?",
             set_command=":SOUR:CURR:LEV:IMM:AMPL {}",
             dummy_return="15.0",
         )
+        # Voltage on instrument front panel
         self.add_parameter(
             "CH1_V_OUT",
             read_command=":MEAS:VOLT?",
             dummy_return="10.0",
         )
+        # Current on instrument front panel
         self.add_parameter(
             "CH1_I_OUT",
             read_command=":MEAS:CURR?",

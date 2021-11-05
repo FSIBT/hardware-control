@@ -49,9 +49,9 @@ def call_hooks(hooks_list: List[Callable], value: str) -> Optional[str]:
        The value to be manipulated
 
     """
-    if value is None:
+    if value is None or value == "None":
         return None
-    
+
     for hook in hooks_list:
         if callable(hook):
             value = hook(value)

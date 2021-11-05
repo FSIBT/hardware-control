@@ -164,7 +164,13 @@ class HCMixin:
     def hc_update(self):
         """Apply hooks to a new widget value."""
 
-        if hasattr(self, "hasFocus") and self.hasFocus():
+        # Don't update an HC widget if the focus is on the widget (if the widget has a focus)
+        # This does not apply to HCOnOffButtons
+        if (
+            hasattr(self, "hasFocus")
+            and self.hasFocus()
+            and not self.__class__.__name__ == "HCOnOffButton"
+        ):
             logger.debug(f"'{self.name}' has focus, not updating")
             return
 
@@ -411,10 +417,8 @@ class HCOnOffButton(HCMixin, QPushButton):
     def set_state(self, value):
         if self.show_icon:
             if value == "True":
-                print("checked", flush=True)
                 self.setIcon(self.icon_checked)
             elif value == "False":
-                print("unchecked", flush=True)
                 self.setIcon(self.icon_unchecked)
 
         if self.show_text:
@@ -424,9 +428,10 @@ class HCOnOffButton(HCMixin, QPushButton):
                 self.setText(self.text_unchecked)
 
     def value_change(self) -> None:
-        value = self.isChecked()
-        self.app.set_instrument_parameter(self.instrument, self.parameter, value)
-        self.set_state(value)
+        """Change value to opposite of current value."""
+        value = self.app.get_instrument_parameter(self.instrument, self.parameter)
+        new_value = not (value == "True")
+        self.app.set_instrument_parameter(self.instrument, self.parameter, new_value)
 
     def widget_update(self, value):
         self.set_state(value)

@@ -241,6 +241,7 @@ class Keysight_4000X(Instrument):
 
         # Initial configure call
         self.write("CONFIG_READ_WAVE")
+        self.write("\n*CLS")
 
     def _read_waveform(self, channel: int):
         """Reads a waveform from the oscilloscope.
@@ -300,6 +301,9 @@ class Keysight_4000X(Instrument):
         x_ref = self.query(":WAV:XREF?")
         # Read X Increment
         x_incr = self.query(":WAV:XINC?")
+
+        if x_orig is None:
+            return "[[],[]]"
 
         try:
             # Convert X Origin
