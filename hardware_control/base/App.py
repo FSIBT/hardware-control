@@ -287,36 +287,38 @@ class App(QApplication):
         """
 
         for name, sub in self.zmq_subscribers.items():
-            try:
-                msg = sub.recv_string(flags=zmq.NOBLOCK)
-            except zmq.ZMQError:
-                continue
-            logger.debug(f"App got '{msg}' from '{name}'")
+            # handle all messages in queue
+            while True:
+                try:
+                    msg = sub.recv_string(flags=zmq.NOBLOCK)
+                except zmq.ZMQError:
+                    break
+                logger.debug(f"App got '{msg}' from '{name}'")
 
-            try:
-                inst_name, parameter, value = msg.split()
-            except ValueError:
-                logger.error(
-                    f"{msg.split()} has too few or too many values (expected 3)."
-                )
-                return
-            assert inst_name == name
+                try:
+                    inst_name, parameter, value = msg.split()
+                except ValueError:
+                    logger.error(
+                        f"{msg.split()} has too few or too many values (expected 3)."
+                    )
+                    return
+                assert inst_name == name
 
-            if name not in self._data:
-                logger.error(f"{name} not available in data modell")
-                return
-            if parameter not in self._data[name]:
-                logger.error(f"{parameter} not available for instrument {name}")
-                return
+                if name not in self._data:
+                    logger.error(f"{name} not available in data modell")
+                    return
+                if parameter not in self._data[name]:
+                    logger.error(f"{parameter} not available for instrument {name}")
+                    return
 
-            post_read_hooks = self._data[name][parameter]["post_read_hooks"]
-            value = call_hooks(post_read_hooks, value)
-            if value is not None:
-                # update value
-                self._data[name][parameter]["read_value"] = value
-                # update widgets
-                for w in self._data[name][parameter]["widgets"]:
-                    w.hc_update()
+                post_read_hooks = self._data[name][parameter]["post_read_hooks"]
+                value = call_hooks(post_read_hooks, value)
+                if value is not None:
+                    # update value
+                    self._data[name][parameter]["read_value"] = value
+                    # update widgets
+                    for w in self._data[name][parameter]["widgets"]:
+                        w.hc_update()
 
     def update_instruments(self) -> None:
         for instrument, parameter_or_function in self.request_updates:
