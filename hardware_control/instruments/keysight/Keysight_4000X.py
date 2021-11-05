@@ -4,6 +4,8 @@
 
 """
 
+from functools import partial
+import json
 import logging
 import numpy as np
 
@@ -14,6 +16,8 @@ from ...base.hooks import (
     expected_input_validator,
     make_negative,
     max_len_converter,
+    substring_hook,
+    range_validator,
 )
 
 logger = logging.getLogger(__name__)
@@ -83,7 +87,7 @@ class Keysight_4000X(Instrument):
             default_port=5025,
         )
 
-        self.chan_nums = [0, 1, 2, 3]
+        self.chan_nums = [1, 2, 3, 4]
 
         self.num_vert_divisions = 8
         self.check_connection_commands = "*IDN?"
@@ -92,7 +96,7 @@ class Keysight_4000X(Instrument):
             "TIMEBASE",
             read_command=":TIM:SCAL?",
             set_command=":TIM:SCAL {}",
-            pre_hooks=[format_float(".6E")],
+            pre_hooks=[range_validator(1e-9, 50), format_float(".6E")],
             dummy_return="5e-3",
         )
 
@@ -149,6 +153,7 @@ class Keysight_4000X(Instrument):
             read_command="TRIG:SOUR?",
             set_command="TRIG:SOUR CHAN{}",
             pre_hooks=[format_int],
+            post_hooks=[substring_hook(4, None)],
             dummy_return="1",
         )
 
@@ -165,7 +170,7 @@ class Keysight_4000X(Instrument):
                 f"CH{channel}_OFFSET",
                 read_command=f"CHAN{channel}:OFFS?",
                 set_command=f"CHAN{channel}:OFFS {{}}",
-                pre_hooks=[make_negative, format_float(".6E")],
+                pre_hooks=[format_float(".6E")],
                 dummy_return="1.",
             )
 
@@ -189,9 +194,9 @@ class Keysight_4000X(Instrument):
                 f"CH{channel}_IMPEDANCE",
                 read_command=f"CHAN{channel}:IMP?",
                 set_command=f"CHAN{channel}:IMP {{}}",
-                pre_hooks=[lambda value: "FIFT" if value == "50" else "ONEM"],
                 dummy_return="1e6",
             )
+            self.add_lookup(f"CH{channel}_IMPEDANCE", {"50": "FIFT", "1E6": "ONEM"})
 
             self.add_parameter(
                 f"CH{channel}_PROBE_ATTEN",
@@ -203,7 +208,7 @@ class Keysight_4000X(Instrument):
 
             self.add_parameter(
                 f"CH{channel}_WAVEFORM",
-                read_command=lambda: self._read_waveform(channel),
+                read_command=partial(self._read_waveform, channel),
                 dummy_return=lambda: self._read_waveform_dummy(),
             )
 
@@ -213,17 +218,21 @@ class Keysight_4000X(Instrument):
                 set_command=f"CHAN{channel}:DISP {{}}",
                 dummy_return="True",
             )
+            self.add_lookup(f"CH{channel}_ON-OFF", {"True": "1", "False": "0"})
+
             self.add_parameter(
                 f"CH{channel}_BW_LIM",
                 read_command=f"CHAN{channel}:BWL?",
                 set_command=f"CHAN{channel}:BWL {{}}",
             )
+            self.add_lookup(f"CH{channel}_BW_LIM", {"True": "1", "False": "0"})
 
             self.add_parameter(
                 f"CH{channel}_INVERT",
                 read_command=f"CHAN{channel}:INV?",
                 set_command=f"CHAN{channel}:INV {{}}",
             )
+            self.add_lookup(f"CH{channel}_INVERT", {"True": "1", "False": "0"})
 
         self.add_command("SINGLE_TRIGGER", ":SING")
         self.add_command("RUN", ":RUN")
@@ -249,7 +258,10 @@ class Keysight_4000X(Instrument):
 
         # Check if we have data and read it from oscilloscope
         try:
-            data_length = int(self.query(":WAV:POINTS?"))
+            wav_points = self.query(":WAV:POINTS?")
+            if wav_points is None:
+                wav_points = 0
+            data_length = int(wav_points)
             if data_length == 0:
                 logger.error(
                     "Cannot read scope trace because scope is not sending any data.",
@@ -292,7 +304,7 @@ class Keysight_4000X(Instrument):
         try:
             # Convert X Origin
             x_orig = float(x_orig)
-        except ValueError:
+        except (ValueError, TypeError):
             logger.error("Received bad origin from scope.", exc_info=True)
             return "[[],[]]"
         try:
@@ -322,7 +334,8 @@ class Keysight_4000X(Instrument):
             logger.error("Failed to calculate V & t.", exc_info=True)
             return "[[],[]]"
 
-        return f"[{t}, {fmt}]"
+        out = json.dumps([t, fmt])
+        return out
 
     def _read_waveform_dummy(self):
         """Returns a dummy waveform.

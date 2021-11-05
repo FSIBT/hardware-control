@@ -57,7 +57,7 @@ class Oscilloscope(QGroupBox):
         if channels is not None:
             self.channels = channels
         else:
-            self.channels = [0, 1, 2, 3]
+            self.channels = [1, 2, 3, 4]
 
         self.disp = OscilloscopeDisplayWidget(
             self.app, self.instrument, channels=self.channels
@@ -86,12 +86,6 @@ class Oscilloscope(QGroupBox):
 
         self.default_update_readout()
 
-    def query_if_enabled(self, parameter):
-        """Only query waveforms if channel is enabled"""
-        for channel in self.channels:
-            if self.app.get_instrument_parameter(self.instrument, parameter) == "True":
-                self.app.update_instrument_parameter(self.instrument, parameter)
-
     def default_update_readout(self) -> None:
         """Register certain parameterts to be automatically udpated every second."""
 
@@ -107,13 +101,16 @@ class Oscilloscope(QGroupBox):
         ]
 
         for ch in self.channel_widgets:
-            update.append(lambda: self.query_if_enabled(f"CH{ch.channel}_VOLTS_DIV"))
-            update.append(lambda: self.query_if_enabled(f"CH{ch.channel}_OFFSET"))
-            update.append(lambda: self.query_if_enabled(f"CH{ch.channel}_LABEL"))
-            update.append(lambda: self.query_if_enabled(f"CH{ch.channel}_COUPLING"))
-            update.append(lambda: self.query_if_enabled(f"CH{ch.channel}_IMPEDANCE"))
-            update.append(lambda: self.query_if_enabled(f"CH{ch.channel}_PROBE_ATTEN"))
-            update.append(lambda: self.query_if_enabled(f"CH{ch.channel}_WAVEFORM"))
+            update.append(f"CH{ch.channel}_VOLTS_DIV")
+            update.append(f"CH{ch.channel}_OFFSET")
+            update.append(f"CH{ch.channel}_LABEL")
+            update.append(f"CH{ch.channel}_COUPLING")
+            update.append(f"CH{ch.channel}_IMPEDANCE")
+            update.append(f"CH{ch.channel}_PROBE_ATTEN")
+            update.append(f"CH{ch.channel}_WAVEFORM")
+            update.append(f"CH{ch.channel}_ON-OFF")
+            update.append(f"CH{ch.channel}_BW_LIM")
+            update.append(f"CH{ch.channel}_INVERT")
 
         for parameter in update:
             self.app.add_auto_update_instrument_parameter(self.instrument, parameter)
@@ -135,7 +132,7 @@ class OscilloscopeChannelWidget(QWidget):
         self.colors = {0: "yellow", 1: "green", 2: "blue", 3: "red"}
 
         self.channel_label = HCHeader(
-            f"channel{self.channel+1}_{self.colors[self.channel]}.png"
+            f"channel{self.channel}_{self.colors[self.channel-1]}.png"
         )
         self.channel_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
 
@@ -265,7 +262,6 @@ class OscilloscopeTriggerWidget(QGroupBox):
             label="Channel",
             label_align="right",
             items=["1", "2", "3", "4"],
-            lookuptable={"1": "0", "2": "1", "3": "2", "4": "3"},
         )
 
         self.trig_coupling = HCComboBox(
@@ -318,7 +314,7 @@ class OscilloscopeHorizontalWidget(QGroupBox):
             self.instrument,
             "TIMEBASE",
             "Time/Div",
-            units={"s": 1, "ms": 1e3, "us": 1e6, "ns": 1e9},
+            units={"s": 1, "ms": 1e-3, "us": 1e-6, "ns": 1e-9},
             label_align="right",
         )
         self.timebase.spin.setSingleStep(1)
@@ -331,7 +327,7 @@ class OscilloscopeHorizontalWidget(QGroupBox):
             self.instrument,
             "TIME_OFFSET",
             "Offset",
-            units={"s": 1, "ms": 1e3, "us": 1e6, "ns": 1e9},
+            units={"s": 1, "ms": 1e-3, "us": 1e-6, "ns": 1e-9},
             label_align="right",
         )
         self.time_offset.spin.setSingleStep(1)
@@ -413,7 +409,7 @@ class OscilloscopeDisplayWidget(QGroupBox):
             self.p2.setXLink(self.p1)
             right_label_items = [f"channel {i}" for i in self.channels]
             left_label_items = [
-                f"channel {i+1}"
+                f"channel {i}"
                 for i in range(max(self.channels) + 1)
                 if i not in self.channels
             ]
@@ -443,7 +439,7 @@ class OscilloscopeDisplayWidget(QGroupBox):
             self.CH_data.append(([], []))
 
         for i, curve in enumerate(self.CH):
-            if i + 1 in self.channels:
+            if i in self.channels:
                 self.p2.addItem(curve)
             else:
                 self.p1.addItem(curve)
@@ -461,20 +457,25 @@ class OscilloscopeDisplayWidget(QGroupBox):
                 self.instrument,
                 f"CH{ch}_WAVEFORM",
                 "post_read_hooks",
-                lambda x: self.update_waveform(ch, x),
+                self.make_update_waveform_func(ch),
             )
 
     def updateViews(self):
         self.p2.setGeometry(self.p1.vb.sceneBoundingRect())
         self.p2.linkedViewChanged(self.p1.vb, self.p2.XAxis)
 
-    def update_waveform(self, channel):
-        trace_string = self.app.get_instrument_parameter(
-            self.instrument, f"CH{channel}_WAVEFORM"
-        )
+    def make_update_waveform_func(self, channel):
+        return lambda x: self.update_waveform(channel, x)
+
+    def update_waveform(self, channel, trace_string):
+        if trace_string is None:
+            logger.warning(
+                f"Scope {self.instrument}: no trace data available for channel {channel}"
+            )
+            return
         t, wave = json.loads(trace_string)
 
-        self.CH[channel].setData(t, wave)
-        self.CH_data[channel] = (t, wave)
+        self.CH[channel - 1].setData(t, wave)
+        self.CH_data[channel - 1] = (t, wave)
 
         self.updateViews()
