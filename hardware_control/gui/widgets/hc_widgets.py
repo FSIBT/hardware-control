@@ -125,6 +125,7 @@ class HCMixin:
         self.instrument = instrument
         self.parameter = parameter
         self.widget_hooks = []
+        self.return_set_value = False
 
         super().__init__(**kwargs)
 
@@ -156,19 +157,32 @@ class HCMixin:
         self,
         function: Callable[[Any], Any],
     ):
-        """Add a hook function to be called on a widget's value."""
+        """Add a hook function to be called when a value in a widgets gets updated from app._data."""
 
         self.widget_hooks.append(function)
 
-    def call_widget_hooks(self, value):
-        """Apply hooks to a widget value.
+    def hc_update(self):
+        """Apply hooks to a new widget value."""
 
-        This function is meant to be inherited by HC widgets in order to
-        to change the widget's parameter value.
-        """
+        if hasattr(self, "hasFocus") and self.hasFocus():
+            logger.debug(f"'{self.name}' has focus, not updating")
+            return
 
+        value = self.app.get_instrument_parameter(
+            self.instrument,
+            self.parameter,
+            return_set_value=self.return_set_value,
+        )
         value = call_hooks(self.widget_hooks, value)
-        return value
+
+        if value is None:
+            logger.warning(
+                f"Widget update for '{self.instrument}:{self.parameter}' failed."
+            )
+            return
+
+        # every HCwidget has the following function to update itself.
+        self.widget_update(value)
 
 
 class HCLabel(HCMixin, QLabel):
@@ -198,9 +212,8 @@ class HCLabel(HCMixin, QLabel):
         self.use_prefix = use_prefix
         self.min_width = min_width
 
-    def hc_update(self):
-        self.value = self.app.get_instrument_parameter(self.instrument, self.parameter)
-        self.setText(self.value)
+    def widget_update(self, value):
+        self.setText(value)
 
     def setText(self, text: str) -> None:
         if self.unit:
@@ -256,18 +269,10 @@ class HCLineEdit(HCMixin, QLineEdit):
         self.editingFinished.connect(self.value_change)
 
     def value_change(self) -> None:
-        value = super().call_widget_hooks(self.text())
+        value = self.text()
         self.app.set_instrument_parameter(self.instrument, self.parameter, value)
 
-    def hc_update(self) -> None:
-        if self.hasFocus():
-            logger.debug(f"'{self.name}' has focus, not updating")
-            return
-        value = self.app.get_instrument_parameter(
-            self.instrument,
-            self.parameter,
-            return_set_value=self.return_set_value,
-        )
+    def widget_update(self, value) -> None:
         self.setText(value)
 
 
@@ -304,14 +309,11 @@ class HCDoubleSpinBox(HCMixin, QDoubleSpinBox):
         self.editingFinished.connect(self.value_change)
 
     def value_change(self) -> None:
-        value = super().call_widget_hooks(self.text())
-        self.app.set_instrument_parameter(self.instrument, self.parameter, self.value)
+        value = self.text()
+        self.app.set_instrument_parameter(self.instrument, self.parameter, value)
 
-    def hc_update(self) -> None:
-        self.value = float(
-            self.app.get_instrument_parameter(self.instrument, self.parameter)
-        )
-        self.setValue(self.value)
+    def widget_update(self, value) -> None:
+        self.setValue(float(value))
 
 
 class HCPushButton(HCMixin, QPushButton):
@@ -348,7 +350,7 @@ class HCPushButton(HCMixin, QPushButton):
     def value_change(self) -> None:
         self.app.call_instrument_command(self.instrument, self.parameter)
 
-    def hc_update(self) -> None:
+    def widget_update(self, value) -> None:
         pass
 
 
@@ -423,17 +425,10 @@ class HCOnOffButton(HCMixin, QPushButton):
 
     def value_change(self) -> None:
         value = self.isChecked()
-        value = super().call_widget_hooks(value)
         self.app.set_instrument_parameter(self.instrument, self.parameter, value)
-
         self.set_state(value)
 
-    def hc_update(self):
-        value = self.app.get_instrument_parameter(
-            self.instrument,
-            self.parameter,
-        )
-
+    def widget_update(self, value):
         self.set_state(value)
 
 
@@ -498,8 +493,6 @@ class HCOnOffIndicator(HCMixin, QLabel):
         return False
 
     def set_state(self, value):
-        value = super().call_widget_hooks(value)
-
         if self.show_icon:
             if value == "True":
                 self.setPixmap(self.icon_checked)
@@ -512,12 +505,7 @@ class HCOnOffIndicator(HCMixin, QLabel):
             elif value == "False":
                 self.setText(self.text_unchecked)
 
-    def hc_update(self):
-        value = self.app.get_instrument_parameter(
-            self.instrument,
-            self.parameter,
-        )
-
+    def widget_update(self, value):
         self.set_state(value)
 
 
@@ -562,13 +550,12 @@ class HCComboBox(HCMixin, QComboBox):
         self.currentIndexChanged.connect(self.value_change)
 
     def value_change(self) -> None:
-        value = super().call_widget_hooks(self.currentText().upper())
+        value = self.currentText().upper()
         if self.lookuptable:
             value = self.lookuptable[value]
         self.app.set_instrument_parameter(self.instrument, self.parameter, value)
 
-    def hc_update(self) -> None:
-        value = self.app.get_instrument_parameter(self.instrument, self.parameter)
+    def widget_update(self, value) -> None:
         if self.lookuptable:
             value = self.inverse_lookuptable[value]
         for i in self.items:
@@ -576,9 +563,22 @@ class HCComboBox(HCMixin, QComboBox):
                 self.setCurrentText(i)
                 break
         else:
-            logger.error(
-                f"HCComboBox for '{self.parameter}': could not find '{value}' in item list"
-            )
+            # try float values
+            try:
+                float(value)
+            except (ValueError, TypeError):
+                logger.error(
+                    f"HCComboBox for '{self.parameter}': could not find '{value}' in item list and cannot test for float number."
+                )
+                return
+            for i in self.items:
+                if float(value) == float(i):
+                    self.setCurrentText(i)
+                    break
+            else:
+                logger.error(
+                    f"HCComboBox for '{self.parameter}': could not find '{value}' in item list"
+                )
 
 
 class HCDoubleSpinComboBox(HCMixin):
@@ -622,19 +622,15 @@ class HCDoubleSpinComboBox(HCMixin):
     def value_change(self) -> None:
         combo_value = self.units[self.combo.currentText()]
         spin_value = float(self.spin.text())
-        self.value = spin_value * combo_value
-        value = super().call_widget_hooks(self.value)
+        value = spin_value * combo_value
 
-        self.app.set_instrument_parameter(self.instrument, self.parameter, self.value)
+        self.app.set_instrument_parameter(self.instrument, self.parameter, value)
 
-    def hc_update(self) -> None:
-        self.value = float(
-            self.app.get_instrument_parameter(self.instrument, self.parameter)
-        )
+    def widget_update(self, value) -> None:
+        value = float(value)
         combo_value = self.units[self.combo.currentText()]
-        self.value *= combo_value
-
-        self.spin.setValue(self.value)
+        value /= combo_value
+        self.spin.setValue(value)
 
 
 class HCSpinBox(HCMixin, QSpinBox):
@@ -655,20 +651,16 @@ class HCSpinBox(HCMixin, QSpinBox):
             label=label,
             label_align=label_align,
         )
-        # Rename QSpinBox method for getting current value to avoid naming conflicts
-        self.get_current_value = self.value
 
         self.valueChanged.connect(self.value_change)
 
     def value_change(self) -> None:
-        self.value = super().call_widget_hooks(self.get_current_value())
-        self.app.set_instrument_parameter(self.instrument, self.parameter, self.value)
+        value = self.value()
+        self.app.set_instrument_parameter(self.instrument, self.parameter, value)
 
-    def hc_update(self) -> None:
-        self.value = float(
-            self.app.get_instrument_parameter(self.instrument, self.parameter)
-        )
-        self.setValue(self.value)
+    def widget_update(self, value) -> None:
+        value = float(value)
+        self.setValue(value)
 
 
 class HCHeader(QLabel):
@@ -702,9 +694,8 @@ class HCFixedLabel(HCMixin, QLabel):
         )
 
         self.unit = unit
-        self.value = init_label
 
-        self.setText(self.value + " " + self.unit)
+        self.setText(f"{init_label} {self.unit}")
 
         font = QFont()
         font.setPointSize(fontsize)
@@ -728,13 +719,10 @@ class HCFixedLabel(HCMixin, QLabel):
         elif label_align == "center":
             self.setAlignment(QtCore.Qt.AlignCenter)
 
-    def hc_update(self):
-        self.value = self.app.get_instrument_parameter(self.instrument, self.parameter)
-        self.setText(self.value)
+    def widget_update(self, value) -> None:
+        self.setText(f"{value} {self.unit}")
 
     def setText(self, text: str) -> None:
-        text = super().call_widget_hooks(text)
-
         if self.unit:
             try:
                 text = f"{float(text):.3g} {self.unit}"
