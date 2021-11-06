@@ -57,22 +57,22 @@ class Keysight_4000X(Instrument):
             * Coupling mode for channel 'X'.
         * CH<X>_WAVEFORM
             * Most recent waveform measurement from channel 'X'.
-
-    COMMANDS
-        * SINGLE_TRIGGER
-            * Set the instrument to trigger once and save the data.
-        * RUN
-            * Set the instrument to continuously trigger.
-        * CONFIG_READ_WAVE
-            * Configure instrument settings to prepare for reading waveforms.
-        * STOP
-            * Prevent the instrument from triggering.
         * CH<X>_ON-OFF
             * Enables or disables channel 'X'.
         * CH<X>_BW_LIM
             * Enables or disables the 20MHz bandwidth limit for channel 'X'.
         * CH<X>_INVERT
             * Enables or disables inversion of the channel 'X' waveform.
+
+    COMMANDS
+        * SINGLE_TRIGGER
+            * Set the instrument to trigger once and save the data.
+        * RUN
+            * Set the instrument to continuously trigger.
+        * STOP
+            * Prevent the instrument from triggering.
+        * DIGITIZE
+            * Start digitize process for waveform
 
     """
 
@@ -209,7 +209,7 @@ class Keysight_4000X(Instrument):
             self.add_parameter(
                 f"CH{channel}_WAVEFORM",
                 read_command=partial(self._read_waveform, channel),
-                dummy_return=lambda: self._read_waveform_dummy(),
+                dummy_return=self._read_waveform_dummy,
             )
 
             self.add_parameter(
@@ -240,22 +240,7 @@ class Keysight_4000X(Instrument):
         self.add_command("DIGITIZE", ":DIG")
 
         # Initial configure call
-        self.write("CONFIG_READ_WAVE")
         self.write("\n*CLS")
-
-        # configure waveform readout
-        for channel in self.chan_nums:
-            # Set the source channel
-            self.write(f":WAV:SOUR CHAN{channel}")
-
-            # Sets data format to ASCII text
-            self.write(":WAV:FORM ASCII")
-            # Set data record to transfer to 'measurement record'
-            self.write(":WAV:POIN:MODE NORM")
-        # Set aquisition mode to normal
-        self.write(":ACQ:TYPE NORM")
-
-        self.write(":DIG")
 
     def _read_waveform(self, channel: int):
         """Reads a waveform from the oscilloscope.
@@ -272,13 +257,13 @@ class Keysight_4000X(Instrument):
         """
 
         channel_active = self.query(f"CHAN{channel}:DISP?")
-        print("debug", channel_active)
         if not channel_active:
             return "[[],[]]"
 
         # switch to correct channel and request ASCII output
         self.write(f":WAV:SOUR CHAN{channel}")
         self.write(":WAV:FORM ASCII")
+        self.write(":WAV:POIN:MODE NORM")
 
         # Read waveform data
         raw_data = self.query(":WAV:DATA?")

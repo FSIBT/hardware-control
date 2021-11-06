@@ -7,6 +7,7 @@ See class definition for details.
 
 """
 
+from functools import partial
 import json
 import logging
 
@@ -19,6 +20,47 @@ logger = logging.getLogger(__name__)
 
 
 class Rigol_DS1000Z(Instrument):
+    """
+    PARAMETERS
+        * TIMEBASE (*float*)
+            * Horizontal resolution in time per division.
+        * TIME_OFFSET (*float*)
+            * Time offset from trigger.
+        * LABELS_ENABLED (*bool*)
+            * On/Off status of channel labels on the instrument.
+        * TRIGGER_LEVEL (*float*)
+            * Trigger level.
+        * TRIGGER_COUPLING (*AC*, *DC*, *LFReject*)
+            * Trigger coupling type.
+        * TRIGGER_EDGE (*BOTH*, *NEG*, *POS*, *ALT*)
+            * Edge of waveform that the oscilloscope triggers on.
+        * TRIGGER_CHANNEL (*int*)
+            * The channel (1,2,3, or 4) to trigger on.
+        * MEAS_STAT_ENABLED (*bool*)
+            * Show measurement stats
+        * CH<X>_VOLTS_DIV (*float*)
+            * The voltage per division for channel 'X'.
+        * CH<X>_OFFSET (*float*)
+            * The voltage offset for channel 'X'.
+        * CH<X>_LABEL (*str*)
+            * Label for channel 'X'.
+        * CH<X>_PROBE_ATTEN (*float*)
+            * Probe attenuation for channel 'X'. For example, providing the value '10' would indicate a 10x or 10:1 probe.
+        * CH<X>_COUPLING (*AC*, *DC*)
+            * Coupling mode for channel 'X'.
+        * CH<X>_WAVEFORM
+            * Most recent waveform measurement from channel 'X'.
+
+    COMMANDS
+        * SINGLE_TRIGGER
+            * Set the instrument to trigger once and save the data.
+        * RUN
+            * Set the instrument to continuously trigger.
+        * STOP
+            * Prevent the instrument from triggering.
+
+    """
+
     def __init__(
         self,
         instrument_name: str = "RIGOL_DS1000Z",
@@ -91,8 +133,9 @@ class Rigol_DS1000Z(Instrument):
             pre_hooks=[format_bool],
         )
 
-        for ch in range(self.number_channels):
-
+        for channel in range(self.number_channels):
+            # channels are starting at 1 for Rigol scopes
+            ch = channel + 1
             self.add_parameter(
                 f"CH{ch}_VOLTS_DIV",
                 read_command=f":CHAN{ch}:SCAL?",
@@ -156,15 +199,17 @@ class Rigol_DS1000Z(Instrument):
             )
 
             sefl.add_parameter(
-                f"CH{ch}_WVFM",
-                read_command=lambda: self.read_waveform(ch),
+                f"CH{ch}_WAVEFORM",
+                read_command=partial(self._read_waveform, ch),
+                dummy_return=self._read_waveform_dummy,
             )
 
         self.add_command("SINGLE_TRIGGER", ":SING")
         self.add_command("RUN", ":RUN")
         self.add_command("STOP", ":STOP")
 
-    def read_waveform(self, channel: int):
+    def _read_waveform(self, channel: int):
+        """Read the waveform from the scope"""
 
         self.write(f"WAV:SOUR CHAN{channel}")  # Specify channel to read
         self.write("WAV:MODE NORM")  # Specify to read data displayed on screen
@@ -185,3 +230,15 @@ class Rigol_DS1000Z(Instrument):
 
         out = [t, volts]
         return json.dumps(out)
+
+    def _read_waveform_dummy(self):
+        """Returns a dummy waveform.
+
+        Returns
+        -------
+        waveform : str
+            A string that contains a list of times and a list of random waveform values (between 0 and 10) embedded in another list.
+        """
+
+        dummy_return = str(np.random.uniform(0.0, 10.0, 10).tolist()).replace(" ", "")
+        return f"[[1,2,3,4,5,6,7,8,9,10],{dummy_return}]"
