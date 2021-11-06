@@ -87,10 +87,10 @@ class Ni_9000(Instrument):
 
         # Initialize parameters on all requested channels
         for mod in self.modules:
-            if self.analog_channels.get(mod) != None:
+            if self.analog_channels.get(mod) is not None:
                 for chan in self.analog_channels[mod]:
                     self._initialize_params(mod, chan, "a")
-            if self.digital_channels.get(mod) != None:
+            if self.digital_channels.get(mod) is not None:
                 for chan in self.digital_channels[mod]:
                     self._initialize_params(mod, chan, "d")
 

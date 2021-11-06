@@ -100,7 +100,7 @@ class StatusTool(QGroupBox):
             if self.instrument_grid.itemAtPosition(row, 1) is None:
                 continue
 
-            if self.app.dummy == False:
+            if self.app.dummy is False:
                 online = self.app.get_instrument_parameter(instrument, "online")
             else:
                 online = False

@@ -11,6 +11,7 @@ https://www.lakeshore.com/docs/default-source/product-downloads/224_manual.pdf f
 
 """
 
+from functools import partial
 import logging
 import random
 
@@ -62,7 +63,7 @@ class Lakeshore_224(Instrument):
         for channel in self.active_channels:
             self.add_command(f"SET_CH{channel}_OFF", f"INCRV {channel} 0")
             self.add_command(
-                f"READ_CH{channel}_STATUS", lambda: self.read_status(channel)
+                f"READ_CH{channel}_STATUS", partial(self.read_status, channel)
             )
 
             self.add_parameter(
@@ -80,14 +81,6 @@ class Lakeshore_224(Instrument):
                 post_hooks=[lambda value: value if value != "00" else None],
                 dummy_return=lambda: random.random() * 200 + 200,
             )
-
-            # self.add_parameter(
-            #     f"CH{channel}_NAME",
-            #     read_command=f"INNAME? {channel}",
-            #     set_command=f"INCRV {channel} {{}}",
-            #     post_hooks=[lambda value: channel if value == 0 else value],
-            #     dummy_return="",
-            # )
 
     def read_status(self, channel):
         """

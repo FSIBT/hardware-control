@@ -223,7 +223,7 @@ class Caen_14xxET(Instrument):
 
         return validator
 
-    def _return_status(value):
+    def _return_status(self, value):
         value = int(value)
         status = {
             "ON_OFF": value & 1,

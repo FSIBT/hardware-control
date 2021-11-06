@@ -83,7 +83,7 @@ class regressor:
         self.ypred = None
         self.std = None
 
-    def neighbor_probability(potential_vals, found_vals, delta):
+    def neighbor_probability(self, potential_vals, found_vals, delta):
         """For each element in potential_vals, return a value proportional to the number of nearby points in found_vals."""
         found_vals = found_vals.flatten()  # points already measured
         potential_vals = potential_vals.flatten()  # points that could be measured
@@ -493,7 +493,7 @@ class ScanWidget(QGroupBox):
         self.parameter_drop.clear()
         # If a list of scan_parameters is provided for each instrument,
         # add those parameters to the parameter dropdown
-        if self.scan_parameters != None:
+        if self.scan_parameters is not None:
             self.parameter_drop.addItems(self.scan_parameters[self.scan_instrument])
         # If list of scan parameters is not provided, add all the
         # scan instrument's parameters to the parameter dropdown
@@ -652,7 +652,7 @@ class ScanWidget(QGroupBox):
         self.scan_timer.start(100)
 
     def operate_cycle(self):
-        if self.use_GP.isChecked() == False:
+        if self.use_GP.isChecked() is False:
             self.GP_n_prescans = np.inf
         self.measured_yvals = self.get_measured_values()
 
@@ -710,7 +710,7 @@ class ScanWidget(QGroupBox):
         self.scan_button.setEnabled(True)
         self.continue_scan_button.setEnabled(True)
         self.stop_button.setEnabled(False)
-        if self.scan_finished == False:
+        if self.scan_finished is False:
             logger.info("Scan Widget stopped manually by the user.")
         self.progress_bar.setValue(float(self.scan_progress))
         if self.progress_bar.value() > 0.0:
@@ -760,7 +760,7 @@ class ScanWidget(QGroupBox):
 
         # If a list of scan parameters is provided, add the scanned
         # instruments to the scan instrument dropdown
-        if self.scan_parameters != None:
+        if self.scan_parameters is not None:
             self.instrument_drop.addItems(self.scan_parameters.keys())
             return
 

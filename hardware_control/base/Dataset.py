@@ -175,13 +175,16 @@ class Dataset(QObject):
         self.channel_names[channel] = alias
 
     def start_autosave(
-        self, interval: float = 120, format: str = "JSON", filename: str = "autosave"
+        self,
+        interval: float = 120,
+        file_format: str = "JSON",
+        filename: str = "autosave",
     ) -> None:
         """Activates the dataset's autosave feature."""
 
         self.autosave = True
         self.autosave_interval = interval
-        self.autosave_format = format
+        self.autosave_format = file_format
         self.autosave_filename = Path(filename)
 
         self.autosave_timer.start(1e3 * self.autosave_interval)
@@ -293,10 +296,10 @@ class Dataset(QObject):
             filename = filename.with_suffix(".npy")
         np.save(filename, self.data)
 
-    def save(self, filename: Path, format: str) -> None:
+    def save(self, filename: Path, file_format: str) -> None:
         """Saves the dataset to a file. Format specifies the file format.
 
-        The file format specifier is not case sensitive.
+        The file_format specifier is not case sensitive.
 
         File Formats:
            JSON
@@ -306,25 +309,25 @@ class Dataset(QObject):
 
         """
 
-        format = format.upper()
+        file_format = file_format.upper()
 
-        if format == "JSON":
+        if file_format == "JSON":
             self.save_json(filename)
             logger.debug(f"Saved file {filename} as .json file.")
-        elif format == "PICKLE":
+        elif file_format == "PICKLE":
             self.save_pickle(filename)
             logger.debug(f"Saved file {filename} as .pickle file.")
-        elif format == "NPY":
+        elif file_format == "NPY":
             self.save_npy(filename)
             logger.debug(f"Saved file {filename} as .npy file.")
-        elif format == "TXT":
+        elif file_format == "TXT":
             self.save_txt(filename)
             logger.debug(f"Saved file {filename} as .txt file.")
-        elif self.app is not None and format in self.app.additional_save_formats:
-            self.app.additional_save_formats[format](self, filename)
-            logger.debug(f"Saved file {filename} as '{format}' file.")
+        elif self.app is not None and file_format in self.app.additional_save_formats:
+            self.app.additional_save_formats[file_format](self, filename)
+            logger.debug(f"Saved file {filename} as '{file_format}' file.")
         else:
-            logger.warning(f"Unrecognized file format '{format}'.")
+            logger.warning(f"Unrecognized file format '{file_format}'.")
 
     def update_data(self) -> None:
         """Logs values from the specified instruments to the datasets.

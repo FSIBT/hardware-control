@@ -4,6 +4,7 @@
 
 """
 
+from functools import partial
 import json
 import logging
 import numpy as np
@@ -104,48 +105,56 @@ class Picotech_6000(Instrument):
         channels = {0: "A", 1: "B", 2: "C", 3: "D"}
         for i in range(self.number_of_channels):
             ch = channels[i]
+
             self.add_parameter(
                 f"CH{ch}_VOLTS_DIV",
                 read_command=None,
-                set_commmand=lambda x: self.ps.setChannel(channel=ch, VRange=x),
+                set_command=self.create_set_channel_func(ch, "VRange"),
             )
             self.add_parameter(
                 f"CH{ch}_OFFSET",
                 read_command=None,
-                set_commmand=lambda x: self.ps.setChannel(channel=ch, VOffset=x),
+                set_command=self.create_set_channel_func(ch, "VOffset"),
             )
             self.add_parameter(
                 f"CH{ch}_BW_LIM",
                 read_command=None,
-                set_commmand=lambda x: self.ps.setChannel(channel=ch, BWLimited=x),
+                set_command=self.create_set_channel_func(ch, "BWLimited"),
             )
             self.add_parameter(
                 f"CH{ch}_ACTIVE",
                 read_command=None,
-                set_commmand=lambda x: self.ps.setChannel(channel=ch, enabled=x),
+                set_command=self.create_set_channel_func(ch, "enabled"),
             )
             self.add_parameter(
                 f"CH{ch}_PROBE_ATTEN",
                 read_command=None,
-                set_commmand=lambda x: self.ps.setChannel(
-                    channel=ch, probeAttenuation=x
-                ),
+                set_command=self.create_set_channel_func(ch, "probeAttenuation"),
             )
             self.add_parameter(
                 f"CH{ch}_COUPLING",
                 read_command=None,
-                set_commmand=lambda x: self.ps.setChannel(channel=ch, coupling=x),
+                set_command=self.create_set_channel_func(ch, "coupling"),
             )
 
             self.add_parameter(
                 f"CH{ch}_WVFM",
-                read_command=lambda: self._read_waveform(i),
+                read_command=partial(self._read_waveform, i),
                 set_command=None,
             )
 
         self.add_command("SINGLE_TRIGGER", self._trigger)
         self.add_command("RUN", self._run)
         self.add_command("STOP", self.ps.stop)
+
+    def create_set_channel_func(self, channel, parameter):
+        """Create a channel specific function to set a parameter."""
+
+        def func(value):
+            kwargs = {parameter: value}
+            self.ps.setChannel(channel=channel, **kwargs)
+
+        return func
 
     def _get_timebase(self):
         return str(self.timebase)

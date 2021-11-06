@@ -94,7 +94,7 @@ class IOModule(QGroupBox):
                 )
                 continue
 
-            if self.ensure_all_fields(c_dict, c_dict_key) == False:
+            if self.ensure_all_fields(c_dict, c_dict_key) is False:
                 continue
 
             kwargs = {}

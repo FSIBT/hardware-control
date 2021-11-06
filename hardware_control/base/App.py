@@ -351,7 +351,7 @@ class App(QApplication):
     def add_skip_update_instrument_parameter(
         self, instrument: str, parameter: str
     ) -> None:
-        self.skip_request_updates((instrument, parameter))
+        self.skip_request_updates.add((instrument, parameter))
 
     @ensure_instrument_exists
     def is_parameter(self, instrument: str, parameter: str) -> bool:
@@ -575,36 +575,6 @@ class App(QApplication):
         self.additional_save_formats[format_name] = save_fxn
 
     @ensure_instrument_exists
-    def get_instrument_read_values(self, instrument: str) -> Optional[Dict]:
-        """Return a dictionary of an instrument's read_values"""
-        instrument_dict_reads = {}
-        for parameter in self.list_instrument_parameters(instrument):
-            # Ignore boolean parameters
-            if type(self._data[instrument][parameter]) is dict:
-                # Ignore parameters without read_value functionality
-                if "read_value" in self._data[instrument][parameter].keys():
-                    instrument_dict_reads[parameter] = self._data[instrument][
-                        parameter
-                    ]["read_value"]
-
-        return instrument_dict_reads
-
-    @ensure_instrument_exists
-    def get_instrument_set_values(self, instrument: str) -> Optional[Dict]:
-        """Return a dictionary of an instrument's set_values"""
-        instrument_dict_sets = {}
-        for parameter in self.list_instrument_parameters(instrument):
-            # Ignore boolean parameters
-            if type(self._data[instrument][parameter]) is dict:
-                # Ignore parameters without set_value functionality
-                if "set_value" in self._data[instrument][parameter].keys():
-                    instrument_dict_sets[parameter] = self._data[instrument][parameter][
-                        "set_value"
-                    ]
-
-        return instrument_dict_sets
-
-    @ensure_instrument_exists
     def list_instrument_parameters(self, instrument) -> List[str]:
         """Compile a list of all the parameters for a specified instrument."""
         return [parameter for parameter in self._data[instrument]]
@@ -693,7 +663,7 @@ class App(QApplication):
             return
         for parameter in all_settings:
             value = all_settings[parameter]
-            self.set_instrument_parameter(instrument, parameter, value, raw=True)
+            self.set_instrument_parameter(instrument, parameter, value, skip_hooks=True)
 
     @ensure_instrument_exists
     def add_load_settings_hook(

@@ -169,7 +169,7 @@ def expected_input_validator(types: List, default_val=None):
     """Ensures `value` is in a certain list, returns a default if this is not the case."""
 
     def validator(value):
-        if value not in types and default_val != None:
+        if (value not in types) and (default_val is not None):
             logger.info(
                 f"Unfamiliar with input '{value}'. Using '{default_val}' instead."
             )

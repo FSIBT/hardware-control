@@ -76,7 +76,7 @@ class Rigol_DS1000Z(Instrument):
         self.add_parameter(
             "TIMEBASE",
             read_command=":TIM:MAIN:SCAL?",
-            write_command=":TIM:MAIN:SCAL {}",
+            set_command=":TIM:MAIN:SCAL {}",
             dummy_return="1e-6",
             pre_hooks=[format_float(".6E")],
         )
@@ -84,21 +84,21 @@ class Rigol_DS1000Z(Instrument):
         self.add_parameter(
             "TIME_OFFSET",
             read_command=":TIM:MAIN:OFFS?",
-            write_command=":TIM:MAIN:OFFS {}",
+            set_command=":TIM:MAIN:OFFS {}",
             dummy_return="2e-6",
             pre_hooks=[format_float(".6E")],
         )
         self.add_parameter(
             "LABELS_ENABLED",
             read_command="DISP:LAB?",
-            write_command="DISP:LAB {}",
+            set_command="DISP:LAB {}",
             dummy_return="1",
             pre_hooks=[format_bool],
         )
         self.add_parameter(
             "TRIGGER_LEVEL",
             read_command="TRIG:EDGE:LEV?",
-            write_command="TRIG:EDGE:LEV {}",
+            set_command="TRIG:EDGE:LEV {}",
             dummy_return="1e-6",
             pre_hooks=[format_float(".6E")],
         )
@@ -107,7 +107,7 @@ class Rigol_DS1000Z(Instrument):
         self.add_parameter(
             "TRIGGER_COUPLING",
             read_command="TRIG:COUP?",
-            write_command="TRIG:COUP {}",
+            set_command="TRIG:COUP {}",
             dummy_return="DC",
         )
 
@@ -115,20 +115,20 @@ class Rigol_DS1000Z(Instrument):
         self.add_parameter(
             "TRIGGER_EDGE",
             read_command="TRIG:EDGE:SLOP?",
-            write_command="TRIG:EDGE:SLOP {}",
+            set_command="TRIG:EDGE:SLOP {}",
             dummy_return="NEG",
         )
         self.add_parameter(
             "TRIGGER_CHANNEL",
             read_command="TRIG:EDG:SOUR?",
-            write_command="TRIG:EDG:SOUR CHAN{}",
+            set_command="TRIG:EDG:SOUR CHAN{}",
             dummy_return="1",
         )
 
         self.add_parameter(
             "MEAS_STAT_ENABLED",
             read_command=":MEAS:STAT:DISP?",
-            write_command=":MEAS:STAT:DISP {}",
+            set_command=":MEAS:STAT:DISP {}",
             dummy_return="1",
             pre_hooks=[format_bool],
         )
@@ -139,21 +139,21 @@ class Rigol_DS1000Z(Instrument):
             self.add_parameter(
                 f"CH{ch}_VOLTS_DIV",
                 read_command=f":CHAN{ch}:SCAL?",
-                write_command=f":CHAN{ch}:SCAL {{}}",
+                set_command=f":CHAN{ch}:SCAL {{}}",
                 dummy_return="2",
                 pre_hooks=[format_float(".6E")],
             )
             self.add_parameter(
                 f"CH{ch}_OFFSET",
                 read_command=f"CHAN{ch}:OFFS?",
-                write_command=f"CHAN{ch}:OFFS {{}}",
+                set_command=f"CHAN{ch}:OFFS {{}}",
                 dummy_return="1e-6",
                 pre_hooks=[format_float(".6E")],
             )
             self.add_parameter(
                 f"CH{ch}_BW_LIM",
                 read_command=f"CHAN{ch}:BWL?",
-                write_command=f"CHAN{ch}:BWL {{}}",
+                set_command=f"CHAN{ch}:BWL {{}}",
                 dummy_return="True",
             )
             self.add_lookup(f"CH{ch}_BW_LIM", {"True": "20M", "False": "OFF"})
@@ -161,7 +161,7 @@ class Rigol_DS1000Z(Instrument):
             self.add_parameter(
                 f"CH{ch}_ACTIVE",
                 read_command=f"CHAN{ch}:DISP?",
-                write_command=f"CHAN{ch}:DISP {{}}",
+                set_command=f"CHAN{ch}:DISP {{}}",
                 dummy_return="1",
                 pre_hooks=[format_bool],
             )
@@ -169,7 +169,7 @@ class Rigol_DS1000Z(Instrument):
             self.add_parameter(
                 f"CH{ch}_LABEL",
                 read_command=f"CHAN{ch}:LAB?",
-                write_command=f"CHAN{ch}:LAB {{}}",
+                set_command=f"CHAN{ch}:LAB {{}}",
                 dummy_return="label unkown",
                 pre_hooks=[max_len_converter(32)],
             )
@@ -177,7 +177,7 @@ class Rigol_DS1000Z(Instrument):
             self.add_parameter(
                 f"CH{ch}_INVERT",
                 read_command=f"CHAN{ch}:INV?",
-                write_command=f"CHAN{ch}:INV {{}}",
+                set_command=f"CHAN{ch}:INV {{}}",
                 dummy_return="1",
                 pre_hooks=[format_bool],
             )
@@ -185,7 +185,7 @@ class Rigol_DS1000Z(Instrument):
             self.add_parameter(
                 f"CH{ch}_PROBE_ATTEN",
                 read_command=f"CHAN{ch}:PROB?",
-                write_command=f"CHAN{ch}:PROB {{}}",
+                set_command=f"CHAN{ch}:PROB {{}}",
                 dummy_return="1",
                 pre_hooks=[format_float(".6E")],
             )
@@ -194,7 +194,7 @@ class Rigol_DS1000Z(Instrument):
             self.add_parameter(
                 f"CH{ch}_COUPLING",
                 read_command=f"CHAN{ch}:COUP?",
-                write_command=f"CHAN{ch}:COUP {{}}",
+                set_command=f"CHAN{ch}:COUP {{}}",
                 dummy_return="DC",
             )
 
