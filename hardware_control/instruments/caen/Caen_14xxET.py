@@ -16,7 +16,6 @@ from ...base.hooks import (
     format_float,
     scaling_converter,
     format_int,
-    last_n_values_converter,
 )
 
 logger = logging.getLogger(__name__)

@@ -7,9 +7,6 @@ See class definition for details.
 
 """
 import logging
-import random
-
-import pyvisa
 
 from ...base import Instrument
 

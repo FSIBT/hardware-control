@@ -4,17 +4,14 @@ it provides a simple UI.
 """
 import json
 import logging
-from typing import Union, Optional
+from typing import Union
 
 from PyQt5.QtCore import QTimer
-from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtWidgets import (
     QLabel,
     QGridLayout,
     QSpacerItem,
     QGroupBox,
-    QLineEdit,
-    QPushButton,
     QSizePolicy,
 )
 

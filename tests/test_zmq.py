@@ -1,6 +1,4 @@
 """Test ZMQ related functions"""
-import pytest
-
 from hardware_control.base.zmq_helper import (
     add_ZMQ_message_to_queue,
     handle_ZMQ_message_from_app,

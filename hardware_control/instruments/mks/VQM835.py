@@ -9,9 +9,6 @@ connection works over proprietary driver, with "tasks"
 """
 
 import logging
-import random
-
-import numpy as np
 
 from ...base import Instrument
 

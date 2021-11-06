@@ -15,7 +15,6 @@ from PyQt5.QtWidgets import (
 from typing import List
 
 from ..widgets import (
-    load_pixmap,
     HCLineEdit,
     HCLabel,
     HCOnOffButton,
@@ -215,8 +214,6 @@ class PowerSupplyChannel(QWidget):
             )
         else:
             self.power_button = False
-
-        align_left_center = QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
 
         # Create a header for the channel widget
         if self.channel <= 20:

@@ -75,30 +75,30 @@ class Picotech_6000(Instrument):
 
         self.add_parameter(
             "TIMEBASE",
-            read_command=_get_timebase,
-            set_command=_set_timebase,
+            read_command=self._get_timebase,
+            set_command=self._set_timebase,
         )
         self.add_parameter(
             "TIME_OFFSET",
-            read_command=_get_timeoffset,
-            set_command=_set_timeoffset,
+            read_command=self._get_timeoffset,
+            set_command=self._set_timeoffset,
         )
         self.add_parameter(
             "TRIGGER_LEVEL",
             read_command=None,
-            set_command=_set_triggerlevel,
+            set_command=self._set_triggerlevel,
         )
         self.add_parameter(
             "TRIGGER_EDGE",
             read_command=None,
-            set_command=_set_triggeredge,
+            set_command=self._set_triggeredge,
         )
         self.add_lookup(
             "TRIGGER_EDGE",
             {"BOTH": "Rising", "NEG": "Falling", "POS": "Rising", "ALT": "Rising"},
         )
         self.add_parameter(
-            "TRIGGER_CHANNEL", read_command=None, set_command=_set_triggerchannel
+            "TRIGGER_CHANNEL", read_command=None, set_command=self._set_triggerchannel
         )
 
         channels = {0: "A", 1: "B", 2: "C", 3: "D"}
@@ -253,8 +253,6 @@ class Picotech_6000(Instrument):
             List of the function values in Volts
 
         """
-
-        channel_orig = channel
 
         try:
             number_samples = min(self.ps.noSamples, self.ps.maxSamples)

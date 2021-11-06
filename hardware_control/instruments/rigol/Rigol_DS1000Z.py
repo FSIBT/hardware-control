@@ -198,7 +198,7 @@ class Rigol_DS1000Z(Instrument):
                 dummy_return="DC",
             )
 
-            sefl.add_parameter(
+            self.add_parameter(
                 f"CH{ch}_WAVEFORM",
                 read_command=partial(self._read_waveform, ch),
                 dummy_return=self._read_waveform_dummy,

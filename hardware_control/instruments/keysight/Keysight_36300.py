@@ -5,7 +5,6 @@
 """
 
 import logging
-import random
 
 from ...base import Instrument
 
@@ -81,7 +80,7 @@ class Keysight_36300(Instrument):
                 read_command=f":SOURCE:VOLT? (@{channel})",
                 set_command=f"SOURCE:VOLT {{}}, (@{channel})",
                 pre_hooks=[
-                    lambda x: min(value, self.max_V[channel - 1])
+                    lambda x: min(x, self.max_V[channel - 1])
                     if self.max_V[channel - 1] is not None
                     else None
                 ],
@@ -93,7 +92,7 @@ class Keysight_36300(Instrument):
                 read_command=f":SOURCE:CURR? (@{channel})",
                 set_command=f"SOURCE:CURR {{}}, (@{channel})",
                 pre_hooks=[
-                    lambda x: min(value, self.max_I[channel - 1])
+                    lambda x: min(x, self.max_I[channel - 1])
                     if self.max_I[channel - 1] is not None
                     else None
                 ],

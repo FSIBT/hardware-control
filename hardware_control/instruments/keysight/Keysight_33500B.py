@@ -99,11 +99,11 @@ class Keysight_33500B(Instrument):
 
         self.add_parameter(
             "DISPLAY",
-            read_command=f"CHAN:DISP?",
-            set_command=f"CHAN:DISP {{}}",
+            read_command="CHAN:DISP?",
+            set_command="CHAN:DISP {}",
             dummy_return="True",
         )
-        self.add_lookup(f"DISPLAY", {"True": "1", "False": "0"})
+        self.add_lookup("DISPLAY", {"True": "1", "False": "0"})
 
         self.add_parameter(
             "TIMEBASE",

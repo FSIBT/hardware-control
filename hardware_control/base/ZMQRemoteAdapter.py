@@ -91,7 +91,7 @@ class ZMQSingleInstrument:
             message = self.zmq_new.recv_string()
 
             if not message.startswith("APP"):
-                self.zmq_new.send_string(f"Unknown command")
+                self.zmq_new.send_string("Unknown command")
                 continue
 
             _, self.app_publisher = message.split()
@@ -196,7 +196,7 @@ class ZMQRemoteAdapter:
     def list_parameters(self):
         """Get a list of all available parameters from the remote instrument."""
         logger.info(f"{self.name} requesting parameter list")
-        self.req_rep_socket.send_string(f"LIST_PARAMETERS")
+        self.req_rep_socket.send_string("LIST_PARAMETERS")
         message = self.req_rep_socket.recv_string()
         read_set_commands = json.loads(message)
         return read_set_commands

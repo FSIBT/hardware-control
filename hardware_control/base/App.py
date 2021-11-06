@@ -251,7 +251,7 @@ class App(QApplication):
         """
         if name in self._data:
             logger.error(
-                f"Instrument {instrument.name} already exists... instruments names need to be unique"
+                f"Instrument {name} already exists... instruments names need to be unique"
             )
             return
 

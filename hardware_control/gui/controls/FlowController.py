@@ -71,8 +71,6 @@ class FlowController(QGroupBox):
 
         self.config_auto_update()
 
-        logger.debug(f"Initalized {self.name}")
-
     def config_auto_update(self):
         """Queries the instrument for current readout data."""
 

@@ -5,9 +5,6 @@
 """
 
 import logging
-from typing import Optional
-
-from hardware_control.gui.controls.DelayGenerator import DelayChannelWidget
 
 from ...base import Instrument
 from ...base.hooks import range_validator, substring_hook
@@ -56,14 +53,14 @@ class SRS_DG535(Instrument):
     """
 
     _CHANNEL_NAMES = {
-        "TRIG": '0',
-        "T0": '1',
-        "A": '2',
-        "B": '3',
-        "AB": '4',
-        "C": '5',
-        "D": '6',
-        "CD": '7',
+        "TRIG": "0",
+        "T0": "1",
+        "A": "2",
+        "B": "3",
+        "AB": "4",
+        "C": "5",
+        "D": "6",
+        "CD": "7",
     }
 
     def __init__(
@@ -178,7 +175,9 @@ class SRS_DG535(Instrument):
                 set_command=f"TZ {channel},{{}}",
                 dummy_return="50-OHMS",
             )
-            self.add_lookup(f"CH{inst_ch_name}_TRIGGER_IMPEDANCE", {"50-OHMS": "0", "HI-Z": "1"})
+            self.add_lookup(
+                f"CH{inst_ch_name}_TRIGGER_IMPEDANCE", {"50-OHMS": "0", "HI-Z": "1"}
+            )
 
             if inst_ch_name in ["AB", "CD"]:
                 continue
@@ -198,10 +197,12 @@ class SRS_DG535(Instrument):
                 f"CH{inst_ch_name}_RELATIVE_TO",
                 read_command=f"DT {channel}",
                 set_command=f"DT {channel},{{}}",
-                post_hooks=[substring_hook(None, 1), lambda value: self.numeric_to_alpha(value)],
+                post_hooks=[
+                    substring_hook(None, 1),
+                    lambda value: self.numeric_to_alpha(value),
+                ],
                 dummy_return="T0",
             )
-
 
         def try_connect(self):
             """Need to clear the buffer every time we start the instrument."""

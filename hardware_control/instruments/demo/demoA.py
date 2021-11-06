@@ -38,14 +38,14 @@ class DemoA(Instrument):
 
         for ch in self.channels:
             self.add_parameter(
-                f"CH{channel}_ENABLE",
+                f"CH{ch}_ENABLE",
                 read_command=None,
                 set_command=None,
                 dummy_return=lambda: random.random() > 0.5,
             )
 
             self.add_parameter(
-                f"CH{channel}_VALUE",
+                f"CH{ch}_VALUE",
                 read_command=None,
                 set_command=None,
                 dummy_return=lambda: random.random() * 5,

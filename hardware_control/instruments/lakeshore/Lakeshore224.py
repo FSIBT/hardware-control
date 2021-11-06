@@ -14,8 +14,6 @@ https://www.lakeshore.com/docs/default-source/product-downloads/224_manual.pdf f
 import logging
 import random
 
-import numpy as np
-
 from ...base import Instrument
 
 logger = logging.getLogger(__name__)
@@ -95,14 +93,11 @@ class Lakeshore_224(Instrument):
         """
         Read all settings of the instrument
 
-        Parameters
-        ----------
-        setting : str
-            Setting to change
         """
         if self._dummy:
-            outputs = [1 + 128 + 1024, 128, 1, 1024]
-            value = random.choice(outputs)
+            status = {}
+            status["CURVE"] = "1"
+            status["NAME"] = "dummy"
         else:
             status = {}
             status["CURVE"] = self.query(f"INCRV? {channel}")

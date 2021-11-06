@@ -203,7 +203,7 @@ class Ni_9000(Instrument):
 
         return value
 
-    def _display_configuration():
+    def _display_configuration(self):
         logger.info(f"--------- Configuration for {self.ID} ---------")
         logger.info("Terminal Configurations:")
         for key in self.term_config_modes:

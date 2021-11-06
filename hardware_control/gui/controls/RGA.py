@@ -1,25 +1,17 @@
 import logging
-import time
 
-from PyQt5 import QtCore
-from PyQt5.QtCore import QTimer
-from PyQt5.QtGui import QIcon, QFont, QDoubleValidator, QIntValidator
+from PyQt5.QtGui import QIcon, QIntValidator
 
 from PyQt5.QtWidgets import (
     QGroupBox,
-    QComboBox,
-    QLabel,
     QGridLayout,
     QPushButton,
-    QWidget,
 )
 
 from ..widgets import (
     load_icon,
     HCLineEdit,
     HCComboBox,
-    HCDoubleSpinBox,
-    HCPushButton,
     HCSpinBox,
     ScanWidget,
 )
@@ -124,12 +116,9 @@ class RGA(QGroupBox):
 
         self.setLayout(self.master_layout)
 
-        # Create timer to query instrument
-        self.readout_timer = QTimer(self)
-        self.readout_timer.timeout.connect(self.update_readout)
-        self.readout_timer.start(self.app.globalRefreshRate)
+        self.config_auto_update()
 
-    def update_readout(self):
+    def config_update_readout(self):
         """Queries the instrument for current readout data."""
 
         for parameter in [
@@ -142,7 +131,7 @@ class RGA(QGroupBox):
             "EM_VOLTAGE",
             "",
         ]:
-            self.app.update_instrument_parameter(self.instrument, parameter)
+            self.app.add_auto_update_instrument_parameter(self.instrument, parameter)
 
 
 class ScanProcessControlWidget(ScanWidget):

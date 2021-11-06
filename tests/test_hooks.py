@@ -1,6 +1,4 @@
 """Test internal hooks"""
-import pytest
-
 import hardware_control as hc
 
 

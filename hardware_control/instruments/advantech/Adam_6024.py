@@ -5,7 +5,6 @@
 """
 
 import logging
-import random
 
 from ...base.hooks import range_validator, format_float
 
@@ -56,7 +55,7 @@ class Adam_6024(AdamBase):
                 f"CH{channel}_READ_VOLTAGE",
                 read_command="#01",
                 post_hooks=[_create_channel_parser(channel)],
-                dummy_return=f"10.",
+                dummy_return="10.",
             )
 
         for channel in range(self.n_output_channels):

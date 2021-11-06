@@ -471,7 +471,7 @@ class Instrument:
         if command_name in self.commands:
             if self._dummy:
                 logger.debug(
-                    f"{self.name}: Would call {command_name} -> {self.commands[name]}"
+                    f"{self.name}: Would call {command_name} -> {self.commands[command_name]}"
                 )
                 return
             if callable(self.commands[command_name]):
@@ -638,7 +638,9 @@ class Instrument:
                 if command == "write_coil":
                     self.device.write_coil(address=address, value=value, unit=unit)
                 elif command == "write_registers":
-                    self.device.write_registers(address=address, values=value, unit=unit)
+                    self.device.write_registers(
+                        address=address, values=value, unit=unit
+                    )
                 else:
                     logger.error(
                         f"modbus command for {command} currently not implemented for instrument '{self.name}'"
