@@ -56,8 +56,8 @@ interfaces. The package also provides means for simplifying data
 collection with automatic data logging, plotting, and many export
 formats. `Hardware-Control` was designed with the use case of
 experiments in our laboratory in mind. Normally, this involves reading
-and setting voltages, controlling power supplies and oscilloscopes, 
-updating values on external triggers, and automatically updating these 
+and setting voltages, controlling power supplies and oscilloscopes,
+updating values on external triggers, and automatically updating these
 values on a timer with time scales of about a second. The program is
 currently not well-fitted to do any real-time or near real-time
 communications with instruments or to handle data that is, for example,
@@ -86,7 +86,7 @@ github are therefore difficult). Furthermore, although backend code
 can be shared between projects, complex user interfaces cannot
 easily be reused. The software package presented here tries to address
 these issues. Specifically, it makes reusing frontend code easier,
-integrates well with git, and provides an easy built-in scripting solution 
+integrates well with git, and provides an easy built-in scripting solution
 (via an optional python REPL that has full
 access to the GUI and all backends). The control through
 python during execution makes one-off complex parameter scans easy to
@@ -99,7 +99,7 @@ test the program.
 
 Similar packages already exist (see Scopefoundry.org
 [@Barnard], pymeasure [@pymeasure], yaq [@yaq], etc.). A good overview
-of available python packages can be found at Ref [@overview]. However, 
+of available python packages can be found at Ref [@overview]. However,
 for our experiments we had a specific usecase in mind, and we
 therefore decided to implement the provided solution. This software is
 currently actively used in our group at Lawrence Berkeley National
