@@ -243,6 +243,20 @@ class Keysight_4000X(Instrument):
         self.write("CONFIG_READ_WAVE")
         self.write("\n*CLS")
 
+        # configure waveform readout
+        for channel in self.chan_nums:
+            # Set the source channel
+            self.write(f":WAV:SOUR CHAN{channel}")
+
+            # Sets data format to ASCII text
+            self.write(":WAV:FORM ASCII")
+            # Set data record to transfer to 'measurement record'
+            self.write(":WAV:POIN:MODE NORM")
+        # Set aquisition mode to normal
+        self.write(":ACQ:TYPE NORM")
+
+        self.write(":DIG")
+
     def _read_waveform(self, channel: int):
         """Reads a waveform from the oscilloscope.
 
@@ -257,43 +271,17 @@ class Keysight_4000X(Instrument):
             A string that contains a list of times and a list of waveform values embedded in another list.
         """
 
-        # Check if we have data and read it from oscilloscope
-        try:
-            wav_points = self.query(":WAV:POINTS?")
-            if wav_points is None:
-                wav_points = 0
-            data_length = int(wav_points)
-            if data_length == 0:
-                logger.error(
-                    "Cannot read scope trace because scope is not sending any data.",
-                    exc_info=True,
-                )
-                return "[[],[]]"
-        except ValueError:
-            logger.error(
-                "Cannot read scope trace because scope is not sending any data.",
-                exc_info=True,
-            )
+        channel_active = self.query(f"CHAN{channel}:DISP?")
+        print("debug", channel_active)
+        if not channel_active:
             return "[[],[]]"
 
-        try:
-            # Set the source channel
-            self.write(f":WAV:SOUR CHAN{channel}")
-            # Read waveform data
-            raw_data = self.query(":WAV:DATA?")
-        except:
-            # Digitize
-            self.write(":DIG")
+        # switch to correct channel and request ASCII output
+        self.write(f":WAV:SOUR CHAN{channel}")
+        self.write(":WAV:FORM ASCII")
 
-            # Sets data format to ASCII text
-            self.write(":WAV:FORM ASC")
-            # Set data record to transfer to 'measurement record'
-            self.write(":WAV:POIN:MODE NORM")
-            # Set aquisition mode to normal
-            self.write(":ACQ:TYPE NORM")
-
-            # Read waveform data
-            raw_data = self.query(":WAV:DATA?")
+        # Read waveform data
+        raw_data = self.query(":WAV:DATA?")
 
         # Read X Origin
         x_orig = self.query(":WAV:XOR?")
@@ -302,26 +290,13 @@ class Keysight_4000X(Instrument):
         # Read X Increment
         x_incr = self.query(":WAV:XINC?")
 
-        if x_orig is None:
-            return "[[],[]]"
-
         try:
             # Convert X Origin
             x_orig = float(x_orig)
+            x_ref = float(x_ref)
+            x_incr = float(x_incr)
         except (ValueError, TypeError):
             logger.error("Received bad origin from scope.", exc_info=True)
-            return "[[],[]]"
-        try:
-            # Convert X Reference
-            x_ref = float(x_ref)
-        except ValueError:
-            logger.error("Received bad reference from scope.", exc_info=True)
-            return "[[],[]]"
-        try:
-            # Convert X Increment
-            x_incr = float(x_incr)
-        except ValueError:
-            logger.error("Received bad increment from scope.", exc_info=True)
             return "[[],[]]"
 
         try:
