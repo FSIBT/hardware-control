@@ -99,14 +99,14 @@ class Instrument:
         self._online: bool = False
 
         # can be set when defining the instrument
-        self.manufacturer = None
-        self.model = None
+        self.manufacturer: Optional[str] = None
+        self.model: Optional[str] = None
 
         self.device = None  # This is the physical instrument to write to
         self._dummy: bool = False
 
         self.connection_addr = connection_addr
-        self.connection_type = None
+        self.connection_type: Optional[str] = None
 
         self.ip_addr = None
         self.port_no = default_port
@@ -167,7 +167,7 @@ class Instrument:
                 self.ip_addr, self.port_no = values
             self.port_no = int(self.port_no)
 
-    def check_connection(self) -> None:
+    def check_connection(self) -> bool:
         """Test if the instrument is reachable.
 
         The functions checks `self.check_connection_commands` and runs
@@ -489,11 +489,11 @@ class Instrument:
 
         if self._dummy:
             logger.debug(f"{self.name}: Dummy connection closed.")
-            return False
+            return
 
         if self.device is None:
             logger.debug(f"{self.name}: Called close with no device defined.")
-            return False
+            return
 
         self.device.close()
 
@@ -506,7 +506,7 @@ class Instrument:
 
         if self._dummy:
             if self._online:
-                return
+                return True
             logger.debug(
                 f"{self.name}: creating dummy connection to {self.connection_addr}"
             )

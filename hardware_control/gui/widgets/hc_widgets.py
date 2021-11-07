@@ -49,24 +49,25 @@ def icon_filename(name: str):
 def convert_prefix(value: str, decimals: int = 3) -> List[str]:
     try:
         value = float(value)
-    except:
-        return value, ""
+    except ValueError:
+        return [value, ""]
     if abs(value) < 1e-9:
-        return f"{round(value*1e12, decimals)}", "p"
+        return [f"{round(value*1e12, decimals)}", "p"]
     if abs(value) < 1e-6:
-        return f"{round(value*1e9, decimals)}", "n"
+        return [f"{round(value*1e9, decimals)}", "n"]
     if abs(value) < 1e-3:
-        return f"{round(value*1e6, decimals)}", "µ"
+        return [f"{round(value*1e6, decimals)}", "µ"]
     if abs(value) < 1:
-        return f"{round(value*1e3, decimals)}", "m"
+        return [f"{round(value*1e3, decimals)}", "m"]
     if abs(value) < 1e3:
-        return f"{round(value, decimals)}", ""
+        return [f"{round(value, decimals)}", ""]
     if abs(value) < 1e6:
-        return f"{round(value*1e-3, decimals)}", "k"
+        return [f"{round(value*1e-3, decimals)}", "k"]
     if abs(value) < 1e9:
-        return f"{round(value*1e-6, decimals)}", "M"
+        return [f"{round(value*1e-6, decimals)}", "M"]
     if abs(value) < 1e12:
-        return f"{round(value*1e-9, decimals)}", "G"
+        return [f"{round(value*1e-9, decimals)}", "G"]
+    return [f"{value}", ""]
 
 
 class HCGridLayout(QGridLayout):
@@ -118,7 +119,7 @@ class HCMixin:
         for arg in [app, instrument, parameter]:
             if arg is None:
                 logger.error(
-                    f"Widget '{self.name}' does not get correct arguments (app, instrument, parameter)"
+                    f"Widget '{label}' does not get correct arguments (app, instrument, parameter)"
                 )
 
         self.app = app

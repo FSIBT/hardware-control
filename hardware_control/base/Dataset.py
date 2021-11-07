@@ -66,7 +66,7 @@ class Dataset(QObject):
 
         # The autosave option appends the latest data to the output file
         self.autosave = False
-        self.autosave_interval = 120  # in seconds
+        self.autosave_interval = 120.0  # in seconds
         self.autosave_format = "JSON"
         self.autosave_filename = Path(f"autosave_{self.name}")
         # for some autosave formats it makes sense to only append new
@@ -75,7 +75,7 @@ class Dataset(QObject):
         self.autosave_next_row = 0
 
         self.instruments = []
-        self.update_interval = 10  # in seconds
+        self.update_interval = 10.0  # in seconds
 
         # Dictionary of datapoints. Each key follows the <instrument>:<parameter>
         # naming scheme. Every value is a list and all lists need to have the
