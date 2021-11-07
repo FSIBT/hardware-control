@@ -20,7 +20,7 @@ import json
 import logging
 import socket
 import time
-from typing import Optional, Any, Callable, List, Dict, Union
+from typing import Optional, Any, Callable, List, Dict, Union, Iterable
 
 import pyvisa
 from pymodbus.client.sync import ModbusTcpClient as ModbusClient
@@ -102,7 +102,12 @@ class Instrument:
         self.manufacturer: Optional[str] = None
         self.model: Optional[str] = None
 
-        self.device = None  # This is the physical instrument to write to
+        self.device: Union[
+            None,
+            socket.socket,
+            pyvisa.resources.Resource,
+            ModbusClient,
+        ] = None  # This is the physical instrument to write to
         self._dummy: bool = False
 
         self.connection_addr = connection_addr
@@ -132,7 +137,7 @@ class Instrument:
         # which will enable automatic checks using these commands to
         # see if the instrument is still online. For more complicated
         # checks, the user can also overwite check_connections()
-        self.check_connection_commands = None
+        self.check_connection_commands: Union[None, str, Iterable[str]] = None
 
         self.parse_connection_addr()
 
