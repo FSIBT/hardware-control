@@ -35,7 +35,9 @@ class DeviceType(QGroupBox):
         self.text = QLabel()
         self.text.setText("123")
 
-        self.spinbox = HCDoubleSpinBox(self.app, self.instrument, parameter="CH2_Volt")
+        self.spinbox = HCDoubleSpinBox(
+            self.app, self.instrument, parameter="CH2_VOLT", label="Voltage"
+        )
         self.spinbox.setRange(0, 10)
         self.spinbox.setSingleStep(0.15)
 

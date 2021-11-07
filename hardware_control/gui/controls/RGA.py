@@ -137,7 +137,7 @@ class RGA(QGroupBox):
 class ScanProcessControlWidget(ScanWidget):
     def __init__(self, app, actions):
 
-        super().__init__()
+        super().__init__(app, "RGA scan", actions)
         self.app = app
         self.actions = actions
 
