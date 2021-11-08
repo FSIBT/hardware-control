@@ -29,6 +29,22 @@ logger = logging.getLogger(__name__)
 LABEL_MIN_WIDTH = 15
 DISP_DECIMAL_PLACES = 1
 
+status_labels = {
+    "RAMPING_UP": "Ramp Up",
+    "RAMPING_DOWN": "Ramp Down",
+    "OVER_CURRENT": "Over Curr",
+    "OVER_VOLTAGE": "Over Volt",
+    "UNDER_VOLTAGE": "Under Volt",
+    "MAX_VOLTAGE": "Max Volt",
+    "TRIPPED": "Trip",
+    "OVER_POWER": "Over Power",
+    "OVER_TEMPERATURE": "Over Temp",
+    "DISABLED": "Disabled",
+    "KILL": "Kill",
+    "INTERLOCKED": "Interlock",
+    "CALIBRATION_ERROR": "Calib Err",
+}
+
 
 class MultiPowerSupply(QGroupBox):
     """A GUI for a multi channel power supply.
@@ -164,6 +180,14 @@ class MultiPowerSupply(QGroupBox):
                 cw.Power_out_value.setText(
                     f"{round(float(cw.V_out_value) * float(cw.I_out_value), 3)} W"
                 )
+
+            # Status parameters
+            if self.show_status_panel:
+                for bit_name in status_labels.keys():
+                    self.app.update_instrument_parameter(
+                        self.instrument,
+                        f"CH{cw.channel}_{bit_name}",
+                    )
 
     def set_maxI(self, channel: int, maxI: float):
         """Sets an internal limit for the current from channel 'n'."""
@@ -336,41 +360,34 @@ class PowerSupplyChannel(QWidget):
 
         # Potentially add a status panel to the master channel layout
         if show_status_panel:
-            self.current_ind = HCOnOffIndicator(
-                self.app,
-                self.instrument,
-                f"CH{self.channel}_I_SET",
-                "Constant Current/Voltage:",
-                show_icon=True,
-                icon_checked="ccurrent_label.svg",
-                icon_unchecked="cvoltage_label.svg",
-            )
-            # If the current set value is less than 95% of the current read out,
-            # show the constant current indicator; otherwise, show the constant
-            # voltage indicator
-            self.current_ind.add_widget_hook(
-                lambda value: self.set_current_indicator(value)
-            )
-
             self.status_panel = QGroupBox()
             self.status_grid = QGridLayout()
-            self.status_grid.addWidget(self.current_ind.label, 0, 0)
-            self.status_grid.addWidget(self.current_ind, 0, 1)
+            row_num = 0
+            col_num = 0
+            for widget_num, (parameter, status_label) in enumerate(
+                status_labels.items()
+            ):
+                indicator = HCOnOffIndicator(
+                    self.app,
+                    self.instrument,
+                    f"CH{self.channel}_{parameter}",
+                    status_label,
+                    label_align="right",
+                    show_icon=True,
+                    icon_checked="green_ind.svg",
+                    icon_unchecked="red_ind.svg",
+                )
+                self.status_grid.addWidget(indicator.label, row_num % 7, col_num)
+                self.status_grid.addWidget(indicator, row_num % 7, col_num + 1)
+                row_num += 1
+                if row_num != 0 and row_num % 7 == 0:
+                    col_num += 2
             self.status_panel.setLayout(self.status_grid)
 
             self.channel_layout.addWidget(self.status_panel, 2, 0)
 
         self.channel_layout.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignTop)
         self.setLayout(self.channel_layout)
-
-    def set_current_indicator(self, value):
-        """Determine whether the instrument is in constant current or voltage mode"""
-
-        if None not in [self.I_out_value, value]:
-            if float(self.I_out_value) >= float(value) * 0.95:
-                return True
-        else:
-            return False
 
     def set_label(self, label: str):
         """Sets a label header"""

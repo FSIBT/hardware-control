@@ -59,7 +59,6 @@ class Demo(hc.HCMainWindow):
             "tdkl",
             [1],
             "TDKL Power Supply Unit",
-            show_status_panel=True,
             enable_power_buttons="both",
         )
         self.caen_ctrl = hc.gui.MultiPowerSupply(
@@ -77,7 +76,6 @@ class Demo(hc.HCMainWindow):
             [3],
             "RigolDP832 Power Supply Unit",
             show_VI_limits=True,
-            show_status_panel=True,
             enable_power_buttons="both",
         )
 

@@ -43,7 +43,7 @@ class Demo(hc.HCMainWindow):
         self.app.add_instrument(hc.instruments.Caen_14xxET("caen", "192.168.0.1:1470"))
 
         # When not in dummy mode, these set channel voltage and current maximum values for all 16 Caen channels
-        for channel in [1]:
+        for channel in [x for x in range(4)]:
             self.app.set_instrument_parameter("caen", f"CH{channel}_V_MAX", 2000)
             self.app.set_instrument_parameter("caen", f"CH{channel}_I_MAX", 100e-6)
 
@@ -51,7 +51,7 @@ class Demo(hc.HCMainWindow):
         self.caen_ctrl = hc.gui.MultiPowerSupply(
             self.app,
             "caen",
-            [1],
+            [x for x in range(4)],
             "Caen Power Supply Unit",
             show_VI_limits=True,
             show_status_panel=True,

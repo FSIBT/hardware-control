@@ -22,9 +22,9 @@ class TDKL_GenH(Instrument):
         * CH1_I_OUT (*float*)
             * Current current.
         * CH1_V_SET (*float*)
-            * New voltage to set.
+            * Output voltage limit.
         * CH1_I_SET (*float*)
-            * New current to set.
+            * Output current limit.
 
     """
 

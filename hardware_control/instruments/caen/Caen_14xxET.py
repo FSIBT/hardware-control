@@ -187,7 +187,7 @@ class Caen_14xxET(Instrument):
                     f"CH{channel}_{bit_name}",
                     read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
                     post_hooks=[_create_parse_status(bit)],
-                    dummy_return="",
+                    dummy_return="True",
                 )
 
     def _read_V_max(self, channel):
