@@ -224,7 +224,7 @@ class App(QApplication):
         )
 
         # register an ignore flag for the instrument
-        self._data[zmq_instrument.name]["ignore"] = ignore_flag
+        self._data[zmq_instrument.name]["IGNORE"] = ignore_flag
 
         # some time for ZMQ to set things up
         time.sleep(1)
@@ -463,7 +463,7 @@ class App(QApplication):
         """
 
         # Some parameters are boolean
-        if parameter == "ignore":
+        if parameter == "IGNORE":
             return self._data[instrument][parameter]
 
         # Make sure parameter is not a command

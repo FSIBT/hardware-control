@@ -230,7 +230,7 @@ class Instrument:
            These can also easily be overwritten in an actual app to customize this.
 
         """
-        if parameter in ["online", "ignore"]:
+        if parameter in ["ONLINE", "IGNORE"]:
             logger.error(
                 f"Parameter '{parameter}' is a special command and cannot be used in instrument {self.name}."
             )

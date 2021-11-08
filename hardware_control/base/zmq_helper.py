@@ -145,8 +145,13 @@ def handle_ZMQ_message_from_app(adapter) -> None:
                 return
             value = adapter.instrument.get_value(parameter)
             # make sure that there are no spaces in the value string
+            # since the app expects exactly three white-space-separated strings
             value = f"{value}"
-            value = value.replace(" ", "")
+            if " " in value:
+                value = value.replace(" ", "")
+                logger.warning(
+                    f"In {adapter.name} - {parameter}: Found a white space(s) in returned value. Removing them."
+                )
 
             logger.debug(f"sending value '{value}' back for {parameter}")
             if value is not None:

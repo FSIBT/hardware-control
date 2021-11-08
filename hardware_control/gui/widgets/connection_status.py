@@ -67,7 +67,7 @@ class StatusTool(QGroupBox):
         self.instrument_rows = {}
 
         for row, instrument in enumerate(self.app.list_instruments()):
-            if self.app.get_instrument_parameter(instrument, "ignore"):
+            if self.app.get_instrument_parameter(instrument, "IGNORE"):
                 continue
 
             # save the row to make updating the instrument later easier

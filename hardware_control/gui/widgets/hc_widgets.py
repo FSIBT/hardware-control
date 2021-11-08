@@ -163,7 +163,12 @@ class HCMixin:
         self.widget_hooks.append(function)
 
     def hc_update(self):
-        """Apply hooks to a new widget value."""
+        """Get the HC widget parameter value from the instrument and apply hooks to that value.
+
+        When this function finishes running it calls the widget_update function which should be
+        written for each HC widget. If this function has not been defined the default update_widget
+        function raises an AttributeError.
+        """
 
         # Don't update an HC widget if the focus is on the widget (if the widget has a focus)
         # This does not apply to HCOnOffButtons
@@ -190,6 +195,12 @@ class HCMixin:
 
         # every HCwidget has the following function to update itself.
         self.widget_update(value)
+
+    def widget_update(self, value):
+        raise AttributeError(
+            f"HC widget for instrument {self.instrument}, parameter {self.parameter} "
+            f"needs to define a update_widget function"
+        )
 
 
 class HCLabel(HCMixin, QLabel):
@@ -633,9 +644,8 @@ class HCDoubleSpinComboBox(HCMixin):
         self.app.set_instrument_parameter(self.instrument, self.parameter, value)
 
     def widget_update(self, value) -> None:
-        value = float(value)
         combo_value = self.units[self.combo.currentText()]
-        value /= combo_value
+        value = float(value) / combo_value
         self.spin.setValue(value)
 
 
@@ -661,12 +671,11 @@ class HCSpinBox(HCMixin, QSpinBox):
         self.valueChanged.connect(self.value_change)
 
     def value_change(self) -> None:
-        value = self.value()
+        self.value = self.get_current_value()
         self.app.set_instrument_parameter(self.instrument, self.parameter, value)
 
     def widget_update(self, value) -> None:
-        value = float(value)
-        self.setValue(value)
+        self.setValue(float(value))
 
 
 class HCHeader(QLabel):

@@ -768,7 +768,7 @@ class ScanWidget(QGroupBox):
         # to the scan instrument dropdown
         scan_instruments = []
         for instrument in self.app.list_instruments():
-            if self.app.get_instrument_parameter(instrument, "ignore"):
+            if self.app.get_instrument_parameter(instrument, "IGNORE"):
                 continue
             scan_instruments.append(instrument)
         self.instrument_drop.addItems(scan_instruments)
