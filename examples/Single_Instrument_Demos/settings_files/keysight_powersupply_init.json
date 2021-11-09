@@ -1,0 +1,9 @@
+{
+    "CH2_V_PROT": "6",
+    "CH3_V_PROT": "-6",
+    "CH1_V_SET": "5",
+    "CH2_V_SET": "5",
+    "CH2_I_SET": "0.5",
+    "CH3_V_SET": "-5",
+    "CH3_I_SET": "0.5"
+}
