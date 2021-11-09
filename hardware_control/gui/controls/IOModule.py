@@ -5,6 +5,7 @@ it provides a simple UI.
 import json
 import logging
 from typing import Union
+from pathlib import Path
 
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import (
@@ -189,7 +190,7 @@ class IOModule(QGroupBox):
         """
 
         self.channel_data = channel_data
-        if isinstance(self.channel_data, str):
+        if isinstance(self.channel_data, str) or isinstance(self.channel_data, Path):
             with open(self.channel_data) as file:
                 self.channel_data = json.load(file)
         else:
