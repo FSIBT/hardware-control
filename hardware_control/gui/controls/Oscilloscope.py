@@ -25,6 +25,7 @@ from ..widgets import (
     HCSpinBox,
     HCHeader,
     HCDoubleSpinComboBox,
+    HCToggleButton,
 )
 
 logger = logging.getLogger(__name__)
@@ -159,7 +160,7 @@ class OscilloscopeChannelWidget(QWidget):
             label_align="right",
         )
 
-        self.on_off_but = HCOnOffButton(
+        self.on_off_but = HCToggleButton(
             self.app, self.instrument, f"CH{self.channel}_ON-OFF"
         )
 
