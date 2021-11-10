@@ -20,6 +20,8 @@ class VQM835(Instrument):
 
     Instrument home page: https://www.mksinst.com/f/835-vacuum-quality-monitor
     The instrument uses USB-A and is controlled using the pyvisa library.
+
+    The MKS 835VQM show as a virtual port device and invisible for list_resources
     """
 
     def __init__(
@@ -30,7 +32,6 @@ class VQM835(Instrument):
         super().__init__(
             instrument_name=instrument_name,
             connection_addr=connection_addr,
-            default_port=7777,
         )
 
         self.manufacturer = "MKS"
@@ -38,7 +39,7 @@ class VQM835(Instrument):
 
         self.check_connection_commands = ["*IDN?"]
 
-        self._termination = "\r"
+        self.termination = "\r"
 
         self.add_command("ENTRY_PLATE", "INST ENTR")
         self.add_command("FILAMENT", "INST FIL")
