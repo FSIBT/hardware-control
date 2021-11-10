@@ -10,6 +10,7 @@ See class definition for details.
 import logging
 
 from ...base import Instrument
+from ...base import hooks
 
 logger = logging.getLogger(__name__)
 
