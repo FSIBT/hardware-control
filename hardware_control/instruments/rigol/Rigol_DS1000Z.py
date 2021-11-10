@@ -127,7 +127,7 @@ class Rigol_DS1000Z(Instrument):
                 f"CH{ch}_LABEL",
                 read_command=f"CHAN{ch}:LAB?",
                 set_command=f"CHAN{ch}:LAB {{}}",
-                dummy_return="label unkown",
+                dummy_return="label_unkown",
                 pre_hooks=[max_len_converter(32)],
             )
 
