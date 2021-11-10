@@ -309,6 +309,7 @@ class App(QApplication):
                 logger.error(
                     f"{msg.split()} has too few or too many values (expected 3)."
                 )
+                return
             assert inst_name == name
 
             if name not in self._data:
