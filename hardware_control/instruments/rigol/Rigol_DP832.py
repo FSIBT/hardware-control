@@ -6,10 +6,8 @@
 See class definition for details.
 
 """
+from functools import partial
 import logging
-import random
-
-import pyvisa
 
 from ...base import Instrument
 
@@ -36,15 +34,15 @@ class Rigol_DP832(Instrument):
         for channel in self.chan_nums:
             self.add_parameter(
                 f"CH{channel}_V_MAX",
-                read_command=lambda x: self.read_V_max(channel),
-                set_command=lambda x: self.set_V_max(channel, x),
+                read_command=partial(self.read_V_max, channel),
+                set_command=partial(self.set_V_max, channel),
                 dummy_return="20.0",
             )
 
             self.add_parameter(
                 f"CH{channel}_I_MAX",
-                read_command=lambda x: self.read_I_max(channel),
-                set_command=lambda x: self.set_I_max(channel, x),
+                read_command=partial(self.read_I_max, channel),
+                set_command=partial(self.set_I_max, channel),
                 dummy_return="25.0",
             )
 

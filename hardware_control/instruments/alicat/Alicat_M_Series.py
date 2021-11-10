@@ -1,9 +1,6 @@
-"""Alicat M-Series gas flow meters.
-
+"""
 .. image:: /images/Alicat_M-Series.jpg
   :height: 200
-
-See class definition for details.
 
 """
 
@@ -16,14 +13,16 @@ from ..utility import (
 )
 
 
-def IEEE754_converter_to_ulong_pair(value):
+def _IEEE754_converter_to_ulong_pair(value):
     i = converter_IEEE754_to_ulong(float(value))
     a = i >> 16
     b = i & ((1 << 16) - 1)
     return [a, b]
 
 
-def modbus_registers_to_float(r):
+def _modbus_registers_to_float(r):
+    if r is None:
+        return
     a, b = r.registers
     value = (a << 16) + b
     value = converter_ulong_to_IEEE754(value)
@@ -31,11 +30,13 @@ def modbus_registers_to_float(r):
 
 
 class Alicat_M_Series(Instrument):
-    """A driver for Alicat M-Series flow controllers.
+    """Alicat M-Series flow controller instrument class.
 
-    Instrument home page: https://www.alicat.com/product/mass-flow-meters
-
-    The instrument is controlled via modbus over ethernet.
+    PARAMETERS
+        * RATE (*int*)
+            * Flow rate (in SCCM).
+        * PRESSURE (*int*)
+            * Flow pressure (in Torr).
 
     """
 
@@ -48,7 +49,7 @@ class Alicat_M_Series(Instrument):
         super().__init__(
             instrument_name=instrument_name,
             connection_addr=connection_addr,
-            default_port=0,  # modbus instrument need to set a default_port to an integer
+            default_port=0,  # modbus instrument needs to set a default_port to an integer
         )
         self.connection_type = Instrument.MODBUS
         self.error_count = 0
@@ -57,14 +58,14 @@ class Alicat_M_Series(Instrument):
         self.add_parameter(
             "RATE",
             read_command=f"read_input_registers:1208:2:{self.unit}",
-            set_command=f"write_coil:1009:{{}}:{self.unit}",
-            pre_hooks=[IEEE754_converter_to_ulong_pair],
-            post_hooks=[modbus_registers_to_float],
+            set_command=f"write_registers:1009:{{}}:{self.unit}",
+            pre_hooks=[_IEEE754_converter_to_ulong_pair],
+            post_hooks=[_modbus_registers_to_float],
             dummy_return=lambda: random.randint(0, 10),
         )
         self.add_parameter(
             "PRESSURE",
             read_command=f"read_input_registers:1202:2:{self.unit}",
-            post_hooks=[modbus_registers_to_float],
+            post_hooks=[_modbus_registers_to_float],
             dummy_return=lambda: random.randint(0, 10),
         )

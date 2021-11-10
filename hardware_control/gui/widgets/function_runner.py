@@ -1,13 +1,10 @@
 import logging
 from typing import Callable
 
-from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import (
     QPushButton,
-    QLabel,
     QGridLayout,
-    QComboBox,
     QLCDNumber,
     QGroupBox,
 )

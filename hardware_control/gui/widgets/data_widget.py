@@ -1,9 +1,7 @@
 import logging
-from typing import Callable
 from os import getcwd
 from pathlib import Path
 
-from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import (
     QComboBox,
@@ -13,7 +11,6 @@ from PyQt5.QtWidgets import (
     QMessageBox,
     QPushButton,
     QSizePolicy,
-    QSpacerItem,
     QTableWidget,
     QTableWidgetItem,
     QWidget,
@@ -167,7 +164,6 @@ class DataWidget(QWidget):
             # Use custom name if available, otherwise use field name
             if field in dataset.channel_names:
                 header_names.append(dataset.channel_names[field])
-                p = dataset.channel_names[field]
             else:
                 # Apply readable name for time column if not specified
                 if field == "time:time":

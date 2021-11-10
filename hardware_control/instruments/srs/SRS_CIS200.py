@@ -7,9 +7,9 @@ See class definition for details.
 
 """
 
-import logging, pyvisa
+import logging
 
-from ...base import Instrument, hooks
+from ...base import Instrument
 
 logger = logging.getLogger(__name__)
 

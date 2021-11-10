@@ -1,28 +1,22 @@
+import json
 import logging
 import pyqtgraph as pg
-import json
+from typing import Optional, List
 
 from PyQt5 import QtCore
-from PyQt5.QtCore import QTimer
-from PyQt5.QtGui import QIcon, QFont, QDoubleValidator
 from PyQt5.QtWidgets import (
     QGroupBox,
-    QComboBox,
-    QLabel,
     QGridLayout,
     QWidget,
-    QLineEdit,
-    QHBoxLayout,
 )
 
 from ..widgets import (
-    load_icon,
+    HCGridLayout,
     HCLineEdit,
     HCComboBox,
     HCDoubleSpinBox,
     HCPushButton,
     HCOnOffButton,
-    HCSpinBox,
     HCHeader,
     HCDoubleSpinComboBox,
     HCToggleButton,
@@ -32,34 +26,51 @@ logger = logging.getLogger(__name__)
 
 
 class Oscilloscope(QGroupBox):
+    """A GUI for an Oscilloscope,
+
+    Can be configured to only show certain channels and their controls.
+
+    Parameters
+    ----------
+    app
+       The main App instance
+    instrument_name
+       The name used to address the oscilloscope
+    widget_name
+       Name used in QGroupBox, defaults to Oscilloscope
+    channels
+       A list of channel number
+    """
+
     def __init__(
         self,
         app,
         instrument_name: str,
         widget_name: str = "Oscilloscope",
-        display_channels=None,
+        channels: Optional[List] = None,
     ):
 
         super().__init__(widget_name)
 
         self.app = app
         self.instrument = instrument_name
-        self.channels = 4
-        self.display_channels = display_channels
+
+        if channels is not None:
+            self.channels = channels
+        else:
+            self.channels = [1, 2, 3, 4]
 
         self.disp = OscilloscopeDisplayWidget(
-            self.app,
-            self.instrument,
-            display_channels=self.display_channels,
+            self.app, self.instrument, channels=self.channels
         )
         self.horiz = OscilloscopeHorizontalWidget(self.app, self.instrument)
-        self.trig = OscilloscopeTriggerWidget(self.app, self.instrument, self.disp)
+        self.trig = OscilloscopeTriggerWidget(self.app, self.instrument)
 
         widget_col = 0
         self.channel_widgets = []
         self.channel_box = QGroupBox()
         self.channel_box_layout = QGridLayout()
-        for i in ["1", "2", "3", "4"]:
+        for i in self.channels:
             self.channel_widgets.append(
                 OscilloscopeChannelWidget(self.app, self.instrument, i)
             )
@@ -74,15 +85,12 @@ class Oscilloscope(QGroupBox):
         self.master_layout.addWidget(self.channel_box, 10, 0, 1, 4)
         self.setLayout(self.master_layout)
 
-        # Create timer to query instrument
-        self.readout_timer = QTimer(self)
-        self.readout_timer.timeout.connect(self.update_readout)
-        self.readout_timer.start(self.app.globalRefreshRate)
+        self.default_update_readout()
 
-    def update_readout(self):
-        """Queries the instrument for current readout data."""
+    def default_update_readout(self) -> None:
+        """Register certain parameterts to be automatically udpated every second."""
 
-        for parameter in [
+        update = [
             "TIMEBASE",
             "TIME_OFFSET",
             "NUM_POINTS",
@@ -91,28 +99,22 @@ class Oscilloscope(QGroupBox):
             "TRIGGER_COUPLING",
             "TRIGGER_EDGE",
             "TRIGGER_CHANNEL",
-        ]:
-            self.app.update_instrument_parameter(self.instrument, parameter)
+        ]
 
         for ch in self.channel_widgets:
-            self.app.update_instrument_parameter(
-                self.instrument, f"CH{ch.channel}_VOLTS_DIV"
-            )
-            self.app.update_instrument_parameter(
-                self.instrument, f"CH{ch.channel}_OFFSET"
-            )
-            self.app.update_instrument_parameter(
-                self.instrument, f"CH{ch.channel}_LABEL"
-            )
-            self.app.update_instrument_parameter(
-                self.instrument, f"CH{ch.channel}_COUPLING"
-            )
-            self.app.update_instrument_parameter(
-                self.instrument, f"CH{ch.channel}_IMPEDANCE"
-            )
-            self.app.update_instrument_parameter(
-                self.instrument, f"CH{ch.channel}_PROBE_ATTEN"
-            )
+            update.append(f"CH{ch.channel}_VOLTS_DIV")
+            update.append(f"CH{ch.channel}_OFFSET")
+            update.append(f"CH{ch.channel}_LABEL")
+            update.append(f"CH{ch.channel}_COUPLING")
+            update.append(f"CH{ch.channel}_IMPEDANCE")
+            update.append(f"CH{ch.channel}_PROBE_ATTEN")
+            update.append(f"CH{ch.channel}_WAVEFORM")
+            update.append(f"CH{ch.channel}_ON-OFF")
+            update.append(f"CH{ch.channel}_BW_LIM")
+            update.append(f"CH{ch.channel}_INVERT")
+
+        for parameter in update:
+            self.app.add_auto_update_instrument_parameter(self.instrument, parameter)
 
 
 class OscilloscopeChannelWidget(QWidget):
@@ -128,12 +130,11 @@ class OscilloscopeChannelWidget(QWidget):
         self.app = app
         self.instrument = instrument_name
         self.channel = channel
-        self.colors = {"1": "yellow", "2": "green", "3": "blue", "4": "red"}
+        self.colors = {0: "yellow", 1: "green", 2: "blue", 3: "red"}
 
         self.channel_label = HCHeader(
-            f"channel{self.channel}_{self.colors[str(self.channel)]}.png"
+            f"channel{self.channel}_{self.colors[self.channel-1]}.png"
         )
-        self.channel_label.setFont(QFont("Arial", 20))
         self.channel_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
 
         self.volts_div = HCDoubleSpinBox(
@@ -160,21 +161,35 @@ class OscilloscopeChannelWidget(QWidget):
             label_align="right",
         )
 
-        self.on_off_but = HCToggleButton(
-            self.app, self.instrument, f"CH{self.channel}_ON-OFF"
+        self.on_off_but = HCOnOffButton(
+            self.app,
+            self.instrument,
+            f"CH{self.channel}_ON-OFF",
+            label="On/Off",
+            label_align="right",
+            text_checked=" On",
+            text_unchecked="Off",
         )
 
-        self.BW_but = HCPushButton(
-            self.app, self.instrument, f"CH{self.channel}_BW_LIM", label="BW Limit"
+        self.BW_but = HCOnOffButton(
+            self.app,
+            self.instrument,
+            f"CH{self.channel}_BW_LIM",
+            label="BW Limit",
+            label_align="right",
+            text_checked="BW_limit  on",
+            text_unchecked="BW_limit off",
         )
-        self.BW_but.setIcon(QIcon(load_icon("BWlim.png")))
-        self.BW_but.setCheckable(True)
 
-        self.Inv_but = HCPushButton(
-            self.app, self.instrument, f"CH{self.channel}_INVERT", label="Invert"
+        self.Inv_but = HCOnOffButton(
+            self.app,
+            self.instrument,
+            f"CH{self.channel}_INVERT",
+            label="Invert",
+            label_align="right",
+            text_checked="  Inverted  ",
+            text_unchecked="Not Inverted",
         )
-        self.Inv_but.setIcon(QIcon(load_icon("invert.png")))
-        self.Inv_but.setCheckable(True)
 
         self.coupling = HCComboBox(
             self.app,
@@ -203,33 +218,30 @@ class OscilloscopeChannelWidget(QWidget):
             items=[".001", ".01", ".1", "1", "10", "100", "1000"],
         )
 
-        self.channel_layout = QGridLayout()
+        self.channel_layout = HCGridLayout(
+            [
+                self.volts_div,
+                self.volts_offset,
+                self.label,
+                self.on_off_but,
+                self.BW_but,
+                self.Inv_but,
+                self.coupling,
+                self.impedance,
+                self.probe_atten,
+            ],
+            offset=1,
+        )
         self.channel_layout.addWidget(self.channel_label, 0, 0, 1, 2)
-        self.channel_layout.addWidget(self.volts_div.label, 1, 0)
-        self.channel_layout.addWidget(self.volts_div, 1, 1)
-        self.channel_layout.addWidget(self.volts_offset.label, 2, 0)
-        self.channel_layout.addWidget(self.volts_offset, 2, 1)
-        self.channel_layout.addWidget(self.label.label, 3, 0)
-        self.channel_layout.addWidget(self.label, 3, 1)
-        self.channel_layout.addWidget(self.on_off_but, 4, 1)
-        self.channel_layout.addWidget(self.BW_but, 5, 1)
-        self.channel_layout.addWidget(self.Inv_but, 5, 2)
-        self.channel_layout.addWidget(self.coupling.label, 6, 0)
-        self.channel_layout.addWidget(self.coupling, 6, 1)
-        self.channel_layout.addWidget(self.impedance.label, 7, 0)
-        self.channel_layout.addWidget(self.impedance, 7, 1)
-        self.channel_layout.addWidget(self.probe_atten.label, 8, 0)
-        self.channel_layout.addWidget(self.probe_atten, 8, 1)
         self.setLayout(self.channel_layout)
 
 
 class OscilloscopeTriggerWidget(QGroupBox):
-    def __init__(self, app, instrument_name, display_widget=None):
+    def __init__(self, app, instrument_name):
         super().__init__()
 
         self.app = app
         self.instrument = instrument_name
-        self.display_widget = display_widget
 
         self.trig_header = HCHeader("trigger_label.png")
 
@@ -274,22 +286,15 @@ class OscilloscopeTriggerWidget(QGroupBox):
         self.trig_single = HCPushButton(
             self.app, self.instrument, "SINGLE_TRIGGER", label="Trigger"
         )
-        if self.display_widget != None:
-            self.trig_single.clicked.connect(self.display_widget.query_waveforms)
         self.trig_run = HCPushButton(self.app, self.instrument, "RUN", label="Run")
         self.trig_stop = HCPushButton(self.app, self.instrument, "STOP", label="Stop")
 
         # Add widgets to grid layout
-        self.trig_grid = QGridLayout()
+        self.trig_grid = HCGridLayout(
+            [self.trig_level, self.trig_chan, self.trig_coupling, self.trig_edge],
+            offset=1,
+        )
         self.trig_grid.addWidget(self.trig_header, 0, 0, 1, 2, QtCore.Qt.AlignTop)
-        self.trig_grid.addWidget(self.trig_level.label, 1, 0, QtCore.Qt.AlignTop)
-        self.trig_grid.addWidget(self.trig_level, 1, 1, QtCore.Qt.AlignTop)
-        self.trig_grid.addWidget(self.trig_chan.label, 2, 0, QtCore.Qt.AlignTop)
-        self.trig_grid.addWidget(self.trig_chan, 2, 1, QtCore.Qt.AlignTop)
-        self.trig_grid.addWidget(self.trig_coupling.label, 3, 0, QtCore.Qt.AlignTop)
-        self.trig_grid.addWidget(self.trig_coupling, 3, 1, QtCore.Qt.AlignTop)
-        self.trig_grid.addWidget(self.trig_edge.label, 4, 0, QtCore.Qt.AlignTop)
-        self.trig_grid.addWidget(self.trig_edge, 4, 1, QtCore.Qt.AlignTop)
         self.trig_grid.addWidget(self.trig_single, 5, 0, QtCore.Qt.AlignTop)
         self.trig_grid.addWidget(self.trig_run, 5, 1, QtCore.Qt.AlignTop)
         self.trig_grid.addWidget(self.trig_stop, 6, 1, QtCore.Qt.AlignTop)
@@ -310,7 +315,7 @@ class OscilloscopeHorizontalWidget(QGroupBox):
             self.instrument,
             "TIMEBASE",
             "Time/Div",
-            units={"s": 1, "ms": 1e3, "us": 1e6, "ns": 1e9},
+            units={"s": 1, "ms": 1e-3, "us": 1e-6, "ns": 1e-9},
             label_align="right",
         )
         self.timebase.spin.setSingleStep(1)
@@ -323,7 +328,7 @@ class OscilloscopeHorizontalWidget(QGroupBox):
             self.instrument,
             "TIME_OFFSET",
             "Offset",
-            units={"s": 1, "ms": 1e3, "us": 1e6, "ns": 1e9},
+            units={"s": 1, "ms": 1e-3, "us": 1e-6, "ns": 1e-9},
             label_align="right",
         )
         self.time_offset.spin.setSingleStep(1)
@@ -343,16 +348,11 @@ class OscilloscopeHorizontalWidget(QGroupBox):
         self.num_points.setMaximum(4e6)
 
         # ******* DEFINE LAYOUT
-        self.horiz_layout = QGridLayout()
+        self.horiz_layout = HCGridLayout(
+            [self.timebase, self.time_offset, self.num_points],
+            offset=1,
+        )
         self.horiz_layout.addWidget(self.horiz_header, 0, 0, 1, 3, QtCore.Qt.AlignTop)
-        self.horiz_layout.addWidget(self.timebase.label, 1, 0, QtCore.Qt.AlignTop)
-        self.horiz_layout.addWidget(self.timebase.spin, 1, 1, QtCore.Qt.AlignTop)
-        self.horiz_layout.addWidget(self.timebase.combo, 1, 2, QtCore.Qt.AlignTop)
-        self.horiz_layout.addWidget(self.time_offset.label, 2, 0, QtCore.Qt.AlignTop)
-        self.horiz_layout.addWidget(self.time_offset.spin, 2, 1, QtCore.Qt.AlignTop)
-        self.horiz_layout.addWidget(self.time_offset.combo, 2, 2, QtCore.Qt.AlignTop)
-        self.horiz_layout.addWidget(self.num_points.label, 3, 0, QtCore.Qt.AlignTop)
-        self.horiz_layout.addWidget(self.num_points, 3, 1, QtCore.Qt.AlignTop)
         self.setLayout(self.horiz_layout)
 
 
@@ -375,27 +375,23 @@ class OscilloscopeDisplayWidget(QGroupBox):
         hc.base.instrument instance to connect display to.
     display_name
         Oscilloscope Display Widget name
-    display_channels : list or None
-        channels to display
-    show_controls : bool
-        Allows user to show or hide display refresh controls
-    refresh : float
-        Refresh period in seconds
+    channels : list
+        channels to display (starting with 0)
     """
 
     def __init__(
         self,
         app,
-        instrument_name: str = "",
+        instrument_name: str,
+        channels,
         display_name: str = "Oscilloscope Display",
-        display_channels=None,
     ):
 
         super().__init__(display_name)
 
         self.app = app
         self.instrument = instrument_name
-        self.display_channels = display_channels
+        self.channels = channels
 
         # ************** DEFINE UI *********************#
         self.display = pg.PlotWidget()
@@ -406,15 +402,17 @@ class OscilloscopeDisplayWidget(QGroupBox):
         self.p1.setMenuEnabled(enableMenu=True)
 
         # set up second axis
-        if self.display_channels:
+        if self.channels:
             self.p2 = pg.ViewBox()
             self.p1.showAxis("right")
             self.p1.scene().addItem(self.p2)
             self.p1.getAxis("right").linkToView(self.p2)
             self.p2.setXLink(self.p1)
-            right_label_items = [f"channel {i}" for i in self.display_channels]
+            right_label_items = [f"channel {i}" for i in self.channels]
             left_label_items = [
-                f"channel {i}" for i in range(1, 5) if i not in self.display_channels
+                f"channel {i}"
+                for i in range(max(self.channels) + 1)
+                if i not in self.channels
             ]
             right_label = ", ".join(right_label_items)
             left_label = ", ".join(left_label_items)
@@ -425,103 +423,60 @@ class OscilloscopeDisplayWidget(QGroupBox):
             self.p2 = self.p1
 
         channel_colors = {
-            1: (255, 255, 13),
-            2: (31, 255, 9),
-            3: (0, 0, 254),
-            4: (252, 0, 8),
+            0: (255, 255, 13),
+            1: (31, 255, 9),
+            2: (0, 0, 254),
+            3: (252, 0, 8),
         }
 
-        self.lineCH1 = pg.mkPen(color=channel_colors[1], style=QtCore.Qt.SolidLine)
-        self.lineCH2 = pg.mkPen(color=channel_colors[2], style=QtCore.Qt.SolidLine)
-        self.lineCH3 = pg.mkPen(color=channel_colors[3], style=QtCore.Qt.SolidLine)
-        self.lineCH4 = pg.mkPen(color=channel_colors[4], style=QtCore.Qt.SolidLine)
-        self.CH1 = pg.PlotCurveItem(pen=self.lineCH1, symbol=None)
-        self.CH2 = pg.PlotCurveItem(pen=self.lineCH2, symbol=None)
-        self.CH3 = pg.PlotCurveItem(pen=self.lineCH3, symbol=None)
-        self.CH4 = pg.PlotCurveItem(pen=self.lineCH4, symbol=None)
+        self.lineCH = []
+        self.CH = []
+        self.CH_data = []
+        for i, ch in enumerate(self.channels):
+            self.lineCH.append(
+                pg.mkPen(color=channel_colors[i], style=QtCore.Qt.SolidLine)
+            )
+            self.CH.append(pg.PlotCurveItem(pen=self.lineCH[i], symbol=None))
+            self.CH_data.append(([], []))
 
-        for i, ch in enumerate([self.CH1, self.CH2, self.CH3, self.CH4]):
-            if self.display_channels and i + 1 in self.display_channels:
-                self.p2.addItem(ch)
+        for i, curve in enumerate(self.CH):
+            if i in self.channels:
+                self.p2.addItem(curve)
             else:
-                self.p1.addItem(ch)
+                self.p1.addItem(curve)
 
-        if self.display_channels:
+        if self.channels:
             self.updateViews()
             self.p1.vb.sigResized.connect(self.updateViews)
 
-        self.CH1_data = ([], [])
-        self.CH2_data = ([], [])
-        self.CH3_data = ([], [])
-        self.CH4_data = ([], [])
-
-        # Method of updating display plot data
-        self.update_timer = QtCore.QTimer(self)
-        self.update_timer.timeout.connect(self.query_waveforms)
-        # Default refresh period is set to 5 seconds
-        self.update_timer.start(1000 * 5)
-
-        self.refresh_mode_label = QLabel("Refresh Mode: ")
-        self.refresh_mode_drop = QComboBox()
-        self.refresh_mode_drop.addItems(["Timer", "Single Trig"])
-        self.refresh_mode_drop.currentIndexChanged.connect(
-            lambda: self.set_refresh_mode(self.refresh_mode_drop.currentText())
-        )
-        self.refresh_mode_drop.setCurrentText("Single Trig")
-
-        self.refresh_rate_label = QLabel("Refresh Period (s): ")
-        self.refresh_rate_edit = QLineEdit()
-        self.refresh_rate_edit.setValidator(QDoubleValidator())
-        self.refresh_rate_edit.editingFinished.connect(
-            lambda: self.refresh_period(float(self.refresh_rate_edit.text()))
-        )
-        # Default refresh period is set to 5 seconds
-        self.refresh_rate_edit.setText(str(5))
-
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.display, 0, 0, 1, 20)
-        self.master_layout.addWidget(self.refresh_mode_label, 1, 0)
-        self.master_layout.addWidget(self.refresh_mode_drop, 1, 1)
-        self.master_layout.addWidget(self.refresh_rate_label, 1, 2)
-        self.master_layout.addWidget(self.refresh_rate_edit, 1, 3, 1, 1)
         self.setLayout(self.master_layout)
+
+        for ch in self.channels:
+            self.app.add_hook(
+                self.instrument,
+                f"CH{ch}_WAVEFORM",
+                "post_read_hooks",
+                self.make_update_waveform_func(ch),
+            )
 
     def updateViews(self):
         self.p2.setGeometry(self.p1.vb.sceneBoundingRect())
         self.p2.linkedViewChanged(self.p1.vb, self.p2.XAxis)
 
-    # Set refresh rate (in ms)
-    def refresh_period(self, period: float):
-        self.update_timer.setInterval(period * 1e3)
+    def make_update_waveform_func(self, channel):
+        return lambda x: self.update_waveform(channel, x)
 
-    def set_refresh_mode(self, mode: str):
-        if mode == "Timer":
-            if not self.update_timer.isActive():
-                self.update_timer.start()
-        elif mode == "Single Trig":
-            if self.update_timer.isActive():
-                self.update_timer.stop()
+    def update_waveform(self, channel, trace_string):
+        if trace_string is None:
+            logger.warning(
+                f"Scope {self.instrument}: no trace data available for channel {channel}"
+            )
+            return
+        t, wave = json.loads(trace_string)
 
-    def query_waveforms(self):
-        for channel in self.display_channels:
-            if self.app.call_instrument_command(self.instrument, f"CH{channel}_ON-OFF"):
-                self.app.update_instrument_parameter(
-                    self.instrument, f"CH{channel}_WAVEFORM"
-                )
-                trace_string = self.app.get_instrument_parameter(
-                    self.instrument, f"CH{channel}_WAVEFORM"
-                )
-                t, wave = json.loads(trace_string)
+        self.CH[channel - 1].setData(t, wave)
+        self.CH_data[channel - 1] = (t, wave)
 
-                if channel == 1:
-                    self.CH1.setData(t, wave)
-                    self.CH1_data = (t, wave)
-                elif channel == 2:
-                    self.CH2.setData(t, wave)
-                    self.CH2_data = (t, wave)
-                elif channel == 3:
-                    self.CH3.setData(t, wave)
-                    self.CH3_data = (t, wave)
-                elif channel == 4:
-                    self.CH4.setData(t, wave)
-                    self.CH4_data = (t, wave)
+        self.updateViews()

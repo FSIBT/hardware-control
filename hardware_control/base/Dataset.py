@@ -66,7 +66,7 @@ class Dataset(QObject):
 
         # The autosave option appends the latest data to the output file
         self.autosave = False
-        self.autosave_interval = 120  # in seconds
+        self.autosave_interval = 120.0  # in seconds
         self.autosave_format = "JSON"
         self.autosave_filename = Path(f"autosave_{self.name}")
         # for some autosave formats it makes sense to only append new
@@ -75,7 +75,7 @@ class Dataset(QObject):
         self.autosave_next_row = 0
 
         self.instruments = []
-        self.update_interval = 10  # in seconds
+        self.update_interval = 10.0  # in seconds
 
         # Dictionary of datapoints. Each key follows the <instrument>:<parameter>
         # naming scheme. Every value is a list and all lists need to have the
@@ -175,13 +175,16 @@ class Dataset(QObject):
         self.channel_names[channel] = alias
 
     def start_autosave(
-        self, interval: float = 120, format: str = "JSON", filename: str = "autosave"
-    ):
+        self,
+        interval: float = 120,
+        file_format: str = "JSON",
+        filename: str = "autosave",
+    ) -> None:
         """Activates the dataset's autosave feature."""
 
         self.autosave = True
         self.autosave_interval = interval
-        self.autosave_format = format
+        self.autosave_format = file_format
         self.autosave_filename = Path(filename)
 
         self.autosave_timer.start(1e3 * self.autosave_interval)
@@ -191,7 +194,7 @@ class Dataset(QObject):
             f" Interval: {self.autosave_interval} s"
         )
 
-    def start_updates(self, interval: float = 10):
+    def start_updates(self, interval: float = 10) -> None:
         """Start automaticaly logging data every `interval` seconds."""
 
         self.update_interval = interval
@@ -199,21 +202,21 @@ class Dataset(QObject):
         self.update_timer.start(1e3 * self.update_interval)
 
         logger.debug(
-            f"Dataset {self.name} activated asynchronous mode."
+            f"Dataset {self.name} started update mode."
             f" Interval: {self.update_interval} s"
         )
 
-    def set_save_interval(self, interval: float):
+    def set_save_interval(self, interval: float) -> None:
         """Set the autosave interval in seconds."""
         self.autosave_interval = interval
         self.autosave_timer.setInterval(1e3 * self.autosave_interval)
 
-    def set_update_interval(self, interval: float):
+    def set_update_interval(self, interval: float) -> None:
         """Set the update interval (when a new row is added) in seconds."""
         self.update_interval = interval
         self.update_timer.setInterval(1e3 * self.update_interval)
 
-    def timer_autosave(self):
+    def timer_autosave(self) -> None:
         logger.debug(
             f"Dataset {self.name} autosaveing to" f" file {self.autosave_filename}"
         )
@@ -275,28 +278,28 @@ class Dataset(QObject):
                 # Move pointer to next line
                 self.autosave_next_row += 1
 
-    def save_json(self, filename: Path):
+    def save_json(self, filename: Path) -> None:
         if filename.suffix != ".json":
             filename = filename.with_suffix(".json")
 
         with filename.open("w", encoding="utf-8") as outfile:
             json.dump(self.data, outfile, ensure_ascii=False, indent=4)
 
-    def save_pickle(self, filename: Path):
+    def save_pickle(self, filename: Path) -> None:
         if filename.suffix != ".pickle":
             filename = filename.with_suffix(".pickle")
         with filename.open("wb") as outfile:
             pickle.dump(self.data, outfile)
 
-    def save_npy(self, filename: Path):
+    def save_npy(self, filename: Path) -> None:
         if filename.suffix != ".npy":
             filename = filename.with_suffix(".npy")
         np.save(filename, self.data)
 
-    def save(self, filename: Path, format: str):
+    def save(self, filename: Path, file_format: str) -> None:
         """Saves the dataset to a file. Format specifies the file format.
 
-        The file format specifier is not case sensitive.
+        The file_format specifier is not case sensitive.
 
         File Formats:
            JSON
@@ -306,25 +309,25 @@ class Dataset(QObject):
 
         """
 
-        format = format.upper()
+        file_format = file_format.upper()
 
-        if format == "JSON":
+        if file_format == "JSON":
             self.save_json(filename)
             logger.debug(f"Saved file {filename} as .json file.")
-        elif format == "PICKLE":
+        elif file_format == "PICKLE":
             self.save_pickle(filename)
             logger.debug(f"Saved file {filename} as .pickle file.")
-        elif format == "NPY":
+        elif file_format == "NPY":
             self.save_npy(filename)
             logger.debug(f"Saved file {filename} as .npy file.")
-        elif format == "TXT":
+        elif file_format == "TXT":
             self.save_txt(filename)
             logger.debug(f"Saved file {filename} as .txt file.")
-        elif self.app is not None and format in self.app.additional_save_formats:
-            self.app.additional_save_formats[format](self, filename)
-            logger.debug(f"Saved file {filename} as '{format}' file.")
+        elif self.app is not None and file_format in self.app.additional_save_formats:
+            self.app.additional_save_formats[file_format](self, filename)
+            logger.debug(f"Saved file {filename} as '{file_format}' file.")
         else:
-            logger.warning(f"Unrecognized file format '{format}'.")
+            logger.warning(f"Unrecognized file format '{file_format}'.")
 
     def update_data(self) -> None:
         """Logs values from the specified instruments to the datasets.

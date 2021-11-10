@@ -1,9 +1,3 @@
-"""Advantac Adam backend base class
-
-
-A base class for connecting to ADAM modules.
-
-"""
 import logging
 import socket
 
@@ -12,8 +6,8 @@ from ...base import Instrument
 logger = logging.getLogger(__name__)
 
 
-class AdamBackend(Instrument):
-    """Common try connect and init parts for all ADAM modules"""
+class AdamBase(Instrument):
+    """Base class for all Adam instruments that overwrites some instrument base class attributes with unique Adam module attributes."""
 
     def __init__(
         self,
@@ -41,6 +35,7 @@ class AdamBackend(Instrument):
         self.try_connect()
 
     def write(self, command: str):
+        """Unique 'write' function for writing to Adam instruments."""
         if self._dummy:
             logger.debug(f"{self.name} sending write command {command}")
             return
@@ -58,7 +53,7 @@ class AdamBackend(Instrument):
             return
 
     def try_connect(self):
-        """Force the use of sockets with different option (DGRAM instead of STREAM)."""
+        """Unique 'try_connect' function for using sockets with a different option (DGRAM instead of STREAM)."""
         # Prevent trying to connect while the program is booting up
         if self.connection_tries < 1:
             self.connection_tries += 1

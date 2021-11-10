@@ -4,21 +4,18 @@ it provides a simple UI.
 """
 import json
 import logging
-from typing import Union, Optional
+from typing import Union
 
 from PyQt5.QtCore import QTimer
-from PyQt5.QtGui import QDoubleValidator
 from PyQt5.QtWidgets import (
     QLabel,
     QGridLayout,
     QSpacerItem,
     QGroupBox,
-    QLineEdit,
-    QPushButton,
     QSizePolicy,
 )
 
-from ..widgets import load_icon, setButtonState, HCLineEdit, HCLabel, HCToggleButton
+from ..widgets import load_pixmap, HCLineEdit, HCLabel, HCOnOffButton
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +94,7 @@ class IOModule(QGroupBox):
                 )
                 continue
 
-            if self.ensure_all_fields(c_dict, c_dict_key) == False:
+            if self.ensure_all_fields(c_dict, c_dict_key) is False:
                 continue
 
             kwargs = {}
@@ -313,10 +310,10 @@ class DigitalInputChannel(QGroupBox):
         self.instrument_name = instrument_name
         self.channel = channel
 
-        self.high_indicator = load_icon("high_label.svg")
-        self.low_indicator = load_icon("low_label.svg")
-        self.error_indicator = load_icon("error_label.svg")
-        self.na_indicator = load_icon("na_label.svg")
+        self.high_indicator = load_pixmap("high_label.svg")
+        self.low_indicator = load_pixmap("low_label.svg")
+        self.error_indicator = load_pixmap("error_label.svg")
+        self.na_indicator = load_pixmap("na_label.svg")
 
         label += ":"
         self.param_label = QLabel(label)
@@ -369,14 +366,14 @@ class DigitalOutputChannel(QGroupBox):
         else:
             super().__init__()
 
-        self.togg_but = HCToggleButton(
+        self.togg_but = HCOnOffButton(
             app,
             instrument_name,
             f"CH{channel}_DIGITAL",
             label,
-            show_indicator=True,
-            icon_1="high_label.svg",
-            icon_2="low_label.svg",
+            show_icon=True,
+            icon_checked="high_label.svg",
+            icon_unchecked="low_label.svg",
         )
 
         self.edit_spacer = QSpacerItem(
@@ -385,6 +382,6 @@ class DigitalOutputChannel(QGroupBox):
 
         self.main_layout = QGridLayout()
         self.main_layout.addWidget(self.togg_but, 0, 0)
-        self.main_layout.addWidget(self.togg_but.indic_label, 0, 1)
+        self.main_layout.addWidget(self.togg_but.label, 0, 1)
 
         self.setLayout(self.main_layout)

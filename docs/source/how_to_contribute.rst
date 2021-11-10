@@ -38,3 +38,7 @@ If you supply a new instrument driver of an already existing type, for
 example, a power supply, then please ensure that it will work with
 existing GUIs.
 
+Also, please add tests if feasible and make sure that the old tests
+still run. Tests can be run using
+
+   python -m pytest

@@ -1,19 +1,8 @@
 import logging
 
-from PyQt5 import QtCore
-from PyQt5.QtCore import QTimer
-from PyQt5.QtGui import QDoubleValidator
-from PyQt5.QtWidgets import (
-    QLineEdit,
-    QLabel,
-    QFormLayout,
-    QGridLayout,
-    QComboBox,
-    QGroupBox,
-)
+from PyQt5.QtWidgets import QGroupBox
 
-
-from ..widgets import HCComboBox, HCLabel, HCLineEdit
+from ..widgets import HCLabel, HCLineEdit, HCGridLayout
 
 logger = logging.getLogger(__name__)
 
@@ -77,34 +66,13 @@ class FlowController(QGroupBox):
             label_align="right",
         )
 
-        self.layout = QGridLayout()
-        self.layout.addWidget(self.rate.label, 0, 0)
-        self.layout.addWidget(self.rate, 0, 1)
-
-        # self.layout.addWidget(self.gas.label, 1, 0)
-        # self.layout.addWidget(self.gas, 1, 1)
-
-        self.layout.addWidget(self.pressure.label, 2, 0)
-        self.layout.addWidget(self.pressure, 2, 1)
-
-        self.layout.addWidget(self.flow.label, 3, 0)
-        self.layout.addWidget(self.flow, 3, 1)
-
+        self.layout = HCGridLayout([self.rate, self.pressure, self.flow])
         self.setLayout(self.layout)
 
-        # Create timer to query instrument
-        self.readout_timer = QTimer(self)
-        self.readout_timer.timeout.connect(self.update_readout)
-        self.readout_timer.start(self.app.globalRefreshRate)
+        self.config_auto_update()
 
-        logger.debug(f"Initalized {self.name}")
-
-    def close(self):
-        self.readout_timer.stop()
-        super().close()
-
-    def update_readout(self):
+    def config_auto_update(self):
         """Queries the instrument for current readout data."""
 
         for parameter in ["RATE", "PRESSURE"]:
-            self.app.update_instrument_parameter(self.instrument, parameter)
+            self.app.add_auto_update_instrument_parameter(self.instrument, parameter)

@@ -33,18 +33,20 @@ class Demo(hc.HCMainWindow):
 
         self.setWindowTitle("Demo")
 
-        # this is the main widget, actual device widgets are added to it
+        # This is the main widget, actual device widgets are added to it
         self.main_widget = QWidget(self)
 
-        # create a backend and a GUI control for the backend
+        # Create an Keysight_4000X instrument backend and add it to the app
         self.app.add_instrument(
             hc_inst.Keysight_4000X("Keysight-4000", "TCPIP0::192.168.0.14::INSTR")
         )
+
+        # Create an Oscilloscope GUI control that connects to the instrument backend
         self.scope_ctrl = hc.gui.Oscilloscope(
-            self.app, "Keysight-4000", "Keysight 4000", display_channels=[1]
+            self.app, "Keysight-4000", "Keysight 4000", channels=[1, 2, 3, 4]
         )
 
-        # Add control to the main Widget
+        # Add the control to the main widget
         self.grid = QGridLayout()
         self.grid.addWidget(self.scope_ctrl, 0, 0)
         self.main_widget.setLayout(self.grid)

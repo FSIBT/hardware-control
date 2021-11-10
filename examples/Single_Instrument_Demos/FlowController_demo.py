@@ -34,15 +34,21 @@ class Demo(hc.HCMainWindow):
 
         self.setWindowTitle("Flow Controller Demo")
 
+        # This is the main widget (a widget with tabs), actual device widgets are added to it
         self.tabs = QTabWidget()
 
+        # Create an flow controller Alicat_M_Series instrument backend and add it to the app
         self.app.add_instrument(
             hc.instruments.Alicat_M_Series("alicat", "192.168.0.15")
         )
+
+        # Create a FlowController GUI control that connects to the instrument backend
         self.instr_ctrl = hc.gui.FlowController(self.app, "alicat", "Flow Controller")
 
+        # Create an interactive ipython console
         self.ipython = hc.gui.Qtconsole(self.app)
 
+        # Create tabs for the flow controller control and the ipython console, respectively
         self.tabs.addTab(self.instr_ctrl, "Instruments")
         self.tabs.addTab(self.ipython, "Interactive")
 

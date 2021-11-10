@@ -4,6 +4,8 @@
 
 """
 
+from functools import partial
+import json
 import logging
 import numpy as np
 
@@ -12,8 +14,9 @@ from ...base.hooks import (
     format_float,
     format_int,
     expected_input_validator,
-    make_negative,
     max_len_converter,
+    substring_hook,
+    range_validator,
 )
 
 logger = logging.getLogger(__name__)
@@ -52,23 +55,23 @@ class Keysight_4000X(Instrument):
         * CH<X>_COUPLING (*AC*, *DC*)
             * Coupling mode for channel 'X'.
         * CH<X>_WAVEFORM
-            * Most recent waveform measurement from channel 'X'. This parameter can be read but cannot be set.
-
-    COMMANDS
-        * SINGLE_TRIGGER
-            * Set the instrument to trigger once and save the data.
-        * RUN
-            * Set the instrument to continuously trigger.
-        * CONFIG_READ_WAVE
-            * Configure instrument settings to prepare for reading waveforms.
-        * STOP
-            * Prevent the instrument from triggering.
+            * Most recent waveform measurement from channel 'X'.
         * CH<X>_ON-OFF
             * Enables or disables channel 'X'.
         * CH<X>_BW_LIM
             * Enables or disables the 20MHz bandwidth limit for channel 'X'.
         * CH<X>_INVERT
             * Enables or disables inversion of the channel 'X' waveform.
+
+    COMMANDS
+        * SINGLE_TRIGGER
+            * Set the instrument to trigger once and save the data.
+        * RUN
+            * Set the instrument to continuously trigger.
+        * STOP
+            * Prevent the instrument from triggering.
+        * DIGITIZE
+            * Start digitize process for waveform
 
     """
 
@@ -83,8 +86,7 @@ class Keysight_4000X(Instrument):
             default_port=5025,
         )
 
-        # The instrument has channels 1, 2, 3, and 4
-        self.chan_nums = range(1, 5)
+        self.chan_nums = [1, 2, 3, 4]
 
         self.num_vert_divisions = 8
         self.check_connection_commands = "*IDN?"
@@ -93,7 +95,7 @@ class Keysight_4000X(Instrument):
             "TIMEBASE",
             read_command=":TIM:SCAL?",
             set_command=":TIM:SCAL {}",
-            pre_hooks=[format_float(".6E")],
+            pre_hooks=[range_validator(1e-9, 50), format_float(".6E")],
             dummy_return="5e-3",
         )
 
@@ -150,6 +152,7 @@ class Keysight_4000X(Instrument):
             read_command="TRIG:SOUR?",
             set_command="TRIG:SOUR CHAN{}",
             pre_hooks=[format_int],
+            post_hooks=[substring_hook(4, None)],
             dummy_return="1",
         )
 
@@ -166,7 +169,7 @@ class Keysight_4000X(Instrument):
                 f"CH{channel}_OFFSET",
                 read_command=f"CHAN{channel}:OFFS?",
                 set_command=f"CHAN{channel}:OFFS {{}}",
-                pre_hooks=[make_negative, format_float(".6E")],
+                pre_hooks=[format_float(".6E")],
                 dummy_return="1.",
             )
 
@@ -190,9 +193,9 @@ class Keysight_4000X(Instrument):
                 f"CH{channel}_IMPEDANCE",
                 read_command=f"CHAN{channel}:IMP?",
                 set_command=f"CHAN{channel}:IMP {{}}",
-                pre_hooks=[lambda value: "FIFT" if value == "50" else "ONEM"],
                 dummy_return="1e6",
             )
+            self.add_lookup(f"CH{channel}_IMPEDANCE", {"50": "FIFT", "1E6": "ONEM"})
 
             self.add_parameter(
                 f"CH{channel}_PROBE_ATTEN",
@@ -204,17 +207,31 @@ class Keysight_4000X(Instrument):
 
             self.add_parameter(
                 f"CH{channel}_WAVEFORM",
-                read_command=lambda: self._read_waveform(channel),
-                dummy_return=lambda: self._read_waveform_dummy(),
+                read_command=partial(self._read_waveform, channel),
+                dummy_return=self._read_waveform_dummy,
             )
 
-            self.add_command(
-                f"CH{channel}_ON-OFF", lambda: self._on_off_command(channel)
+            self.add_parameter(
+                f"CH{channel}_ON-OFF",
+                read_command=f"CHAN{channel}:DISP?",
+                set_command=f"CHAN{channel}:DISP {{}}",
+                dummy_return="True",
             )
-            self.add_command(
-                f"CH{channel}_BW_LIM", lambda: self._BW_lim_command(channel)
+            self.add_lookup(f"CH{channel}_ON-OFF", {"True": "1", "False": "0"})
+
+            self.add_parameter(
+                f"CH{channel}_BW_LIM",
+                read_command=f"CHAN{channel}:BWL?",
+                set_command=f"CHAN{channel}:BWL {{}}",
             )
-            self.add_command(f"CH{channel}_INVERT", lambda: self._inv_command(channel))
+            self.add_lookup(f"CH{channel}_BW_LIM", {"True": "1", "False": "0"})
+
+            self.add_parameter(
+                f"CH{channel}_INVERT",
+                read_command=f"CHAN{channel}:INV?",
+                set_command=f"CHAN{channel}:INV {{}}",
+            )
+            self.add_lookup(f"CH{channel}_INVERT", {"True": "1", "False": "0"})
 
         self.add_command("SINGLE_TRIGGER", ":SING")
         self.add_command("RUN", ":RUN")
@@ -222,7 +239,7 @@ class Keysight_4000X(Instrument):
         self.add_command("DIGITIZE", ":DIG")
 
         # Initial configure call
-        self.write("CONFIG_READ_WAVE")
+        self.write("\n*CLS")
 
     def _read_waveform(self, channel: int):
         """Reads a waveform from the oscilloscope.
@@ -238,33 +255,17 @@ class Keysight_4000X(Instrument):
             A string that contains a list of times and a list of waveform values embedded in another list.
         """
 
-        # Check if we have data and read it from oscilloscope
-        try:
-            data_length = int(self.query(":WAV:POINTS?"))
-            if data_length == 0:
-                logger.error(
-                    "Cannot read scope trace because scope is not sending any data.",
-                    exc_info=True,
-                )
-                return "[[],[]]"
-        except ValueError:
-            logger.error(
-                "Cannot read scope trace because scope is not sending any data.",
-                exc_info=True,
-            )
+        channel_active = self.query(f"CHAN{channel}:DISP?")
+        if not channel_active:
             return "[[],[]]"
 
-        try:
-            # Set the source channel
-            self.write(f":WAV:SOUR CHAN{channel}")
-            # Read waveform data
-            raw_data = self.query(":WAV:DATA?")
-        except:
-            # Digitize
-            self.write(":DIG")
-            self._configure_read_waveform()
-            # Read waveform data
-            raw_data = self.query(":WAV:DATA?")
+        # switch to correct channel and request ASCII output
+        self.write(f":WAV:SOUR CHAN{channel}")
+        self.write(":WAV:FORM ASCII")
+        self.write(":WAV:POIN:MODE NORM")
+
+        # Read waveform data
+        raw_data = self.query(":WAV:DATA?")
 
         # Read X Origin
         x_orig = self.query(":WAV:XOR?")
@@ -276,20 +277,10 @@ class Keysight_4000X(Instrument):
         try:
             # Convert X Origin
             x_orig = float(x_orig)
-        except ValueError:
-            logger.error("Received bad origin from scope.", exc_info=True)
-            return "[[],[]]"
-        try:
-            # Convert X Reference
             x_ref = float(x_ref)
-        except ValueError:
-            logger.error("Received bad reference from scope.", exc_info=True)
-            return "[[],[]]"
-        try:
-            # Convert X Increment
             x_incr = float(x_incr)
-        except ValueError:
-            logger.error("Received bad increment from scope.", exc_info=True)
+        except (ValueError, TypeError):
+            logger.error("Received bad origin from scope.", exc_info=True)
             return "[[],[]]"
 
         try:
@@ -306,7 +297,8 @@ class Keysight_4000X(Instrument):
             logger.error("Failed to calculate V & t.", exc_info=True)
             return "[[],[]]"
 
-        return f"[{t}, {fmt}]"
+        out = json.dumps([t, fmt])
+        return out
 
     def _read_waveform_dummy(self):
         """Returns a dummy waveform.
@@ -319,31 +311,3 @@ class Keysight_4000X(Instrument):
 
         dummy_return = str(np.random.uniform(0.0, 10.0, 10).tolist()).replace(" ", "")
         return f"[[1,2,3,4,5,6,7,8,9,10],{dummy_return}]"
-
-    def _configure_read_waveform(self):
-        """Sets the data transfer mode of the oscilloscope."""
-
-        # Sets data format to ASCII text
-        self.write(":WAV:FORM ASC")
-        # Set data record to transfer to 'measurement record'
-        self.write(":WAV:POIN:MODE NORM")
-        # Set aquisition mode to normal
-        self.write(":ACQ:TYPE NORM")
-
-    def _on_off_command(self, channel):
-        """Turns the oscilloscope on and off."""
-
-        value = not self.query(f"CHAN{channel}:DISP?")
-        self.write(f"CHAN{channel}:DISP {value}")
-
-    def _BW_lim_command(self, channel):
-        """Enables or disables the BW limit."""
-
-        value = not self.query(f"CHAN{channel}:BWL?")
-        self.write(f"CHAN{channel}:BWL {value}")
-
-    def _inv_command(self, channel):
-        """Enables or disables inversion of the waveform."""
-
-        value = not self.query(f"CHAN{channel}:INV?")
-        self.write(f"CHAN{channel}:INV {value}")

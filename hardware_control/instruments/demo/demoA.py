@@ -16,9 +16,21 @@ logger = logging.getLogger(__name__)
 
 
 class DemoA(Instrument):
-    def __init__(self, connection_addr: str):
+    """An example instrument class.
+
+    PARAMETERS
+        * CH<X>_ENABLE (*bool*)
+            * On/off status of channel 'X'.
+        * CH<X>_VALUE (*float*)
+            * Random value stored in channel 'X'.
+
+    """
+
+    def __init__(self, instrument_name: str = "DemoA", connection_addr: str = ""):
         super().__init__(
-            instrument_name="DemoA", connection_addr=connection_addr, default_port=7123
+            instrument_name=instrument_name,
+            connection_addr=connection_addr,
+            default_port=7123,
         )
         self._encoding = "ascii"
 
@@ -26,14 +38,14 @@ class DemoA(Instrument):
 
         for ch in self.channels:
             self.add_parameter(
-                f"CH{channel}_ENABLE",
+                f"CH{ch}_ENABLE",
                 read_command=None,
                 set_command=None,
                 dummy_return=lambda: random.random() > 0.5,
             )
 
             self.add_parameter(
-                f"CH{channel}_VALUE",
+                f"CH{ch}_VALUE",
                 read_command=None,
                 set_command=None,
                 dummy_return=lambda: random.random() * 5,

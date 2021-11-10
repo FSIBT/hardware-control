@@ -11,10 +11,9 @@ https://www.lakeshore.com/docs/default-source/product-downloads/224_manual.pdf f
 
 """
 
+from functools import partial
 import logging
 import random
-
-import numpy as np
 
 from ...base import Instrument
 
@@ -64,7 +63,7 @@ class Lakeshore_224(Instrument):
         for channel in self.active_channels:
             self.add_command(f"SET_CH{channel}_OFF", f"INCRV {channel} 0")
             self.add_command(
-                f"READ_CH{channel}_STATUS", lambda: self.read_status(channel)
+                f"READ_CH{channel}_STATUS", partial(self.read_status, channel)
             )
 
             self.add_parameter(
@@ -83,26 +82,15 @@ class Lakeshore_224(Instrument):
                 dummy_return=lambda: random.random() * 200 + 200,
             )
 
-            # self.add_parameter(
-            #     f"CH{channel}_NAME",
-            #     read_command=f"INNAME? {channel}",
-            #     set_command=f"INCRV {channel} {{}}",
-            #     post_hooks=[lambda value: channel if value == 0 else value],
-            #     dummy_return="",
-            # )
-
     def read_status(self, channel):
         """
         Read all settings of the instrument
 
-        Parameters
-        ----------
-        setting : str
-            Setting to change
         """
         if self._dummy:
-            outputs = [1 + 128 + 1024, 128, 1, 1024]
-            value = random.choice(outputs)
+            status = {}
+            status["CURVE"] = "1"
+            status["NAME"] = "dummy"
         else:
             status = {}
             status["CURVE"] = self.query(f"INCRV? {channel}")

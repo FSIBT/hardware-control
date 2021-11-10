@@ -19,7 +19,6 @@ GUI elements
    gui/widgets/connection_status
    gui/widgets/data_widget
    gui/widgets/function_runner
-   gui/widgets/hc_on_off
    gui/widgets/hc_widgets
    gui/widgets/plot
    gui/widgets/qtconsole

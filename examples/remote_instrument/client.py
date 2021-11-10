@@ -25,8 +25,13 @@ dummy = commands["--dummy"]
 logger = logging.getLogger(__name__)
 hc.setup_logging_docopt(logger, commands)
 
+print("")
+print(" *** End with Ctrl-c ***", flush=True)
+print("")
+print(" The instrument will take a few second to show up as online.")
+print("")
 
 flow_controller = hc.instruments.Alicat_M_Series("alicat", "192.168.0.15")
 flow_controller._dummy = dummy
 
-zmqadapter = hc.ZMQSingleInstrument(flow_controller, "127.0.0.1", 4444)
+zmqadapter = hc.ZMQSingleInstrument(flow_controller, "127.0.0.1:4444")

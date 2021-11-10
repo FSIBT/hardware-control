@@ -10,7 +10,7 @@ See class definition for details.
 import logging
 
 from ...base import Instrument
-from ...base import hooks
+from ...base.hooks import format_float
 
 logger = logging.getLogger(__name__)
 

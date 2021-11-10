@@ -1,7 +1,6 @@
 import logging
 
-from PyQt5.QtCore import QTimer
-from PyQt5.QtWidgets import QLineEdit, QLabel, QGridLayout, QDoubleSpinBox, QGroupBox
+from PyQt5.QtWidgets import QLabel, QGridLayout, QGroupBox
 
 from ..widgets import HCLineEdit, HCDoubleSpinBox
 
@@ -36,7 +35,9 @@ class DeviceType(QGroupBox):
         self.text = QLabel()
         self.text.setText("123")
 
-        self.spinbox = HCDoubleSpinBox(self.app, self.instrument, parameter="CH2_Volt")
+        self.spinbox = HCDoubleSpinBox(
+            self.app, self.instrument, parameter="CH2_VOLT", label="Voltage"
+        )
         self.spinbox.setRange(0, 10)
         self.spinbox.setSingleStep(0.15)
 
@@ -52,13 +53,10 @@ class DeviceType(QGroupBox):
 
         self.setLayout(self.layout)
 
-        # Create timer to query
-        self.readout_timer = QTimer(self)
-        self.readout_timer.timeout.connect(self.update_readout)
-        self.readout_timer.start(self.app.globalRefreshRate)
+        self.config_auto_update()
 
-    def update_readout(self):
+    def config_auto_update(self):
         """Code that reads certain settings on a regular basis"""
 
         for parameter in ["CH1_VOLT", "CH2_Volt"]:
-            self.app.update_instrument_parameter(self.instrument, parameter)
+            self.app.add_auto_update_instrument_parameter(self.instrument, parameter)

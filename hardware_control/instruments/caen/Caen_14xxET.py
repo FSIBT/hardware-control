@@ -16,8 +16,6 @@ from ...base.hooks import (
     format_float,
     scaling_converter,
     format_int,
-    last_n_values_converter,
-    range_validator,
 )
 
 logger = logging.getLogger(__name__)
@@ -25,8 +23,10 @@ logger = logging.getLogger(__name__)
 
 def _parse_instrument_response(value: str) -> Union[str, None]:
     value = value.strip(r"\r")
+    print("debug1", value)
     if value.endswith("CMD:OK"):
         return None
+    print(value[value.find("VAL:") + 4 :])
     return value[value.find("VAL:") + 4 :]
 
 
@@ -72,16 +72,16 @@ class Caen_14xxET(Instrument):
         self,
         instrument_name: str = "CAEN_14xxET",
         connection_addr: str = "",
+        num_channels: int = 16,
     ):
 
         super().__init__(
             instrument_name=instrument_name, connection_addr=connection_addr
         )
 
-        # The instrument has channels 1-8
-        self.chan_nums = list(range(1, 9))
-        self.max_V = [None] * len(self.chan_nums)
-        self.max_I = [None] * len(self.chan_nums)
+        # Default instrument has 16 channels (0-15)
+        self.max_V = [Infinity] * num_channels
+        self.max_I = [Infinity] * num_channels
 
         self.status = {
             "ON_OFF": 1,
@@ -100,26 +100,30 @@ class Caen_14xxET(Instrument):
             "CALIBRATION_ERROR": 8192,
         }
 
-        for channel in self.chan_nums:
+        for channel in range(num_channels):
             self.add_parameter(
                 f"CH{channel}_ENABLE",
-                read_command=f"CH{channel}_ENABLE?",
+                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
                 set_command=f"$BD:00,CMD:SET,CH:{channel},PAR:{{}}",
+                post_hooks=[
+                    _create_parse_status(1),
+                    lambda value: "ON" if value == 1 else "OFF",
+                ],
                 dummy_return="False",
             )
             self.add_lookup(f"CH{channel}_ENABLE", {"True": "ON", "False": "OFF"})
 
             self.add_parameter(
                 f"CH{channel}_V_MAX",
-                read_command=lambda: self._read_V_max(channel),
-                set_command=lambda x: self._set_V_max(channel, x),
+                read_command=self._read_V_max(channel),
+                set_command=self._set_V_max(channel),
                 dummy_return="20.0",
             )
 
             self.add_parameter(
                 f"CH{channel}_I_MAX",
-                read_command=lambda: self._read_I_max(channel),
-                set_command=lambda x: self._set_I_max(channel, x),
+                read_command=self._read_I_max(channel),
+                set_command=self._set_I_max(channel),
                 dummy_return="25.0",
             )
 
@@ -128,7 +132,6 @@ class Caen_14xxET(Instrument):
                 read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:VMON",
                 post_hooks=[
                     _parse_instrument_response,
-                    lambda value: value.strip("\\nr"),
                 ],
                 dummy_return="10.0",
             )
@@ -138,9 +141,8 @@ class Caen_14xxET(Instrument):
                 read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:IMON",
                 post_hooks=[
                     _parse_instrument_response,
-                    lambda value: value.strip("\\nr"),
                     format_float(),
-                    scaling_converter(1e6),
+                    scaling_converter(1e-6),
                 ],
                 dummy_return="15.0",
             )
@@ -149,12 +151,8 @@ class Caen_14xxET(Instrument):
                 f"CH{channel}_V_SET",
                 read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:VSET",
                 set_command=f"$BD:00,CMD:SET,CH:{channel},PAR:VSET,VAL:{{}}",
-                pre_hooks=[range_validator(-Infinity, self._read_V_max(channel))],
-                post_hooks=[
-                    _parse_instrument_response,
-                    lambda value: value.strip("\\nr"),
-                    last_n_values_converter(6),
-                ],
+                pre_hooks=[self.range_validator(self.max_V, channel)],
+                post_hooks=[_parse_instrument_response, format_float(".3e")],
                 dummy_return="10.0",
             )
 
@@ -162,13 +160,13 @@ class Caen_14xxET(Instrument):
                 f"CH{channel}_I_SET",
                 read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:ISET",
                 set_command=f"$BD:00,CMD:SET,CH:{channel},PAR:ISET,VAL:{{}}",
-                pre_hooks=[range_validator(-Infinity, self._read_I_max(channel))],
+                pre_hooks=[
+                    self.range_validator(self.max_I, channel),
+                    scaling_converter(1e6),
+                ],
                 post_hooks=[
                     _parse_instrument_response,
-                    lambda value: value.strip("\\nr"),
-                    last_n_values_converter(7),
-                    format_float(),
-                    scaling_converter(1e6),
+                    scaling_converter(1e-6),
                 ],
                 dummy_return="15.0",
             )
@@ -189,22 +187,44 @@ class Caen_14xxET(Instrument):
                     f"CH{channel}_{bit_name}",
                     read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
                     post_hooks=[_create_parse_status(bit)],
-                    dummy_return="",
+                    dummy_return="True",
                 )
 
     def _read_V_max(self, channel):
-        return self.max_V[channel - 1]
+        def get_value():
+            return self.max_V[channel]
 
-    def _set_V_max(self, channel, value):
-        self.max_V[channel - 1] = float(value)
+        return get_value
+
+    def _set_V_max(self, channel):
+        def set_value(value):
+            self.max_V[channel] = float(value)
+
+        return set_value
 
     def _read_I_max(self, channel):
-        return self.max_I[channel - 1]
+        def get_value():
+            return self.max_I[channel]
 
-    def _set_I_max(self, channel, value):
-        self.max_I[channel - 1] = float(value)
+        return get_value
 
-    def _return_status(value):
+    def _set_I_max(self, channel):
+        def set_value(value):
+            self.max_I[channel] = float(value)
+
+        return set_value
+
+    def range_validator(self, maxlst, channel):
+        def validator(value):
+            value = float(value)
+            if value < 0:
+                return 0
+            return min(value, maxlst[channel])
+
+        return validator
+
+    def _return_status(self, value):
+        value = int(value)
         status = {
             "ON_OFF": value & 1,
             "RAMPING_UP": value & 2,
@@ -223,3 +243,7 @@ class Caen_14xxET(Instrument):
         }
 
         return status
+
+    def write(self, command: str):
+        """The write commands on the CAEN always send back a '#CMD:OK' that needs to be read back."""
+        self.query(command)

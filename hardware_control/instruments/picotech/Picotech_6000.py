@@ -1,12 +1,10 @@
-"""Picoscpe 6000 series.
-
+"""
 .. image:: /images/Pico_6000.jpg
   :height: 200
 
-See class definition for details.
-
 """
 
+from functools import partial
 import json
 import logging
 import numpy as np
@@ -19,9 +17,42 @@ logger = logging.getLogger(__name__)
 
 
 class Picotech_6000(Instrument):
-    """A driver for the Picotech Picoscpe 6000 series
+    """Picotech Picoscpe 6000 series instrument class.
 
-    Instrument home page: https://www.picotech.com/oscilloscope/picoscope-6000-series
+    PARAMETERS
+        * TIMEBASE (*float*)
+            * Horizontal resolution in time per division.
+        * TIME_OFFSET (*float*)
+            * Time offset from trigger.
+        * TRIGGER_LEVEL (*float*)
+            * Trigger level.
+        * TRIGGER_EDGE (*BOTH*, *NEG*, *POS*, *ALT*)
+            * Edge of waveform that the picoscope triggers on.
+        * TRIGGER_CHANNEL (*int*)
+            * The channel (1,2,3, or 4) to trigger on.
+        * CH<X>_VOLTS_DIV (*float*)
+            * The voltage per division for channel 'X'.
+        * CH<X>_OFFSET (*float*)
+            * The voltage offset for channel 'X'.
+        * CH<X>_BW_LIM
+            * Status of the bandwidth limit for channel 'X'.
+        * CH<X>_ACTIVE
+            * On/off status of channel 'X'.
+        * CH<X>_PROBE_ATTEN (*float*)
+            * Probe attenuation for channel 'X'. For example, providing the value '10' would indicate a 10x or 10:1 probe.
+        * CH<X>_COUPLING (*AC*, *DC*)
+            * Coupling mode for channel 'X'.
+        * CH<X>_WVFM
+            * Most recent waveform measurement from channel 'X'.
+
+    COMMANDS
+        * SINGLE_TRIGGER
+            * Set the instrument to trigger once.
+        * RUN
+            * Set the instrument to continuously trigger.
+        * STOP
+            * Prevent the instrument from triggering.
+
     """
 
     def __init__(
@@ -45,83 +76,90 @@ class Picotech_6000(Instrument):
 
         self.add_parameter(
             "TIMEBASE",
-            read_command=get_timebase,
-            set_command=set_timebase,
+            read_command=self._get_timebase,
+            set_command=self._set_timebase,
         )
         self.add_parameter(
             "TIME_OFFSET",
-            read_command=get_timeoffset,
-            set_command=set_timeoffset,
+            read_command=self._get_timeoffset,
+            set_command=self._set_timeoffset,
         )
         self.add_parameter(
             "TRIGGER_LEVEL",
             read_command=None,
-            set_command=set_triggerlevel,
+            set_command=self._set_triggerlevel,
         )
         self.add_parameter(
             "TRIGGER_EDGE",
             read_command=None,
-            set_command=set_triggeredge,
+            set_command=self._set_triggeredge,
         )
         self.add_lookup(
             "TRIGGER_EDGE",
             {"BOTH": "Rising", "NEG": "Falling", "POS": "Rising", "ALT": "Rising"},
         )
         self.add_parameter(
-            "TRIGGER_CHANNEL", read_command=None, set_command=set_triggerchannel
+            "TRIGGER_CHANNEL", read_command=None, set_command=self._set_triggerchannel
         )
 
         channels = {0: "A", 1: "B", 2: "C", 3: "D"}
         for i in range(self.number_of_channels):
             ch = channels[i]
+
             self.add_parameter(
                 f"CH{ch}_VOLTS_DIV",
                 read_command=None,
-                set_commmand=lambda x: self.ps.setChannel(channel=ch, VRange=x),
+                set_command=self.create_set_channel_func(ch, "VRange"),
             )
             self.add_parameter(
                 f"CH{ch}_OFFSET",
                 read_command=None,
-                set_commmand=lambda x: self.ps.setChannel(channel=ch, VOffset=x),
+                set_command=self.create_set_channel_func(ch, "VOffset"),
             )
             self.add_parameter(
                 f"CH{ch}_BW_LIM",
                 read_command=None,
-                set_commmand=lambda x: self.ps.setChannel(channel=ch, BWLimited=x),
+                set_command=self.create_set_channel_func(ch, "BWLimited"),
             )
             self.add_parameter(
                 f"CH{ch}_ACTIVE",
                 read_command=None,
-                set_commmand=lambda x: self.ps.setChannel(channel=ch, enabled=x),
+                set_command=self.create_set_channel_func(ch, "enabled"),
             )
             self.add_parameter(
                 f"CH{ch}_PROBE_ATTEN",
                 read_command=None,
-                set_commmand=lambda x: self.ps.setChannel(
-                    channel=ch, probeAttenuation=x
-                ),
+                set_command=self.create_set_channel_func(ch, "probeAttenuation"),
             )
-            # possible values: "AC", "DC"
             self.add_parameter(
                 f"CH{ch}_COUPLING",
                 read_command=None,
-                set_commmand=lambda x: self.ps.setChannel(channel=ch, coupling=x),
+                set_command=self.create_set_channel_func(ch, "coupling"),
             )
 
             self.add_parameter(
                 f"CH{ch}_WVFM",
-                read_command=lambda: self.read_waveform(i),
+                read_command=partial(self._read_waveform, i),
                 set_command=None,
             )
 
-        self.add_command("SINGLE_TRIGGER", self.trigger)
-        self.add_command("RUN", self.run)
+        self.add_command("SINGLE_TRIGGER", self._trigger)
+        self.add_command("RUN", self._run)
         self.add_command("STOP", self.ps.stop)
 
-    def get_timebase(self):
+    def create_set_channel_func(self, channel, parameter):
+        """Create a channel specific function to set a parameter."""
+
+        def func(value):
+            kwargs = {parameter: value}
+            self.ps.setChannel(channel=channel, **kwargs)
+
+        return func
+
+    def _get_timebase(self):
         return str(self.timebase)
 
-    def set_timebase(self, value):
+    def _set_timebase(self, value):
         self.timebase = value * 10
         obs_duration = self.timebase
         sampling_interval = obs_duration / self.record_length
@@ -134,42 +172,41 @@ class Picotech_6000(Instrument):
         self.ps.memorySegments(1)
         self.ps.setNoOfCaptures(1)
 
-    def get_timeoffset(self):
+    def _get_timeoffset(self):
         return str(self.offset_position)
 
-    def set_timeoffset(self, value):
+    def _set_timeoffset(self, value):
         self.offset_position = value
 
-    def set_triggerlevel(self, value):
+    def _set_triggerlevel(self, value):
         if self.trigger_channel != "None":
             self.ps.setSimpleTrigger(
                 self.trigger_channel, threshold_V=value, enabled=True
             )
 
-    def set_triggeredge(self, value):
+    def _set_triggeredge(self, value):
         if self.trigger_channel != "None":
             self.ps.setSimpleTrigger(
                 self.trigger_channel, direction=value, enabled=True
             )
 
-    def set_triggerchannel(self, value):
+    def _set_triggerchannel(self, value):
         if value == "None":
             self.trigger_channel = 0
         else:
             self.trigger_channel = int(value) - 1
         self.ps.setSimpleTrigger(self.trigger_channel, enabled=True)
 
-    def trigger(self):
+    def _trigger(self):
         self.ps.runBlock(pretrig=self.offset_position / self.timebase)
         self.ps.waitReady()
 
-    def run(self):
+    def _run(self):
         self.ps.runBlock(pretrig=self.offset_position / self.timebase)
         self.ps.waitReady()
 
     def try_connect(self):
-        """Checks if the backend is in communication with the object, if it is
-        not, it tries to re-establish communication."""
+        """Unique picoscope ‘try_connect’ function."""
 
         if self._dummy:
             if self._online:
@@ -200,19 +237,19 @@ class Picotech_6000(Instrument):
 
         # If connection purportedly successful, verify connection
         if self._online:
-            if not self.check_connection():
+            if not self._check_connection():
                 self._online = False
 
         return self._online
 
-    def check_connection(self):
+    def _check_connection(self):
         """TODO: could use ps.ping() to test"""
         if not self._online:
             return False
 
         return True
 
-    def read_waveform(self, channel: str):
+    def _read_waveform(self, channel: str):
         """Reads a waveform from the oscilloscope.
 
         Returns
@@ -225,8 +262,6 @@ class Picotech_6000(Instrument):
             List of the function values in Volts
 
         """
-
-        channel_orig = channel
 
         try:
             number_samples = min(self.ps.noSamples, self.ps.maxSamples)

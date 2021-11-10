@@ -1,13 +1,12 @@
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import (
     QGroupBox,
-    QGridLayout,
     QLabel,
     QMessageBox,
 )
 
-from ..widgets import HCFixedLabel, HCLineEdit
-from ...base.hooks import add_offset, scaling_converter
+from ..widgets import HCFixedLabel, HCLineEdit, HCGridLayout
+from ...base.hooks import scaling_converter, add_offset
 
 
 class Adam6024Control(QGroupBox):
@@ -59,10 +58,7 @@ class Adam6024Control(QGroupBox):
             "Pressure",
         )
         self.app.add_hook(
-            self.instrument,
-            "CH0_SET_VOLTAGE",
-            "pre_set_hooks",
-            lambda value: self.scale(100, value),
+            self.instrument, "CH0_SET_VOLTAGE", "pre_set_hooks", scaling_converter(100)
         )
 
         # Current setter
@@ -73,16 +69,13 @@ class Adam6024Control(QGroupBox):
             "Current",
         )
         self.app.add_hook(
-            self.instrument,
-            "CH1_SET_VOLTAGE",
-            "pre_set_hooks",
-            lambda value: self.scale(3e-4, value),
+            self.instrument, "CH1_SET_VOLTAGE", "pre_set_hooks", scaling_converter(3e-4)
         )
         self.app.add_hook(
             self.instrument,
             "CH1_SET_VOLTAGE",
             "pre_set_hooks",
-            lambda value: self.add_offset(8.1e-6, value),
+            add_offset(8.1e-6),
         )
 
         # Voltage setter
@@ -93,30 +86,23 @@ class Adam6024Control(QGroupBox):
             "Voltage",
         )
         self.app.add_hook(
-            self.instrument,
-            "CH2_SET_VOLTAGE",
-            "pre_set_hooks",
-            lambda value: self.scale(1e4, value),
+            self.instrument, "CH2_SET_VOLTAGE", "pre_set_hooks", scaling_converter(1e4)
         )
         self.app.add_hook(
             self.instrument,
             "CH2_SET_VOLTAGE",
             "pre_set_hooks",
-            lambda value: self.add_offset(420, value),
+            add_offset(420),
         )
 
         # Interlock indicator
         self.interlock_label = QLabel("Not Interlocked")
 
-        self.main_layout = QGridLayout()
-        self.main_layout.addWidget(self.pressure_input.label, 0, 0)
-        self.main_layout.addWidget(self.pressure_input, 0, 1)
+        self.main_layout = HCGridLayout(
+            [self.pressure_input, self.current_input, self.voltage_input]
+        )
         self.main_layout.addWidget(self.pressure_read, 0, 2)
-        self.main_layout.addWidget(self.current_input.label, 1, 0)
-        self.main_layout.addWidget(self.current_input, 1, 1)
         self.main_layout.addWidget(self.current_read, 1, 2)
-        self.main_layout.addWidget(self.voltage_input.label, 2, 0)
-        self.main_layout.addWidget(self.voltage_input, 2, 1)
         self.main_layout.addWidget(self.voltage_read, 2, 2)
         self.main_layout.addWidget(self.interlock_label, 3, 0)
         self.setLayout(self.main_layout)
@@ -186,13 +172,3 @@ class Adam6024Control(QGroupBox):
         pressure_val = float(self.pressure_read.text()[:-6])
         self.pressure_read.unit = "mTorr"
         self.pressure_read.setText(f"{pressure_val:.3f}")
-
-    def add_offset(self, offset, value):
-        """Convert `value` to float and add `offset` to it."""
-        value = float(value) + float(offset)
-        return value
-
-    def scale(self, scale_factor, value):
-        """Convert `value` to float and add `offset` to it."""
-        value = float(value) * float(scale_factor)
-        return value

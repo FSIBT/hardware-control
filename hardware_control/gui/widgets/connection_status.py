@@ -67,7 +67,7 @@ class StatusTool(QGroupBox):
         self.instrument_rows = {}
 
         for row, instrument in enumerate(self.app.list_instruments()):
-            if self.app.get_instrument_parameter(instrument, "ignore"):
+            if self.app.get_instrument_parameter(instrument, "IGNORE"):
                 continue
 
             # save the row to make updating the instrument later easier
@@ -100,7 +100,7 @@ class StatusTool(QGroupBox):
             if self.instrument_grid.itemAtPosition(row, 1) is None:
                 continue
 
-            if self.app.dummy == False:
+            if self.app.dummy is False:
                 online = self.app.get_instrument_parameter(instrument, "online")
             else:
                 online = False

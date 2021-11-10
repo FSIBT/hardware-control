@@ -4,8 +4,8 @@
 
 """
 
+from functools import partial
 import logging
-import random
 
 from ...base import Instrument
 
@@ -27,9 +27,9 @@ class Keysight_36300(Instrument):
         * CH<X>_I_SET (*float*)
             * Instrument current for channel 'X'.
         * CH<X>_V_OUT
-            * Output voltage for channel 'X'. This parameter can be read but cannot be set.
+            * Output voltage for channel 'X'.
         * CH<X>_I_OUT
-            * Output current for channel 'X'. This parameter can be read but cannot be set.
+            * Output current for channel 'X'.
         * CH<X>_V_PROT (*float*)
             * Level at which overvoltage protection trips for channel 'X'.
 
@@ -80,11 +80,7 @@ class Keysight_36300(Instrument):
                 f"CH{channel}_V_SET",
                 read_command=f":SOURCE:VOLT? (@{channel})",
                 set_command=f"SOURCE:VOLT {{}}, (@{channel})",
-                pre_hooks=[
-                    lambda x: min(value, self.max_V[channel - 1])
-                    if self.max_V[channel - 1] is not None
-                    else None
-                ],
+                pre_hooks=[partial(self.check_Vmax, channel)],
                 dummy_return="5",
             )
 
@@ -92,11 +88,7 @@ class Keysight_36300(Instrument):
                 f"CH{channel}_I_SET",
                 read_command=f":SOURCE:CURR? (@{channel})",
                 set_command=f"SOURCE:CURR {{}}, (@{channel})",
-                pre_hooks=[
-                    lambda x: min(value, self.max_I[channel - 1])
-                    if self.max_I[channel - 1] is not None
-                    else None
-                ],
+                pre_hooks=[partial(self.check_Imax, channel)],
                 dummy_return="6",
             )
 
@@ -128,3 +120,21 @@ class Keysight_36300(Instrument):
 
         self.add_command("CLEAR", "*CLS")
         self.add_command("ALLOW_NEG_OUTPUT", "SYST:PERS:MOD E3631A")
+
+    def check_Imax(self, channel, value):
+        """check if a maximum has been set and enforce it"""
+
+        Imax = self.max_I[channel - 1]
+        if Imax is not None:
+            return min(value, Imax)
+        else:
+            return value
+
+    def check_Vmax(self, channel, value):
+        """check if a maximum has been set and enforce it"""
+
+        Imax = self.max_V[channel - 1]
+        if Imax is not None:
+            return min(value, Imax)
+        else:
+            return value

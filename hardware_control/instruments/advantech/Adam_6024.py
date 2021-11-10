@@ -1,23 +1,19 @@
-"""Advantac ADAM 6024
-
+"""
 .. image:: /images/ADAM-6024.jpg
   :height: 200
-
-See class definition for details.
 
 """
 
 import logging
-import random
 
 from ...base.hooks import range_validator, format_float
 
-from .Adam_base import AdamBackend
+from .Adam_base import AdamBase
 
 logger = logging.getLogger(__name__)
 
 
-def create_channel_parser(channel):
+def _create_channel_parser(channel):
     def parse_channel(value):
         start_idx = (channel) * 7
         end_idx = (channel + 1) * 7
@@ -27,10 +23,14 @@ def create_channel_parser(channel):
     return parse_channel
 
 
-class Adam_6024(AdamBackend):
-    """A driver for the Adam 6024 input/output module.
+class Adam_6024(AdamBase):
+    """Adam 6024 input/output module instrument class.
 
-    Instrument home page: https://www.advantech.com/products/a67f7853-013a-4b50-9b20-01798c56b090/adam-6024/mod_99d243cd-2f38-48a3-a82c-eeb5e0f4e278
+    PARAMETERS
+        * CH<X>_READ_VOLTAGE (*float*)
+            * Current voltage of channel 'X'.
+        * CH<X>_SET_VOLTAGE (*float*)
+            * New voltage to set for channel 'X'.
 
     """
 
@@ -54,8 +54,8 @@ class Adam_6024(AdamBackend):
             self.add_parameter(
                 f"CH{channel}_READ_VOLTAGE",
                 read_command="#01",
-                post_hooks=[create_channel_parser(channel)],
-                dummy_return=f"10.",
+                post_hooks=[_create_channel_parser(channel)],
+                dummy_return="10.",
             )
 
         for channel in range(self.n_output_channels):

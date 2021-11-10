@@ -1,10 +1,13 @@
 """Code to enable running and connecting to instruments on a different computer.
 
-Defines `ZMQSingleInstrument` that can wrap an instrument driver, so that it can
-easily run in a separate program and that will have all the ZMQ ports
-required, so that an App object can easily connect to it.
+Defines :class:`ZMQSingleInstrument` that can wrap an single
+instrument driver. It creates a single REQ/REP channel that a main App
+can use to establish connection. It then creates the standard ZMQ
+publisher and subscriber to talk to the remote App.
 
-`ZMQRemoteInstrument` is used in the main app to connect to `ZMQSingleInstrument`.
+:class:`ZMQRemoteAdapter` is used in the main app to connect to
+:class:`ZMQSingleInstrument` and will handle all the REQ/REP commands
+that are needed.
 
 """
 
@@ -14,8 +17,12 @@ import time
 
 import zmq
 
-from .zmq_helper import handle_zmq_message_from_app
-
+from .zmq_helper import (
+    handle_ZMQ_message_from_app,
+    check_adapter_online,
+    add_ZMQ_message_to_queue,
+)
+from .Instrument import Instrument
 
 logger = logging.getLogger(__name__)
 
@@ -33,17 +40,32 @@ class ZMQSingleInstrument:
     then use this channel to supply this class with the ip address and
     port to be used to listen to commands.
 
-    In the remote app, we use `ZMQRemoteInstrument` to connect to this class.
+    In the remote app, we use :class:`ZMQRemoteAdapter` to connect to this class.
 
+    Currently there is no way to end a :class:`ZMQSingleInstrument`
+    instance and one needs to exit via Ctrl-C.
 
+    Parameters
+    ----------
+    instrument
+        An instrument driver
+    address
+        The ZMQ address for a REQ/REP socket that is used to estable the
+        communication with a remote app. Should be in "<ipaddress>:<portnumber>" format
 
     """
 
-    def __init__(self, instrument, ipaddress, port):
+    def __init__(self, instrument: Instrument, address: str):
         self.instrument = instrument
         self.name = instrument.name
+        self.online = False
+
+        # priority queues for incoming commands
+        self.priority_queue = {0: [], 1: [], 2: []}
 
         self.zmq_context = zmq.Context()
+
+        ipaddress, port = address.split(":")
 
         # socket to receive requests to connect
         logger.info(f"Setting up ZMQ REP/REQ at {ipaddress}:{port}")
@@ -60,52 +82,76 @@ class ZMQSingleInstrument:
             f"Setting up ZMQ publisher at {ipaddress}:{self.zmq_publisher_port}"
         )
 
+        # some time for ZMQ to set up publisher
+        time.sleep(1)
+
+        self.instrument.try_connect()
+
         while True:
             message = self.zmq_new.recv_string()
 
-            if message.startswith("APP"):
-                _, self.app_publisher = message.split()
+            if not message.startswith("APP"):
+                self.zmq_new.send_string("Unknown command")
+                continue
 
-                # subscribe to remote app
-                self.zmq_subscriber = self.zmq_context.socket(zmq.SUB)
-                self.zmq_subscriber.connect(self.app_publisher)
-                self.zmq_subscriber.subscribe(self.name)
-                self.zmq_topic_length = len(self.name) + 1
+            _, self.app_publisher = message.split()
 
-                # let app know where to subscribe to
-                self.zmq_new.send_string(
-                    f"{self.name} {ipaddress} {self.zmq_publisher_port}"
-                )
-                logger.info("Got remote request and sent ZMQ info")
+            # subscribe to remote app
+            self.zmq_subscriber = self.zmq_context.socket(zmq.SUB)
+            self.zmq_subscriber.connect(self.app_publisher)
+            self.zmq_subscriber.subscribe(self.name)
+            self.zmq_topic_length = len(self.name) + 1
 
-                keep_running = True
-                while keep_running:
+            # some time for ZMQ to set up subscriber
+            time.sleep(1)
+
+            # let app know where to subscribe to
+            self.zmq_new.send_string(
+                f"{self.name} {ipaddress} {self.zmq_publisher_port}"
+            )
+            logger.info("Got remote request and sent ZMQ info")
+
+            # enter new eventloop that will handle instrument communication
+            keep_running = True
+            i = 0
+            while keep_running:
+                i += 1
+                if i % 50 == 0:
+                    self.instrument.try_connect()
+                    check_adapter_online(self)
+
+                # get all ZMQ messages
+                get_messages = True
+                while get_messages:
                     try:
                         msg = self.zmq_subscriber.recv_string(flags=zmq.NOBLOCK)
+                        add_ZMQ_message_to_queue(self, msg)
                     except zmq.ZMQError:
-                        time.sleep(0.1)
-                        print(f"\r{time.time()}", end="")
-                        # check for message on the REQ/REP socket
-                        try:
-                            new_message = self.zmq_new.recv_string(flags=zmq.NOBLOCK)
-                        except zmq.ZMQError:
-                            new_message = None
-                        if new_message == "STOP":
-                            logger.info("Got STOP request")
-                            keep_running = False
-                            self.zmq_subscriber.close()
-                            self.zmq_new.send_string("ACK")
-                        elif new_message == "LIST_PARAMETERS":
-                            logger.info("Got parameter list request")
-                            read_set_commands = self.instrument.list_parameters()
-                            out = json.dumps(read_set_commands)
-                            self.zmq_new.send_string(out)
-                        continue
+                        get_messages = False
 
-                    handle_zmq_message_from_app(self, msg, logger)
+                # handle messages in queue
+                handle_ZMQ_message_from_app(self)
+
+                print(f"\r{time.time()}", end="")
+
+                # check for message on the REQ/REP socket
+                try:
+                    new_message = self.zmq_new.recv_string(flags=zmq.NOBLOCK)
+                except zmq.ZMQError:
+                    new_message = None
+                if new_message == "STOP":
+                    logger.info("Got STOP request")
+                    keep_running = False
+                    self.zmq_subscriber.close()
+                    self.zmq_new.send_string("ACK")
+                elif new_message == "LIST_PARAMETERS":
+                    logger.info("Got parameter list request")
+                    read_set_commands = self.instrument.list_parameters()
+                    out = json.dumps(read_set_commands)
+                    self.zmq_new.send_string(out)
 
 
-class ZMQRemoteInstrument:
+class ZMQRemoteAdapter:
     """A placeholder for a remote instrument that, for example, could be running on a remote computer.
 
     To be able to connect to an instrument on a remote computer. The
@@ -126,9 +172,11 @@ class ZMQRemoteInstrument:
 
     """
 
-    def __init__(self, name, ipaddress, port, context, publisher):
+    def __init__(self, name, address, context, publisher):
 
         self.name = name
+
+        ipaddress, port = address.split(":")
 
         logger.info(f"{name} Connecting to remote {ipaddress}:{port}")
         self.req_rep_socket = context.socket(zmq.REQ)
@@ -146,13 +194,15 @@ class ZMQRemoteInstrument:
             )
 
     def list_parameters(self):
-        logger.info(f"{self.name}: requesting parameter list")
-        self.req_rep_socket.send_string(f"LIST_PARAMETERS")
+        """Get a list of all available parameters from the remote instrument."""
+        logger.info(f"{self.name} requesting parameter list")
+        self.req_rep_socket.send_string("LIST_PARAMETERS")
         message = self.req_rep_socket.recv_string()
         read_set_commands = json.loads(message)
         return read_set_commands
 
     def join(self):
+        """Have the remote instrument disconnect from the App."""
         logger.info(f"{self.name} stopping remote")
         self.req_rep_socket.send_string("STOP")
         self.req_rep_socket.recv_string()

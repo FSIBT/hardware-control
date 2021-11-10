@@ -8,15 +8,16 @@ from .function_runner import FunctionRunnerTool
 from .plot import PlotTool, MiniPlotTool
 from .scan_widget import ScanWidget
 from .qtconsole import Qtconsole
-from .hc_on_off import HCOnOffButton, HCOnOffIndicator
 from .hc_widgets import (
-    setButtonState,
     load_icon,
+    load_pixmap,
     icon_filename,
+    HCGridLayout,
     HCLineEdit,
     HCComboBox,
     HCPushButton,
-    HCToggleButton,
+    HCOnOffButton,
+    HCOnOffIndicator,
     HCDoubleSpinBox,
     HCSpinBox,
     HCLabel,

@@ -7,7 +7,7 @@ from typing import Optional
 def setup_logging(
     logger,
     logoutput: Optional[Path] = None,
-    loglevel: Optional[str] = None,
+    loglevel: Optional[int] = None,
 ):
     """Setup the loglevel and direct output to the console or a file.
 

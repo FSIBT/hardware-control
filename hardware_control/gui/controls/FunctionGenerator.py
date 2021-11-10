@@ -1,19 +1,10 @@
 import logging
 
-from PyQt5 import QtCore
-from PyQt5.QtGui import QDoubleValidator, QIcon
 from PyQt5.QtWidgets import (
-    QLineEdit,
-    QPushButton,
-    QLabel,
-    QWidget,
-    QFormLayout,
     QGridLayout,
     QGroupBox,
-    QComboBox,
 )
 
-from ..widgets import setButtonState, load_icon
 from ..widgets.hc_widgets import HCLineEdit, HCComboBox
 
 

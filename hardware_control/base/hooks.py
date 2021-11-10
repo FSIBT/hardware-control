@@ -23,6 +23,43 @@ from typing import Optional, List, Dict, Callable
 
 logger = logging.getLogger(__name__)
 
+
+def call_hooks(hooks_list: List[Callable], value: str) -> Optional[str]:
+    """Call a list of function.
+
+    If any of the functions returns None, the final value will be
+    ignored and no further hooks will be called.
+
+    Every hook function must take a single parameter: the value of the
+    parameter to be set (set to None for commands)
+
+    If a hook needs several parameter, one should pass these in when
+    defining the hook using lambda functions, e.g.:
+
+    app.add_hook(instrument, parameter, 'pre_set_hooks', lambda x: change_ui(app, x, widget)
+
+    where app and widget are defined in the enironment where add_hook
+    is called.
+
+    Parameters
+    ----------
+    hooks_list
+       A list of functions or callable objects
+    values
+       The value to be manipulated
+
+    """
+    if value is None or value == "None":
+        return None
+
+    for hook in hooks_list:
+        if callable(hook):
+            value = hook(value)
+            if value is None:
+                return None
+    return str(value)
+
+
 # Converters
 def add_offset(offset):
     """Convert `value` to float and add `offset` to it."""
@@ -42,7 +79,7 @@ def create_converter(lookuptable: Dict) -> Callable:
 
     def converter(value: str):
         if value not in lookuptable:
-            logger.error(f"Value '{value}'' not in lookuptable '{lookuptable}'")
+            logger.error(f"Value '{value}' not in lookuptable '{lookuptable}'")
             return None
         return lookuptable[value]
 
@@ -111,7 +148,12 @@ def substring_hook(min_char, max_char):
     """Return a substring `value[min_char:max_char]`."""
 
     def converter(value):
-        value = value[min_char:max_char]
+        if min_char is None:
+            value = value[:max_char]
+        elif max_char is None:
+            value = value[min_char:]
+        else:
+            value = value[min_char:max_char]
         return value
 
     return converter
@@ -127,7 +169,7 @@ def expected_input_validator(types: List, default_val=None):
     """Ensures `value` is in a certain list, returns a default if this is not the case."""
 
     def validator(value):
-        if value not in types and default_val != None:
+        if (value not in types) and (default_val is not None):
             logger.info(
                 f"Unfamiliar with input '{value}'. Using '{default_val}' instead."
             )

@@ -1,8 +1,20 @@
+"""HC aware versions of Qt widgets.
+
+Here you find version of Qt widgets, such as QLabel, QPushButton, etc.
+that connect to a certain instrument and parameter and automatic update.
+
+This module also provides some more additional widgets that do not
+have equivalent ones in Qt directly.
+
+"""
+
+
 import logging
 import pkg_resources
-from typing import Dict, Optional
+from typing import Dict, Optional, Union, Callable, Any, List
 
 from PyQt5.QtWidgets import (
+    QGridLayout,
     QPushButton,
     QLabel,
     QLineEdit,
@@ -11,17 +23,22 @@ from PyQt5.QtWidgets import (
     QSpinBox,
     QSizePolicy,
 )
-from PyQt5.QtGui import QPixmap, QDoubleValidator, QFont, QFontMetrics
+from PyQt5.QtGui import QPixmap, QIcon, QDoubleValidator, QFont, QFontMetrics
 from PyQt5 import QtCore
-from typing import List
+from ...base.hooks import call_hooks
 
 
 logger = logging.getLogger(__name__)
 
 
-def load_icon(name: str) -> QPixmap:
+def load_pixmap(name: str) -> QPixmap:
     """Load an icon from the installed package location as a QPixmap"""
     return QPixmap(icon_filename(name))
+
+
+def load_icon(name: str) -> QPixmap:
+    """Load an icon from the installed package location as a QPixmap"""
+    return QIcon(icon_filename(name))
 
 
 def icon_filename(name: str):
@@ -29,47 +46,50 @@ def icon_filename(name: str):
     return pkg_resources.resource_filename("hardware_control", f"icons/{name}")
 
 
-def setButtonState(button: QPushButton, value):
-    """Sets the state of a QPushButton to checked
-    or unchecked, accoridng to 'value'. Only applicable
-    to QPushButtons with field 'checkable' set to true."""
-    if isinstance(value, bool):
-        if value:
-            if not button.isChecked():
-                button.toggle()
-        else:
-            if button.isChecked():
-                button.toggle()
-    elif isinstance(value, str):
-        if value in ["True", "TRUE"]:
-            if not button.isChecked():
-                button.toggle()
-        else:
-            if button.isChecked():
-                button.toggle()
-
-
 def convert_prefix(value: str, decimals: int = 3) -> List[str]:
     try:
         value = float(value)
-    except:
-        return value, ""
+    except ValueError:
+        return [value, ""]
     if abs(value) < 1e-9:
-        return f"{round(value*1e12, decimals)}", "p"
+        return [f"{round(value*1e12, decimals)}", "p"]
     if abs(value) < 1e-6:
-        return f"{round(value*1e9, decimals)}", "n"
+        return [f"{round(value*1e9, decimals)}", "n"]
     if abs(value) < 1e-3:
-        return f"{round(value*1e6, decimals)}", "µ"
+        return [f"{round(value*1e6, decimals)}", "µ"]
     if abs(value) < 1:
-        return f"{round(value*1e3, decimals)}", "m"
+        return [f"{round(value*1e3, decimals)}", "m"]
     if abs(value) < 1e3:
-        return f"{round(value, decimals)}", ""
+        return [f"{round(value, decimals)}", ""]
     if abs(value) < 1e6:
-        return f"{round(value*1e-3, decimals)}", "k"
+        return [f"{round(value*1e-3, decimals)}", "k"]
     if abs(value) < 1e9:
-        return f"{round(value*1e-6, decimals)}", "M"
+        return [f"{round(value*1e-6, decimals)}", "M"]
     if abs(value) < 1e12:
-        return f"{round(value*1e-9, decimals)}", "G"
+        return [f"{round(value*1e-9, decimals)}", "G"]
+    return [f"{value}", ""]
+
+
+class HCGridLayout(QGridLayout):
+    """Places HCwidgets into a Gridlayout.
+
+    This is a 2 column grid with the label of the HCWidget in the left
+    column and the widget itself in the right column.
+
+    A special case is a HCDoubleSpinComboBox where an additional 3rd
+    column is created.
+
+    """
+
+    def __init__(self, HCwidgets: List, offset: int = 0) -> None:
+        super().__init__()
+        for i, w in enumerate(HCwidgets):
+            self.addWidget(w.label, i + offset, 0)
+            if isinstance(w, HCDoubleSpinComboBox):
+                self.addWidget(w.spin, i + offset, 1)
+                self.addWidget(w.combo, i + offset, 2)
+            else:
+                self.addWidget(w, i + offset, 1)
 
 
 class HCMixin:
@@ -87,38 +107,100 @@ class HCMixin:
         app = kwargs.pop("app")
         instrument = kwargs.pop("instrument")
         parameter = kwargs.pop("parameter")
-        if "label" in kwargs:
-            label = kwargs.pop("label")
-            label_align = kwargs.pop("label_align")
-            self.add_label = True
-        else:
-            self.add_label = False
+
+        self._visible = app.is_parameter(instrument, parameter)
+
+        label = kwargs.pop("label", "")
+        label_align = kwargs.pop("label_align", "center")
+        colon = kwargs.pop("colon", True)
+        if colon and label:
+            label = f"{label}: "
 
         for arg in [app, instrument, parameter]:
             if arg is None:
                 logger.error(
-                    f"Widget '{self.name}' does not get correct arguments (app, instrument, parameter)"
+                    f"Widget '{label}' does not get correct arguments (app, instrument, parameter)"
                 )
 
         self.app = app
         self.instrument = instrument
         self.parameter = parameter
+        self.widget_hooks = []
+        self.return_set_value = False
 
         super().__init__(**kwargs)
 
-        # create an optional label
-        if self.add_label:
-            self.name = label
-            self.label = QLabel(f"{label}: ")
-            if label_align == "right":
-                self.label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
-            elif label_align == "left":
-                self.label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
-            elif label_align == "center":
-                self.label.setAlignment(QtCore.Qt.AlignCenter)
+        self.name = label
+        self.label = QLabel(label)
 
-        # connect to app
-        self.app.add_widget(self.instrument, self.parameter, self)
+        if label_align == "right":
+            self.label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        elif label_align == "left":
+            self.label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        elif label_align == "center":
+            self.label.setAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
+
+        if self._visible:
+            # connect to app
+            self.app.add_widget(self.instrument, self.parameter, self)
+        else:
+            # hide widget, put parameter on list to skip when auto-updating
+            logger.info(
+                f"widget for {self.instrument}:{self.parameter} does not exist, hiding it."
+            )
+            self.app.add_skip_update_instrument_parameter(
+                self.instrument, self.parameter
+            )
+            self.label.hide()
+            self.hide()
+
+    def add_widget_hook(
+        self,
+        function: Callable[[Any], Any],
+    ):
+        """Add a hook function to be called when a value in a widgets gets updated from app._data."""
+
+        self.widget_hooks.append(function)
+
+    def hc_update(self):
+        """Get the HC widget parameter value from the instrument and apply hooks to that value.
+
+        When this function finishes running it calls the widget_update function which should be
+        written for each HC widget. If this function has not been defined the default update_widget
+        function raises an AttributeError.
+        """
+
+        # Don't update an HC widget if the focus is on the widget (if the widget has a focus)
+        # This does not apply to HCOnOffButtons
+        if (
+            hasattr(self, "hasFocus")
+            and self.hasFocus()
+            and not self.__class__.__name__ == "HCOnOffButton"
+        ):
+            logger.debug(f"'{self.name}' has focus, not updating")
+            return
+
+        value = self.app.get_instrument_parameter(
+            self.instrument,
+            self.parameter,
+            return_set_value=self.return_set_value,
+        )
+        value = call_hooks(self.widget_hooks, value)
+
+        if value is None:
+            logger.warning(
+                f"Widget update for '{self.instrument}:{self.parameter}' failed."
+            )
+            return
+
+        # every HCwidget has the following function to update itself.
+        self.widget_update(value)
+
+    def widget_update(self, value):
+        raise AttributeError(
+            f"HC widget for instrument {self.instrument}, parameter {self.parameter} "
+            f"needs to define a update_widget function"
+        )
 
 
 class HCLabel(HCMixin, QLabel):
@@ -148,9 +230,8 @@ class HCLabel(HCMixin, QLabel):
         self.use_prefix = use_prefix
         self.min_width = min_width
 
-    def hc_update(self):
-        self.value = self.app.get_instrument_parameter(self.instrument, self.parameter)
-        self.setText(self.value)
+    def widget_update(self, value):
+        self.setText(value)
 
     def setText(self, text: str) -> None:
         if self.unit:
@@ -183,7 +264,9 @@ class HCLineEdit(HCMixin, QLineEdit):
         instrument: str,
         parameter: str,
         label: str,
-        label_align="left",
+        label_align: str = "left",
+        return_set_value: bool = False,
+        default_txt: str = "----",
         validator=QDoubleValidator,
     ):
         super().__init__(
@@ -194,26 +277,21 @@ class HCLineEdit(HCMixin, QLineEdit):
             label_align=label_align,
         )
         self.validator = validator
+        self.return_set_value = return_set_value
 
         if self.validator is not None:
             self.setValidator(validator())
 
-        self.setText("----")
+        self.setText(default_txt)
 
         self.editingFinished.connect(self.value_change)
 
     def value_change(self) -> None:
-        self.value = self.text()
-        self.app.set_instrument_parameter(self.instrument, self.parameter, self.value)
+        value = self.text()
+        self.app.set_instrument_parameter(self.instrument, self.parameter, value)
 
-    def hc_update(self) -> None:
-        if self.hasFocus():
-            logger.debug(f"'{self.name}' has focus, not updating")
-            return
-        self.value = self.app.get_instrument_parameter(
-            self.instrument, self.parameter, return_set_value=True
-        )
-        self.setText(self.value)
+    def widget_update(self, value) -> None:
+        self.setText(value)
 
 
 class HCDoubleSpinBox(HCMixin, QDoubleSpinBox):
@@ -249,14 +327,11 @@ class HCDoubleSpinBox(HCMixin, QDoubleSpinBox):
         self.editingFinished.connect(self.value_change)
 
     def value_change(self) -> None:
-        self.value = self.text()
-        self.app.set_instrument_parameter(self.instrument, self.parameter, self.value)
+        value = self.text()
+        self.app.set_instrument_parameter(self.instrument, self.parameter, value)
 
-    def hc_update(self) -> None:
-        self.value = float(
-            self.app.get_instrument_parameter(self.instrument, self.parameter)
-        )
-        self.setValue(self.value)
+    def widget_update(self, value) -> None:
+        self.setValue(float(value))
 
 
 class HCPushButton(HCMixin, QPushButton):
@@ -293,66 +368,162 @@ class HCPushButton(HCMixin, QPushButton):
     def value_change(self) -> None:
         self.app.call_instrument_command(self.instrument, self.parameter)
 
-    def hc_update(self) -> None:
+    def widget_update(self, value) -> None:
         pass
 
 
-class HCToggleButton(HCMixin, QPushButton):
-    """A simple control widget with a label (QLabel), a button (QPushButton), and an optional indicator (QLabel).
-
-    The control widget can be connected to a generic function, or
-    directly to an instrument and a specific setting.
-
-    """
+class HCOnOffButton(HCMixin, QPushButton):
+    """Similar to HCPushButton, but also have graphical indicators for on/off state."""
 
     def __init__(
         self,
         app,
         instrument: str,
         parameter: str,
-        button_label: str = "",
-        show_indicator: bool = False,
-        icon_1: str = "button-power-on.svg",
-        icon_2: str = "button-power-off.svg",
+        label: str = "",
+        label_align: str = "left",
+        show_text: bool = True,
+        show_icon: bool = False,
+        text_checked: str = "On",
+        text_unchecked: str = "Off",
+        icon_checked: str = "button-power-on.svg",
+        icon_unchecked: str = "button-power-off.svg",
     ):
         super().__init__(
             app=app,
             instrument=instrument,
             parameter=parameter,
-            text=button_label,
+            label=label,
+            label_align=label_align,
+            colon=False,
         )
-        self.show_indicator = show_indicator
 
-        self.icon_1 = load_icon(icon_1)
-        self.icon_2 = load_icon(icon_2)
-        self.indic_label = QLabel()
-        self.indic_label.setPixmap(load_icon("na_label.svg"))
+        self.show_icon = show_icon
+        if self.show_icon:
+            self.icon_checked = load_icon(icon_checked)
+            self.icon_unchecked = load_icon(icon_unchecked)
+            self.icon_unknown = load_icon("button-power-unknown.svg")
+
+        self.show_text = show_text
+        if self.show_text:
+            self.text_checked = text_checked
+            self.text_unchecked = text_unchecked
 
         self.clicked.connect(self.value_change)
         self.setCheckable(True)
-        setButtonState(self, False)
+
+        # set default to unkown state
+        if show_icon:
+            self.setIcon(self.icon_unknown)
+        if show_text:
+            self.setText("unkown")
+
+    def is_true(self, value: Union[bool, str]) -> bool:
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            if value in ["True", "TRUE"]:
+                return True
+        return False
+
+    def set_state(self, value):
+        if self.show_icon:
+            if value == "True":
+                self.setIcon(self.icon_checked)
+            elif value == "False":
+                self.setIcon(self.icon_unchecked)
+
+        if self.show_text:
+            if value == "True":
+                self.setText(self.text_checked)
+            elif value == "False":
+                self.setText(self.text_unchecked)
 
     def value_change(self) -> None:
-        self.app.set_instrument_parameter(
-            self.instrument, self.parameter, self.isChecked()
+        """Change value to opposite of current value."""
+        value = self.app.get_instrument_parameter(self.instrument, self.parameter)
+        new_value = not (value == "True")
+        self.app.set_instrument_parameter(self.instrument, self.parameter, new_value)
+
+    def widget_update(self, value):
+        self.set_state(value)
+
+
+class HCOnOffIndicator(HCMixin, QLabel):
+    """Similar to HCPushbutton, but only indicates an  on/off state."""
+
+    def __init__(
+        self,
+        app,
+        instrument: str,
+        parameter: str,
+        label: str = "",
+        label_align: str = "left",
+        show_text: bool = False,
+        show_icon: bool = False,
+        text_checked: str = "On",
+        text_unchecked: str = "Off",
+        icon_checked: str = "on-off-indicator-on.svg",
+        icon_unchecked: str = "on-off-indicator-off.svg",
+        tooltip: str = "",
+    ):
+        super().__init__(
+            app=app,
+            instrument=instrument,
+            parameter=parameter,
+            text=label,
         )
 
-        if self.show_indicator:
-            if self.isChecked():
-                self.indic_label.setPixmap(self.icon_1)
-            else:
-                self.indic_label.setPixmap(self.icon_2)
+        self.label = QLabel(label)
+        self.show_icon = show_icon
+        self.show_text = show_text
+        self.text_checked = text_checked
+        self.text_unchecked = text_unchecked
 
-    def hc_update(self):
-        if self.show_indicator:
-            self.value = self.app.get_instrument_parameter(
-                self.instrument, self.parameter
-            )
+        self.icon_checked = load_pixmap(icon_checked)
+        self.icon_unchecked = load_pixmap(icon_unchecked)
+        self.icon_unknown = load_pixmap("on-off-indicator-unknown.svg")
 
-            if self.value:
-                self.indic_label.setPixmap(self.icon_1)
-            else:
-                self.indic_label.setPixmap(self.icon_2)
+        # set default to unkown state
+        if self.show_icon:
+            self.setPixmap(self.icon_unknown)
+        if self.show_text:
+            self.setText("unkown")
+
+        self.setMouseTracking(True)
+        self.setToolTip(tooltip)
+
+        self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+
+    def sizeHint(self):
+        if self.show_icon and not self.show_text:
+            return QtCore.QSize(10, 20)
+        else:
+            return super().sizeHint()
+
+    def is_true(self, value: Union[bool, str]) -> bool:
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, str):
+            if value in ["True", "TRUE"]:
+                return True
+        return False
+
+    def set_state(self, value):
+        if self.show_icon:
+            if value == "True":
+                self.setPixmap(self.icon_checked)
+            elif value == "False":
+                self.setPixmap(self.icon_unchecked)
+
+        if self.show_text:
+            if value == "True":
+                self.setText(self.text_checked)
+            elif value == "False":
+                self.setText(self.text_unchecked)
+
+    def widget_update(self, value):
+        self.set_state(value)
 
 
 class HCComboBox(HCMixin, QComboBox):
@@ -373,6 +544,7 @@ class HCComboBox(HCMixin, QComboBox):
         label: str,
         items,
         label_align: str = "left",
+        lookuptable: Optional[Dict] = None,
     ):
         super().__init__(
             app=app,
@@ -386,20 +558,44 @@ class HCComboBox(HCMixin, QComboBox):
         self.addItems(self.items)
         self.setCurrentText(self.items[0])
 
+        self.lookuptable = lookuptable
+        if self.lookuptable is not None:
+            self.inverse_lookuptable = {
+                value: key for key, value in lookuptable.items()
+            }
+
         self.currentIndexChanged.connect(self.value_change)
 
     def value_change(self) -> None:
-        self.value = self.currentText().upper()
-        self.app.set_instrument_parameter(self.instrument, self.parameter, self.value)
+        value = self.currentText().upper()
+        if self.lookuptable:
+            value = self.lookuptable[value]
+        self.app.set_instrument_parameter(self.instrument, self.parameter, value)
 
-    def hc_update(self) -> None:
-        self.value = self.app.get_instrument_parameter(self.instrument, self.parameter)
+    def widget_update(self, value) -> None:
+        if self.lookuptable:
+            value = self.inverse_lookuptable[value]
         for i in self.items:
-            if self.value.casefold() == i.casefold():
+            if value.casefold() == i.casefold():
                 self.setCurrentText(i)
                 break
         else:
-            logger.error(f"HCControlCombo: could not find '{self.value}' in item list")
+            # try float values
+            try:
+                float(value)
+            except (ValueError, TypeError):
+                logger.error(
+                    f"HCComboBox for '{self.parameter}': could not find '{value}' in item list and cannot test for float number."
+                )
+                return
+            for i in self.items:
+                if float(value) == float(i):
+                    self.setCurrentText(i)
+                    break
+            else:
+                logger.error(
+                    f"HCComboBox for '{self.parameter}': could not find '{value}' in item list"
+                )
 
 
 class HCDoubleSpinComboBox(HCMixin):
@@ -443,18 +639,14 @@ class HCDoubleSpinComboBox(HCMixin):
     def value_change(self) -> None:
         combo_value = self.units[self.combo.currentText()]
         spin_value = float(self.spin.text())
-        self.value = spin_value * combo_value
+        value = spin_value * combo_value
 
-        self.app.set_instrument_parameter(self.instrument, self.parameter, self.value)
+        self.app.set_instrument_parameter(self.instrument, self.parameter, value)
 
-    def hc_update(self) -> None:
-        self.value = float(
-            self.app.get_instrument_parameter(self.instrument, self.parameter)
-        )
+    def widget_update(self, value) -> None:
         combo_value = self.units[self.combo.currentText()]
-        self.value *= combo_value
-
-        self.spin.setValue(self.value)
+        value = float(value) / combo_value
+        self.spin.setValue(value)
 
 
 class HCSpinBox(HCMixin, QSpinBox):
@@ -475,20 +667,15 @@ class HCSpinBox(HCMixin, QSpinBox):
             label=label,
             label_align=label_align,
         )
-        # Rename QSpinBox method for getting current value to avoid naming conflicts
-        self.get_current_value = self.value
 
         self.valueChanged.connect(self.value_change)
 
     def value_change(self) -> None:
         self.value = self.get_current_value()
-        self.app.set_instrument_parameter(self.instrument, self.parameter, self.value)
+        self.app.set_instrument_parameter(self.instrument, self.parameter, value)
 
-    def hc_update(self) -> None:
-        self.value = float(
-            self.app.get_instrument_parameter(self.instrument, self.parameter)
-        )
-        self.setValue(self.value)
+    def widget_update(self, value) -> None:
+        self.setValue(float(value))
 
 
 class HCHeader(QLabel):
@@ -496,7 +683,7 @@ class HCHeader(QLabel):
 
     def __init__(self, icon_name):
         super().__init__()
-        self.setPixmap(load_icon(icon_name))
+        self.setPixmap(load_pixmap(icon_name))
         self.setAlignment(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignHCenter)
 
 
@@ -522,9 +709,8 @@ class HCFixedLabel(HCMixin, QLabel):
         )
 
         self.unit = unit
-        self.value = init_label
 
-        self.setText(self.value + " " + self.unit)
+        self.setText(f"{init_label} {self.unit}")
 
         font = QFont()
         font.setPointSize(fontsize)
@@ -548,9 +734,8 @@ class HCFixedLabel(HCMixin, QLabel):
         elif label_align == "center":
             self.setAlignment(QtCore.Qt.AlignCenter)
 
-    def hc_update(self):
-        self.value = self.app.get_instrument_parameter(self.instrument, self.parameter)
-        self.setText(self.value)
+    def widget_update(self, value) -> None:
+        self.setText(f"{value} {self.unit}")
 
     def setText(self, text: str) -> None:
         if self.unit:

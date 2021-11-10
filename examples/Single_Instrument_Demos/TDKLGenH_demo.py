@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Keysight Power Supply demo
+"""Multi-Channel Power Supply demo
 
 Usage:
-  KeysightPowerSupply_demo.py [--dummy] [--debug] [--console] [--info]
+  MultiPowerSupply_demo.py [--dummy] [--debug] [--console] [--info]
 
 Options:
   --dummy    use dummy connection for instruments that return semi-random data
@@ -15,14 +15,13 @@ Options:
 
 import logging
 import sys
-from os import getcwd
 
 from docopt import docopt
 
 from PyQt5.QtWidgets import QWidget, QGridLayout
-from PyQt5.QtGui import QDoubleValidator
 
 import hardware_control as hc
+
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
@@ -35,16 +34,28 @@ class Demo(hc.HCMainWindow):
     def __init__(self, dummy):
         super().__init__(dummy=dummy)
 
-        self.setWindowTitle("Adam 6024 Demo")
+        self.setWindowTitle("MultiPowerSupply Demo")
 
+        # This is the main widget, actual device widgets are added to it
         self.main_widget = QWidget(self)
 
-        # Add an Adam 6024 to the app
-        self.app.add_instrument(hc.instruments.Adam_6024("ADAM_6024", "192.168.0.5"))
-        self.adam_ctrl = hc.gui.AdamControl(self.app, "ADAM_6024")
+        # Create a TDKL_GenH instrument backend and add it to the app
+        self.app.add_instrument(
+            hc.instruments.TDKL_GenH("tdkl", "TCPIP0::192.168.1.19::INSTR")
+        )
 
+        # Create a MultiPowerSupply control that connects to the nstrument backend
+        self.tdkl_ctrl = hc.gui.MultiPowerSupply(
+            self.app,
+            "tdkl",
+            [1],
+            "TDKL Power Supply Unit",
+            enable_power_buttons="both",
+        )
+
+        # Add the three control and the console to the main widget
         self.grid = QGridLayout()
-        self.grid.addWidget(self.adam_ctrl, 1, 1)
+        self.grid.addWidget(self.tdkl_ctrl, 1, 1)
         self.main_widget.setLayout(self.grid)
 
         self.setCentralWidget(self.main_widget)
