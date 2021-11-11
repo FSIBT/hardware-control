@@ -32,6 +32,7 @@ class VQM835(Instrument):
         super().__init__(
             instrument_name=instrument_name,
             connection_addr=connection_addr,
+            default_port=7777
         )
 
         self.manufacturer = "MKS"
@@ -39,7 +40,7 @@ class VQM835(Instrument):
 
         self.check_connection_commands = ["*IDN?"]
 
-        self.termination = "\r"
+        self._termination = "\r"
 
         self.add_command("ENTRY_PLATE", "INST ENTR")
         self.add_command("FILAMENT", "INST FIL")
@@ -49,28 +50,35 @@ class VQM835(Instrument):
         self.add_command("CLEAN_ALL", "*CLS")
 
         ## get the total pressure from the external source (Ion Gauge)
-        self.add_command("TOTAL_PRESSURE", "INST ETPR;OUTP ON;MEAS:PRES?")
+        self.add_command("TOTAL_PRESSURE", "INST ETPR\rOUTP ON\rMEAS:PRES?")
 
         ## Setting the ionizer parameters
         self.add_parameter(
             "FILAMENT_EMISSION",
-            read_command="INST FIL;MEAS:CURR?",
-            set_command="INST FIL;SOUR:MOD ADJ;SOUR:CURR",
+            read_command="INST FIL\rMEAS:CURR?",
+            set_command="INST FIL\rSOUR:MOD ADJ\rSOUR:CURR",
             dummy_return="",
         )
 
         ## Setting up the Detectors
         self.add_parameter(
             "EM_VOLTAGE",
-            read_command="INST EMUL;MEAS:VOLT",
-            set_command="INST EMUL;SOUR:VOLT",
+            read_command="INST EMUL\rMEAS:VOLT",
+            set_command="INST EMUL\rSOUR:VOLT",
             dummy_return="",
         )
 
         ## Setting up the Scans
-        self.add_command("SINGLE_MEASUREMENT", "INST MSP;OUTP ON;INIT;FETC?")
+        self.add_command('READOUT_SET', 'FORM 1,1\rFORM?')
+        self.add_command('MASS_RANGE','INST MSP\rCONF:AMU 1,20\rCONF:AMU?')
+        self.add_command("SINGLE_MEASUREMENT", "INST MSP\rOUTP ON\rINIT\rFETC?")
 
         ## Store and load the trap settings
-        self.add_command("STORE_SETTINGS", "MEM:STOR;SYST:ERR:ALL?")
-        self.add_command("LOAD_SETTINGS", "MEM:LOAD;SYST:ERR:ALL?")
-        self.add_command("FACTORY_SETTINGS", "MEM:LOAD FACT;SYST:ERR:ALL?")
+        self.add_command("STORE_SETTINGS", "MEM:STOR\rSYST:ERR:ALL?")
+        self.add_command("LOAD_SETTINGS", "MEM:LOAD\rSYST:ERR:ALL?")
+        self.add_command("FACTORY_SETTINGS", "MEM:LOAD FACT\rSYST:ERR:ALL?")
+
+        ## Turn off the MSP
+        self.add_command('CLEAR_OFF', 'INST MSP\rOUTP OFF\rSYST:ERR:ALL?')
+
+
