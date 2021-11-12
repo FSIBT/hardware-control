@@ -5,6 +5,7 @@ it provides a simple UI.
 import json
 import logging
 from typing import Union
+from pathlib import Path
 
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import (
@@ -127,13 +128,7 @@ class IOModule(QGroupBox):
                     f"{self.instrument}: 'DIR' field in channel data mus be set to OUTPUT or INPUT."
                 )
 
-            # Remove input/output status from channel name since all
-            # parameters are required to have both input and output fields
             chan_name = c_dict["ID_STR"]
-            chan_name = chan_name.replace("ao", "a-")
-            chan_name = chan_name.replace("ai", "a-")
-            chan_name = chan_name.replace("do", "d-")
-            chan_name = chan_name.replace("di", "d-")
             self.channel_names.append(chan_name)
 
             last_wdgt = create_widget_function(
@@ -189,7 +184,7 @@ class IOModule(QGroupBox):
         """
 
         self.channel_data = channel_data
-        if isinstance(self.channel_data, str):
+        if isinstance(self.channel_data, str) or isinstance(self.channel_data, Path):
             with open(self.channel_data) as file:
                 self.channel_data = json.load(file)
         else:
@@ -211,11 +206,11 @@ class IOModule(QGroupBox):
 
     def update_readout(self) -> None:
         for channel in self.channel_names:
-            if "/a" in channel:
+            if "/ai" in channel:
                 self.app.update_instrument_parameter(
                     self.instrument, "CH" + channel + "_ANALOG"
                 )
-            if "/d" in channel:
+            if "/di" in channel:
                 self.app.update_instrument_parameter(
                     self.instrument, "CH" + channel + "_DIGITAL"
                 )

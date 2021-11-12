@@ -544,10 +544,10 @@ class Instrument:
                 logger.debug(
                     f"opened pyvisa connection to {self.name} at {self.connection_addr}"
                 )
-            except Exception:
+            except Exception as e:
                 self._online = False
-                logger.debug(
-                    f"\t({self.name}) ERROR connecting with visa.",
+                logger.error(
+                    f"\t({self.name}) received the following error connecting with visa: {e}."
                 )
                 logger.debug(f"{self.name} is offline")
             else:
@@ -562,9 +562,11 @@ class Instrument:
                 logger.debug(
                     f"opened socket connection to {self.name} at {self.ip_addr}:{self.port_no}"
                 )
-            except Exception:
+            except Exception as e:
                 self._online = False
-                logger.debug(f"\t({self.name}) ERROR connecting with sockets.")
+                logger.error(
+                    f"\t({self.name}) received the following error connecting with sockets: {e}."
+                )
                 logger.debug(f"{self.name} is offline")
             else:
                 self._online = True
@@ -576,9 +578,11 @@ class Instrument:
                     logger.debug(
                         f"opened modbus connection to {self.name} at {self.connection_addr}"
                     )
-            except Exception:
+            except Exception as e:
                 self._online = False
-                logger.debug(f"\t({self.name}) ERROR connecting with modbus.")
+                logger.error(
+                    f"\t({self.name}) received the following error connecting with modbus: {e}."
+                )
                 logger.debug(f"{self.name} is offline")
 
         time.sleep(self.startup_delay)

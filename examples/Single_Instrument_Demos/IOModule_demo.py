@@ -17,6 +17,7 @@ import sys
 from PyQt5.QtWidgets import QWidget, QGridLayout
 from docopt import docopt
 from os import getcwd
+from pathlib import Path
 
 import hardware_control.instruments as hc_inst
 import hardware_control as hc
@@ -44,8 +45,7 @@ class Demo(hc.HCMainWindow):
                 instrument_name="NI-9000",
                 connection_addr="cDAQ1",
                 modules=[1, 2],
-                analog_channels={1: [0, 1], 2: [0, 3]},
-                digital_channels={1: [0, 1], 2: [0, 3]},
+                analog_channels={1: ["o0", "o1"], 2: ["i0", "i1", "i2", "i3", "i4"]},
             )
         )
 
@@ -56,8 +56,9 @@ class Demo(hc.HCMainWindow):
         self.iomodule = hc.gui.IOModule(
             self.app,
             "NI-9000",
-            cwd + "/settings_files/IOModule_channel_data.json",
-            num_columns=4,
+            Path(cwd + "/settings_files/nidaq_grid_conf.json"),
+            # Path(cwd + "/settings_files/IOModule_channel_data.json"),
+            num_columns=2,
         )
 
         # Add control to the main widget

@@ -15,3 +15,4 @@ from .srs import SRS_CIS200
 from .tdkl import TDKL_GenH
 from .lakeshore import Lakeshore_224
 from .mks import GP_356
+from .mks import VQM835
