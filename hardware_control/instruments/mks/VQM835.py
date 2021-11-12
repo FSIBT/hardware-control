@@ -32,7 +32,7 @@ class VQM835(Instrument):
         super().__init__(
             instrument_name=instrument_name,
             connection_addr=connection_addr,
-            default_port=7777
+            default_port=7777,
         )
 
         self.manufacturer = "MKS"
@@ -60,17 +60,45 @@ class VQM835(Instrument):
             dummy_return="",
         )
 
+        ## Setting up the mass filiter
+        self.add_parameter(
+            "REPELLER",
+            read_command="INST REP\rMEAS:VOLT?",
+            set_command="INST REP\rSOUR:VOLT",
+            dummy_return="",
+        )
+
+        self.add_parameter(
+            "RF_APM",
+            read_command="INST CUPS\rMEAS:VOLT?",
+            set_command="INST CUPS\rSOUR:VOLT",
+            dummy_return="",
+        )
+
+        self.add_parameter(
+            "EXIT_PLATE",
+            read_command="INST EXIT\rMEAS:VOLT?",
+            set_command="INST EXIT\rSOUR:VOLT",
+            dummy_return="",
+        )
+
         ## Setting up the Detectors
         self.add_parameter(
             "EM_VOLTAGE",
-            read_command="INST EMUL\rMEAS:VOLT",
+            read_command="INST EMUL\rMEAS:VOLT?",
             set_command="INST EMUL\rSOUR:VOLT",
             dummy_return="",
         )
 
+        self.add_parameter(
+            "MASS_RANGE",
+            read_command="INST MSP\rCONF:AMU?",
+            set_command="INST MSP\rCONF:AMU",
+            dummy_return="",
+        )
+
         ## Setting up the Scans
-        self.add_command('READOUT_SET', 'FORM 1,1\rFORM?')
-        self.add_command('MASS_RANGE','INST MSP\rCONF:AMU 1,20\rCONF:AMU?')
+        self.add_command("READOUT_SET", "FORM 1,1\rFORM?")
         self.add_command("SINGLE_MEASUREMENT", "INST MSP\rOUTP ON\rINIT\rFETC?")
 
         ## Store and load the trap settings
@@ -78,7 +106,6 @@ class VQM835(Instrument):
         self.add_command("LOAD_SETTINGS", "MEM:LOAD\rSYST:ERR:ALL?")
         self.add_command("FACTORY_SETTINGS", "MEM:LOAD FACT\rSYST:ERR:ALL?")
 
-        ## Turn off the MSP
-        self.add_command('CLEAR_OFF', 'INST MSP\rOUTP OFF\rSYST:ERR:ALL?')
-
-
+        ## Turn On/Off the MSP
+        self.add_command("ON", "INST MSP\rOUTP ON\rSYST:ERR:ALL?")
+        self.add_command("CLEAR_OFF", "INST MSP\rOUTP OFF\rSYST:ERR:ALL?")
