@@ -46,7 +46,7 @@ class Demo(hc.HCMainWindow):
         self.app.add_instrument(hc.instruments.Caen_14xxET("caen", "192.168.1.20:1470"))
         # Note that this is not the correct address for Rigol
         self.app.add_instrument(
-            hc.instruments.Rigol_DP832("rigol", "192.168.1.20:1470")
+            hc.instruments.Rigol_DP832("rigol", "TCPIP0::192.168.2.83::INSTR")
         )
 
         # When not in dummy mode, these set channel voltage and current maximum values
