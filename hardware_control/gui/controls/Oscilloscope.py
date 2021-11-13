@@ -19,7 +19,6 @@ from ..widgets import (
     HCOnOffButton,
     HCHeader,
     HCDoubleSpinComboBox,
-    HCToggleButton,
 )
 
 logger = logging.getLogger(__name__)
