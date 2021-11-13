@@ -32,7 +32,7 @@ hc.setup_logging_docopt(logger, commands)
 if commands["--socket"]:
     address = "192.168.0.20"
 else:
-    address = "TCPIP0::192.128.2.12::INSTR"
+    address = "TCPIP0::192.168.2.12::INSTR"
 
 
 class Demo(hc.HCMainWindow):
