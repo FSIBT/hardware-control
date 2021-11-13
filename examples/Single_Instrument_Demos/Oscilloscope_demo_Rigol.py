@@ -44,7 +44,7 @@ class Demo(hc.HCMainWindow):
         print(self.app._data)
 
         self.scope_ctrl = hc.gui.Oscilloscope(
-            self.app, "Rigol-1000", "Rigol Oscilloscope", display_channels=[1, 2, 3, 4]
+            self.app, "Rigol-1000", "Rigol Oscilloscope"
         )
 
         # Add control to the main Widget
