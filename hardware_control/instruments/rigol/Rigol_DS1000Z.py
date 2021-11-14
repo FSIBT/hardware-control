@@ -89,6 +89,13 @@ class Rigol_DS1000Z(Instrument):
             pre_hooks=[format_float(".6E")],
         )
         self.add_parameter(
+            "TIME_OFFSET",
+            read_command=":TIM:MAIN:OFFS?",
+            set_command=":TIM:MAIN:OFFS {}",
+            dummy_return="2e-6",
+            pre_hooks=[format_float(".6E")],
+        )
+        self.add_parameter(
             "LABELS_ENABLED",
             read_command="DISP:LAB?",
             set_command="DISP:LAB {}",
@@ -144,6 +151,13 @@ class Rigol_DS1000Z(Instrument):
                 pre_hooks=[format_float(".6E")],
             )
             self.add_parameter(
+                f"CH{ch}_ON-OFF",
+                read_command=f"CHAN{ch}:DISP?",
+                set_command=f"CHAN{ch}:DISP {{}}",
+                dummy_return="True",
+            )
+            self.add_lookup(f"CH{ch}_ON-OFF", {"True": "1", "False": "0"})
+            self.add_parameter(
                 f"CH{ch}_OFFSET",
                 read_command=f"CHAN{ch}:OFFS?",
                 set_command=f"CHAN{ch}:OFFS {{}}",
@@ -170,7 +184,7 @@ class Rigol_DS1000Z(Instrument):
                 f"CH{ch}_LABEL",
                 read_command=f"CHAN{ch}:LAB?",
                 set_command=f"CHAN{ch}:LAB {{}}",
-                dummy_return="label unkown",
+                dummy_return="label_unkown",
                 pre_hooks=[max_len_converter(32)],
             )
 
@@ -215,6 +229,9 @@ class Rigol_DS1000Z(Instrument):
         self.write("WAV:MODE NORM")  # Specify to read data displayed on screen
         self.write("WAV:FORM ASCII")  # Specify data format to ASCII
         data = self.query("WAV:DATA?")  # Request data
+
+        if data is None:
+            return "[[],[]]"
 
         # Split string into ASCII voltage values
         volts = data[11:].split(",")

@@ -65,14 +65,14 @@ Hardware-control consists of several parts:
    every second.
 
 
-We try to follow the modell-view-controller approach. To achieve this,
+We try to follow the model-view-controller approach. To achieve this,
 we store all the instrument settings and values the instruments report
-back in a modell in the main app. When an instrument reports a new
-value, the value in the modell gets updated and the all widgets that
+back in a model in the main app. When an instrument reports a new
+value, the value in the model gets updated and the all widgets that
 display this value get updated automatically. Widgets that for example
 plot data never directly talk to the instrument, but just use the
-latest data in the modell. This makes the UI responsive, since there
+latest data in the model. This makes the UI responsive, since there
 is no delay from the instrument. Instrument data can be automatically
-be updated through a timer to keep the modell up to date. The downside
+be updated through a timer to keep the model up to date. The downside
 of this approach is that the data can be slightly outdated, which, for
 our use case, has never been an issue.

@@ -41,19 +41,21 @@ We also implemented a 'dummy' mode for instruments, where they will
 return pre-defined data (that can be random), which can be good for
 debugging.
 
-The reason to define a HC custom string is to be able to make our GUIs
-reusable. Therefore, if you want to use one of the pre-defined GUIs,
-you should choose the HC names in according to the GUI you want to
-use.
+The reason we remap the instrument's command syntax to new command names in the
+`add_parameter` and `add_command` functions is to ensure that the widgets can
+base their UIs on generic command/parameter names that can work for all instruments
+of one type. The driver's purpose is to translate the generic commands to the
+syntax required for your specific instrument. Because of this, if you plan on
+using your driver with an existing Hardware-Control GUI, you will need to make
+sure the `name` field in the calls to `add_parameter` and `add_command` in your
+driver agrees with the corresponding names in the widget's interface.
 
-To get a usable instrument driver, you only need to implement the
-commands and parameter you want to use and don't have to implement
-everything (which of course would be nice).
+Note that to get a usable instrument driver, you only need to implement the
+commands and parameters you want to use. There is no need to implement every
+command available to the instrument or the widget (although this would be nice).
 
-### 3. Querying Data directly from the Instrument
+### 3. Interfacing with the Instrument through Hardware-Control
 
-To call a commands you just do `instance.command(<HC name of the
-command>)` and to read a value `instance[<HC name of parameter>]`
-works. Setting a value can also be done easily by using `instance[<HC
-name of parameter>]=value`.
-
+To trigger a driver command, use `instance.command(<HC name of the
+command>)`. You can read parameter with `instance[<HC name of parameter>]` and
+set parameters with `instance[<HC name of parameter>]=value`.
