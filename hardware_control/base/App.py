@@ -655,7 +655,7 @@ class App(QApplication):
             with open(filename) as file:
                 all_settings = json.load(file)
                 logger.info(
-                    f"Settings for all instruments read from file '{filename}.'"
+                    f"Settings for instrument '{instrument}' read from file '{filename}'."
                 )
         except:
             logger.error(f"Failed to read file '{filename}'.", exc_info=True)

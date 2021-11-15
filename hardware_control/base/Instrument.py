@@ -365,8 +365,8 @@ class Instrument:
                             "User-defined function for dummy mode returned None."
                         )
             else:
-                logger.debug(
-                    f"Error when calling 'Instrument.get_value': User requested parameter '{parameter}' in instrument '{self.name}' in dummy mode, but no dummy return was defined."
+                logger.error(
+                    f"When calling 'Instrument.get_value': User requested parameter '{parameter}' in instrument '{self.name}' in dummy mode, but no dummy return was defined."
                 )
         else:
             # talk to the instrument
@@ -395,7 +395,7 @@ class Instrument:
         if val is not None:
             return val
         logger.error(
-            f"Error when calling 'Instrument.__getitem__': '{parameter}' not available in instrument '{self.name}'"
+            f"When calling 'Instrument.__getitem__': '{parameter}' not available in instrument '{self.name}'"
         )
 
     def __getattr__(self, parameter: str):
@@ -411,7 +411,7 @@ class Instrument:
             return val
 
         logger.error(
-            f"Error when calling 'Instrument.__getattr__': '{parameter}' not available in instrument '{self.name}'"
+            f"When calling 'Instrument.__getattr__': '{parameter}' not available in instrument '{self.name}'"
         )
 
     def set_value(self, parameter: str, value) -> None:
@@ -429,7 +429,7 @@ class Instrument:
                 self.write(self.set_commands[parameter].format(value))
             return
         logger.error(
-            f"Error when calling 'Instrumentset_value': '{parameter}' not available in instrument '{self.name}'"
+            f"When calling 'Instrumentset_value': '{parameter}' not available in instrument '{self.name}'"
         )
 
     def __setitem__(self, parameter, value) -> None:
@@ -486,7 +486,7 @@ class Instrument:
             return
 
         logger.error(
-            f"Error when calling 'command': {command_name} not available in instrument {self.name}"
+            f"When calling 'command': {command_name} not available in instrument {self.name}"
         )
 
     def close(self) -> None:
@@ -655,7 +655,7 @@ class Instrument:
                         f"modbus command for {command} currently not implemented for instrument '{self.name}'"
                     )
         except Exception:
-            logger.debug(f"ERROR: Write {command} failed in {self.name}", exc_info=True)
+            logger.error(f"Write {command} failed in {self.name}", exc_info=True)
             self._online = False
             return
 
@@ -719,7 +719,7 @@ class Instrument:
 
             return reply
         except Exception:
-            logger.debug(f"ERROR: Query {command} failed in {self.name}", exc_info=True)
+            logger.error(f"Query {command} failed in {self.name}", exc_info=True)
             self._online = False
             return None
 

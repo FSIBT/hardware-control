@@ -69,7 +69,7 @@ class StatusTool(QGroupBox):
             # save the row to make updating the instrument later easier
             self.instrument_rows[instrument] = row
 
-            self.app.add_widget(instrument, "online", self)
+            self.app.add_widget(instrument, "ONLINE", self)
 
             label = QLabel(instrument)
             indicator = QLabel()
@@ -97,7 +97,7 @@ class StatusTool(QGroupBox):
                 continue
 
             if self.app.dummy is False:
-                online = self.app.get_instrument_parameter(instrument, "online")
+                online = self.app.get_instrument_parameter(instrument, "ONLINE")
             else:
                 online = False
 
