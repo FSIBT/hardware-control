@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Multi-Channel Power Supply demo
+"""Caen_RSeries demo
 
 Usage:
   MultiPowerSupply_demo.py [--dummy] [--debug] [--console] [--info]
@@ -39,8 +39,8 @@ class Demo(hc.HCMainWindow):
         # This is the main widget, actual device widgets are added to it
         self.main_widget = QWidget(self)
 
-        # Create Caen_14xxET instrument backend and add them to the app
-        self.app.add_instrument(hc.instruments.Caen_14xxET("caen", "192.168.0.1:1470"))
+        # Create Caen_RSeries instrument backend and add them to the app
+        self.app.add_instrument(hc.instruments.Caen_RSeries("caen", "192.168.0.1:1470"))
 
         # When not in dummy mode, these set channel voltage and current maximum values for all 16 Caen channels
         for channel in range(4):

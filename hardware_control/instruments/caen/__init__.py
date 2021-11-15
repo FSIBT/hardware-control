@@ -1,1 +1,1 @@
-from .Caen_14xxET import Caen_14xxET
+from .Caen_RSeries import Caen_RSeries

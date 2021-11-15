@@ -39,11 +39,13 @@ class Demo(hc.HCMainWindow):
         # This is the main widget, actual device widgets are added to it
         self.main_widget = QWidget(self)
 
-        # Create TDKL_GenH, Caen_14xxET, and Rigol_DP832 instrument backends and add them to the app
+        # Create TDKL_GenH, Caen_RSeries, and Rigol_DP832 instrument backends and add them to the app
         self.app.add_instrument(
             hc.instruments.TDKL_GenH("tdkl", "TCPIP0::192.168.1.19::INSTR")
         )
-        self.app.add_instrument(hc.instruments.Caen_14xxET("caen", "192.168.1.20:1470"))
+        self.app.add_instrument(
+            hc.instruments.Caen_RSeries("caen", "192.168.1.20:1470")
+        )
         # Note that this is not the correct address for Rigol
         self.app.add_instrument(
             hc.instruments.Rigol_DP832("rigol", "TCPIP0::192.168.2.83::INSTR")

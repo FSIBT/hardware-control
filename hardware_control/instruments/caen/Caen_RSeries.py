@@ -23,10 +23,8 @@ logger = logging.getLogger(__name__)
 
 def _parse_instrument_response(value: str) -> Union[str, None]:
     value = value.strip(r"\r")
-    print("debug1", value)
     if value.endswith("CMD:OK"):
         return None
-    print(value[value.find("VAL:") + 4 :])
     return value[value.find("VAL:") + 4 :]
 
 
@@ -43,8 +41,8 @@ def _create_parse_status(bitmask):
     return parse_status
 
 
-class Caen_14xxET(Instrument):
-    """CAEN R14xxET high voltage power supply instrument class.
+class Caen_RSeries(Instrument):
+    """CAEN R Series high voltage power supply instrument class.
 
     PARAMETERS
         * CH<X>_ENABLE (*bool*)
@@ -70,7 +68,7 @@ class Caen_14xxET(Instrument):
 
     def __init__(
         self,
-        instrument_name: str = "CAEN_14xxET",
+        instrument_name: str = "Caen_RSeries",
         connection_addr: str = "",
         num_channels: int = 16,
     ):

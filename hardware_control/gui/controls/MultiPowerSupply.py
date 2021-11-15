@@ -61,7 +61,7 @@ class MultiPowerSupply(QGroupBox):
 
     See Also
     --------
-    hardware_control.instruments.caen.Caen_14xxET
+    hardware_control.instruments.caen.Caen_RSeries
     hardware_control.instruments.rigol.Rigol_DP832
     hardware_control.instruments.tdkl.TDKL_GenH
     """
