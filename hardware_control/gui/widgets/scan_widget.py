@@ -33,7 +33,7 @@ from PyQt5.QtWidgets import (
     QSizePolicy,
 )
 
-from .hc_widgets import load_icon
+from .hc_widgets import load_pixmap
 
 logger = logging.getLogger(__name__)
 
@@ -235,7 +235,7 @@ class ScanWidget(QGroupBox):
         self.instrument_drop.currentIndexChanged.connect(self.set_instrument)
 
         self.arrow_symbol = QLabel()
-        self.arrow_symbol.setPixmap(load_icon("arrow.png"))
+        self.arrow_symbol.setPixmap(load_pixmap("arrow.png"))
         self.arrow_symbol.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
 
         self.parameter_label = QLabel("Parameter:")
@@ -416,7 +416,7 @@ class ScanWidget(QGroupBox):
         # Add scanning buttons and a scan progress bar
         self.scan_button = QPushButton()
         self.scan_button.setText("New Scan")
-        self.scan_button.setIcon(QIcon(load_icon("scan.png")))
+        self.scan_button.setIcon(QIcon(load_pixmap("scan.png")))
         self.scan_button.setCheckable(False)
         self.scan_button.clicked.connect(self.new_scan)
         self.scan_button.setSizePolicy(
@@ -434,7 +434,7 @@ class ScanWidget(QGroupBox):
 
         self.stop_button = QPushButton()
         self.stop_button.setText("Stop")
-        self.stop_button.setIcon(QIcon(load_icon("stop.svg")))
+        self.stop_button.setIcon(QIcon(load_pixmap("stop.svg")))
         self.stop_button.setCheckable(False)
         self.stop_button.setSizePolicy(
             QSizePolicy(QSizePolicy.Maximum, QSizePolicy.Maximum)

@@ -4,7 +4,7 @@ from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QGroupBox, QLabel, QGridLayout
 
-from .hc_widgets import load_icon
+from .hc_widgets import load_pixmap
 
 logger = logging.getLogger(__name__)
 
@@ -26,20 +26,16 @@ class StatusTool(QGroupBox):
         self.instrument_rows = {}
 
         if short_indicators:
-            self.green_indicator = load_icon("green_ind.svg")
-            self.grey_indicator = load_icon("grey_ind.svg")
-            self.darkgrey_indicator = load_icon("ind_darkgrey.png")
-            self.red_indicator = load_icon("red_ind.svg")
-            self.blue_indicator = load_icon("blue_ind.svg")
+            self.green_indicator = load_pixmap("green_ind.svg")
+            self.grey_indicator = load_pixmap("grey_ind.svg")
+            self.red_indicator = load_pixmap("red_ind.svg")
         else:
-            self.green_indicator = load_icon("online_label.svg")
-            self.grey_indicator = load_icon("na_label.svg")
-            self.darkgrey_indicator = load_icon("disabled_label.svg")
-            self.red_indicator = load_icon("offline_label.svg")
-            self.blue_indicator = load_icon("enabled_label.svg")
+            self.green_indicator = load_pixmap("online_label.svg")
+            self.grey_indicator = load_pixmap("na_label.svg")
+            self.red_indicator = load_pixmap("offline_label.svg")
 
         self.instruments_label = QLabel()
-        self.instruments_label.setPixmap(load_icon("status_label.png"))
+        self.instruments_label.setPixmap(load_pixmap("status_label.png"))
         self.instruments_label.setAlignment(
             QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
         )
