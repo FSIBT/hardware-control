@@ -39,6 +39,8 @@ class Oscilloscope(QGroupBox):
        Name used in QGroupBox, defaults to Oscilloscope
     channels
        A list of channel number
+    instrument_type
+       Either "keysight", "rigol", or "picoscope". Default is "keysight".
     """
 
     def __init__(
@@ -47,12 +49,14 @@ class Oscilloscope(QGroupBox):
         instrument_name: str,
         widget_name: str = "Oscilloscope",
         channels: Optional[List] = None,
+        instrument_type: str = "keysight",
     ):
 
         super().__init__(widget_name)
 
         self.app = app
         self.instrument = instrument_name
+        self.instrument_type = instrument_type
 
         if channels is not None:
             self.channels = channels
@@ -63,7 +67,9 @@ class Oscilloscope(QGroupBox):
             self.app, self.instrument, channels=self.channels
         )
         self.horiz = OscilloscopeHorizontalWidget(self.app, self.instrument)
-        self.trig = OscilloscopeTriggerWidget(self.app, self.instrument)
+        self.trig = OscilloscopeTriggerWidget(
+            self.app, self.instrument, self.instrument_type
+        )
 
         widget_col = 0
         self.channel_widgets = []
@@ -92,25 +98,29 @@ class Oscilloscope(QGroupBox):
         update = [
             "TIMEBASE",
             "TIME_OFFSET",
-            "NUM_POINTS",
-            "LABELS_ENABLED",
-            "TRIGGER_LEVEL",
-            "TRIGGER_COUPLING",
             "TRIGGER_EDGE",
+            "TRIGGER_LEVEL",
             "TRIGGER_CHANNEL",
         ]
+        if self.instrument_type == "keysight" or self.instrument_type == "rigol":
+            update.append("LABELS_ENABLED")
+            update.append("TRIGGER_COUPLING")
+            if self.instrument_type == "keysight":
+                update.append("NUM_POINTS")
 
         for ch in self.channel_widgets:
             update.append(f"CH{ch.channel}_VOLTS_DIV")
             update.append(f"CH{ch.channel}_OFFSET")
-            update.append(f"CH{ch.channel}_LABEL")
             update.append(f"CH{ch.channel}_COUPLING")
-            update.append(f"CH{ch.channel}_IMPEDANCE")
             update.append(f"CH{ch.channel}_PROBE_ATTEN")
             update.append(f"CH{ch.channel}_WAVEFORM")
-            update.append(f"CH{ch.channel}_ON-OFF")
             update.append(f"CH{ch.channel}_BW_LIM")
-            update.append(f"CH{ch.channel}_INVERT")
+            if self.instrument_type == "keysight" or self.instrument_type == "rigol":
+                update.append(f"CH{ch.channel}_LABEL")
+                update.append(f"CH{ch.channel}_ON-OFF")
+                update.append(f"CH{ch.channel}_INVERT")
+                if self.instrument_type == "keysight":
+                    update.append(f"CH{ch.channel}_IMPEDANCE")
 
         for parameter in update:
             self.app.add_auto_update_instrument_parameter(self.instrument, parameter)
@@ -134,7 +144,7 @@ class OscilloscopeChannelWidget(QWidget):
         self.channel_label = HCHeader(
             f"channel{self.channel}_{self.colors[self.channel-1]}.png"
         )
-        self.channel_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        self.channel_label.setAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
 
         self.volts_div = HCDoubleSpinBox(
             self.app,
@@ -166,8 +176,8 @@ class OscilloscopeChannelWidget(QWidget):
             f"CH{self.channel}_ON-OFF",
             label="On/Off",
             label_align="right",
-            text_checked=" On",
-            text_unchecked="Off",
+            text_checked="Turn Off",
+            text_unchecked=" Turn On",
         )
 
         self.BW_but = HCOnOffButton(
@@ -176,8 +186,8 @@ class OscilloscopeChannelWidget(QWidget):
             f"CH{self.channel}_BW_LIM",
             label="BW Limit",
             label_align="right",
-            text_checked="BW_limit  on",
-            text_unchecked="BW_limit off",
+            text_checked="Turn Off",
+            text_unchecked=" Turn On",
         )
 
         self.Inv_but = HCOnOffButton(
@@ -186,8 +196,8 @@ class OscilloscopeChannelWidget(QWidget):
             f"CH{self.channel}_INVERT",
             label="Invert",
             label_align="right",
-            text_checked="  Inverted  ",
-            text_unchecked="Not Inverted",
+            text_checked="Un-Invert",
+            text_unchecked="  Invert  ",
         )
 
         self.coupling = HCComboBox(
@@ -236,11 +246,12 @@ class OscilloscopeChannelWidget(QWidget):
 
 
 class OscilloscopeTriggerWidget(QGroupBox):
-    def __init__(self, app, instrument_name):
+    def __init__(self, app, instrument_name, instrument_type):
         super().__init__()
 
         self.app = app
         self.instrument = instrument_name
+        self.instrument_type = instrument_type
 
         self.trig_header = HCHeader("trigger_label.png")
 
@@ -264,22 +275,29 @@ class OscilloscopeTriggerWidget(QGroupBox):
             items=["1", "2", "3", "4"],
         )
 
+        coupling_items = ["AC", "DC"]
+        if self.instrument_type == "rigol":
+            coupling_items.extend(["LFReject", "HFReject"])
         self.trig_coupling = HCComboBox(
             self.app,
             self.instrument,
             parameter="TRIGGER_COUPLING",
             label="Coupling",
             label_align="right",
-            items=["AC", "DC"],
+            items=coupling_items,
         )
 
+        if self.instrument_type == "rigol":
+            edge_items = ["NEG", "POS", "RFALI"]
+        else:
+            edge_items = ["BOTH", "NEG", "POS", "ALT"]
         self.trig_edge = HCComboBox(
             self.app,
             self.instrument,
             parameter="TRIGGER_EDGE",
             label="Edge",
             label_align="right",
-            items=["BOTH", "NEG", "POS", "ALT"],
+            items=edge_items,
         )
 
         self.trig_single = HCPushButton(

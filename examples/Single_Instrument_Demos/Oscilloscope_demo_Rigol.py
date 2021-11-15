@@ -41,10 +41,11 @@ class Demo(hc.HCMainWindow):
             hc_inst.Rigol_DS1000Z("Rigol-1000", "TCPIP0::192.168.2.11::INSTR")
         )
 
-        print(self.app._data)
-
         self.scope_ctrl = hc.gui.Oscilloscope(
-            self.app, "Rigol-1000", "Rigol Oscilloscope"
+            self.app,
+            "Rigol-1000",
+            "Rigol Oscilloscope",
+            instrument_type="rigol",
         )
 
         # Add control to the main Widget

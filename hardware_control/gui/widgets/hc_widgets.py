@@ -410,7 +410,7 @@ class HCOnOffButton(HCMixin, QPushButton):
             self.text_unchecked = text_unchecked
 
         self.clicked.connect(self.value_change)
-        self.setCheckable(True)
+        self.setCheckable(False)
 
         # set default to unkown state
         if show_icon:

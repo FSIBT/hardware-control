@@ -223,6 +223,7 @@ class Keysight_4000X(Instrument):
                 f"CH{channel}_BW_LIM",
                 read_command=f"CHAN{channel}:BWL?",
                 set_command=f"CHAN{channel}:BWL {{}}",
+                dummy_return="True",
             )
             self.add_lookup(f"CH{channel}_BW_LIM", {"True": "1", "False": "0"})
 
@@ -230,6 +231,7 @@ class Keysight_4000X(Instrument):
                 f"CH{channel}_INVERT",
                 read_command=f"CHAN{channel}:INV?",
                 set_command=f"CHAN{channel}:INV {{}}",
+                dummy_return="True",
             )
             self.add_lookup(f"CH{channel}_INVERT", {"True": "1", "False": "0"})
 

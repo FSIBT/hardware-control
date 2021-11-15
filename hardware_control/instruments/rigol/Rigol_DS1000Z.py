@@ -30,9 +30,9 @@ class Rigol_DS1000Z(Instrument):
             * On/Off status of channel labels on the instrument.
         * TRIGGER_LEVEL (*float*)
             * Trigger level.
-        * TRIGGER_COUPLING (*AC*, *DC*, *LFReject*)
+        * TRIGGER_COUPLING (*AC*, *DC*, *LFReject*, *HFReject*)
             * Trigger coupling type.
-        * TRIGGER_EDGE (*BOTH*, *NEG*, *POS*, *ALT*)
+        * TRIGGER_EDGE (*NEG*, *POS*, *RFALI*)
             * Edge of waveform that the oscilloscope triggers on.
         * TRIGGER_CHANNEL (*int*)
             * The channel (1,2,3, or 4) to trigger on.
@@ -89,13 +89,6 @@ class Rigol_DS1000Z(Instrument):
             pre_hooks=[format_float(".6E")],
         )
         self.add_parameter(
-            "TIME_OFFSET",
-            read_command=":TIM:MAIN:OFFS?",
-            set_command=":TIM:MAIN:OFFS {}",
-            dummy_return="2e-6",
-            pre_hooks=[format_float(".6E")],
-        )
-        self.add_parameter(
             "LABELS_ENABLED",
             read_command="DISP:LAB?",
             set_command="DISP:LAB {}",
@@ -110,7 +103,6 @@ class Rigol_DS1000Z(Instrument):
             pre_hooks=[format_float(".6E")],
         )
 
-        # possible values: "AC", "DC", "LFReject", "HFReject"
         self.add_parameter(
             "TRIGGER_COUPLING",
             read_command="TRIG:COUP?",
@@ -118,7 +110,6 @@ class Rigol_DS1000Z(Instrument):
             dummy_return="DC",
         )
 
-        # possible values: "NEG", "POS", "RFALI"
         self.add_parameter(
             "TRIGGER_EDGE",
             read_command="TRIG:EDGE:SLOP?",
@@ -184,7 +175,7 @@ class Rigol_DS1000Z(Instrument):
                 f"CH{ch}_LABEL",
                 read_command=f"CHAN{ch}:LAB?",
                 set_command=f"CHAN{ch}:LAB {{}}",
-                dummy_return="label_unkown",
+                dummy_return=f"Channel_{ch}",
                 pre_hooks=[max_len_converter(32)],
             )
 
@@ -192,7 +183,7 @@ class Rigol_DS1000Z(Instrument):
                 f"CH{ch}_INVERT",
                 read_command=f"CHAN{ch}:INV?",
                 set_command=f"CHAN{ch}:INV {{}}",
-                dummy_return="1",
+                dummy_return="True",
                 pre_hooks=[format_bool],
             )
 
@@ -204,7 +195,6 @@ class Rigol_DS1000Z(Instrument):
                 pre_hooks=[format_float(".6E")],
             )
 
-            # possible values: "AC, "DC"
             self.add_parameter(
                 f"CH{ch}_COUPLING",
                 read_command=f"CHAN{ch}:COUP?",
