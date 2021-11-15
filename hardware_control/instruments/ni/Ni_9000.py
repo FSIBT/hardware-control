@@ -125,6 +125,8 @@ class Ni_9000(Instrument):
             dummy_return="DIFF",
         )
 
+        self.channel_term_configs[channel_string] = "DIFF"
+
         if signal_type == "a":
             if channel[0] == "i":
                 read_command = lambda: self._analog_read(channel_string)
@@ -132,6 +134,12 @@ class Ni_9000(Instrument):
             elif channel[0] == "o":
                 read_command = None
                 set_command = lambda value: self._analog_write(channel_string, value)
+            else:
+                logger.error(
+                    f"The channel '{channel}' of port '{channel_string}' must start with either an 'i' (input) or 'o' (output)."
+                )
+                return
+
             self.add_parameter(
                 f"CH{channel_string}_ANALOG",
                 read_command=read_command,
@@ -140,12 +148,21 @@ class Ni_9000(Instrument):
             )
 
         elif signal_type == "d":
+            logger.warning(
+                "The NI_9000 driver's digital functionality remains untested. Proceed with caution."
+            )
             if channel[0] == "i":
                 read_command = lambda: self._digital_read(channel_string)
                 set_command = None
             elif channel[0] == "o":
                 read_command = None
                 set_command = lambda value: self._digital_write(channel_string, value)
+            else:
+                logger.error(
+                    f"The channel '{channel}' of port '{channel_string}' must start with either an 'i' (input) or 'o' (output)."
+                )
+                return
+
             self.add_parameter(
                 f"CH{channel_string}_DIGITAL",
                 read_command=read_command,
@@ -153,7 +170,10 @@ class Ni_9000(Instrument):
                 dummy_return="True",
             )
 
-        self.channel_term_configs[channel_string] = "DIFF"
+        else:
+            logger.error(
+                f"The signal type '{signal_type}' of port '{channel_string}' must be either 'a' (analog) or 'd' (digital)."
+            )
 
     def _set_V_max(self, channel_string, value):
         self.V_maxs[channel_string] = float(value)

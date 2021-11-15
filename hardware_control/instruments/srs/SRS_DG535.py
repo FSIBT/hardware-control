@@ -40,9 +40,9 @@ class SRS_DG535(Instrument):
             * Voltage output offset of channel 'X'. Only available in variable output mode.
         * CH<X>_OUTPUT_AMPLITUDE (*float*)
             * Voltage output amplitude of channel 'X'. Only available in variable output mode.
-        * CH<X>_DELAY
+        * CH<X>_DELAY (*float*)
             * Delay time (in seconds) of channel 'X' with respect to another channel (see 'CH<X>_RELATIVE_TO').
-        * CH<X>_RELATIVE_TO
+        * CH<X>_RELATIVE_TO (*'T0'*, *'A'*, *'B'*, *'C'*, *'D'*)
             * Channel with respect to which the delay on channel 'X' is applied (see 'CH<X>_DELAY').
         * CH<X>_TRIGGER_IMPEDANCE (*50-OHMS*, *HI-Z*)
             * Trigger input impedance of channel 'X'.

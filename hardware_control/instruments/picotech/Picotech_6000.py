@@ -215,7 +215,7 @@ class Picotech_6000(Instrument):
                 return True
 
             logger.debug(
-                f"{self.ID}: creating dummy connection to {self.connection_addr}"
+                f"{self.name}: creating dummy connection to {self.connection_addr}"
             )
             self._online = True
             return True
@@ -223,7 +223,7 @@ class Picotech_6000(Instrument):
         if self._online:
             return True
 
-        logger.debug(f"{self.ID}: trying to connect")
+        logger.debug(f"{self.name}: trying to connect")
 
         try:
             self.ps = PS6000()
@@ -231,9 +231,10 @@ class Picotech_6000(Instrument):
         except Exception:
             self._online = False
             logger.debug(
-                f"\t({self.ID}) ERROR connecting with picoscope.", exc_info=True
+                f"\t({self.name}) ERROR connecting with picoscope.",
+                exc_info=True,
             )
-            logger.debug(f"{self.ID} is offline")
+            logger.debug(f"{self.name} is offline")
         else:
             self._online = True
 
