@@ -671,7 +671,7 @@ class HCSpinBox(HCMixin, QSpinBox):
         self.valueChanged.connect(self.value_change)
 
     def value_change(self) -> None:
-        self.value = self.get_current_value()
+        value = self.value()
         self.app.set_instrument_parameter(self.instrument, self.parameter, value)
 
     def widget_update(self, value) -> None:

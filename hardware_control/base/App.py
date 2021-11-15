@@ -388,6 +388,11 @@ class App(QApplication):
         """
 
         logger.debug(f"app: updating value '{value}' for '{instrument}-{parameter}'")
+
+        # Don't try to set parameters in dummy mode
+        if self.dummy:
+            return
+
         if not skip_hooks:
             if "pre_set_hooks" not in self._data[instrument][parameter]:
                 logger.error(
@@ -522,7 +527,7 @@ class App(QApplication):
 
         if when not in ["post_read_hooks", "pre_set_hooks", "pre_call_hooks"]:
             logger.error(
-                f"'{instrument}': '{parameter}' has wrong hook type: '{when}'. Needs to be one of 'post_read_hook', 'pre_set_hooks', 'pre_call_hooks'"
+                f"'{instrument}': '{parameter}' has wrong hook type: '{when}'. Needs to be one of 'post_read_hooks', 'pre_set_hooks', 'pre_call_hooks'"
             )
             return
 
@@ -645,7 +650,6 @@ class App(QApplication):
             Name of JSON file to read settings from.
 
         """
-
         # Read file
         try:
             with open(filename) as file:
@@ -681,6 +685,6 @@ class App(QApplication):
         self.add_hook(
             instrument,
             "ONLINE",
-            "post_read_hook",
+            "post_read_hooks",
             lambda x: self.load_settings(instrument, filename),
         )

@@ -116,8 +116,6 @@ class HCMainWindow(QMainWindow):
         if not filename:  # If cancel bttonw as hit, name will be null
             return
 
-        # print(filename)
-
         all_data = {}
 
         # Collect all datasets data in one dictionary
