@@ -42,7 +42,7 @@ class Picotech_6000(Instrument):
             * Probe attenuation for channel 'X'. For example, providing the value '10' would indicate a 10x or 10:1 probe.
         * CH<X>_COUPLING (*AC*, *DC*)
             * Coupling mode for channel 'X'.
-        * CH<X>_WVFM
+        * CH<X>_WAVEFORM
             * Most recent waveform measurement from channel 'X'.
 
     COMMANDS
@@ -102,50 +102,49 @@ class Picotech_6000(Instrument):
             "TRIGGER_CHANNEL", read_command=None, set_command=self._set_triggerchannel
         )
 
-        channels = {0: "A", 1: "B", 2: "C", 3: "D"}
-        for i in range(self.number_of_channels):
-            ch = channels[i]
-
+        for channel in range(1, self.number_of_channels + 1):
             self.add_parameter(
-                f"CH{ch}_VOLTS_DIV",
+                f"CH{channel}_VOLTS_DIV",
                 read_command=None,
-                set_command=self.create_set_channel_func(ch, "VRange"),
+                set_command=self.create_set_channel_func(channel, "VRange"),
             )
             self.add_parameter(
-                f"CH{ch}_OFFSET",
+                f"CH{channel}_OFFSET",
                 read_command=None,
-                set_command=self.create_set_channel_func(ch, "VOffset"),
+                set_command=self.create_set_channel_func(channel, "VOffset"),
             )
             self.add_parameter(
-                f"CH{ch}_BW_LIM",
+                f"CH{channel}_BW_LIM",
                 read_command=None,
-                set_command=self.create_set_channel_func(ch, "BWLimited"),
+                set_command=self.create_set_channel_func(channel, "BWLimited"),
             )
             self.add_parameter(
-                f"CH{ch}_ACTIVE",
+                f"CH{channel}_ACTIVE",
                 read_command=None,
-                set_command=self.create_set_channel_func(ch, "enabled"),
+                set_command=self.create_set_channel_func(channel, "enabled"),
             )
             self.add_parameter(
-                f"CH{ch}_PROBE_ATTEN",
+                f"CH{channel}_PROBE_ATTEN",
                 read_command=None,
-                set_command=self.create_set_channel_func(ch, "probeAttenuation"),
+                set_command=self.create_set_channel_func(channel, "probeAttenuation"),
             )
             self.add_parameter(
-                f"CH{ch}_COUPLING",
+                f"CH{channel}_COUPLING",
                 read_command=None,
-                set_command=self.create_set_channel_func(ch, "coupling"),
+                set_command=self.create_set_channel_func(channel, "coupling"),
             )
 
             self.add_parameter(
-                f"CH{ch}_WVFM",
-                read_command=partial(self._read_waveform, i),
+                f"CH{channel}_WAVEFORM",
+                read_command=partial(self._read_waveform, channel),
                 set_command=None,
             )
 
         self.add_command("SINGLE_TRIGGER", self._trigger)
         self.add_command("RUN", self._run)
-        self.add_command("STOP", self.ps.stop)
+        self.add_command("STOP", self._stop)
+
+        logger.warning("The Picoscope driver class is still under development.")
 
     def create_set_channel_func(self, channel, parameter):
         """Create a channel specific function to set a parameter."""
@@ -160,7 +159,7 @@ class Picotech_6000(Instrument):
         return str(self.timebase)
 
     def _set_timebase(self, value):
-        self.timebase = value * 10
+        self.timebase = float(value) * 10
         obs_duration = self.timebase
         sampling_interval = obs_duration / self.record_length
 
@@ -204,6 +203,9 @@ class Picotech_6000(Instrument):
     def _run(self):
         self.ps.runBlock(pretrig=self.offset_position / self.timebase)
         self.ps.waitReady()
+
+    def _stop(self):
+        self.ps.stop()
 
     def try_connect(self):
         """Unique picoscope ‘try_connect’ function."""
@@ -254,7 +256,7 @@ class Picotech_6000(Instrument):
 
         Returns
         -------
-        CHX_WVFM : str
+        CHX_WAVEFORM : str
             Information about the channel number
         t : list
             List of the time stamps
