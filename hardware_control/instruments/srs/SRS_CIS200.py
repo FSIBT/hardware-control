@@ -1,6 +1,6 @@
 """Stanford Research Systems CIS200.
 
-.. image:: /images/DG535.jpg
+.. image:: /images/SRS_CIS.jpg
   :height: 200
 
 See class definition for details.

@@ -5,7 +5,7 @@ Note: Not all functions for all instruments are supported. If you need a current
 
 - Delay Generator:
 
-  The delay generator widget provides a UI for delay generator/trigger instruments.
+  The DelayGenerator control widget provides a UI for delay generator/trigger instruments.
 
   .. list-table::
      :widths: 50 50
@@ -18,9 +18,10 @@ Note: Not all functions for all instruments are supported. If you need a current
        - .. image:: /images/DG535.jpg
            :height: 100
 
+
 - Flow Controller:
 
-  The flow controller widget provides a UI for gas flow controllers.
+  The FlowController control widget provides a UI for gas flow controllers.
 
   .. list-table::
      :widths: 50 50
@@ -34,9 +35,60 @@ Note: Not all functions for all instruments are supported. If you need a current
            :height: 100
 
 
+- Gas Analyzer:
+
+  The RGA control widget provides a UI for gas analyzers.
+
+  .. list-table::
+     :widths: 50 50
+     :header-rows: 0
+     :align: left
+
+     * - Included instruments:
+       -
+     * - `Stanford Research Systems CIS Series <https://www.thinksrs.com/products/cis.html>`_
+       - .. image:: /images/SRS_CIS.jpg
+           :height: 100
+
+
+- Temperature Monitor:
+
+  The TempMonitor control widget provides a UI for temperature monitors.
+
+  .. list-table::
+     :widths: 50 50
+     :header-rows: 0
+     :align: left
+
+     * - Included instruments:
+       -
+     * - `Lake Shore Model 224 <https://www.lakeshore.com/products/categories/overview/temperature-products/cryogenic-temperature-monitors/model-224-temperature-monitor>`_
+       - .. image:: /images/Lake_Shore_224.png
+           :height: 100
+
+
+- Ion Gauge:
+
+  There is currently no control widget for these instruments.
+
+  .. list-table::
+     :widths: 50 50
+     :header-rows: 0
+     :align: left
+
+     * - Included instruments:
+       -
+     * - `Granville Phillips 356 <https://www.mksinst.com/f/356-micro-ion-plus-modules>`_
+       - .. image:: /images/GP356.jpg
+           :height: 100
+     * - `Granville Phillips 835 <https://www.mksinst.com/f/835-vacuum-quality-monitor>`_
+       - .. image:: /images/GP_VQM835.jpg
+           :height: 100
+
+
 - Function Generator:
 
-  The function generator widget provides a UI for arbitrary waveform
+  The FunctionGenerator control widget provides a UI for arbitrary waveform
   generator or function generator instruments. The widget can be
   created with either one or two channels to fit various instrument
   models.
@@ -58,7 +110,7 @@ Note: Not all functions for all instruments are supported. If you need a current
 
 - IOModule:
 
-  The IO Module provides a way to communicate with data acquisition
+  The IO Module control widget provides a UI for data acquisition
   instruments and digital to analog converters.
 
   .. list-table::
@@ -78,9 +130,10 @@ Note: Not all functions for all instruments are supported. If you need a current
        - .. image:: /images/ADAM-6024.jpg
            :height: 100
 
+
 - Oscilloscope:
 
-  The oscilloscope widget provides a UI for oscilloscopes. The current
+  The Oscilloscope control widget provides a UI for oscilloscopes. The current
   implementation always displays four channels, although it can work
   with two channel oscilloscopes while ignoring the two additional
   channels.
@@ -104,6 +157,10 @@ Note: Not all functions for all instruments are supported. If you need a current
 
 
 - Power Supplies:
+
+  The MultiPowerSupply control widget provides a UI for single- and multi-channel
+  power supplies. The current implementation allows the user to select the
+  number of channels utilized on each instrument.
 
   .. list-table::
      :widths: 50 50

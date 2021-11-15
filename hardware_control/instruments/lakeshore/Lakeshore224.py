@@ -1,7 +1,7 @@
 """
 Control class to handle Lake shore 224 Temperature Monitor for Temp readouts.
 
-.. image:: /images/NI9000.jpeg
+.. image:: /images/Lake_Shore_224.png
   :height: 200
 
 Has been tested with Lakeshore models 224

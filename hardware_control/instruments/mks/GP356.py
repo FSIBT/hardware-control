@@ -1,5 +1,5 @@
 """
-Control class to handle Granville Phillips 356 Series Ion gauge for preesure readout.
+Instrument driver class to handle Granville Phillips 356 Series Ion gauge for pressure readout.
 
 .. image:: /images/NI9000.jpeg
   :height: 200
@@ -70,3 +70,5 @@ class GP_356(Instrument):
             set_command="",
             dummy_return="",
         )
+
+        logger.warning("The GP_356 driver class is still under development.")

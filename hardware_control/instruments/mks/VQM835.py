@@ -1,5 +1,5 @@
 """
-Control class to handle Granville Phillips 356 Series Ion gauge for preesure readout.
+Instrument driver class to handle Granville Phillips 356 Series Ion gauge for pressure readout.
 
 .. image:: /images/NI9000.jpeg
   :height: 200
@@ -109,3 +109,5 @@ class VQM835(Instrument):
         ## Turn On/Off the MSP
         self.add_command("ON", "INST MSP\rOUTP ON\rSYST:ERR:ALL?")
         self.add_command("CLEAR_OFF", "INST MSP\rOUTP OFF\rSYST:ERR:ALL?")
+
+        logger.warning("The VQM835 driver class is still under development.")
