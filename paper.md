@@ -53,7 +53,7 @@ interfaces compatible with most major operating
 systems. `Hardware-Control` is also designed so that new drivers can
 be easily added for new hardware and used with existing user
 interfaces. The package also provides means for simplifying data
-collection with automatic data logging, plotting, and many export
+collection with automatic data logging, plotting, and several export
 formats. `Hardware-Control` was designed with the use case of
 experiments in our laboratory in mind. Normally, this involves reading
 and setting voltages, controlling power supplies and oscilloscopes,
@@ -71,7 +71,7 @@ library, but drivers can also utilize pymodbus [@pymodbus], or the built-in
 socket library.
 
 For handling the data, we rely on numpy [@numpy], pandas [@pandas],
-and many other libraries that are available on pypi to do data analysis.
+and many other common libraries that are available on pypi to do data analysis.
 
 For communications within the library we rely on ZMQ [@ZMQ].
 
@@ -79,22 +79,21 @@ For communications within the library we rely on ZMQ [@ZMQ].
 
 Commercial systems, such as LabVIEW, already exist, and they often do
 provide a wide range of instrument drivers (either directly or from
-the manufacturer of the devices). However, we have found that the resulting
-code is often hard to version control (LabVIEW files are binary, so
-code reviews and pull requests on services such as bitbucket and
-github are therefore difficult). Furthermore, although backend code
-can be shared between projects, complex user interfaces cannot
-easily be reused. The software package presented here tries to address
-these issues. Specifically, it makes reusing frontend code easier,
-integrates well with git, and provides an easy built-in scripting solution
-(via an optional python REPL that has full
-access to the GUI and all backends). The control through
-python during execution makes one-off complex parameter scans easy to
-implement. The software also makes it easy to develop and test the
-code without any hardware connected to the system by running a program in
-'dummy mode' in which the hardware does not need to be present. When in
-dummy mode, the
-user can specify return values for certain opperations in order to
+the manufacturer of the devices). However, we have found that the
+resulting code is often hard to version control (LabVIEW files are
+binary, so code reviews and pull requests on services such as
+bitbucket and github are therefore difficult). Furthermore, although
+backend code can be shared between projects, complex user interfaces
+cannot easily be reused. The software package presented here tries to
+address these issues. Specifically, it makes reusing frontend code
+easier, integrates well with git, and provides an easy built-in
+scripting solution (via an optional python REPL that has full access
+to the GUI and all backends). The control through python during
+execution makes one-off complex parameter scans easy to implement. The
+software also makes it easy to develop and test the code without any
+hardware connected to the system by running a program in 'dummy mode'
+in which the hardware does not need to be present. When in dummy mode,
+the user can specify return values for certain opperations in order to
 test the program.
 
 Similar packages already exist (see Scopefoundry.org
@@ -109,10 +108,12 @@ can be useful for other experiments too.
 
 In principle, we plan to continue to develop the code in the future by
 adding more instrument drivers and custom widgets since we believe
-that the current solution also provides us several benefits compared
-to prior solutions. Therefore, we are also open to community
+that the current solution provides us several benefits compared to
+prior solutions and we have working setups at our test
+stands. Therefore, we are also open to community
 contributions. However, we are also open to merge our code into one of
-the pre-existing code bases and plan to explore these options going forward.
+the pre-existing code bases and plan to explore these options going
+forward.
 
 # Acknowledgements
 

@@ -28,6 +28,7 @@ without the use of Qt.
    howtos
    hardware_control
    how_to_contribute
+   outlook.md
    CHANGELOG.md
 
 Indices and tables
