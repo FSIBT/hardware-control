@@ -10,12 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Complete rewrite on how the instruments threads communicate with the main app. This used to rely on internal Qt slots and signals and is now being replaced by ZMQ-based communication.
 - Complete rewrite on where and how instrument data is stored. Instead of storing it at the instrument level, we now store it in app._data. This enables us to completely separate the UI from the instruments.
-- Complete rewrite on how instrument parameters hare handled. Instead of a large if statement where different parameters/commands are checked for, we now use a add_coomand/add_parameter function that defines either a python function to be called or directly ascii strings that are then send to the instrument.
+- Complete rewrite on how instrument parameters are handled. Instead of a large if statement where different parameters/commands are checked for, we now use an add_command/add_parameter function that defines either a python function to be called or ascii strings that are sent to the instrument.
 - scan widget: use python function directly instead of macros
 - MacroRunnerTool now uses python function directly, renamed to FunctionRunnerTool
 
 ### Added
-- Posibilty to use Gaussian Process during scanning to figure out where to scan next (instead of a linear scan)
+- Added Gaussian Process functionality during scanning to figure out where to scan next (instead of
+using linear scans)
 
 ### Removed
 - Removed old functionality that is not used anymore, e.g., MeasurementDirector, MeasurementRequests, macros
