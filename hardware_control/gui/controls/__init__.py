@@ -6,6 +6,5 @@ from .IOModule import IOModule
 from .KeysightPowerSupply import KeysightPowerSupply
 from .MultiPowerSupply import MultiPowerSupply
 from .Oscilloscope import Oscilloscope
-from .ReadModule import Read
 from .RGA import RGA
 from .TempMonitor import TempMonitor

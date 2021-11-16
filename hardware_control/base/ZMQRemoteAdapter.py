@@ -156,7 +156,7 @@ class ZMQRemoteAdapter:
 
     To be able to connect to an instrument on a remote computer. The
     program on that computer needs to wrap the instrument driver in
-    the `ZMQSingleInstrument` from above.
+    the :class:`ZMQSingleInstrument`.
 
     This class then sets up the required communication by using a separate ZMQ REQ/REP channel.
 
@@ -194,7 +194,12 @@ class ZMQRemoteAdapter:
             )
 
     def list_parameters(self):
-        """Get a list of all available parameters from the remote instrument."""
+        """Get a list of all available parameters from the remote instrument.
+
+        Needed so that the instrument can be registered with the `app`
+        and the necessary `app._data` entries can be created.
+
+        """
         logger.info(f"{self.name} requesting parameter list")
         self.req_rep_socket.send_string("LIST_PARAMETERS")
         message = self.req_rep_socket.recv_string()
@@ -202,7 +207,14 @@ class ZMQRemoteAdapter:
         return read_set_commands
 
     def join(self):
-        """Have the remote instrument disconnect from the App."""
+        """Duck type to make this class behave similar to a Thread.
+
+        At the end of the app, all instruments running in separate
+        threads are ended and those threads are then joined back into
+        the main app. This method provides the same interface and will
+        disconnect the remote instrument from the app.
+
+        """
         logger.info(f"{self.name} stopping remote")
         self.req_rep_socket.send_string("STOP")
         self.req_rep_socket.recv_string()

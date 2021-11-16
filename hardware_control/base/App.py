@@ -236,10 +236,12 @@ class App(QApplication):
     def add_remote_instrument(self, name: str, address: str) -> None:
         """Connect to a instrument driver on, for example, a different computer.
 
-        This is relatively straightforward since the ZMQ publishers that update
-        the data model do not care about which computer they are running. The main
-        task is to create subscribers to the already existing publishers (from the
-        app and on the remote side). This task is mostly handled by ZMQRemoteAdapter.
+        This is relatively straightforward since the ZMQ publishers
+        that update the data model do not care about which computer
+        they are running on. The main task is to create subscribers to
+        the already existing publishers (from the app and on the
+        remote side). This task is mostly handled by
+        :class:`~.base.ZMQRemoteAdapter.ZMQRemoteAdapter`.
 
         Parameters
         ----------
@@ -338,6 +340,18 @@ class App(QApplication):
     def add_auto_update_instrument_parameter(
         self, instrument: str, parameter: str
     ) -> None:
+        """Add an instrument's parameter to a list for automatic updates.
+
+        The app class provides a mechanism to automaticaly update
+        instrument parameters by querying the instrument in a regular
+        interval.
+
+        To limit how much requests and data we exchange with an
+        instrument driver, not all parameters are automatically
+        updated all the time. This function can be used to enable
+        automatic updates.
+
+        """
         if not callable(parameter):
             if parameter not in self._data[instrument]:
                 logger.error(
@@ -351,10 +365,22 @@ class App(QApplication):
     def add_skip_update_instrument_parameter(
         self, instrument: str, parameter: str
     ) -> None:
+        """A method to skip automatic updates for certain parameters.
+
+        This is mostly used for parameters that are defined in a GUI,
+        but not in an instrument driver. For example, some scopes only
+        have highZ inputs and no option to change the input impedance.
+        The GUI might define this parameter to be automatically
+        updated though which would leave to logging
+        errors/warnings. By putting it on the skip list, the automated
+        update will just not request an update.
+
+        """
         self.skip_request_updates.add((instrument, parameter))
 
     @ensure_instrument_exists
     def is_parameter(self, instrument: str, parameter: str) -> bool:
+        """Check if the app knows about this instrument parameter."""
         return parameter in self._data[instrument]
 
     @ensure_parameter_and_instrument_exists

@@ -1,7 +1,9 @@
 List of supported instruments
 =============================
 
-Note: Not all functions for all instruments are supported. If you need a currently unsuported functionality, feel free to contact us or provide a pull request.
+Note: Not all functions for all instruments are supported. If you need
+a currently unsuported functionality, feel free to contact us or
+provide a pull request.
 
 - Delay Generator:
 
@@ -37,7 +39,7 @@ Note: Not all functions for all instruments are supported. If you need a current
 
 - Gas Analyzer:
 
-  The RGA control widget provides a UI for gas analyzers.
+  The RGA control widget provides a UI for gas analyzers (under development).
 
   .. list-table::
      :widths: 50 50
@@ -48,6 +50,9 @@ Note: Not all functions for all instruments are supported. If you need a current
        -
      * - `Stanford Research Systems CIS Series <https://www.thinksrs.com/products/cis.html>`_
        - .. image:: /images/SRS_CIS.jpg
+           :height: 100
+     * - `Granville Phillips 835 <https://www.mksinst.com/f/835-vacuum-quality-monitor>`_
+       - .. image:: /images/GP_VQM835.jpg
            :height: 100
 
 
@@ -81,9 +86,6 @@ Note: Not all functions for all instruments are supported. If you need a current
      * - `Granville Phillips 356 <https://www.mksinst.com/f/356-micro-ion-plus-modules>`_
        - .. image:: /images/GP356.jpg
            :height: 100
-     * - `Granville Phillips 835 <https://www.mksinst.com/f/835-vacuum-quality-monitor>`_
-       - .. image:: /images/GP_VQM835.jpg
-           :height: 100
 
 
 - Function Generator:
@@ -111,7 +113,8 @@ Note: Not all functions for all instruments are supported. If you need a current
 - IOModule:
 
   The IO Module control widget provides a UI for data acquisition
-  instruments and digital to analog converters.
+  instruments and digital to analog converters. We use these often to
+  control, for example, power supplies via a analog inputs/outputs.
 
   .. list-table::
      :widths: 50 50

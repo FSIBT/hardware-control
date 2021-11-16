@@ -54,7 +54,8 @@ class ZMQAdapter(threading.Thread):
             f"listen to: {publisher} publishing at: {self.zmq_publisher_address}:{self.zmq_publisher_port}"
         )
 
-    def get_address(self, ip_and_port):
+    def get_address(self, ip_and_port: str) -> str:
+        """Parses the ip address from the zmq connection string."""
         # strip 'tcp://'
         ip_and_port = ip_and_port[6:]
         ip, _ = ip_and_port.split(":")

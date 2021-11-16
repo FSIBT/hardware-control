@@ -28,7 +28,7 @@ new hardware.
 We currently do all our work on the `main` branch and therefore pull
 requests should be based off the latest available commit on this branch.
 
-Furthermore, feel free to contact us at apersaud@lbl.gov directly to discuss possible
+Furthermore, feel free to contact Arun at apersaud@lbl.gov directly to discuss possible
 changes or ideas. If you plan to make a large contribution, we would especially like
 to coordinate with you beforehand.
 

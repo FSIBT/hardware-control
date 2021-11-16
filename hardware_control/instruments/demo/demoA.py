@@ -1,4 +1,4 @@
-"""A backend for a dummy instrument that can be used for debugging and development.
+"""An instrument driver for a dummy instrument that can be used for debugging and development.
 
 The QT instrument frontend for this virtual instrument can be found in hardware_control/debug/demoA.py
 

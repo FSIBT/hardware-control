@@ -18,7 +18,7 @@ class FlowController(QGroupBox):
 
     See Also
     --------
-    hardware_control.backends.alicat.Alicat_M_Series.Alicat_M_Series
+    hardware_control.instruments.alicat.Alicat_M_Series.Alicat_M_Series
 
     """
 

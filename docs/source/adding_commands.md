@@ -1,19 +1,21 @@
-# Add a New Command to Existing Backend
+# Add a New Command to Existing Backends
 
-Some instruments have commands that are not currently implemented in our instruments
+Almost all instruments have commands that are not currently implemented in our instruments
 drivers. If you want to add a command to an instrument that is not yet implemented,
 this guide will show you how.
 
 ### 1. Identify Instrument Syntax
 
-One can communicate with the instruments via two distinction objects: commands and
-parameters. A command tells the instrument to perform some action but does not produce a
-value to read back. An example of a command would be triggering an oscilloscope.
-A parameter is something that can be read or written, such as
-the output voltage of a power supply. For both sending commands and reading or
-writing parameters, you need to determine the correct syntax for communicating
-with the instrument from the instrument's manual. In most cases, these are just
-ASCII strings, often in the form of SCPI instructions.
+In Hardware Control we distinguid between two different ways of
+communicating with an instrument: _commands_ and _parameters_. A
+_command_ tells the instrument to perform some action but does not
+produce a value to read back. An example of a command would be
+triggering an oscilloscope.  A _parameter_ is something that can be read
+or written to, such as the output voltage of a power supply. For both,
+sending commands and reading or writing parameters, you need to
+determine the correct syntax for communicating with the instrument
+from the instrument's manual. In most cases, these are just ASCII
+strings, often in the form of SCPI instructions.
 
 ### 2. Linking to an Existing GUI Widget
 

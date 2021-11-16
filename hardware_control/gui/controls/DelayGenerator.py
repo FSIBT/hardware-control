@@ -34,7 +34,7 @@ class DelayGenerator(QGroupBox):
 
     See Also
     --------
-    hardware_control.backends.srs.SRS_DG535.SRS_DG535
+    hardware_control.instruments.srs.SRS_DG535.SRS_DG535
 
     """
 

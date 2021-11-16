@@ -52,9 +52,11 @@ to the main window.
 
 2. Create a Control Widget
 
-	The control widget or frontend will communicate with instrument. To create the
-	control widget, create an class instance of the control widget class and pass the
-	app and the name of the instrument to it.
+	The control widget or frontend will show the data of the
+	instrument to the user and provide controls to change values
+	in the instrument. To create the control widget, create an
+	class instance of the control widget class and pass the app
+	and the name of the instrument to it.
 
             self.scope_wdgt = hc.gui.Oscilloscope(app, "scope")
 
@@ -93,11 +95,13 @@ window.
 
 ### 5. Create Instance of Your Class and App
 
-The next step is to create an instance of your class. To do this, however, you
-must pass in an App object. Hardware Control provides an App class which
-facilitates communication between instruments, along with a number of other
-features such as centralized data collection and menu bars. Create an instance
-of App and pass it to the class you defined for your program.
+The next step is to create an instance of your class. To do this, you
+can pass in an App object. Hardware Control provides it's own version
+of an App class which facilitates communication between instruments,
+along with a number of other features such as centralized data
+collection and menu bars. Create an instance of App and pass it to the
+class you defined for your program. Alternatively, the app instance
+can also be created automatically if you set `app` to `None`.
 
     app = hc.App()
     demo_prog = DemoProgram(app)
@@ -150,4 +154,9 @@ A complete sample program could look like this:
       # Execute the program
       sys.exit(app.exec_())
 
-You can find more examples on how to use `hardware control` in the example directory.
+Note that we enforce _dummy_ mode in this program, which enables you
+to run and test the program without having the instrument hardware
+actually connected to your computer.
+
+You can find more examples on how to use `hardware control` in the
+example directory.

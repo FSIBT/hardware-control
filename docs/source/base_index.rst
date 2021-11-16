@@ -1,7 +1,8 @@
 Base Classes
 ============
 
-A collection of base classes and helpers used throughout the project.
+A collection of base classes and helpers used throughout the
+project. These classes provide the main features of our framework.
 
 .. toctree::
    :maxdepth: 1

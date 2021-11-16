@@ -5,16 +5,16 @@ Hardware-control is a Python package designed to simplify creating
 instrument control programs (for example for power supplies,
 oscilloscopes, etc.). By using reusable front ends (widgets) and
 instrument drivers hardware-control tries to minimize the
-effort and code required to communicate with lab instruments.
+effort and code required to communicate with instruments in the lab.
 
-Hardware_Control uses a few basic constructs to organize its
+Hardware-control uses a few basic constructs to organize its
 applications:
 
 * Widgets: UI elements that control a specific instrument or function.
 * Instrument drivers: Python objects that facilitate communication
-  between to the physical instrument and the program.
+  between the physical instrument and the program.
 
-Although the package is meant to create Qt based programs, the
+Although the package is meant to create Qt based frontends, the
 instrument drivers are designed so that they can also be used in programs
 without the use of Qt.
 

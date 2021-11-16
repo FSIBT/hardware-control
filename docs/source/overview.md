@@ -1,16 +1,16 @@
 # Overview
 
 Hardware-control is a Python package for controlling laboratory
-equipment that we use in our lab. Specifically, these include
-power supplies, scopes, and many other instruments that work using
-(slow) communication of read and write statements to an instrument.
-Hardware that currently will not work well with this code base are,
-for example, live streaming cameras or any other instrument that
-relies on a fast readout and communication between the program and the
-instrument. Also, since we are developing the package to be used for
-our experiments, we normally only deal with a moderate amount of
-instruments (which can be connected to different computers). If you
-want to scale this to hundreds of instruments your mileage may vary ;)
+equipment. A task we do every day in our lab. Specifically, these
+include power supplies, scopes, and many other instruments that work
+using (slow) communication of read and write statements to an
+instrument.  Hardware that currently will not work well with this code
+base are, for example, live streaming cameras or any other instrument
+that relies on a fast readout and communication between the program
+and the instrument. Also, since our use case are the experiments we
+run, we normally only deal with a moderate amount of instruments
+(which can be connected to different computers). If you want to scale
+this to hundreds of instruments your mileage may vary ;)
 
 The package has been developed to replace LabVIEW for instrument
 control in the [Ion Beam Technology](https://ibt.lbl.gov) group at
@@ -35,8 +35,10 @@ Hardware-control consists of three fundamental parts:
 
    * A way to create a communication channel to the instrument.
    * A list of commands (not all commands the instrument can
-     handle need to be implemented). Here the driver will map possible
-     commands to a custom name that will be used to access this command.
+     handle need to be implemented). We decided to map each command
+     to a custom name, which enables us to write UI controls that
+     only rely on these custom names and therefore can be reused
+     for different instruments.
 
    In the program, the user will create a python instance of
    a driver for each instrument the user wants to control.
@@ -59,10 +61,13 @@ Hardware-control consists of three fundamental parts:
    achieved by naming the instrument commands in the different
    instrument drivers consistently.
 
-3. A set of Qt Widgets that can easily access and display data from
+3. A set of custom Qt Widgets that can easily access and display data from
    the instruments. For example, these can be used to easily plot
    measured values versus time or create logfiles of data that
-   are automatically acquired every second.
+   are automatically acquired every second. These are basically copies
+   of standard Qt Widgets with some extra code that connects, for example,
+   the text of a QtLabel to the read value of a parameter in an instrument
+   and allows automatic updates by the main app.
 
 We try to follow the model-view-controller approach. To achieve this,
 we store all the instrument settings and values the instruments report
@@ -73,4 +78,11 @@ latest data in the model, and therefore never directly talk to instruments.
 This makes the UI responsive since there is no delay from the instrument.
 Instrument data can automatically be updated through a timer to keep the
 model up to date. The downside of this approach is that the data can be
-slightly outdated, which, for our use case, has never been an issue.
+slightly outdated, which, for our use case, is not an issue, but might
+be for your applications.
+
+We found that this approach makes it easy to write new drivers, while
+at the same time keep the flexibility of writing custom Qt application
+with all the features that come with Qt. Providing the same user
+interface for different drivers makes it easy to add new instruments
+and provide a more uniform interface to the user.
