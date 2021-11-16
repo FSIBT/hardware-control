@@ -1,10 +1,10 @@
-"""Base class and helper functions for implementing an instrument backend.
+"""Base class and helper functions for implementing an instrument drivers.
 
-A backend for an instrument should be very basic, so that one can
-use it in a terminal. A backend should not have any GUI elements and
+A driver for an instrument should be very basic, so that one can
+use it in a terminal. A driver should not have any GUI elements and
 therefore no references to Qt.
 
-Hardware control will automatically start each backend in its own
+Hardware control will automatically start each driver in its own
 thread. See the ZMQ adapter class for more details.
 
 Several default connection modes are supported out of the box:
