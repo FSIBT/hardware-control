@@ -20,11 +20,10 @@ logger = logging.getLogger(__name__)
 
 
 def ensure_instrument_exists(f):
-    """Error check to make sure that an instrument is in exists in the app.
+    """Error check to make sure that an instrument exists in the app.
 
     This decorator assumes that the first argument of the decorated function
-    is the app class, and the second argument is the instrument name.
-
+    is the app class and the second argument is the instrument name.
     """
 
     @wraps(f)
@@ -49,7 +48,6 @@ def ensure_parameter_and_instrument_exists(f):
     This decorator assumes that the first argument of the decorated function
     is the app class, the second argument is the instrument name, and the
     third is the parameter name.
-
     """
 
     @wraps(f)
@@ -81,7 +79,6 @@ class App(QApplication):
     This class should be used to create the main Qt app in your
     program. It keeps track of all connected instruments, settings,
     and current data.
-
     """
 
     def __init__(self, ipaddress=None, dummy: bool = False) -> None:
@@ -132,8 +129,7 @@ class App(QApplication):
         self.globalRefreshRate = 1000
 
     def stop(self) -> None:
-        """Stop all threads and wait until they return"""
-
+        """Stop all threads and wait until they return."""
         # first set the event which will trigger the while loop in the
         # thread's run function to stop
         self.stop_threads_event.set()
@@ -145,8 +141,7 @@ class App(QApplication):
     def register_parameters_and_commands(
         self, instrument: str, read_parameters, set_parameters, commands
     ) -> None:
-        """Adds all parameter names to a data dictionary and set defaults values."""
-
+        """Adds all parameter names to a data dictionary and sets default values."""
         for r in read_parameters:
             p = {
                 "read_value": None,
@@ -174,7 +169,6 @@ class App(QApplication):
 
     def add_dataset(self, dataset: Dataset) -> None:
         """Add a dataset object to the app. See the Dataset base class for more details."""
-
         name = dataset.name
         if name in self.data_sets:
             logger.error(f"Dataset {name} already exists... not adding dataset to App.")
@@ -187,7 +181,6 @@ class App(QApplication):
         ignore_flag: Optional[bool] = False,
     ) -> None:
         """Add an instrument object to the app. See the Instrument base class for more details."""
-
         if instrument.name in self._data:
             logger.error(
                 f"Instrument {instrument.name} already exists... instruments names need to be unique"
@@ -205,8 +198,7 @@ class App(QApplication):
 
         # subscribe to the instrument
         # there might be an option to only use one subscriber and
-        # subscribe to multiple publisher for now we create multiple
-        # subscribers
+        # subscribe to multiple publisher for now we create multiple subscribers
         subscriber = self.zmq_context.socket(zmq.SUB)
         subscriber.connect(
             f"tcp://{self.ipaddress}:{zmq_instrument.zmq_publisher_port}"
@@ -249,7 +241,6 @@ class App(QApplication):
            The remote instrument name
         address
            The ipaddress:port combination where the remote instrument is running
-
         """
         if name in self._data:
             logger.error(
@@ -283,11 +274,10 @@ class App(QApplication):
         self.threads.append(zmq_instrument)
 
     def parse_message_from_instruments(self) -> None:
-        """Check for message from the instruments.
+        """Check for messages from the instruments.
 
         Call any defined hooks and update any widgets.
         """
-
         for name, sub in self.zmq_subscribers.items():
             # handle all messages in queue
             while True:
@@ -323,6 +313,7 @@ class App(QApplication):
                         w.hc_update()
 
     def update_instruments(self) -> None:
+        """Update the app's dictionary of instrument parameter values in a desginated set of parameters."""
         for instrument, parameter_or_function in self.request_updates:
             if (instrument, parameter_or_function) in self.skip_request_updates:
                 continue
@@ -409,10 +400,8 @@ class App(QApplication):
            The priority of the message. See: :func:`.base.zmq_helper.add_ZMQ_message_to_queue`
         skip_hooks
            If True, don't call the available hooks (usefull when
-           loading settings from a file for example
-
+           loading settings from a file for example)
         """
-
         logger.debug(f"app: updating value '{value}' for '{instrument}-{parameter}'")
 
         # Don't try to set parameters in dummy mode
@@ -442,8 +431,7 @@ class App(QApplication):
     ) -> None:
         """Sends request to the instrument thread via ZMQ to query the parameter value.
 
-        Any pre_set_hooks will be called and the value will only be
-        set if none of them returns None.
+        Any post_read_hooks will be called.
 
         Parameters
         ----------
@@ -453,7 +441,6 @@ class App(QApplication):
            The name of the parameter
         priority
            The priority of the message. See: :func:`.base.zmq_helper.add_ZMQ_message_to_queue`
-
         """
         self.zmq_publisher.send_string(f"{instrument} {priority} get {parameter}")
 
@@ -488,11 +475,10 @@ class App(QApplication):
     def get_instrument_parameter(
         self, instrument: str, parameter: str, return_set_value: bool = False
     ) -> Optional[str]:
-        """Return the last read back value.
+        """Return the last value read back for the given instrument parameter.
 
         This function does not communicate with the instrument.
         """
-
         # Some parameters are boolean
         if parameter == "IGNORE":
             return self._data[instrument][parameter]
@@ -511,11 +497,10 @@ class App(QApplication):
     def get_instrument_set_parameter(
         self, instrument: str, parameter: str
     ) -> Optional[str]:
-        """Return the last set value.
+        """Return the last value that was set for the given instrument parameter.
 
         This function does not communicate with the instrument.
         """
-
         return self._data[instrument][parameter]["set_value"]
 
     @ensure_parameter_and_instrument_exists
@@ -526,7 +511,7 @@ class App(QApplication):
         when: str,
         function: Callable[[Any], Any],
     ) -> None:
-        """Adds a hook to a parameter or command.
+        """Add a hook to a parameter or command.
 
         Every hook function takes a single parameter: the value of the
         parameter to be set (set to None for commands). If a hook requires
@@ -544,13 +529,10 @@ class App(QApplication):
         parameter
            The name of the parameter
         when
-           At what time the hook should be called. Possible options are: "post_read_hooks", "pre_set_hooks", "pre_call_hooks".
+           At what point the hook should be called. Possible options are: "post_read_hooks", "pre_set_hooks", "pre_call_hooks".
         function
            The hook function to be added.
-
-
         """
-
         if when not in ["post_read_hooks", "pre_set_hooks", "pre_call_hooks"]:
             logger.error(
                 f"'{instrument}': '{parameter}' has wrong hook type: '{when}'. Needs to be one of 'post_read_hooks', 'pre_set_hooks', 'pre_call_hooks'"
@@ -561,7 +543,7 @@ class App(QApplication):
 
     @ensure_parameter_and_instrument_exists
     def add_widget(self, instrument: str, parameter: str, widget) -> None:
-        """Adds a widget to a parameter.
+        """Add a widget to a parameter.
 
         This enables automatic updating if the value changes.
         """
@@ -589,7 +571,6 @@ class App(QApplication):
             The function used for the new save format. This function must
             take a Dataset object and a filename as argument.
         """
-
         if format_name in Dataset.built_in_save_formats:
             logger.warning(
                 f"Cannot add save format '{format_name}'"
@@ -622,7 +603,6 @@ class App(QApplication):
         Safely closes the application by disconnecting all instruments and saving
         any data specified to save automatically before close.
         """
-
         self.stop()
 
         # Loop through datasets, save all set to autosave
@@ -639,10 +619,8 @@ class App(QApplication):
         Parameters
         ----------
         filename
-            Name of file to save _data to
-
+            Name of file to save set_value entries to
         """
-
         app_settings = {}
         for instrument in self._data:
             app_settings[instrument] = {}
@@ -662,7 +640,7 @@ class App(QApplication):
 
     @ensure_instrument_exists
     def load_settings(self, instrument: str, filename: Union[str, Path]) -> None:
-        """Reads a JSON file to overwrite instrument's settings dictionaries.
+        """Reads a JSON file to overwrite instrument's settings.
 
         The JSON file must be a dictionary where the keys are parameter names while
         the values are the new settings values. Parameters in the dictionary that
@@ -689,9 +667,16 @@ class App(QApplication):
 
         # Try to set instrument settings
         if instrument not in self._data:
-            logger.error(f"{instrument} not found in app.")
+            logger.warning(
+                f"{instrument} not found in app. Settings for {instrument} were not set."
+            )
             return
         for parameter in all_settings:
+            if parameter not in self._data[instrument]:
+                logger.warning(
+                    f"{parameter} not found in {instrument}. Settings for {parameter} were not set."
+                )
+                return
             value = all_settings[parameter]
             self.set_instrument_parameter(instrument, parameter, value, skip_hooks=True)
 
@@ -706,7 +691,6 @@ class App(QApplication):
         filename
             Name of JSON file to read settings from. See load_settings method
             for details on the formatting of the JSON file.
-
         """
         self.add_hook(
             instrument,

@@ -1,20 +1,3 @@
-"""Base class and helper functions for implementing an instrument drivers.
-
-A driver for an instrument should be very basic, so that one can
-use it in a terminal. A driver should not have any GUI elements and
-therefore no references to Qt.
-
-Hardware control will automatically start each driver in its own
-thread. See the ZMQ adapter class for more details.
-
-Several default connection modes are supported out of the box:
-pyvisa, sockets, and modbus.
-
-For other communications protocols, the user needs to overwrite the
-try_connect function.
-
-"""
-
 from functools import wraps
 import json
 import logging
@@ -50,31 +33,30 @@ def ensure_online(f):
 
 
 class Instrument:
-    """Base class for all physical instruments.
+    """
+    Base class and helper functions for all physical instrument drivers.
 
-    The instrument implements the actual communications between python
-    and the instrument.
+    Instrument drivers implement the actual communications between the user
+    and the instrument. The class supports several connection modes out of the box:
+    pyvisa, sockets, and modbus. For other types of communication protocols, the
+    try_connect function must be overwritten.
 
-    The class supports several connections modes out of the box:
-    pyvisa, sockets, and modbus
+    An instrument driver should be very basic, such that one can
+    use it in a terminal. A driver should neither have any GUI elements
+    nor any references to Qt.
 
-    For other type of communictioan the try_connect function needs to
-    be overwritten.
-
-    When implementing a instrument, the user inherits from this base class
-    and then calls add_parameter and add_command several times. These
-    commands define 'read only' or 'read and write' parameters, for
-    example, voltage settings or just basic commands, such as,
-    'trigger' and links these to the actual hardware command that
-    needs to be send to the instrument.
-
-    We also overwrite __getitem__, __getattr__ and the corresponding set functions to
+    When initializing an instrument, the user inherits from this base class
+    and then calls add_parameter and/or add_command several times. These
+    define 'read only' commands (e.g. to start collecting data) and/or 'read
+    and write' parameters (e.g. to read or set a voltage), which are linked to the
+    actual message that needs to be sent to the physical instrument. We also overwrite
+    __getitem__, __getattr__, and the corresponding set functions to
     allow for a more pythonic way of reading and writing these parameters.
 
-    An instrument can also be in `dummy` mode. Here, python will not
-    try to connect to the instrument and return pre-defined data or
+    An instrument can also be used in `dummy` mode. In this mode, python will not
+    try to connect to the physical instrument; it will instead return pre-defined data or
     call a user-defined function to generate the return value. This
-    can be handy for creating and debugging an app when one doesn't
+    can be handy for creating and debugging an app when one does not
     have access to the hardware.
 
     Attributes
@@ -82,14 +64,16 @@ class Instrument:
     online : bool
          Online/Offline status of the instrument
     dummy : bool
-         Whether instrument is in dummy mode (no commands are send to the instrument) or normal mode
-
+         Whether instrument is in dummy mode (no commands are sent to the instrument) or normal mode;
+         this parameter is set for all an app's instruments when an app is initialized
     """
 
-    # class variables for the different supported connection types
     VISA = "visa"
+    """Class variable that can be used to specify a pyvisa connection."""
     SOCKET = "socket"
+    """Class variable that can be used to specify a socket connection."""
     MODBUS = "modbus"
+    """Class variable that can be used to specify a modbus connection."""
 
     def __init__(
         self, instrument_name: str, connection_addr: str, default_port: int = None
@@ -142,17 +126,15 @@ class Instrument:
         self.parse_connection_addr()
 
     def parse_connection_addr(self) -> None:
-        """Figures out if pyvisa or other methods should be used.
+        """Determine the connection protocol to be used.
 
         Currently pyvisa addresses are automatically recognised;
         everything else is assumed to be in the form of either an
         IP address or an IP address and a port number seperated by a
-        ":".  For these cases sockets are automatically assumed. If
+        ":". For these cases, sockets are automatically assumed. If
         modbus should be used, the user needs to overwrite this in the
-        init function of the instrument.
-
+        init function of the instrument driver.
         """
-
         if (
             self.connection_addr.startswith("ASRL")
             or self.connection_addr.startswith("GPIB")
@@ -173,16 +155,14 @@ class Instrument:
             self.port_no = int(self.port_no)
 
     def check_connection(self) -> bool:
-        """Test if the instrument is reachable.
+        """Check if the instrument is reachable.
 
-        The functions checks `self.check_connection_commands` and runs
-        those commands or if `None it will skip any tests.`
+        The function runs the commands in `self.check_connection_commands`.
 
         Returns
         -------
         bool
            True if the instrument is reachable or no test have been done, False if not.
-
         """
         if not self._online:
             return False
@@ -219,16 +199,14 @@ class Instrument:
            This parameter name must be unique and will be used within hardware control to
            access this setting.
         read_command
-           The control characters that need to be send to the instrument
-           to read this value
+           The control characters that need to be sent to the instrument to read the parameter
         set_command
-           The control characters that need to be send to the instrument to set
-           this value. This string can include '{value}' including possible formating
-           definitions where the value should be used.
+           The control characters that need to be sent to the instrument to set
+           the parameter. This string can include '{}' to indicate where the set_value should
+           be place in the control command.
         dummy_return
            A value or a user-defined function that will be returned in dummy mode.
-           These can also easily be overwritten in an actual app to customize this.
-
+           These can easily be overwritten in an app in order to be customized.
         """
         if parameter in ["ONLINE", "IGNORE"]:
             logger.error(
@@ -293,7 +271,6 @@ class Instrument:
 
     def add_command(self, command_name: str, command: Union[str, Callable]) -> None:
         """Add a command to an instrument."""
-
         if command_name in self.commands:
             logger.error(
                 f"Command {command_name} already exists in instrument {self.name}."
@@ -303,7 +280,6 @@ class Instrument:
 
     def add_pre_hook(self, parameter: str, function: Callable) -> None:
         """Add a 'hook function' to be exectued prior to the setting of a parameter."""
-
         if parameter in self.pre_hooks:
             self.pre_hooks[parameter].append(function)
         else:
@@ -311,7 +287,6 @@ class Instrument:
 
     def add_post_hook(self, parameter: str, function: Callable) -> None:
         """Add a 'hook function' to be exectued after reading a parameter."""
-
         if parameter in self.post_hooks:
             self.post_hooks[parameter].append(function)
         else:
@@ -320,21 +295,19 @@ class Instrument:
     def add_lookup(self, parameter: str, lookuptable: Dict) -> None:
         """Add a pre- and a post-hook to convert values according to a lookup table.
 
-        The lookup table will be used in the pre-hook and an inverse of the
+        The lookup table will be used in the pre-hook, and an inverse of the
         lookup table will be created for the post-hook.
         """
-
         self.add_pre_hook(parameter, create_converter(lookuptable))
 
         inverse_lookuptable = {b: a for a, b in lookuptable.items()}
         self.add_post_hook(parameter, create_converter(inverse_lookuptable))
 
     def list_parameters(self) -> List[str]:
-        """Return all parameters of all commands.
+        """List all instrument commands, parameter read_commands, and parameter set_commands.
 
         This is mostly used so that the main app can know what commands are available.
         """
-
         return (
             list(self.read_commands.keys()) + ["ONLINE"],
             list(self.set_commands.keys()),
@@ -342,10 +315,10 @@ class Instrument:
         )
 
     def get_value(self, parameter: str):
-        """Get the value of a parameter from the instrument.
+        """Get the value of a parameter from the physical instrument.
 
-        Also handle the special cases of querying the 'ONLINE' status and
-        dummy mode.
+        This function also handles the special cases of querying the
+        _online and _dummy variable values.
 
         Note: User-defined functions in dummy mode should not return
         None, since None indicates that a parameter does not exist.
@@ -389,7 +362,6 @@ class Instrument:
         Example Usage:
         b = certain_instrument()
         volts = b['voltage']
-
         """
         val = self.get_value(parameter)
         if val is not None:
@@ -404,7 +376,6 @@ class Instrument:
         Example Usage:
         b = certain_instrument()
         volts = b.voltage
-
         """
         val = self.get_value(parameter)
         if val is not None:
@@ -416,7 +387,6 @@ class Instrument:
 
     def set_value(self, parameter: str, value) -> None:
         """Call all of an instrument parameter's pre-hooks, then set the value of the parameter."""
-
         if parameter in self.set_commands:
             if parameter in self.pre_hooks:
                 hooks = self.pre_hooks[parameter]
@@ -433,25 +403,21 @@ class Instrument:
         )
 
     def __setitem__(self, parameter, value) -> None:
-        """Allow values to be easily accessed.
+        """Allow values to be easily set.
 
         Example Usage:
         b = certain_instrument()
         b['voltage'] = 10
-
         """
-
         self.set_value(parameter, value)
 
     def __setattr__(self, parameter: str, value) -> None:
-        """Allow values to be easily accessed.
+        """Allow values to be easily set.
 
         Example Usage:
         b = certain_instrument()
         b.voltage = 10
-
         """
-
         # Need to check if 'set_commands' is in self.__dict__ to avoid an infinite loop
         if (
             "set_commands" in self.__dict__
@@ -465,14 +431,10 @@ class Instrument:
     def command(self, command_name: str) -> None:
         """Execute an instrument command.
 
-        Commands do not fall into simple read/write categories of instrument parameters.
-
         Example Usage:
         b = certain_instrument()
         b.command('trigger')
-
         """
-
         if command_name in self.commands:
             if self._dummy:
                 logger.debug(
@@ -491,7 +453,6 @@ class Instrument:
 
     def close(self) -> None:
         """Close connection to the instrument."""
-
         if self._dummy:
             logger.debug(f"{self.name}: Dummy connection closed.")
             return
@@ -503,12 +464,10 @@ class Instrument:
         self.device.close()
 
     def try_connect(self) -> bool:
-        """Checks if the instrument is in communication with the object, if it is
-        not, it tries to re-establish communication.
+        """Checks if the instrument is in communication with the driver and tries to re-establish communication if it not.
 
-        Certain instruments need require that this function be overwritten.
+        Certain instruments require that this function be overwritten.
         """
-
         if self._dummy:
             if self._online:
                 return True
@@ -601,7 +560,6 @@ class Instrument:
         parity: Optional[int] = None,
     ) -> None:
         """Configure a serial port."""
-
         if self.device is None:
             logger.error(f"No visa device for '{self.name}'")
             self._online = False
@@ -620,7 +578,6 @@ class Instrument:
     @ensure_online
     def write(self, command: str) -> None:
         """Write a command directly to the insturment."""
-
         if self._dummy:
             logger.debug(f"{self.name} sending write command {command}")
             return
@@ -674,7 +631,6 @@ class Instrument:
     @ensure_online
     def query(self, command: str, delay: Optional[float] = None):
         """Query the insturment directly."""
-
         if self._dummy:
             logger.debug(f"'{self.name}' sending query command '{command}'")
             return
@@ -722,20 +678,3 @@ class Instrument:
             logger.error(f"Query {command} failed in {self.name}", exc_info=True)
             self._online = False
             return None
-
-    def load_state(self, filename: str) -> None:
-        """Read and set instrument settings from a json dictionary."""
-
-        try:
-            with open(filename) as file:
-                default_settings = json.load(file)
-                logger.info(f"settings for {self.name} read from file '{filename}'")
-        except:
-            logger.error(
-                f"Failed to read file '{filename}'. Using defualt case.", exc_info=True
-            )
-            return
-
-        for key in default_settings:
-            if key in list(self.set_commands.keys()):
-                self.__setitem__(key, default_settings[key])
