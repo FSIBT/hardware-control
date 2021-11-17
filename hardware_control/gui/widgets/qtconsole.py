@@ -18,6 +18,22 @@ class Qtconsole(RichJupyterWidget):
         app: main app widget
         np:  numpy
 
+        To see a list of all instruments and parameters use_prefix
+        app.list_instruments()
+        app.list_instrument_parameters(<instrument name>)
+
+        To access values for a specific setting:
+        app.get_instrument_parameter(<inst>, <parameter>)
+
+        To access the set value for a parameter (not the one that is read back)
+        app.get_instrument_parameter(<inst>, <parameter>, return_set_value=True)
+
+        To execute a command on an instrument:
+        app.call_instrument_command(<inst>, <command>)
+
+        Note: some commands fail with a logging.error message and will
+        just return, which can result in unexpected behavior here.
+
         """
         self.kernel.gui = "qt"
         self.kernel.shell.push({"np": np, "app": app})
