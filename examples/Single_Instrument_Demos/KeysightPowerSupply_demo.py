@@ -14,8 +14,8 @@ Options:
 """
 
 import logging
+from pathlib import Path
 import sys
-from os import getcwd
 
 from docopt import docopt
 
@@ -46,8 +46,9 @@ class Demo(hc.HCMainWindow):
         )
 
         # Load a settings file with preset values for the instrument parameters
-        cwd = getcwd()
-        keysight_settings = cwd + "/settings_files/keysight_powersupply_init.json"
+        keysight_settings = (
+            Path.cwd() / "settings_files" / "keysight_powersupply_init.json"
+        )
         self.app.add_load_settings_hook("Keysight_36300", keysight_settings)
 
         # Create a keysight powersupply control with channels 1, 2, and 3

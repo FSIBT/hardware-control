@@ -16,7 +16,6 @@ import sys
 
 from PyQt5.QtWidgets import QWidget, QGridLayout
 from docopt import docopt
-from os import getcwd
 from pathlib import Path
 
 import hardware_control.instruments as hc_inst
@@ -52,12 +51,11 @@ class Demo(hc.HCMainWindow):
         # Create a IOModule GUI control that connects to the instrument backend.
         # The control must be given a json file with information about each module
         # channel. See IOModule.py for more details.
-        cwd = getcwd()
         self.iomodule = hc.gui.IOModule(
             self.app,
             "NI-9000",
-            Path(cwd + "/settings_files/nidaq_grid_conf.json"),
-            # Path(cwd + "/settings_files/IOModule_channel_data.json"),
+            Path.cwd() / "settings_files" / "nidaq_grid_conf.json",
+            # Path.cwd() / "settings_files"/"IOModule_channel_data.json",
             num_columns=2,
         )
 
