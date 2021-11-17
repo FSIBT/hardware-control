@@ -491,16 +491,6 @@ class App(QApplication):
             return self._data[instrument][parameter]["read_value"]
 
     @ensure_parameter_and_instrument_exists
-    def get_instrument_set_parameter(
-        self, instrument: str, parameter: str
-    ) -> Optional[str]:
-        """Return the last value that was set for the given instrument parameter.
-
-        This function does not communicate with the instrument.
-        """
-        return self._data[instrument][parameter]["set_value"]
-
-    @ensure_parameter_and_instrument_exists
     def add_hook(
         self,
         instrument: str,
