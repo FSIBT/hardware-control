@@ -9,7 +9,7 @@ def setup_logging(
     logoutput: Optional[Path] = None,
     loglevel: Optional[int] = None,
 ):
-    """Setup the loglevel and direct output to the console or a file.
+    """Set up the log level and direct the logger output to the console or a file.
 
     Parameters
     ----------
@@ -17,13 +17,11 @@ def setup_logging(
         A logger needs to be defined in the main instance, e.g. using
         logging.getLogger(__name__)
     logoutput :
-        "console" creates a loghandler that logs to stdout. Otherwise
-        if path is given a filehandler is created
+        "console" creates a loghandler that logs to stdout. If a path
+        is given, a filehandler is created
     loglevel :
-        The loglevel requested
-
+        The log level requested
     """
-
     if loglevel == logging.DEBUG:
         loglevelname = "Debug"
     elif loglevel == logging.INFO:
@@ -63,9 +61,9 @@ def setup_logging(
 
 
 def setup_logging_docopt(logger, commands):
-    """Setup logging by parsing the output of a docopt dictionary for certain command line options.
+    """Set up logging by parsing the output of a docopt dictionary for certain command line options.
 
-    The function recognizes '--debug', '--info', and '--console' to set the loglevel and the output.
+    The function recognizes '--debug', '--info', and '--console' to set the log level and the output.
     """
     if commands["--debug"]:
         loglevel = logging.DEBUG

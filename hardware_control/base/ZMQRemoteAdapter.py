@@ -1,16 +1,4 @@
-"""Code to enable running and connecting to instruments on a different computer.
-
-Defines :class:`ZMQSingleInstrument` that can wrap an single
-instrument driver. It creates a single REQ/REP channel that a main App
-can use to establish connection. It then creates the standard ZMQ
-publisher and subscriber to talk to the remote App.
-
-:class:`ZMQRemoteAdapter` is used in the main app to connect to
-:class:`ZMQSingleInstrument` and will handle all the REQ/REP commands
-that are needed.
-
-"""
-
+"""Code to enable running and connecting to instruments on a different computer."""
 import json
 import logging
 import time
@@ -31,8 +19,8 @@ class ZMQSingleInstrument:
     """Wraps an instrument so that another app can connect to it.
 
     This is meant to be run outside the app, e.g., on another
-    computer.  The instrument driver in this case will create its own
-    publisher and we need to have the remote app subscribe to it and
+    computer. The instrument driver in this case will create its own
+    publisher, and we need to have the remote app subscribe to it and
     also subscribe to the publisher of the remote app.
 
     To solve the problems of subscribing to a remote app, we add a
@@ -40,7 +28,10 @@ class ZMQSingleInstrument:
     then use this channel to supply this class with the ip address and
     port to be used to listen to commands.
 
-    In the remote app, we use :class:`ZMQRemoteAdapter` to connect to this class.
+    :class:`ZMQSingleInstrument` is meant to wrap a single
+    instrument driver. It creates a single REQ/REP channel that a main App
+    can use to establish connection. It then creates the standard ZMQ
+    publisher and subscriber to talk to the remote App.
 
     Currently there is no way to end a :class:`ZMQSingleInstrument`
     instance and one needs to exit via Ctrl-C.
@@ -52,7 +43,6 @@ class ZMQSingleInstrument:
     address
         The ZMQ address for a REQ/REP socket that is used to estable the
         communication with a remote app. Should be in "<ipaddress>:<portnumber>" format
-
     """
 
     def __init__(self, instrument: Instrument, address: str):
@@ -158,6 +148,10 @@ class ZMQRemoteAdapter:
     program on that computer needs to wrap the instrument driver in
     the :class:`ZMQSingleInstrument`.
 
+    :class:`ZMQRemoteAdapter` is used in the main app to connect to
+    :class:`ZMQSingleInstrument` and will handle all the REQ/REP commands
+    that are needed.
+
     This class then sets up the required communication by using a separate ZMQ REQ/REP channel.
 
     The REQ/REP channel implements the following commands
@@ -168,8 +162,7 @@ class ZMQRemoteAdapter:
     LIST_PARAMETERS
        List all available read and set parameters and command names
     STOP
-       Unsubscribes the remote end and closes the connection
-
+       Unsubscribe the remote end and close the connection
     """
 
     def __init__(self, name, address, context, publisher):
@@ -198,7 +191,6 @@ class ZMQRemoteAdapter:
 
         Needed so that the instrument can be registered with the `app`
         and the necessary `app._data` entries can be created.
-
         """
         logger.info(f"{self.name} requesting parameter list")
         self.req_rep_socket.send_string("LIST_PARAMETERS")
@@ -213,7 +205,6 @@ class ZMQRemoteAdapter:
         threads are ended and those threads are then joined back into
         the main app. This method provides the same interface and will
         disconnect the remote instrument from the app.
-
         """
         logger.info(f"{self.name} stopping remote")
         self.req_rep_socket.send_string("STOP")

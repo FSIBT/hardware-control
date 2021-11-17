@@ -1,4 +1,4 @@
-"""Functions that can be used in hooks for instrument parameter and commands.
+"""Functions that can be used in hooks for instrument parameters and commands.
 
 A hook function takes a single argument, the `value`, and returns the
 `modified value` or `None`. If `None` is returned no further hooks (if
@@ -6,7 +6,7 @@ they exist) will be executed.
 
 To create a hook function that depends on other variables, you can
 create a function that returns another function (similar to
-decorators), e.g.
+decorators), e.g.:
 
 Example
 -------
@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 def call_hooks(hooks_list: List[Callable], value: str) -> Optional[str]:
-    """Call a list of function.
+    """Call a list of functions.
 
     If any of the functions returns None, the final value will be
     ignored and no further hooks will be called.
@@ -33,12 +33,12 @@ def call_hooks(hooks_list: List[Callable], value: str) -> Optional[str]:
     Every hook function must take a single parameter: the value of the
     parameter to be set (set to None for commands)
 
-    If a hook needs several parameter, one should pass these in when
+    If a hook needs several parameters, one should pass these in when
     defining the hook using lambda functions, e.g.:
 
-    app.add_hook(instrument, parameter, 'pre_set_hooks', lambda x: change_ui(app, x, widget)
+    app.add_hook(instrument, parameter, 'pre_set_hooks', lambda x: change_ui(app, x, widget))
 
-    where app and widget are defined in the enironment where add_hook
+    where app and widget are defined in the environment where add_hook
     is called.
 
     Parameters
@@ -47,7 +47,6 @@ def call_hooks(hooks_list: List[Callable], value: str) -> Optional[str]:
        A list of functions or callable objects
     values
        The value to be manipulated
-
     """
     if value is None or value == "None":
         return None
@@ -87,7 +86,7 @@ def create_converter(lookuptable: Dict) -> Callable:
 
 
 def format_bool(value):
-    """Convert True/False string to 1/0"""
+    """Convert True/False string to 1/0."""
     return str(int(value == "True"))
 
 
@@ -106,7 +105,7 @@ def format_int(value):
 
 
 def last_n_values_converter(num_of_values: int) -> Callable:
-    """Assumes `value` is a list and only return the last `num_of_values` entries."""
+    """Assume `value` is a list and only return the last `num_of_values` entries."""
 
     def converter(value):
         # TODO: should do some type checking here and error logging
@@ -124,7 +123,7 @@ def make_negative(value):
 
 
 def max_len_converter(max_length: int) -> Callable:
-    """Ensure that a string is not longer than `max_length`"""
+    """Ensure that a string is not longer than `max_length`."""
 
     def converter(value):
         if len(value) > max_length:
@@ -166,7 +165,7 @@ def uppercase(value):
 
 # Validators
 def expected_input_validator(types: List, default_val=None):
-    """Ensures `value` is in a certain list, returns a default if this is not the case."""
+    """Ensures `value` is in a specified list, returns a default if this is not the case."""
 
     def validator(value):
         if (value not in types) and (default_val is not None):
@@ -184,7 +183,7 @@ def expected_input_validator(types: List, default_val=None):
 
 
 def range_validator(min_val: float, max_val: float):
-    """Ensure `value` is in a certain numerical range.
+    """Ensure `value` is in a specified numerical range.
 
     If the value is outside of the range, the value gets replaces by the min/max value.
     """

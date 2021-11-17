@@ -337,11 +337,10 @@ class App(QApplication):
         instrument parameters by querying the instrument in a regular
         interval.
 
-        To limit how much requests and data we exchange with an
+        To limit the number of requests and how much data we exchange with an
         instrument driver, not all parameters are automatically
         updated all the time. This function can be used to enable
         automatic updates.
-
         """
         if not callable(parameter):
             if parameter not in self._data[instrument]:
@@ -358,14 +357,12 @@ class App(QApplication):
     ) -> None:
         """A method to skip automatic updates for certain parameters.
 
-        This is mostly used for parameters that are defined in a GUI,
+        This is mostly used for parameters that are defined in a GUI
         but not in an instrument driver. For example, some scopes only
         have highZ inputs and no option to change the input impedance.
         The GUI might define this parameter to be automatically
-        updated though which would leave to logging
-        errors/warnings. By putting it on the skip list, the automated
-        update will just not request an update.
-
+        updated,vi which would lead to logging errors/warnings. By putting it
+        on the skip list, the automated update will just not request an update.
         """
         self.skip_request_updates.add((instrument, parameter))
 
@@ -571,7 +568,7 @@ class App(QApplication):
             The function used for the new save format. This function must
             take a Dataset object and a filename as argument.
         """
-        if format_name in Dataset.built_in_save_formats:
+        if format_name in Dataset._built_in_save_formats:
             logger.warning(
                 f"Cannot add save format '{format_name}'"
                 f" because it is already included by default."
@@ -608,7 +605,7 @@ class App(QApplication):
         # Loop through datasets, save all set to autosave
         for key in self.data_sets:
             if self.data_sets[key].autosave:
-                self.data_sets[key].timer_autosave()
+                self.data_sets[key].autosave()
 
     def save_settings(self, filename: Union[str, Path]) -> None:
         """Save all settings as JSON.

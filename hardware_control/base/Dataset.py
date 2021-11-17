@@ -16,46 +16,35 @@ logger = logging.getLogger(__name__)
 
 
 class Dataset(QObject):
-    """Collect values from different instruments over time.
+    """Collect values from different instrument parameters over time.
 
-    This data structure can be used to track values over time. It
-    requires a list of instruments, parameter names, a time interval
-    in order to add a row with the current time stamp and the values
-    for each parameter to an internal data table every N seconds.
+    A Dataset object collects the values of each instrument parameter in a given list
+    of parameters once per a given time interval in the Dataset's self.data dictionary. For
+    each parameter, self.data has a key (of the format 'instrument:parameter')
+    which accesses a list with all returned values for the given parameter. self.data
+    also has a key ('time:time') with the times at which the values were returned.
 
-    The object also automates saving this table to disc in different
-    formats and enables other widgets to easily display the whole
-    dataset or certain columns vs time.
-
-    The idea is that a single datasets can group together certain
-    instrument-parameter combinations that are useful to log into a
-    file or display in a single plot.
-
-    The length of a Dataset is the number of rows in self.data.
-
-    Since parameters in instruments can have complicated names, the
-    class provides an easy way to overwrite names when the data is
-    output to, for example, disk.
-
-    The internal data is saved as a defaultdict of lists where the keys
-    have the form 'instrument:parameter' and the list has the
-    instrument value for each time stamp.
-
-    The time is stored in a special column called 'time:time'.
-
-    The data is taken from app._data, meaning that it is not taken
+    The values are taken from app._data, meaning that they are not taken
     directly from the instrument; a Dataset therefore does not communicate
     with any actual hardware. It is assumed that the user has set up a
-    timer that pulls new data from the hardware into the Instrument.values
-    dictionary periodically.
+    timer that pulls new values from the hardware into the app._data
+    dictionary periodically. This setup can create small discrepancies between the actual
+    data in the instrument and what is recorded in the Dataset, but in practice this has
+    not been an issue for our experiments.
 
-    This can create small lags between the actual data and what is
-    recorded in the dataset, but in pratice this hasn't been an issue
-    (at least for our experiments).
+    A single Dataset can be used to group together certain instrument-parameter combinations
+    that are useful to log into a file or display in a single plot.
 
+    The Dataset object can automate saving self.data to disc in different
+    formats and enables other widgets to easily display the whole dataset or
+    certain columns versus time.
+
+    Since parameters in instruments sometimes have complicated names, the
+    class provides an easy way to overwrite names when the data is
+    output to, for example, disc, using self.define_alias.
     """
 
-    built_in_save_formats = ["JSON", "Pickle", "NPY", "TXT"]
+    _built_in_save_formats = ["JSON", "Pickle", "NPY", "TXT"]
 
     def __init__(self, name: str, app=None) -> None:
 
@@ -87,7 +76,7 @@ class Dataset(QObject):
         self.channel_names = {}
 
         self.autosave_timer = QTimer(self)
-        self.autosave_timer.timeout.connect(self.timer_autosave)
+        self.autosave_timer.timeout.connect(self.autosave)
 
         self.update_timer = QTimer(self)
         self.update_timer.timeout.connect(self.update_data)
@@ -100,7 +89,6 @@ class Dataset(QObject):
 
     def __len__(self) -> int:
         """Returns the number of rows in self.data."""
-
         if len(self.data.keys()) == 0:
             return 0
 
@@ -109,8 +97,7 @@ class Dataset(QObject):
         return len(self.data[first_key])
 
     def clear(self) -> None:
-        """Clears the dataset's contents."""
-
+        """Clear the Dataset's contents."""
         self.data = defaultdict(list)
         self.autosave_next_row = 0
 
@@ -122,23 +109,17 @@ class Dataset(QObject):
     ) -> None:
         """Add a parameter from an instrument to the dataset.
 
-        If parameter is `None`, all parameters that can be read
-        are included.
-
-        If an alias is specified, the name will be used for plotting and saving.
-
         Parameters
         ----------
         instrument
            The instrument name
         parameter
-           The parameter that should be tracked. If `None`, all parameters are tracked.
+           The parameter that should be tracked. If None, all read parameters
+           in the instrument are tracked.
         alias
            Use this as an alias when plotting or saving the dataset
-           (only being used if a parameter was given)
-
+           (only used if a parameter was given)
         """
-
         if instrument not in self.app._data:
             logger.error(f"{instrument} not found in App.")
             return
@@ -158,21 +139,19 @@ class Dataset(QObject):
             for p in self.app.list_instrument_parameters(instrument):
                 self.instruments.append((instrument, p))
 
-    def define_alias(self, channel: str, alias: str) -> None:
-        """Define an alias for a <instrument>:<parameter> name.
+    def define_alias(self, original_name: str, alias: str) -> None:
+        """Define an alias for an original parameter name of format <instrument>:<parameter>.
 
         The alias will be used when saving and plotting.
-
-        Channel must be a key in self.data and name is the replacement string.
-
         """
-
-        instrument, parameter = channel.split(":")
+        instrument, parameter = original_name.split(":")
         if (instrument, parameter) not in self.instruments:
-            logger.warning(f"'{channel}' is not available in dataset '{self.name}'.")
+            logger.warning(
+                f"'{original_name}' is not available in dataset '{self.name}'."
+            )
             return
 
-        self.channel_names[channel] = alias
+        self.channel_names[original_name] = alias
 
     def start_autosave(
         self,
@@ -181,7 +160,6 @@ class Dataset(QObject):
         filename: str = "autosave",
     ) -> None:
         """Activates the dataset's autosave feature."""
-
         self.autosave = True
         self.autosave_interval = interval
         self.autosave_format = file_format
@@ -196,7 +174,6 @@ class Dataset(QObject):
 
     def start_updates(self, interval: float = 10) -> None:
         """Start automaticaly logging data every `interval` seconds."""
-
         self.update_interval = interval
 
         self.update_timer.start(1e3 * self.update_interval)
@@ -216,7 +193,8 @@ class Dataset(QObject):
         self.update_interval = interval
         self.update_timer.setInterval(1e3 * self.update_interval)
 
-    def timer_autosave(self) -> None:
+    def autosave(self) -> None:
+        """Autosave data."""
         logger.debug(
             f"Dataset {self.name} autosaveing to" f" file {self.autosave_filename}"
         )
@@ -225,18 +203,17 @@ class Dataset(QObject):
             self.save(self.autosave_filename, self.autosave_format)
 
     def save_txt(self, filename: Path, header: Optional[str] = None) -> None:
-        r"""Appends data if the file already exists.
+        """Save data as a txt file.
 
         Parameters
         ----------
         filename
-            filename to be used
+            filename to be used. If the file already exists, the data will be
+            appended to it.
         header
-            None or string to be used as a header. If given the header needs to include
-            and end on a \n.
-
+            None or string to be used as a header. If given, the header should include
+            the datetime. Each line of the header must end with \\\\n.
         """
-
         if filename.suffix != ".txt":
             filename = filename.with_suffix(".txt")
 
@@ -279,6 +256,7 @@ class Dataset(QObject):
                 self.autosave_next_row += 1
 
     def save_json(self, filename: Path) -> None:
+        """Save data as a json file."""
         if filename.suffix != ".json":
             filename = filename.with_suffix(".json")
 
@@ -286,29 +264,29 @@ class Dataset(QObject):
             json.dump(self.data, outfile, ensure_ascii=False, indent=4)
 
     def save_pickle(self, filename: Path) -> None:
+        """Save data as a pickle file."""
         if filename.suffix != ".pickle":
             filename = filename.with_suffix(".pickle")
         with filename.open("wb") as outfile:
             pickle.dump(self.data, outfile)
 
     def save_npy(self, filename: Path) -> None:
+        """Save data as a .npy file."""
         if filename.suffix != ".npy":
             filename = filename.with_suffix(".npy")
         np.save(filename, self.data)
 
     def save(self, filename: Path, file_format: str) -> None:
-        """Saves the dataset to a file. Format specifies the file format.
+        """Saves the Dataset to a file. Format specifies the file format.
 
-        The file_format specifier is not case sensitive.
+        Note: the file_format specifier is not case sensitive.
 
         File Formats:
-           JSON
-           Pickle
-           NPY
-           TXT
-
+           | json
+           | pickle
+           | npy
+           | txt
         """
-
         file_format = file_format.upper()
 
         if file_format == "JSON":
@@ -330,12 +308,10 @@ class Dataset(QObject):
             logger.warning(f"Unrecognized file format '{file_format}'.")
 
     def update_data(self) -> None:
-        """Logs values from the specified instruments to the datasets.
+        """Log values from the specified instruments in the Dataset.
 
-        Normally called by the internal timer.
-
+        This is normally called by the internal timer.
         """
-
         logger.debug(f"Updating data in Dataset {self.name}.")
 
         self.data["time:time"].append(str(time.time()))
@@ -356,9 +332,7 @@ class Dataset(QObject):
         -------
         dict
             dictionary of requested columns
-
         """
-
         out = {}
         for name in columns:
             if name in self.data:
@@ -380,9 +354,7 @@ class Dataset(QObject):
             Keys in self.data that should be returned
         cleanup
             Remove all None values
-
         """
-
         if columns is None:
             data = self.data
         else:

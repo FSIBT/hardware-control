@@ -1,5 +1,4 @@
-""" Functions that are commen to ZMQ functionality used in `ZMQAdapter` and `ZMQRemoteAdapter`.
-"""
+"""Functions that are commonly used for ZMQ functionality; these are primarily used in `ZMQAdapter` and `ZMQRemoteAdapter`."""
 import logging
 import time
 
@@ -19,8 +18,8 @@ def add_ZMQ_message_to_queue(adapter, msg: str) -> None:
     """Sort the messages into different queues that have different priorities.
 
     Since instruments can take a while to respond to a request, it can
-    happen that there will be a large ZMQ queue waiting for the
-    instrument to handle. In principle this queue can also grow over
+    happen that there will be a large ZMQ message queue waiting for the
+    instrument to handle the messages. In principle, this queue can also grow over
     time if the instrument is too slow to catch up. To avoid this we
     use different priorities for the ZMQ requests. A priority always
     needs to be defined for a request. The following options are
@@ -31,12 +30,11 @@ def add_ZMQ_message_to_queue(adapter, msg: str) -> None:
          one is dropped from the queue. These can be used for regular
          update requests of parameters from the instrument.
        - '1': if a new request for the same parameter arrives, the old
-         one is dropped from the queue. However, these are handled
+         one is dropped from the queue. These, however, are handled
          before any '0' priority item. These are used when a a user
-         pushes a button on an UI.
+         pushes a button on a UI.
        - '2': These are handled first and are never dropped from the
          queue. Usefule for automatted scanning.
-
     """
     logger.debug(f"{adapter.name} got ZMQ messages from App: {msg}")
     msg = msg[adapter.zmq_topic_length :]
@@ -78,10 +76,10 @@ def add_ZMQ_message_to_queue(adapter, msg: str) -> None:
 
 
 def handle_ZMQ_message_from_app(adapter) -> None:
-    """Parses and handles the ZMQ messsage from the main app.
+    """Parse and handle a ZMQ messsage from the main app.
 
-    First parse the message and then depending on the content execute
-    a command, read or set a value in the instrument.
+    The function first parses the message and then, depending on the message's content,
+    executes a command, reads a value, or sets a value in the instrument.
 
     The possible messages have the following form:
 
@@ -92,7 +90,7 @@ def handle_ZMQ_message_from_app(adapter) -> None:
        This triggers a read request of the parameter
 
     <instrument name> <priority> set <parameter> <value>
-       Set a parameter to a new value
+       This set a parameter to a new value
 
     When arriving at this function the first two arguments are already
     taken care of and have been removed from the incoming msg.
@@ -100,7 +98,7 @@ def handle_ZMQ_message_from_app(adapter) -> None:
     When reading a value, the return ZMQ message has the form:
 
     <instrument name> <parameter> <value>
-       Return a parameter value from the instrument
+       This returns a parameter value from the instrument
 
     Parameters
     ----------
@@ -108,9 +106,7 @@ def handle_ZMQ_message_from_app(adapter) -> None:
        the ZMQAdapter/ZMQRemoteAdapter for the instrument driver
     msg
        the ZMQ message received by the adapter
-
     """
-
     # get a message from the priority queue or return if nothing to do
     for priority in [2, 1, 0]:
         if adapter.priority_queue[priority]:
