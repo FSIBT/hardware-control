@@ -1,13 +1,13 @@
 # Overview
 
 Hardware-control is a Python package for controlling laboratory
-equipment. A task we do every day in our lab. Specifically, these
+equipment, a task we do every day in our lab. Specifically, these
 include power supplies, scopes, and many other instruments that work
 using (slow) communication of read and write statements to an
 instrument.  Hardware that currently will not work well with this code
 base are, for example, live streaming cameras or any other instrument
 that relies on a fast readout and communication between the program
-and the instrument. Also, since our use case are the experiments we
+and the instrument. Also, since our use cases are the experiments we
 run, we normally only deal with a moderate amount of instruments
 (which can be connected to different computers). If you want to scale
 this to hundreds of instruments your mileage may vary ;)
@@ -78,11 +78,11 @@ latest data in the model, and therefore never directly talk to instruments.
 This makes the UI responsive since there is no delay from the instrument.
 Instrument data can automatically be updated through a timer to keep the
 model up to date. The downside of this approach is that the data can be
-slightly outdated, which, for our use case, is not an issue, but might
+slightly outdated, which, for our use cases, is not an issue, but might
 be for your applications.
 
 We found that this approach makes it easy to write new drivers, while
-at the same time keep the flexibility of writing custom Qt application
+at the same time keep the flexibility of writing custom Qt applications
 with all the features that come with Qt. Providing the same user
 interface for different drivers makes it easy to add new instruments
 and provide a more uniform interface to the user.

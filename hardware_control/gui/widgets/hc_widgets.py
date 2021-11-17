@@ -204,7 +204,7 @@ class HCMixin:
 
 
 class HCLabel(HCMixin, QLabel):
-    """A simpel indicator widget for a label(QLabel) and a value (QLabel)."""
+    """A simple indicator widget for a label(QLabel) and a value (QLabel)."""
 
     def __init__(
         self,
