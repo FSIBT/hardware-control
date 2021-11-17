@@ -31,11 +31,15 @@ terminal using `--console` and the log-level changed by providing
 We use `pytest` to provide some simple tests for some of the
 functionallity of the package. However, to check if an instrument is
 really working, one needs to have the instrument connected, which
-makes testing harder. The best way to do this is to run some of the
-examples.  When the instruments are not available some functionallity,
-such as the Qt layout, can be tested using "--dummy" mode. See the
-examples on how to enable it. In this mode instrument parameters can
-return a predefined value or the result of a function.
+makes testing harder. When the instruments are not available some
+functionallity, such as the Qt layout, can still be tested using
+"--dummy" mode. In this mode instrument parameters can return a
+predefined value or the result of a function.
+
+To run the tests use:
+
+    python -m pytest
+
 
 ## Contribution guidelines
 
@@ -48,15 +52,6 @@ and use the config file we provide:
     pip install pre-commit
     # cd into repo
     pre-commit install
-
-## Tests
-
-We use pytest to run a small test suite. You can run all tests using:
-
-    python -m pytest
-
-Furthermore it is good practise to run the examples in dummy mode or
-even better with real hardware connected.
 
 ## Who do I talk to?
 
