@@ -1,4 +1,4 @@
-[![read-the-docs](https://readthedocs.org/projects/hardware-control/badge/?style=plastic)](https://readthedocs.org/projects/hardware-control/)
+[![read-the-docs](https://readthedocs.org/projects/hardware-control/badge/?style=flat)](https://readthedocs.org/projects/hardware-control/)
 [![PyPI version](https://badge.fury.io/py/hardware-control.svg)](https://badge.fury.io/py/hardware-control)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
