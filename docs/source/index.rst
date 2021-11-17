@@ -26,6 +26,7 @@ without the use of Qt.
    installation
    supported_instruments
    howtos
+   examples.md
    hardware_control
    how_to_contribute
    outlook.md
