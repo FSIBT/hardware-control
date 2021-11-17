@@ -230,7 +230,7 @@ class HCLabel(HCMixin, QLabel):
         self.use_prefix = use_prefix
         self.min_width = min_width
 
-    def widget_update(self, value):
+    def widget_update(self, value) -> None:
         self.setText(value)
 
     def setText(self, text: str) -> None:
@@ -697,6 +697,7 @@ class HCFixedLabel(HCMixin, QLabel):
         parameter: str,
         init_label: str = "",
         unit: str = "",
+        use_prefix: bool = True,
         color: str = None,
         fontsize: int = 18,
         bold: bool = False,
@@ -709,6 +710,7 @@ class HCFixedLabel(HCMixin, QLabel):
         )
 
         self.unit = unit
+        self.use_prefix = use_prefix
 
         self.setText(f"{init_label} {self.unit}")
 
@@ -735,17 +737,16 @@ class HCFixedLabel(HCMixin, QLabel):
             self.setAlignment(QtCore.Qt.AlignCenter)
 
     def widget_update(self, value) -> None:
-        self.setText(f"{value} {self.unit}")
+        self.setText(value)
 
     def setText(self, text: str) -> None:
         if self.unit:
-            try:
-                text = f"{float(text):.3g} {self.unit}"
-            except:
-                text = f"{text} {self.unit}"
-        else:
-            try:
-                text = f"{float(text):.3g}"
-            except:
-                text = f"{text}"
+            if self.use_prefix:
+                text, prefix = convert_prefix(text)
+                text = f"{text} {prefix}{self.unit}"
+            else:
+                try:
+                    text = f"{float(text):.3g} {self.unit}"
+                except:
+                    text = f"{text} {self.unit}"
         super().setText(text)

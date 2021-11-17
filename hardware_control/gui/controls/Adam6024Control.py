@@ -30,7 +30,8 @@ class Adam6024Control(QGroupBox):
             self.app,
             self.instrument,
             "CH0_READ_VOLTAGE",
-            init_label="+0.000 xXxxx",
+            init_label="+0.000  Torr",
+            unit="Torr",
             label_align="left",
         )
         # Current readout
@@ -38,7 +39,8 @@ class Adam6024Control(QGroupBox):
             self.app,
             self.instrument,
             "CH1_READ_VOLTAGE",
-            init_label="+0.000 xX",
+            init_label="+0.000  A",
+            unit="A",
             label_align="left",
         )
         # Voltage readout
@@ -46,7 +48,8 @@ class Adam6024Control(QGroupBox):
             self.app,
             self.instrument,
             "CH2_READ_VOLTAGE",
-            init_label="+0.000 xX",
+            init_label="+0.000  V",
+            unit="V",
             label_align="left",
         )
 
@@ -144,31 +147,9 @@ class Adam6024Control(QGroupBox):
             self.voltage_input.setStyleSheet("background-color: white")
 
     def update_readout(self):
+        # here we query the instrument manually, this could also be
+        # done using functionallity int the app.
         for channel in [0, 1, 2]:
             self.app.update_instrument_parameter(
                 self.instrument, f"CH{channel}_READ_VOLTAGE"
             )
-
-        voltage_val = float(self.voltage_read.text()[:-3])
-        self.voltage_setpoint = voltage_val
-        if abs(voltage_val) > 1e3:
-            self.voltage_read.unit = "kV"
-            self.voltage_read.setText(f"{voltage_val*1e-3:.3f}")
-        else:
-            self.voltage_read.unit = " V"
-            self.voltage_read.setText(f"{voltage_val:.3f}")
-
-        current_val = float(self.current_read.text()[:-3])
-        if abs(current_val) < 1e-3:
-            self.current_read.unit = "µA"
-            self.current_read.setText(f"{current_val*1e6:.3f}")
-        elif abs(current_val) < 1:
-            self.current_read.unit = "mA"
-            self.current_read.setText(f"{current_val*1e3:.3f}")
-        else:
-            self.current_read.unit = " A"
-            self.current_read.setText(f"{current_val:.3f}")
-
-        pressure_val = float(self.pressure_read.text()[:-6])
-        self.pressure_read.unit = "mTorr"
-        self.pressure_read.setText(f"{pressure_val:.3f}")

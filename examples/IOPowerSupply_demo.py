@@ -16,6 +16,7 @@ Options:
 import logging
 import sys
 from os import getcwd
+import random
 
 from docopt import docopt
 
@@ -40,8 +41,14 @@ class Demo(hc.HCMainWindow):
         # This is the main widget, actual device widgets are added to it
         self.main_widget = QWidget(self)
 
-        # Create an Adam_6024 instrument backend and add it to the app
-        self.app.add_instrument(hc.instruments.Adam_6024("ADAM_6024", "192.168.0.5"))
+        # Create an Adam_6024 instrument driver
+        inst = hc.instruments.Adam_6024("ADAM_6024", "192.168.0.5")
+        # let's make the dummy defaults a bit more insteresting (the default is just a constant 10)
+        inst.dummy_returns["CH0_READ_VOLTAGE"] = lambda: random.random() * 100e-3
+        inst.dummy_returns["CH1_READ_VOLTAGE"] = lambda: random.random() * 4e-6
+        inst.dummy_returns["CH2_READ_VOLTAGE"] = lambda: random.random() * 10e3
+        #  and add it to the app
+        self.app.add_instrument(inst)
 
         # Create a Adam6024Control GUI control that connects to the instrument backend
         self.adam_ctrl = hc.gui.Adam6024Control(self.app, "ADAM_6024")
