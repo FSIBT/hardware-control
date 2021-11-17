@@ -604,7 +604,7 @@ class App(QApplication):
 
         # Loop through datasets, save all set to autosave
         for key in self.data_sets:
-            if self.data_sets[key].autosave:
+            if self.data_sets[key].autosave_enabled:
                 self.data_sets[key].autosave()
 
     def save_settings(self, filename: Union[str, Path]) -> None:

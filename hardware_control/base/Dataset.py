@@ -54,7 +54,7 @@ class Dataset(QObject):
         self.app = app
 
         # The autosave option appends the latest data to the output file
-        self.autosave = False
+        self.autosave_enabled = False
         self.autosave_interval = 120.0  # in seconds
         self.autosave_format = "JSON"
         self.autosave_filename = Path(f"autosave_{self.name}")
@@ -160,7 +160,7 @@ class Dataset(QObject):
         filename: str = "autosave",
     ) -> None:
         """Activates the dataset's autosave feature."""
-        self.autosave = True
+        self.autosave_enabled = True
         self.autosave_interval = interval
         self.autosave_format = file_format
         self.autosave_filename = Path(filename)
@@ -199,7 +199,7 @@ class Dataset(QObject):
             f"Dataset {self.name} autosaveing to" f" file {self.autosave_filename}"
         )
 
-        if self.autosave:
+        if self.autosave_enabled:
             self.save(self.autosave_filename, self.autosave_format)
 
     def save_txt(self, filename: Path, header: Optional[str] = None) -> None:
