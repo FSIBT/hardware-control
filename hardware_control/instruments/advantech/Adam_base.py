@@ -34,25 +34,28 @@ class AdamBase(Instrument):
 
         self.try_connect()
 
-    def write(self, command: str):
+    def write(self, command: str) -> None:
         """Unique 'write' function for writing to Adam instruments."""
         if self._dummy:
             logger.debug(f"{self.name} sending write command {command}")
             return
 
-        self.device.sendto(
-            (command + self._termination).encode(self._encoding), self.addr
-        )
-        # check return code
-        indata, inaddr = self.device.recvfrom(self.buffer_length)
-        output = indata.decode("ascii")
-        if output == "?01\r":
-            logger.error("Adam: Last command invalid")
-            return
-        if output == ">\r":
-            return
+        try:
+            self.device.sendto(
+                (command + self._termination).encode(self._encoding), self.addr
+            )
+            # check return code
+            indata, inaddr = self.device.recvfrom(self.buffer_length)
+            output = indata.decode("ascii")
+            if output == "?01\r":
+                logger.error("Adam: Last command invalid")
+                return
+            if output == ">\r":
+                return
+        except socket.timeout:
+            self.online = False
 
-    def try_connect(self):
+    def try_connect(self) -> None:
         """Unique 'try_connect' function for using sockets with a different option (DGRAM instead of STREAM)."""
         # Prevent trying to connect while the program is booting up
         if self.connection_tries < 1:
