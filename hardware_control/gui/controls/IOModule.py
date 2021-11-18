@@ -145,7 +145,7 @@ class IOModule(QGroupBox):
             self.channel_panel.addWidget(
                 last_wdgt,
                 int(load_idx / num_columns),
-                (load_idx) % num_columns,
+                load_idx % num_columns,
             )
 
             for opt_name in c_dict["OPTIONS"]:

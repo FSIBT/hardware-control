@@ -52,8 +52,8 @@ class Demo(hc.HCMainWindow):
         )
 
         # When not in dummy mode, these set channel voltage and current maximum values
-        self.app.set_instrument_parameter("caen", f"CH1_V_MAX", 20)
-        self.app.set_instrument_parameter("caen", f"CH1_I_MAX", 25)
+        self.app.set_instrument_parameter("caen", "CH1_V_MAX", 20)
+        self.app.set_instrument_parameter("caen", "CH1_I_MAX", 25)
 
         # Create three MultiPowerSupply controls that connects to each of the three instrument backends
         self.tdkl_ctrl = hc.gui.MultiPowerSupply(
