@@ -78,11 +78,13 @@ class Picotech_6000(Instrument):
             "TIMEBASE",
             read_command=self._get_timebase,
             set_command=self._set_timebase,
+            dummy_return="5e-3",
         )
         self.add_parameter(
             "TIME_OFFSET",
             read_command=self._get_timeoffset,
             set_command=self._set_timeoffset,
+            dummy_return="6e-3",
         )
         self.add_parameter(
             "TRIGGER_LEVEL",
@@ -99,7 +101,9 @@ class Picotech_6000(Instrument):
             {"BOTH": "Rising", "NEG": "Falling", "POS": "Rising", "ALT": "Rising"},
         )
         self.add_parameter(
-            "TRIGGER_CHANNEL", read_command=None, set_command=self._set_triggerchannel
+            "TRIGGER_CHANNEL",
+            read_command=None,
+            set_command=self._set_triggerchannel,
         )
 
         for channel in range(1, self.number_of_channels + 1):
@@ -138,6 +142,7 @@ class Picotech_6000(Instrument):
                 f"CH{channel}_WAVEFORM",
                 read_command=partial(self._read_waveform, channel),
                 set_command=None,
+                dummy_return=self._read_waveform_dummy,
             )
 
         self.add_command("SINGLE_TRIGGER", self._trigger)
@@ -305,3 +310,15 @@ class Picotech_6000(Instrument):
             return "[[],[]]"
 
         return json.dumps([t, volts])
+
+    def _read_waveform_dummy(self):
+        """Returns a dummy waveform.
+
+        Returns
+        -------
+        waveform : str
+            A string that contains a list of times and a list of random waveform values (between 0 and 10) embedded in another list.
+        """
+
+        dummy_return = str(np.random.uniform(0.0, 10.0, 10).tolist()).replace(" ", "")
+        return f"[[1,2,3,4,5,6,7,8,9,10],{dummy_return}]"
