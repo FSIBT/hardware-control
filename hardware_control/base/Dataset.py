@@ -137,7 +137,12 @@ class Dataset(QObject):
                 self.define_alias(f"{instrument}:{parameter}", alias)
         else:
             for p in self.app.list_instrument_parameters(instrument):
-                self.instruments.append((instrument, p))
+                # Never track the special "IGNORE" parameter
+                if p != "IGNORE":
+                    # Only track parameters (not commands)
+                    # All parameters have a "read_value" key while commands do not
+                    if "read_value" in self.app._data[instrument][p].keys():
+                        self.instruments.append((instrument, p))
 
     def define_alias(self, original_name: str, alias: str) -> None:
         """Define an alias for an original parameter name of format <instrument>:<parameter>.
