@@ -92,6 +92,15 @@ class Oscilloscope(QGroupBox):
 
         self.default_update_readout()
 
+        # Skip readout updates for picoscope parameters that don't have read commands
+        if self.instrument_type == "picoscope":
+            for parameter in self.app.list_instrument_parameters(self.instrument):
+                # Allow updating for certain picoscope parameters that DO have read commands
+                if not parameter.endswith(("TIMEBASE", "TIME_OFFSET", "_WAVEFORM")):
+                    self.app.add_skip_update_instrument_parameter(
+                        self.instrument, parameter
+                    )
+
     def default_update_readout(self) -> None:
         """Register certain parameterts to be automatically udpated every second."""
 
