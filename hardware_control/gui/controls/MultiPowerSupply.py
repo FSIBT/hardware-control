@@ -1,4 +1,6 @@
 import logging
+from typing import Optional, List
+from math import floor
 
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
@@ -12,7 +14,6 @@ from PyQt5.QtWidgets import (
     QSpacerItem,
     QSizePolicy,
 )
-from typing import List
 
 from ..widgets import (
     HCLineEdit,
@@ -72,35 +73,47 @@ class MultiPowerSupply(QGroupBox):
         instrument_name: str,
         channels: List,
         widget_name: str = "Multi_Channel_PSU",
+        channel_names: Optional[List] = None,
         show_VI_limits: bool = False,
         show_status_panel: bool = False,
         enable_power_buttons: str = "none",
+        num_columns: int = -1,
     ):
         super().__init__(widget_name)
 
         self.app = app
         self.instrument = instrument_name
         self.channels = channels
+        self.channel_names = channel_names
         self.show_VI_limits = show_VI_limits
         self.show_status_panel = show_status_panel
         self.enable_power_buttons = enable_power_buttons
+        # Default number of columns is number of channels
+        if num_columns == -1:
+            num_columns = len(channels)
 
         # Create a widget for each channel and push them into a row
         self.channel_widgets = []
         self.channel_box = QGroupBox()
         self.channel_box_layout = QGridLayout()
         for idx, channel in enumerate(self.channels):
-            self.channel_widgets.append(
-                PowerSupplyChannel(
-                    self.app,
-                    self.instrument,
-                    channel,
-                    self.show_VI_limits,
-                    self.show_status_panel,
-                    self.enable_power_buttons,
-                )
+            channel_widget = PowerSupplyChannel(
+                self.app,
+                self.instrument,
+                channel,
+                self.show_VI_limits,
+                self.show_status_panel,
+                self.enable_power_buttons,
             )
-            self.channel_box_layout.addWidget(self.channel_widgets[-1], 0, idx)
+            if self.channel_names != None:
+                print(self.channel_names, flush=True)
+                channel_widget.set_label(self.channel_names[idx])
+            self.channel_widgets.append(channel_widget)
+            self.channel_box_layout.addWidget(
+                self.channel_widgets[-1],
+                int(idx / num_columns),
+                idx % num_columns,
+            )
         self.channel_box.setLayout(self.channel_box_layout)
 
         self.master_layout = QGridLayout()
