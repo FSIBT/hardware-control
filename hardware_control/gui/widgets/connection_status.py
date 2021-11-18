@@ -96,10 +96,7 @@ class StatusTool(QGroupBox):
             if self.instrument_grid.itemAtPosition(row, 1) is None:
                 continue
 
-            if self.app.dummy is False:
-                online = self.app.get_instrument_parameter(instrument, "ONLINE")
-            else:
-                online = False
+            online = self.app.get_instrument_parameter(instrument, "ONLINE")
 
             if online:
                 self.instrument_grid.itemAtPosition(row, 1).widget().setPixmap(
