@@ -165,7 +165,7 @@ class Dataset(QObject):
         self.autosave_format = file_format
         self.autosave_filename = Path(filename)
 
-        self.autosave_timer.start(1e3 * self.autosave_interval)
+        self.autosave_timer.start(1_000 * self.autosave_interval)
 
         logger.debug(
             f"Dataset {self.name} activated autosave."
@@ -176,7 +176,7 @@ class Dataset(QObject):
         """Start automaticaly logging data every `interval` seconds."""
         self.update_interval = interval
 
-        self.update_timer.start(1e3 * self.update_interval)
+        self.update_timer.start(1_000 * self.update_interval)
 
         logger.debug(
             f"Dataset {self.name} started update mode."
@@ -186,7 +186,7 @@ class Dataset(QObject):
     def set_save_interval(self, interval: float) -> None:
         """Set the autosave interval in seconds."""
         self.autosave_interval = interval
-        self.autosave_timer.setInterval(1e3 * self.autosave_interval)
+        self.autosave_timer.setInterval(1_000 * self.autosave_interval)
 
     def set_update_interval(self, interval: float) -> None:
         """Set the update interval (when a new row is added) in seconds."""
