@@ -490,6 +490,12 @@ class App(QApplication):
                 return self._data[instrument][parameter]["set_value"]
             return self._data[instrument][parameter]["read_value"]
 
+        # If a command IS being passed write a logger warning
+        else:
+            logger.warning(
+                f"The 'get_instrument_parameter' function was called on the command '{parameter}' in instrument '{instrument}'. Only parameters can be passed to 'get_instrument_parameter'."
+            )
+
     @ensure_parameter_and_instrument_exists
     def add_hook(
         self,
@@ -626,46 +632,53 @@ class App(QApplication):
             )
 
     @ensure_instrument_exists
-    def load_settings(self, instrument: str, filename: Union[str, Path]) -> None:
-        """Reads a JSON file to overwrite instrument's settings.
+    def load_settings_hook(self, instrument: str, filename: Union[str, Path]) -> None:
+        def hook_function(value):
+            """Reads a JSON file to overwrite instrument's settings.
 
-        The JSON file must be a dictionary where the keys are parameter names while
-        the values are the new settings values. Parameters in the dictionary that
-        do not exist in the instrument's settings dictionary are ignored. If the
-        file does not specify a parameter held by the instrument's settings dictionary
-        then that parameter is unchanged.
+            The JSON file must be a dictionary where the keys are parameter names while
+            the values are the new settings values. Parameters in the dictionary that
+            do not exist in the instrument's settings dictionary are ignored. If the
+            file does not specify a parameter held by the instrument's settings dictionary
+            then that parameter is unchanged.
 
-        Parameters
-        ----------
-        filename
-            Name of JSON file to read settings from.
+            Parameters
+            ----------
+            filename
+                Name of JSON file to read settings from.
 
-        """
-        # Read file
-        try:
-            with open(filename) as file:
-                all_settings = json.load(file)
-                logger.info(
-                    f"Settings for instrument '{instrument}' read from file '{filename}'."
-                )
-        except:
-            logger.error(f"Failed to read file '{filename}'.", exc_info=True)
-            return
+            """
+            # Read file
+            try:
+                with open(filename) as file:
+                    all_settings = json.load(file)
+                    logger.info(
+                        f"Settings for instrument '{instrument}' read from file '{filename}'."
+                    )
+            except:
+                logger.error(f"Failed to read file '{filename}'.", exc_info=True)
+                return value
 
-        # Try to set instrument settings
-        if instrument not in self._data:
-            logger.warning(
-                f"{instrument} not found in app. Settings for {instrument} were not set."
-            )
-            return
-        for parameter in all_settings:
-            if parameter not in self._data[instrument]:
+            # Try to set instrument settings
+            if instrument not in self._data:
                 logger.warning(
-                    f"{parameter} not found in {instrument}. Settings for {parameter} were not set."
+                    f"{instrument} not found in app. Settings for {instrument} were not set."
                 )
-                return
-            value = all_settings[parameter]
-            self.set_instrument_parameter(instrument, parameter, value, skip_hooks=True)
+                return value
+            for parameter in all_settings:
+                if parameter not in self._data[instrument]:
+                    logger.warning(
+                        f"{parameter} not found in {instrument}. Settings for {parameter} were not set."
+                    )
+                    return value
+                set_value = all_settings[parameter]
+                self.set_instrument_parameter(
+                    instrument, parameter, set_value, skip_hooks=True
+                )
+
+                return value
+
+        return hook_function
 
     @ensure_instrument_exists
     def add_load_settings_hook(
@@ -683,5 +696,5 @@ class App(QApplication):
             instrument,
             "ONLINE",
             "post_read_hooks",
-            lambda x: self.load_settings(instrument, filename),
+            self.load_settings_hook(instrument, filename),
         )
