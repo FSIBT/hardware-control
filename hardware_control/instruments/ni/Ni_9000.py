@@ -204,20 +204,20 @@ class Ni_9000(Instrument):
             try:
                 with nidaqmx.Task() as task:
                     if task.name:
-                        self.online = True
+                        self._online = True
             except nidaqmx.errors.DaqError:
-                self.online = False
+                self._online = False
                 logger.error(
                     "Connection failed due to DaqError."
                     " This could mean the NIDAQ must be reserved"
                     " in NI-Max Application."
                 )
             except Exception:
-                self.online = False
+                self._online = False
                 logger.error("Connect failed.", exc_info=True)
         else:
-            self.online = True
-        return self.online
+            self._online = True
+        return self._online
 
     def _analog_write(self, channel_string, value):
         with nidaqmx.Task() as task:
