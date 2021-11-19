@@ -31,19 +31,19 @@ LABEL_MIN_WIDTH = 15
 DISP_DECIMAL_PLACES = 1
 
 status_labels = {
-    "RAMPING_UP": "Ramp Up",
-    "RAMPING_DOWN": "Ramp Down",
-    "OVER_CURRENT": "Over Curr",
-    "OVER_VOLTAGE": "Over Volt",
-    "UNDER_VOLTAGE": "Under Volt",
-    "MAX_VOLTAGE": "Max Volt",
-    "TRIPPED": "Trip",
+    "RAMPING_UP": "Ramping Up",
+    "RAMPING_DOWN": "Ramping Down",
+    "OVER_CURRENT": "Over Current",
+    "OVER_VOLTAGE": "Over Voltage",
+    "UNDER_VOLTAGE": "Under Voltage",
+    "MAX_VOLTAGE": "Max Voltage",
+    "TRIPPED": "Tripped",
     "OVER_POWER": "Over Power",
-    "OVER_TEMPERATURE": "Over Temp",
+    "OVER_TEMPERATURE": "Over Temperature",
     "DISABLED": "Disabled",
     "KILL": "Kill",
-    "INTERLOCKED": "Interlock",
-    "CALIBRATION_ERROR": "Calib Err",
+    "INTERLOCKED": "Interlocked",
+    "CALIBRATION_ERROR": "Calibration Error",
 }
 
 
@@ -106,7 +106,6 @@ class MultiPowerSupply(QGroupBox):
                 self.enable_power_buttons,
             )
             if self.channel_names != None:
-                print(self.channel_names, flush=True)
                 channel_widget.set_label(self.channel_names[idx])
             self.channel_widgets.append(channel_widget)
             self.channel_box_layout.addWidget(
@@ -389,12 +388,13 @@ class PowerSupplyChannel(QWidget):
                     show_icon=True,
                     icon_checked="green_ind.svg",
                     icon_unchecked="red_ind.svg",
+                    tooltip=status_label,
                 )
-                self.status_grid.addWidget(indicator.label, row_num % 7, col_num)
-                self.status_grid.addWidget(indicator, row_num % 7, col_num + 1)
+                indicator.setToolTip(status_label)
+                self.status_grid.addWidget(indicator, row_num % 2, col_num)
                 row_num += 1
-                if row_num != 0 and row_num % 7 == 0:
-                    col_num += 2
+                if row_num != 0 and row_num % 2 == 0:
+                    col_num += 1
             self.status_panel.setLayout(self.status_grid)
 
             self.channel_layout.addWidget(self.status_panel, 2, 0)
