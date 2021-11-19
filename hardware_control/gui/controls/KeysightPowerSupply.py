@@ -21,22 +21,27 @@ class ChannelDisplay(QVBoxLayout):
         self.set_voltage_option = set_voltage_option
         self.set_current_option = set_current_option
 
+        if self.set_current_option or self.set_voltage_option:
+            init_label = "+000.000000000 xX"
+        else:
+            init_label = "+000.0000 xX"
+
+
         self.on_off = HCOnOffButton(
             self.app,
             self.instrument,
             f"CH{channel}_ENABLE",
-            label="ON/OFF",
+            label=None,
             show_icon=True,
         )
-        self.tog_but_layout = HCGridLayout([self.on_off])
-        self.addLayout(self.tog_but_layout)
+        self.addWidget(self.on_off)
 
         # Channel voltage readout
         self.voltage = HCFixedLabel(
             self.app,
             self.instrument,
             f"CH{channel}_V_OUT",
-            init_label="+000.0000 xX",
+            init_label=init_label,
             unit="V",
             color=self.color,
             label_align="right",
@@ -48,7 +53,7 @@ class ChannelDisplay(QVBoxLayout):
             self.app,
             self.instrument,
             f"CH{channel}_I_OUT",
-            init_label="+000.0000 xX",
+            init_label=init_label,
             unit="A",
             color=self.color,
             label_align="right",
@@ -157,15 +162,11 @@ class KeysightPowerSupply(QGroupBox):
     def default_update_readout(self):
         """Register values for automatic updates."""
         for channel in self.channels:
-            tmp = [
-                f"CH{channel}_ENABLE",
-                f"CH{channel}_I_SET",
-                f"CH{channel}_V_SET",
-            ]
+            tmp = [f"CH{channel}_ENABLE", f"CH{channel}_I_OUT", f"CH{channel}_V_OUT"]
             if self.channel_widgets[channel - 1].set_voltage_option:
-                tmp.append(f"CH{channel}_V_OUT")
+                tmp.append(f"CH{channel}_V_SET")
             if self.channel_widgets[channel - 1].set_current_option:
-                tmp.append(f"CH{channel}_I_OUT")
+                tmp.append(f"CH{channel}_I_SET")
 
             for parameter in tmp:
                 self.app.add_auto_update_instrument_parameter(

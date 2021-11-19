@@ -71,10 +71,11 @@ class Keysight_36300(Instrument):
         for channel in self.chan_nums:
             self.add_parameter(
                 f"CH{channel}_ENABLE",
-                read_command="OUTPUT:STATE?",
-                set_command="OUTPUT:STATE {}",
-                dummy_return="ON",
+                read_command=f"OUTPUT:STATE? (@{channel})",
+                set_command=f"OUTPUT:STATE {{}},(@{channel})",
+                dummy_return="True",
             )
+            self.add_lookup(f"CH{channel}_ENABLE", {"True": "1", "False": "0"})
 
             self.add_parameter(
                 f"CH{channel}_V_SET",

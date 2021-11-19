@@ -36,7 +36,7 @@ def _create_parse_status(bitmask):
         if value is None:
             return None
         value = int(float(value))
-        return value & bitmask
+        return value & bitmask > 0
 
     return parse_status
 

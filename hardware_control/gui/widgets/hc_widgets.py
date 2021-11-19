@@ -703,16 +703,12 @@ class HCFixedLabel(HCMixin, QLabel):
         bold: bool = False,
         label_align: str = "center",
     ):
-        super().__init__(
-            app=app,
-            instrument=instrument,
-            parameter=parameter,
-        )
+        super().__init__(app=app, instrument=instrument, parameter=parameter)
 
         self.unit = unit
         self.use_prefix = use_prefix
 
-        self.setText(f"{init_label} {self.unit}")
+        super().setText(f"{init_label}")
 
         font = QFont()
         font.setPointSize(fontsize)
@@ -720,7 +716,7 @@ class HCFixedLabel(HCMixin, QLabel):
         self.setFont(font)
 
         fm = QFontMetrics(self.font())
-        self.setFixedWidth(fm.width(self.text()))
+        self.setFixedWidth(fm.width(init_label))
 
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         if color is not None:

@@ -54,6 +54,29 @@ class AdamBase(Instrument):
                 return
         except socket.timeout:
             self.online = False
+    
+    def query(self, command: str) -> None:
+        """Unique 'write' function for writing to Adam instruments."""
+        if self._dummy:
+            logger.debug(f"{self.name} sending query command {command}")
+            return
+
+        try:
+            self.device.sendto(
+                (command + self._termination).encode(self._encoding), self.addr
+            )
+            # check return code
+            indata, inaddr = self.device.recvfrom(self.buffer_length)
+            output = indata.decode("ascii")
+            if output == "?01\r":
+                logger.error("Adam: Last command invalid")
+                return
+            if output == ">\r":
+                return
+            output = output[1:-1]
+            return output
+        except socket.timeout:
+            self.online = False
 
     def try_connect(self) -> None:
         """Unique 'try_connect' function for using sockets with a different option (DGRAM instead of STREAM)."""
@@ -73,9 +96,10 @@ class AdamBase(Instrument):
                 self.device.settimeout(0.950)
                 self.device.connect(self.addr)
                 logger.debug(
-                    f"Opened socket connection to {self.ID} at"
+                    f"Opened socket connection to {self.name} at"
                     f" {self.ip_addr}:{self.port_no}"
                 )
+                self._online = True
             except Exception as e:
                 logger.error(f"During ADAM try_connect: {e}", exc_info=True)
                 self._online = False
