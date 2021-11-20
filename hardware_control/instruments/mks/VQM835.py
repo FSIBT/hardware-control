@@ -9,6 +9,7 @@ connection works over proprietary driver, with "tasks"
 """
 
 import logging
+import numpy as np
 
 from ...base import Instrument
 
@@ -41,6 +42,12 @@ class VQM835(Instrument):
         self.check_connection_commands = ["*IDN?"]
 
         self._termination = "\r"
+
+        # define the readout data type
+        self.dt16 = np.dtype(np.uint16)
+        self.dt16 = self.dt16.newbyteorder("<")
+        self.dt32 = np.dtype(np.float32)
+        self.dt32 = self.dt32.newbyteorder("<")
 
         self.add_command("ENTRY_PLATE", "INST ENTR")
         self.add_command("FILAMENT", "INST FIL")
@@ -111,3 +118,26 @@ class VQM835(Instrument):
         self.add_command("CLEAR_OFF", "INST MSP\rOUTP OFF\rSYST:ERR:ALL?")
 
         logger.warning("The VQM835 driver class is still under development.")
+
+    def read_binary_chunk(self, nr_data, spaces):
+        L = int(nr_data.decode("ascii"))
+        nr = int(self.device.read_bytes(L).decode("ascii"))
+        space = self.device.read_bytes(spaces)
+        assert space == b" " * spaces
+        data = self.device.read_bytes(nr)
+        return data
+
+    def read_binary_data(self):
+        tmp = []
+        for nr_bytes, nr_spaces in [(845, 2), (314, 2), (443, 1)]:
+            data = self.device.read_bytes(nr_bytes)
+            data = self.read_binary_chunk(data[-1:], nr_spaces)
+            tmp.append(data)
+        # read rest
+        data = self.device.read_raw()
+        assert data.endswith(b")))\r")
+
+        noise = np.frombuffer(tmp[0], dtype=self.dt16, count=len(tmp[0]) // 2)
+        counts = np.frombuffer(tmp[1], dtype=self.dt16, count=len(tmp[1]) // 2)
+        amu = np.frombuffer(tmp[2], dtype=self.dt32, count=len(tmp[2]) // 4)
+        return noise, counts, amu
