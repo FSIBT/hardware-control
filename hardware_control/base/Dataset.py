@@ -232,13 +232,7 @@ class Dataset(QObject):
                         f"# Logfile from hardware_control run\n"
                     )
 
-                    datastructure = "Time[s] "
-                    datastructure += " ".join(
-                        [
-                            instrument_param_tuple[1]
-                            for instrument_param_tuple in self.instruments
-                        ]
-                    )
+                    datastructure = self.header_get_instruments()
 
                     outfile.write(f"{datastructure}\n")
 
@@ -259,6 +253,24 @@ class Dataset(QObject):
 
                 # Move pointer to next line
                 self.autosave_next_row += 1
+
+    def header_get_instruments(self)->str:
+        """Create a string of all values used in the dataset.
+        
+        Use the channel alias if available.
+        """
+        names = []
+        
+        for instrument, parameter in self.instruments:
+            name = f"{instrument}:{parameter}"
+            if name in self.channel_names:
+                names.append(self.channel_names[name])
+            else:
+                names.append(parameter)
+        
+        result = "Time[s] "
+        result += " ".join(names)
+        return result
 
     def save_json(self, filename: Path) -> None:
         """Save data as a json file."""
