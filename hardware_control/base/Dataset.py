@@ -254,20 +254,20 @@ class Dataset(QObject):
                 # Move pointer to next line
                 self.autosave_next_row += 1
 
-    def header_get_instruments(self)->str:
+    def header_get_instruments(self) -> str:
         """Create a string of all values used in the dataset.
-        
+
         Use the channel alias if available.
         """
         names = []
-        
+
         for instrument, parameter in self.instruments:
             name = f"{instrument}:{parameter}"
             if name in self.channel_names:
                 names.append(self.channel_names[name])
             else:
                 names.append(parameter)
-        
+
         result = "Time[s] "
         result += " ".join(names)
         return result
