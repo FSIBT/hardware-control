@@ -21,6 +21,8 @@ Example
 import logging
 from typing import Optional, List, Dict, Callable
 
+from PyQt5.QtCore import QObject, QTimer
+
 logger = logging.getLogger(__name__)
 
 
@@ -193,3 +195,103 @@ def range_validator(min_val: float, max_val: float):
         return max(min(value, max_val), min_val)
 
     return validator
+
+
+class Ramp(QObject):
+    """Ramp a setting up and down via a timer.
+
+    This can be useful for, e.g., high voltage power supplies that do
+    not support ramping.
+
+    The class can be used as a hook. If there are several hooks, this
+    should be the first one, so that the ramp units are all in the
+    same units as on the UI, e.g. before any scaling happens.
+
+    """
+
+    def __init__(
+        self,
+        app,
+        instrument: str,
+        paramaeter: str,
+        ramp_speed: int,
+        timer_step: int = 500,
+        min_value: float = 0,
+        epsilon: float = 1e-4,
+    ):
+        """Define the ramp parameters.
+
+        Parameters
+        ----------
+        app
+            The m ain app.
+        instrument
+            The instrument name
+        parameter
+            The instrument parameter
+        ramp_speed
+            The change in the parameter (in UI units) per second.
+        timer_step
+            The time between steps, in ms. (default 500 ms)
+        min_value
+            Only scan when we are above this value
+        epsilon
+            Stop when we are within epsilon of target value
+
+        """
+        self.app = app
+        self.instrument = instrument
+        self.parameter = paramaeter
+
+        self.ramp_speed = ramp_speed
+        self.timer_step = timer_step  # in ms
+        self.min_value = min_value
+        self.epsilon = epsilon
+
+        self.target_value = 0
+        self.current_value = 0
+        self.next_value = 0
+
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.do_step)
+
+    def do_step(self):
+
+        value = self.app.get_instrument_parameter(self.instrument, self.parameter)
+
+        # adjust current value (e.g. if instrument already on when starting the program
+        if abs(self.current_value - value) > self.epsilon:
+            self.current_value = value
+
+        # calc next value
+        delta = self.ramp_speed * (self.timer_step / 1000)
+
+        if self.target > self.current_value:
+            self.next_value = self.current_value + delta
+        else:
+            self.next_value = self.current_value + delta
+
+        if self.next_value < self.min_value:
+            self.next_value = self.min_value
+
+        # if we a re close just go directly to the target value and stop the timer
+        if (abs(value - self.target) < self.epsilon) or (
+            abs(self.next_value - self.target) < self.epsilon
+        ):
+            self.next_value = self.target
+            self.timer.stop()
+
+        self.app.set_instrument_parameter(
+            self.instrument, self.parameter, self.next_value, priority=2
+        )
+        self.current_value = self.next_value
+
+    def __call__(self, value):
+        # if we get the next value in the ramp, just pass it through
+        value = float(value)
+        if abs(value - self.current_value) < self.epsilon:
+            return f"{value}"
+        else:
+            # start a new ramp cycle
+            self.target = value
+            self.timer.start(self.timer_step)

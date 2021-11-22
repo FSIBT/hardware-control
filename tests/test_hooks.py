@@ -2,7 +2,7 @@
 import hardware_control as hc
 
 
-class TestHooks:
+class TestSimpleHooks:
     def test_call_hooks(self):
         """check that the call_hooks works as expected"""
 
@@ -132,3 +132,54 @@ class TestHooks:
         assert func("5") == 5.0
         assert func("10") == 10.0
         assert func("11") == 10.0
+
+
+class MockApp:
+    def __init__(self):
+        self.data = [0]
+
+    def get_instrument_parameter(self, inst, parameter):
+        return self.data[-1]
+
+    def set_instrument_parameter(self, inst, parameter, value, priority=2):
+        self.data.append(value)
+
+
+class MockConnection:
+    def __init__(self):
+        self.func = None
+
+    def connect(self, func):
+        self.func = func
+
+
+class MockTimer:
+    def __init__(self):
+        self.timeout = MockConnection()
+
+    def start(self, dt=1):
+        for i in range(5):
+            self.timeout.func()
+
+    def stop(self):
+        pass
+
+
+class TestRampHook:
+    def test_steps_and_min_value(self):
+        app = MockApp()
+        ramp = hc.hooks.Ramp(
+            app,
+            "instrument_dummy",
+            "parameter_dummy",
+            ramp_speed=1,
+            timer_step=1000,
+            min_value=10,
+            epsilon=1,
+        )
+
+        ramp.timer = MockTimer()
+        ramp.timer.timeout.connect(ramp.do_step)
+
+        ramp(20)
+        assert app.data == [0, 10, 11, 12, 13, 14]
