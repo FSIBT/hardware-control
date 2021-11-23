@@ -154,10 +154,7 @@ class HCMixin:
             self.label.hide()
             self.hide()
 
-    def add_widget_hook(
-        self,
-        function: Callable[[Any], Any],
-    ):
+    def add_widget_hook(self, function: Callable[[Any], Any]):
         """Add a hook function to be called when a value in a widgets gets updated from app._data."""
 
         self.widget_hooks.append(function)
@@ -181,9 +178,7 @@ class HCMixin:
             return
 
         value = self.app.get_instrument_parameter(
-            self.instrument,
-            self.parameter,
-            return_set_value=self.return_set_value,
+            self.instrument, self.parameter, return_set_value=self.return_set_value
         )
         value = call_hooks(self.widget_hooks, value)
 
@@ -307,12 +302,7 @@ class HCDoubleSpinBox(HCMixin, QDoubleSpinBox):
     """
 
     def __init__(
-        self,
-        app,
-        instrument: str,
-        parameter: str,
-        label: str,
-        label_align="left",
+        self, app, instrument: str, parameter: str, label: str, label_align="left"
     ):
         super().__init__(
             app=app,
@@ -468,10 +458,7 @@ class HCOnOffIndicator(HCMixin, QLabel):
         tooltip: str = "",
     ):
         super().__init__(
-            app=app,
-            instrument=instrument,
-            parameter=parameter,
-            text=label,
+            app=app, instrument=instrument, parameter=parameter, text=label
         )
 
         self.label = QLabel(label)

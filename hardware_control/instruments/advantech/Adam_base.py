@@ -54,7 +54,7 @@ class AdamBase(Instrument):
                 return
         except socket.timeout:
             self.online = False
-    
+
     def query(self, command: str) -> None:
         """Unique 'write' function for writing to Adam instruments."""
         if self._dummy:
