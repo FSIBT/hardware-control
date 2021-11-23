@@ -213,8 +213,9 @@ class Ramp(QObject):
         self,
         app,
         instrument: str,
-        paramaeter: str,
+        set_parameter: str,
         ramp_speed: int,
+        read_parameter: str = "",
         timer_step: int = 500,
         min_value: float = 0,
         epsilon: float = 1e-4,
@@ -224,13 +225,15 @@ class Ramp(QObject):
         Parameters
         ----------
         app
-            The m ain app.
+            The main app.
         instrument
             The instrument name
-        parameter
-            The instrument parameter
+        set_parameter
+            The instrument parameter for setting the voltage
         ramp_speed
             The change in the parameter (in UI units) per second.
+        read_parameter
+            The instrument parameter to reading the current voltage (if empty, then set_parameter will be used)
         timer_step
             The time between steps, in ms. (default 500 ms)
         min_value
@@ -239,9 +242,11 @@ class Ramp(QObject):
             Stop when we are within epsilon of target value
 
         """
+        super().__init__()
         self.app = app
         self.instrument = instrument
-        self.parameter = paramaeter
+        self.set_parameter = set_parameter
+        self.read_parameter = read_parameter or set_parameter
 
         self.ramp_speed = ramp_speed
         self.timer_step = timer_step  # in ms
@@ -252,16 +257,13 @@ class Ramp(QObject):
         self.current_value = 0
         self.next_value = 0
 
-        self.timer = QTimer()
+        self.timer = QTimer(self)
         self.timer.timeout.connect(self.do_step)
 
     def do_step(self):
-
-        value = self.app.get_instrument_parameter(self.instrument, self.parameter)
-
-        # adjust current value (e.g. if instrument already on when starting the program
-        if abs(self.current_value - value) > self.epsilon:
-            self.current_value = value
+        value = float(
+            self.app.get_instrument_parameter(self.instrument, self.read_parameter)
+        )
 
         # calc next value
         delta = self.ramp_speed * (self.timer_step / 1000)
@@ -269,29 +271,37 @@ class Ramp(QObject):
         if self.target > self.current_value:
             self.next_value = self.current_value + delta
         else:
-            self.next_value = self.current_value + delta
+            self.next_value = self.current_value - delta
 
         if self.next_value < self.min_value:
             self.next_value = self.min_value
 
-        # if we a re close just go directly to the target value and stop the timer
-        if (abs(value - self.target) < self.epsilon) or (
-            abs(self.next_value - self.target) < self.epsilon
-        ):
+        # if we are close just go directly to the target value and stop the timer
+        if abs(self.next_value - self.target) < self.epsilon + delta:
             self.next_value = self.target
             self.timer.stop()
 
         self.app.set_instrument_parameter(
-            self.instrument, self.parameter, self.next_value, priority=2
+            self.instrument, self.set_parameter, self.next_value, priority=2
         )
         self.current_value = self.next_value
 
     def __call__(self, value):
-        # if we get the next value in the ramp, just pass it through
         value = float(value)
-        if abs(value - self.current_value) < self.epsilon:
+        # if we get the next value in the ramp, just pass it through or next value is smaller than the min value
+        if (value < self.min_value + self.epsilon) or (
+            abs(value - self.next_value) < self.epsilon
+        ):
             return f"{value}"
         else:
             # start a new ramp cycle
             self.target = value
             self.timer.start(self.timer_step)
+            # adjust current value (e.g. if instrument already on when starting the program)
+            if abs(self.current_value - value) > self.epsilon:
+                read_value = float(
+                    self.app.get_instrument_parameter(
+                        self.instrument, self.read_parameter
+                    )
+                )
+                self.current_value = read_value
