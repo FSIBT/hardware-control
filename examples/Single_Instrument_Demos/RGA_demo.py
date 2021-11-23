@@ -38,10 +38,10 @@ class RGA_CIS(hc.HCMainWindow):
         self.main_widget = QWidget(self)
 
         # Create an SRS_CIS200 instrument backend and add it to the app
-        self.app.add_instrument(hc.instruments.SRS_CIS200("CIS200", ""))
+        self.app.add_instrument(hc.instruments.SRS_CIS200("CIS200", "192.168.0.3:5025"))
 
         # Create an RGA GUI control that connects to the instrument backend
-        self.rga_wdgt = hc.gui.RGA(self.app, instrument="CIS200")
+        self.rga_wdgt = hc.gui.RGA(self.app, "CIS200")
 
         # # Create data_sets
         # self.app.data_sets["Temps"] = hc.Dataset("Temps", self.app)
