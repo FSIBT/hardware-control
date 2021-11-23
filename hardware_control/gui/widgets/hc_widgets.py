@@ -282,6 +282,13 @@ class HCLineEdit(HCMixin, QLineEdit):
         self.editingFinished.connect(self.value_change)
 
     def value_change(self) -> None:
+        # https://forum.qt.io/topic/105335/qlineedit-editingfinished-called-twice-if-press-enter-key-actual-bug/8
+        # Ignore second signal.
+        # seems to be fixed in newer version, so we might be able to remove this eventually
+        if not self.isModified():
+            return
+        self.setModified(False)
+
         value = self.text()
         self.app.set_instrument_parameter(self.instrument, self.parameter, value)
 
