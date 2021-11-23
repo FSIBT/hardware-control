@@ -1,6 +1,5 @@
-Flow controllers
+Flow Controllers
 ================
-
 
 hardware_control.gui.controls.FlowController module
 ---------------------------------------------------

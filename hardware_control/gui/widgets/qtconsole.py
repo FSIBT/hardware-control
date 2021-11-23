@@ -1,9 +1,15 @@
+"""
+    .. image:: /images/widgets/qtconsole.png
+"""
+
 import numpy as np
 from qtconsole.rich_jupyter_widget import RichJupyterWidget
 from qtconsole.inprocess import QtInProcessKernelManager
 
 
 class Qtconsole(RichJupyterWidget):
+    """A python interface that allows for interaction with the main app."""
+
     def __init__(self, app, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.kernel_manager = QtInProcessKernelManager()
@@ -32,8 +38,7 @@ class Qtconsole(RichJupyterWidget):
         app.call_instrument_command(<inst>, <command>)
 
         Note: some commands fail with a logging.error message and will
-        just return, which can result in unexpected behavior here.
-
+        just return, which can result in unexpected behavior.
         """
         self.kernel.gui = "qt"
         self.kernel.shell.push({"np": np, "app": app})

@@ -1,3 +1,6 @@
+"""
+    .. image:: /images/controls/RGA.png
+"""
 import logging
 
 from PyQt5.QtGui import QIcon, QIntValidator
@@ -20,19 +23,15 @@ logger = logging.getLogger(__name__)
 
 
 class RGA(QGroupBox):
-    """A GUI for Residual Gas Analyzer.
+    """A control program for residual gas analyzers (RGAs).
 
-    This implements all front panel functions of a SRS CIS200 and has
+    This implements all front panel functions of a SRS CIS200 and
     also has some elements that are probably unique to this
     instrument.
-
-    .. image:: /images/controls/DelayGenerator.png
-      :height: 200
 
     See Also
     --------
     hardware_control.instruments.srs.CIS200
-
     """
 
     def __init__(
@@ -98,8 +97,6 @@ class RGA(QGroupBox):
         self.bias.setMinimum(0)
         self.bias.setMaximum(2490)
 
-        self.channel_box.setLayout(self.channel_box_layout)
-
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.filament_emission.label, 0, 0)
         self.master_layout.addWidget(self.filament_emission, 0, 1)
@@ -116,10 +113,10 @@ class RGA(QGroupBox):
 
         self.setLayout(self.master_layout)
 
-        self.config_auto_update()
+        self.config_update_readout()
 
     def config_update_readout(self):
-        """Queries the instrument for current readout data."""
+        """Query the instrument for current readout data."""
 
         for parameter in [
             "FILAMENT_EMISSION",

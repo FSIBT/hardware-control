@@ -1,6 +1,5 @@
-Widget utility functions
+Widget Utility Functions
 ========================
-
 
 hardware_control.gui.widgets.hc_widgets module
 ----------------------------------------------
@@ -9,4 +8,3 @@ hardware_control.gui.widgets.hc_widgets module
    :members:
    :undoc-members:
    :show-inheritance:
-

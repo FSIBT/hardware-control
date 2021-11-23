@@ -1,7 +1,6 @@
 Oscilloscopes
 =============
 
-
 hardware_control.gui.controls.Oscilloscope module
 -------------------------------------------------
 

@@ -1,6 +1,6 @@
 """
-This is the Base class for reading modules
-it provides a simple UI.
+    .. image:: /images/controls/IOModule.png
+      :height: 350
 """
 import json
 import logging
@@ -25,13 +25,42 @@ DISP_DECIMAL_PLACES = 1
 
 
 class IOModule(QGroupBox):
-    """A GUI for generic Input/Output(IO) module.
+    """A GUI for a generic Input/Output (IO) module.
 
     See Also
     --------
     hardware_control.instruments.advantech.Adam_6015
     hardware_control.instruments.advantech.Adam_6024
     hardware_control.instruments.ni.Ni_9000
+
+    Parameters
+    ----------
+    app : hardware_control.App
+        The main app instance
+    instrument : hardware_control.base.Instrument
+        The instrument that will be controlled by the control module
+    channel_data : dict or json-file
+        A dictionary that contains data for each channel used (see example below)
+    num_columns : integer
+    show_ID_labels : bool
+
+    Example
+    -------
+    .. code-block:: python
+
+        channel_data =  {
+            "extraction_voltage_out": {
+                "DIR": "OUTPUT",
+                "TYPE": "ANALOG",
+                "ID_STR": "Mod7/ao4",
+                "LABEL": "Extraction Voltage (set)",
+                "UNITS": "V",
+                "OPTIONS": {
+                    "CHX_V_MAX": "10",
+                    "CHX_V_MIN": "-10"
+                }
+            },
+        }
 
     """
 
@@ -44,36 +73,6 @@ class IOModule(QGroupBox):
         num_columns: int = 1,
         show_ID_labels=False,
     ):
-        """Initialize the IOModule.
-
-        Parameters
-        ----------
-        app : hardware_control.App
-            The main app instance
-        instrument : hardware_control.base.Instrument
-            An instrument that will be controlled using this instrument
-        channel_data : dict or json-file
-            A dictionary that contains that contains data for each channel used (see example below)
-        num_columns : integer
-        show_ID_labels : bool
-
-        Example
-        -------
-            channel_data =  {
-                    "extraction_voltage_out": {
-                        "DIR": "OUTPUT",
-                        "TYPE": "Analog",
-                        "ID_STR": "Mod7/ao4",
-                        "LABEL": "Extraction Voltage (set):",
-                        "UNITS": "V",
-                        "OPTIONS": {
-                             "CHX_V_MAX": "10",
-                             "CHX_V_MIN": "-10"
-                        }
-                     },
-                }
-        """
-
         super().__init__(name)
 
         self.app = app
@@ -179,10 +178,7 @@ class IOModule(QGroupBox):
         self.readout_timer.start(self.app.globalRefreshRate)
 
     def read_channel_data(self, channel_data):
-        """
-        Sets the channel parameters from a JSON file or a dictionary.
-        """
-
+        """Set the channel parameters from a JSON file or a dictionary."""
         self.channel_data = channel_data
         if isinstance(self.channel_data, str) or isinstance(self.channel_data, Path):
             with open(self.channel_data) as file:
@@ -205,6 +201,7 @@ class IOModule(QGroupBox):
         return True
 
     def update_readout(self) -> None:
+        """Update parameter readouts with values from the instrument."""
         for channel in self.channel_names:
             if "/ai" in channel:
                 self.app.update_instrument_parameter(
@@ -326,6 +323,7 @@ class DigitalInputChannel(QGroupBox):
         self.app.add_widget(self.instrument_name, f"CH{self.channel}_DIGITAL", self)
 
     def hc_update(self):
+        """Update parameter readout in the channel widget."""
         try:
             # Query value
             truth_val = self.app.get_instrument_parameter(

@@ -1,5 +1,5 @@
-Function runner class
-=====================
+Function Runner
+===============
 
 
 hardware_control.gui.widgets.function_runner module
@@ -9,4 +9,3 @@ hardware_control.gui.widgets.function_runner module
    :members:
    :undoc-members:
    :show-inheritance:
-

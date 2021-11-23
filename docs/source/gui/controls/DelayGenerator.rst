@@ -1,6 +1,5 @@
-Delay generators
+Delay Generators
 ================
-
 
 hardware_control.gui.controls.DelayGenerator module
 ---------------------------------------------------
@@ -9,4 +8,3 @@ hardware_control.gui.controls.DelayGenerator module
    :members:
    :undoc-members:
    :show-inheritance:
-

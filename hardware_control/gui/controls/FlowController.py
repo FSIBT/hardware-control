@@ -1,3 +1,7 @@
+"""
+    .. image:: /images/controls/FlowController.png
+      :height: 150
+"""
 import logging
 
 from PyQt5.QtWidgets import QGroupBox
@@ -8,18 +12,14 @@ logger = logging.getLogger(__name__)
 
 
 class FlowController(QGroupBox):
-    """A GUI for a gas flow controller.
+    """A GUI for gas flow controllers.
 
-    Implements setting the gas flow and the type of gas used. As well
-    as reading out the current flow and pressure at the flow meter.
-
-    .. image:: /images/controls/FlowController.png
-      :height: 200
+    Implements setting the gas flow and the type of gas used. The GUI also reads
+    out the current flow and pressure at the flow meter.
 
     See Also
     --------
     hardware_control.instruments.alicat.Alicat_M_Series.Alicat_M_Series
-
     """
 
     def __init__(
@@ -72,7 +72,7 @@ class FlowController(QGroupBox):
         self.config_auto_update()
 
     def config_auto_update(self):
-        """Queries the instrument for current readout data."""
+        """Query the instrument for current readout data."""
 
         for parameter in ["RATE", "PRESSURE"]:
             self.app.add_auto_update_instrument_parameter(self.instrument, parameter)

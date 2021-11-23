@@ -1,3 +1,6 @@
+"""
+    .. image:: /images/widgets/plot.png
+"""
 import logging
 
 from PyQt5.QtCore import QTimer
@@ -32,7 +35,7 @@ class PlotBase(QWidget):
         name: str = "",
         width: int = 500,
         height: int = 500,
-        active: bool = True,
+        active_update: bool = True,
         time_zone: str = "America/Los_Angeles",
         dpi: int = 100,
     ):
@@ -40,7 +43,7 @@ class PlotBase(QWidget):
 
         self.app = app
         self.name = name
-        self.active = active
+        self.active_update = active_update
         self.time_zone = time_zone
         self.dpi = dpi
 
@@ -59,23 +62,23 @@ class PlotBase(QWidget):
         # Create timer to query instruments
         self.update_timer = QTimer(self)
         self.update_timer.timeout.connect(self.update)
-        if self.active:
+        if self.active_update:
             self.update_timer.start(self.app.globalRefreshRate)
 
-    def set_dataset(self, set_name: str):
-        """Specifies which dataset the widget should display
+    def set_dataset(self, dataset_name: str):
+        """Specify which dataset the widget should display.
 
         Parameters
         ----------
-        set_name : str
-            Name of dataset in hc.App to display
+        dataset_name : str
+            Name of dataset to display
         """
-        self.plot_set = set_name
+        self.plot_set = dataset_name
 
         self.axes.clear()
 
     def toggle_autoscale(self):
-        """Toggles the autoscale function.
+        """Toggle the autoscale function.
 
         The autoscale function will automatically adjust the axes to fit the
         data. This function toggles the autoscale function on and off.
@@ -83,7 +86,7 @@ class PlotBase(QWidget):
         self.autoscale = not self.autoscale
 
     def toggle_normalize(self):
-        """Toggles the normalize function.
+        """Toggle the normalize function.
 
         The normalize function will automatically normalize the displayed data to
         have a maximum value of 1. This allows parameters of greatly different
@@ -95,18 +98,18 @@ class PlotBase(QWidget):
     def update(self):
         """Update the plot with new data.
 
-        handels autoscale and normalize and plots the data.
+        Handles autoscaling, normalizaiton, and data plotting.
 
         Should be called via super() from the class that inherits from
-        hc.PlotBase. self.plot.draw() also needs to be called.
+        PlotBase. self.plot.draw() also needs to be called.
         """
 
         # Return if nothing set
         if self.plot_set is None:
-            logger.error(f"No data set given in {self.name}.")
+            logger.error(f"No dataset given in {self.name}.")
             return
 
-        # Check that set exists
+        # Check that the dataset exists
         if self.plot_set not in self.app.data_sets:
             logger.error(f"Unkown data set {self.plot_set} in {self.name}.")
             return
@@ -157,10 +160,7 @@ class PlotBase(QWidget):
 
 
 class PlotTool(PlotBase):
-    """A single matplotlib figure.
-
-    with a normalize and autoscale button.
-    """
+    """A single matplotlib figure with normalize and autoscale buttons."""
 
     def __init__(self, app, name="Plot Tool", **kwargs):
         super().__init__(app, name=name, **kwargs)
@@ -202,35 +202,31 @@ class PlotTool(PlotBase):
         self.setLayout(self.vbox)
 
     def selector_changed(self):
-        """Automatically call this function when the dataset dropdown is changed.
+        """Update the dataset to plot using the current dataset in the dropdown.
 
-        This function updates the dataset to plot using the current value of the
-        dropdown widget.
+        This function is called automatically when the dataset dropdown is changed.
         """
-
         current_text = self.select_set_drop.currentText()
 
         if current_text is not None:
             super().set_dataset(current_text)
 
-    def set_dataset(self, set_name: str):
-        """Sets the dataset in hc.App to plot.
+    def set_dataset(self, dataset_name: str):
+        """Specify which dataset the widget should display.
 
         Parameters
         ----------
-        set_name : str
+        dataset_name : str
             Name of set in hc.App to plot
         """
-
-        super().set_dataset(set_name)
+        super().set_dataset(dataset_name)
 
         self.select_set_drop.clear()
         self.select_set_drop.addItems([x for x in self.app.data_sets])
-        self.select_set_drop.setCurrentText(set_name)
+        self.select_set_drop.setCurrentText(dataset_name)
 
     def update(self):
-        """Updates the plot widget with the most recent data."""
-
+        """Update the plot widget with the most recent data."""
         super().update()
 
         self.axes.set_xlabel("Time (s)")
@@ -243,11 +239,10 @@ class PlotTool(PlotBase):
 
 
 class MiniPlotTool(PlotBase):
-    """A minimized matplotlib figure.
+    """A no-frills matplotlib figure.
 
-    No axes, no lables, just the data in a small window that can be
-    included in a status bar for example.
-
+    These objects contain neither axes nor labels. They merely consist of a
+    small window that can be included, for example, in a status bar.
     """
 
     def __init__(self, app, name="Mini Plot", width=100, height=100, **kwargs):
@@ -267,7 +262,7 @@ class MiniPlotTool(PlotBase):
         self.setLayout(self.vbox)
 
     def update(self):
-        """Updates the plot widget with the most recent data."""
+        """Update the plot widget with the most recent data."""
         super().update()
 
         self.axes.axis("off")

@@ -1,3 +1,6 @@
+"""
+    .. image:: /images/controls/TempMonitor.png
+"""
 import logging
 
 from PyQt5.QtWidgets import QGroupBox
@@ -9,9 +12,20 @@ logger = logging.getLogger(__name__)
 
 class TempMonitor(QGroupBox):
     """
-    A GUI for Lakeshore Temperature Monitor.
+    A control program for temperature monitors.
 
-    It only includes channels listed in `channel_list`.
+    Parameters
+    ----------
+    app : hardware_control.App
+        The main app instance
+    instrument_name: str
+        The name of the temperature monitor instrument
+    channels : list
+        A list of channels to be shown in the control program
+
+    See Also
+    --------
+    hardware_control.instruments.lakeshore.Lakeshore224
     """
 
     def __init__(

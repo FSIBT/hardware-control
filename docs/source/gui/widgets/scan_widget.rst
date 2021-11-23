@@ -1,6 +1,5 @@
-Scan class
-==========
-
+Scan Widget
+===========
 
 hardware_control.gui.widgets.scan_widget module
 -----------------------------------------------

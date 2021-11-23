@@ -1,3 +1,6 @@
+"""
+    .. image:: /images/controls/Oscilloscope.png
+"""
 import json
 import logging
 import pyqtgraph as pg
@@ -25,22 +28,26 @@ logger = logging.getLogger(__name__)
 
 
 class Oscilloscope(QGroupBox):
-    """A GUI for an Oscilloscope,
-
-    Can be configured to only show certain channels and their controls.
+    """A control program for an oscilloscope.
 
     Parameters
     ----------
-    app
-       The main App instance
-    instrument_name
-       The name used to address the oscilloscope
-    widget_name
-       Name used in QGroupBox, defaults to Oscilloscope
-    channels
-       A list of channel number
-    instrument_type
-       Either "keysight", "rigol", or "picoscope". Default is "keysight".
+    app : hardware_control.App
+       The main app instance
+    instrument_name : str
+        The name of the oscilloscope instrument
+    widget_name : str
+       Name shown in the control program; default is 'Oscilloscope'
+    channels : list
+       A list of instrument channel numbers to be shown
+    instrument_type : str
+       Either 'keysight', 'rigol', or 'picoscope'; default is 'keysight'
+
+    See Also
+    --------
+    hardware_control.instruments.keysight.Keysight_4000X
+    hardware_control.instruments.rigol.Rigol_DS1000Z
+    hardware_control.instruments.picotech.Picotech_6000
     """
 
     def __init__(
@@ -102,7 +109,7 @@ class Oscilloscope(QGroupBox):
                     )
 
     def default_update_readout(self) -> None:
-        """Register certain parameterts to be automatically udpated every second."""
+        """Register certain parameterts to be automatically udpated."""
 
         update = [
             "TIMEBASE",
@@ -136,6 +143,8 @@ class Oscilloscope(QGroupBox):
 
 
 class OscilloscopeChannelWidget(QWidget):
+    """A Qt-widget that implements controls for a single channel of an oscilloscope."""
+
     def __init__(
         self,
         app,
@@ -255,6 +264,8 @@ class OscilloscopeChannelWidget(QWidget):
 
 
 class OscilloscopeTriggerWidget(QGroupBox):
+    """A group of widgets that control parameters relating to oscilloscope triggering."""
+
     def __init__(self, app, instrument_name, instrument_type):
         super().__init__()
 
@@ -328,6 +339,8 @@ class OscilloscopeTriggerWidget(QGroupBox):
 
 
 class OscilloscopeHorizontalWidget(QGroupBox):
+    """A group of widgets that control parameters relating to the oscilloscope signal display."""
+
     def __init__(self, app, instrument_name):
         super().__init__()
 
@@ -383,24 +396,14 @@ class OscilloscopeHorizontalWidget(QGroupBox):
 
 
 class OscilloscopeDisplayWidget(QGroupBox):
-    """Creates a widget that displays a plot that can automatically refresh
-    from oscilloscope data.
-
-    Has three display refresh modes: Timer, Manual, and Single Trigger. Timer mode
-    automatically refreshes every few seconds (specified in refresh rate text edit).
-    Single Trigger mode refreshes every time a single trigger is sent to the
-    oscilloscope (to make this work, the OscilloscopeDisplayWidget instance must
-    be passed to the OscilloscopeTriggerWidget instance it should be connected to).
-    Manual mode never refreshes automatically, it depends on the refresh button
-    to update. The refresh button will immediately refresh the display, regardless
-    of display mode.
+    """A group of widgets that displays a constantly refreshing plot of the oscilloscope output.
 
     Parameters
     ----------
-    instrument
-        hc.base.instrument instance to connect display to.
+    instrument : hc.base.instrument
+        Instance to connect display to.
     display_name
-        Oscilloscope Display Widget name
+        Display widget name shown in the control program; default is 'Oscilloscope Display'
     channels : list
         channels to display (starting with 0)
     """
@@ -419,7 +422,6 @@ class OscilloscopeDisplayWidget(QGroupBox):
         self.instrument = instrument_name
         self.channels = channels
 
-        # ************** DEFINE UI *********************#
         self.display = pg.PlotWidget()
         self.display.show()
 
@@ -484,17 +486,16 @@ class OscilloscopeDisplayWidget(QGroupBox):
                 self.instrument,
                 f"CH{ch}_WAVEFORM",
                 "post_read_hooks",
-                self.make_update_waveform_func(ch),
+                lambda x: self.load_waveform(channel, x),
             )
 
     def updateViews(self):
+        """Update display with most recent trace."""
         self.p2.setGeometry(self.p1.vb.sceneBoundingRect())
         self.p2.linkedViewChanged(self.p1.vb, self.p2.XAxis)
 
-    def make_update_waveform_func(self, channel):
-        return lambda x: self.update_waveform(channel, x)
-
-    def update_waveform(self, channel, trace_string):
+    def load_waveform(self, channel, trace_string):
+        """Load waveform from the instrument."""
         if trace_string is None:
             logger.warning(
                 f"Scope {self.instrument}: no trace data available for channel {channel}"

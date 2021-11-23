@@ -1,3 +1,8 @@
+"""
+    .. image:: /images/widgets/data_widget.png
+      :height: 490
+      :width: 700
+"""
 import logging
 from os import getcwd
 from pathlib import Path
@@ -31,7 +36,6 @@ class DataWidget(QWidget):
 
     Also includes a button to clear all data from the selected dataset
     and option to save the dataset.
-
     """
 
     def __init__(
@@ -97,6 +101,7 @@ class DataWidget(QWidget):
         self.update_table_timer.start(1000)
 
     def save_data(self):
+        """Save the current dataset to a .json, .pickle, .npy, or .txt file."""
         # File options
         file_filter = "JSON File (*.json);; Pickle File (*.pickle);; NPY File (*.npy);; Text File (*.txt)"
 
@@ -113,6 +118,7 @@ class DataWidget(QWidget):
         self.app.data_sets[self.current_dataset].save(Path(savefile), file_extension)
 
     def erase_dataset_data(self):
+        """Clear all data in the dataset that is currently being viewed."""
         ds_name = self.current_dataset
 
         msg = QMessageBox()
@@ -135,6 +141,7 @@ class DataWidget(QWidget):
         self.update_table()
 
     def set_current_dataset(self, dataset):
+        """Change which dataset is currently being viewed."""
         if dataset == "":
             return
 
@@ -149,6 +156,7 @@ class DataWidget(QWidget):
         self.table.resizeColumnsToContents()
 
     def update_table(self):
+        """Set up or update the current dataset data table."""
         dataset = self.app.data_sets[self.current_dataset]
 
         # Set correct number of columns
@@ -215,7 +223,6 @@ class DataWidget(QWidget):
 
     def update_dataset_chooser(self):
         """Updated the drop down menu with the list of all datasets."""
-
         self.dataset_chooser_drop.clear()
 
         names = list(self.app.data_sets.keys())

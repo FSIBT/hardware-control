@@ -1,6 +1,5 @@
-Plotting class
-==============
-
+Plot Widget
+===========
 
 hardware_control.gui.widgets.plot module
 ----------------------------------------
@@ -9,4 +8,3 @@ hardware_control.gui.widgets.plot module
    :members:
    :undoc-members:
    :show-inheritance:
-

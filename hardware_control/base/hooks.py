@@ -207,6 +207,25 @@ class Ramp(QObject):
     should be the first one, so that the ramp units are all in the
     same units as on the UI, e.g. before any scaling happens.
 
+    Parameters
+    ----------
+    app
+        The main app.
+    instrument
+        The instrument name
+    set_parameter
+        The instrument parameter for setting the voltage
+    ramp_speed
+        The change in the parameter (in UI units) per second.
+    read_parameter
+        The instrument parameter to reading the current voltage (if empty, then set_parameter will be used)
+    timer_step
+        The time between steps, in ms. (default 500 ms)
+    min_value
+        Only scan when we are above this value
+    epsilon
+        Stop when we are within epsilon of target value
+
     """
 
     def __init__(
@@ -220,28 +239,6 @@ class Ramp(QObject):
         min_value: float = 0,
         epsilon: float = 1e-4,
     ):
-        """Define the ramp parameters.
-
-        Parameters
-        ----------
-        app
-            The main app.
-        instrument
-            The instrument name
-        set_parameter
-            The instrument parameter for setting the voltage
-        ramp_speed
-            The change in the parameter (in UI units) per second.
-        read_parameter
-            The instrument parameter to reading the current voltage (if empty, then set_parameter will be used)
-        timer_step
-            The time between steps, in ms. (default 500 ms)
-        min_value
-            Only scan when we are above this value
-        epsilon
-            Stop when we are within epsilon of target value
-
-        """
         super().__init__()
         self.app = app
         self.instrument = instrument
@@ -261,6 +258,7 @@ class Ramp(QObject):
         self.timer.timeout.connect(self.do_step)
 
     def do_step(self):
+        """Execute one ramping step."""
         value = float(
             self.app.get_instrument_parameter(self.instrument, self.read_parameter)
         )

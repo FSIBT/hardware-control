@@ -1,9 +1,14 @@
+"""
+    .. image:: /images/controls/KeysightPowerSupply.png
+"""
 from typing import List
 from PyQt5.QtWidgets import QGroupBox, QVBoxLayout, QPushButton, QGridLayout
 from ..widgets import HCFixedLabel, HCLineEdit, HCOnOffButton, HCGridLayout
 
 
 class ChannelDisplay(QVBoxLayout):
+    """Widget for individual Keysight Power Supply channels."""
+
     def __init__(
         self,
         app,
@@ -25,7 +30,6 @@ class ChannelDisplay(QVBoxLayout):
             init_label = "+000.000000000 xX"
         else:
             init_label = "+000.0000 xX"
-
 
         self.on_off = HCOnOffButton(
             self.app,
@@ -86,7 +90,12 @@ class ChannelDisplay(QVBoxLayout):
 
 
 class KeysightPowerSupply(QGroupBox):
-    """Simple control program for a Keysight powersupply."""
+    """Control program for a Keysight Power Supply.
+
+    See Also
+    --------
+    hardware_control.instruments.keysight.Keysight_36300
+    """
 
     def __init__(
         self,
@@ -146,14 +155,14 @@ class KeysightPowerSupply(QGroupBox):
         self.default_update_readout()
 
     def enable_all(self):
-        """Enables all channels."""
+        """Enable all channels."""
         for channel in self.channels:
             self.app.set_instrument_parameter(
                 self.instrument, f"CH{channel}_ENABLE", True
             )
 
     def disable_all(self):
-        """Disables all channels."""
+        """Disable all channels."""
         for channel in self.channels:
             self.app.set_instrument_parameter(
                 self.instrument, f"CH{channel}_ENABLE", False

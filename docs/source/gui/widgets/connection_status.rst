@@ -1,6 +1,5 @@
-Connection status class
-=======================
-
+Connection Status
+=================
 
 hardware_control.gui.widgets.connection_status module
 -----------------------------------------------------
@@ -9,4 +8,3 @@ hardware_control.gui.widgets.connection_status module
    :members:
    :undoc-members:
    :show-inheritance:
-

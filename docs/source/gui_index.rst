@@ -1,4 +1,4 @@
-GUI elements
+GUI Elements
 ============
 
 Widgets that provide extra functionallity that we often use when
@@ -32,6 +32,8 @@ Controls provide a complete user interface for a certain type of instrument. One
    gui/controls/FlowController
    gui/controls/FunctionGenerator
    gui/controls/IOModule
+   gui/controls/KeysightPowerSupply
    gui/controls/Oscilloscope
-   gui/controls/PowerSupply
-
+   gui/controls/MultiPowerSupply
+   gui/controls/RGA
+   gui/controls/TempMonitor

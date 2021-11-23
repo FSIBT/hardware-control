@@ -1,8 +1,8 @@
-IO modules
+IO Modules
 ==========
 
-hardware_control.gui.controls.IOModule
---------------------------------------
+hardware_control.gui.controls.IOModule module
+---------------------------------------------
 
 .. automodule:: hardware_control.gui.controls.IOModule
    :members:

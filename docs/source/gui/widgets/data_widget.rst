@@ -1,5 +1,5 @@
-Data widget class
-=================
+Data Widget
+===========
 
 
 hardware_control.gui.widgets.data_widget module
@@ -9,4 +9,3 @@ hardware_control.gui.widgets.data_widget module
    :members:
    :undoc-members:
    :show-inheritance:
-

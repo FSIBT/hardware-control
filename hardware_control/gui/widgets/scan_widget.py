@@ -1,3 +1,8 @@
+"""
+    .. image:: /images/widgets/scan_widget.png
+      :height: 400
+"""
+
 import logging
 import time
 from typing import Callable, Optional, Dict
@@ -39,6 +44,8 @@ logger = logging.getLogger(__name__)
 
 
 class regressor:
+    """Object that contains the Gaussian process capability of the scan widget."""
+
     def __init__(self, x_prescans, y_prescans, stepsize):
         # Intialize GP regressor object with the prescan measurements
         self.x_measured = x_prescans
@@ -84,7 +91,9 @@ class regressor:
         self.std = None
 
     def neighbor_probability(self, potential_vals, found_vals, delta):
-        """For each element in potential_vals, return a value proportional to the number of nearby points in found_vals."""
+        """For each element in potential_vals, return a value proportional to the number of nearby points in found_vals.
+
+        Delta is the window that determines what is considered "nearby"."""
         found_vals = found_vals.flatten()  # points already measured
         potential_vals = potential_vals.flatten()  # points that could be measured
 
@@ -109,6 +118,7 @@ class regressor:
             return prob
 
     def next_query_val(self):
+        """Select the best point to measure next in a parameter scan."""
         # Get the predicted y values and standard deviations according to the current model
         ypred, std = self.model.predict((self.x_potential).reshape(-1, 1))
         # Form a normalized probability distribution out of the standard deviations
@@ -144,6 +154,7 @@ class regressor:
         self.x_measured = np.append(self.x_measured, x_query).reshape(-1, 1)
 
     def update_model(self, new_y_val):
+        """Update the Gaussian process kernel with newly measured data."""
         self.y_measured = np.append(self.y_measured, new_y_val).reshape(-1, 1)
 
         # Update training sets
@@ -180,6 +191,31 @@ class regressor:
 
 
 class ScanWidget(QGroupBox):
+    """
+    Widget that scans a number of instrument parameter values and makes a measurement at each one.
+
+    Parameters
+    ----------
+    app
+        The main app
+    name
+        The scan widget name that appears in the user interface
+    actions
+        A dictionary in which the values are functions to be called at each measured value
+    scan_parameters
+        The parameters that one can scan; if no parameters are specified, then all parameters
+        in the instrument will be considered scan parameters
+    GP_option
+        Option to use a Gaussian process scan or not
+    get_measured_values_fxn
+        Function that makes and returns a measurement at each parameter value
+    scan_cycle_fxn
+        Optional function that will be executed after each measurement
+        (i.e. once per measurement cycle)
+    finish_scan_fxn
+        Optional function that will be executed at the conclusion of the scan
+    """
+
     def __init__(
         self,
         app,
@@ -187,21 +223,10 @@ class ScanWidget(QGroupBox):
         actions: Dict,
         scan_parameters: Optional[Dict] = None,
         GP_option: bool = False,
-        get_measured_values_fxn: Optional[Callable] = None,
-        plot_scan_fxn: Optional[Callable] = None,
-        save_scan_fxn: Optional[Callable] = None,
+        get_measured_values_fxn: Callable = None,
+        scan_cycle_fxn: Optional[Callable] = None,
+        finish_scan_fxn: Optional[Callable] = None,
     ):
-        """
-        Parameters
-        ----------
-        app :
-            The main app
-        name : str
-            The name of the groupbox
-        actions : dict
-            A dictionary with names of the action as keys and function to call during the scan
-        """
-
         super().__init__(name)
 
         self.app = app
@@ -209,8 +234,8 @@ class ScanWidget(QGroupBox):
         self.actions = actions
         self.scan_parameters = scan_parameters
         self.get_measured_values = get_measured_values_fxn
-        self.plot_scan = plot_scan_fxn
-        self.save_scan = save_scan_fxn
+        self.scan_cycle_fxn = scan_cycle_fxn
+        self.finish_scan = finish_scan_fxn
 
         self.scan_instrument = None
         self.scan_parameter = None
@@ -465,7 +490,7 @@ class ScanWidget(QGroupBox):
         self.setLayout(self.master_layout)
 
         # Might need to call this again in the main app if instruments get defined after the scan widget
-        self.update_instruments()
+        self.update_scan_parameters()
 
         # Create timer to do scan
         self.scan_timer = QTimer(self)
@@ -512,15 +537,42 @@ class ScanWidget(QGroupBox):
         self.scan_parameter = self.parameter_drop.currentText()
 
     def set_list_values(self) -> None:
-        """Set scan values to the values inputted in the list field."""
+        """Set scan values to the values in the list field."""
         self.values = self.list_edit.text()
 
     def action_changed(self) -> None:
         """Change the action done at each scanned value."""
         self.scan_action = self.actions[self.action_drop.currentText()]
 
+    def new_scan(self):
+        "Set all parameters to initital scanning state and call start_scan."
+        self.count = 0
+        self.new_scan_time = ""
+        self.continue_scan = False
+        self.start_scan()
+
+    def start_scan(self):
+        "Enable stop scan button and call scanning function."
+        if self.scan_instrument is None:
+            logger.error(
+                f"Failed to find instrument {self.instrument_drop.currentText()}"
+            )
+            return
+        if not self.compute_values():
+            return
+        instrument = self.instrument_drop.currentText()
+        parameter = self.parameter_drop.currentText()
+        logger.info(
+            f"Starting scan\n\tInstrument: {instrument}\n\tParameter: {parameter}\n\tValues:{self.val_list}"
+        )
+        self.scan_button.setEnabled(False)
+        self.continue_scan_button.setEnabled(False)
+        self.stop_button.setEnabled(True)
+        self.pause_before = True
+        self.pause_before_after()
+
     def compute_values(self):
-        """Reads the values of the widgets and computes the values for the scan to iterate over."""
+        """Compute the values for the scan to iterate over."""
         if self.use_list.isChecked():
             new_val_list = [float(x) for x in self.list_edit.text().split(",")]
             if self.continue_scan:
@@ -619,39 +671,56 @@ class ScanWidget(QGroupBox):
         return True
 
     def pause_before_after(self):
-        start_time = time.time()
+        """Determine whether an upcoming pause is before or after a measurement and call the pause function."""
+        self.start_time = time.time()
         if self.pause_before:
             dt = float(self.pause_edit_before.text())
         else:
             dt = float(self.pause_edit_after.text())
-        end_time = start_time + dt
-
-        def pause():
-            time_left = end_time - time.time()
-            if time_left > 0:
-                if self.pause_before:
-                    self.pause_timer_label_before.setText(f"{time_left:.1f}")
-                else:
-                    self.pause_timer_label_after.setText(f"{time_left:.1f}")
-            else:
-                if self.pause_before:
-                    self.pause_timer_label_before.setText("0.0")
-                else:
-                    self.pause_timer_label_after.setText("0.0")
-                self.scan_timer.stop()
-                if self.pause_before:
-                    self.scan()
-                else:
-                    self.operate_cycle()
+        self.end_time = self.start_time + dt
 
         try:
             self.scan_timer.timeout.disconnect()
         except TypeError:
             pass
-        self.scan_timer.timeout.connect(pause)
+        self.scan_timer.timeout.connect(self.pause)
         self.scan_timer.start(100)
 
+    def pause(self):
+        """Give instruments time to update by pausing before and after measurement.
+
+        After pausing before, this function calls operate_cycle to start a new cycle."""
+        time_left = self.end_time - time.time()
+        if time_left > 0:
+            if self.pause_before:
+                self.pause_timer_label_before.setText(f"{time_left:.1f}")
+            else:
+                self.pause_timer_label_after.setText(f"{time_left:.1f}")
+        else:
+            if self.pause_before:
+                self.pause_timer_label_before.setText("0.0")
+            else:
+                self.pause_timer_label_after.setText("0.0")
+            self.scan_timer.stop()
+            if self.pause_before:
+                scan_action = self.action_drop.currentText()
+                func = self.actions.get(scan_action, None)
+                if func is not None:
+                    logger.info(f"Running scan function '{scan_action}'")
+                    func()
+                self.first_run = False
+                self.pause_before = False
+                self.pause_before_after()
+            else:
+                self.operate_cycle()
+
     def operate_cycle(self):
+        """Perform all actions that take place at one scan value measurement (i.e. in one cycle).
+
+        These actions include making the desired measurement, updating the Gaussian
+        process kernel (if applicable), executing the given scan_cycle_fxn (if given),
+        updating the progress bar, moving to the next scan value to measure, and
+        pausing when all these actions are completed."""
         if self.use_GP.isChecked() is False:
             self.GP_n_prescans = np.inf
         self.measured_yvals = self.get_measured_values()
@@ -660,7 +729,7 @@ class ScanWidget(QGroupBox):
             self.GP_regressor.update_model(
                 self.measured_yvals[self.count],
             )
-        self.plot_scan()
+        self.scan_cycle_fxn()
 
         # Update progress bar
         self.scan_progress = str((self.count + 1) / self.number_of_values * 100)
@@ -673,7 +742,7 @@ class ScanWidget(QGroupBox):
             logger.info(
                 f"Finished scan\n\tInstrument: {self.scan_instrument}\n\tParameter: {self.scan_parameter}\n\tValues:{self.val_list}."
             )
-            self.end_scan()
+            self._end_scan()
             return
         if self.count >= self.GP_n_prescans or self.continue_scan:
             # For first GP query, initialize the GP regressor
@@ -699,63 +768,13 @@ class ScanWidget(QGroupBox):
         self.pause_before = True
         self.pause_before_after()
 
-    def end_scan(self):
-        self.scan_finished = True
-        self.stop_button.click()
-
-    def button_stop_scan(self):
-        self.scan_timer.stop()
-        self.pause_timer_label_before.setText("0.0")
-        self.pause_timer_label_after.setText("0.0")
-        self.scan_button.setEnabled(True)
-        self.continue_scan_button.setEnabled(True)
-        self.stop_button.setEnabled(False)
-        if self.scan_finished is False:
-            logger.info("Scan Widget stopped manually by the user.")
-        self.progress_bar.setValue(float(self.scan_progress))
-        if self.progress_bar.value() > 0.0:
-            self.save_scan()
-
-    def start_scan(self):
-        if self.scan_instrument is None:
-            logger.error(
-                f"Failed to find instrument {self.instrument_drop.currentText()}"
-            )
-            return
-        if not self.compute_values():
-            return
-        instrument = self.instrument_drop.currentText()
-        parameter = self.parameter_drop.currentText()
-        logger.info(
-            f"Starting scan\n\tInstrument: {instrument}\n\tParameter: {parameter}\n\tValues:{self.val_list}"
-        )
-        self.scan_button.setEnabled(False)
-        self.continue_scan_button.setEnabled(False)
-        self.stop_button.setEnabled(True)
-        self.pause_before = True
-        self.pause_before_after()
-
-    def new_scan(self):
-        self.count = 0
-        self.new_scan_time = ""
-        self.continue_scan = False
-        self.start_scan()
-
     def continue_scan(self):
+        "Continue the previous scan."
         self.continue_scan = True
         self.start_scan()
 
-    def scan(self):
-        scan_action = self.action_drop.currentText()
-        func = self.actions.get(scan_action, None)
-        if func is not None:
-            logger.info(f"Running scan function '{scan_action}'")
-            func()
-        self.first_run = False
-        self.pause_before = False
-        self.pause_before_after()
-
-    def update_instruments(self):
+    def update_scan_parameters(self):
+        """Determine which parameter can be scanned over."""
         self.instrument_drop.clear()
 
         # If a list of scan parameters is provided, add the scanned
@@ -772,3 +791,22 @@ class ScanWidget(QGroupBox):
                 continue
             scan_instruments.append(instrument)
         self.instrument_drop.addItems(scan_instruments)
+
+    def end_scan(self):
+        """Reset buttons to non-scanning state."""
+        self.scan_finished = True
+        self.stop_button.click()
+
+    def button_stop_scan(self):
+        """Reset the user interface to the state when the app is not scanning."""
+        self.scan_timer.stop()
+        self.pause_timer_label_before.setText("0.0")
+        self.pause_timer_label_after.setText("0.0")
+        self.scan_button.setEnabled(True)
+        self.continue_scan_button.setEnabled(True)
+        self.stop_button.setEnabled(False)
+        if self.scan_finished is False:
+            logger.info("Scan Widget stopped manually by the user.")
+        self.progress_bar.setValue(float(self.scan_progress))
+        if self.progress_bar.value() > 0.0:
+            self.finish_scan()

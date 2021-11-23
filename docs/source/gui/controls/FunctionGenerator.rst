@@ -1,7 +1,6 @@
 Function Generators
 ===================
 
-
 hardware_control.gui.controls.FunctionGenerator module
 ------------------------------------------------------
 
@@ -9,4 +8,3 @@ hardware_control.gui.controls.FunctionGenerator module
    :members:
    :undoc-members:
    :show-inheritance:
-

@@ -1,13 +1,12 @@
-"""HC aware versions of Qt widgets.
+"""Qt widgets that are well integrate with Hardware Control.
 
-Here you find version of Qt widgets, such as QLabel, QPushButton, etc.
-that connect to a certain instrument and parameter and automatic update.
+Here you will find versions of Qt widgets, such as QLabel, QPushButton, etc.
+that can be connected to a certain instrument parameter and automatically be
+updated.
 
 This module also provides some more additional widgets that do not
 have equivalent ones in Qt directly.
-
 """
-
 
 import logging
 import pkg_resources
@@ -32,21 +31,22 @@ logger = logging.getLogger(__name__)
 
 
 def load_pixmap(name: str) -> QPixmap:
-    """Load an icon from the installed package location as a QPixmap"""
+    """Load an icon from the installed package location as a QPixmap."""
     return QPixmap(icon_filename(name))
 
 
 def load_icon(name: str) -> QPixmap:
-    """Load an icon from the installed package location as a QPixmap"""
+    """Load an icon from the installed package location as a QIcon."""
     return QIcon(icon_filename(name))
 
 
 def icon_filename(name: str):
-    """Get the icon filename from the installed package location"""
+    """Get the icon filename from the installed package location."""
     return pkg_resources.resource_filename("hardware_control", f"icons/{name}")
 
 
 def convert_prefix(value: str, decimals: int = 3) -> List[str]:
+    """Handle units prefix conversions."""
     try:
         value = float(value)
     except ValueError:
@@ -78,7 +78,6 @@ class HCGridLayout(QGridLayout):
 
     A special case is a HCDoubleSpinComboBox where an additional 3rd
     column is created.
-
     """
 
     def __init__(self, HCwidgets: List, offset: int = 0) -> None:
@@ -95,11 +94,12 @@ class HCGridLayout(QGridLayout):
 class HCMixin:
     """Connect a Qt element to a setting or command in the app.
 
-    This mixin sets the app, instrument, parameter values, connects to
-    the app and also defines an hc_update function. The hc_update function
-    still needs to be overwritten to connect to the actual widget,
+    This mixin sets the app, instrument, and parameter values; connects to
+    the app; and defines an hc_update function. The hc_update function
+    still needs to be overwritten to connect to the actual widget
     since there might be custom code needed to do this.
 
+    HCwidgets generally inherit from this class.
     """
 
     def __init__(self, **kwargs) -> None:
@@ -163,7 +163,7 @@ class HCMixin:
         """Get the HC widget parameter value from the instrument and apply hooks to that value.
 
         When this function finishes running it calls the widget_update function which should be
-        written for each HC widget. If this function has not been defined the default update_widget
+        written for each HC widget. If this function has not been defined the default widget_update
         function raises an AttributeError.
         """
 
@@ -199,7 +199,7 @@ class HCMixin:
 
 
 class HCLabel(HCMixin, QLabel):
-    """A simple indicator widget for a label(QLabel) and a value (QLabel)."""
+    """A simple indicator widget for a label (QLabel) and a value (QLabel)."""
 
     def __init__(
         self,
@@ -246,11 +246,13 @@ class HCLabel(HCMixin, QLabel):
 class HCLineEdit(HCMixin, QLineEdit):
     """A simple control widget with a label (QLabel) and an input box (QLineEdit).
 
-    The control widget can be connected to a generic function, or
-    directly to an instrument and a specific setting.
-
-    A validator can also be set for the QLineEdit widget.
-
+    Parameters
+    ----------
+    return_set_value
+        If True, retain the input in the HCLinEdit; if False, periodiccaly update
+        the input with the parameter readout
+    validator
+        A QValidator object to be used to validate the lineedit input
     """
 
     def __init__(
@@ -297,16 +299,7 @@ class HCLineEdit(HCMixin, QLineEdit):
 
 
 class HCDoubleSpinBox(HCMixin, QDoubleSpinBox):
-    """A simple control widget with a label (QLabel) and an input box (QLineEdit).
-
-    The control widget can be connected to a generic function, or
-    directly to an instrument and a specific setting.
-
-    A validator can also be set for the QLineEdit widget.
-
-    When used directly inside an instrument the ``remote`` should be set to False.
-
-    """
+    """A simple control widget with a label (QLabel) and an input box (QDoubleSpinBox)."""
 
     def __init__(
         self, app, instrument: str, parameter: str, label: str, label_align="left"
@@ -332,16 +325,7 @@ class HCDoubleSpinBox(HCMixin, QDoubleSpinBox):
 
 
 class HCPushButton(HCMixin, QPushButton):
-    """A simple control widget with a label (QLabel) and an input box (QLineEdit).
-
-    The control widget can be connected to a generic function, or
-    directly to an instrument and a specific setting.
-
-    A validator can also be set for the QLineEdit widget.
-
-    When used directly inside an instrument the ``remote`` should be set to False.
-
-    """
+    """A simple control widget with a push-button (QPushButton)."""
 
     def __init__(
         self,
@@ -370,7 +354,26 @@ class HCPushButton(HCMixin, QPushButton):
 
 
 class HCOnOffButton(HCMixin, QPushButton):
-    """Similar to HCPushButton, but also have graphical indicators for on/off state."""
+    """A simple control widget with a push-button (QPushButton) with graphical indicators for on/off state.
+
+    One also has the option of (only or additionally) introducing text to indicate
+    on-off status.
+
+    Parameters
+    ----------
+    show_text : bool
+        Option to show a text indicator of the on-off status
+    show_icon : bool
+        Option to show an icon indicator of the on-off status
+    text_checked : str
+        Text to show when instrument parameter is 'On'
+    text_unchecked : str
+        Text to show when instrument parameter is 'Off'
+    icon_checked : str
+        Icon to show when instrument parameter is 'On'
+    icon_unchecked : str
+        Icon to show when instrument parameter is 'Off'
+    """
 
     def __init__(
         self,
@@ -416,6 +419,7 @@ class HCOnOffButton(HCMixin, QPushButton):
             self.setText("unkown")
 
     def is_true(self, value: Union[bool, str]) -> bool:
+        """Handle multiple versions (of different data type and case) of the option 'True'."""
         if isinstance(value, bool):
             return value
         if isinstance(value, str):
@@ -424,6 +428,7 @@ class HCOnOffButton(HCMixin, QPushButton):
         return False
 
     def set_state(self, value):
+        """Change the icon and/or text display."""
         if self.show_icon:
             if value == "True":
                 self.setIcon(self.icon_checked)
@@ -447,7 +452,26 @@ class HCOnOffButton(HCMixin, QPushButton):
 
 
 class HCOnOffIndicator(HCMixin, QLabel):
-    """Similar to HCPushbutton, but only indicates an  on/off state."""
+    """A simple control widget with a label (QLabel) image or text that indicates on/off state.
+
+    Parameters
+    ----------
+    show_text : bool
+        Option to show a text indicator of the on-off status; if show_text is
+        True, the show_icon option will be ignored
+    show_icon : bool
+        Option to show an icon indicator of the on-off status
+    text_checked : str
+        Text to show when instrument parameter is 'On'
+    text_unchecked : str
+        Text to show when instrument parameter is 'Off'
+    icon_checked : str
+        Icon to show when instrument parameter is 'On'
+    icon_unchecked : str
+        Icon to show when instrument parameter is 'Off'
+    tooltip : str
+        Optional text to be displayed when mousing over the indicator
+    """
 
     def __init__(
         self,
@@ -496,6 +520,7 @@ class HCOnOffIndicator(HCMixin, QLabel):
             return super().sizeHint()
 
     def is_true(self, value: Union[bool, str]) -> bool:
+        """Handle multiple versions (of different data type and case) of the option 'True'."""
         if isinstance(value, bool):
             return value
         if isinstance(value, str):
@@ -504,6 +529,7 @@ class HCOnOffIndicator(HCMixin, QLabel):
         return False
 
     def set_state(self, value):
+        """Change the icon and/or text display."""
         if self.show_icon:
             if value == "True":
                 self.setPixmap(self.icon_checked)
@@ -523,11 +549,13 @@ class HCOnOffIndicator(HCMixin, QLabel):
 class HCComboBox(HCMixin, QComboBox):
     """A simple control widget with a label (QLabel) and an input box (QComboBox).
 
-    The control widget can be connected to a generic function, or
-    directly to an instrument and a specific setting.
-
-    When used directly inside an instrument the ``remote`` should be set to False.
-
+    Parameters
+    ----------
+    items : list
+        List of options to be place in the HCComboBox
+    lookuptable : dict
+        An optional table that can be used to convert the items in the HCComboBox
+        into values to be sent to the instrument
     """
 
     def __init__(
@@ -536,7 +564,7 @@ class HCComboBox(HCMixin, QComboBox):
         instrument: str,
         parameter: str,
         label: str,
-        items,
+        items: List,
         label_align: str = "left",
         lookuptable: Optional[Dict] = None,
     ):
@@ -595,11 +623,11 @@ class HCComboBox(HCMixin, QComboBox):
 class HCDoubleSpinComboBox(HCMixin):
     """A simple control widget with a label (QLabel) and two input boxes (QSpinBox, QComboBox).
 
-    The control widget can be connected to a generic function, or
-    directly to an instrument and a specific setting.
-
-    When used directly inside an instrument the ``remote`` should be set to False.
-
+    Parameters
+    ----------
+    units : dict
+        A dictionary with keys that are units (str) and values that are the corresponding
+        scale factors (float) to convert to the fundamental unit
     """
 
     def __init__(
@@ -682,7 +710,7 @@ class HCHeader(QLabel):
 
 
 class HCFixedLabel(HCMixin, QLabel):
-    """A QLabel that fixes its width to the initial string."""
+    """A simple control widget with a label (QLabel)that fixes its width to the given initial string."""
 
     def __init__(
         self,

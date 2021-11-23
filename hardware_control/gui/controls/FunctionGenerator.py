@@ -1,3 +1,7 @@
+"""
+    .. image:: /images/controls/FunctionGenerator.png
+      :height: 350
+"""
 import logging
 
 from PyQt5.QtWidgets import (
@@ -12,12 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 class FunctionGenerator(QGroupBox):
-    """A GUI for Function/Waveform generators.
-
-    Example of a two channel function generator:
-
-    .. image:: /images/controls/FunctionGenerator-2ch.png
-      :height: 200
+    """A GUI for two-channel Function/Waveform generators.
 
     Note
     ----
@@ -26,9 +25,7 @@ class FunctionGenerator(QGroupBox):
     See Also
     --------
     hardware_control.instruments.keysight.Keysight_33500B
-    hardware_control.instruments.keysight.Keysight_36300
     hardware_control.instruments.siglent.Siglent_SDG
-
     """
 
     def __init__(
@@ -321,6 +318,7 @@ class FunctionGenerator(QGroupBox):
         self.setLayout(self.grid)
 
     def set_tracking_hook(self, setting, value):
+        """Allow one channel to mirror the parameter values of another channel."""
         if setting == "CH2_TRACK":
             settings_list = self.widgets
         elif setting == "CH1_TRACK":

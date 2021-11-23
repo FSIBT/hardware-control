@@ -1,6 +1,5 @@
-Qtconsole class
-===============
-
+Qtconsole
+=========
 
 hardware_control.gui.widgets.qtconsole module
 ---------------------------------------------
@@ -9,4 +8,3 @@ hardware_control.gui.widgets.qtconsole module
    :members:
    :undoc-members:
    :show-inheritance:
-

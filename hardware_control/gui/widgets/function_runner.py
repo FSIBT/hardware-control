@@ -1,3 +1,6 @@
+"""
+    .. image:: /images/widgets/function_runner.png
+"""
 import logging
 from typing import Callable
 
@@ -14,9 +17,22 @@ logger = logging.getLogger(__name__)
 
 
 class FunctionRunnerTool(QGroupBox):
-    """Provide a button that runs a python function.
+    """Create a button that runs a python function.
 
-    Optionally add a countdown timer next to the button
+    There is an option to add a countdown timer next to the button.
+
+    Parameters
+    ----------
+    name : str
+        Name of the QGroupBox
+    button_label : str
+        Label of the QPushbutton that will trigger the function call
+    call_function : Callable
+        The function to call when the button gets pressed
+    countdown : int
+        If > 0 then add a countdown to the right of the button
+    countdown_callback : Callable
+        Call this function when the countdown reaches zero
     """
 
     def __init__(
@@ -27,21 +43,6 @@ class FunctionRunnerTool(QGroupBox):
         countdown: int = 0,
         countdown_callback=None,
     ):
-        """
-        Parameters
-        ----------
-        name : str
-            Name of the QGroupBox
-        button_label : str
-            Label of the Pushbutton that will trigger the function call
-        call_function : Callable
-            The function to call when the button gets hit
-        countdown : int
-            If > 0 then add a countdown to the right of the button
-        countdown_callback : Callable
-            Call this function when the countdown reaches zero
-
-        """
         super().__init__(name)
         self.button_label = button_label
         self.countdown = countdown

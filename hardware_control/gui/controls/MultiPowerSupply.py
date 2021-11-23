@@ -1,3 +1,6 @@
+"""
+    .. image:: /images/controls/MultiPowerSupply.png
+"""
 import logging
 from typing import Optional, List
 from math import floor
@@ -48,23 +51,39 @@ status_labels = {
 
 
 class MultiPowerSupply(QGroupBox):
-    """A GUI for a multi channel power supply.
+    """A generic control program for a multi-channel power supply.
 
-    Example of a 3 channel power supply:
-
-    .. image:: /images/controls/MultiPowerSupply-3ch.png
-      :height: 200
-
-    Note: enable_power_buttons parameter accepts one of three argument –
-    "none" (for no enable buttons), "individual" (for one enable button per
-    channel), or "both" (for individual channel enable buttons and an enable
-    button for all channels)
+    Parameters
+    ----------
+    app : hardware_control.App
+        The main app instance
+    instrument_name: str
+        The name of the power supply instrument
+    channels : list
+        A list of channels to be shown in the control program
+    widget_name : str
+        Name shown on the control program; default is 'Multi_Channel_PSU'
+    channel_names : list
+        An optional list of strings to be used as the channel names; if no
+        list is given the channels are named according to their numbers
+    show_VI_limits : bool
+        Option to show the maximum allowed voltage and current for each channel
+    show_status_panel : bool
+        Option to show the status panel; this option only works with Caen
+        power supply units
+    enable_power_buttons : str
+        Power buttons option; 'individual' creates one enable button per
+        channel), 'both' creates individual channel enable buttons
+        and an enable button for all channels, and 'none' will not create any
+    num_columns : int
+        Number of columns to place the power supply channel widgets in
 
     See Also
     --------
     hardware_control.instruments.caen.Caen_RSeries
     hardware_control.instruments.rigol.Rigol_DP832
     hardware_control.instruments.tdkl.TDKL_GenH
+    hardware_control.instruments.keysight.Keysight_36300
     """
 
     def __init__(
@@ -141,21 +160,21 @@ class MultiPowerSupply(QGroupBox):
         self.readout_timer.start(self.app.globalRefreshRate)
 
     def enable_all(self):
-        """Enables all channels."""
+        """Enable all channels."""
         for channel in self.channels:
             self.app.set_instrument_parameter(
                 self.instrument, f"CH{channel}_ENABLE", True
             )
 
     def disable_all(self):
-        """Disables all channels."""
+        """Disable all channels."""
         for channel in self.channels:
             self.app.set_instrument_parameter(
                 self.instrument, f"CH{channel}_ENABLE", False
             )
 
     def update_readout(self):
-        """Queries the instrument for current readout data and pushes it to the GUI"""
+        """Query the instrument for current readout data and push it to the GUI."""
         # Update readout data for each parameter
         for cw in self.channel_widgets:
             self.app.update_instrument_parameter(
@@ -202,26 +221,26 @@ class MultiPowerSupply(QGroupBox):
                     )
 
     def set_maxI(self, channel: int, maxI: float):
-        """Sets an internal limit for the current from channel 'n'."""
+        """Set an internal limit for the current from channel 'X'."""
         self.app.set_instrument_parameter(
             self.instrument, f"CH{channel}_I_MAX", str(maxI)
         )
 
     def set_maxV(self, channel: int, maxV: float):
-        """Sets an internal limit for the voltage from channel 'n'."""
+        """Set an internal limit for the voltage from channel 'X'."""
         self.app.set_instrument_parameter(
             self.instrument, f"CH{channel}_V_MAX", str(maxV)
         )
 
     def set_channel_label(self, channel: int, label: str):
-        """Sets a channel label to a new custom value"""
+        """Set a channel label to a new custom label."""
         for cw in self.channel_widgets:
             if cw.channel == channel:
                 cw.set_label(label)
 
 
 class PowerSupplyChannel(QWidget):
-    """A Qt-widget that implements controls for a single channel of a power supply"""
+    """A Qt-widget that implements controls for a single channel of a power supply."""
 
     def __init__(
         self,
@@ -403,7 +422,7 @@ class PowerSupplyChannel(QWidget):
         self.setLayout(self.channel_layout)
 
     def set_label(self, label: str):
-        """Sets a label header"""
+        """Set a label header for the channel."""
         align_left_center = QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
         self.channel_label.setText(f"{label}")
         self.channel_label.setFont(QFont("Arial", 20))

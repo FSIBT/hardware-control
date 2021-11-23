@@ -1,3 +1,6 @@
+"""
+    .. image:: /images/controls/DelayGenerator.png
+"""
 import logging
 
 from PyQt5 import QtCore
@@ -25,17 +28,13 @@ logger = logging.getLogger(__name__)
 class DelayGenerator(QGroupBox):
     """A GUI for delay generators.
 
-    This implements all front panel functions of a SRS DG535 and has
-    also has some elements that are probably unique to this
+    This implements many front panel functions of an SRS DG535 and
+    also contains some elements that are unique to this
     instrument.
-
-    .. image:: /images/controls/DelayGenerator.png
-      :height: 200
 
     See Also
     --------
     hardware_control.instruments.srs.SRS_DG535.SRS_DG535
-
     """
 
     def __init__(self, app, instrument_name: str, widget_name: str = "Delay Generator"):
@@ -179,6 +178,7 @@ class DelayGenerator(QGroupBox):
         self.config_auto_update()
 
     def enable_disable_hook(self, value):
+        """Enable/Disable and show/hide certain inputs depending on the trigger mode."""
         if value == "SINGLE":
             self.single_trig_but.setEnabled(True)
             self.single_trig_but.setStyleSheet("background-color: white")
@@ -211,7 +211,7 @@ class DelayGenerator(QGroupBox):
         return value
 
     def config_auto_update(self):
-        """Queries the instrument for current readout data."""
+        """Query the instrument for current readout data."""
 
         for parameter in [
             "TRIGGER_MODE",
@@ -251,19 +251,14 @@ class DelayChannelWidget(QWidget):
 
     Used together with :py:class:`DelayGenerator`.
 
-    .. image:: /images/controls/DelayGenerator-channel.png
-      :height: 200
-
-
     Parameters
     ----------
 
     main_widget : DelayGenerator
-        The main widget where this is used in
+        The main widget in which the objects is used
     channel : str
-        The channel this widget controls. Normally A, B, C, or D, but AB and CD are also
-        allowed for combined channels that, for example, exist in the SRS DG533.
-
+        The channel the object controls. Normally A, B, C, or D, but AB and CD are also
+        allowed for combined channels that, for example, exist in the SRS DG533 instrument.
     """
 
     _CHANNEL_NAMES = {
@@ -390,28 +385,17 @@ class DelayChannelWidget(QWidget):
         self.setLayout(self.channel_layout)
 
     def update_relative_channel(self, relative_channel):
-        """Add a hook to self.relative widget.
-
-        When updating the relative channel, send both the new
-        channel which will signify a delay of 0 and the current delay.
-
-        """
-
+        """When updating the relative channel, send both the relative channel and the delay."""
         relative_channel = self._CHANNEL_NAMES[relative_channel]
         return f"{relative_channel},{self.time_delay.text()}"
 
     def update_delay(self, delay):
-        """Add a hook to self.time_delay widget.
-
-        When updating a channel's time delay, send both the channel
-        which signifies a delay of 0 and the new delay.
-
-        """
-
+        """When updating a channel's time delay, send both the relative channel and the delay."""
         relative_channel = self._CHANNEL_NAMES[self.relative.currentText()]
         return f"{relative_channel},{delay}"
 
     def set_output_level_hook(self, value):
+        """Only allow input for 'High Level' and 'Output Offset' when in 'Var' output mode."""
         if value is None:
             return
 
