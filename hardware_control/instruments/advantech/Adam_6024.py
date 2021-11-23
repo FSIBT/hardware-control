@@ -26,12 +26,15 @@ def _create_channel_parser(channel):
 class Adam_6024(AdamBase):
     """Adam 6024 input/output module instrument class.
 
+    Note: Read commands correspond to the analog input
+    and set commands to analog output. Both starting at
+    channel number 0!
+
     PARAMETERS
         * CH<X>_READ_VOLTAGE (*float*)
             * Current voltage of channel 'X'.
         * CH<X>_SET_VOLTAGE (*float*)
             * New voltage to set for channel 'X'.
-
     """
 
     def __init__(
@@ -48,7 +51,7 @@ class Adam_6024(AdamBase):
 
         # This specifies the max number of channels the user can request
         self.n_input_channels = 7
-        self.n_output_channels = 3
+        self.n_output_channels = 2
 
         for channel in range(self.n_input_channels):
             self.add_parameter(

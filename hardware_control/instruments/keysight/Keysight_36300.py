@@ -72,10 +72,11 @@ class Keysight_36300(Instrument):
             self.add_parameter(
                 f"CH{channel}_ENABLE",
                 read_command=f"OUTPUT:STATE? (@{channel})",
-                set_command=f"OUTPUT:STATE {{}},(@{channel})",
+                set_command=f"OUTP {{}}, (@{channel})",
+                pre_hooks=[lambda value: "ON" if value == "True" else "OFF"],
+                post_hooks=[lambda value: "True" if value == "1" else "False"],
                 dummy_return="True",
             )
-            self.add_lookup(f"CH{channel}_ENABLE", {"True": "1", "False": "0"})
 
             self.add_parameter(
                 f"CH{channel}_V_SET",
