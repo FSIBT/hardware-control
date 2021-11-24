@@ -282,7 +282,7 @@ class Keysight_33500B(Instrument):
                 read_command=f":OUTP{ch}?",
                 set_command=f":OUTP{ch} {{}}",
                 pre_hooks=[lambda value: "ON" if value is True else "OFF"],
-                post_hooks=[lambda value: True if value == "1\n" else False],
+                post_hooks=[lambda value: value == "1\n"],
                 dummy_return="False",
             )
 

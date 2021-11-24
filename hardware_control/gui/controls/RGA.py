@@ -1,5 +1,8 @@
 """
     .. image:: /images/controls/RGA.png
+
+Note: This control is under current development.
+
 """
 import logging
 

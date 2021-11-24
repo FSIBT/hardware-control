@@ -130,8 +130,7 @@ def max_len_converter(max_length: int) -> Callable:
     def converter(value):
         if len(value) > max_length:
             return value[0:max_length]
-        else:
-            return value
+        return value
 
     return converter
 
@@ -175,11 +174,10 @@ def expected_input_validator(types: List, default_val=None):
                 f"Unfamiliar with input '{value}'. Using '{default_val}' instead."
             )
             return default_val
-        elif value not in types:
+        if value not in types:
             logger.error(f"Input value of '{value}' is invalid.")
             return
-        else:
-            return value
+        return value
 
     return validator
 
@@ -266,7 +264,7 @@ class Ramp(QObject):
         # calc next value
         delta = self.ramp_speed * (self.timer_step / 1000)
 
-        if self.target > self.current_value:
+        if self.target_value > self.current_value:
             self.next_value = self.current_value + delta
         else:
             self.next_value = self.current_value - delta
@@ -274,9 +272,9 @@ class Ramp(QObject):
         if self.next_value < self.min_value:
             self.next_value = self.min_value
 
-        # if we are close just go directly to the target value and stop the timer
-        if abs(self.next_value - self.target) < self.epsilon + delta:
-            self.next_value = self.target
+        # if we are close just go directly to the target_value value and stop the timer
+        if abs(self.next_value - self.target_value) < self.epsilon + delta:
+            self.next_value = self.target_value
             self.timer.stop()
 
         self.app.set_instrument_parameter(
@@ -291,15 +289,13 @@ class Ramp(QObject):
             abs(value - self.next_value) < self.epsilon
         ):
             return f"{value}"
-        else:
-            # start a new ramp cycle
-            self.target = value
-            self.timer.start(self.timer_step)
-            # adjust current value (e.g. if instrument already on when starting the program)
-            if abs(self.current_value - value) > self.epsilon:
-                read_value = float(
-                    self.app.get_instrument_parameter(
-                        self.instrument, self.read_parameter
-                    )
-                )
-                self.current_value = read_value
+
+        # start a new ramp cycle
+        self.target_value = value
+        self.timer.start(self.timer_step)
+        # adjust current value (e.g. if instrument already on when starting the program)
+        if abs(self.current_value - value) > self.epsilon:
+            read_value = float(
+                self.app.get_instrument_parameter(self.instrument, self.read_parameter)
+            )
+            self.current_value = read_value

@@ -183,7 +183,7 @@ class PlotTool(PlotBase):
         self.autoscalebutton.setChecked(True)
         self.select_set_label = QLabel("Dataset:")
         self.select_set_drop = QComboBox()
-        self.select_set_drop.addItems([x for x in app.data_sets])
+        self.select_set_drop.addItems(x for x in app.data_sets)
         self.select_set_drop.currentIndexChanged.connect(self.selector_changed)
 
         self.controls = QHBoxLayout()
@@ -222,7 +222,7 @@ class PlotTool(PlotBase):
         super().set_dataset(dataset_name)
 
         self.select_set_drop.clear()
-        self.select_set_drop.addItems([x for x in self.app.data_sets])
+        self.select_set_drop.addItems(x for x in self.app.data_sets)
         self.select_set_drop.setCurrentText(dataset_name)
 
     def update(self):

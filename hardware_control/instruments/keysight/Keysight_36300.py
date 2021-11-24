@@ -129,8 +129,7 @@ class Keysight_36300(Instrument):
         Imax = self.max_I[channel - 1]
         if Imax is not None:
             return min(value, Imax)
-        else:
-            return value
+        return value
 
     def check_Vmax(self, channel, value):
         """check if a maximum has been set and enforce it"""
@@ -138,5 +137,4 @@ class Keysight_36300(Instrument):
         Imax = self.max_V[channel - 1]
         if Imax is not None:
             return min(value, Imax)
-        else:
-            return value
+        return value

@@ -45,7 +45,7 @@ class AdamBase(Instrument):
                 (command + self._termination).encode(self._encoding), self.addr
             )
             # check return code
-            indata, inaddr = self.device.recvfrom(self.buffer_length)
+            indata, _ = self.device.recvfrom(self.buffer_length)
             output = indata.decode("ascii")
             if output == "?01\r":
                 logger.error("Adam: Last command invalid")
@@ -53,7 +53,7 @@ class AdamBase(Instrument):
             if output == ">\r":
                 return
         except socket.timeout:
-            self.online = False
+            self._online = False
 
     def query(self, command: str) -> None:
         """Unique 'write' function for writing to Adam instruments."""
@@ -66,7 +66,7 @@ class AdamBase(Instrument):
                 (command + self._termination).encode(self._encoding), self.addr
             )
             # check return code
-            indata, inaddr = self.device.recvfrom(self.buffer_length)
+            indata, _ = self.device.recvfrom(self.buffer_length)
             output = indata.decode("ascii")
             if output == "?01\r":
                 logger.error("Adam: Last command invalid")
@@ -76,7 +76,7 @@ class AdamBase(Instrument):
             output = output[1:-1]
             return output
         except socket.timeout:
-            self.online = False
+            self._online = False
 
     def try_connect(self) -> None:
         """Unique 'try_connect' function for using sockets with a different option (DGRAM instead of STREAM)."""

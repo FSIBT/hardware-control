@@ -331,7 +331,7 @@ class FunctionGenerator(QGroupBox):
         for w in settings_list:
             if value == "OFF":
                 w.setEnabled(True)
-            elif value == "ON" or value == "INV":
+            elif value in ("ON", "INV"):
                 w.setEnabled(False)
             else:
                 logger.warning(

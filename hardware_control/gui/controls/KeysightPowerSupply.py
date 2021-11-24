@@ -1,7 +1,7 @@
 """
     .. image:: /images/controls/KeysightPowerSupply.png
 """
-from typing import List
+from typing import List, Optional
 from PyQt5.QtWidgets import QGroupBox, QVBoxLayout, QPushButton, QGridLayout
 from ..widgets import HCFixedLabel, HCLineEdit, HCOnOffButton, HCGridLayout
 
@@ -103,8 +103,8 @@ class KeysightPowerSupply(QGroupBox):
         instrument_name: str,
         channels: List,
         channel_colors: List,
-        set_voltage_channels: List = [],
-        set_current_channels: List = [],
+        set_voltage_channels: Optional[List] = None,
+        set_current_channels: Optional[List] = None,
         widget_name: str = "Keysight Power Supply",
     ):
         super().__init__(widget_name)
@@ -112,8 +112,12 @@ class KeysightPowerSupply(QGroupBox):
         self.instrument = instrument_name
         self.channels = channels
         self.channel_colors = channel_colors
-        self.set_voltage_channels = set_voltage_channels
-        self.set_current_channels = set_current_channels
+        self.set_voltage_channels = (
+            set_voltage_channels if set_voltage_channels is not None else []
+        )
+        self.set_current_channels = (
+            set_current_channels if set_current_channels is not None else []
+        )
 
         # Create a channel widgets for all channels
         self.channel_widgets = []

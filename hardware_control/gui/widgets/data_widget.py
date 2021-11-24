@@ -194,7 +194,7 @@ class DataWidget(QWidget):
                 temp_item = QTableWidgetItem()
 
                 # If value can be converted to a string, do so
-                if isinstance(val, float) or isinstance(val, int):
+                if isinstance(val, (int, float)):
                     temp_item.setText(f"{val:g}")
                 elif isinstance(val, bool):
                     temp_item.setText(str(val))

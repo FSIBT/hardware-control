@@ -9,8 +9,8 @@ have equivalent ones in Qt directly.
 """
 
 import logging
-import pkg_resources
 from typing import Dict, Optional, Union, Callable, Any, List
+import pkg_resources
 
 from PyQt5.QtWidgets import (
     QGridLayout,
@@ -172,7 +172,7 @@ class HCMixin:
         if (
             hasattr(self, "hasFocus")
             and self.hasFocus()
-            and not self.__class__.__name__ == "HCOnOffButton"
+            and self.__class__.__name__ != "HCOnOffButton"
         ):
             logger.debug(f"'{self.name}' has focus, not updating")
             return
@@ -516,8 +516,7 @@ class HCOnOffIndicator(HCMixin, QLabel):
     def sizeHint(self):
         if self.show_icon and not self.show_text:
             return QtCore.QSize(10, 20)
-        else:
-            return super().sizeHint()
+        return super().sizeHint()
 
     def is_true(self, value: Union[bool, str]) -> bool:
         """Handle multiple versions (of different data type and case) of the option 'True'."""

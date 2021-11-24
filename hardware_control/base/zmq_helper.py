@@ -129,7 +129,7 @@ def handle_ZMQ_message_from_app(adapter) -> None:
             )
             adapter.instrument.command(command_name)
             return
-        elif command == "get":
+        if command == "get":
             parameter = msg[1]
             logger.debug(
                 f"'{adapter.name}' got get request '{parameter}' [priority={priority}]"

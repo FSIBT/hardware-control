@@ -5,7 +5,6 @@
 import logging
 
 from PyQt5 import QtCore
-from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import QGroupBox, QLabel, QGridLayout
 
 from .hc_widgets import load_pixmap, HCOnOffIndicator

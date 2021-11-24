@@ -3,7 +3,6 @@
 """
 import logging
 from typing import Optional, List
-from math import floor
 
 from PyQt5 import QtCore
 from PyQt5.QtCore import QTimer
@@ -124,7 +123,7 @@ class MultiPowerSupply(QGroupBox):
                 self.show_status_panel,
                 self.enable_power_buttons,
             )
-            if self.channel_names != None:
+            if self.channel_names is not None:
                 channel_widget.set_label(self.channel_names[idx])
             self.channel_widgets.append(channel_widget)
             self.channel_box_layout.addWidget(
@@ -214,7 +213,7 @@ class MultiPowerSupply(QGroupBox):
 
             # Status parameters
             if self.show_status_panel:
-                for bit_name in status_labels.keys():
+                for bit_name in status_labels:
                     self.app.update_instrument_parameter(
                         self.instrument,
                         f"CH{cw.channel}_{bit_name}",
@@ -395,9 +394,7 @@ class PowerSupplyChannel(QWidget):
             self.status_grid = QGridLayout()
             row_num = 0
             col_num = 0
-            for widget_num, (parameter, status_label) in enumerate(
-                status_labels.items()
-            ):
+            for parameter, status_label in status_labels.items():
                 indicator = HCOnOffIndicator(
                     self.app,
                     self.instrument,

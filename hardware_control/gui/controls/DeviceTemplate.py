@@ -20,7 +20,6 @@ class DeviceType(QGroupBox):
         channels: list,
         name: str = "TemplateDevice",
         initialize_with: str = "INSTRUMENT",
-        lock_until_sync=False,
     ):
         super().__init__()
 

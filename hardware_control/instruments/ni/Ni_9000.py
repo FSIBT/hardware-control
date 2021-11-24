@@ -63,9 +63,9 @@ class Ni_9000(Instrument):
         self,
         instrument_name: str = "NI_9000",
         connection_addr: str = "",
-        modules: List = [1],
-        analog_channels: Optional[Dict] = {},
-        digital_channels: Optional[Dict] = {},
+        modules: Optional[List] = None,
+        analog_channels: Optional[Dict] = None,
+        digital_channels: Optional[Dict] = None,
     ):
 
         # A default port is required for this instrument
@@ -76,10 +76,10 @@ class Ni_9000(Instrument):
         )
 
         # Numeric list of all modules
-        self.modules = modules
+        self.modules = modules if modules is not None else [1]
         # Numeric lists of all analog and digital channels
-        self.analog_channels = analog_channels
-        self.digital_channels = digital_channels
+        self.analog_channels = analog_channels if analog_channels is not None else {}
+        self.digital_channels = digital_channels if digital_channels is not None else {}
 
         # Dictionaries for storing parameter values for each channel
         self.term_config_modes = {
@@ -93,10 +93,10 @@ class Ni_9000(Instrument):
 
         # Initialize parameters on all requested channels
         for mod in self.modules:
-            if self.analog_channels.get(mod) != None:
+            if self.analog_channels.get(mod) is not None:
                 for chan in self.analog_channels[mod]:
                     self._initialize_params(mod, chan, "a")
-            if self.digital_channels.get(mod) != None:
+            if self.digital_channels.get(mod) is not None:
                 for chan in self.digital_channels[mod]:
                     self._initialize_params(mod, chan, "d")
 
@@ -280,4 +280,3 @@ class Ni_9000(Instrument):
         for key in self.term_maxes:
             val = self.term_maxes[key]
             logger.info(f"\t{key}:{val}")
-        return

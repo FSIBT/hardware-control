@@ -3,8 +3,9 @@
 """
 import json
 import logging
-import pyqtgraph as pg
 from typing import Optional, List
+
+import pyqtgraph as pg
 
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import (

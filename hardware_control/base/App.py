@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 import threading
 import time
-from typing import Union, Optional, Callable, Any, List, Dict
+from typing import Union, Optional, Callable, Any, List
 
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import QTimer
@@ -482,7 +482,7 @@ class App(QApplication):
 
         # Make sure parameter is not a command
         # (Commands don't have "set_value" or "read_value" keys.)
-        elif (
+        if (
             "set_value" in self._data[instrument][parameter].keys()
             or "read_value" in self._data[instrument][parameter].keys()
         ):

@@ -180,7 +180,7 @@ class IOModule(QGroupBox):
     def read_channel_data(self, channel_data):
         """Set the channel parameters from a JSON file or a dictionary."""
         self.channel_data = channel_data
-        if isinstance(self.channel_data, str) or isinstance(self.channel_data, Path):
+        if isinstance(self.channel_data, (Path, str)):
             with open(self.channel_data) as file:
                 self.channel_data = json.load(file)
         else:
