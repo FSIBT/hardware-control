@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Add an interactive python console to the App
+"""Add an interactive python console to the App.
 
 Usage:
-  interactive_python [--dummy] [--debug] [--console] [--info]
+  interactive_python.py [--dummy] [--debug] [--console] [--info]
 
 Options:
   --dummy    use dummy connection for instruments that return semi-random data
@@ -10,7 +10,6 @@ Options:
   --debug    allow debug print statements
   --info     allow info print statements
   --console  Print logger output to console
-
 """
 import logging
 import sys

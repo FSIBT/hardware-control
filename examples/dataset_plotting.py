@@ -2,7 +2,7 @@
 """Add a dataset and plotting window to the App
 
 Usage:
-  dataset_plotting [--dummy] [--debug] [--console] [--info]
+  dataset_plotting.py [--dummy] [--debug] [--console] [--info]
 
 Options:
   --dummy    use dummy connection for instruments that return semi-random data
@@ -10,7 +10,6 @@ Options:
   --debug    allow debug print statements
   --info     allow info print statements
   --console  Print logger output to console
-
 """
 import logging
 import sys
