@@ -486,13 +486,19 @@ class OscilloscopeDisplayWidget(QGroupBox):
                 self.instrument,
                 f"CH{ch}_WAVEFORM",
                 "post_read_hooks",
-                lambda x: self.load_waveform(channel, x),
+                self.create_load_waveform_hook(ch),
             )
 
     def updateViews(self):
         """Update display with most recent trace."""
         self.p2.setGeometry(self.p1.vb.sceneBoundingRect())
         self.p2.linkedViewChanged(self.p1.vb, self.p2.XAxis)
+
+    def create_load_waveform_hook(self, channel):
+        def hook(trace_string):
+            self.load_waveform(channel, trace_string)
+
+        return hook
 
     def load_waveform(self, channel, trace_string):
         """Load waveform from the instrument."""
