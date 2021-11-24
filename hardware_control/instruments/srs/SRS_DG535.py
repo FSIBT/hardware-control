@@ -199,7 +199,7 @@ class SRS_DG535(Instrument):
                 set_command=f"DT {channel},{{}}",
                 post_hooks=[
                     substring_hook(None, 1),
-                    lambda value: self.numeric_to_alpha(value),
+                    self.numeric_to_alpha,
                 ],
                 dummy_return="T0",
             )

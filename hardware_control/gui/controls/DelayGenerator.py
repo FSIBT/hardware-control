@@ -58,7 +58,7 @@ class DelayGenerator(QGroupBox):
             self.instrument,
             "TRIGGER_MODE",
             "pre_set_hooks",
-            lambda x: self.enable_disable_hook(x),
+            self.enable_disable_hook,
         )
 
         self.trig_edge = HCComboBox(
@@ -298,7 +298,7 @@ class DelayChannelWidget(QWidget):
                 self.instrument,
                 f"CH{self.channel}_DELAY",
                 when="pre_set_hooks",
-                function=lambda delay: self.update_delay(delay),
+                function=self.update_delay,
             )
             self.app.add_hook(
                 self.instrument,
@@ -319,9 +319,7 @@ class DelayChannelWidget(QWidget):
                 self.instrument,
                 f"CH{self.channel}_RELATIVE_TO",
                 when="pre_set_hooks",
-                function=lambda relative_channel: self.update_relative_channel(
-                    relative_channel
-                ),
+                function=self.update_relative_channel,
             )
 
         self.level = HCComboBox(
@@ -335,7 +333,7 @@ class DelayChannelWidget(QWidget):
             self.instrument,
             f"CH{self.channel}_OUTPUT_MODE",
             when="pre_set_hooks",
-            function=lambda x: self.set_output_level_hook(x),
+            function=self.set_output_level_hook,
         )
 
         self.volt = HCLineEdit(

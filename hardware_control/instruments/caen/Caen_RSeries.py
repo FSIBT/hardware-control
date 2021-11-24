@@ -175,7 +175,7 @@ class Caen_RSeries(Instrument):
                 post_hooks=[
                     _parse_instrument_response,
                     format_int,
-                    lambda value: self._return_status(value),
+                    self._return_status,
                 ],
                 dummy_return="",
             )

@@ -100,7 +100,7 @@ class Ni_9000(Instrument):
                 for chan in self.digital_channels[mod]:
                     self._initialize_params(mod, chan, "d")
 
-        self.add_command("DISPLAY_CONFIGURATION", lambda: self._display_configuration())
+        self.add_command("DISPLAY_CONFIGURATION", self._display_configuration)
 
     def _initialize_params(self, module_num, channel, signal_type):
         channel_string = f"Mod{module_num}/{signal_type}{channel}"
@@ -266,7 +266,7 @@ class Ni_9000(Instrument):
 
         return value
 
-    def _display_configuration():
+    def _display_configuration(self):
         logger.info(f"--------- Configuration for {self.ID} ---------")
         logger.info("Terminal Configurations:")
         for key in self.term_config_modes:
