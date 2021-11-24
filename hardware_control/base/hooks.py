@@ -256,12 +256,10 @@ class Ramp(QObject):
         self.timer.timeout.connect(self.do_step)
 
     def do_step(self):
-        """Execute one ramping step."""
-        value = float(
-            self.app.get_instrument_parameter(self.instrument, self.read_parameter)
-        )
+        """Execute one ramping step.
 
-        # calc next value
+        Calculated the next value in the ramping cycle and set it via the app.
+        """
         delta = self.ramp_speed * (self.timer_step / 1000)
 
         if self.target_value > self.current_value:
@@ -269,6 +267,7 @@ class Ramp(QObject):
         else:
             self.next_value = self.current_value - delta
 
+        # no ramping below min_value
         if self.next_value < self.min_value:
             self.next_value = self.min_value
 
@@ -283,12 +282,19 @@ class Ramp(QObject):
         self.current_value = self.next_value
 
     def __call__(self, value):
+        """This is the function that is used as a hook
+
+        We need to let expected values pass through and start the ramp otherwise.
+        """
+        value_orig = value
         value = float(value)
-        # if we get the next value in the ramp, just pass it through or next value is smaller than the min value
+
+        # if we get the next value in the ramp, just pass it through
+        # or next value is smaller than the min value
         if (value < self.min_value + self.epsilon) or (
             abs(value - self.next_value) < self.epsilon
         ):
-            return f"{value}"
+            return value_orig
 
         # start a new ramp cycle
         self.target_value = value

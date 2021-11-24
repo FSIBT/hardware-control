@@ -183,3 +183,68 @@ class TestRampHook:
 
         ramp(20)
         assert app.data == [0, 10, 11, 12, 13, 14]
+
+        app = MockApp()
+        ramp = hc.hooks.Ramp(
+            app,
+            "instrument_dummy",
+            "parameter_dummy",
+            ramp_speed=1,
+            timer_step=500,
+            min_value=10,
+            epsilon=1,
+        )
+
+        ramp.timer = MockTimer()
+        ramp.timer.timeout.connect(ramp.do_step)
+
+        ramp(20)
+        assert app.data == [0, 10, 10.5, 11, 11.5, 12]
+
+        app = MockApp()
+        ramp = hc.hooks.Ramp(
+            app,
+            "instrument_dummy",
+            "parameter_dummy",
+            ramp_speed=2,
+            timer_step=500,
+            min_value=10,
+            epsilon=1,
+        )
+
+        ramp.timer = MockTimer()
+        ramp.timer.timeout.connect(ramp.do_step)
+
+        ramp(20)
+        assert app.data == [0, 10, 11, 12, 13, 14]
+
+    def test_call_function(self):
+        app = MockApp()
+        ramp = hc.hooks.Ramp(
+            app,
+            "instrument_dummy",
+            "parameter_dummy",
+            ramp_speed=1,
+            timer_step=1000,
+            min_value=10,
+            epsilon=1,
+        )
+        ramp.timer = MockTimer()
+        ramp.timer.timeout.connect(ramp.do_step)
+
+        # no ramps below min_value
+        ramp.next_value = 10
+        assert ramp("10") == "10"
+        assert ramp("10.2") == "10.2"
+        assert ramp("9.8") == "9.8"
+        assert ramp("0") == "0"
+
+        # no ramps near next_value
+        ramp.next_value = 15
+        assert ramp("15") == "15"
+        assert ramp("15.2") == "15.2"
+        assert ramp("14.8") == "14.8"
+
+        # this should start the ramp
+        ramp("20")
+        assert app.data == [0, 10, 11, 12, 13, 14]
