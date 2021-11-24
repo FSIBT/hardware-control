@@ -127,9 +127,12 @@ class regressor:
         pk /= pk.sum()
 
         # Artificially deflate probability of choosing a point to measure that has many trained points next to it
-        neigh_prob = 0.3 * regressor.neighbor_probability(
-            self.x_potential, self.x_measured, self.delta
+        neigh_prob = self.neighbor_probability(
+            self.x_potential,
+            self.x_measured,
+            self.delta,
         ).reshape(-1, 1)
+        neigh_prob *= 0.3
         pk -= neigh_prob
 
         # (By a factor of 2) artificially inflate probability of choosing the higher points in the spectrum
@@ -149,8 +152,15 @@ class regressor:
         pk /= pk.sum()
 
         # Select x value for next query using the probability distribution
-        S = rv_discrete(values=[self.x_potential.reshape(-1, 1), pk])
-        x_query = S.rvs()
+        # (rv_discrete only takes integers, so we scale all values up by 100
+        # before using rv_discrete and then scale back down afterwards; for this
+        # reason, the stepsize of x_potential cannot be less than 0.01, for under
+        # those conditions there would still be some values that would not be
+        # whole numbers)
+        S = rv_discrete(
+            values=[(1e2 * self.x_potential).astype(int).reshape(-1, 1), pk]
+        )
+        x_query = float(S.rvs()) / 1e2
         self.x_measured = np.append(self.x_measured, x_query).reshape(-1, 1)
 
     def update_model(self, new_y_val):
@@ -214,6 +224,18 @@ class ScanWidget(QGroupBox):
         (i.e. once per measurement cycle)
     finish_scan_fxn
         Optional function that will be executed at the conclusion of the scan
+
+
+    :Scan Range GUI Parameters: * **Start** - Value at which the scan starts
+                                * **Stop** - Value at which the scan ends
+                                * **Step** - The step size between the values measured in the scan
+
+
+    :Gaussian Process GUI Parameters: * **Start** - Value at which the Gaussian process pre-scan starts; this is also the minimum value that the Gaussian process will ever measure
+                                      * **Stop** - Value at which the Gaussian process pre-scan ends; this is also the maximum value that the Gaussian process will ever measure
+                                      * **Step** - The minimum spacing between adjacent measured values; this value cannot be less than 0.01
+                                      * **# of Pre-Scans** - Number of values to pre-scan; Gaussian processes always begin with a prescan over an evenly-spaced array starting and ending with the start and stop values, respectively
+                                      * **# of Queries** – Number of values to query during the Gaussian process (after the pre-scan) is finished
     """
 
     def __init__(
@@ -270,7 +292,7 @@ class ScanWidget(QGroupBox):
         self.parameter_drop.addItems(["----------"])
         self.parameter_drop.currentIndexChanged.connect(self.set_parameter)
 
-        # UI 2: Indicates scan type – Gaussian Process (GP), list of values, a range of values, or values list from a file
+        # UI 2: Indicates scan type – Gaussian process (GP), list of values, a range of values, or values list from a file
         self.use_GP = QRadioButton("GP")
         self.use_list = QRadioButton("List")
         self.use_range = QRadioButton("Range")
@@ -620,10 +642,15 @@ class ScanWidget(QGroupBox):
             if self.GP_step_edit.text() == "":
                 self.GP_step_edit.setText(self.range_step_edit.text())
 
+            if float(self.GP_step_edit.text()) < 0.01:
+                logger.error(
+                    "ValueError: Gaussian process stepsize must be greater than 0.01."
+                )
+                return False
             try:
-                start = float(self.range_start_edit.text())
-                end = float(self.range_end_edit.text())
-                step_size = float(self.range_step_edit.text())
+                start = float(self.GP_step_edit.text())
+                end = float(self.GP_step_edit.text())
+                step_size = float(self.GP_step_edit.text())
             except:
                 logger.error(
                     "Scan Widget: Invalid values for GP Scan start, end, or step."
@@ -635,7 +662,7 @@ class ScanWidget(QGroupBox):
 
             if self.GP_n_prescans < 2:
                 logger.error(
-                    "ValueError: Gaussian Process requires at least 2 prescans."
+                    "ValueError: Gaussian process requires at least 2 prescans."
                 )
                 return False
 
@@ -645,7 +672,7 @@ class ScanWidget(QGroupBox):
                 self.GP_n_prescans,
             )
 
-            if np.max(np.diff(self.prescan_vals)) <= int(self.GP_step_edit.text()):
+            if np.max(np.diff(self.prescan_vals)) <= float(self.GP_step_edit.text()):
                 logger.error(
                     "ValueError: The GP minimum stepsize is larger than the prescan values stepsize."
                 )
@@ -720,7 +747,8 @@ class ScanWidget(QGroupBox):
         These actions include making the desired measurement, updating the Gaussian
         process kernel (if applicable), executing the given scan_cycle_fxn (if given),
         updating the progress bar, moving to the next scan value to measure, and
-        pausing when all these actions are completed."""
+        pausing when all these actions are completed.
+        """
         if self.use_GP.isChecked() is False:
             self.GP_n_prescans = np.inf
         self.measured_yvals = self.get_measured_values()
@@ -742,7 +770,7 @@ class ScanWidget(QGroupBox):
             logger.info(
                 f"Finished scan\n\tInstrument: {self.scan_instrument}\n\tParameter: {self.scan_parameter}\n\tValues:{self.val_list}."
             )
-            self._end_scan()
+            self.end_scan()
             return
         if self.count >= self.GP_n_prescans or self.continue_scan:
             # For first GP query, initialize the GP regressor
