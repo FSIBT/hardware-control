@@ -8,6 +8,7 @@ from functools import partial
 import logging
 
 from ...base import Instrument
+from ...base.hooks import format_float
 
 logger = logging.getLogger(__name__)
 
@@ -83,6 +84,7 @@ class Keysight_36300(Instrument):
                 read_command=f":SOURCE:VOLT? (@{channel})",
                 set_command=f"SOURCE:VOLT {{}}, (@{channel})",
                 pre_hooks=[partial(self.check_Vmax, channel)],
+                post_hooks=[format_float()],
                 dummy_return="5",
             )
 
@@ -91,6 +93,7 @@ class Keysight_36300(Instrument):
                 read_command=f":SOURCE:CURR? (@{channel})",
                 set_command=f"SOURCE:CURR {{}}, (@{channel})",
                 pre_hooks=[partial(self.check_Imax, channel)],
+                post_hooks=[format_float()],
                 dummy_return="6",
             )
 
