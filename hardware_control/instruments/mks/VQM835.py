@@ -104,6 +104,13 @@ class VQM835(Instrument):
             dummy_return="",
         )
 
+        self.add_parameter(
+            "MASS_CAL",
+            read_command="INST MSP\rCAL:VAL?",
+            set_command="INST MSP\rCAL:VAL",
+            dummy_return="6.076e5",
+        )
+
         ## Setting up the Scans
         self.add_command("READOUT_SET", "FORM 1,1\rFORM?")
         self.add_command("SINGLE_MEASUREMENT", "INST MSP\rOUTP ON\rINIT\rFETC?")
