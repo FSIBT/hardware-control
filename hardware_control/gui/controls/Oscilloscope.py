@@ -496,10 +496,11 @@ class OscilloscopeDisplayWidget(QGroupBox):
         self.p2.linkedViewChanged(self.p1.vb, self.p2.XAxis)
 
     def create_load_waveform_hook(self, channel):
-        def hook(trace_string):
-            self.load_waveform(channel, trace_string)
+        def load_waveform_hook(trace_string):
+            trace_string = self.load_waveform(channel, trace_string)
+            return trace_string
 
-        return hook
+        return load_waveform_hook
 
     def load_waveform(self, channel, trace_string):
         """Load waveform from the instrument."""
@@ -514,3 +515,5 @@ class OscilloscopeDisplayWidget(QGroupBox):
         self.CH_data[channel - 1] = (t, wave)
 
         self.updateViews()
+
+        return trace_string
