@@ -61,6 +61,11 @@ def call_hooks(hooks_list: List[Callable], value: str) -> Optional[str]:
     return str(value)
 
 
+def list_hook_names(hooks_list: List[Callable]) -> List[str]:
+    """List the function names of all hooks in a given list of hooks."""
+    return [hook.__name__ for hook in hooks_list]
+
+
 # Converters
 def add_offset(offset):
     """Convert `value` to float and add `offset` to it."""
