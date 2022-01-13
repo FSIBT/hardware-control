@@ -566,6 +566,7 @@ class HCComboBox(HCMixin, QComboBox):
         items: List,
         label_align: str = "left",
         lookuptable: Optional[Dict] = None,
+        upper: bool = False,
     ):
         super().__init__(
             app=app,
@@ -575,6 +576,7 @@ class HCComboBox(HCMixin, QComboBox):
             label_align=label_align,
         )
         self.items = items
+        self.upper = upper
 
         self.addItems(self.items)
         self.setCurrentText(self.items[0])
@@ -588,7 +590,9 @@ class HCComboBox(HCMixin, QComboBox):
         self.currentIndexChanged.connect(self.value_change)
 
     def value_change(self) -> None:
-        value = self.currentText().upper()
+        value = self.currentText()
+        if self.upper:
+            value = value.upper()
         if self.lookuptable:
             value = self.lookuptable[value]
         self.app.set_instrument_parameter(self.instrument, self.parameter, value)
@@ -665,6 +669,11 @@ class HCDoubleSpinComboBox(HCMixin):
         self.app.set_instrument_parameter(self.instrument, self.parameter, value)
 
     def widget_update(self, value) -> None:
+        # Don't update an HC widget if the focus is on either the combobox or the spinbox
+        if self.spin.hasFocus() or self.combo.hasFocus():
+            logger.debug(f"'{self.name}' has focus, not updating")
+            return
+
         combo_value = self.units[self.combo.currentText()]
         value = float(value) / combo_value
         self.spin.setValue(value)
