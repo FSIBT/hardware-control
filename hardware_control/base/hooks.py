@@ -58,7 +58,7 @@ def call_hooks(hooks_list: List[Callable], value: str) -> Optional[str]:
             value = hook(value)
             if value is None:
                 return None
-    return str(value)
+    return value
 
 
 def list_hook_names(hooks_list: List[Callable]) -> List[str]:
@@ -97,11 +97,14 @@ def format_bool(value):
     return str(int(value == "True"))
 
 
-def format_float(format_type=".17"):
+def format_float(format_type=".17", as_string=True):
     """Convert value to float and format using any f-string format."""
 
     def converter(value):
-        return f"{float(value):{format_type}}"
+        if as_string:
+            return f"{float(value):{format_type}}"
+        else:
+            return float(value)
 
     return converter
 
