@@ -74,9 +74,11 @@ class Oscilloscope(QGroupBox):
         self.disp = OscilloscopeDisplayWidget(
             self.app, self.instrument, channels=self.channels
         )
-        self.horiz = OscilloscopeHorizontalWidget(self.app, self.instrument)
-        self.trig = OscilloscopeTriggerWidget(
+        self.horiz = OscilloscopeHorizontalWidget(
             self.app, self.instrument, self.instrument_type
+        )
+        self.trig = OscilloscopeTriggerWidget(
+            self.app, self.instrument, self.instrument_type, self.channels
         )
 
         widget_col = 0
@@ -85,7 +87,9 @@ class Oscilloscope(QGroupBox):
         self.channel_box_layout = QGridLayout()
         for i in self.channels:
             self.channel_widgets.append(
-                OscilloscopeChannelWidget(self.app, self.instrument, i)
+                OscilloscopeChannelWidget(
+                    self.app, self.instrument, i, self.instrument_type
+                )
             )
             self.channel_box_layout.addWidget(self.channel_widgets[-1], 0, widget_col)
             widget_col += 1
@@ -151,12 +155,14 @@ class OscilloscopeChannelWidget(QWidget):
         app,
         instrument_name: str,
         channel: int,
+        instrument_type: str,
     ):
 
         super().__init__()
 
         self.app = app
         self.instrument = instrument_name
+        self.instrument_type = instrument_type
         self.channel = channel
         self.colors = {0: "yellow", 1: "green", 2: "blue", 3: "red"}
 
@@ -172,6 +178,7 @@ class OscilloscopeChannelWidget(QWidget):
             label="Volts/Div (V)",
             label_align="right",
         )
+        self.volts_div.setValue(1)
 
         self.volts_offset = HCDoubleSpinBox(
             self.app,
@@ -180,6 +187,7 @@ class OscilloscopeChannelWidget(QWidget):
             label="Vert. Offset (V)",
             label_align="right",
         )
+        self.volts_offset.setMinimum(-10)
 
         self.label = HCLineEdit(
             self.app,
@@ -199,15 +207,26 @@ class OscilloscopeChannelWidget(QWidget):
             text_unchecked=" Turn On",
         )
 
-        self.BW_but = HCOnOffButton(
-            self.app,
-            self.instrument,
-            f"CH{self.channel}_BW_LIM",
-            label="BW Limit",
-            label_align="right",
-            text_checked="Turn Off",
-            text_unchecked=" Turn On",
-        )
+        if not self.instrument_type == "picoscope":
+            self.BW_lim = HCOnOffButton(
+                self.app,
+                self.instrument,
+                f"CH{self.channel}_BW_LIM",
+                label="BW Limit",
+                label_align="right",
+                text_checked="Turn Off",
+                text_unchecked=" Turn On",
+            )
+        else:
+            self.BW_lim = HCComboBox(
+                self.app,
+                self.instrument,
+                parameter=f"CH{channel}_BW_LIM",
+                label="BW Limit",
+                label_align="right",
+                items=["Full", "20MHZ"],
+            )
+            self.BW_lim.setCurrentText("Full")
 
         self.Inv_but = HCOnOffButton(
             self.app,
@@ -227,6 +246,7 @@ class OscilloscopeChannelWidget(QWidget):
             label_align="right",
             items=["AC", "DC"],
         )
+        self.coupling.setCurrentText("DC")
 
         self.impedance = HCComboBox(
             self.app,
@@ -245,6 +265,7 @@ class OscilloscopeChannelWidget(QWidget):
             label_align="right",
             items=[".001", ".01", ".1", "1", "10", "100", "1000"],
         )
+        self.probe_atten.setCurrentText("1")
 
         self.channel_layout = HCGridLayout(
             [
@@ -252,7 +273,7 @@ class OscilloscopeChannelWidget(QWidget):
                 self.volts_offset,
                 self.label,
                 self.on_off_but,
-                self.BW_but,
+                self.BW_lim,
                 self.Inv_but,
                 self.coupling,
                 self.impedance,
@@ -267,7 +288,7 @@ class OscilloscopeChannelWidget(QWidget):
 class OscilloscopeTriggerWidget(QGroupBox):
     """A group of widgets that control parameters relating to oscilloscope triggering."""
 
-    def __init__(self, app, instrument_name, instrument_type):
+    def __init__(self, app, instrument_name, instrument_type, channels):
         super().__init__()
 
         self.app = app
@@ -286,6 +307,7 @@ class OscilloscopeTriggerWidget(QGroupBox):
         self.trig_level.setSingleStep(0.01)
         self.trig_level.setDecimals(2)
         self.trig_level.setMinimum(-50.0)
+        self.trig_level.setValue(1)
 
         self.trig_chan = HCComboBox(
             self.app,
@@ -293,7 +315,7 @@ class OscilloscopeTriggerWidget(QGroupBox):
             parameter="TRIGGER_CHANNEL",
             label="Channel",
             label_align="right",
-            items=["1", "2", "3", "4"],
+            items=[str(channel) for channel in channels],
         )
 
         coupling_items = ["AC", "DC"]
@@ -320,6 +342,7 @@ class OscilloscopeTriggerWidget(QGroupBox):
             label_align="right",
             items=edge_items,
         )
+        self.trig_edge.setCurrentText("POS")
 
         self.trig_single = HCPushButton(
             self.app, self.instrument, "SINGLE_TRIGGER", label="Trigger"
@@ -333,16 +356,16 @@ class OscilloscopeTriggerWidget(QGroupBox):
             offset=1,
         )
         self.trig_grid.addWidget(self.trig_header, 0, 0, 1, 2, QtCore.Qt.AlignTop)
-        self.trig_grid.addWidget(self.trig_single, 5, 0, QtCore.Qt.AlignTop)
-        self.trig_grid.addWidget(self.trig_run, 5, 1, QtCore.Qt.AlignTop)
-        self.trig_grid.addWidget(self.trig_stop, 6, 1, QtCore.Qt.AlignTop)
+        self.trig_grid.addWidget(self.trig_single, 5, 1, QtCore.Qt.AlignTop)
+        self.trig_grid.addWidget(self.trig_run, 5, 0, QtCore.Qt.AlignTop)
+        self.trig_grid.addWidget(self.trig_stop, 6, 0, QtCore.Qt.AlignTop)
         self.setLayout(self.trig_grid)
 
 
 class OscilloscopeHorizontalWidget(QGroupBox):
     """A group of widgets that control parameters relating to the oscilloscope signal display."""
 
-    def __init__(self, app, instrument_name):
+    def __init__(self, app, instrument_name, instrument_type):
         super().__init__()
 
         self.app = app
@@ -358,10 +381,12 @@ class OscilloscopeHorizontalWidget(QGroupBox):
             units={"s": 1, "ms": 1e-3, "us": 1e-6, "ns": 1e-9},
             label_align="right",
         )
-        self.timebase.spin.setSingleStep(1)
         self.timebase.spin.setDecimals(3)
         self.timebase.spin.setMaximum(1e9)
+        self.timebase.spin.setValue(1)
         self.timebase.combo.setCurrentText("ms")
+        if instrument_type == "picoscope":
+            self.timebase.label.setText("Time")
 
         self.time_offset = HCDoubleSpinComboBox(
             self.app,
@@ -371,7 +396,6 @@ class OscilloscopeHorizontalWidget(QGroupBox):
             units={"s": 1, "ms": 1e-3, "us": 1e-6, "ns": 1e-9},
             label_align="right",
         )
-        self.time_offset.spin.setSingleStep(1)
         self.time_offset.spin.setDecimals(3)
         self.time_offset.spin.setMaximum(1e9)
         self.time_offset.combo.setCurrentText("ms")

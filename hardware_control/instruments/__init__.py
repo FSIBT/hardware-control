@@ -6,7 +6,7 @@ from .keysight import Keysight_33500B
 from .keysight import Keysight_36300
 from .keysight import Keysight_4000X
 from .ni import Ni_9000
-from .picotech import Picotech_6000
+from .picotech import Picoscope
 from .rigol import Rigol_DP832
 from .rigol import Rigol_DS1000Z
 from .siglent import Siglent_SDG
