@@ -107,13 +107,16 @@ class App(QApplication):
         # keep track of datasets, so that we can autosave, etc.
         self.data_sets = {}
 
-        # keep a list of parameters that should be updated periodiccaly
+        # keep a list of parameters that should be updated periodicaly
         # This is a set of (<instrument name>,<parameters>) combinations
         self.request_updates = set()
         # keep a list of parameters that should be skipped. For example
         # when a parameter it not implemented in an instrument driver,
         # but does exists in a GUI
         self.skip_request_updates = set()
+        # keep a list of commands that should be called periodicaly
+        # This is a set of (<instrument name>,<commands>,<status>) combinations
+        self.continuous_commands = set()
 
         # a timer to check ZMQ messages
         self.zmq_timer = QTimer(self)
@@ -123,6 +126,7 @@ class App(QApplication):
         # a timer to requests updates from instruments
         self.update_instrument_timer = QTimer(self)
         self.update_instrument_timer.timeout.connect(self.update_instruments)
+        self.update_instrument_timer.timeout.connect(self.call_continuous_commands)
         self.update_instrument_timer.start(1000)
 
         # default refresh rate used by many GUI elements
@@ -345,12 +349,39 @@ class App(QApplication):
         if not callable(parameter):
             if parameter not in self._data[instrument]:
                 logger.error(
-                    f"Cannot find parameter/command '{parameter}' for instrument '{instrument}' in app"
+                    f"Cannot find parameter/command '{parameter}' for instrument '{instrument}' in app."
                 )
                 return
 
         logger.debug(f"register {instrument}->{parameter} for auto updates")
         self.request_updates.add((instrument, parameter))
+
+    def call_continuous_commands(self) -> None:
+        """Call all commands that are to be called continuously."""
+        for instrument, command, status in self.continuous_commands:
+            online = self.get_instrument_parameter(instrument, "ONLINE")
+            if online is None or online == "False" or status == False:
+                return
+            self.call_instrument_command(instrument, command)
+
+    @ensure_instrument_exists
+    def add_continuous_command(
+        self, instrument: str, command: str, status: bool = False
+    ) -> None:
+        """Add an instrument's parameter to a list of continuously-called commands.
+
+        The app class provides a mechanism to call instrument commands once every
+        regular interval. The command will not be called continuously unless the
+        status parameter in the self.continuous_commands set is set to True.
+        """
+        if command not in self._data[instrument]:
+            logger.error(
+                f"Cannot find parameter/command '{command}' for instrument '{instrument}' in app."
+            )
+            return
+
+        logger.debug(f"register {instrument}->{command} as a continuous command")
+        self.continuous_commands.add((instrument, command, status))
 
     def add_skip_update_instrument_parameter(
         self, instrument: str, parameter: str

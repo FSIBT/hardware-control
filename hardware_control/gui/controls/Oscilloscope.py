@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import (
     QGroupBox,
     QGridLayout,
     QWidget,
+    QPushButton,
 )
 
 from ..widgets import (
@@ -112,6 +113,7 @@ class Oscilloscope(QGroupBox):
                     self.app.add_skip_update_instrument_parameter(
                         self.instrument, parameter
                     )
+            self.app.add_continuous_command(self.instrument, "SINGLE_TRIGGER", False)
 
     def default_update_readout(self) -> None:
         """Register certain parameterts to be automatically udpated."""
@@ -122,12 +124,11 @@ class Oscilloscope(QGroupBox):
             "TRIGGER_EDGE",
             "TRIGGER_LEVEL",
             "TRIGGER_CHANNEL",
+            "LABELS_ENABLED",
+            "TRIGGER_COUPLING",
         ]
-        if self.instrument_type == "keysight" or self.instrument_type == "rigol":
-            update.append("LABELS_ENABLED")
-            update.append("TRIGGER_COUPLING")
-            if self.instrument_type == "keysight":
-                update.append("NUM_POINTS")
+        if self.instrument_type == "keysight":
+            update.append("NUM_POINTS")
 
         for ch in self.channel_widgets:
             update.append(f"CH{ch.channel}_VOLTS_DIV")
@@ -347,8 +348,20 @@ class OscilloscopeTriggerWidget(QGroupBox):
         self.trig_single = HCPushButton(
             self.app, self.instrument, "SINGLE_TRIGGER", label="Trigger"
         )
-        self.trig_run = HCPushButton(self.app, self.instrument, "RUN", label="Run")
-        self.trig_stop = HCPushButton(self.app, self.instrument, "STOP", label="Stop")
+
+        if self.instrument_type == "picoscope":
+            self.trig_run = QPushButton()
+            self.trig_run.clicked.connect(self.pico_run)
+            self.trig_run.setText("Run")
+
+            self.trig_stop = QPushButton()
+            self.trig_stop.clicked.connect(self.pico_stop)
+            self.trig_stop.setText("Stop")
+        else:
+            self.trig_run = HCPushButton(self.app, self.instrument, "RUN", label="Run")
+            self.trig_stop = HCPushButton(
+                self.app, self.instrument, "STOP", label="Stop"
+            )
 
         # Add widgets to grid layout
         self.trig_grid = HCGridLayout(
@@ -360,6 +373,14 @@ class OscilloscopeTriggerWidget(QGroupBox):
         self.trig_grid.addWidget(self.trig_run, 5, 0, QtCore.Qt.AlignTop)
         self.trig_grid.addWidget(self.trig_stop, 6, 0, QtCore.Qt.AlignTop)
         self.setLayout(self.trig_grid)
+
+    def pico_run(self):
+        self.app.continuous_commands.remove((self.instrument, "SINGLE_TRIGGER", False))
+        self.app.continuous_commands.add((self.instrument, "SINGLE_TRIGGER", True))
+
+    def pico_stop(self):
+        self.app.continuous_commands.remove((self.instrument, "SINGLE_TRIGGER", True))
+        self.app.continuous_commands.add((self.instrument, "SINGLE_TRIGGER", False))
 
 
 class OscilloscopeHorizontalWidget(QGroupBox):
