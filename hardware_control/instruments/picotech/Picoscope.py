@@ -27,7 +27,9 @@ def pico_error_check(func):
         try:
             func(*args, **kwargs)
         except Exception as e:
-            logger.error(f"Picoscope {e.__class__.__name__}: {e}")
+            logger.error(
+                f"Picoscope {e.__class__.__name__} while calling {func.__name__}: {e}"
+            )
 
     return inner
 
@@ -274,6 +276,12 @@ class Picoscope(Instrument):
             if not self._check_connection():
                 self._online = False
 
+            # Set default parameters
+            self._set_triggerchannel(1)
+            self._set_triggerlevel(1.0)
+            self._set_triggeredge("POS")
+            self._set_timebase(1.0)
+
         return self._online
 
     def _check_connection(self):
@@ -298,12 +306,8 @@ class Picoscope(Instrument):
         """
 
         try:
-            number_samples = min(self.ps.noSamples, self.ps.maxSamples)
-
             # seems data and dataR are needed
-            data = np.zeros(number_samples, dtype=np.float64)
-            dataR = np.zeros(number_samples, dtype=np.int16)
-            data = self.ps.getDataV(channel, dataV=data, dataRaw=dataR)
+            data = self.ps.getDataV(channel)
             volts = list(data)
 
             # Get time values

@@ -356,13 +356,13 @@ class App(QApplication):
         logger.debug(f"register {instrument}->{parameter} for auto updates")
         self.request_updates.add((instrument, parameter))
 
-    def call_continuous_commands(self) -> None:
+    def call_continuous_commands(self, priority=0) -> None:
         """Call all commands that are to be called continuously."""
         for instrument, command, status in self.continuous_commands:
             online = self.get_instrument_parameter(instrument, "ONLINE")
             if online is None or online == "False" or status == False:
                 return
-            self.call_instrument_command(instrument, command)
+            self.call_instrument_command(instrument, command, priority)
 
     @ensure_instrument_exists
     def add_continuous_command(
