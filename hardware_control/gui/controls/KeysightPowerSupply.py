@@ -144,6 +144,11 @@ class KeysightPowerSupply(QGroupBox):
         # Set protection levels on channels
         self.app.set_instrument_parameter(self.instrument, "CH2_V_PROT", 6)
         self.app.set_instrument_parameter(self.instrument, "CH3_V_PROT", -6)
+        self.app.set_instrument_parameter(self.instrument, "CH1_V_SET", 5)
+        self.app.set_instrument_parameter(self.instrument, "CH2_V_SET", 5)
+        self.app.set_instrument_parameter(self.instrument, "CH2_I_SET", 0.5)
+        self.app.set_instrument_parameter(self.instrument, "CH3_V_SET", -5)
+        self.app.set_instrument_parameter(self.instrument, "CH3_I_SET", 0.5)
 
         self.hbox = QVBoxLayout()
         # Add channel widgets to the control program

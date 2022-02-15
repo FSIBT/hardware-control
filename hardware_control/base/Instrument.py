@@ -76,7 +76,10 @@ class Instrument:
     """Class variable that can be used to specify a modbus connection."""
 
     def __init__(
-        self, instrument_name: str, connection_addr: str, default_port: int = None
+        self,
+        instrument_name: str,
+        connection_addr: Optional[str] = None,
+        default_port: int = None,
     ) -> None:
 
         self.name = instrument_name
@@ -135,7 +138,9 @@ class Instrument:
         modbus should be used, the user needs to overwrite this in the
         init function of the instrument driver.
         """
-        if (
+        if self.connection_addr == None:
+            return
+        elif (
             self.connection_addr.startswith("ASRL")
             or self.connection_addr.startswith("GPIB")
             or self.connection_addr.startswith("PXI")

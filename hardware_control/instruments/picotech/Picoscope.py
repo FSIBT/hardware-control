@@ -18,6 +18,7 @@ from ...base.hooks import format_float
 from picoscope.ps2000 import PS2000
 from picoscope.ps2000a import PS2000a
 from picoscope.ps6000 import PS6000
+from picoscope.ps5000a import PS5000a
 
 
 def pico_error_check(func):
@@ -35,7 +36,7 @@ def pico_error_check(func):
 
 
 class Picoscope(Instrument):
-    """Picotech Picoscpe 2000 and 6000 series instrument class.
+    """Picotech Picoscpe 2000, 2000a, and 6000 series instrument class.
 
     PARAMETERS
         * TIMEBASE (*float*)
@@ -73,15 +74,8 @@ class Picoscope(Instrument):
 
     """
 
-    def __init__(
-        self,
-        instrument_name: str = "PICOSCOPE",
-        connection_addr: str = "",
-        pico_series="6000",
-    ):
-        super().__init__(
-            instrument_name=instrument_name, connection_addr=connection_addr
-        )
+    def __init__(self, instrument_name: str = "PICOSCOPE", pico_series="6000"):
+        super().__init__(instrument_name=instrument_name)
         self.pico_series = pico_series
 
         self.number_of_channels = 4
@@ -122,7 +116,7 @@ class Picoscope(Instrument):
 
         for channel in range(1, self.number_of_channels + 1):
             self.channel_params[channel] = {
-                "volts_div": 1.0,
+                "volts_div": 2.0,
                 "offset": 0.0,
                 "bw_lim": "Full",
                 "coupling": "DC",
@@ -259,6 +253,8 @@ class Picoscope(Instrument):
                 self.ps = PS2000a()
             if self.pico_series == "2000":
                 self.ps = PS2000()
+            elif self.pico_series == "5000a":
+                self.ps = PS5000a()
             elif self.pico_series == "6000":
                 self.ps = PS6000()
             self._online = True
@@ -275,12 +271,6 @@ class Picoscope(Instrument):
         if self._online:
             if not self._check_connection():
                 self._online = False
-
-            # Set default parameters
-            self._set_triggerchannel(1)
-            self._set_triggerlevel(1.0)
-            self._set_triggeredge("POS")
-            self._set_timebase(1.0)
 
         return self._online
 
@@ -306,7 +296,6 @@ class Picoscope(Instrument):
         """
 
         try:
-            # seems data and dataR are needed
             data = self.ps.getDataV(channel)
             volts = list(data)
 
