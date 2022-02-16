@@ -74,11 +74,16 @@ class Picoscope(Instrument):
 
     """
 
-    def __init__(self, instrument_name: str = "PICOSCOPE", pico_series="6000"):
+    def __init__(
+        self,
+        instrument_name: str = "PICOSCOPE",
+        pico_series: str = "6000",
+        n_chan: int = 2,
+    ):
         super().__init__(instrument_name=instrument_name)
         self.pico_series = pico_series
 
-        self.number_of_channels = 4
+        self.number_of_channels = n_chan
         self.num_vert_divisions = 8
         self.record_length = 1e3  # Maximum 64 MS
         self.trigger_channel = 0
