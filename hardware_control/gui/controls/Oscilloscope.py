@@ -24,6 +24,7 @@ from ..widgets import (
     HCOnOffButton,
     HCHeader,
     HCDoubleSpinComboBox,
+    TracePlotter,
 )
 
 logger = logging.getLogger(__name__)
@@ -72,8 +73,12 @@ class Oscilloscope(QGroupBox):
         else:
             self.channels = [1, 2, 3, 4]
 
-        self.disp = OscilloscopeDisplayWidget(
-            self.app, self.instrument, channels=self.channels
+        self.disp = TracePlotter(
+            self.app,
+            self.instrument,
+            "Oscilloscope Trace",
+            self.channels,
+            bkg_color="w",
         )
         self.horiz = OscilloscopeHorizontalWidget(
             self.app, self.instrument, self.instrument_type
@@ -439,126 +444,3 @@ class OscilloscopeHorizontalWidget(QGroupBox):
         )
         self.horiz_layout.addWidget(self.horiz_header, 0, 0, 1, 3, QtCore.Qt.AlignTop)
         self.setLayout(self.horiz_layout)
-
-
-class OscilloscopeDisplayWidget(QGroupBox):
-    """A group of widgets that displays a constantly refreshing plot of the oscilloscope output.
-
-    Parameters
-    ----------
-    instrument : hc.base.instrument
-        Instance to connect display to.
-    display_name
-        Display widget name shown in the control program; default is 'Oscilloscope Display'
-    channels : list
-        channels to display (starting with 0)
-    """
-
-    def __init__(
-        self,
-        app,
-        instrument_name: str,
-        channels,
-        display_name: str = "Oscilloscope Display",
-    ):
-
-        super().__init__(display_name)
-
-        self.app = app
-        self.instrument = instrument_name
-        self.channels = channels
-
-        self.display = pg.PlotWidget()
-        self.display.show()
-
-        self.p1 = self.display.plotItem
-        self.p1.showGrid(x=True, y=True)
-        self.p1.setMenuEnabled(enableMenu=True)
-
-        # set up second axis
-        if self.channels:
-            self.p2 = pg.ViewBox()
-            self.p1.showAxis("right")
-            self.p1.scene().addItem(self.p2)
-            self.p1.getAxis("right").linkToView(self.p2)
-            self.p2.setXLink(self.p1)
-            right_label_items = [f"channel {i}" for i in self.channels]
-            left_label_items = [
-                f"channel {i}"
-                for i in range(max(self.channels) + 1)
-                if i not in self.channels
-            ]
-            right_label = ", ".join(right_label_items)
-            left_label = ", ".join(left_label_items)
-            self.p1.getAxis("right").setLabel(right_label, **{"font-size": "20pt"})
-            self.p1.getAxis("left").setLabel(left_label, **{"font-size": "20pt"})
-
-        else:
-            self.p2 = self.p1
-
-        channel_colors = {
-            0: (255, 255, 13),
-            1: (31, 255, 9),
-            2: (0, 0, 254),
-            3: (252, 0, 8),
-        }
-
-        self.lineCH = []
-        self.CH = []
-        self.CH_data = []
-        for i, ch in enumerate(self.channels):
-            self.lineCH.append(
-                pg.mkPen(color=channel_colors[i], style=QtCore.Qt.SolidLine)
-            )
-            self.CH.append(pg.PlotCurveItem(pen=self.lineCH[i], symbol=None))
-            self.CH_data.append(([], []))
-
-        for i, curve in enumerate(self.CH):
-            if i in self.channels:
-                self.p2.addItem(curve)
-            else:
-                self.p1.addItem(curve)
-
-        if self.channels:
-            self.updateViews()
-            self.p1.vb.sigResized.connect(self.updateViews)
-
-        self.master_layout = QGridLayout()
-        self.master_layout.addWidget(self.display, 0, 0, 1, 20)
-        self.setLayout(self.master_layout)
-
-        for ch in self.channels:
-            self.app.add_hook(
-                self.instrument,
-                f"CH{ch}_WAVEFORM",
-                "post_read_hooks",
-                self.create_load_waveform_hook(ch),
-            )
-
-    def updateViews(self):
-        """Update display with most recent trace."""
-        self.p2.setGeometry(self.p1.vb.sceneBoundingRect())
-        self.p2.linkedViewChanged(self.p1.vb, self.p2.XAxis)
-
-    def create_load_waveform_hook(self, channel):
-        def load_waveform_hook(trace_string):
-            trace_string = self.load_waveform(channel, trace_string)
-            return trace_string
-
-        return load_waveform_hook
-
-    def load_waveform(self, channel, trace_string):
-        """Load waveform from the instrument."""
-        if trace_string is None:
-            logger.warning(
-                f"Scope {self.instrument}: no trace data available for channel {channel}"
-            )
-            return
-        t, wave = json.loads(trace_string)
-
-        self.CH[channel - 1].setData(t, wave)
-        self.CH_data[channel - 1] = (t, wave)
-
-        self.updateViews()
-
-        return trace_string

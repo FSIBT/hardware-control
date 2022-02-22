@@ -6,8 +6,9 @@ from .connection_status import StatusTool
 from .data_widget import DataWidget
 from .function_runner import FunctionRunnerTool
 from .plot import PlotTool, MiniPlotTool
-from .scan_widget import ScanWidget
 from .qtconsole import Qtconsole
+from .scan_widget import ScanWidget
+from .trace_plotter import TracePlotter
 from .hc_widgets import (
     load_icon,
     load_pixmap,
