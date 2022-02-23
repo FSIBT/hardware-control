@@ -269,7 +269,7 @@ class Dataset(QObject):
         """
         names = []
 
-        for instrument, parameter in self.instruments:
+        for instrument, parameter, plot_ax in self.instruments:
             name = f"{instrument}:{parameter}"
             if name in self.channel_names:
                 names.append(self.channel_names[name])
