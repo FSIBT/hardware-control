@@ -2,6 +2,7 @@
     .. image:: /images/widgets/plot.png
 """
 import logging
+from typing import Optional, List
 
 from PyQt5.QtCore import QTimer
 from PyQt5.QtWidgets import (
@@ -211,12 +212,20 @@ class PlotBase(QWidget):
 class PlotTool(PlotBase):
     """A single matplotlib figure with normalize and autoscale buttons."""
 
-    def __init__(self, app, name="Plot Tool", **kwargs):
+    def __init__(
+        self,
+        app,
+        name: str = "Plot Tool",
+        skip_datasets: Optional[List[str]] = None,
+        **kwargs,
+    ) -> None:
         super().__init__(app, name=name, **kwargs)
 
         self.axes = self.fig.add_subplot()
         self.axes_2 = self.axes.twinx()
         self.ax_lst = [self.axes, self.axes_2]
+
+        self.skip_datasets = [] if skip_datasets is None else skip_datasets
 
         self.linewidth = 1
 
@@ -234,7 +243,9 @@ class PlotTool(PlotBase):
         self.autoscalebutton.setChecked(True)
         self.select_set_label = QLabel("Dataset:")
         self.select_set_drop = QComboBox()
-        self.select_set_drop.addItems(x for x in app.data_sets)
+        self.select_set_drop.addItems(
+            x for x in app.data_sets if x not in self.skip_datasets
+        )
         self.select_set_drop.currentIndexChanged.connect(self.selector_changed)
 
         self.controls = QHBoxLayout()
@@ -273,7 +284,9 @@ class PlotTool(PlotBase):
         super().set_dataset(dataset_name)
 
         self.select_set_drop.clear()
-        self.select_set_drop.addItems(x for x in self.app.data_sets)
+        self.select_set_drop.addItems(
+            x for x in self.app.data_sets if x not in self.skip_datasets
+        )
         self.select_set_drop.setCurrentText(dataset_name)
 
     def update(self):
