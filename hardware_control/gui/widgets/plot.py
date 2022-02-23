@@ -52,6 +52,22 @@ class PlotBase(QWidget):
         self.autoscale = True
         self.fmt = "o-"
         self.plot_set = None
+        self.unused_colors = [
+            "b",
+            "g",
+            "r",
+            "c",
+            "m",
+            "y",
+            "k",
+            "purple",
+            "orange",
+            "springgreen",
+            "slategray",
+            "maroon",
+        ]
+        self.used_colors = []
+        self.param_colors = {}
 
         # Set up plotting
         self.fig = plt.figure(
@@ -75,7 +91,8 @@ class PlotBase(QWidget):
         """
         self.plot_set = dataset_name
 
-        self.axes.clear()
+        for ax in self.ax_lst:
+            ax.clear()
 
     def toggle_autoscale(self):
         """Toggle the autoscale function.
@@ -114,18 +131,17 @@ class PlotBase(QWidget):
             logger.error(f"Unkown data set {self.plot_set} in {self.name}.")
             return
 
-        xleft, xright = self.axes.get_xlim()
-        ybottom, ytop = self.axes.get_ylim()
-
         dataset = self.app.data_sets[self.plot_set]
 
-        self.axes.clear()
-        for key in dataset.data:
-            if key[-4:] == "Misc":
-                continue
+        for ax in self.ax_lst:
+            ax.clear()
 
-            if key == "time:time":
-                continue
+        self.ax_1_labels = []
+        self.ax_2_labels = []
+        self.plot_obj_lst = []
+        for idx, instrument_tup in enumerate(dataset.instruments):
+            key = f"{instrument_tup[0]}:{instrument_tup[1]}"
+            plot_ax = instrument_tup[2]
 
             df = dataset.to_pandas(columns=["time:time", key], cleanup=True)
             if df.empty:
@@ -145,18 +161,51 @@ class PlotBase(QWidget):
             else:
                 label_name = key
 
-            self.axes.plot_date(
+            if plot_ax == 1:
+                ax = self.axes
+                self.ax_1_labels.append(label_name)
+            elif plot_ax == 2:
+                ax = self.axes_2
+                self.ax_2_labels.append(label_name)
+            else:
+                logger.error(
+                    f"Plot axis {plot_ax} is invalid. Plot axis must be either 1 or 2."
+                )
+
+            if label_name not in self.param_colors.keys():
+                if len(self.unused_colors) == 0:
+                    self.unused_colors = self.used_colors
+                    self.used_colors = []
+                self.param_colors[label_name] = self.unused_colors[0]
+                self.used_colors.append(self.unused_colors[0])
+                self.unused_colors.remove(self.unused_colors[0])
+
+            plot_obj = ax.plot_date(
                 x_values,
                 y_values,
                 self.fmt,
+                color=self.param_colors[label_name],
                 label=label_name,
                 tz=self.time_zone,
                 linewidth=self.linewidth,
             )
+            self.plot_obj_lst.append(plot_obj[0])
 
         if not self.autoscale:
-            self.axes.set_xlim([xleft, xright])
-            self.axes.set_ylim([ybottom, ytop])
+            xleft, xright = ax.get_xlim()
+            ybottom, ytop = ax.get_ylim()
+            ax.set_xlim([xleft, xright])
+            ax.set_ylim([ybottom, ytop])
+
+        # Label axes if two axes are in use
+        if len(self.ax_2_labels) != 0:
+            self.ax_1_labels = ", ".join(self.ax_1_labels)
+            self.ax_2_labels = ", ".join(self.ax_2_labels)
+            self.axes.set_ylabel(self.ax_1_labels, labelpad=13)
+            self.axes_2.set_ylabel(self.ax_2_labels, rotation=270, labelpad=19)
+            self.axes_2.yaxis.tick_right()
+        else:
+            self.axes_2.get_yaxis().set_ticks([])
 
 
 class PlotTool(PlotBase):
@@ -166,6 +215,8 @@ class PlotTool(PlotBase):
         super().__init__(app, name=name, **kwargs)
 
         self.axes = self.fig.add_subplot()
+        self.axes_2 = self.axes.twinx()
+        self.ax_lst = [self.axes, self.axes_2]
 
         self.linewidth = 1
 
@@ -230,9 +281,8 @@ class PlotTool(PlotBase):
         super().update()
 
         self.axes.set_xlabel("Time (s)")
-        handles, labels = self.axes.get_legend_handles_labels()
-        if len(handles) > 0:
-            self.axes.legend(loc="best")
+        labels = [l.get_label() for l in self.plot_obj_lst]
+        self.axes.legend(self.plot_obj_lst, labels, loc=0)
         self.axes.grid(True)
         plt.locator_params(axis="y", nbins=6)
         self.plot.draw()

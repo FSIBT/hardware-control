@@ -106,19 +106,23 @@ class Dataset(QObject):
         instrument: str,
         parameter: Optional[str] = None,
         alias: Optional[str] = None,
+        plot_ax: Optional[int] = 1,
     ) -> None:
         """Add a parameter from an instrument to the dataset.
 
         Parameters
         ----------
         instrument
-           The instrument name
+            The instrument name
         parameter
-           The parameter that should be tracked. If None, all read parameters
-           in the instrument are tracked.
+            The parameter that should be tracked. If None, all read parameters
+            in the instrument are tracked.
         alias
-           Use this as an alias when plotting or saving the dataset
-           (only used if a parameter was given)
+            Use given string as an alias when plotting or saving the dataset
+            (only used if a parameter was given)
+        plot_ax
+            Axis – either 1 or 2 – the parameter(s) should be plotted on.
+            Default is 1.
         """
         if instrument not in self.app._data:
             logger.error(f"{instrument} not found in App.")
@@ -130,7 +134,7 @@ class Dataset(QObject):
                 logger.error(f"{parameter} not available for {instrument}.")
                 return
 
-            self.instruments.append((instrument, parameter))
+            self.instruments.append((instrument, parameter, plot_ax))
 
             # If alias is specified, change parameter name to alias
             if alias is not None:
@@ -142,7 +146,7 @@ class Dataset(QObject):
                     # Only track parameters (not commands)
                     # All parameters have a "read_value" key while commands do not
                     if "read_value" in self.app._data[instrument][p].keys():
-                        self.instruments.append((instrument, p))
+                        self.instruments.append((instrument, p, plot_ax))
 
     def define_alias(self, original_name: str, alias: str) -> None:
         """Define an alias for an original parameter name of format <instrument>:<parameter>.
@@ -150,7 +154,11 @@ class Dataset(QObject):
         The alias will be used when saving and plotting.
         """
         instrument, parameter = original_name.split(":")
-        if (instrument, parameter) not in self.instruments:
+        instrument_lst = np.array(self.instruments)[:, :2].tolist()
+        # Need second if condition for when instrument_lst only contains one embedded list
+        if ([instrument, parameter] not in instrument_lst) and (
+            [instrument, parameter] != instrument_lst
+        ):
             logger.warning(
                 f"'{original_name}' is not available in dataset '{self.name}'."
             )
@@ -333,7 +341,7 @@ class Dataset(QObject):
 
         self.data["time:time"].append(str(time.time()))
 
-        for instrument, parameter in self.instruments:
+        for instrument, parameter, plot_ax in self.instruments:
             value = self.app.get_instrument_parameter(instrument, parameter)
             self.data[f"{instrument}:{parameter}"].append(value)
 
