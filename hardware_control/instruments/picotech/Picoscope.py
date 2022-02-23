@@ -8,6 +8,7 @@ from functools import partial
 import json
 import logging
 import numpy as np
+from typing import List
 
 from ...base import Instrument
 
@@ -71,19 +72,18 @@ class Picoscope(Instrument):
             * Set the instrument to continuously trigger.
         * STOP
             * Prevent the instrument from triggering.
-
     """
 
     def __init__(
         self,
-        instrument_name: str = "PICOSCOPE",
-        pico_series: str = "6000",
-        n_chan: int = 2,
+        instrument_name: str,
+        pico_series: str,
+        channels: List,
     ):
         super().__init__(instrument_name=instrument_name)
         self.pico_series = pico_series
 
-        self.number_of_channels = n_chan
+        self.channels = channels
         self.num_vert_divisions = 8
         self.record_length = 1e3  # Maximum 64 MS
         self.trigger_channel = 0
@@ -119,7 +119,7 @@ class Picoscope(Instrument):
             "TRIGGER_CHANNEL", read_command=None, set_command=self._set_triggerchannel
         )
 
-        for channel in range(1, self.number_of_channels + 1):
+        for channel in self.channels:
             self.channel_params[channel] = {
                 "volts_div": 2.0,
                 "offset": 0.0,
