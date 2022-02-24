@@ -18,8 +18,9 @@ from PyQt5.QtWidgets import (
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
 import matplotlib.pyplot as plt
-from matplotlib.dates import epoch2num
+
 import numpy as np
+import pandas as pd
 
 # needed to get plots work
 plt.ioff()
@@ -149,7 +150,9 @@ class PlotBase(QWidget):
                 return
 
             y_values = df[key].to_numpy()
-            x_values = epoch2num(df.index.to_numpy())
+            x_values = pd.to_datetime(df["time:time"], unit="s").dt.tz_localize("UTC")
+            x_values = x_values.dt.tz_convert("America/Los_Angeles")
+            # x_values = x_values.dt.strftime("%H:%M:%S")
 
             if self.normalize:
                 mymax = np.abs(y_values).max()
