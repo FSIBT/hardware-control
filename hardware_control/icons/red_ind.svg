@@ -1,12 +1,12 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg width="100%" height="100%" viewBox="0 0 25 25" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:1.5;">
-    <g transform="matrix(1,0,0,1,-209.012,-155.607)">
-        <g transform="matrix(0.0781448,0,0,0.0781448,187.888,134.533)">
-            <circle cx="425.627" cy="424.989" r="151.143" style="fill:url(#_Linear1);stroke:black;stroke-width:8.33px;"/>
-        </g>
-    </g>
-    <defs>
-        <linearGradient id="_Linear1" x1="0" y1="0" x2="1" y2="0" gradientUnits="userSpaceOnUse" gradientTransform="matrix(-145.05,195.205,-195.205,-145.05,526.052,292.268)"><stop offset="0" style="stop-color:rgb(227,17,31);stop-opacity:1"/><stop offset="1" style="stop-color:rgb(147,0,16);stop-opacity:1"/></linearGradient>
-    </defs>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="0px" height="0px" viewBox="0 0 19 19" version="1.1">
+<defs>
+<linearGradient id="linear0" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="1" y2="0" gradientTransform="matrix(-145.05,195.205,-195.205,-145.05,526.052,292.268)">
+<stop offset="0" style="stop-color:rgb(89.019608%,6.666667%,12.156863%);stop-opacity:1;"/>
+<stop offset="1" style="stop-color:rgb(57.647059%,0%,6.27451%);stop-opacity:1;"/>
+</linearGradient>
+</defs>
+<g id="surface1">
+<path style="fill-rule:evenodd;fill:url(#linear0);stroke-width:8.33;stroke-linecap:round;stroke-linejoin:round;stroke:rgb(0%,0%,0%);stroke-opacity:1;stroke-miterlimit:1.5;" d="M 576.754185 424.968443 C 576.754185 508.434132 509.07397 576.114347 425.608281 576.114347 C 342.142593 576.114347 274.462377 508.434132 274.462377 424.968443 C 274.462377 341.502755 342.142593 273.822539 425.608281 273.822539 C 509.07397 273.822539 576.754185 341.502755 576.754185 424.968443 Z M 576.754185 424.968443 " transform="matrix(0.05939,0,0,0.05939,-16.05424,-16.01624)"/>
+</g>
 </svg>

@@ -385,8 +385,8 @@ class PowerSupplyChannel(QWidget):
 
         # Combine channel header and readout/update parameters in a master channel layout
         self.channel_layout = QGridLayout()
-        self.channel_layout.addWidget(self.channel_label, 0, 0)
-        self.channel_layout.addLayout(self.readout_grid, 1, 0)
+        self.channel_layout.addWidget(self.channel_label, 0, 0, 1, 1)
+        self.channel_layout.addLayout(self.readout_grid, 0, 1, 2, 5)
 
         # Potentially add a status panel to the master channel layout
         if show_status_panel:
@@ -407,13 +407,13 @@ class PowerSupplyChannel(QWidget):
                     tooltip=status_label,
                 )
                 indicator.setToolTip(status_label)
-                self.status_grid.addWidget(indicator, row_num % 2, col_num)
-                row_num += 1
-                if row_num != 0 and row_num % 2 == 0:
-                    col_num += 1
+                self.status_grid.addWidget(indicator, row_num, col_num % 4)
+                col_num += 1
+                if col_num != 0 and col_num % 4 == 0:
+                    row_num += 1
             self.status_panel.setLayout(self.status_grid)
 
-            self.channel_layout.addWidget(self.status_panel, 2, 0)
+            self.channel_layout.addWidget(self.status_panel, 1, 0, 1, 1)
 
         self.channel_layout.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignTop)
         self.setLayout(self.channel_layout)

@@ -152,7 +152,6 @@ class PlotBase(QWidget):
             y_values = df[key].to_numpy()
             x_values = pd.to_datetime(df["time:time"], unit="s").dt.tz_localize("UTC")
             x_values = x_values.dt.tz_convert("America/Los_Angeles")
-            # x_values = x_values.dt.strftime("%H:%M:%S")
 
             if self.normalize:
                 mymax = np.abs(y_values).max()
