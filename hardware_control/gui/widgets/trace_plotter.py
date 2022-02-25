@@ -4,7 +4,14 @@ import numpy as np
 from typing import Optional, List
 
 from PyQt5 import QtCore
-from PyQt5.QtWidgets import QGroupBox, QGridLayout, QLabel, QDoubleSpinBox, QPushButton
+from PyQt5.QtWidgets import (
+    QGroupBox,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QDoubleSpinBox,
+    QPushButton,
+)
 
 import logging
 
@@ -111,16 +118,16 @@ class TracePlotter(QGroupBox):
         self.p1.setYRange(self.left_min_lst[-1], self.left_max_lst[-1])
         self.p2.setYRange(self.right_min_lst[-1], self.right_max_lst[-1])
         # Plot range parameters
-        self.left_vmin_label = QLabel("Voltage Min")
+        self.left_vmin_label = QLabel("Voltage Min:")
         self.left_vmin = QDoubleSpinBox()
         self.left_vmin.setValue(1e-20)
-        self.left_vmax_label = QLabel("Voltage Max")
+        self.left_vmax_label = QLabel("Voltage Max:")
         self.left_vmax = QDoubleSpinBox()
         self.left_vmax.setValue(10.0)
-        self.right_vmin_label = QLabel("Current Min")
+        self.right_vmin_label = QLabel("Current Min:")
         self.right_vmin = QDoubleSpinBox()
         self.right_vmin.setValue(1e-20)
-        self.right_vmax_label = QLabel("Current Max")
+        self.right_vmax_label = QLabel("Current Max:")
         self.right_vmax = QDoubleSpinBox()
         self.right_vmax.setValue(10.0)
         for spinbox in [
@@ -137,7 +144,7 @@ class TracePlotter(QGroupBox):
         self.range_btn.setText("Set User Ranges")
         self.range_btn.setCheckable(True)
         self.reset_range_btn = QPushButton()
-        self.reset_range_btn.setText("Automate Ranges (Temp)")
+        self.reset_range_btn.setText("Automate Ranges")
         self.reset_range_btn.setCheckable(True)
 
         self.plot_items = {}
@@ -162,18 +169,21 @@ class TracePlotter(QGroupBox):
         self.updateViews()
         self.p1.vb.sigResized.connect(self.updateViews)
 
+        self.input_layout = QHBoxLayout()
+        self.input_layout.addWidget(self.left_vmin_label)
+        self.input_layout.addWidget(self.left_vmin)
+        self.input_layout.addWidget(self.left_vmax_label)
+        self.input_layout.addWidget(self.left_vmax)
+        self.input_layout.addWidget(self.right_vmin_label)
+        self.input_layout.addWidget(self.right_vmin)
+        self.input_layout.addWidget(self.right_vmax_label)
+        self.input_layout.addWidget(self.right_vmax)
+        self.input_layout.addWidget(self.range_btn)
+        self.input_layout.addWidget(self.reset_range_btn)
+        self.input_layout.setAlignment(QtCore.Qt.AlignLeft)
         self.master_layout = QGridLayout()
-        self.master_layout.addWidget(self.display, 0, 0, 5, 20)
-        self.master_layout.addWidget(self.left_vmin_label, 6, 0, 1, 1)
-        self.master_layout.addWidget(self.left_vmin, 6, 1, 1, 1)
-        self.master_layout.addWidget(self.left_vmax_label, 6, 2, 1, 1)
-        self.master_layout.addWidget(self.left_vmax, 6, 3, 1, 1)
-        self.master_layout.addWidget(self.right_vmin_label, 6, 4, 1, 1)
-        self.master_layout.addWidget(self.right_vmin, 6, 5, 1, 1)
-        self.master_layout.addWidget(self.right_vmax_label, 6, 6, 1, 1)
-        self.master_layout.addWidget(self.right_vmax, 6, 7, 1, 1)
-        self.master_layout.addWidget(self.range_btn, 6, 8, 1, 1)
-        self.master_layout.addWidget(self.reset_range_btn, 6, 9, 1, 1)
+        self.master_layout.addWidget(self.display, 0, 0, 5, 30)
+        self.master_layout.addLayout(self.input_layout, 6, 0, 1, 10)
         self.setLayout(self.master_layout)
 
     def updateViews(self):
@@ -222,8 +232,12 @@ class TracePlotter(QGroupBox):
         if channel == self.channels[0]:
             self.left_min_lst = [np.min(wave)]
             self.left_max_lst = [np.max(wave)]
-            self.p1.setYRange(0.8 * np.min(wave), 1.2 * np.max(wave))
+            p = self.p1
         else:
             self.right_min_lst = [np.min(wave)]
             self.right_max_lst = [np.max(wave)]
-            self.p2.setYRange(0.8 * np.min(wave), 1.2 * np.max(wave))
+            p = self.p2
+
+        new_min = np.min(wave) - 0.2 * np.abs(np.min(wave))
+        new_max = np.max(wave) + 0.2 * np.abs(np.max(wave))
+        p.setYRange(new_min, new_max)
