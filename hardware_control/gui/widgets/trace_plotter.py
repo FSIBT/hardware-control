@@ -218,6 +218,8 @@ class TracePlotter(QGroupBox):
         for function in self.loading_hooks:
             trace_string = function(self, channel, t, wave)
 
+        return trace_string
+
     def user_resize(self):
         """Resize channel ranges accoridng to user inputs."""
         self.left_min_lst = [float(self.left_vmin.text())]
