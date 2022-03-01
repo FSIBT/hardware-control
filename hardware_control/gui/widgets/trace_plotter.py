@@ -31,7 +31,7 @@ class TracePlotter(QGroupBox):
         Widget name shown in the control program
     channels : List
         Channels to display (first channel is 1; up to 4 channels allowed)
-    channel_names : Optional[List]
+    channel_names : List
         Names of channels to displayed on the y-axis
     bkg_color : Optional[str]
         Color of plot background
@@ -45,7 +45,7 @@ class TracePlotter(QGroupBox):
         instrument_name: str,
         display_name: str,
         channels: List,
-        channel_names: Optional[List] = [],
+        channel_names: List = [],
         bkg_color: Optional[str] = "k",
         loading_hooks: Optional[List] = [],
     ):
@@ -118,34 +118,37 @@ class TracePlotter(QGroupBox):
         self.p1.setYRange(self.left_min_lst[-1], self.left_max_lst[-1])
         self.p2.setYRange(self.right_min_lst[-1], self.right_max_lst[-1])
         # Plot range parameters
-        self.left_vmin_label = QLabel("Voltage Min:")
-        self.left_vmin = QDoubleSpinBox()
-        self.left_vmin.setValue(1e-20)
-        self.left_vmax_label = QLabel("Voltage Max:")
-        self.left_vmax = QDoubleSpinBox()
-        self.left_vmax.setValue(10.0)
-        self.right_vmin_label = QLabel("Current Min:")
-        self.right_vmin = QDoubleSpinBox()
-        self.right_vmin.setValue(1e-20)
-        self.right_vmax_label = QLabel("Current Max:")
-        self.right_vmax = QDoubleSpinBox()
-        self.right_vmax.setValue(10.0)
-        for spinbox in [
-            self.left_vmin,
-            self.left_vmax,
-            self.right_vmin,
-            self.right_vmax,
-        ]:
-            spinbox.setMinimum(-np.inf)
-            spinbox.setMaximum(np.inf)
-            spinbox.setDecimals(5)
+        self.vmin_labs = []
+        self.vmax_labs = []
+        self.vmins = []
+        self.vmaxs = []
+        for ch_nm in self.channel_names:
+            vmin_label = QLabel(f"{ch_nm} Min (V):")
+            vmin = QDoubleSpinBox()
+            vmin.setValue(1e-20)
+            vmin.setMinimum(-np.inf)
+            vmin.setMaximum(np.inf)
+            vmin.setDecimals(5)
+            vmax_label = QLabel(f"{ch_nm} Max (V):")
+            vmax = QDoubleSpinBox()
+            vmax.setValue(10.0)
+            vmax.setMinimum(-np.inf)
+            vmax.setMaximum(np.inf)
+            vmax.setDecimals(5)
+
+            self.vmin_labs.append(vmin_label)
+            self.vmax_labs.append(vmax_label)
+            self.vmins.append(vmin)
+            self.vmaxs.append(vmax)
 
         self.range_btn = QPushButton()
         self.range_btn.setText("Set User Ranges")
         self.range_btn.setCheckable(True)
+        self.range_btn.clicked.connect(self.click_range_btn)
         self.reset_range_btn = QPushButton()
         self.reset_range_btn.setText("Automate Ranges")
         self.reset_range_btn.setCheckable(True)
+        self.reset_range_btn.clicked.connect(self.click_reset_range_btn)
 
         self.plot_items = {}
         for idx, channel in enumerate(self.channels):
@@ -157,7 +160,7 @@ class TracePlotter(QGroupBox):
             )
 
             pen = pg.mkPen(
-                color=channel_colors[idx], style=QtCore.Qt.SolidLine, width=5
+                color=channel_colors[idx], style=QtCore.Qt.SolidLine, width=2
             )
             curve = pg.PlotCurveItem(pen=pen, symbol=None)
             self.plot_items[channel] = curve
@@ -170,14 +173,13 @@ class TracePlotter(QGroupBox):
         self.p1.vb.sigResized.connect(self.updateViews)
 
         self.input_layout = QHBoxLayout()
-        self.input_layout.addWidget(self.left_vmin_label)
-        self.input_layout.addWidget(self.left_vmin)
-        self.input_layout.addWidget(self.left_vmax_label)
-        self.input_layout.addWidget(self.left_vmax)
-        self.input_layout.addWidget(self.right_vmin_label)
-        self.input_layout.addWidget(self.right_vmin)
-        self.input_layout.addWidget(self.right_vmax_label)
-        self.input_layout.addWidget(self.right_vmax)
+        for vmin, vmax, vmin_label, vmax_label in zip(
+            self.vmins, self.vmaxs, self.vmin_labs, self.vmax_labs
+        ):
+            self.input_layout.addWidget(vmin_label)
+            self.input_layout.addWidget(vmin)
+            self.input_layout.addWidget(vmax_label)
+            self.input_layout.addWidget(vmax)
         self.input_layout.addWidget(self.range_btn)
         self.input_layout.addWidget(self.reset_range_btn)
         self.input_layout.setAlignment(QtCore.Qt.AlignLeft)
@@ -222,24 +224,24 @@ class TracePlotter(QGroupBox):
 
     def user_resize(self):
         """Resize channel ranges accoridng to user inputs."""
-        self.left_min_lst = [float(self.left_vmin.text())]
-        self.left_max_lst = [float(self.left_vmax.text())]
-        self.right_min_lst = [float(self.right_vmin.text())]
-        self.right_max_lst = [float(self.right_vmax.text())]
-        self.p1.setYRange(self.left_min_lst[-1], self.left_max_lst[-1])
-        self.p2.setYRange(self.right_min_lst[-1], self.right_max_lst[-1])
+        self.p1.setYRange(float(self.vmins[0].text()), float(self.vmaxs[0].text()))
+        self.p2.setYRange(float(self.vmins[1].text()), float(self.vmaxs[1].text()))
 
     def automate_resize(self, wave, channel):
         """Resize according to channel trace min and max."""
         if channel == self.channels[0]:
-            self.left_min_lst = [np.min(wave)]
-            self.left_max_lst = [np.max(wave)]
             p = self.p1
         else:
-            self.right_min_lst = [np.min(wave)]
-            self.right_max_lst = [np.max(wave)]
             p = self.p2
 
         new_min = np.min(wave) - 0.2 * np.abs(np.min(wave))
         new_max = np.max(wave) + 0.2 * np.abs(np.max(wave))
         p.setYRange(new_min, new_max)
+
+    def click_range_btn(self):
+        """Uncheck automatic resizing button."""
+        self.reset_range_btn.setChecked(False)
+
+    def click_reset_range_btn(self):
+        """Uncheck user resize button."""
+        self.range_btn.setChecked(False)
