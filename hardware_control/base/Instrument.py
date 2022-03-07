@@ -138,7 +138,7 @@ class Instrument:
         modbus should be used, the user needs to overwrite this in the
         init function of the instrument driver.
         """
-        if self.connection_addr == None:
+        if self.connection_addr == "None":
             return
         elif (
             self.connection_addr.startswith("ASRL")

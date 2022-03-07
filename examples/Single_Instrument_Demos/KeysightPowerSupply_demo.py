@@ -2,14 +2,16 @@
 """Keysight Power Supply demo
 
 Usage:
-  KeysightPowerSupply_demo.py [--dummy] [--debug] [--console] [--info]
+  KeysightPowerSupply_demo.py [--conn_addr=CONN_ADD] [--dummy] [--debug] [--console] [--info]
 
 Options:
-  --dummy    use dummy connection for instruments that return semi-random data
-             so that one run the program away from the test stand
-  --debug    allow debug print statements
-  --info     allow info print statements
-  --console  Print logger output to console
+  --conn_addr=CONN_ADD  Connection address of physical instrument [default: None].
+                        Required for most instruments when not in dummy mode.
+  --dummy               Use dummy connection for instruments that return semi-random data
+                        so that one can run the program away from the test stand.
+  --debug               Allow debug print statements.
+  --info                Allow info print statements.
+  --console             Print logger output to console.
 
 """
 
@@ -26,6 +28,7 @@ import hardware_control as hc
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
+conn_addr = commands["--conn_addr"]
 
 logger = logging.getLogger(__name__)
 hc.setup_logging_docopt(logger, commands)
@@ -42,7 +45,7 @@ class Demo(hc.HCMainWindow):
 
         # Create an Keysight_36300 instrument backend and add it to the app
         self.app.add_instrument(
-            hc.instruments.Keysight_36300("Keysight_36300", "192.168.0.3:5025")
+            hc.instruments.Keysight_36300("Keysight_36300", conn_addr)
         )
 
         # Load a settings file with preset values for the instrument parameters
