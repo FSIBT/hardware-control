@@ -527,7 +527,6 @@ class App(QApplication):
                 f"The 'get_instrument_parameter' function was called on the command '{parameter}' in instrument '{instrument}'. Only parameters can be passed to 'get_instrument_parameter'."
             )
 
-    @ensure_parameter_and_instrument_exists
     def add_hook(
         self,
         instrument: str,
@@ -557,13 +556,19 @@ class App(QApplication):
         function
            The hook function to be added.
         """
-        if when not in ["post_read_hooks", "pre_set_hooks", "pre_call_hooks"]:
-            logger.error(
-                f"'{instrument}': '{parameter}' has wrong hook type: '{when}'. Needs to be one of 'post_read_hooks', 'pre_set_hooks', 'pre_call_hooks'"
-            )
-            return
-
-        self._data[instrument][parameter][when].append(function)
+        if instrument in self._data:
+            if parameter in self._data[instrument]:
+                if when not in ["post_read_hooks", "pre_set_hooks", "pre_call_hooks"]:
+                    logger.error(
+                        f"'{instrument}': '{parameter}' has wrong hook type: '{when}'. Needs to be one of 'post_read_hooks', 'pre_set_hooks', 'pre_call_hooks'"
+                    )
+                    return
+                else:
+                    self._data[instrument][parameter][when].append(function)
+                    return
+        logger.info(
+            f"Parameter {parameter} does not exist in instrument {instrument}, not adding parameter hook to {when}."
+        )
 
     @ensure_parameter_and_instrument_exists
     def add_widget(self, instrument: str, parameter: str, widget) -> None:
