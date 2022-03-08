@@ -6,13 +6,12 @@ Usage:
 
 Options:
   --conn_addr=CONN_ADD  Connection address of physical instrument [default: None].
-                        Required for most instruments when not in dummy mode.
+                        Required if not in dummy mode.
   --dummy               Use dummy connection for instruments that return semi-random data
                         so that one can run the program away from the test stand.
   --debug               Allow debug print statements.
   --info                Allow info print statements.
   --console             Print logger output to console.
-
 """
 
 import logging

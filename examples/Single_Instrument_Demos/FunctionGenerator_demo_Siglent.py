@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-"""wavegen demo
+"""Siglent Wave Generator demo
 
 Usage:
-  wavegen_demo [--dummy] [--socket] [--debug] [--console] [--info]
+  FunctionGenerator_demo_Siglent.py [--conn_addr=CONN_ADD] [--dummy] [--debug] [--console] [--info]
 
 Options:
-  --dummy    use dummy connection for instruments that return semi-random data
-             so that one run the program away from the test stand
-  --socket   use sockets instead of visa
-  --debug    allow debug print statements
-  --info     allow info print statements
-  --console  Print logger output to console
-
+  --conn_addr=CONN_ADD  Connection address of physical instrument [default: None].
+                        Required if not in dummy mode.
+  --dummy               Use dummy connection for instruments that return semi-random data
+                        so that one can run the program away from the test stand.
+  --debug               Allow debug print statements.
+  --info                Allow info print statements.
+  --console             Print logger output to console.
 """
 
 import logging
@@ -24,15 +24,10 @@ import hardware_control as hc
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
+conn_addr = commands["--conn_addr"]
 
 logger = logging.getLogger(__name__)
 hc.setup_logging_docopt(logger, commands)
-
-
-if commands["--socket"]:
-    address = "192.168.0.20"
-else:
-    address = "TCPIP0::192.168.2.12::INSTR"
 
 
 class Demo(hc.HCMainWindow):
@@ -43,7 +38,7 @@ class Demo(hc.HCMainWindow):
 
         self.main_widget = QWidget(self)
 
-        self.app.add_instrument(hc.instruments.Siglent_SDG("Siglent", address))
+        self.app.add_instrument(hc.instruments.Siglent_SDG("Siglent", conn_addr))
         self.awg_ctrl = hc.gui.FunctionGenerator(self.app, "Siglent", num_channels=2)
 
         self.grid = QGridLayout()

@@ -1,14 +1,16 @@
-"""Device demo
+"""General IO Module demo
 
 Usage:
-  device_demo [--dummy] [--debug] [--console] [--info]
+  IOModule_demo.py [--conn_addr=CONN_ADD] [--dummy] [--debug] [--console] [--info]
 
 Options:
-  --dummy    use dummy connection for instruments that return semi-random data
-             so that one run the program away from the test stand
-  --debug    allow debug print statements
-  --info     allow info print statements
-  --console  Print logger output to console
+  --conn_addr=CONN_ADD  Connection address of physical instrument [default: None].
+                        Required if not in dummy mode.
+  --dummy               Use dummy connection for instruments that return semi-random data
+                        so that one can run the program away from the test stand.
+  --debug               Allow debug print statements.
+  --info                Allow info print statements.
+  --console             Print logger output to console.
 """
 
 import logging
@@ -23,7 +25,7 @@ import hardware_control as hc
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
-
+conn_addr = commands["--conn_addr"]
 
 logger = logging.getLogger(__name__)
 hc.setup_logging_docopt(logger, commands)
@@ -42,7 +44,7 @@ class Demo(hc.HCMainWindow):
         self.app.add_instrument(
             hc_inst.Ni_9000(
                 instrument_name="NI-9000",
-                connection_addr="cDAQ1",
+                connection_addr=conn_addr,
                 modules=[1, 2],
                 analog_channels={1: ["o0", "o1"], 2: ["i0", "i1", "i2", "i3", "i4"]},
             )
@@ -55,7 +57,6 @@ class Demo(hc.HCMainWindow):
             self.app,
             "NI-9000",
             Path.cwd() / "settings_files" / "nidaq_grid_conf.json",
-            # Path.cwd() / "settings_files"/"IOModule_channel_data.json",
             num_columns=2,
         )
 

@@ -1,14 +1,14 @@
-"""Device demo
+"""Picoscope demo
 
 Usage:
-  device_demo [--dummy] [--debug] [--console] [--info]
+  Picoscope_demo.py [--dummy] [--debug] [--console] [--info]
 
 Options:
-  --dummy    use dummy connection for instruments that return semi-random data
-             so that one run the program away from the test stand
-  --debug    allow debug print statements
-  --info     allow info print statements
-  --console  Print logger output to console
+  --dummy               Use dummy connection for instruments that return semi-random data
+                        so that one can run the program away from the test stand.
+  --debug               Allow debug print statements.
+  --info                Allow info print statements.
+  --console             Print logger output to console.
 """
 
 import logging
@@ -37,18 +37,16 @@ class Demo(hc.HCMainWindow):
         self.main_widget = QWidget(self)
 
         # Create an Picoscope-2000a instrument backend and add it to the app
-        self.app.add_instrument(
-            hc_inst.Picoscope(
-                "Picoscope-2000", "USB::128.3.131.114", pico_series="2000a"
-            )
-        )
+        # Picoscopes must be connected into the computer via usb
+        # Picoscopes do not require a connection address
+        self.app.add_instrument(hc_inst.Picoscope("Picoscope-2000", "2000a", [0, 1]))
 
         # Create an Oscilloscope GUI control that connects to the instrument backend
         self.scope_ctrl = hc.gui.Oscilloscope(
             self.app,
             "Picoscope-2000",
             "Picoscope",
-            channels=[1],
+            channels=[0, 1],
             instrument_type="picoscope",
         )
 

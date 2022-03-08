@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-"""wavegen demo
+"""Function Generator demo
 
 Usage:
-  wavegen_demo [--dummy] [--socket] [--debug] [--console] [--info]
+  FunctionGenerator_demo.py [--conn_addr=CONN_ADD] [--dummy] [--debug] [--console] [--info]
 
 Options:
-  --dummy    use dummy connection for instruments that return semi-random data
-             so that one run the program away from the test stand
-  --socket   use sockets instead of visa
-  --debug    allow debug print statements
-  --info     allow info print statements
-  --console  Print logger output to console
-
+  --conn_addr=CONN_ADD  Connection address of physical instrument [default: None].
+                        Required if not in dummy mode.
+  --dummy               Use dummy connection for instruments that return semi-random data
+                        so that one can run the program away from the test stand.
+  --debug               Allow debug print statements.
+  --info                Allow info print statements.
+  --console             Print logger output to console.
 """
 
 import logging
@@ -24,15 +24,10 @@ import hardware_control as hc
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
+conn_addr = commands["--conn_addr"]
 
 logger = logging.getLogger(__name__)
 hc.setup_logging_docopt(logger, commands)
-
-
-if commands["--socket"]:
-    address = "192.168.0.20"
-else:
-    address = "USB0::0x0957::0x2907::MY52500624::INSTR"
 
 
 class Demo(hc.HCMainWindow):
@@ -47,7 +42,7 @@ class Demo(hc.HCMainWindow):
         # Create an Keysight_33500B instrument backend and add it to the app
         # One must specify the number of channels for this instrument
         self.app.add_instrument(
-            hc.instruments.Keysight_33500B("keysight", address, number_of_channels=2)
+            hc.instruments.Keysight_33500B("keysight", conn_addr, number_of_channels=2)
         )
 
         # Create a FunctionGenerator GUI control that connects to the instrument backend

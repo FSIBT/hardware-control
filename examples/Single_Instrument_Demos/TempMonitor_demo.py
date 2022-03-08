@@ -1,14 +1,16 @@
-"""temp_monitor
+"""Temperature Monitor demo
 
 Usage:
-  temp_monitor [--dummy] [--debug] [--console] [--info]
+  TempMonitor_demo.py [--conn_addr=CONN_ADD] [--dummy] [--debug] [--console] [--info]
 
 Options:
-  --dummy    use dummy connection for instruments that return semi-random data
-             so that one run the program away from the test stand
-  --debug    allow debug print statements
-  --info     allow info print statements
-  --console  Print logger output to console
+  --conn_addr=CONN_ADD  Connection address of physical instrument [default: None].
+                        Required if not in dummy mode.
+  --dummy               Use dummy connection for instruments that return semi-random data
+                        so that one can run the program away from the test stand.
+  --debug               Allow debug print statements.
+  --info                Allow info print statements.
+  --console             Print logger output to console.
 """
 
 import logging
@@ -21,7 +23,7 @@ import hardware_control as hc
 
 commands = docopt(__doc__)
 dummy = commands["--dummy"]
-
+conn_addr = commands["--conn_addr"]
 
 logger = logging.getLogger(__name__)
 hc.setup_logging_docopt(logger, commands)
@@ -39,11 +41,7 @@ class TemperatureMonitor(hc.HCMainWindow):
         self.main_widget = QWidget(self)
 
         # create a backend and a GUI control for the backend
-        self.app.add_instrument(
-            hc.instruments.Lakeshore_224(
-                "lakeshore", "TCPIP::192.168.0.12::7777::SOCKET"
-            )
-        )
+        self.app.add_instrument(hc.instruments.Lakeshore_224("lakeshore", conn_addr))
 
         # Create a TempMonitor GUI control that connects to the instrument backend
         self.temp_wdgt = hc.gui.TempMonitor(
