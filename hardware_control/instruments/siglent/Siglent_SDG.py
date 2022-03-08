@@ -35,8 +35,6 @@ class Siglent_SDG(Instrument):
         self.number_of_channels = 2
 
         for ch in range(self.number_of_channels):
-
-            # might need a readback hook to parse to True/False
             self.add_parameter(
                 f"CH{ch}_ENABLED",
                 read_command=f"C{ch}:OUTP?",
@@ -52,15 +50,15 @@ class Siglent_SDG(Instrument):
             self.add_lookup(
                 f"CH{ch}_WAVEFORM",
                 {
-                    "SINE": "SINE",
-                    "SQUARE": "SQUARE",
-                    "RAMP": "RAMP",
-                    "PULSE": "PULSE",
+                    "Sine": "SINE",
+                    "Square": "SQUARE",
+                    "Ramp": "RAMP",
+                    "Pulse": "PULSE",
                     "PRBS": "PRBS",
-                    "NOISE": "NOISE",
+                    "Noise": "NOISE",
                     "DC": "DC",
-                    "TRIANGLE": "RAMP",
-                    "ARBITRARY": "ARB",
+                    "Triangle": "RAMP",
+                    "Arbitrary": "ARB",
                 },
             )
             self.add_parameter(
@@ -92,7 +90,7 @@ class Siglent_SDG(Instrument):
             self.add_lookup(
                 f"CH{ch}_IMPEDANCE",
                 {
-                    "50": "50",
-                    "HiZ": "HZ",
+                    "50-OHM": "50",
+                    "Hi-Z": "HZ",
                 },
             )
