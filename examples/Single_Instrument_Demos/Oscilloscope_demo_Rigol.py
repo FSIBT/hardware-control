@@ -45,6 +45,7 @@ class Demo(hc.HCMainWindow):
         self.scope_ctrl = hc.gui.Oscilloscope(
             self.app,
             "Rigol-1000",
+            [1, 2, 3, 4],
             "Rigol Oscilloscope",
             instrument_type="rigol",
         )

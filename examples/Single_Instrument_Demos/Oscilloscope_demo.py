@@ -44,7 +44,10 @@ class Demo(hc.HCMainWindow):
 
         # Create an Oscilloscope GUI control that connects to the instrument backend
         self.scope_ctrl = hc.gui.Oscilloscope(
-            self.app, "Keysight-4000", "Keysight 4000", channels=[1, 2, 3, 4]
+            self.app,
+            "Keysight-4000",
+            [1, 2, 3, 4],
+            "Keysight 4000",
         )
 
         # Add the control to the main widget

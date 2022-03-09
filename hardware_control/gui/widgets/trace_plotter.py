@@ -45,11 +45,10 @@ class TracePlotter(QGroupBox):
         instrument_name: str,
         display_name: str,
         channels: List,
-        channel_names: List = [],
-        bkg_color: Optional[str] = "k",
+        channel_names: List,
+        bkg_color: Optional[str] = "w",
         loading_hooks: Optional[List] = [],
     ):
-
         super().__init__(display_name)
 
         self.app = app
@@ -87,24 +86,18 @@ class TracePlotter(QGroupBox):
         self.p1.scene().addItem(self.p2)
         self.p1.getAxis("right").linkToView(self.p2)
         self.p2.setXLink(self.p1)
-        if self.channel_names == []:
-            left_label_items = [
-                f"channel {idx}" for idx, ch in enumerate(self.channels) if idx % 2 == 0
-            ]
-            right_label_items = [
-                f"channel {idx}" for idx, ch in enumerate(self.channels) if idx % 2 != 0
-            ]
-        else:
-            left_label_items = [
-                self.channel_names[idx]
-                for idx, ch in enumerate(self.channels)
-                if idx % 2 == 0
-            ]
-            right_label_items = [
-                self.channel_names[idx]
-                for idx, ch in enumerate(self.channels)
-                if idx % 2 != 0
-            ]
+
+        # Y-axis channel labels
+        left_label_items = [
+            self.channel_names[idx]
+            for idx, ch in enumerate(self.channels)
+            if idx % 2 == 0
+        ]
+        right_label_items = [
+            self.channel_names[idx]
+            for idx, ch in enumerate(self.channels)
+            if idx % 2 != 0
+        ]
         left_label = ", ".join(left_label_items)
         self.p1.getAxis("left").setLabel(left_label, units="V", **{"font-size": "14pt"})
         self.p1.getAxis("left").setTextPen(channel_colors[0])
@@ -115,9 +108,6 @@ class TracePlotter(QGroupBox):
         self.p1.getAxis("right").setTextPen(channel_colors[1])
 
         # Y-axis range widgets
-        self.p1.setYRange(self.left_min_lst[-1], self.left_max_lst[-1])
-        self.p2.setYRange(self.right_min_lst[-1], self.right_max_lst[-1])
-        # Plot range parameters
         self.vmin_labs = []
         self.vmax_labs = []
         self.vmins = []
@@ -135,11 +125,12 @@ class TracePlotter(QGroupBox):
             vmax.setMinimum(-np.inf)
             vmax.setMaximum(np.inf)
             vmax.setDecimals(5)
-
             self.vmin_labs.append(vmin_label)
             self.vmax_labs.append(vmax_label)
             self.vmins.append(vmin)
             self.vmaxs.append(vmax)
+        self.p1.setYRange(self.left_min_lst[-1], self.left_max_lst[-1])
+        self.p2.setYRange(self.right_min_lst[-1], self.right_max_lst[-1])
 
         self.range_btn = QPushButton()
         self.range_btn.setText("Set User Ranges")

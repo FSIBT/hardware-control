@@ -37,16 +37,17 @@ class Demo(hc.HCMainWindow):
         self.main_widget = QWidget(self)
 
         # Create an Picoscope-2000a instrument backend and add it to the app
-        # Picoscopes must be connected into the computer via usb
-        # Picoscopes do not require a connection address
-        self.app.add_instrument(hc_inst.Picoscope("Picoscope-2000", "2000a", [0, 1]))
+        channels = [0, 1]
+        self.app.add_instrument(
+            hc_inst.Picoscope("Picoscope-2000a", pico_series="5000a", channels=channels)
+        )
 
         # Create an Oscilloscope GUI control that connects to the instrument backend
         self.scope_ctrl = hc.gui.Oscilloscope(
             self.app,
-            "Picoscope-2000",
+            "Picoscope-2000a",
+            channels,
             "Picoscope",
-            channels=[0, 1],
             instrument_type="picoscope",
         )
 

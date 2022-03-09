@@ -13,6 +13,7 @@ from PyQt5.QtWidgets import (
     QGridLayout,
     QWidget,
     QPushButton,
+    QLabel,
 )
 
 from ..widgets import (
@@ -57,8 +58,8 @@ class Oscilloscope(QGroupBox):
         self,
         app,
         instrument_name: str,
+        channels: List[int],
         widget_name: str = "Oscilloscope",
-        channels: Optional[List] = None,
         instrument_type: str = "keysight",
     ):
 
@@ -66,18 +67,15 @@ class Oscilloscope(QGroupBox):
 
         self.app = app
         self.instrument = instrument_name
+        self.channels = channels
         self.instrument_type = instrument_type
-
-        if channels is not None:
-            self.channels = channels
-        else:
-            self.channels = [1, 2, 3, 4]
 
         self.disp = TracePlotter(
             self.app,
             self.instrument,
             "Oscilloscope Trace",
             self.channels,
+            [f"Channel {chan}" for chan in self.channels],
             bkg_color="w",
         )
         self.horiz = OscilloscopeHorizontalWidget(
@@ -108,8 +106,6 @@ class Oscilloscope(QGroupBox):
         self.master_layout.addWidget(self.channel_box, 10, 0, 1, 4)
         self.setLayout(self.master_layout)
 
-        self.default_update_readout()
-
         # Skip readout updates for picoscope parameters that don't have read commands
         if self.instrument_type == "picoscope":
             for parameter in self.app.list_instrument_parameters(self.instrument):
@@ -120,6 +116,8 @@ class Oscilloscope(QGroupBox):
                     )
             self.app.add_continuous_command(self.instrument, "SINGLE_TRIGGER", False)
 
+        self.default_update_readout()
+
     def default_update_readout(self) -> None:
         """Register certain parameterts to be automatically udpated."""
 
@@ -129,9 +127,10 @@ class Oscilloscope(QGroupBox):
             "TRIGGER_EDGE",
             "TRIGGER_LEVEL",
             "TRIGGER_CHANNEL",
-            "LABELS_ENABLED",
-            "TRIGGER_COUPLING",
         ]
+        if not self.instrument_type == "picoscope":
+            update.append("LABELS_ENABLED")
+            update.append("TRIGGER_COUPLING")
         if self.instrument_type == "keysight":
             update.append("NUM_POINTS")
 
@@ -141,8 +140,8 @@ class Oscilloscope(QGroupBox):
             update.append(f"CH{ch.channel}_COUPLING")
             update.append(f"CH{ch.channel}_PROBE_ATTEN")
             update.append(f"CH{ch.channel}_WAVEFORM")
-            update.append(f"CH{ch.channel}_BW_LIM")
             if self.instrument_type == "keysight" or self.instrument_type == "rigol":
+                update.append(f"CH{ch.channel}_BW_LIM")
                 update.append(f"CH{ch.channel}_LABEL")
                 update.append(f"CH{ch.channel}_ON-OFF")
                 update.append(f"CH{ch.channel}_INVERT")
@@ -170,10 +169,10 @@ class OscilloscopeChannelWidget(QWidget):
         self.instrument = instrument_name
         self.instrument_type = instrument_type
         self.channel = channel
-        self.colors = {0: "yellow", 1: "green", 2: "blue", 3: "red"}
+        self.colors = {0: "blue", 1: "red", 2: "green", 3: "orange", 4: "purple"}
 
-        self.channel_label = HCHeader(
-            f"channel{self.channel}_{self.colors[self.channel-1]}.png"
+        self.channel_label = QLabel(
+            f"<font color = {self.colors[channel]}>Channel {self.channel}"
         )
         self.channel_label.setAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
 
@@ -223,16 +222,6 @@ class OscilloscopeChannelWidget(QWidget):
                 text_checked="Turn Off",
                 text_unchecked=" Turn On",
             )
-        else:
-            self.BW_lim = HCComboBox(
-                self.app,
-                self.instrument,
-                parameter=f"CH{channel}_BW_LIM",
-                label="BW Limit",
-                label_align="right",
-                items=["Full", "20MHZ"],
-            )
-            self.BW_lim.setCurrentText("Full")
 
         self.Inv_but = HCOnOffButton(
             self.app,
@@ -273,20 +262,19 @@ class OscilloscopeChannelWidget(QWidget):
         )
         self.probe_atten.setCurrentText("1")
 
-        self.channel_layout = HCGridLayout(
-            [
-                self.volts_div,
-                self.volts_offset,
-                self.label,
-                self.on_off_but,
-                self.BW_lim,
-                self.Inv_but,
-                self.coupling,
-                self.impedance,
-                self.probe_atten,
-            ],
-            offset=1,
-        )
+        widgets = [
+            self.volts_div,
+            self.volts_offset,
+            self.label,
+            self.on_off_but,
+            self.Inv_but,
+            self.coupling,
+            self.impedance,
+            self.probe_atten,
+        ]
+        if self.instrument_type != "picoscope":
+            widgets.append(self.BW_lim)
+        self.channel_layout = HCGridLayout(widgets, offset=1)
         self.channel_layout.addWidget(self.channel_label, 0, 0, 1, 2)
         self.setLayout(self.channel_layout)
 
@@ -336,17 +324,18 @@ class OscilloscopeTriggerWidget(QGroupBox):
             items=coupling_items,
         )
 
-        if self.instrument_type == "rigol":
-            edge_items = ["NEG", "POS", "RFALI"]
-        else:
-            edge_items = ["BOTH", "NEG", "POS", "ALT"]
+        edge_items_dict = {
+            "keysight": ["BOTH", "NEG", "POS", "ALT"],
+            "rigol": ["NEG", "POS", "RFALI"],
+            "picoscope": ["Rising", "Falling"],
+        }
         self.trig_edge = HCComboBox(
             self.app,
             self.instrument,
             parameter="TRIGGER_EDGE",
             label="Edge",
             label_align="right",
-            items=edge_items,
+            items=edge_items_dict[self.instrument_type],
         )
         self.trig_edge.setCurrentText("POS")
 
@@ -362,6 +351,9 @@ class OscilloscopeTriggerWidget(QGroupBox):
             self.trig_stop = QPushButton()
             self.trig_stop.clicked.connect(self.pico_stop)
             self.trig_stop.setText("Stop")
+
+            # Trigger once or else the picoscope won't be happy that it doesn't see any data
+            self.trig_single.clicked.emit()
         else:
             self.trig_run = HCPushButton(self.app, self.instrument, "RUN", label="Run")
             self.trig_stop = HCPushButton(
@@ -424,6 +416,7 @@ class OscilloscopeHorizontalWidget(QGroupBox):
         )
         self.time_offset.spin.setDecimals(3)
         self.time_offset.spin.setMaximum(1e9)
+        self.time_offset.spin.setMinimum(-1e9)
         self.time_offset.combo.setCurrentText("ms")
 
         self.num_points = HCDoubleSpinBox(

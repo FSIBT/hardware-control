@@ -16,9 +16,7 @@ logger = logging.getLogger(__name__)
 
 from ...base.hooks import format_float
 
-from picoscope.ps2000 import PS2000
 from picoscope.ps2000a import PS2000a
-from picoscope.ps6000 import PS6000
 from picoscope.ps5000a import PS5000a
 
 
@@ -37,7 +35,7 @@ def pico_error_check(func):
 
 
 class Picoscope(Instrument):
-    """Picotech Picoscpe 2000, 2000a, and 6000 series instrument class.
+    """Picotech Picoscpe 2000a and 5000a series instrument class.
 
     PARAMETERS
         * TIMEBASE (*float*)
@@ -54,8 +52,6 @@ class Picoscope(Instrument):
             * The voltage per division for channel 'X'.
         * CH<X>_OFFSET (*float*)
             * The voltage offset for channel 'X'.
-        * CH<X>_BW_LIM
-            * Status of the bandwidth limit for channel 'X'.
         * CH<X>_ACTIVE
             * On/off status of channel 'X'.
         * CH<X>_PROBE_ATTEN (*float*)
@@ -92,6 +88,11 @@ class Picoscope(Instrument):
 
         self.measurements = ["", "", "", "", ""]
         self.channel_params = {}
+        self.trigger_params = {
+            "trigger_level": 1.0,
+            "channel": 0,
+            "edge": "Rising",
+        }
 
         self.add_parameter(
             "TIMEBASE",
@@ -105,25 +106,27 @@ class Picoscope(Instrument):
             set_command=self._set_timeoffset,
             dummy_return="6e-3",
         )
+
         self.add_parameter(
-            "TRIGGER_LEVEL", read_command=None, set_command=self._set_triggerlevel
+            "TRIGGER_LEVEL",
+            read_command=None,
+            set_command=self.create_set_trigger_func("trigger_level"),
         )
         self.add_parameter(
-            "TRIGGER_EDGE", read_command=None, set_command=self._set_triggeredge
+            "TRIGGER_CHANNEL",
+            read_command=None,
+            set_command=self.create_set_trigger_func("channel"),
         )
-        self.add_lookup(
+        self.add_parameter(
             "TRIGGER_EDGE",
-            {"BOTH": "Rising", "NEG": "Falling", "POS": "Rising", "ALT": "Rising"},
-        )
-        self.add_parameter(
-            "TRIGGER_CHANNEL", read_command=None, set_command=self._set_triggerchannel
+            read_command=None,
+            set_command=self.create_set_trigger_func("edge"),
         )
 
         for channel in self.channels:
             self.channel_params[channel] = {
                 "volts_div": 2.0,
                 "offset": 0.0,
-                "bw_lim": "Full",
                 "coupling": "DC",
                 "probe_atten": 1.0,
             }
@@ -136,11 +139,6 @@ class Picoscope(Instrument):
                 f"CH{channel}_OFFSET",
                 read_command=None,
                 set_command=self.create_set_channel_func(channel, "offset"),
-            )
-            self.add_parameter(
-                f"CH{channel}_BW_LIM",
-                read_command=None,
-                set_command=self.create_set_channel_func(channel, "bw_lim"),
             )
             self.add_parameter(
                 f"CH{channel}_COUPLING",
@@ -163,6 +161,28 @@ class Picoscope(Instrument):
 
         logger.warning("The Picoscope driver class is still under development.")
 
+    def create_set_trigger_func(self, param):
+        """Create a function that sets all parameters relating to triggering."""
+
+        @pico_error_check
+        def func(value):
+            self.trigger_params[param] = value
+            channel = int(self.trigger_params["channel"])
+            if float(self.trigger_params["trigger_level"]) >= float(
+                self.channel_params[channel]["volts_div"]
+            ):
+                logger.error("Trigger Level must be smaller than Volts/Div.")
+                return
+            kwargs = {
+                "threshold_V": float(self.trigger_params["trigger_level"]),
+                "direction": self.trigger_params["edge"],
+                "timeout_ms": 20000,
+            }
+
+            self.ps.setSimpleTrigger(trigSrc=channel, **kwargs)
+
+        return func
+
     def create_set_channel_func(self, channel, param):
         """Create a channel specific function to set a parameter."""
 
@@ -172,7 +192,6 @@ class Picoscope(Instrument):
             kwargs = {
                 "VRange": float(self.channel_params[channel]["volts_div"]),
                 "VOffset": float(self.channel_params[channel]["offset"]),
-                "BWLimited": self.channel_params[channel]["bw_lim"],
                 "coupling": self.channel_params[channel]["coupling"],
                 "probeAttenuation": float(self.channel_params[channel]["probe_atten"]),
             }
@@ -209,28 +228,6 @@ class Picoscope(Instrument):
         self.offset_position = float(value)
 
     @pico_error_check
-    def _set_triggerlevel(self, value):
-        if self.trigger_channel != "None":
-            self.ps.setSimpleTrigger(
-                self.trigger_channel, threshold_V=float(value), enabled=True
-            )
-
-    @pico_error_check
-    def _set_triggeredge(self, value):
-        if self.trigger_channel != "None":
-            self.ps.setSimpleTrigger(
-                self.trigger_channel, direction=value, enabled=True
-            )
-
-    @pico_error_check
-    def _set_triggerchannel(self, value):
-        if value == "None":
-            self.trigger_channel = 0
-        else:
-            self.trigger_channel = int(value) - 1
-        self.ps.setSimpleTrigger(self.trigger_channel, enabled=True)
-
-    @pico_error_check
     def _trigger(self):
         self.ps.runBlock(pretrig=self.offset_position / self.timebase)
         self.ps.waitReady()
@@ -256,12 +253,8 @@ class Picoscope(Instrument):
         try:
             if self.pico_series == "2000a":
                 self.ps = PS2000a()
-            if self.pico_series == "2000":
-                self.ps = PS2000()
             elif self.pico_series == "5000a":
                 self.ps = PS5000a()
-            elif self.pico_series == "6000":
-                self.ps = PS6000()
             self._online = True
         except Exception as e:
             self._online = False

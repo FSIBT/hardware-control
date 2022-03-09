@@ -78,7 +78,7 @@ class Instrument:
     def __init__(
         self,
         instrument_name: str,
-        connection_addr: Optional[str] = None,
+        connection_addr: Optional[str] = "None",
         default_port: int = None,
     ) -> None:
 
