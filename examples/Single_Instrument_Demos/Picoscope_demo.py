@@ -39,7 +39,7 @@ class Demo(hc.HCMainWindow):
         # Create an Picoscope-2000a instrument backend and add it to the app
         channels = [0, 1]
         self.app.add_instrument(
-            hc_inst.Picoscope("Picoscope-2000a", pico_series="5000a", channels=channels)
+            hc_inst.Picoscope("Picoscope-2000a", pico_series="2000a", channels=channels)
         )
 
         # Create an Oscilloscope GUI control that connects to the instrument backend
