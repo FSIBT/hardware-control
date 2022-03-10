@@ -75,11 +75,13 @@ class Picoscope(Instrument):
         instrument_name: str,
         pico_series: str,
         channels: List,
+        timeout_ms: int = 20_000,
     ):
         super().__init__(instrument_name=instrument_name)
         self.pico_series = pico_series
-
         self.channels = channels
+        self.timeout_ms = timeout_ms  # time (in ms) instrument waits for trigger before auto-triggering
+
         self.num_vert_divisions = 8
         self.record_length = 1e3  # Maximum 64 MS
         self.trigger_channel = 0
@@ -176,7 +178,7 @@ class Picoscope(Instrument):
             kwargs = {
                 "threshold_V": float(self.trigger_params["trigger_level"]),
                 "direction": self.trigger_params["edge"],
-                "timeout_ms": 20000,
+                "timeout_ms": self.timeout_ms,
             }
 
             self.ps.setSimpleTrigger(trigSrc=channel, **kwargs)
