@@ -634,7 +634,7 @@ class App(QApplication):
         """
         self.stop()
 
-        # Loop through datasets, save all set to autosave
+        # Loop through datasets, save all sets to autosave
         for key in self.data_sets:
             if self.data_sets[key].autosave_enabled:
                 self.data_sets[key].autosave()

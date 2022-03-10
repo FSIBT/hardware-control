@@ -17,3 +17,5 @@ python/.eggs/
 .directory
 .vscode/
 .coverage
+examples/Single_Instrument_Demos/autosave.json
+autosave.json

@@ -2,6 +2,7 @@ import sys
 import json
 import logging
 import os
+import signal
 from sys import platform
 from typing import Optional
 
@@ -45,10 +46,15 @@ class HCMainWindow(QMainWindow):
         self.add_menu()
 
         self.app.aboutToQuit.connect(self.close)
+        signal.signal(signal.SIGINT, self.ctrl_c)
+
+    def ctrl_c(self, signum, frame):
+        "Close the app via Ctrl-C."
+        self.close()
+        exit(0)
 
     def close(self):
         """Close the app."""
-
         self.app.close()
 
     def add_menu(self):
