@@ -173,10 +173,9 @@ class TracePlotter(QGroupBox):
             self.input_layout.addWidget(vmax)
         self.input_layout.addWidget(self.range_btn)
         self.input_layout.addWidget(self.reset_range_btn)
-        self.input_layout.setAlignment(QtCore.Qt.AlignLeft)
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.display, 0, 0, 5, 30)
-        self.master_layout.addLayout(self.input_layout, 6, 0, 1, 10)
+        self.master_layout.addLayout(self.input_layout, 6, 0, 1, 20)
         self.setLayout(self.master_layout)
 
     def updateViews(self):
