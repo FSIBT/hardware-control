@@ -476,9 +476,7 @@ class Instrument:
         if self._dummy:
             if self._online:
                 return True
-            logger.debug(
-                f"{self.name}: creating dummy connection to {self.connection_addr}"
-            )
+            logger.debug(f"{self.name}: creating dummy connection.")
             self._online = True
             return True
 

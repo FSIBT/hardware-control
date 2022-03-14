@@ -152,7 +152,7 @@ def scaling_converter(scale_val):
     return converter
 
 
-def substring_hook(min_char, max_char):
+def substring_hook(min_char: int = None, max_char: int = None):
     """Return a substring `value[min_char:max_char]`."""
 
     def converter(value):
@@ -170,6 +170,22 @@ def substring_hook(min_char, max_char):
 def uppercase(value):
     """Convert to uppercase."""
     return value.upper()
+
+
+def splitter(idx_lst: List, delimiter: str = ","):
+    """Split a string into parts and only return n of those parts.
+
+    delimiter : str
+        delimiter to use in split function
+    idx_lst : List
+        Indices of elements in split string to return
+    """
+
+    def converter(value):
+        values_lst = np.array(value.split(delimiter))
+        return delimiter.join(values_lst[idx_lst])
+
+    return converter
 
 
 # Validators
