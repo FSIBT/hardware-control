@@ -10,13 +10,13 @@ See class definition for details.
 import logging
 
 from ...base import Instrument
-from ...base.hooks import format_float
+from ...base.hooks import splitter, substring_hook, format_float
 
 logger = logging.getLogger(__name__)
 
 
 class Siglent_SDG(Instrument):
-    """Siglent SDG Serie instrument class.
+    """Siglent SDG Series instrument class.
 
     Instrument home page: https://www.siglent.eu/waveform-generators
 
@@ -34,11 +34,13 @@ class Siglent_SDG(Instrument):
 
         self.number_of_channels = 2
 
-        for ch in range(self.number_of_channels):
+        for ch in range(1, self.number_of_channels + 1):
             self.add_parameter(
-                f"CH{ch}_ENABLED",
+                f"CH{ch}_ENABLE",
                 read_command=f"C{ch}:OUTP?",
                 set_command=f"C{ch}:OUTP {{}}",
+                post_hooks=[splitter([0]), substring_hook(min_char=8)],
+                dummy_return="False",
             )
             self.add_lookup(f"CH{ch}_ENABLED", {"True": "ON", "False": "OFF"})
 
@@ -46,6 +48,8 @@ class Siglent_SDG(Instrument):
                 f"CH{ch}_WAVEFORM",
                 read_command=f"C{ch}:BSWV?",
                 set_command=f"C{ch}:BSWV WVTP,{{}}",
+                post_hooks=[splitter([1])],
+                dummy_return="SQUARE",
             )
             self.add_lookup(
                 f"CH{ch}_WAVEFORM",
@@ -66,6 +70,8 @@ class Siglent_SDG(Instrument):
                 read_command=f"C{ch}:BSWV?",
                 set_command=f"C{ch}:BSWV FRQ,{{}}",
                 pre_hooks=[format_float(".6E")],
+                post_hooks=[splitter([3]), substring_hook(max_char=3)],
+                dummy_return="100",
             )
 
             self.add_parameter(
@@ -73,6 +79,8 @@ class Siglent_SDG(Instrument):
                 read_command=f"C{ch}:BSWV?",
                 set_command=f"C{ch}:BSWV AMP,{{}}",
                 pre_hooks=[format_float(".6E")],
+                post_hooks=[splitter([7]), substring_hook(max_char=1)],
+                dummy_return="2",
             )
 
             self.add_parameter(
@@ -80,12 +88,16 @@ class Siglent_SDG(Instrument):
                 read_command=f"C{ch}:BSWV?",
                 set_command=f"C{ch}:BSWV OFST,{{}}",
                 pre_hooks=[format_float(".6E")],
+                post_hooks=[splitter([9]), substring_hook(max_char=1)],
+                dummy_return="0",
             )
 
             self.add_parameter(
                 f"CH{ch}_IMPEDANCE",
                 read_command=f"C{ch}:OUTP?",
                 set_command=f"C{ch}:OUTP LOAD,{{}}",
+                post_hooks=[splitter([2])],
+                dummy_return="HZ",
             )
             self.add_lookup(
                 f"CH{ch}_IMPEDANCE",
