@@ -619,7 +619,7 @@ class HCComboBox(HCMixin, QComboBox):
                     break
             else:
                 logger.error(
-                    f"HCComboBox for '{self.parameter}': could not find '{value}' in item list"
+                    f"HCComboBox for '{self.parameter}': could not find '{value}' in item list."
                 )
 
 

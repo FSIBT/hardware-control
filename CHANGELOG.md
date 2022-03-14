@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Created the TracePlotter widget for plotting traces or any data not saved as a dataset. TracePlotter 'intercepts' data as it is coming from the instrument (via a hook) rather than reading it from the App data dictionary.
+- Hook for splitting a string.
 
 ### Changed
 - ability to skip certain datasets in PlotTool
