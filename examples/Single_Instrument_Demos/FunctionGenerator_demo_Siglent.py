@@ -39,10 +39,15 @@ class Demo(hc.HCMainWindow):
         self.main_widget = QWidget(self)
 
         self.app.add_instrument(hc.instruments.Siglent_SDG("Siglent", conn_addr))
-        self.awg_ctrl = hc.gui.FunctionGenerator(self.app, "Siglent", num_channels=2)
+        self.ctrl = hc.gui.FunctionGenerator(
+            self.app,
+            "Siglent",
+            num_channels=2,
+            freq_unit="Hz",
+        )
 
         self.grid = QGridLayout()
-        self.grid.addWidget(self.awg_ctrl, 1, 1)
+        self.grid.addWidget(self.ctrl, 1, 1)
         self.main_widget.setLayout(self.grid)
 
         self.setCentralWidget(self.main_widget)

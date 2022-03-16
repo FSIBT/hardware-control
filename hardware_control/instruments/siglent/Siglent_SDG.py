@@ -42,7 +42,7 @@ class Siglent_SDG(Instrument):
                 post_hooks=[splitter([0]), substring_hook(min_char=8)],
                 dummy_return="False",
             )
-            self.add_lookup(f"CH{ch}_ENABLED", {"True": "ON", "False": "OFF"})
+            self.add_lookup(f"CH{ch}_ENABLE", {"True": "ON", "False": "OFF"})
 
             self.add_parameter(
                 f"CH{ch}_WAVEFORM",

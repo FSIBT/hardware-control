@@ -35,11 +35,13 @@ class FunctionGenerator(QGroupBox):
         app,
         instrument_name: str,
         num_channels: int = 2,
+        freq_unit: str = "MHz",
     ):
         super().__init__(instrument_name)
         self.app = app
         self.instrument = instrument_name
         self.num_channels = num_channels
+        self.freq_unit = freq_unit
         self.widgets = {}
 
         for i in range(1, self.num_channels + 1):
@@ -54,7 +56,7 @@ class FunctionGenerator(QGroupBox):
                 self.app,
                 self.instrument,
                 f"CH{i}_FREQUENCY",
-                label=f"CH{i} Frequency (MHz)",
+                label=f"CH{i} Frequency ({self.freq_unit})",
             )
             amplitude = HCLineEdit(
                 self.app,
