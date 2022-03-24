@@ -30,7 +30,7 @@ authors:
 affiliations:
   - name: Lawrence Berkeley National Laboratory, Berkeley, CA 94720, USA
     index: 1
-  - name: Technische Universit„t Darmstadt, 64289 Darmstadt, Hesse, Germany
+  - name: Technische UniversitÃ¤t Darmstadt, 64289 Darmstadt, Hesse, Germany
     index: 2
 date: 21 October 2021
 bibliography: paper.bib
