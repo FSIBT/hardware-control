@@ -161,8 +161,6 @@ class Picoscope(Instrument):
 
         self.add_command("SINGLE_TRIGGER", self._trigger)
 
-        logger.warning("The Picoscope driver class is still under development.")
-
     def create_set_trigger_func(self, param):
         """Create a function that sets all parameters relating to triggering."""
 
