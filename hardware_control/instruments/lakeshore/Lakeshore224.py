@@ -82,6 +82,14 @@ class Lakeshore_224(Instrument):
                 dummy_return=lambda: random.random() * 200 + 200,
             )
 
+            self.add_parameter(
+                f"CH{channel}_ON-OFF",
+                read_command=f"INCRV? {channel}",
+                set_command=f"INCRV {channel} {{}}",
+                post_hooks=[lambda value: value if value != "00" else None],
+                dummy_return="",
+            )
+
     def read_status(self, channel):
         """
         Read all settings of the instrument

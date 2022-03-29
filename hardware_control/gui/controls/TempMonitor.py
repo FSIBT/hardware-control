@@ -5,7 +5,7 @@ import logging
 
 from PyQt5.QtWidgets import QGroupBox
 
-from ..widgets import HCLineEdit, HCLabel, HCGridLayout
+from ..widgets import HCLineEdit, HCLabel, HCGridLayout, HCOnOffButton
 
 logger = logging.getLogger(__name__)
 
@@ -59,8 +59,19 @@ class TempMonitor(QGroupBox):
                 label=f"{channel}_CURVE",
                 label_align="right",
             )
+            on_off_but = HCOnOffButton(
+                self.app,
+                self.instrument,
+                f"CH{channel}_ON-OFF",
+                label="On/Off",
+                label_align="right",
+                text_checked="Turn Off",
+                text_unchecked=" Turn On",
+            )
+            # on_off_but.clicked.connect(self.remove_auto_update)
             self.widgets.append(temperature)
             self.widgets.append(curve)
+            self.widgets.append(on_off_but)
 
         self.grid = HCGridLayout(self.widgets)
         self.setLayout(self.grid)
@@ -72,6 +83,10 @@ class TempMonitor(QGroupBox):
         """Register parameters for automatic updates."""
 
         for channel in self.channel_list:
-            self.app.add_auto_update_instrument_parameter(
-                self.instrument, f"CH{channel}_READ_TEMP"
-            )
+
+            tmp = [f"CH{channel}_ENABLE", f"CH{channel}_READ_TEMP"]
+
+            for parameter in tmp:
+                self.app.add_auto_update_instrument_parameter(
+                    self.instrument, parameter
+                )
