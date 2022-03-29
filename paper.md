@@ -41,7 +41,7 @@ bibliography: paper.bib
 Conducting experimental research often relies on the control of
 laboratory instruments to, for example, control power supplies, move
 stages, and measure data. Tasks, such as data logging or parameter
-scans, often needs to be automated. Being able to easily create a user
+scans, often need to be automated. Being able to easily create a user
 interface to the hardware and to be able to reuse code is highly
 desirable.
 
@@ -62,16 +62,16 @@ values on a timer with time scales of about a second. The program is
 currently not well-fitted to do any real-time or near real-time
 communications with instruments or to handle data that is, for example,
 being streamed from a camera. The program interacts best with
-message-based devices or devices that already have pythons modules
+message-based devices or devices that already have Pythons modules
 available to control them. The program's instrument drivers can
-send messages to sockets, usb ports, serial ports, etc. or call a python
+send messages to sockets, usb ports, serial ports, etc. or call a Python
 function to read or write a setting or call a command on the
-interface. Most of the drivers rely on the excellent pyvisa [@pyvisa]
-library, but drivers can also utilize pymodbus [@pymodbus], or the built-in
+interface. Most of the drivers rely on the excellent PyVISA [@pyvisa]
+library, but drivers can also utilize PyModbus [@pymodbus], or the built-in
 socket library.
 
-For handling the data, we rely on numpy [@numpy], pandas [@pandas],
-and many other common libraries that are available on pypi to do data analysis.
+For handling the data, we rely on NumPy [@numpy], pandas [@pandas],
+and many other common libraries that are available on PyPI to do data analysis.
 
 For communications within the library we rely on ZMQ [@ZMQ].
 
@@ -87,8 +87,8 @@ backend code can be shared between projects, complex user interfaces
 cannot easily be reused. The software package presented here tries to
 address these issues. Specifically, it makes reusing frontend code
 easier, integrates well with git, and provides an easy built-in
-scripting solution (via an optional python REPL that has full access
-to the GUI and all backends). The control through python during
+scripting solution (via an optional Python REPL that has full access
+to the GUI and all backends). The control through Python during
 execution makes one-off complex parameter scans easy to implement. The
 software also makes it easy to develop and test the code without any
 hardware connected to the system by running a program in 'dummy mode'
@@ -97,9 +97,9 @@ the user can specify return values for certain opperations in order to
 test the program.
 
 Similar packages already exist (see Scopefoundry.org
-[@Barnard], pymeasure [@pymeasure], yaq [@yaq], etc.). A good overview
-of available python packages can be found at Ref [@overview]. However,
-for our experiments we had a specific usecase in mind, and we
+[@Barnard], PyMeasure [@pymeasure], yaq [@yaq], etc.). A good overview
+of available Python packages can be found at Ref [@overview]. However,
+for our experiments we had a specific use case in mind, and we
 therefore decided to implement the provided solution. This software is
 currently actively used in our group at Lawrence Berkeley National
 Laboratory.  Although our group is using `Hardware-Control`
