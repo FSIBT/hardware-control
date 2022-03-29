@@ -39,8 +39,8 @@ class Siglent_SDG(Instrument):
                 f"CH{ch}_ENABLE",
                 read_command=f"C{ch}:OUTP?",
                 set_command=f"C{ch}:OUTP {{}}",
-                post_hooks=[splitter([0]), substring_hook(min_char=8)],
-                dummy_return="False",
+                post_hooks=[splitter([0]), splitter([-1], delimiter=" ")],
+                dummy_return="True",
             )
             self.add_lookup(f"CH{ch}_ENABLE", {"True": "ON", "False": "OFF"})
 

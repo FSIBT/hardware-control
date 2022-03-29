@@ -176,10 +176,10 @@ def uppercase(value):
 def splitter(idx_lst: List, delimiter: str = ","):
     """Split a string into parts and only return n of those parts.
 
-    delimiter : str
-        delimiter to use in split function
     idx_lst : List
         Indices of elements in split string to return
+    delimiter : str
+        delimiter to use in split function
     """
 
     def converter(value):
