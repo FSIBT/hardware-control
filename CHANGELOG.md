@@ -7,14 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0] 2022-04-13
+
 ### Added
-- Created the TracePlotter widget for plotting traces or any data not saved as a dataset. TracePlotter 'intercepts' data as it is coming from the instrument (via a hook) rather than reading it from the App data dictionary.
-- Hook for splitting a string.
-- Siglent Function Generator enable button.
+- We already have an option to automatically update a list of
+  parameteres, add the same for commands that should be called
+  periodically
+- Created the TracePlotter widget for plotting traces or any data not
+  saved as a dataset. TracePlotter 'intercepts' data as it is coming
+  from the instrument (via a hook) rather than reading it from the App
+  data dictionary
+- Hook for splitting a string
+- Siglent Function Generator enable button
+- Better support of Ctrl-C to stop the app
 
 ### Changed
+- Hooks can now return non-string values
 - Ability to skip certain datasets in PlotTool
+- Examples now take a connection address on the command line, to make
+  it easier to run them with real hardware
+- Keysight 36300: convert current and voltage to floats
+- VQM835: add option to read and set calibration constant
+- Picoscope: update driver, add support fro 2000-series
+
+### Fixed
 - Fix Siglent Function Generator impedance and waveform inputs
+- Fix return value for hook used with oscilloscopes
 
 ## [2.0.0] 2021-11-24
 
