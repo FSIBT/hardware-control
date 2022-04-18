@@ -30,7 +30,7 @@ authors:
 affiliations:
   - name: Lawrence Berkeley National Laboratory, Berkeley, CA 94720, USA
     index: 1
-  - name: Technische UniversitÃ¤t Darmstadt, 64289 Darmstadt, Hesse, Germany
+  - name: Technische Universit„t Darmstadt, 64289 Darmstadt, Hesse, Germany
     index: 2
 date: 21 October 2021
 bibliography: paper.bib
@@ -62,7 +62,7 @@ values on a timer with time scales of about a second. The program is
 currently not well-fitted to do any real-time or near real-time
 communications with instruments or to handle data that is, for example,
 being streamed from a camera. The program interacts best with
-message-based devices or devices that already have Pythons modules
+message-based devices or devices that already have Python's modules
 available to control them. The program's instrument drivers can
 send messages to sockets, usb ports, serial ports, etc. or call a Python
 function to read or write a setting or call a command on the
@@ -82,7 +82,7 @@ provide a wide range of instrument drivers (either directly or from
 the manufacturer of the devices). However, we have found that the
 resulting code is often hard to version control (LabVIEW files are
 binary, so code reviews and pull requests on services such as
-bitbucket and github are therefore difficult). Furthermore, although
+Bitbucket and GitHub are therefore difficult). Furthermore, although
 backend code can be shared between projects, complex user interfaces
 cannot easily be reused. The software package presented here tries to
 address these issues. Specifically, it makes reusing frontend code
@@ -98,7 +98,7 @@ test the program.
 
 Similar packages already exist (see Scopefoundry.org
 [@Barnard], PyMeasure [@pymeasure], yaq [@yaq], etc.). A good overview
-of available Python packages can be found at Ref [@overview]. However,
+of available Python packages can be found in @overview. However,
 for our experiments we had a specific use case in mind, and we
 therefore decided to implement the provided solution. This software is
 currently actively used in our group at Lawrence Berkeley National
