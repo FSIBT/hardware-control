@@ -2,6 +2,7 @@
 [![PyPI version](https://badge.fury.io/py/hardware-control.svg)](https://badge.fury.io/py/hardware-control)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.02688/status.svg)](https://doi.org/10.21105/joss.02688)
 
 ## What is this repository for?
 
@@ -52,6 +53,25 @@ and use the config file we provide:
     pip install pre-commit
     # cd into repo
     pre-commit install
+
+## How to cite this package
+
+Please use the following [citation](https://doi.org/10.21105/joss.02688).
+
+```
+@article{Giesbrecht2022,
+  doi = {10.21105/joss.02688},
+  url = {https://doi.org/10.21105/joss.02688},
+  year = {2022},
+  publisher = {The Open Journal},
+  volume = {7},
+  number = {72},
+  pages = {2688},
+  author = {Grant Giesbrecht and Ariel Amsellem and Timo Bauer and Brian Mak and Brian Wynne and Zhihao Qin and Arun Persaud},
+  title = {Hardware-Control: Instrument control and automation package},
+  journal = {Journal of Open Source Software}
+}
+```
 
 ## Who do I talk to?
 
