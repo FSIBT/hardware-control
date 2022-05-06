@@ -341,6 +341,7 @@ class PowerSupplyChannel(QWidget):
             label_align="right",
             text_checked="Disable",
             text_unchecked="Enable",
+            show_set_text=True,
         )
         self.enabled_but.setCheckable(False)
 

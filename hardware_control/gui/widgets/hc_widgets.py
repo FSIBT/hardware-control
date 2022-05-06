@@ -388,6 +388,7 @@ class HCOnOffButton(HCMixin, QPushButton):
         text_unchecked: str = "Off",
         icon_checked: str = "button-power-on.svg",
         icon_unchecked: str = "button-power-off.svg",
+        show_set_text: bool = False,
     ):
         super().__init__(
             app=app,
@@ -408,6 +409,7 @@ class HCOnOffButton(HCMixin, QPushButton):
         if self.show_text:
             self.text_checked = text_checked
             self.text_unchecked = text_unchecked
+        self.show_set_text = show_set_text
 
         self.clicked.connect(self.value_change)
         self.setCheckable(False)
@@ -446,9 +448,17 @@ class HCOnOffButton(HCMixin, QPushButton):
         value = self.app.get_instrument_parameter(self.instrument, self.parameter)
         new_value = not (value == "True")
         self.app.set_instrument_parameter(self.instrument, self.parameter, new_value)
+        if self.show_set_text:
+            self.set_state(new_value)
+            self.setEnabled(False)
 
     def widget_update(self, value):
-        self.set_state(value)
+        if self.show_set_text:
+            if self.is_true(value) != self.is_true(self.prev_value):
+                self.setEnabled(True)
+        else:
+            self.set_state(value)
+        self.prev_value = value
 
 
 class HCOnOffIndicator(HCMixin, QLabel):
