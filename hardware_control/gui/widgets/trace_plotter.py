@@ -33,6 +33,10 @@ class TracePlotter(QGroupBox):
         Channels to display (first channel is 1; up to 4 channels allowed)
     channel_names : List
         Names of channels to displayed on the y-axis
+    left_unit : str
+        Unit of the left axis
+    right_unit : str
+        Unit of the right axis
     bkg_color : Optional[str]
         Color of plot background
     loading_hooks : Optional[List]
@@ -46,6 +50,8 @@ class TracePlotter(QGroupBox):
         display_name: str,
         channels: List,
         channel_names: List,
+        left_unit: str = "V",
+        right_unit: str = "V",
         bkg_color: Optional[str] = "w",
         loading_hooks: Optional[List] = [],
     ):
@@ -56,6 +62,8 @@ class TracePlotter(QGroupBox):
         self.channels = channels
         self.channel_names = channel_names
         self.loading_hooks = loading_hooks
+        self.left_unit = left_unit
+        self.right_unit = right_unit
 
         self.left_min_lst = [1e-20]
         self.left_max_lst = [1.0]
@@ -99,11 +107,13 @@ class TracePlotter(QGroupBox):
             if idx % 2 != 0
         ]
         left_label = ", ".join(left_label_items)
-        self.p1.getAxis("left").setLabel(left_label, units="V", **{"font-size": "14pt"})
+        self.p1.getAxis("left").setLabel(
+            left_label, units=self.left_unit, **{"font-size": "14pt"}
+        )
         self.p1.getAxis("left").setTextPen(channel_colors[0])
         right_label = ", ".join(right_label_items)
         self.p1.getAxis("right").setLabel(
-            right_label, units="V", **{"font-size": "14pt"}
+            right_label, units=self.right_unit, **{"font-size": "14pt"}
         )
         self.p1.getAxis("right").setTextPen(channel_colors[1])
 
