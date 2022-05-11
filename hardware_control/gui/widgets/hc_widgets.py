@@ -400,25 +400,28 @@ class HCOnOffButton(HCMixin, QPushButton):
         )
 
         self.show_icon = show_icon
+        self.show_text = show_text
+        self.show_set_text = show_set_text
+
         if self.show_icon:
             self.icon_checked = load_icon(icon_checked)
             self.icon_unchecked = load_icon(icon_unchecked)
             self.icon_unknown = load_icon("button-power-unknown.svg")
 
-        self.show_text = show_text
         if self.show_text:
             self.text_checked = text_checked
             self.text_unchecked = text_unchecked
-        self.show_set_text = show_set_text
 
         self.clicked.connect(self.value_change)
         self.setCheckable(False)
 
         # set default to unkown state
-        if show_icon:
+        if self.show_icon:
             self.setIcon(self.icon_unknown)
-        if show_text:
+        if self.show_text:
             self.setText("unkown")
+        if self.show_set_text:
+            self.prev_value = 0
 
     def is_true(self, value: Union[bool, str]) -> bool:
         """Handle multiple versions (of different data type and case) of the option 'True'."""
@@ -432,15 +435,15 @@ class HCOnOffButton(HCMixin, QPushButton):
     def set_state(self, value):
         """Change the icon and/or text display."""
         if self.show_icon:
-            if value == "True":
+            if self.is_true(value):
                 self.setIcon(self.icon_checked)
-            elif value == "False":
+            elif not self.is_true(value):
                 self.setIcon(self.icon_unchecked)
 
         if self.show_text:
-            if value == "True":
+            if self.is_true(value):
                 self.setText(self.text_checked)
-            elif value == "False":
+            elif not self.is_true(value):
                 self.setText(self.text_unchecked)
 
     def value_change(self) -> None:
@@ -454,11 +457,14 @@ class HCOnOffButton(HCMixin, QPushButton):
 
     def widget_update(self, value):
         if self.show_set_text:
-            if self.is_true(value) != self.is_true(self.prev_value):
-                self.setEnabled(True)
+            if self.prev_value != 0:
+                if self.is_true(value) != self.is_true(self.prev_value):
+                    self.setEnabled(True)
+            else:
+                self.set_state(value)
+            self.prev_value = value
         else:
             self.set_state(value)
-        self.prev_value = value
 
 
 class HCOnOffIndicator(HCMixin, QLabel):
