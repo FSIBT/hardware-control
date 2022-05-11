@@ -160,17 +160,49 @@ class MultiPowerSupply(QGroupBox):
 
     def enable_all(self):
         """Enable all channels."""
-        for channel in self.channels:
+        self.all_enable_but.setEnabled(False)
+        self.all_disable_but.setEnabled(False)
+
+        for channel, cw in zip(self.channels, self.channel_widgets):
             self.app.set_instrument_parameter(
                 self.instrument, f"CH{channel}_ENABLE", True
             )
+            cw.enabled_but.set_state(True)
+            cw.enabled_but.setEnabled(False)
+        for channel, cw in zip(self.channels, self.channel_widgets):
+            enabled = False
+            while not enabled:
+                enabled = self.app.get_instrument_parameter(
+                    self.instrument, f"CH{channel}_ENABLE"
+                )
+        for cw in self.channel_widgets:
+            cw.enabled_but.setEnabled(True)
+
+        self.all_enable_but.setEnabled(True)
+        self.all_disable_but.setEnabled(True)
 
     def disable_all(self):
         """Disable all channels."""
-        for channel in self.channels:
+        self.all_disable_but.setEnabled(False)
+        self.all_enable_but.setEnabled(False)
+
+        for channel, cw in zip(self.channels, self.channel_widgets):
             self.app.set_instrument_parameter(
                 self.instrument, f"CH{channel}_ENABLE", False
             )
+            cw.enabled_but.set_state(False)
+            cw.enabled_but.setEnabled(False)
+        for channel, cw in zip(self.channels, self.channel_widgets):
+            enabled = True
+            while enabled:
+                enabled = self.app.get_instrument_parameter(
+                    self.instrument, f"CH{channel}_ENABLE"
+                )
+        for cw in self.channel_widgets:
+            cw.enabled_but.setEnabled(True)
+
+        self.all_disable_but.setEnabled(True)
+        self.all_enable_but.setEnabled(True)
 
     def update_readout(self):
         """Query the instrument for current readout data and push it to the GUI."""
