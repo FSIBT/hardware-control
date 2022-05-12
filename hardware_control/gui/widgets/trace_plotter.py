@@ -50,8 +50,8 @@ class TracePlotter(QGroupBox):
         display_name: str,
         channels: List,
         channel_names: List,
-        left_unit: str = "V",
-        right_unit: str = "V",
+        units: List[str] = ["V", "V"],
+        scalings: List[float] = [1.0, 1.0],
         bkg_color: Optional[str] = "w",
         loading_hooks: Optional[List] = [],
     ):
@@ -62,8 +62,8 @@ class TracePlotter(QGroupBox):
         self.channels = channels
         self.channel_names = channel_names
         self.loading_hooks = loading_hooks
-        self.left_unit = left_unit
-        self.right_unit = right_unit
+        self.units = units
+        self.scalings = scalings
 
         self.left_min_lst = [1e-20]
         self.left_max_lst = [1.0]
@@ -108,12 +108,12 @@ class TracePlotter(QGroupBox):
         ]
         left_label = ", ".join(left_label_items)
         self.p1.getAxis("left").setLabel(
-            left_label, units=self.left_unit, **{"font-size": "14pt"}
+            left_label, units=self.units[0], **{"font-size": "14pt"}
         )
         self.p1.getAxis("left").setTextPen(channel_colors[0])
         right_label = ", ".join(right_label_items)
         self.p1.getAxis("right").setLabel(
-            right_label, units=self.right_unit, **{"font-size": "14pt"}
+            right_label, units=self.units[1], **{"font-size": "14pt"}
         )
         self.p1.getAxis("right").setTextPen(channel_colors[1])
 
@@ -122,14 +122,18 @@ class TracePlotter(QGroupBox):
         self.vmax_labs = []
         self.vmins = []
         self.vmaxs = []
-        for ch_nm in self.channel_names:
-            vmin_label = QLabel(f"{ch_nm} Min (V):")
+        for idx, ch_nm in enumerate(self.channel_names):
+            vmin_label = QLabel(
+                f"{ch_nm} Min ({np.format_float_scientific(self.scalings[idx])} x {self.units[idx]}):"
+            )
             vmin = QDoubleSpinBox()
             vmin.setValue(1e-20)
             vmin.setMinimum(-np.inf)
             vmin.setMaximum(np.inf)
             vmin.setDecimals(5)
-            vmax_label = QLabel(f"{ch_nm} Max (V):")
+            vmax_label = QLabel(
+                f"{ch_nm} Max ({np.format_float_scientific(self.scalings[idx])}x{self.units[idx]}):"
+            )
             vmax = QDoubleSpinBox()
             vmax.setValue(10.0)
             vmax.setMinimum(-np.inf)
@@ -177,9 +181,9 @@ class TracePlotter(QGroupBox):
         for vmin, vmax, vmin_label, vmax_label in zip(
             self.vmins, self.vmaxs, self.vmin_labs, self.vmax_labs
         ):
-            self.input_layout.addWidget(vmin_label)
+            self.input_layout.addWidget(vmin_label, alignment=QtCore.Qt.AlignRight)
             self.input_layout.addWidget(vmin)
-            self.input_layout.addWidget(vmax_label)
+            self.input_layout.addWidget(vmax_label, alignment=QtCore.Qt.AlignRight)
             self.input_layout.addWidget(vmax)
         self.input_layout.addWidget(self.range_btn)
         self.input_layout.addWidget(self.reset_range_btn)
@@ -208,7 +212,12 @@ class TracePlotter(QGroupBox):
             )
             return
 
+        # Load data
         t, wave = json.loads(trace_string)
+        # Execute all loading hooks on data
+        for function in self.loading_hooks:
+            t, wave = function(self, channel, t, wave)
+        # Set the data to be plotted in GUI
         self.plot_items[channel].setData(t, wave)
 
         # Range resizing
@@ -217,15 +226,18 @@ class TracePlotter(QGroupBox):
         elif self.reset_range_btn.isChecked():
             self.automate_resize(wave, channel)
 
-        for function in self.loading_hooks:
-            trace_string = function(self, channel, t, wave)
-
-        return trace_string
+        return json.dumps([t, wave], separators=(",", ":"))
 
     def user_resize(self):
         """Resize channel ranges accoridng to user inputs."""
-        self.p1.setYRange(float(self.vmins[0].text()), float(self.vmaxs[0].text()))
-        self.p2.setYRange(float(self.vmins[1].text()), float(self.vmaxs[1].text()))
+        self.p1.setYRange(
+            self.scalings[0] * float(self.vmins[0].text()),
+            self.scalings[0] * float(self.vmaxs[0].text()),
+        )
+        self.p2.setYRange(
+            self.scalings[1] * float(self.vmins[1].text()),
+            self.scalings[1] * float(self.vmaxs[1].text()),
+        )
 
     def automate_resize(self, wave, channel):
         """Resize according to channel trace min and max."""
