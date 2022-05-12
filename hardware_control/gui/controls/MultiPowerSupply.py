@@ -141,8 +141,10 @@ class MultiPowerSupply(QGroupBox):
         if self.enable_power_buttons == "both":
             self.all_enable_but = QPushButton("Enable All")
             self.all_enable_but.clicked.connect(self.enable_all)
+            self.all_enable_but.setCheckable(False)
             self.all_disable_but = QPushButton("Disable All")
             self.all_disable_but.clicked.connect(self.disable_all)
+            self.all_disable_but.setCheckable(False)
 
             self.all_spacer = QSpacerItem(
                 10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
@@ -160,49 +162,19 @@ class MultiPowerSupply(QGroupBox):
 
     def enable_all(self):
         """Enable all channels."""
-        self.all_enable_but.setEnabled(False)
-        self.all_disable_but.setEnabled(False)
-
         for channel, cw in zip(self.channels, self.channel_widgets):
             self.app.set_instrument_parameter(
-                self.instrument, f"CH{channel}_ENABLE", True
+                self.instrument, f"CH{channel}_ENABLE", "True"
             )
             cw.enabled_but.set_state(True)
-            cw.enabled_but.setEnabled(False)
-        for channel, cw in zip(self.channels, self.channel_widgets):
-            enabled = False
-            while not enabled:
-                enabled = self.app.get_instrument_parameter(
-                    self.instrument, f"CH{channel}_ENABLE"
-                )
-        for cw in self.channel_widgets:
-            cw.enabled_but.setEnabled(True)
-
-        self.all_enable_but.setEnabled(True)
-        self.all_disable_but.setEnabled(True)
 
     def disable_all(self):
         """Disable all channels."""
-        self.all_disable_but.setEnabled(False)
-        self.all_enable_but.setEnabled(False)
-
         for channel, cw in zip(self.channels, self.channel_widgets):
             self.app.set_instrument_parameter(
-                self.instrument, f"CH{channel}_ENABLE", False
+                self.instrument, f"CH{channel}_ENABLE", "False"
             )
             cw.enabled_but.set_state(False)
-            cw.enabled_but.setEnabled(False)
-        for channel, cw in zip(self.channels, self.channel_widgets):
-            enabled = True
-            while enabled:
-                enabled = self.app.get_instrument_parameter(
-                    self.instrument, f"CH{channel}_ENABLE"
-                )
-        for cw in self.channel_widgets:
-            cw.enabled_but.setEnabled(True)
-
-        self.all_disable_but.setEnabled(True)
-        self.all_enable_but.setEnabled(True)
 
     def update_readout(self):
         """Query the instrument for current readout data and push it to the GUI."""
