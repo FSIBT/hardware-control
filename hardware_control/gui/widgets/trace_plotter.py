@@ -150,10 +150,13 @@ class TracePlotter(QGroupBox):
         self.range_btn.setText("Set User Ranges")
         self.range_btn.setCheckable(True)
         self.range_btn.clicked.connect(self.click_range_btn)
+        self.range_btn.setChecked(False)
+
         self.reset_range_btn = QPushButton()
         self.reset_range_btn.setText("Automate Ranges")
         self.reset_range_btn.setCheckable(True)
         self.reset_range_btn.clicked.connect(self.click_reset_range_btn)
+        self.reset_range_btn.setChecked(True)
 
         self.plot_items = {}
         for idx, channel in enumerate(self.channels):
