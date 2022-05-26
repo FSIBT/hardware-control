@@ -37,6 +37,12 @@ def pico_error_check(func):
 class Picoscope(Instrument):
     """Picotech Picoscpe 2000a and 5000a series instrument class.
 
+    Notes
+    -----
+    1. The picoscope.ps5000a python library is meant for both 5000a and 5000b
+    series instruments.
+    2. Picoscope channels are numbered such that the first channel is 0.
+
     PARAMETERS
         * TIMEBASE (*float*)
             * Horizontal resolution in time per division.
