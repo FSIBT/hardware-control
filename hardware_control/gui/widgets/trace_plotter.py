@@ -48,10 +48,10 @@ class TracePlotter(QGroupBox):
         app,
         instrument_name: str,
         display_name: str,
-        channels: List,
-        channel_names: List,
-        units: List[str] = ["V", "V"],
-        scalings: List[float] = [1.0, 1.0],
+        channels: List[int],
+        channel_names: List[str],
+        units: List[str],
+        scalings: List[float] = None,
         bkg_color: Optional[str] = "w",
         loading_hooks: Optional[List] = [],
     ):
@@ -64,6 +64,8 @@ class TracePlotter(QGroupBox):
         self.loading_hooks = loading_hooks
         self.units = units
         self.scalings = scalings
+        if self.scalings is None:
+            self.scalings = [1.0] * len(self.channels)
 
         self.left_min_lst = [1e-20]
         self.left_max_lst = [1.0]
@@ -123,22 +125,25 @@ class TracePlotter(QGroupBox):
         self.vmins = []
         self.vmaxs = []
         for idx, ch_nm in enumerate(self.channel_names):
-            vmin_label = QLabel(
-                f"{ch_nm} Min ({np.format_float_scientific(self.scalings[idx])} x {self.units[idx]}):"
-            )
+            if int(self.scalings[idx]) == 1:
+                displayed_unit = f"{self.units[idx]}"
+            else:
+                displayed_unit = f"{np.format_float_scientific(self.scalings[idx])}x{self.units[idx]}"
+
+            vmin_label = QLabel(f"{ch_nm} Min ({displayed_unit}):")
             vmin = QDoubleSpinBox()
-            vmin.setValue(1e-20)
+            vmin.setValue(0.0)
             vmin.setMinimum(-np.inf)
             vmin.setMaximum(np.inf)
             vmin.setDecimals(5)
-            vmax_label = QLabel(
-                f"{ch_nm} Max ({np.format_float_scientific(self.scalings[idx])}x{self.units[idx]}):"
-            )
+
+            vmax_label = QLabel(f"{ch_nm} Max ({displayed_unit}):")
             vmax = QDoubleSpinBox()
             vmax.setValue(10.0)
             vmax.setMinimum(-np.inf)
             vmax.setMaximum(np.inf)
             vmax.setDecimals(5)
+
             self.vmin_labs.append(vmin_label)
             self.vmax_labs.append(vmax_label)
             self.vmins.append(vmin)
@@ -180,19 +185,23 @@ class TracePlotter(QGroupBox):
         self.updateViews()
         self.p1.vb.sigResized.connect(self.updateViews)
 
-        self.input_layout = QHBoxLayout()
-        for vmin, vmax, vmin_label, vmax_label in zip(
-            self.vmins, self.vmaxs, self.vmin_labs, self.vmax_labs
+        self.input_layout = QGridLayout()
+        row = -1
+        for idx, (vmin, vmax, vmin_label, vmax_label) in enumerate(
+            zip(self.vmins, self.vmaxs, self.vmin_labs, self.vmax_labs)
         ):
-            self.input_layout.addWidget(vmin_label, alignment=QtCore.Qt.AlignRight)
-            self.input_layout.addWidget(vmin)
-            self.input_layout.addWidget(vmax_label, alignment=QtCore.Qt.AlignRight)
-            self.input_layout.addWidget(vmax)
-        self.input_layout.addWidget(self.range_btn)
-        self.input_layout.addWidget(self.reset_range_btn)
+            column = 4 * (idx % 2)
+            if idx % 2 == 0:
+                row += 1
+            self.input_layout.addWidget(vmin_label, row, column + 0, 1, 1)
+            self.input_layout.addWidget(vmin, row, column + 1, 1, 1)
+            self.input_layout.addWidget(vmax_label, row, column + 2, 1, 1)
+            self.input_layout.addWidget(vmax, row, column + 3, 1, 1)
+        self.input_layout.addWidget(self.range_btn, row + 1, 5, 1, 1)
+        self.input_layout.addWidget(self.reset_range_btn, row + 1, 6, 1, 1)
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.display, 0, 0, 5, 30)
-        self.master_layout.addLayout(self.input_layout, 6, 0, 1, 20)
+        self.master_layout.addLayout(self.input_layout, 6, 0, 1, 30)
         self.setLayout(self.master_layout)
 
     def updateViews(self):
