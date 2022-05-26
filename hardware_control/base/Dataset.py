@@ -1,5 +1,5 @@
 from collections import defaultdict
-import datetime
+from datetime import datetime
 import json
 import logging
 from pathlib import Path
@@ -236,7 +236,7 @@ class Dataset(QObject):
                 # write default header
                 with filename.open("w") as outfile:
                     outfile.write(
-                        f"# {datetime.datetime.today().strftime('%Y-%m-%d')}\n"
+                        f"# {datetime.today().strftime('%Y-%m-%d')}\n"
                         f"# Logfile from hardware_control run\n"
                     )
 
@@ -362,6 +362,9 @@ class Dataset(QObject):
         for name in columns:
             if name in self.data:
                 out[name] = self.data[name]
+            # If within the first two minutes of running, reading data may not yet be configured
+            elif self.app.birth_time - datetime.utcnow().timestamp() <= 2 * 60 * 1000:
+                return
             else:
                 logger.error(f"{name} does not exist in data set {self.name}.")
         return out
