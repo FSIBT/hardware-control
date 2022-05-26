@@ -36,12 +36,14 @@ class FunctionGenerator(QGroupBox):
         instrument_name: str,
         num_channels: int = 2,
         freq_unit: str = "MHz",
+        widget_name: str = "",
     ):
-        super().__init__(instrument_name)
+        super().__init__(widget_name)
         self.app = app
         self.instrument = instrument_name
         self.num_channels = num_channels
         self.freq_unit = freq_unit
+        self.widget_name = widget_name
         self.widgets = {}
 
         for i in range(1, self.num_channels + 1):

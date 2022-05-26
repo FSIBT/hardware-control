@@ -59,6 +59,7 @@ class Oscilloscope(QGroupBox):
         app,
         instrument_name: str,
         channels: List[int],
+        units: List[str],
         widget_name: str = "Oscilloscope",
         instrument_type: str = "keysight",
     ):
@@ -68,6 +69,7 @@ class Oscilloscope(QGroupBox):
         self.app = app
         self.instrument = instrument_name
         self.channels = channels
+        self.units = units
         self.instrument_type = instrument_type
 
         self.disp = TracePlotter(
@@ -76,6 +78,7 @@ class Oscilloscope(QGroupBox):
             "Oscilloscope Trace",
             self.channels,
             [f"Channel {chan}" for chan in self.channels],
+            units=self.units,
             bkg_color="w",
         )
         self.horiz = OscilloscopeHorizontalWidget(
