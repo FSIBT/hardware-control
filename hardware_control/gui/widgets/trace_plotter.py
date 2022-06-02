@@ -29,14 +29,12 @@ class TracePlotter(QGroupBox):
         Instrument instance to connect display to.
     display_name : str
         Widget name shown in the control program
-    channels : List
+    channels : List[int]
         Channels to display (first channel is 1; up to 4 channels allowed)
-    channel_names : List
+    channel_names : List[str]
         Names of channels to displayed on the y-axis
-    left_unit : str
-        Unit of the left axis
-    right_unit : str
-        Unit of the right axis
+    units : List[str]
+        Units for eahc channel
     bkg_color : Optional[str]
         Color of plot background
     loading_hooks : Optional[List]
