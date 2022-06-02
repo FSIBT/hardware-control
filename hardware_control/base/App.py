@@ -670,7 +670,9 @@ class App(QApplication):
             )
 
     @ensure_instrument_exists
-    def load_settings_hook(self, instrument: str, filename: Union[str, Path]) -> None:
+    def load_settings_hook(
+        self, instrument: str, filename: Union[str, Path], skip_hooks: bool = True
+    ) -> None:
         def hook_function(value):
             """Reads a JSON file to overwrite instrument's settings.
 
@@ -711,7 +713,7 @@ class App(QApplication):
                     return value
                 set_value = all_settings[parameter]
                 self.set_instrument_parameter(
-                    instrument, parameter, set_value, skip_hooks=True
+                    instrument, parameter, set_value, skip_hooks=skip_hooks
                 )
 
                 return value
