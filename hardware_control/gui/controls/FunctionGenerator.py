@@ -4,12 +4,9 @@
 """
 import logging
 
-from PyQt5.QtWidgets import (
-    QGridLayout,
-    QGroupBox,
-)
+from PyQt5.QtWidgets import QGridLayout, QGroupBox, QPushButton
 from PyQt5.QtCore import QTimer
-
+from typing import List
 
 from ..widgets.hc_widgets import HCLineEdit, HCComboBox, HCOnOffButton
 
@@ -37,6 +34,7 @@ class FunctionGenerator(QGroupBox):
         num_channels: int = 2,
         freq_unit: str = "MHz",
         widget_name: str = "",
+        set_default_fxn=None,
     ):
         super().__init__(widget_name)
         self.app = app
@@ -44,9 +42,11 @@ class FunctionGenerator(QGroupBox):
         self.num_channels = num_channels
         self.freq_unit = freq_unit
         self.widget_name = widget_name
+        self.set_default_fxn = set_default_fxn
         self.widgets = {}
+        self.channels = range(1, self.num_channels + 1)
 
-        for i in range(1, self.num_channels + 1):
+        for i in self.channels:
             enable = HCOnOffButton(
                 self.app,
                 self.instrument,
@@ -205,13 +205,23 @@ class FunctionGenerator(QGroupBox):
                 self.widgets[i].append(self.track2)
                 self.widgets[i].append(self.track1)
 
+        if self.set_default_fxn is not None:
+            default_btn = QPushButton("Set Defaults")
+            default_btn.clicked.connect(self.set_default_fxn)
+
         self.grid = QGridLayout()
-        for channel in range(1, self.num_channels + 1):
+        for channel in self.channels:
             for i, w in enumerate(self.widgets[channel]):
                 label_col = 2 * (channel - 1)
                 widget_col = 2 * channel - 1
                 self.grid.addWidget(w.label, i, label_col)
                 self.grid.addWidget(w, i, widget_col)
+        if self.set_default_fxn is not None:
+            self.grid.addWidget(
+                default_btn,
+                len(self.widgets[self.channels[-1]]),
+                2 * self.channels[-1] - 1,
+            )
         self.setLayout(self.grid)
 
         # Create timer to query whether instrument is enabled
@@ -222,7 +232,7 @@ class FunctionGenerator(QGroupBox):
     def update_readout(self):
         """Query the instrument for current readout data and push it to the GUI."""
         # Update readout data for each parameter
-        for channel in range(1, self.num_channels + 1):
+        for channel in self.channels:
             self.app.update_instrument_parameter(self.instrument, f"CH{channel}_ENABLE")
 
     def set_tracking_hook(self, setting, value):
