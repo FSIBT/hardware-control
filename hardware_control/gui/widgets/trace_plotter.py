@@ -149,17 +149,17 @@ class TracePlotter(QGroupBox):
         self.p1.setYRange(self.left_min_lst[-1], self.left_max_lst[-1])
         self.p2.setYRange(self.right_min_lst[-1], self.right_max_lst[-1])
 
-        self.range_btn = QPushButton()
-        self.range_btn.setText("Set User Ranges")
-        self.range_btn.setCheckable(True)
-        self.range_btn.clicked.connect(self.click_range_btn)
-        self.range_btn.setChecked(False)
+        self.user_range_btn = QPushButton()
+        self.user_range_btn.setText("Set User Ranges")
+        self.user_range_btn.setCheckable(True)
+        self.user_range_btn.clicked.connect(self.click_user_range_btn)
+        self.user_range_btn.setChecked(False)
 
-        self.reset_range_btn = QPushButton()
-        self.reset_range_btn.setText("Automate Ranges")
-        self.reset_range_btn.setCheckable(True)
-        self.reset_range_btn.clicked.connect(self.click_reset_range_btn)
-        self.reset_range_btn.setChecked(True)
+        self.auto_range_btn = QPushButton()
+        self.auto_range_btn.setText("Automate Ranges")
+        self.auto_range_btn.setCheckable(True)
+        self.auto_range_btn.clicked.connect(self.click_auto_range_btn)
+        self.auto_range_btn.setChecked(True)
 
         self.plot_items = {}
         for idx, channel in enumerate(self.channels):
@@ -195,8 +195,8 @@ class TracePlotter(QGroupBox):
             self.input_layout.addWidget(vmin, row, column + 1, 1, 1)
             self.input_layout.addWidget(vmax_label, row, column + 2, 1, 1)
             self.input_layout.addWidget(vmax, row, column + 3, 1, 1)
-        self.input_layout.addWidget(self.range_btn, row + 1, 5, 1, 1)
-        self.input_layout.addWidget(self.reset_range_btn, row + 1, 6, 1, 1)
+        self.input_layout.addWidget(self.user_range_btn, row + 1, 5, 1, 1)
+        self.input_layout.addWidget(self.auto_range_btn, row + 1, 6, 1, 1)
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.display, 0, 0, 5, 30)
         self.master_layout.addLayout(self.input_layout, 6, 0, 1, 30)
@@ -231,9 +231,9 @@ class TracePlotter(QGroupBox):
         self.plot_items[channel].setData(t, wave)
 
         # Range resizing
-        if self.range_btn.isChecked():
+        if self.user_range_btn.isChecked():
             self.user_resize()
-        elif self.reset_range_btn.isChecked():
+        elif self.auto_range_btn.isChecked():
             self.automate_resize(wave, channel)
 
         return json.dumps([t, wave], separators=(",", ":"))
@@ -251,7 +251,10 @@ class TracePlotter(QGroupBox):
 
     def automate_resize(self, wave, channel):
         """Resize according to channel trace min and max."""
-        if channel == self.channels[0]:
+        if len(wave) == 0:
+            return
+
+        if channel in [self.channels[0], self.channels[2]]:
             p = self.p1
         else:
             p = self.p2
@@ -260,10 +263,14 @@ class TracePlotter(QGroupBox):
         new_max = np.max(wave) + 0.2 * np.abs(np.max(wave))
         p.setYRange(new_min, new_max)
 
-    def click_range_btn(self):
-        """Uncheck automatic resizing button."""
-        self.reset_range_btn.setChecked(False)
+    def click_user_range_btn(self):
+        if self.user_range_btn.isChecked():
+            self.auto_range_btn.setChecked(False)
+        else:
+            self.auto_range_btn.setChecked(True)
 
-    def click_reset_range_btn(self):
-        """Uncheck user resize button."""
-        self.range_btn.setChecked(False)
+    def click_auto_range_btn(self):
+        if self.auto_range_btn.isChecked():
+            self.user_range_btn.setChecked(False)
+        else:
+            self.user_range_btn.setChecked(True)

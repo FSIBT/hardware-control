@@ -184,7 +184,7 @@ class PlotBase(QWidget):
                 self.unused_colors.remove(self.unused_colors[0])
 
             plot_obj = ax.plot_date(
-                x_values,
+                x_values.to_numpy(),
                 y_values,
                 self.fmt,
                 color=self.param_colors[label_name],
