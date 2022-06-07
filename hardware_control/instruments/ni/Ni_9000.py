@@ -89,7 +89,7 @@ class Ni_9000(Instrument):
         }
         self.channel_term_configs = {}
         self.V_mins = {}
-        self.V_maxes = {}
+        self.V_maxs = {}
 
         # Initialize parameters on all requested channels
         for mod in self.modules:

@@ -91,15 +91,19 @@ class SRS_DG535(Instrument):
             set_command="TM {}",
             dummy_return="BURST",
         )
-        self.add_lookup(
-            "TRIGGER_MODE",
-            {
-                "INTERNAL": "0",
-                "EXTERNAL": "1",
-                "SINGLE": "2",
-                "BURST": "3",
-            },
-        )
+        trigger_mode_upper = {
+            "INTERNAL": "0",
+            "EXTERNAL": "1",
+            "SINGLE": "2",
+            "BURST": "3",
+        }
+        trigger_mode_lower = {
+            "Interal": "0",
+            "External": "1",
+            "Single": "2",
+            "Burst": "3",
+        }
+        self.add_lookup("TRIGGER_MODE", {**trigger_mode_upper, **trigger_mode_lower})
 
         self.add_parameter(
             "TRIGGER_EDGE",

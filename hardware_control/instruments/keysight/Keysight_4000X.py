@@ -195,7 +195,7 @@ class Keysight_4000X(Instrument):
                 set_command=f"CHAN{channel}:IMP {{}}",
                 dummy_return="1e6",
             )
-            self.add_lookup(f"CH{channel}_IMPEDANCE", {"50": "FIFT", "1E6": "ONEM"})
+            self.add_lookup(f"CH{channel}_IMPEDANCE", {"50": "FIFT", "1e6": "ONEM"})
 
             self.add_parameter(
                 f"CH{channel}_PROBE_ATTEN",
@@ -276,13 +276,20 @@ class Keysight_4000X(Instrument):
         # Read X Increment
         x_incr = self.query(":WAV:XINC?")
 
+        if None in [x_orig, x_ref, x_incr]:
+            logger.info(f"Did not receive trace from {self.instrumemt_name}.")
+            return "[[],[]]"
+
         try:
             # Convert X Origin
             x_orig = float(x_orig)
             x_ref = float(x_ref)
             x_incr = float(x_incr)
         except (ValueError, TypeError):
-            logger.error("Received bad origin from scope.", exc_info=True)
+            logger.error(
+                f"Received bad origin from {self.instrument_name}.", exc_info=True
+            )
+
             return "[[],[]]"
 
         try:
@@ -299,6 +306,10 @@ class Keysight_4000X(Instrument):
             logger.error("Failed to calculate V & t.", exc_info=True)
             return "[[],[]]"
 
+        if " " in t:
+            t = t.replace(" ", "")
+        if " " in fmt:
+            fmt = fmt.replace(" ", "")
         out = json.dumps([t, fmt])
         return out
 
