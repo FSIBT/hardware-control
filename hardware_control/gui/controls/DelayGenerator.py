@@ -174,19 +174,16 @@ class DelayGenerator(QGroupBox):
 
         self.setLayout(self.master_layout)
 
-        # Create timer to query instrument
-        self.config_auto_update()
-
     def enable_disable_hook(self, value):
         """Enable/Disable and show/hide certain inputs depending on the trigger mode."""
-        if value == "SINGLE":
+        if value == "Single":
             self.single_trig_but.setEnabled(True)
             self.single_trig_but.setStyleSheet("background-color: white")
         else:
             self.single_trig_but.setEnabled(False)
             self.single_trig_but.setStyleSheet("background-color: grey")
 
-        if value == "BURST":
+        if value == "Burst":
             self.pulse.setVisible(True)
             self.pulse.label.setVisible(True)
             self.period.setVisible(True)
@@ -201,7 +198,7 @@ class DelayGenerator(QGroupBox):
             self.burst_rate.setVisible(False)
             self.burst_rate.label.setVisible(False)
 
-        if value == "INTERNAL":
+        if value == "Internal":
             self.internal_rate.setVisible(True)
             self.internal_rate.label.setVisible(True)
         else:
@@ -209,41 +206,6 @@ class DelayGenerator(QGroupBox):
             self.internal_rate.label.setVisible(False)
 
         return value
-
-    def config_auto_update(self):
-        """Query the instrument for current readout data."""
-
-        for parameter in [
-            "TRIGGER_MODE",
-            "TRIGGER_EDGE",
-            "TRIGGER_LEVEL",
-            "INTERNAL_TRIGGER_RATE",
-            "BURST_TRIGGER_RATE",
-            "PULSES_PER_BURST",
-            "TRIGGER_PERIOD",
-        ]:
-            self.app.add_auto_update_instrument_parameter(self.instrument, parameter)
-
-        for ch in self.channel_widgets:
-            if getattr(ch, "time_delay", None):
-                self.app.add_auto_update_instrument_parameter(
-                    self.instrument, ch.time_delay.parameter
-                )
-                self.app.add_auto_update_instrument_parameter(
-                    self.instrument, ch.relative.parameter
-                )
-            self.app.add_auto_update_instrument_parameter(
-                self.instrument, ch.volt.parameter
-            )
-            self.app.add_auto_update_instrument_parameter(
-                self.instrument, ch.level.parameter
-            )
-            self.app.add_auto_update_instrument_parameter(
-                self.instrument, ch.offset.parameter
-            )
-            self.app.add_auto_update_instrument_parameter(
-                self.instrument, ch.trig_impedance.parameter
-            )
 
 
 class DelayChannelWidget(QWidget):
@@ -299,12 +261,6 @@ class DelayChannelWidget(QWidget):
                 f"CH{self.channel}_DELAY",
                 when="pre_set_hooks",
                 function=self.update_delay,
-            )
-            self.app.add_hook(
-                self.instrument,
-                f"CH{self.channel}_DELAY",
-                when="post_read_hooks",
-                function=format_float(),
             )
 
             rels.remove(self.channel)
@@ -384,11 +340,13 @@ class DelayChannelWidget(QWidget):
 
     def update_relative_channel(self, relative_channel):
         """When updating the relative channel, send both the relative channel and the delay."""
+        self.relative.setCurrentText(relative_channel)
         relative_channel = self._CHANNEL_NAMES[relative_channel]
         return f"{relative_channel},{self.time_delay.text()}"
 
     def update_delay(self, delay):
         """When updating a channel's time delay, send both the relative channel and the delay."""
+        self.time_delay.setText(delay)
         relative_channel = self._CHANNEL_NAMES[self.relative.currentText()]
         return f"{relative_channel},{delay}"
 
