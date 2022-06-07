@@ -53,6 +53,8 @@ class FunctionGenerator(QGroupBox):
                 f"CH{i}_ENABLE",
                 label=f"CH{i} Enable Output",
                 show_icon=True,
+                text_checked="Turn Off",
+                text_unchecked="Turn On",
             )
             frequency = HCLineEdit(
                 self.app,

@@ -38,14 +38,12 @@ class TDKL_GenH(Instrument):
             connection_addr=connection_addr,
         )
 
-        # Instrument only returns first letter of the words ON and OFF
-        # But to set the instrument, one must use full words
         self.add_parameter(
             "CH1_ENABLE",
             read_command=":OUTP:STAT?",
             set_command=":OUTP:STAT {}",
             pre_hooks=[lambda x: "ON" if x == "True" else "OFF"],
-            post_hooks=[lambda x: "True" if x == "O" else "False"],
+            post_hooks=[lambda x: "True" if x == "ON" else "False"],
             dummy_return="False",
         )
 

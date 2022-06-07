@@ -275,7 +275,7 @@ class PowerSupplyChannel(QWidget):
 
         # Create a header for the channel widget
         if self.channel <= 20:
-            self.channel_label = HCHeader(f"channel_{self.channel+1}.png")
+            self.channel_label = HCHeader(f"channel_{self.channel}.png")
         else:
             self.set_label(f"Channel {self.channel}")
 

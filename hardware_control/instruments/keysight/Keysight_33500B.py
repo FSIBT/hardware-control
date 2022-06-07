@@ -175,11 +175,15 @@ class Keysight_33500B(Instrument):
                 set_command=f"TRIG{ch}:SOUR {{}}",
                 dummy_return="1",
             )
+            self.add_lookup(
+                f"CH{ch}_TRIGGER_CHANNEL",
+                {"EXT": "EXT", "IMM": "IMM", "TIM": "TIM", "MAN": "BUS"},
+            )
 
             self.add_parameter(
                 f"CH{ch}_TRIGGER_LEVEL",
-                read_command=f"TRIG{ch}:EDGE:LEV?",
-                set_command=f"TRIG{ch}:EDGE:LEV {{}}",
+                read_command=f"TRIG{ch}:LEV?",
+                set_command=f"TRIG{ch}:LEV {{}}",
                 pre_hooks=[format_float(".6E")],
                 dummy_return="10",
             )
@@ -194,8 +198,8 @@ class Keysight_33500B(Instrument):
 
             self.add_parameter(
                 f"CH{ch}_TRIGGER_EDGE",
-                read_command=f"TRIG{ch}:EDGE:SLOP?",
-                set_command=f"TRIG{ch}:EDGE:SLOP {{}}",
+                read_command=f"TRIG{ch}:SLOP?",
+                set_command=f"TRIG{ch}:SLOP {{}}",
                 pre_hooks=[expected_input_validator(["NEG", "POS"], "POS")],
                 dummy_return="POS",
             )
@@ -281,8 +285,8 @@ class Keysight_33500B(Instrument):
                 f"CH{ch}_ENABLE",
                 read_command=f":OUTP{ch}?",
                 set_command=f":OUTP{ch} {{}}",
-                pre_hooks=[lambda value: "ON" if value is True else "OFF"],
-                post_hooks=[lambda value: value == "1\n"],
+                pre_hooks=[lambda value: "On" if value == "True" else "Off"],
+                post_hooks=[lambda value: value == "1"],
                 dummy_return="False",
             )
 
@@ -295,8 +299,8 @@ class Keysight_33500B(Instrument):
 
             self.add_parameter(
                 f"CH{ch}_TRIGGER_DELAY",
-                read_command="TRIG1:DEL?",
-                set_command="TRIG1:DEL {}",
+                read_command=f"TRIG{ch}:DEL?",
+                set_command=f"TRIG{ch}:DEL {{}}",
                 pre_hooks=[format_float(".6E")],
                 dummy_return="0",
             )
