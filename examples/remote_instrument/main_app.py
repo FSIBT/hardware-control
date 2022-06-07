@@ -17,7 +17,7 @@ import sys
 
 from docopt import docopt
 
-from PyQt5.QtWidgets import QGridLayout, QTabWidget
+from PyQt5.QtWidgets import QTabWidget
 
 import hardware_control as hc
 
@@ -29,8 +29,8 @@ hc.setup_logging_docopt(logger, commands)
 
 
 class Demo(hc.HCMainWindow):
-    def __init__(self, dummy):
-        super().__init__(dummy=dummy)
+    def __init__(self, app, dummy):
+        super().__init__(app=app, dummy=dummy)
 
         self.setWindowTitle("Remote Demo")
 
