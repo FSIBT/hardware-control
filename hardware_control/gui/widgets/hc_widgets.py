@@ -420,8 +420,6 @@ class HCOnOffButton(HCMixin, QPushButton):
             self.setIcon(self.icon_unknown)
         if self.show_text:
             self.setText("unkown")
-        if self.show_set_text:
-            self.prev_value = 0
 
     def is_true(self, value: Union[bool, str]) -> bool:
         """Handle multiple versions (of different data type and case) of the option 'True'."""
@@ -432,7 +430,7 @@ class HCOnOffButton(HCMixin, QPushButton):
                 return True
         return False
 
-    def set_state(self, value):
+    def set_btn_state(self, value):
         """Change the icon and/or text display."""
         if self.show_icon:
             if self.is_true(value):
@@ -452,19 +450,11 @@ class HCOnOffButton(HCMixin, QPushButton):
         new_value = not (value == "True")
         self.app.set_instrument_parameter(self.instrument, self.parameter, new_value)
         if self.show_set_text:
-            self.set_state(new_value)
-            self.setEnabled(False)
+            self.set_btn_state(new_value)
 
     def widget_update(self, value):
-        if self.show_set_text:
-            if self.prev_value != 0:
-                if self.is_true(value) != self.is_true(self.prev_value):
-                    self.setEnabled(True)
-            else:
-                self.set_state(value)
-            self.prev_value = value
-        else:
-            self.set_state(value)
+        if not self.show_set_text:
+            self.set_btn_state(value)
 
 
 class HCOnOffIndicator(HCMixin, QLabel):
