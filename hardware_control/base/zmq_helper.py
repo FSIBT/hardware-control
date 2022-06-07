@@ -145,7 +145,7 @@ def handle_ZMQ_message_from_app(adapter) -> None:
             value = f"{value}"
             if " " in value:
                 value = value.replace(" ", "")
-                logger.warning(
+                logger.debug(
                     f"In {adapter.name} - {parameter}: Found a white space(s) in returned value. Removing them."
                 )
 

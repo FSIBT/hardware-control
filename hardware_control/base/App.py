@@ -449,7 +449,6 @@ class App(QApplication):
         if value is None:
             logger.info(f"Hook blocked setting of parameter '{instrument}-{parameter}'")
             return
-
         self._data[instrument][parameter]["set_value"] = value
         self.zmq_publisher.send_string(
             f"{instrument} {priority} set {parameter} {value}"
@@ -698,7 +697,6 @@ class App(QApplication):
             except:
                 logger.error(f"Failed to read file '{filename}'.", exc_info=True)
                 return value
-
             # Try to set instrument settings
             if instrument not in self._data:
                 logger.warning(
@@ -716,7 +714,7 @@ class App(QApplication):
                     instrument, parameter, set_value, skip_hooks=skip_hooks
                 )
 
-                return value
+            return value
 
         return hook_function
 
@@ -736,5 +734,5 @@ class App(QApplication):
             instrument,
             "ONLINE",
             "post_read_hooks",
-            self.load_settings_hook(instrument, filename),
+            self.load_settings_hook(instrument, filename, skip_hooks=False),
         )
