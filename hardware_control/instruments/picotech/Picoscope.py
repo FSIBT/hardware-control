@@ -18,6 +18,7 @@ from ...base.hooks import format_float
 
 from picoscope.ps2000a import PS2000a
 from picoscope.ps5000a import PS5000a
+from picoscope.ps6000 import PS6000
 
 
 def pico_error_check(func):
@@ -70,10 +71,6 @@ class Picoscope(Instrument):
     COMMANDS
         * SINGLE_TRIGGER
             * Set the instrument to trigger once.
-        * RUN
-            * Set the instrument to continuously trigger.
-        * STOP
-            * Prevent the instrument from triggering.
     """
 
     def __init__(
@@ -261,6 +258,8 @@ class Picoscope(Instrument):
                 self.ps = PS2000a()
             elif self.pico_series == "5000a":
                 self.ps = PS5000a()
+            elif self.pico_series == "6000":
+                self.ps = PS6000()
             self._online = True
         except Exception as e:
             self._online = False
@@ -290,11 +289,9 @@ class Picoscope(Instrument):
 
         Returns
         -------
-        CHX_WAVEFORM : str
-            Information about the channel number
         t : list
             List of the time stamps
-        values : list
+        volts : list
             List of the function values in Volts
 
         """
