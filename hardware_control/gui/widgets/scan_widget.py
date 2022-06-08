@@ -503,7 +503,7 @@ class ScanWidget(QGroupBox):
         self.progress_bar = QProgressBar()
         self.progress_grid.addWidget(self.progress_label, 0, 0)
         self.progress_grid.addWidget(self.progress_bar, 0, 1)
-        self.progress_bar.setValue(float(self.scan_progress))
+        self.progress_bar.setValue(int(self.scan_progress))
 
         # Define overall layout of the scan_widget
         self.master_layout = QGridLayout()
