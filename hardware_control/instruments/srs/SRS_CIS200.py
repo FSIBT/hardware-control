@@ -146,3 +146,10 @@ class SRS_CIS200(Instrument):
             set_command="MR{}",
             dummy_return="18",
         )  # followed by the mass of the measurement
+
+        self.add_parameter(
+            "MASS_FILTER",
+            read_command="",
+            set_command="ML{}",
+            dummy_return="18",
+        )  # followed by the mass of the measurement
