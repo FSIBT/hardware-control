@@ -16,5 +16,6 @@ from .tdkl import TDKL_GenH
 from .lakeshore import Lakeshore_224
 from .mks import GP_356
 from .mks import VQM835
+from .HP import HP_3478A
 from .HP import HP_33401A
 from .Keithley import Keithley_2400

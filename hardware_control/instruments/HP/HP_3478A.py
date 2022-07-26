@@ -1,7 +1,7 @@
 """
-Control class to handle HP34401A Multimeter readouts.
+Control class to handle HP 3478A Multimeter readouts.
 
-.. image:: /images/Lake_Shore_224.png
+.. image:: /images/HP_3478A.jpg
   :height: 200
 
 Has been tested with HP34401A.
@@ -21,10 +21,13 @@ logger = logging.getLogger(__name__)
 
 
 class HP_3478A(Instrument):
-    """
-    A driver for the Lakeshore 224 Temp Monitor
-    Instrument home page:
-    https://www.keysight.com/us/en/product/34401A/digital-multimeter-6-digit.html
+    """A driver for the HP 3478A Multimeter.
+    
+    PARAMETERS
+        * 2WIRE_OHMS (*float*)
+            * 2 wire automated resistance measurement
+        * 4WIRE_OHMS (*float*)
+            * 4 wire automated resistance measurement
     """
 
     def __init__(
@@ -35,64 +38,12 @@ class HP_3478A(Instrument):
         super().__init__(
             instrument_name=instrument_name,
             connection_addr=connection_addr,
-            default_port=7777,
         )
-
         self.manufacturer = "HP"
         self.model = "3478A"
 
-        self._termination = "\r\n"
+        #self._termination = "\r\n"
 
-        self.check_connection_commands = ["*IDN?"]
+        self.add_parameter("2WIRE_OHMS", read_command="H3")
+        self.add_parameter("4WIRE_OHMS", read_command="H4")
 
-        ## add some low level command
-        self.add_command(f"4WIRE_OHMS", f"H4")
-
-        ## add high level measurement command for resistance
-        self.add_parameter(
-            f"MEAS_RES",
-            read_command=f"MEAS:RES? {{}}",
-            set_command=f"",
-            post_hooks="",
-            dummy_return="",
-        )
-
-        self.add_parameter(
-            f"MEAS_4RES",
-            read_command=f"MEAS:FRES? {{}}",
-            set_command="",
-            post_hooks="",
-            dummy_return="",
-        )
-
-        self.add_parameter(
-            f"CONF_RES",
-            read_command=f"CONF:RES? {{}}",
-            set_command=f"",
-            post_hooks="",
-            dummy_return="",
-        )
-
-        self.add_parameter(
-            f"CONF_4RES",
-            read_command=f"CONF:FRES? {{}}",
-            set_command="",
-            post_hooks="",
-            dummy_return="",
-        )
-
-    def read_status(self, channel):
-        """
-        Read all settings of the instrument
-
-        """
-        if self._dummy:
-            status = {}
-            status["CURVE"] = "1"
-            status["NAME"] = "dummy"
-        else:
-            status = {}
-            status["CURVE"] = self.query(f"INCRV? {channel}")
-            status["NAME"] = self.query(f"INNAME? {channel}")
-
-        return status
