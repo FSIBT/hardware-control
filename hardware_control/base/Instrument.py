@@ -33,31 +33,37 @@ def ensure_online(f):
 
 
 class Instrument:
-    """
-    Base class and helper functions for all physical instrument drivers.
+    """Base class and helper functions for all physical instrument drivers.
 
-    Instrument drivers implement the actual communications between the user
-    and the instrument. The class supports several connection modes out of the box:
-    pyvisa, sockets, and modbus. For other types of communication protocols, the
-    try_connect function must be overwritten.
+    Instrument drivers implement the actual communications between the
+    user and the instrument. The class supports several connection
+    modes out of the box: pyvisa, sockets, and modbus. For other types
+    of communication protocols, the try_connect function must be
+    overwritten.
 
-    An instrument driver should be very basic, such that one can
-    use it in a terminal. A driver should neither have any GUI elements
+    An instrument driver should be very basic, such that one can use
+    it in a terminal. A driver should neither have any GUI elements
     nor any references to Qt.
 
-    When initializing an instrument, the user inherits from this base class
-    and then calls add_parameter and/or add_command several times. These
-    define 'read only' commands (e.g. to start collecting data) and/or 'read
-    and write' parameters (e.g. to read or set a voltage), which are linked to the
-    actual message that needs to be sent to the physical instrument. We also overwrite
-    __getitem__, __getattr__, and the corresponding set functions to
-    allow for a more pythonic way of reading and writing these parameters.
+    When initializing an instrument, the user inherits from this base
+    class and then calls add_parameter and/or add_command several
+    times. These define 'read only' commands (e.g. to start collecting
+    data) and/or 'read and write' parameters (e.g. to read or set a
+    voltage), which are linked to the actual message that needs to be
+    sent to the physical instrument. We also overwrite __getitem__,
+    __getattr__, and the corresponding set functions to allow for a
+    more pythonic way of reading and writing these parameters.
 
-    An instrument can also be used in `dummy` mode. In this mode, python will not
-    try to connect to the physical instrument; it will instead return pre-defined data or
-    call a user-defined function to generate the return value. This
-    can be handy for creating and debugging an app when one does not
-    have access to the hardware.
+    An instrument can also be used in `dummy` mode. In this mode,
+    python will not try to connect to the physical instrument; it will
+    instead return pre-defined data or call a user-defined function to
+    generate the return value. This can be handy for creating and
+    debugging an app when one does not have access to the hardware.
+
+    When creating an instrument one can pick the pyvisa driver to be
+    either the pure python pyvisa one (default or `pyvisa_backend=
+    "@py"` or use the National Instrument one by setting
+    `pyvisa_backend = "".`
 
     Attributes
     ----------
@@ -66,6 +72,7 @@ class Instrument:
     dummy : bool
          Whether instrument is in dummy mode (no commands are sent to the instrument) or normal mode;
          this parameter is set for all an app's instruments when an app is initialized
+
     """
 
     VISA = "visa"
@@ -80,10 +87,12 @@ class Instrument:
         instrument_name: str,
         connection_addr: Optional[str] = "None",
         default_port: int = None,
+        pyvisa_backend: str = "@py",
     ) -> None:
 
         self.name = instrument_name
         self._online: bool = False
+        self.pyvisa_backend = pyvisa_backend
 
         # can be set when defining the instrument
         self.manufacturer: Optional[str] = None
@@ -489,8 +498,8 @@ class Instrument:
 
         if self.connection_type == Instrument.VISA:
             try:
-                rm = pyvisa.ResourceManager("@py")
-                self.device = rm.open_resource(self.connection_addr)
+                self.rm = pyvisa.ResourceManager(self.pyvisa_backend)
+                self.device = self.rm.open_resource(self.connection_addr)
                 self.device.read_termination = (
                     self._termination
                     if not self.read_termination
