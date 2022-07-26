@@ -7,10 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.0] 2022-07-26
+
+### Added
+- New very basic driver for HP 3478A and HP 33401A
+
+### Changed
+- Ability to pick pyvisa backend when creating an instrument
+
 ## [2.1.1] 2022-04-14
 
 ### FIXED
-- author list in setup.cfg cannot be multiline
+- Author list in setup.cfg cannot be multiline
 
 ## [2.1.0] 2022-04-13
 
