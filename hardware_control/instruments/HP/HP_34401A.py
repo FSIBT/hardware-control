@@ -21,7 +21,18 @@ logger = logging.getLogger(__name__)
 
 
 class HP_33401A(Instrument):
-    """A driver for the HP 34401A."""
+    """A driver for the HP 34401A.
+
+    Currently only a few options are supported. Mainly default 2 and 4
+    wire measurements.
+
+    PARAMETERS
+        * MEAS_RES (*float*)
+            * 2 wire automated resistance measurement
+        * MEAS_4RES (*float*)
+            * 4 wire automated resistance measurement
+
+    """
 
     def __init__(
         self,
@@ -35,8 +46,6 @@ class HP_33401A(Instrument):
 
         self.manufacturer = "HP"
         self.model = "34401A"
-
-        #self._termination = "\r\n"
 
         self.check_connection_commands = ["*IDN?"]
 
