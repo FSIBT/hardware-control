@@ -19,7 +19,6 @@ from ...base import Instrument
 
 logger = logging.getLogger(__name__)
 
-
 class HP_3478A(Instrument):
     """A driver for the HP 3478A Multimeter.
 

@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 class Keithley_2400(Instrument):
     """
-    A driver for the Lakeshore 224 Temp Monitor
+    A driver for the Keithley_2400
     Instrument home page:
     https://www.keysight.com/us/en/product/34401A/digital-multimeter-6-digit.html
     """
@@ -53,22 +53,12 @@ class Keithley_2400(Instrument):
         
 
         ## add high level measurement command for resistance
-        self.add_parameter(
-            f"MEAS_RES",
-            read_command=f":MEAS:RES? {{}}",
-            set_command=f"",
-            post_hooks="",
-            dummy_return="",
-        )
+        self.add_parameter("MEAS_RES", read_command=f":MEAS:RES?", post_hooks=[self.parse_resistor])
+        self.add_parameter("CONF_RES", read_command=f":CONF:RES?")
 
-        self.add_parameter(
-            f"CONF_RES",
-            read_command=f":CONF:RES? {{}}",
-            set_command=f"",
-            post_hooks="",
-            dummy_return="",
-        )
-
+    def parse_resistor(self, value):
+        value = value.split(',')[2]
+        return value
 
     def read_status(self, channel):
         """

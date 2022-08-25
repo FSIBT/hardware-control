@@ -54,9 +54,15 @@ class HP_33401A(Instrument):
         self.add_command("SET_TRIG_INT", "TRIG:SOUR INT")
         self.add_command("INIT", "INIT")
         self.add_command("FETCH", "FETC?")
+        self.add_command("REMOTE", "SYSTEM:REMOTE")
 
         ## add high level measurement command for resistance
         self.add_parameter("MEAS_RES", read_command="MEAS:RES?")
         self.add_parameter("MEAS_4RES", read_command="MEAS:FRES?")
         self.add_parameter("CONF_RES", read_command="CONF:RES?")
         self.add_parameter("CONF_4RES", read_command="CONF:FRES?")
+
+    def enable_remote(self):
+        """Change connection to enable remote commands."""
+        if self.connection_type == Instrument.VISA:
+            self.device.control_ren(1)
