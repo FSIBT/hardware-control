@@ -254,7 +254,9 @@ class TracePlotter(QGroupBox):
         if len(wave) == 0:
             return
 
-        if channel in [self.channels[0], self.channels[2]]:
+        # not sure why odd and even channels are handled differently
+        test_channels = self.channels[::2]
+        if channel in test_channels:
             p = self.p1
         else:
             p = self.p2
