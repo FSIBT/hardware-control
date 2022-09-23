@@ -73,22 +73,27 @@ def convert_prefix(value: str, decimals: int = 3) -> List[str]:
 class HCGridLayout(QGridLayout):
     """Places HCwidgets into a Gridlayout.
 
-    This is a 2 column grid with the label of the HCWidget in the left
+    This is a 2*columns (columns=1 by default) column grid with the label of the HCWidget in the left
     column and the widget itself in the right column.
 
     A special case is a HCDoubleSpinComboBox where an additional 3rd
     column is created.
     """
 
-    def __init__(self, HCwidgets: List, offset: int = 0) -> None:
+    def __init__(self, HCwidgets: List, offset: int = 0, columns: int = 1) -> None:
         super().__init__()
+        has_double_spin = any(isinstance(w, HCDoubleSpinComboBox) for w in HCwidgets)
+        width = 3 if has_double_spin else 2
+
         for i, w in enumerate(HCwidgets):
-            self.addWidget(w.label, i + offset, 0)
+            col = i % columns
+            row = i // columns
+            self.addWidget(w.label, row + offset, 0 + col * width)
             if isinstance(w, HCDoubleSpinComboBox):
-                self.addWidget(w.spin, i + offset, 1)
-                self.addWidget(w.combo, i + offset, 2)
+                self.addWidget(w.spin, row + offset, 1 + col * width)
+                self.addWidget(w.combo, row + offset, 2 + col * width)
             else:
-                self.addWidget(w, i + offset, 1)
+                self.addWidget(w, row + offset, 1 + col * width)
 
 
 class HCMixin:
