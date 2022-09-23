@@ -113,8 +113,11 @@ class Caen_RSeries(Instrument):
 
             self.add_parameter(
                 f"CH{channel}_V_MAX",
-                read_command=self._read_V_max(channel),
-                set_command=self._set_V_max(channel),
+                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:MVMAX",
+                set_command=f"$BD:00,CMD:SET,CH:{channel},PAR:MAXV,VAL:{{}}",
+                post_hooks=[
+                    _parse_instrument_response,
+                ],
                 dummy_return="20.0",
             )
 
@@ -149,7 +152,7 @@ class Caen_RSeries(Instrument):
                 f"CH{channel}_V_SET",
                 read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:VSET",
                 set_command=f"$BD:00,CMD:SET,CH:{channel},PAR:VSET,VAL:{{}}",
-                pre_hooks=[self.range_validator(self.max_V, channel)],
+                # pre_hooks=[self.range_validator(self.max_V, channel)],
                 post_hooks=[_parse_instrument_response, format_float(".3e")],
                 dummy_return="10.0",
             )
