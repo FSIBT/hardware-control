@@ -7,3 +7,4 @@ from .MultiPowerSupply import MultiPowerSupply
 from .Oscilloscope import Oscilloscope
 from .RGA import RGA
 from .TempMonitor import TempMonitor
+from .TempMonitor_Adam import TempMonitor_Adam
