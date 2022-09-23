@@ -51,7 +51,7 @@ class Adam_6015(AdamBase):
         self.manufacturer = "Advantech"
         self.model = "Adam 6015"
 
-        for channel in range(1, 6 + 1):
+        for channel in range(0, 5 + 1):
             self.add_parameter(
                 f"CH{channel}_READ_TEMPERATURE",
                 read_command="#01",
