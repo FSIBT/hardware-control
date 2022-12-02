@@ -6,9 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## [Unreleased]
+
 ### Changed
 - Update from PyQt5 to PyQt6
 - Update to pymodbus > 3.0.0
+
+### FIXED
+- fixed button click in MultiPowerSupply
 
 ## [2.2.0] 2022-07-26
 

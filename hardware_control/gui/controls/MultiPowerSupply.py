@@ -166,7 +166,7 @@ class MultiPowerSupply(QGroupBox):
             self.app.set_instrument_parameter(
                 self.instrument, f"CH{channel}_ENABLE", "True"
             )
-            cw.enabled_but.set_state(True)
+            cw.enabled_but.set_btn_state(True)
 
     def disable_all(self):
         """Disable all channels."""
@@ -174,7 +174,7 @@ class MultiPowerSupply(QGroupBox):
             self.app.set_instrument_parameter(
                 self.instrument, f"CH{channel}_ENABLE", "False"
             )
-            cw.enabled_but.set_state(False)
+            cw.enabled_but.set_btn_state(False)
 
     def update_readout(self):
         """Query the instrument for current readout data and push it to the GUI."""
