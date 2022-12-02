@@ -83,7 +83,7 @@ class Ni_9000(Instrument):
 
         # Dictionaries for storing parameter values for each channel
         self.term_config_modes = {
-            "DIFF": TerminalConfiguration.BAL_DIFF,
+            "DIFF": TerminalConfiguration.DIFF,
             "NRSE": TerminalConfiguration.NRSE,
             "RSE": TerminalConfiguration.RSE,
         }
