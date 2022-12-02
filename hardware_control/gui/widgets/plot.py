@@ -4,8 +4,8 @@
 import logging
 from typing import Optional, List
 
-from PyQt5.QtCore import QTimer
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import QTimer
+from PyQt6.QtWidgets import (
     QWidget,
     QSizePolicy,
     QHBoxLayout,

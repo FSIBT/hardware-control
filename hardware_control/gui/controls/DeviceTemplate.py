@@ -1,6 +1,6 @@
 import logging
 
-from PyQt5.QtWidgets import QLabel, QGridLayout, QGroupBox
+from PyQt6.QtWidgets import QLabel, QGridLayout, QGroupBox
 
 from ..widgets import HCLineEdit, HCDoubleSpinBox
 

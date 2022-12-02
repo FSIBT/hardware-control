@@ -3,7 +3,7 @@
 """
 import logging
 
-from PyQt5.QtWidgets import QGroupBox
+from PyQt6.QtWidgets import QGroupBox
 
 from ..widgets import HCLineEdit, HCLabel, HCGridLayout, HCOnOffButton
 

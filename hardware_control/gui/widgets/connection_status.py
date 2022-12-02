@@ -4,8 +4,8 @@
 """
 import logging
 
-from PyQt5 import QtCore
-from PyQt5.QtWidgets import QGroupBox, QLabel, QGridLayout
+from PyQt6 import QtCore
+from PyQt6.QtWidgets import QGroupBox, QLabel, QGridLayout
 
 from .hc_widgets import load_pixmap, HCOnOffIndicator
 
@@ -39,7 +39,7 @@ class StatusTool(QGroupBox):
         self.instruments_label = QLabel()
         self.instruments_label.setPixmap(load_pixmap("status_label.png"))
         self.instruments_label.setAlignment(
-            QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
+            QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignVCenter
         )
         self.instrument_grid = QGridLayout()
 

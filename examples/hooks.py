@@ -16,7 +16,7 @@ import sys
 
 from docopt import docopt
 
-from PyQt5.QtWidgets import QGridLayout, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QGridLayout, QVBoxLayout, QWidget
 
 import hardware_control as hc
 

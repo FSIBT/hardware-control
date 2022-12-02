@@ -16,7 +16,7 @@ Options:
 import logging
 import sys
 
-from PyQt5.QtWidgets import QWidget, QGridLayout
+from PyQt6.QtWidgets import QWidget, QGridLayout
 from docopt import docopt
 from pathlib import Path
 

@@ -7,8 +7,8 @@ from typing import Optional, List
 
 import pyqtgraph as pg
 
-from PyQt5 import QtCore
-from PyQt5.QtWidgets import (
+from PyQt6 import QtCore
+from PyQt6.QtWidgets import (
     QGroupBox,
     QGridLayout,
     QWidget,
@@ -177,7 +177,9 @@ class OscilloscopeChannelWidget(QWidget):
         self.channel_label = QLabel(
             f"<font color = {self.colors[channel]}>Channel {self.channel}"
         )
-        self.channel_label.setAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
+        self.channel_label.setAlignment(
+            QtCore.Qt.AlignmentFlag.AlignCenter | QtCore.Qt.AlignmentFlag.AlignVCenter
+        )
 
         self.volts_div = HCDoubleSpinBox(
             self.app,
@@ -368,10 +370,14 @@ class OscilloscopeTriggerWidget(QGroupBox):
             [self.trig_level, self.trig_chan, self.trig_coupling, self.trig_edge],
             offset=1,
         )
-        self.trig_grid.addWidget(self.trig_header, 0, 0, 1, 2, QtCore.Qt.AlignTop)
-        self.trig_grid.addWidget(self.trig_single, 5, 1, QtCore.Qt.AlignTop)
-        self.trig_grid.addWidget(self.trig_run, 5, 0, QtCore.Qt.AlignTop)
-        self.trig_grid.addWidget(self.trig_stop, 6, 0, QtCore.Qt.AlignTop)
+        self.trig_grid.addWidget(
+            self.trig_header, 0, 0, 1, 2, QtCore.Qt.AlignmentFlag.AlignTop
+        )
+        self.trig_grid.addWidget(
+            self.trig_single, 5, 1, QtCore.Qt.AlignmentFlag.AlignTop
+        )
+        self.trig_grid.addWidget(self.trig_run, 5, 0, QtCore.Qt.AlignmentFlag.AlignTop)
+        self.trig_grid.addWidget(self.trig_stop, 6, 0, QtCore.Qt.AlignmentFlag.AlignTop)
         self.setLayout(self.trig_grid)
 
     def pico_run(self):
@@ -438,5 +444,7 @@ class OscilloscopeHorizontalWidget(QGroupBox):
             [self.timebase, self.time_offset, self.num_points],
             offset=1,
         )
-        self.horiz_layout.addWidget(self.horiz_header, 0, 0, 1, 3, QtCore.Qt.AlignTop)
+        self.horiz_layout.addWidget(
+            self.horiz_header, 0, 0, 1, 3, QtCore.Qt.AlignmentFlag.AlignTop
+        )
         self.setLayout(self.horiz_layout)

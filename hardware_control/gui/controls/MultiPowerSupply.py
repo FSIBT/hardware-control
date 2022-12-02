@@ -4,10 +4,10 @@
 import logging
 from typing import Optional, List
 
-from PyQt5 import QtCore
-from PyQt5.QtCore import QTimer
-from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import (
+from PyQt6 import QtCore
+from PyQt6.QtCore import QTimer
+from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import (
     QPushButton,
     QLabel,
     QWidget,
@@ -299,7 +299,7 @@ class PowerSupplyChannel(QWidget):
         # Power out is calculated from V_out and I_out. See MultiPowerSupply.update_readout() above.
         self.Power_out_label = QLabel("P Out:")
         self.Power_out_value = QLabel("----")
-        self.Power_out_value.setAlignment(QtCore.Qt.AlignLeft)
+        self.Power_out_value.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft)
 
         # Potentially set limits on how hight to set voltage and current
         if self.show_VI_limits:
@@ -420,12 +420,16 @@ class PowerSupplyChannel(QWidget):
 
             self.channel_layout.addWidget(self.status_panel, 1, 0, 1, 1)
 
-        self.channel_layout.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignTop)
+        self.channel_layout.setAlignment(
+            QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignTop
+        )
         self.setLayout(self.channel_layout)
 
     def set_label(self, label: str):
         """Set a label header for the channel."""
-        align_left_center = QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
+        align_left_center = (
+            QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignVCenter
+        )
         self.channel_label.setText(f"{label}")
         self.channel_label.setFont(QFont("Arial", 20))
         self.channel_label.setAlignment(align_left_center)

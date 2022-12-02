@@ -114,7 +114,7 @@ To run your program, just call `sys.exit(app.exec_())`!
 A complete sample program could look like this:
 
     # Import required modules
-    from PyQt5.QtWidgets import QGridLayout, QWidget
+    from PyQt6.QtWidgets import QGridLayout, QWidget
     import sys
 
     import hardware_control as hc
