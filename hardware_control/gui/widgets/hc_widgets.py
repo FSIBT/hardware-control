@@ -724,7 +724,7 @@ class HCSpinBox(HCMixin, QSpinBox):
         self.app.set_instrument_parameter(self.instrument, self.parameter, value)
 
     def widget_update(self, value) -> None:
-        self.setValue(float(value))
+        self.setValue(int(value))
 
 
 class HCHeader(QLabel):
