@@ -381,11 +381,11 @@ class OscilloscopeTriggerWidget(QGroupBox):
         self.setLayout(self.trig_grid)
 
     def pico_run(self):
-        self.app.continuous_commands.remove((self.instrument, "SINGLE_TRIGGER", False))
+        self.app.continuous_commands.discard((self.instrument, "SINGLE_TRIGGER", False))
         self.app.continuous_commands.add((self.instrument, "SINGLE_TRIGGER", True))
 
     def pico_stop(self):
-        self.app.continuous_commands.remove((self.instrument, "SINGLE_TRIGGER", True))
+        self.app.continuous_commands.discard((self.instrument, "SINGLE_TRIGGER", True))
         self.app.continuous_commands.add((self.instrument, "SINGLE_TRIGGER", False))
 
 
