@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fixed button click in MultiPowerSupply
 - fixed removing continuous command from Oscilloscope
 - fixed setting value in HCSpinBox
+- fixed try_reconnect for DG5353
 
 ## [2.2.0] 2022-07-26
 
