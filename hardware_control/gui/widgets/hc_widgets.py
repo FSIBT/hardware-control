@@ -530,7 +530,7 @@ class HCOnOffIndicator(HCMixin, QLabel):
         self.setMouseTracking(True)
         self.setToolTip(tooltip)
 
-        self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
 
     def sizeHint(self):
         if self.show_icon and not self.show_text:
@@ -769,7 +769,7 @@ class HCFixedLabel(HCMixin, QLabel):
         fm = QFontMetrics(self.font())
         self.setFixedWidth(fm.width(init_label))
 
-        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         if color is not None:
             self.setStyleSheet(
                 f"color: white;background-color:{color}; padding: 5px;border: 1px solid black;"

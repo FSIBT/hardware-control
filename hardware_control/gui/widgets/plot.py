@@ -231,9 +231,11 @@ class PlotTool(PlotBase):
 
         self.linewidth = 1
 
-        self.plot.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.plot.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+        )
         self.nav = NavigationToolbar(self.plot, self)
-        self.nav.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.nav.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
 
         # custom toolbar
         self.normalizebutton = QPushButton("normalize")
