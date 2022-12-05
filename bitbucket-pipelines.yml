@@ -9,6 +9,6 @@ pipelines:
             - pip
           script:
             - apt-get update -y
-            - apt-get install -y libgl1-mesa-glx libsm6 libxext6 libxrender-dev
+            - apt-get install -y '^libxcb.*-dev' libx11-xcb-dev libglu1-mesa-dev libxrender-dev libxi-dev libxkbcommon-dev libxkbcommon-x11-dev libdbus-1-dev
             - pip install .
             - pytest -v tests/* --junitxml=test-reports/report.xml

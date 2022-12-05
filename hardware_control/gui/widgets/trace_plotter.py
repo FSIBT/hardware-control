@@ -3,8 +3,8 @@ import pyqtgraph as pg
 import numpy as np
 from typing import Optional, List
 
-from PyQt5 import QtCore
-from PyQt5.QtWidgets import (
+from PyQt6 import QtCore
+from PyQt6.QtWidgets import (
     QGroupBox,
     QGridLayout,
     QHBoxLayout,

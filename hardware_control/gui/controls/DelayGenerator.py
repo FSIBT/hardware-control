@@ -3,9 +3,9 @@
 """
 import logging
 
-from PyQt5 import QtCore
-from PyQt5.QtGui import QIcon, QFont
-from PyQt5.QtWidgets import (
+from PyQt6 import QtCore
+from PyQt6.QtGui import QIcon, QFont
+from PyQt6.QtWidgets import (
     QGroupBox,
     QLabel,
     QGridLayout,
@@ -320,7 +320,7 @@ class DelayChannelWidget(QWidget):
 
         self.channel_layout = QGridLayout()
         self.channel_layout.addWidget(
-            self.channel_label, 0, 0, 1, 2, QtCore.Qt.AlignBottom
+            self.channel_label, 0, 0, 1, 2, QtCore.Qt.AlignmentFlag.AlignBottom
         )
         if self.channel not in ["AB", "CD"]:
             self.channel_layout.addWidget(self.time_delay.label, 1, 0)

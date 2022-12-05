@@ -211,7 +211,8 @@ class SRS_DG535(Instrument):
     def try_connect(self):
         """Need to clear the buffer every time we start the instrument."""
         super().try_connect()
-        self.device.write("CL")
+        if self.device:
+            self.device.write("CL")
 
     def numeric_to_alpha(self, value):
         inverse_CHANNEL_NAMES = {b: a for a, b in self._CHANNEL_NAMES.items()}

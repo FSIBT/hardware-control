@@ -22,7 +22,7 @@ import logging
 from typing import Optional, List, Dict, Callable
 import numpy as np
 
-from PyQt5.QtCore import QObject, QTimer
+from PyQt6.QtCore import QObject, QTimer
 
 logger = logging.getLogger(__name__)
 

@@ -14,7 +14,7 @@ Options:
 import logging
 import sys
 
-from PyQt5.QtWidgets import QWidget, QGridLayout
+from PyQt6.QtWidgets import QWidget, QGridLayout
 from docopt import docopt
 
 import hardware_control.instruments as hc_inst

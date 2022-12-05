@@ -17,7 +17,7 @@ import sys
 
 from docopt import docopt
 
-from PyQt5.QtWidgets import QTabWidget
+from PyQt6.QtWidgets import QTabWidget
 
 import hardware_control as hc
 

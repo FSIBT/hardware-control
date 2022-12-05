@@ -10,7 +10,7 @@ from typing import Dict, Optional, List
 import numpy as np
 import pandas as pd
 
-from PyQt5.QtCore import QObject, QTimer
+from PyQt6.QtCore import QObject, QTimer
 
 logger = logging.getLogger(__name__)
 

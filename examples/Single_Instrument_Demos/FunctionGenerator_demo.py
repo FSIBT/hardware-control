@@ -17,7 +17,7 @@ Options:
 import logging
 import sys
 
-from PyQt5.QtWidgets import QMainWindow, QWidget, QGridLayout
+from PyQt6.QtWidgets import QMainWindow, QWidget, QGridLayout
 from docopt import docopt
 
 import hardware_control as hc

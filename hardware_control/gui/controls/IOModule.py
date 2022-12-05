@@ -7,8 +7,8 @@ import logging
 from typing import Union
 from pathlib import Path
 
-from PyQt5.QtCore import QTimer
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import QTimer
+from PyQt6.QtWidgets import (
     QLabel,
     QGridLayout,
     QSpacerItem,

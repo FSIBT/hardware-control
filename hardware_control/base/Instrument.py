@@ -6,7 +6,7 @@ import time
 from typing import Optional, Any, Callable, List, Dict, Union, Iterable
 
 import pyvisa
-from pymodbus.client.sync import ModbusTcpClient as ModbusClient
+from pymodbus.client import ModbusTcpClient as ModbusClient
 
 from .hooks import create_converter, call_hooks
 

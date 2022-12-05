@@ -7,8 +7,8 @@ import time
 from typing import Union, Optional, Callable, Any, List
 from datetime import datetime
 
-from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import QTimer
+from PyQt6.QtWidgets import QApplication
+from PyQt6.QtCore import QTimer
 import zmq
 
 from .Dataset import Dataset

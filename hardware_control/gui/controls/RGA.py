@@ -4,9 +4,9 @@
 """
 import logging
 
-from PyQt5.QtGui import QIcon, QIntValidator
+from PyQt6.QtGui import QIcon, QIntValidator
 
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QGroupBox,
     QGridLayout,
     QPushButton,

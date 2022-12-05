@@ -14,18 +14,21 @@ with warnings.catch_warnings():
     # ignore warning in GPy
     # bug report https://github.com/SheffieldML/GPy/issues/950
     warnings.simplefilter("ignore", ResourceWarning)
-    from GPy.kern import Matern32, Bias
-    from GPy.models import GPRegression
-    from GPy.core.parameterization.priors import Gamma
+    try:
+        from GPy.kern import Matern32, Bias
+        from GPy.models import GPRegression
+        from GPy.core.parameterization.priors import Gamma
+    except:
+        pass
 
 from scipy.stats import rv_discrete
 
 import numpy as np
 
-from PyQt5 import QtCore
-from PyQt5.QtCore import QTimer
-from PyQt5.QtGui import QIcon, QIntValidator
-from PyQt5.QtWidgets import (
+from PyQt6 import QtCore
+from PyQt6.QtCore import QTimer
+from PyQt6.QtGui import QIcon, QIntValidator
+from PyQt6.QtWidgets import (
     QApplication,
     QGroupBox,
     QLineEdit,
@@ -276,7 +279,9 @@ class ScanWidget(QGroupBox):
         # Create scan widget UI elements
         # UI 1: Indicates instrument and parameter
         self.instrument_label = QLabel("Instrument:")
-        self.instrument_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        self.instrument_label.setAlignment(
+            QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignVCenter
+        )
 
         self.instrument_drop = QComboBox()
         self.instrument_drop.addItems(["----------"])
@@ -284,10 +289,14 @@ class ScanWidget(QGroupBox):
 
         self.arrow_symbol = QLabel()
         self.arrow_symbol.setPixmap(load_pixmap("arrow.png"))
-        self.arrow_symbol.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignVCenter)
+        self.arrow_symbol.setAlignment(
+            QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignVCenter
+        )
 
         self.parameter_label = QLabel("Parameter:")
-        self.parameter_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        self.parameter_label.setAlignment(
+            QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignVCenter
+        )
 
         self.parameter_drop = QComboBox()
         self.parameter_drop.addItems(["----------"])
@@ -303,32 +312,40 @@ class ScanWidget(QGroupBox):
 
         # Option 1: GP scan starting info
         self.GP_start_label = QLabel("Start:")
-        self.GP_start_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        self.GP_start_label.setAlignment(
+            QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignVCenter
+        )
         self.GP_start_edit = QLineEdit()
 
         self.GP_end_label = QLabel("End:")
-        self.GP_end_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.GP_end_label.setAlignment(
+            QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter
+        )
         self.GP_end_edit = QLineEdit()
 
         self.GP_step_label = QLabel("Step:")
-        self.GP_step_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.GP_step_label.setAlignment(
+            QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter
+        )
         self.GP_step_edit = QLineEdit()
 
         self.GP_n_queries_label = QLabel("# of Queries:")
         self.GP_n_queries_label.setAlignment(
-            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
+            QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter
         )
         self.GP_n_queries_edit = QLineEdit()
 
         self.GP_n_prescans_label = QLabel("# of Pre-Scans:")
         self.GP_n_prescans_label.setAlignment(
-            QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
+            QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignVCenter
         )
         self.GP_n_prescans_edit = QLineEdit()
 
         # Option 2: Values to start scanning inputted manually into a list
         self.list_label = QLabel("Values:")
-        self.list_label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+        self.list_label.setAlignment(
+            QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignVCenter
+        )
 
         self.list_edit = QLineEdit()
         self.list_edit.textChanged.connect(self.set_list_values)
@@ -337,26 +354,28 @@ class ScanWidget(QGroupBox):
         # Option 3: Range to scan
         self.range_start_label = QLabel("Start:")
         self.range_start_label.setAlignment(
-            QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
+            QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignVCenter
         )
 
         self.range_start_edit = QLineEdit()
 
         self.range_end_label = QLabel("End:")
-        self.range_end_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.range_end_label.setAlignment(
+            QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter
+        )
 
         self.range_end_edit = QLineEdit()
 
         self.range_step_label = QLabel("Step:")
         self.range_step_label.setAlignment(
-            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
+            QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter
         )
         self.range_step_edit = QLineEdit()
 
         # Option 4: Values to scan from file
         self.values_file_label = QLabel("File:")
         self.values_file_label.setAlignment(
-            QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
+            QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignVCenter
         )
 
         self.values_file_edit = QLineEdit()
@@ -407,7 +426,9 @@ class ScanWidget(QGroupBox):
 
         # UI 3: A QT grid with assorted scanning parameters
         self.macro_label = QLabel("Scan Action:")
-        self.macro_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.macro_label.setAlignment(
+            QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter
+        )
 
         self.action_drop = QComboBox()
         self.action_drop.addItems(self.actions.keys())
@@ -418,16 +439,16 @@ class ScanWidget(QGroupBox):
         self.pause_timer_label_before = QLabel("0.0")
         self.pause_timer_label_after = QLabel("0.0")
         self.pause_label_before.setAlignment(
-            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
+            QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter
         )
         self.pause_label_after.setAlignment(
-            QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter
+            QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter
         )
         self.pause_timer_label_before.setAlignment(
-            QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
+            QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignVCenter
         )
         self.pause_timer_label_after.setAlignment(
-            QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter
+            QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignVCenter
         )
 
         self.pause_edit_before = QLineEdit()
@@ -494,12 +515,14 @@ class ScanWidget(QGroupBox):
         self.scan_button_grid.addWidget(self.scan_button, 0, 0)
         self.scan_button_grid.addWidget(self.continue_scan_button, 0, 1)
         self.scan_button_grid.addWidget(
-            self.stop_button, 0, 2, alignment=QtCore.Qt.AlignRight
+            self.stop_button, 0, 2, alignment=QtCore.Qt.AlignmentFlag.AlignRight
         )
 
         self.progress_grid = QGridLayout()
         self.progress_label = QLabel("Scan Progress")
-        self.progress_label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+        self.progress_label.setAlignment(
+            QtCore.Qt.AlignmentFlag.AlignRight | QtCore.Qt.AlignmentFlag.AlignVCenter
+        )
         self.progress_bar = QProgressBar()
         self.progress_grid.addWidget(self.progress_label, 0, 0)
         self.progress_grid.addWidget(self.progress_bar, 0, 1)

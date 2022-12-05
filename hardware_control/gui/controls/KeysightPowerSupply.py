@@ -2,7 +2,7 @@
     .. image:: /images/controls/KeysightPowerSupply.png
 """
 from typing import List, Optional
-from PyQt5.QtWidgets import QGroupBox, QVBoxLayout, QPushButton, QGridLayout
+from PyQt6.QtWidgets import QGroupBox, QVBoxLayout, QPushButton, QGridLayout
 from ..widgets import HCFixedLabel, HCLineEdit, HCOnOffButton, HCGridLayout
 
 

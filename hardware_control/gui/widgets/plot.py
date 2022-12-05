@@ -4,8 +4,8 @@
 import logging
 from typing import Optional, List
 
-from PyQt5.QtCore import QTimer
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import QTimer
+from PyQt6.QtWidgets import (
     QWidget,
     QSizePolicy,
     QHBoxLayout,
@@ -135,6 +135,12 @@ class PlotBase(QWidget):
 
         dataset = self.app.data_sets[self.plot_set]
 
+        if not self.autoscale:
+            # remember window position
+            xleft, xright = self.axes.get_xlim()
+            ybottom, ytop = self.axes.get_ylim()
+            ybottom2, ytop2 = self.axes_2.get_ylim()
+
         for ax in self.ax_lst:
             ax.clear()
 
@@ -195,10 +201,10 @@ class PlotBase(QWidget):
             self.plot_obj_lst.append(plot_obj[0])
 
         if not self.autoscale:
-            xleft, xright = ax.get_xlim()
-            ybottom, ytop = ax.get_ylim()
-            ax.set_xlim([xleft, xright])
-            ax.set_ylim([ybottom, ytop])
+            # reset to old position
+            self.axes.set_xlim([xleft, xright])
+            self.axes.set_ylim([ybottom, ytop])
+            self.axes_2.set_ylim([ybottom2, ytop2])
 
         # Label axes if two axes are in use
         if len(self.ax_2_labels) != 0:
@@ -231,9 +237,11 @@ class PlotTool(PlotBase):
 
         self.linewidth = 1
 
-        self.plot.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.plot.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding
+        )
         self.nav = NavigationToolbar(self.plot, self)
-        self.nav.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.nav.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
 
         # custom toolbar
         self.normalizebutton = QPushButton("normalize")

@@ -12,7 +12,7 @@ import logging
 from typing import Dict, Optional, Union, Callable, Any, List
 import pkg_resources
 
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QGridLayout,
     QPushButton,
     QLabel,
@@ -22,8 +22,8 @@ from PyQt5.QtWidgets import (
     QSpinBox,
     QSizePolicy,
 )
-from PyQt5.QtGui import QPixmap, QIcon, QDoubleValidator, QFont, QFontMetrics
-from PyQt5 import QtCore
+from PyQt6.QtGui import QPixmap, QIcon, QDoubleValidator, QFont, QFontMetrics
+from PyQt6 import QtCore
 from ...base.hooks import call_hooks
 
 
@@ -139,11 +139,19 @@ class HCMixin:
         self.label = QLabel(label)
 
         if label_align == "right":
-            self.label.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+            self.label.setAlignment(
+                QtCore.Qt.AlignmentFlag.AlignRight
+                | QtCore.Qt.AlignmentFlag.AlignVCenter
+            )
         elif label_align == "left":
-            self.label.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+            self.label.setAlignment(
+                QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignVCenter
+            )
         elif label_align == "center":
-            self.label.setAlignment(QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
+            self.label.setAlignment(
+                QtCore.Qt.AlignmentFlag.AlignCenter
+                | QtCore.Qt.AlignmentFlag.AlignVCenter
+            )
 
         if self._visible:
             # connect to app
@@ -522,7 +530,7 @@ class HCOnOffIndicator(HCMixin, QLabel):
         self.setMouseTracking(True)
         self.setToolTip(tooltip)
 
-        self.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
 
     def sizeHint(self):
         if self.show_icon and not self.show_text:
@@ -716,7 +724,7 @@ class HCSpinBox(HCMixin, QSpinBox):
         self.app.set_instrument_parameter(self.instrument, self.parameter, value)
 
     def widget_update(self, value) -> None:
-        self.setValue(float(value))
+        self.setValue(int(value))
 
 
 class HCHeader(QLabel):
@@ -725,7 +733,9 @@ class HCHeader(QLabel):
     def __init__(self, icon_name):
         super().__init__()
         self.setPixmap(load_pixmap(icon_name))
-        self.setAlignment(QtCore.Qt.AlignVCenter | QtCore.Qt.AlignHCenter)
+        self.setAlignment(
+            QtCore.Qt.AlignmentFlag.AlignVCenter | QtCore.Qt.AlignmentFlag.AlignHCenter
+        )
 
 
 class HCFixedLabel(HCMixin, QLabel):
@@ -759,7 +769,7 @@ class HCFixedLabel(HCMixin, QLabel):
         fm = QFontMetrics(self.font())
         self.setFixedWidth(fm.width(init_label))
 
-        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         if color is not None:
             self.setStyleSheet(
                 f"color: white;background-color:{color}; padding: 5px;border: 1px solid black;"
@@ -767,11 +777,16 @@ class HCFixedLabel(HCMixin, QLabel):
 
         # Align the label
         if label_align == "right":
-            self.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignVCenter)
+            self.setAlignment(
+                QtCore.Qt.AlignmentFlag.AlignRight
+                | QtCore.Qt.AlignmentFlag.AlignVCenter
+            )
         elif label_align == "left":
-            self.setAlignment(QtCore.Qt.AlignLeft | QtCore.Qt.AlignVCenter)
+            self.setAlignment(
+                QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignVCenter
+            )
         elif label_align == "center":
-            self.setAlignment(QtCore.Qt.AlignCenter)
+            self.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
     def widget_update(self, value) -> None:
         self.setText(value)

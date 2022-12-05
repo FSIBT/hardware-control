@@ -6,11 +6,11 @@ import signal
 from sys import platform
 from typing import Optional
 
-from PyQt5.QtWidgets import (
+from PyQt6.QtWidgets import (
     QMainWindow,
-    QAction,
     QFileDialog,
 )
+from PyQt6.QtGui import QAction
 
 from .App import App
 

@@ -19,7 +19,7 @@ import random
 
 from docopt import docopt
 
-from PyQt5.QtWidgets import QWidget, QGridLayout
+from PyQt6.QtWidgets import QWidget, QGridLayout
 
 import hardware_control as hc
 
