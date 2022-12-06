@@ -6,6 +6,7 @@ import time
 from typing import Optional, Any, Callable, List, Dict, Union, Iterable
 
 import pyvisa
+from pyvisa.constants import StopBits
 from pymodbus.client import ModbusTcpClient as ModbusClient
 
 from .hooks import create_converter, call_hooks
@@ -567,7 +568,7 @@ class Instrument:
     def config_serial(
         self,
         baud_rate: Optional[int] = None,
-        stop_bits: Optional[int] = None,
+        stop_bits: Optional[StopBits] = None,
         data_bits: Optional[int] = None,
         parity: Optional[int] = None,
     ) -> None:
