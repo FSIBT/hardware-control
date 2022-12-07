@@ -9,12 +9,16 @@ Move all COMMANDS2 into add_parameter, add_commnad
 """
 
 from dataclasses import dataclass
+import logging
+import time
 from typing import Any
 
 import numpy as np
 
-from ...base import Instrument
-from .hooks import call_hooks
+from ...base import Instrument, StopBits
+from ...base.hooks import call_hooks
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -23,32 +27,6 @@ class Command:
     parameter_length: int = 0
     parameter_type: np.dtype = int
     respond_length: int = 0
-
-
-COMMANDS2 = {
-    "USER_CONTROL": Command(b"\x08\x01"),
-    "USER_CONTROL_STATUS": Command(b"\x07\x01", 1, np.dtype(bool)),
-    "READ_MODEL_NUMBER": Command(b"\x07\x02", 16, np.dtype("a16")),
-    "READ_SERIAL_NUMBER": Command(b"\x07\x03", 16, np.dtype("a16")),
-    "READ_HARDWARE_VERSION": Command(b"\x07\x04", 16, np.dtype("a16")),
-    "READ_FIRMWARE_VERSION": Command(b"\x07\x05", 16, np.dtype("a16")),
-    "READ_TPI_LINK_VERSION": Command(b"\x07\x06", 8, np.dtype("<i2")),
-    "READ_SUPPLY_VOLTAGE": Command(b"\x07\x07", 24, np.dtype("<f4")),
-    "READ_CURRENT_STATE": Command(b"\x07\x08", 2, np.dtype("u1")),
-    "READ_OUTPUT_LEVEL": Command(b"\x07\x0A", 1, np.dtype("i1")),
-    "SET_OUTPUT_LEVEL": Command(b"\x08\x0A", 1, np.dtype("i1")),
-    "READ_OUTPUT_STATUS": Command(b"\x07\x0B", 1, np.dtype(bool)),
-    "SET_OUTPUT_STATUS": Command(b"\x08\x0B", 1, np.dtype(bool)),
-}
-
-COMMANDS = {
-    "SCAN_STOP": Command(b"\x08\x08\x04\x00"),
-    "SCAN_START": Command(b"\x08\x08\x04\x01"),
-    "SCAN_PAUSE": Command(b"\x08\x08\x04\x02"),
-    "SCRIPT_STOP": Command(b"\x08\x08\x05\x00"),
-    "SCRIPT_START": Command(b"\x08\x08\x05\x01"),
-    "SCRIPT_CONTINUE": Command(b"\x08\x08\x05\x02"),
-}
 
 
 def validate_frequency(value: int):
@@ -77,18 +55,60 @@ class TPI(Instrument):
             "FREQUENCY",
             Command(b"\x07\x09", 4, np.dtype("<i4")),
             Command(b"\x08\x09", 4, np.dtype("<i4")),
+            post_hooks=[lambda x: int(x)],
+        )
+        self.add_parameter(
+            "OUTPUT_LEVEL",
+            Command(b"\x07\x0A", 1, np.dtype("i1")),
+            Command(b"\x08\x0A", 1, np.dtype("i1")),
+            post_hooks=[lambda x: int(x)],
         )
 
+        self.add_parameter(
+            "OUTPUT_ON_OFF",
+            Command(b"\x07\x0B", 1, np.dtype(bool)),
+            Command(b"\x08\x0B", 1, np.dtype(bool)),
+            post_hooks=[lambda x: bool(x)],
+        )
+
+        READ_ONLY_COMMANDS = {
+            "USER_CONTROL_STATUS": Command(b"\x07\x01", 1, np.dtype(bool)),
+            "READ_MODEL_NUMBER": Command(b"\x07\x02", 16, np.dtype("a16")),
+            "READ_SERIAL_NUMBER": Command(b"\x07\x03", 16, np.dtype("a16")),
+            "READ_HARDWARE_VERSION": Command(b"\x07\x04", 16, np.dtype("a16")),
+            "READ_FIRMWARE_VERSION": Command(b"\x07\x05", 16, np.dtype("a16")),
+            "READ_TPI_LINK_VERSION": Command(b"\x07\x06", 8, np.dtype("<i2")),
+            "READ_SUPPLY_VOLTAGE": Command(b"\x07\x07", 24, np.dtype("<f4")),
+            "READ_CURRENT_STATE": Command(b"\x07\x08", 2, np.dtype("u1")),
+        }
+        for k, v in READ_ONLY_COMMANDS.items():
+            self.add_parameter(k, v)
+
+        COMMANDS = {
+            "USER_CONTROL": Command(b"\x08\x01"),
+            "SCAN_STOP": Command(b"\x08\x08\x04\x00"),
+            "SCAN_START": Command(b"\x08\x08\x04\x01"),
+            "SCAN_PAUSE": Command(b"\x08\x08\x04\x02"),
+            "SCRIPT_STOP": Command(b"\x08\x08\x05\x00"),
+            "SCRIPT_START": Command(b"\x08\x08\x05\x01"),
+            "SCRIPT_CONTINUE": Command(b"\x08\x08\x05\x02"),
+        }
         for k, v in COMMANDS.items():
             self.add_command(k, v)
 
     def config(self):
         """Needs to be called when coming online."""
-        self.config_serial(baud_rate=3_000_000, stop_bits=1, data_bits=8, parity=None)
+        self.config_serial(
+            baud_rate=3_000_000,
+            stop_bits=StopBits.one,
+            data_bits=8,
+            parity=None,
+        )
         self.device.write_termination = None
         self.device.read_termination = None
         self.device.end_input = False
         self.device.end_output = False
+        self.delay = 0.01
 
     def try_connect(self) -> bool:
         """Overwrite try_connect to always call config when getting online."""
@@ -123,14 +143,15 @@ class TPI(Instrument):
         L = length[0] * 256 + length[1]
 
         body = self.device.read_bytes(L)
-
         checksum = self.device.read_bytes(1)
 
         # calculate package checksum
         tmp = 0xFF - (sum(length + body) % 256)
 
-        if checksum != tmp:
-            print("Error in checksum")
+        if checksum != tmp.to_bytes(1, byteorder="little"):
+            print(
+                f"Error in checksum: got {checksum}, expected {tmp}. bytes: {length+body}."
+            )
 
         return body
 
@@ -152,11 +173,20 @@ class TPI(Instrument):
         L1 = L // 256
         L2 = L % 256
 
-        out = L1.to_bytes() + L2.to_bytes() + command
+        out = (
+            L1.to_bytes(1, byteorder="little")
+            + L2.to_bytes(1, byteorder="little")
+            + command
+        )
 
         checksum = 0xFF - (sum(out) % 256)
 
-        package = 0xAA.to_bytes() + 0x55.to_bytes() + out + checksum.to_bytes()
+        package = (
+            0xAA.to_bytes(1, byteorder="little")
+            + 0x55.to_bytes(1, byteorder="little")
+            + out
+            + checksum.to_bytes(1, byteorder="little")
+        )
 
         self.device.write_raw(package)
 
@@ -166,31 +196,30 @@ class TPI(Instrument):
             return
         try:
             logger.debug(f"'{self.name}' sending query command '{command}'")
-            if self.connection_type == Instrument.VISA:
-                if self.delay is not None:
-                    inst_delay = self.delay
-                else:
-                    inst_delay = 0.0
+            if self.delay is not None:
+                inst_delay = self.delay
+            else:
+                inst_delay = 0.0
 
-                if delay is not None:
-                    inst_delay = delay
+            self.write_package(command.command)
 
-                self.write_package(command.command)
+            time.sleep(inst_delay)
 
-                time.sleep(inst_delay)
+            reply = self.read_package()
 
-                reply = self.read_package()
+            if reply[:2] != command.command:
+                print("ERROR: wrong return")
 
-                if reply[:2] != command.command:
-                    print("ERROR: wrong return")
-
-                values = reply[2 : 2 + command.parameter_length]
-                values = np.frombuffer(values, dtype=command.parameter_type)
-                return values
+            values = reply[2 : 2 + command.parameter_length]
+            values = np.frombuffer(values, dtype=command.parameter_type)
+            return values
         except Exception:
             logger.error(f"Query {command} failed in {self.name}", exc_info=True)
             self._online = False
             return None
+
+    def write(self, command):
+        self.write_package(command.command)
 
     def set_value(self, parameter: str, value) -> None:
         if parameter in self.set_commands:
@@ -200,7 +229,16 @@ class TPI(Instrument):
             if value is None:
                 return
 
-            self.write_package(self.set_commands[parameter].format(value))
+            # if we get strings for values and expect bool, we need to convert manually
+            if (
+                self.set_commands[parameter].parameter_type == np.dtype(bool)
+                and type(value) == str
+            ):
+                value = value == "True"
+
+            value = np.array(value, dtype=self.set_commands[parameter].parameter_type)
+            msg = self.set_commands[parameter].command + value.tobytes()
+            self.write_package(msg)
             reply = self.read_package()
 
             return

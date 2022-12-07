@@ -1,5 +1,6 @@
 from .DelayGenerator import DelayGenerator
 from .FlowController import FlowController
+from .MicrowaveControl import MicrowaveController
 from .FunctionGenerator import FunctionGenerator
 from .IOModule import IOModule
 from .KeysightPowerSupply import KeysightPowerSupply
