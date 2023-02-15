@@ -58,6 +58,7 @@ class TempMonitor(QGroupBox):
                 parameter=f"CH{channel}_CURVE",
                 label=f"{channel}_CURVE",
                 label_align="right",
+                auto_update=False,
             )
             on_off_but = HCOnOffButton(
                 self.app,
@@ -76,17 +77,4 @@ class TempMonitor(QGroupBox):
         self.grid = HCGridLayout(self.widgets)
         self.setLayout(self.grid)
 
-        self.default_update_readout()
         logger.debug("Initalized")
-
-    def default_update_readout(self):
-        """Register parameters for automatic updates."""
-
-        for channel in self.channel_list:
-
-            tmp = [f"CH{channel}_ENABLE", f"CH{channel}_READ_TEMP"]
-
-            for parameter in tmp:
-                self.app.add_auto_update_instrument_parameter(
-                    self.instrument, parameter
-                )

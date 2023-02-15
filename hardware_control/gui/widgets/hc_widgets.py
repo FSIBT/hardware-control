@@ -105,6 +105,23 @@ class HCMixin:
     since there might be custom code needed to do this.
 
     HCwidgets generally inherit from this class.
+
+    Any parameter listed here will be automatically added to the app's
+    auto_update list
+
+    Parameters
+    ----------
+    app
+       The main app
+    instrument
+       The name of the instrument
+    parameter
+       The name of the parameter
+    auto_update
+       Should the variable be added to the auto_update function. Set this
+       to `False` in case you want to run this on a different schedule. In this
+       case you need to create your own timer though and call the appropiate
+       update function.
     """
 
     def __init__(self, **kwargs) -> None:
@@ -112,6 +129,7 @@ class HCMixin:
         app = kwargs.pop("app")
         instrument = kwargs.pop("instrument")
         parameter = kwargs.pop("parameter")
+        auto_update = kwargs.pop("auto_update", True)
 
         self._visible = app.is_parameter(instrument, parameter)
 
@@ -156,6 +174,8 @@ class HCMixin:
         if self._visible:
             # connect to app
             self.app.add_widget(self.instrument, self.parameter, self)
+            if auto_update:
+                self.app.add_auto_update_instrument_parameter(instrument, parameter)
         else:
             # hide widget, put parameter on list to skip when auto-updating
             logger.info(
@@ -224,6 +244,7 @@ class HCLabel(HCMixin, QLabel):
         use_prefix: bool = True,
         label_align: str = "left",
         min_width: int = 10,
+        auto_update=True,
     ) -> None:
 
         super().__init__(
@@ -233,6 +254,7 @@ class HCLabel(HCMixin, QLabel):
             label=label,
             label_align=label_align,
             text="",
+            auto_update=auto_update,
         )
         self.unit = unit
         self.use_prefix = use_prefix
@@ -278,6 +300,7 @@ class HCLineEdit(HCMixin, QLineEdit):
         return_set_value: bool = False,
         default_txt: str = "----",
         validator=QDoubleValidator,
+        auto_update=True,
     ):
         super().__init__(
             app=app,
@@ -285,6 +308,7 @@ class HCLineEdit(HCMixin, QLineEdit):
             parameter=parameter,
             label=label,
             label_align=label_align,
+            auto_update=auto_update,
         )
         self.validator = validator
         self.return_set_value = return_set_value
@@ -315,7 +339,13 @@ class HCDoubleSpinBox(HCMixin, QDoubleSpinBox):
     """A simple control widget with a label (QLabel) and an input box (QDoubleSpinBox)."""
 
     def __init__(
-        self, app, instrument: str, parameter: str, label: str, label_align="left"
+        self,
+        app,
+        instrument: str,
+        parameter: str,
+        label: str,
+        label_align="left",
+        auto_update=True,
     ):
         super().__init__(
             app=app,
@@ -323,6 +353,7 @@ class HCDoubleSpinBox(HCMixin, QDoubleSpinBox):
             parameter=parameter,
             label=label,
             label_align=label_align,
+            auto_update=auto_update,
         )
 
         self.setValue(0)
@@ -347,6 +378,7 @@ class HCPushButton(HCMixin, QPushButton):
         parameter: str,
         label: str = "",
         label_align: str = "left",
+        auto_update=True,
     ):
         super().__init__(
             app=app,
@@ -355,6 +387,7 @@ class HCPushButton(HCMixin, QPushButton):
             label=label,
             label_align=label_align,
             text=label,
+            auto_update=auto_update,
         )
 
         self.clicked.connect(self.value_change)
@@ -402,6 +435,7 @@ class HCOnOffButton(HCMixin, QPushButton):
         icon_checked: str = "button-power-on.svg",
         icon_unchecked: str = "button-power-off.svg",
         show_set_text: bool = False,
+        auto_update=True,
     ):
         super().__init__(
             app=app,
@@ -410,6 +444,7 @@ class HCOnOffButton(HCMixin, QPushButton):
             label=label,
             label_align=label_align,
             colon=False,
+            auto_update=auto_update,
         )
 
         self.show_icon = show_icon
@@ -506,9 +541,14 @@ class HCOnOffIndicator(HCMixin, QLabel):
         icon_checked: str = "on-off-indicator-on.svg",
         icon_unchecked: str = "on-off-indicator-off.svg",
         tooltip: str = "",
+        auto_update=True,
     ):
         super().__init__(
-            app=app, instrument=instrument, parameter=parameter, text=label
+            app=app,
+            instrument=instrument,
+            parameter=parameter,
+            text=label,
+            auto_update=auto_update,
         )
 
         self.label = QLabel(label)
@@ -586,6 +626,7 @@ class HCComboBox(HCMixin, QComboBox):
         label_align: str = "left",
         lookuptable: Optional[Dict] = None,
         upper: bool = False,
+        auto_update=True,
     ):
         super().__init__(
             app=app,
@@ -593,6 +634,7 @@ class HCComboBox(HCMixin, QComboBox):
             parameter=parameter,
             label=label,
             label_align=label_align,
+            auto_update=auto_update,
         )
         self.items = items
         self.upper = upper
@@ -660,6 +702,7 @@ class HCDoubleSpinComboBox(HCMixin):
         label: str,
         units: Dict[str, float],
         label_align: str = "left",
+        auto_update=True,
     ):
         super().__init__(
             app=app,
@@ -667,6 +710,7 @@ class HCDoubleSpinComboBox(HCMixin):
             parameter=parameter,
             label=label,
             label_align=label_align,
+            auto_update=auto_update,
         )
 
         self.units = units
@@ -708,6 +752,7 @@ class HCSpinBox(HCMixin, QSpinBox):
         parameter: str,
         label: str,
         label_align: str = "left",
+        auto_update=True,
     ):
         super().__init__(
             app=app,
@@ -715,6 +760,7 @@ class HCSpinBox(HCMixin, QSpinBox):
             parameter=parameter,
             label=label,
             label_align=label_align,
+            auto_update=auto_update,
         )
 
         self.valueChanged.connect(self.value_change)
@@ -753,8 +799,11 @@ class HCFixedLabel(HCMixin, QLabel):
         fontsize: int = 18,
         bold: bool = False,
         label_align: str = "center",
+        auto_update=True,
     ):
-        super().__init__(app=app, instrument=instrument, parameter=parameter)
+        super().__init__(
+            app=app, instrument=instrument, parameter=parameter, auto_update=auto_update
+        )
 
         self.unit = unit
         self.use_prefix = use_prefix

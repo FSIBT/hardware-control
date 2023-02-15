@@ -63,13 +63,4 @@ class TempMonitor_Adam(QGroupBox):
         self.grid = HCGridLayout(self.widgets, columns=2)
         self.setLayout(self.grid)
 
-        self.default_update_readout()
         logger.debug("Initalized TempMonitor_Adam")
-
-    def default_update_readout(self):
-        """Register parameters for automatic updates."""
-
-        for channel in self.channel_list:
-            self.app.add_auto_update_instrument_parameter(
-                self.instrument, f"CH{channel}_READ_TEMPERATURE"
-            )

@@ -27,12 +27,15 @@ structures.
 
 #### Hardware-Control Widgets
 
-Hardware-Control defines a set of modified widgets to simplify building instrument
-interfaces. Examples of such widgets include the `HCPushButton` and `HCLineEdit`,
-which extend the standard Qt classes by connecting them to driver command/parameters
-names, and automatically registering them within the main app. We recommend using these
-widgets (rather than QtWidget objects) since they are pre-configured for reading/setting
-instrument parameters and conveying instrument commands.
+Hardware-Control defines a set of modified widgets to simplify
+building instrument interfaces. Examples of such widgets include the
+`HCPushButton` and `HCLineEdit`, which extend the standard Qt classes
+by connecting them to driver command/parameters names, and
+automatically registering them within the main app. We recommend using
+these widgets (rather than QtWidget objects) since they are
+pre-configured for reading/setting instrument parameters and conveying
+instrument commands. They will also add the instrument/parameter to
+the list of variables that will get automatically pulled by the app.
 
 ### 3. Getting Help
 

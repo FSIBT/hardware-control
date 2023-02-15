@@ -107,6 +107,7 @@ class Dataset(QObject):
         parameter: Optional[str] = None,
         alias: Optional[str] = None,
         plot_ax: Optional[int] = 1,
+        auto_update=True,
     ) -> None:
         """Add a parameter from an instrument to the dataset.
 
@@ -123,6 +124,10 @@ class Dataset(QObject):
         plot_ax
             Axis – either 1 or 2 – the parameter(s) should be plotted on.
             Default is 1.
+        auto_update
+            Add the variable to the list the list of variables in the app_settings
+            that gets automatically updated. A reason to set this to `False` would
+            be to have this on a different update schedule than the default app one.
         """
         if instrument not in self.app._data:
             logger.error(f"{instrument} not found in App.")
@@ -135,7 +140,8 @@ class Dataset(QObject):
                 return
 
             self.instruments.append((instrument, parameter, plot_ax))
-
+            if auto_update:
+                self.app.add_auto_update_instrument_parameter(instrument, parameter)
             # If alias is specified, change parameter name to alias
             if alias is not None:
                 self.define_alias(f"{instrument}:{parameter}", alias)
@@ -147,6 +153,10 @@ class Dataset(QObject):
                     # All parameters have a "read_value" key while commands do not
                     if "read_value" in self.app._data[instrument][p].keys():
                         self.instruments.append((instrument, p, plot_ax))
+                        if auto_update:
+                            self.app.add_auto_update_instrument_parameter(
+                                instrument, parameter
+                            )
 
     def define_alias(self, original_name: str, alias: str) -> None:
         """Define an alias for an original parameter name of format <instrument>:<parameter>.
