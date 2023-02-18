@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0] 2023-02-18
+
+The main new feature is updating to pyqt6.
+
 ### Changed
 - Update from PyQt5 to PyQt6
 - Update to pymodbus > 3.0.0
@@ -14,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Update qtconsole >= 5.3.2
 - any parameter used in a HC-widget or dataset will now by default be updated in app
 
-### FIXED
+### Fixed
 - fixed button click in MultiPowerSupply
 - fixed removing continuous command from Oscilloscope
 - fixed setting value in HCSpinBox
@@ -43,7 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.1.1] 2022-04-14
 
-### FIXED
+### Fixed
 - Author list in setup.cfg cannot be multiline
 
 ## [2.1.0] 2022-04-13
@@ -114,5 +118,6 @@ Started to use the program at our test stands. Lots of cleanup and improvements
 - Clean up examples
 
 ## [0.0.2] 2020-07-08
+
 ### Added
 - first release on pypi
