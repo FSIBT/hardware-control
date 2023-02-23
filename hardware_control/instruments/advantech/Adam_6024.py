@@ -5,6 +5,7 @@
 """
 
 import logging
+import time
 
 from ...base.hooks import range_validator, format_float
 
@@ -53,6 +54,9 @@ class Adam_6024(AdamBase):
         self.n_input_channels = 7
         self.n_output_channels = 2
 
+        self.n_digital_input_channels = 2
+        self.n_digital_output_channels = 2
+
         for channel in range(self.n_input_channels):
             self.add_parameter(
                 f"CH{channel}_READ_VOLTAGE",
@@ -67,3 +71,27 @@ class Adam_6024(AdamBase):
                 set_command=f"#01{channel:02d}{{}}",
                 pre_hooks=[range_validator(0, 10), format_float("06.3f")],
             )
+
+        # turn on
+        for channel in range(self.n_digital_output_channels):
+            self.add_command(
+                command_name=f"CH_DO{channel}_ON",
+                command=f"011{channel}01",
+            )
+            self.add_command(
+                command_name=f"CH_DO{channel}_OFF",
+                command=f"011{channel}00",
+            )
+            self.add_command(
+                command_name=f"CH_DO{channel}_PULSE",
+                command=lambda: self.puse(channel),
+            )
+
+        # note: channel 0 is DO0 (Pin 5), channel 1 is DO 1 (Pin2)
+        # trigger function - includes in and out signals
+
+    def pulse(self, DO_channel, wait_time=0.1):
+        self.command(f"CH_DO{DO_channel}_ON")
+        time.sleep(wait_time)
+        self.command(f"CH_DO{DO_channel}_OFF")
+        time.sleep(0.5)
