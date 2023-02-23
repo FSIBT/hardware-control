@@ -61,6 +61,8 @@ class SRS_CIS200(Instrument):
 
         self.add_command("CALIBRATION_ALL", "CA")
         self.add_command("CALIBRATION", "CL")
+        self.add_command('CLEAR_OFF', 'FL0\rHV0')
+
 
         # Setting the ionizer parameters
         self.add_parameter(

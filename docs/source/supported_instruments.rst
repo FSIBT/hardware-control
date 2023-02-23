@@ -70,6 +70,9 @@ provide a pull request.
      * - `Lake Shore Model 224 <https://www.lakeshore.com/products/categories/overview/temperature-products/cryogenic-temperature-monitors/model-224-temperature-monitor>`_
        - .. image:: /images/Lake_Shore_224.png
            :height: 100
+     * - `Lake Shore Model 372 <https://www.lakeshore.com/products/categories/overview/temperature-products/ac-resistance-bridges/model-372-ac-resistance-bridge-temperature-controller>`_
+       - .. image:: /images/Lake_Shore_372.png
+           :height: 100
 
 
 - Ion Gauge:

@@ -68,11 +68,3 @@ class FlowController(QGroupBox):
 
         self.layout = HCGridLayout([self.rate, self.pressure, self.flow])
         self.setLayout(self.layout)
-
-        self.config_auto_update()
-
-    def config_auto_update(self):
-        """Query the instrument for current readout data."""
-
-        for parameter in ["RATE", "PRESSURE"]:
-            self.app.add_auto_update_instrument_parameter(self.instrument, parameter)

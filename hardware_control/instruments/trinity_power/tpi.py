@@ -190,33 +190,11 @@ class TPI(Instrument):
 
         self.device.write_raw(package)
 
-    def query(self, command):
-        if self._dummy:
-            logger.debug(f"'{self.name}' sending query command '{command}'")
-            return
-        try:
-            logger.debug(f"'{self.name}' sending query command '{command}'")
-            if self.delay is not None:
-                inst_delay = self.delay
-            else:
-                inst_delay = 0.0
-
-            self.write_package(command.command)
-
-            time.sleep(inst_delay)
-
-            reply = self.read_package()
-
-            if reply[:2] != command.command:
-                print("ERROR: wrong return")
-
-            values = reply[2 : 2 + command.parameter_length]
-            values = np.frombuffer(values, dtype=command.parameter_type)
-            return values
-        except Exception:
-            logger.error(f"Query {command} failed in {self.name}", exc_info=True)
-            self._online = False
-            return None
+    def query_serial(self, command):
+        self.write_package(command.command)
+        time.sleep(inst_delay)
+        reply = self.read_package()
+        return reply
 
     def write(self, command):
         self.write_package(command.command)

@@ -14,6 +14,7 @@ from .srs import SRS_DG535
 from .srs import SRS_CIS200
 from .tdkl import TDKL_GenH
 from .lakeshore import Lakeshore_224
+from .lakeshore import Lakeshore_372
 from .mks import GP_356
 from .mks import VQM835
 from .HP import HP_3478A
