@@ -53,21 +53,21 @@ class TPI(Instrument):
 
         self.add_parameter(
             "FREQUENCY",
-            Command(b"\x07\x09", 4, np.dtype("<i4")),
-            Command(b"\x08\x09", 4, np.dtype("<i4")),
+            read_command=Command(b"\x07\x09", 4, np.dtype("<i4")),
+            set_command=Command(b"\x08\x09", 4, np.dtype("<i4")),
             post_hooks=[lambda x: int(x)],
         )
         self.add_parameter(
             "OUTPUT_LEVEL",
-            Command(b"\x07\x0A", 1, np.dtype("i1")),
-            Command(b"\x08\x0A", 1, np.dtype("i1")),
+            read_command=Command(b"\x07\x0A", 1, np.dtype("i1")),
+            set_command=Command(b"\x08\x0A", 1, np.dtype("i1")),
             post_hooks=[lambda x: int(x)],
         )
 
         self.add_parameter(
             "OUTPUT_ON_OFF",
-            Command(b"\x07\x0B", 1, np.dtype(bool)),
-            Command(b"\x08\x0B", 1, np.dtype(bool)),
+            read_command=Command(b"\x07\x0B", 1, np.dtype(bool)),
+            set_command=Command(b"\x08\x0B", 1, np.dtype(bool)),
             post_hooks=[lambda x: bool(x)],
         )
 
@@ -115,6 +115,7 @@ class TPI(Instrument):
         ret = super().try_connect()
         if self._online:
             self.config()
+            self.command("USER_CONTROL")
         return ret
 
     def read_package(self):
@@ -220,6 +221,7 @@ class TPI(Instrument):
 
     def write(self, command):
         self.write_package(command.command)
+        self.read_package()
 
     def set_value(self, parameter: str, value) -> None:
         if parameter in self.set_commands:
