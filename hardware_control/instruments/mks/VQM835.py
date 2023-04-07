@@ -112,7 +112,8 @@ class VQM835(Instrument):
         )
 
         ## Setting up the Scans
-        self.add_command("READOUT_SET", "FORM 1,1\rFORM?")
+        self.add_command("MASS_READOUT_SET", "FORM 1,1\rFORM?")
+        self.add_command("COUNTs_READOUT_SET", "FORM 1,0\rFORM?")
         self.add_command("SINGLE_MEASUREMENT", "INST MSP\rOUTP ON\rINIT\rFETC?")
 
         ## Store and load the trap settings

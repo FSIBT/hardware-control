@@ -54,10 +54,15 @@ class Keithley_2400(Instrument):
 
         ## add high level measurement command for resistance
         self.add_parameter("MEAS_RES", read_command=f":MEAS:RES?", post_hooks=[self.parse_resistor])
+        self.add_parameter("MEAS_VOLT", read_command=f":MEAS:VOLT?", post_hooks=[self.parse_voltage])
         self.add_parameter("CONF_RES", read_command=f":CONF:RES?")
 
     def parse_resistor(self, value):
         value = value.split(',')[2]
+        return value
+
+    def parse_voltage(self, value):
+        value = value.split(',')[0]
         return value
 
     def read_status(self, channel):

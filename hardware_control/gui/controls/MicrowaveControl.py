@@ -104,11 +104,3 @@ class MicrowaveController(QGroupBox):
             [self.online_ind, self.frequency, self.power, self.on_off]
         )
         self.setLayout(self.layout)
-
-        self.config_auto_update()
-
-    def config_auto_update(self):
-        """Query the instrument for current readout data."""
-
-        for parameter in ["OUTPUT_LEVEL", "FREQUENCY", "OUTPUT_ON_OFF"]:
-            self.app.add_auto_update_instrument_parameter(self.instrument, parameter)

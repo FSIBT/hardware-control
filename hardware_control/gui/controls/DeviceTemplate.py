@@ -51,11 +51,3 @@ class DeviceType(QGroupBox):
         self.layout.addWidget(self.spinbox, 2, 1)
 
         self.setLayout(self.layout)
-
-        self.config_auto_update()
-
-    def config_auto_update(self):
-        """Code that reads certain settings on a regular basis"""
-
-        for parameter in ["CH1_VOLT", "CH2_Volt"]:
-            self.app.add_auto_update_instrument_parameter(self.instrument, parameter)

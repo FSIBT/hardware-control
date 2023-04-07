@@ -114,23 +114,6 @@ class RGA(QGroupBox):
 
         self.setLayout(self.master_layout)
 
-        self.config_update_readout()
-
-    def config_update_readout(self):
-        """Query the instrument for current readout data."""
-
-        for parameter in [
-            "FILAMENT_EMISSION",
-            "EXTRACT_VOLTAGE",
-            "ELECTRON_ENERGY",
-            "ION_ENERGY",
-            "INITIAL_MASS",
-            "FINAL_MASS",
-            "EM_VOLTAGE",
-            "",
-        ]:
-            self.app.add_auto_update_instrument_parameter(self.instrument, parameter)
-
 
 class ScanProcessControlWidget(ScanWidget):
     def __init__(self, app, actions):

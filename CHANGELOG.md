@@ -7,16 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0] 2023-02-18
+
+The main new feature is updating to pyqt6.
+
 ### Changed
 - Update from PyQt5 to PyQt6
 - Update to pymodbus > 3.0.0
 - Update to nidaqmx >= 0.6.4
+- Update qtconsole >= 5.3.2
+- any parameter used in a HC-widget or dataset will now by default be updated in app
 
-### FIXED
+### Fixed
 - fixed button click in MultiPowerSupply
 - fixed removing continuous command from Oscilloscope
 - fixed setting value in HCSpinBox
 - fixed try_reconnect for DG5353
+- fixed autoscale in plot widget
+
+### Added
+- TPI: new microwave controller
+- Lakeshore 372: new instrument driver
+- Keithley 2400: add voltage measurements
+- Keithley 2001: new driver
+- SRS CIS200: add clear offset command
+- SRS DG645: new driver
+- CAEN: new function to read out v_max
+
+### Removed
+- GPy dependencies
 
 ## [2.2.0] 2022-07-26
 
@@ -28,7 +47,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.1.1] 2022-04-14
 
-### FIXED
+### Fixed
 - Author list in setup.cfg cannot be multiline
 
 ## [2.1.0] 2022-04-13
@@ -99,5 +118,6 @@ Started to use the program at our test stands. Lots of cleanup and improvements
 - Clean up examples
 
 ## [0.0.2] 2020-07-08
+
 ### Added
 - first release on pypi

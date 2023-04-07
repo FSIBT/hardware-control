@@ -26,6 +26,7 @@ drivers for the NI-DAQ modules and picoscopes.
    instruments/alicat
    instruments/caen
    instruments/keysight
+   instruments/lakeshore
    instruments/ni
    instruments/picotech
    instruments/rigol

@@ -641,6 +641,14 @@ class Instrument:
                 break
         return data
 
+    def query_serial(self, command, delay):
+        self.device.write(command)
+        time.sleep(inst_delay)
+        reply = self.device.read(
+            termination=(self.read_termination or self._termination)
+        )
+        return reply
+
     @ensure_online
     def query(self, command: str, delay: Optional[float] = None):
         """Query the insturment directly."""
@@ -658,12 +666,8 @@ class Instrument:
 
                 if delay is not None:
                     inst_delay = delay
+                self.query_serial(command, delay)
 
-                self.device.write(command)
-                time.sleep(inst_delay)
-                reply = self.device.read(
-                    termination=(self.read_termination or self._termination)
-                )
             elif self.connection_type == Instrument.SOCKET:
                 self.device.sendall(bytes(command + self._termination, self._encoding))
                 reply_bytes = Instrument._recvall(self.device)
