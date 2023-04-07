@@ -96,6 +96,15 @@ class TPI(Instrument):
         for k, v in COMMANDS.items():
             self.add_command(k, v)
 
+        self.add_command("OUTPUT_ON", self.output_on)
+        self.add_command("OUTPUT_OFF", self.output_off)
+
+    def output_on(self):
+        self["OUTPUT_ON_OFF"] = 1
+
+    def output_off(self):
+        self["OUTPUT_ON_OFF"] = 0
+
     def config(self):
         """Needs to be called when coming online."""
         self.config_serial(
