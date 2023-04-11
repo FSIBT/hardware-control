@@ -55,20 +55,20 @@ class TPI(Instrument):
             "FREQUENCY",
             read_command=Command(b"\x07\x09", 4, np.dtype("<i4")),
             set_command=Command(b"\x08\x09", 4, np.dtype("<i4")),
-            post_hooks=[lambda x: int(x)],
+            post_hooks=[lambda x: str(int(x))],
         )
         self.add_parameter(
             "OUTPUT_LEVEL",
             read_command=Command(b"\x07\x0A", 1, np.dtype("i1")),
             set_command=Command(b"\x08\x0A", 1, np.dtype("i1")),
-            post_hooks=[lambda x: int(x)],
+            post_hooks=[lambda x: str(int(x))],
         )
 
         self.add_parameter(
             "OUTPUT_ON_OFF",
             read_command=Command(b"\x07\x0B", 1, np.dtype(bool)),
             set_command=Command(b"\x08\x0B", 1, np.dtype(bool)),
-            post_hooks=[lambda x: bool(x)],
+            post_hooks=[lambda x: str(bool(x))],
         )
 
         READ_ONLY_COMMANDS = {
@@ -121,10 +121,12 @@ class TPI(Instrument):
 
     def try_connect(self) -> bool:
         """Overwrite try_connect to always call config when getting online."""
+
         ret = super().try_connect()
         if self._online:
             self.config()
             self.command("USER_CONTROL")
+
         return ret
 
     def read_package(self):
@@ -200,10 +202,13 @@ class TPI(Instrument):
 
         self.device.write_raw(package)
 
-    def query_serial(self, command):
+    def query_serial(self, command, delay):
         self.write_package(command.command)
-        time.sleep(inst_delay)
+        time.sleep(delay)
         reply = self.read_package()
+        reply = reply[2:]
+        reply = np.frombuffer(reply, dtype=command.parameter_type)[0]
+
         return reply
 
     def write(self, command):
