@@ -125,7 +125,6 @@ class HCMixin:
     """
 
     def __init__(self, **kwargs) -> None:
-
         app = kwargs.pop("app")
         instrument = kwargs.pop("instrument")
         parameter = kwargs.pop("parameter")
@@ -246,7 +245,6 @@ class HCLabel(HCMixin, QLabel):
         min_width: int = 10,
         auto_update=True,
     ) -> None:
-
         super().__init__(
             app=app,
             instrument=instrument,
@@ -378,7 +376,6 @@ class HCPushButton(HCMixin, QPushButton):
         parameter: str,
         label: str = "",
         label_align: str = "left",
-        auto_update=True,
     ):
         super().__init__(
             app=app,
@@ -387,7 +384,7 @@ class HCPushButton(HCMixin, QPushButton):
             label=label,
             label_align=label_align,
             text=label,
-            auto_update=auto_update,
+            auto_update=False,
         )
 
         self.clicked.connect(self.value_change)
