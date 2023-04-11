@@ -90,7 +90,6 @@ class Instrument:
         default_port: int = None,
         pyvisa_backend: str = "@py",
     ) -> None:
-
         self.name = instrument_name
         self._online: bool = False
         self.pyvisa_backend = pyvisa_backend
@@ -643,7 +642,7 @@ class Instrument:
 
     def query_serial(self, command, delay):
         self.device.write(command)
-        time.sleep(inst_delay)
+        time.sleep(delay)
         reply = self.device.read(
             termination=(self.read_termination or self._termination)
         )
@@ -666,7 +665,7 @@ class Instrument:
 
                 if delay is not None:
                     inst_delay = delay
-                self.query_serial(command, delay)
+                reply = self.query_serial(command, inst_delay)
 
             elif self.connection_type == Instrument.SOCKET:
                 self.device.sendall(bytes(command + self._termination, self._encoding))
@@ -691,7 +690,7 @@ class Instrument:
                     )
 
             return reply
-        except Exception:
+        except Exception as e:
             logger.error(f"Query {command} failed in {self.name}", exc_info=True)
             self._online = False
             return None
