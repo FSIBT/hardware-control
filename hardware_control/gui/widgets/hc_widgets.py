@@ -271,6 +271,8 @@ class HCLabel(HCMixin, QLabel):
                     text = f"{float(text):.3g} {self.unit}"
                 except:
                     text = f"{text} {self.unit}"
+        else:
+            text = str(text)
         if self.min_width:
             text = text.rjust(self.min_width)
         super().setText(text)
