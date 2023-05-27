@@ -1,10 +1,10 @@
 Picotech
 ========
 
-hardware_control.instruments.picotech.Picotech_6000 module
-----------------------------------------------------------
+hardware_control.instruments.picotech.Picoscope module
+------------------------------------------------------
 
-.. automodule:: hardware_control.instruments.picotech.Picotech_6000
+.. automodule:: hardware_control.instruments.picotech.Picoscope
    :members:
    :undoc-members:
    :show-inheritance:

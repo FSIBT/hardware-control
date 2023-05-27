@@ -1,7 +1,7 @@
 Installation
 ============
 
-Hardware control requires python ≥ 3.6.
+Hardware control requires python ≥ 3.7.
 
 The code is available on `PyPi
 <https://pypi.org/project/hardware-control>`_ and therefore can be

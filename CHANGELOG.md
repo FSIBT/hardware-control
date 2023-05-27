@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.1] 2023-02-18
+
+### CHANGED
+- updated docs
+- Removed auto_update from HCPushButton since it connects to a command not a parameter
+
+### FIXED
+- HCLabel: force convertion to string, so that call to .rjust works all the time
+- TPI: several fixes
+- Fix quering for a serial device
+
 ## [3.0.0] 2023-02-18
 
 The main new feature is updating to pyqt6.

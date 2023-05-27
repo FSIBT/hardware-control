@@ -33,3 +33,4 @@ drivers for the NI-DAQ modules and picoscopes.
    instruments/siglent
    instruments/srs
    instruments/tdkl
+   instruments/trinity_power

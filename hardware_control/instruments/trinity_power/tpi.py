@@ -1,17 +1,14 @@
 """
-Instrument driver fro TPI from Trinity Power
+Instrument driver for TPI from Trinity Power
 
-TOOD: refactor query and set_value, so that many checks are still done in Instruemnt
-and only the actual write is overwritten here
-
-Move all COMMANDS2 into add_parameter, add_commnad
+.. image:: /images/TPI.jpg
+  :height: 200
 
 """
 
 from dataclasses import dataclass
 import logging
 import time
-from typing import Any
 
 import numpy as np
 
@@ -41,7 +38,12 @@ def validate_frequency(value: int):
 class TPI(Instrument):
     """TPI Signal Generator
 
-    TPI-1001, TPI-1002, & TPI-1005
+    .. image:: /images/TPI.jpg
+      :height: 200
+
+    TPI-1001, TPI-1002, & TPI-1005.
+
+    Implements its own binary driver.
 
     """
 

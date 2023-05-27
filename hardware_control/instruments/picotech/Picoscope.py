@@ -1,6 +1,10 @@
 """
+Control class to handle different picoscopes.
+
 .. image:: /images/Pico_6000.jpg
   :height: 200
+
+Currently supports 2000, 5000, and 6000 Picoscopes.
 
 """
 

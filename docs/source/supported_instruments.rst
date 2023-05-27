@@ -111,6 +111,9 @@ provide a pull request.
      * - `Siglent SDG Series <https://www.siglent.eu/waveform-generators>`_ (LAN)
        - .. image:: /images/SDG1000X.png
            :height: 100
+     * - `Trinity Power TPI <https://rf-consultant.com/products/tpi-1001-b-signal-generator/>`_ (USB)
+       - .. image:: /images/TPI.jpg
+           :height: 100
 
 
 - IOModule:
