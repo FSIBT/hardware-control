@@ -3,7 +3,13 @@
 """
 from typing import List, Optional
 from PyQt6.QtWidgets import QGroupBox, QVBoxLayout, QPushButton, QGridLayout
-from ..widgets import HCFixedLabel, HCLineEdit, HCOnOffButton, HCGridLayout
+from ..widgets import (
+    HCFixedLabel,
+    HCLineEdit,
+    HCOnOffButton,
+    HCGridLayout,
+    HCOnOffIndicator,
+)
 
 
 class ChannelDisplay(QVBoxLayout):
@@ -17,12 +23,14 @@ class ChannelDisplay(QVBoxLayout):
         color: str,
         set_voltage_option: bool = False,
         set_current_option: bool = False,
+        persona: str = "3631A",
     ):
         super().__init__()
 
         self.app = app
         self.instrument = instrument_name
         self.color = color
+        self.channel = channel
         self.set_voltage_option = set_voltage_option
         self.set_current_option = set_current_option
 
@@ -31,14 +39,17 @@ class ChannelDisplay(QVBoxLayout):
         else:
             init_label = "+000.0000 xX"
 
-        self.on_off = HCOnOffButton(
-            self.app,
-            self.instrument,
-            f"CH{channel}_ENABLE",
-            label=None,
-            show_icon=True,
-        )
-        self.addWidget(self.on_off)
+        if persona != "3631A":
+            # in 3631A mode, you can only turn all channels on/off at the same time.
+            # see p71 in Keysight 3600 Series Programming Guide
+            self.on_off = HCOnOffButton(
+                self.app,
+                self.instrument,
+                f"CH{channel}_ENABLE",
+                label=None,
+                show_icon=True,
+            )
+            self.addWidget(self.on_off)
 
         # Channel voltage readout
         self.voltage = HCFixedLabel(
@@ -106,6 +117,7 @@ class KeysightPowerSupply(QGroupBox):
         set_voltage_channels: Optional[List] = None,
         set_current_channels: Optional[List] = None,
         widget_name: str = "Keysight Power Supply",
+        persona: str = "3631A",
     ):
         super().__init__(widget_name)
         self.app = app
@@ -134,10 +146,19 @@ class KeysightPowerSupply(QGroupBox):
             )
 
         # Create "Enable All" and "Disable All" buttons
-        self.all_enable_but = QPushButton("Enable All")
-        self.all_enable_but.clicked.connect(self.enable_all)
-        self.all_disable_but = QPushButton("Disable All")
-        self.all_disable_but.clicked.connect(self.disable_all)
+        if persona != "3631A":
+            self.all_enable_but = QPushButton("Enable All")
+            self.all_enable_but.clicked.connect(self.enable_all)
+            self.all_disable_but = QPushButton("Disable All")
+            self.all_disable_but.clicked.connect(self.disable_all)
+        else:
+            self.all_enable_but = HCOnOffButton(
+                self.app,
+                self.instrument,
+                f"CH1_ENABLE",  # one channel will enale/disable all channels in this mode
+                label=None,
+                show_icon=True,
+            )
 
         # Allow negative outputs
         self.app.call_instrument_command(self.instrument, "ALLOW_NEG_OUTPUT")
@@ -151,14 +172,18 @@ class KeysightPowerSupply(QGroupBox):
         self.app.set_instrument_parameter(self.instrument, "CH3_I_SET", 0.5)
 
         self.hbox = QVBoxLayout()
+
+        # Add "Enable All" and "Disable All" buttons to the control program
+        self.hbox.addWidget(self.all_enable_but)
+        if persona != "3631A":
+            self.hbox.addWidget(self.all_disable_but)
+
         # Add channel widgets to the control program
         self.channeldisplay = QGridLayout()
         for i, cw in enumerate(self.channel_widgets):
             self.channeldisplay.addLayout(cw, 1, i)
         self.hbox.addLayout(self.channeldisplay)
-        # Add "Enable All" and "Disable All" buttons to the control program
-        self.hbox.addWidget(self.all_enable_but)
-        self.hbox.addWidget(self.all_disable_but)
+
         self.setLayout(self.hbox)
 
         self.default_update_readout()

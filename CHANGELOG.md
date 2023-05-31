@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## [Unreleased]
+### Fixed
+- Keysight 3600 power supply UI: remove on/off buttons for E3631A mode (only global on/off   available)
+
+### Added
+- Keysight 3600 power supply: add readout of persona
 
 ## [3.0.1] 2023-02-18
 

@@ -69,6 +69,12 @@ class Keysight_36300(Instrument):
             dummy_return="",
         )
 
+        self.add_parameter(
+            "PERSONA",
+            read_command="SYSTem:PERSona:MODel?",
+            dummy_return="3631A",
+        )
+
         for channel in self.chan_nums:
             self.add_parameter(
                 f"CH{channel}_ENABLE",
