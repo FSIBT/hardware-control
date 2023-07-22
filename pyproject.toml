@@ -14,6 +14,10 @@ authors = [
    { name = "Grant Giesbrecht", email = "ggiesbrecht@lbl.gov" },
    { name = "Timo Bauer", email = "TimoBauer@lbl.gov" },
    { name = "Zhihao Qin", email = "zqin@lbl.gov" },
+   { name = "Arfon Smith", email = "arfon.smith@gmail.com" },
+   { name ="Sara Matsuo Saib", email = "smsaib@lbl.gov" },
+   { name ="Caroline Egan", email = "cegan@lbl.gov" },
+   { name ="Schuyler Freeman, email = "skyfreeman@lbl.gov" },
 ]
 readme = "README.md"
 license = {file = "LICENSE"}
