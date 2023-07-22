@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Keysight 3600 power supply: add readout of persona
 
+### CHANGED
+- changed to src/ layout
+- move setup.{cfg,py} into pyproject.toml
+
 ## [3.0.1] 2023-02-18
 
 ### CHANGED

@@ -2,7 +2,8 @@
 __pycache__
 *.pyc
 hardware-control.egg-info/
-hardware_control/_version.py
+src/hardware_control.egg-info/
+src/hardware_control/_version.py
 build/
 dist/
 python/.eggs/
