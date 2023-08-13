@@ -8,7 +8,7 @@ pipelines:
             - pip
           script:
             - apt-get update -y
-            - apt-get install -y python3-pyqt6 mesa-libGL
+            - apt-get install -y python3-pyqt6 mesa-common-dev libglu1-mesa-dev
             - pip install -U pip
             - pip install .
             - pytest -v tests/* --junitxml=test-reports/report.xml
@@ -19,7 +19,7 @@ pipelines:
             - pip
           script:
             - apt-get update -y
-            - apt-get install -y python3-pyqt6 mesa-libGL
+            - apt-get install -y python3-pyqt6 mesa-common-dev libglu1-mesa-dev
             - pip install -U pip
             - pip install .
             - pytest -v tests/* --junitxml=test-reports/report.xml
@@ -30,7 +30,7 @@ pipelines:
             - pip
           script:
             - apt-get update -y
-            - apt-get install -y python3-pyqt6 mesa-libGL
+            - apt-get install -y python3-pyqt6 mesa-common-dev libglu1-mesa-dev
             - pip install -U pip
             - pip install .
             - pytest -v tests/* --junitxml=test-reports/report.xml
@@ -41,7 +41,7 @@ pipelines:
             - pip
           script:
             - apt-get update -y
-            - apt-get install -y python3-pyqt6 mesa-libGL
+            - apt-get install -y python3-pyqt6 mesa-common-dev libglu1-mesa-dev
             - pip install -U pip
             - pip install .
             - pytest -v tests/* --junitxml=test-reports/report.xml
@@ -52,7 +52,7 @@ pipelines:
             - pip
           script:
             - apt-get update -y
-            - apt-get install -y python3-pyqt6 mesa-libGL
+            - apt-get install -y python3-pyqt6 mesa-common-dev libglu1-mesa-dev
             - pip install -U pip
             - pip install .
             - pytest -v tests/* --junitxml=test-reports/report.xml
