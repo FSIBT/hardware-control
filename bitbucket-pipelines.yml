@@ -47,7 +47,7 @@ pipelines:
             - pytest -v tests/* --junitxml=test-reports/report.xml
       - step:
           name: Test_3.12
-          image: python:3.12
+          image: python:3.12-rc
           caches:
             - pip
           script:
