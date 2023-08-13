@@ -57,9 +57,10 @@ classifiers = [
 ]
 
 [project.urls]
-"Documentation" = "https://hardware-control.readthedocs.io/"
-"Source" = "https://bitbucket.org/berkeleylab/hardware-control"
-"Tracker" = "https://bitbucket.org/berkeleylab/hardware-control/issues"
+documentation = "https://hardware-control.readthedocs.io/"
+homepage = "https://bitbucket.org/berkeleylab/hardware-control"
+issues = "https://bitbucket.org/berkeleylab/hardware-control/issues"
+changelog = "https://bitbucket.org/berkeleylab/hardware-control/src/main/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
 where = ["src"]
