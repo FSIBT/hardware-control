@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - move setup.{cfg,py} into pyproject.toml
 - require python >= 3.9 (minimum version for numpy)
 - updated pre-commit versions and run on all files
+- updated pipelines and readthedocs python versions
 
 ## [3.0.1] 2023-02-18
 
