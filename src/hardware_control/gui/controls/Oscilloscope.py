@@ -3,7 +3,7 @@
 """
 import json
 import logging
-from typing import Optional, List
+from typing import Optional
 
 import pyqtgraph as pg
 
@@ -58,8 +58,8 @@ class Oscilloscope(QGroupBox):
         self,
         app,
         instrument_name: str,
-        channels: List[int],
-        units: List[str],
+        channels: list[int],
+        units: list[str],
         widget_name: str = "Oscilloscope",
         instrument_type: str = "keysight",
     ):

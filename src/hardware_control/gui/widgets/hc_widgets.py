@@ -9,7 +9,7 @@ have equivalent ones in Qt directly.
 """
 
 import logging
-from typing import Dict, Optional, Union, Callable, Any, List
+from typing import Optional, Union, Callable, Any
 import pkg_resources
 
 from PyQt6.QtWidgets import (
@@ -45,7 +45,7 @@ def icon_filename(name: str):
     return pkg_resources.resource_filename("hardware_control", f"icons/{name}")
 
 
-def convert_prefix(value: str, decimals: int = 3) -> List[str]:
+def convert_prefix(value: str, decimals: int = 3) -> list[str]:
     """Handle units prefix conversions."""
     try:
         value = float(value)
@@ -80,7 +80,7 @@ class HCGridLayout(QGridLayout):
     column is created.
     """
 
-    def __init__(self, HCwidgets: List, offset: int = 0, columns: int = 1) -> None:
+    def __init__(self, HCwidgets: list, offset: int = 0, columns: int = 1) -> None:
         super().__init__()
         has_double_spin = any(isinstance(w, HCDoubleSpinComboBox) for w in HCwidgets)
         width = 3 if has_double_spin else 2
@@ -621,9 +621,9 @@ class HCComboBox(HCMixin, QComboBox):
         instrument: str,
         parameter: str,
         label: str,
-        items: List,
+        items: list,
         label_align: str = "left",
-        lookuptable: Optional[Dict] = None,
+        lookuptable: Optional[dict] = None,
         upper: bool = False,
         auto_update=True,
     ):
@@ -699,7 +699,7 @@ class HCDoubleSpinComboBox(HCMixin):
         instrument: str,
         parameter: str,
         label: str,
-        units: Dict[str, float],
+        units: dict[str, float],
         label_align: str = "left",
         auto_update=True,
     ):

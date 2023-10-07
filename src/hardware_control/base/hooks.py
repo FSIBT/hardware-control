@@ -19,7 +19,7 @@ Example
 """
 
 import logging
-from typing import Optional, List, Dict, Callable
+from typing import Optional, Callable
 import numpy as np
 
 from PyQt6.QtCore import QObject, QTimer
@@ -27,7 +27,7 @@ from PyQt6.QtCore import QObject, QTimer
 logger = logging.getLogger(__name__)
 
 
-def call_hooks(hooks_list: List[Callable], value: str) -> Optional[str]:
+def call_hooks(hooks_list: list[Callable], value: str) -> Optional[str]:
     """Call a list of functions.
 
     If any of the functions returns None, the final value will be
@@ -62,7 +62,7 @@ def call_hooks(hooks_list: List[Callable], value: str) -> Optional[str]:
     return value
 
 
-def list_hook_names(hooks_list: List[Callable]) -> List[str]:
+def list_hook_names(hooks_list: list[Callable]) -> list[str]:
     """List the function names of all hooks in a given list of hooks."""
     return [hook.__name__ for hook in hooks_list]
 
@@ -78,7 +78,7 @@ def add_offset(offset):
     return converter
 
 
-def create_converter(lookuptable: Dict) -> Callable:
+def create_converter(lookuptable: dict) -> Callable:
     """Replaces the parameter value with one stored in a dictionary.
 
     The dictionary consists of "old value":"new value" pairs.
@@ -173,7 +173,7 @@ def uppercase(value):
     return value.upper()
 
 
-def splitter(idx_lst: List, delimiter: str = ","):
+def splitter(idx_lst: list, delimiter: str = ","):
     """Split a string into parts and only return n of those parts.
 
     idx_lst : List
@@ -190,7 +190,7 @@ def splitter(idx_lst: List, delimiter: str = ","):
 
 
 # Validators
-def expected_input_validator(types: List, default_val=None):
+def expected_input_validator(types: list, default_val=None):
     """Ensures `value` is in a specified list, returns a default if this is not the case."""
 
     def validator(value):

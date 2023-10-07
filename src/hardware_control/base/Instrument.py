@@ -3,7 +3,8 @@ import json
 import logging
 import socket
 import time
-from typing import Optional, Any, Callable, List, Dict, Union, Iterable
+from typing import Optional, Any, Callable, Union
+from collections.abc import Iterable
 
 import pyvisa
 from pyvisa.constants import StopBits
@@ -196,8 +197,8 @@ class Instrument:
         parameter: str,
         read_command: Union[Optional[str], Optional[Callable]] = None,
         set_command: Union[Optional[str], Optional[Callable]] = None,
-        pre_hooks: Optional[List] = None,
-        post_hooks: Optional[List] = None,
+        pre_hooks: Optional[list] = None,
+        post_hooks: Optional[list] = None,
         dummy_return: Optional[Any] = None,
     ) -> None:
         """Add a new parameter to the instrument.
@@ -306,7 +307,7 @@ class Instrument:
         else:
             self.post_hooks[parameter] = [function]
 
-    def add_lookup(self, parameter: str, lookuptable: Dict) -> None:
+    def add_lookup(self, parameter: str, lookuptable: dict) -> None:
         """Add a pre- and a post-hook to convert values according to a lookup table.
 
         The lookup table will be used in the pre-hook, and an inverse of the
@@ -317,7 +318,7 @@ class Instrument:
         inverse_lookuptable = {b: a for a, b in lookuptable.items()}
         self.add_post_hook(parameter, create_converter(inverse_lookuptable))
 
-    def list_parameters(self) -> List[str]:
+    def list_parameters(self) -> list[str]:
         """List all instrument commands, parameter read_commands, and parameter set_commands.
 
         This is mostly used so that the main app can know what commands are available.

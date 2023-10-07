@@ -31,7 +31,6 @@ hc.setup_logging_docopt(logger, commands)
 
 class TemperatureMonitor(hc.HCMainWindow):
     def __init__(self, dummy):
-
         super().__init__(dummy=dummy)
 
         # set title of window

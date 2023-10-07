@@ -5,7 +5,7 @@
 
 import logging
 import time
-from typing import Callable, Optional, Dict
+from typing import Callable, Optional
 from datetime import datetime
 
 import warnings
@@ -246,8 +246,8 @@ class ScanWidget(QGroupBox):
         self,
         app,
         name: str,
-        actions: Dict,
-        scan_parameters: Optional[Dict] = None,
+        actions: dict,
+        scan_parameters: Optional[dict] = None,
         GP_option: bool = False,
         get_measured_values_fxn: Callable = None,
         scan_cycle_fxn: Optional[Callable] = None,

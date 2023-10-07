@@ -6,7 +6,6 @@ import logging
 
 from PyQt6.QtWidgets import QGridLayout, QGroupBox, QPushButton
 from PyQt6.QtCore import QTimer
-from typing import List
 
 from ..widgets.hc_widgets import HCLineEdit, HCComboBox, HCOnOffButton
 

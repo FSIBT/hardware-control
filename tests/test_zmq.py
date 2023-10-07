@@ -165,7 +165,6 @@ class TestHelper:
         assert adapter.message == "TEST_C"
 
     def test_add_ZMQ_message_to_queue(self):
-
         adapter = Adapter()
 
         # add some low priority items

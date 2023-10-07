@@ -2,7 +2,7 @@
     .. image:: /images/controls/TempMonitor.png
 """
 import logging
-from typing import List, Optional
+from typing import Optional
 
 from PyQt6.QtWidgets import QGroupBox
 
@@ -33,8 +33,8 @@ class TempMonitor_Adam(QGroupBox):
         self,
         app,
         instrument: str,
-        channel_list: List[int],
-        label_list: Optional[List[str]] = None,
+        channel_list: list[int],
+        label_list: Optional[list[str]] = None,
     ):
         super().__init__(instrument)
         self.app = app

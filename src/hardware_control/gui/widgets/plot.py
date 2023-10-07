@@ -2,7 +2,7 @@
     .. image:: /images/widgets/plot.png
 """
 import logging
-from typing import Optional, List
+from typing import Optional
 
 from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import (
@@ -224,7 +224,7 @@ class PlotTool(PlotBase):
         self,
         app,
         name: str = "Plot Tool",
-        skip_datasets: Optional[List[str]] = None,
+        skip_datasets: Optional[list[str]] = None,
         **kwargs,
     ) -> None:
         super().__init__(app, name=name, **kwargs)

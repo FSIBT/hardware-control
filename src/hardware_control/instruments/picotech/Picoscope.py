@@ -12,7 +12,6 @@ from functools import partial
 import json
 import logging
 import numpy as np
-from typing import List
 
 from ...base import Instrument
 
@@ -81,7 +80,7 @@ class Picoscope(Instrument):
         self,
         instrument_name: str,
         pico_series: str,
-        channels: List,
+        channels: list,
         timeout_ms: int = 20_000,
     ):
         super().__init__(instrument_name=instrument_name)

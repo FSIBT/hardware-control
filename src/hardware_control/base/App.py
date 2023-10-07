@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 import threading
 import time
-from typing import Union, Optional, Callable, Any, List
+from typing import Union, Optional, Callable, Any
 from datetime import datetime
 
 from PyQt6.QtWidgets import QApplication
@@ -617,11 +617,11 @@ class App(QApplication):
         self.additional_save_formats[format_name] = save_fxn
 
     @ensure_instrument_exists
-    def list_instrument_parameters(self, instrument) -> List[str]:
+    def list_instrument_parameters(self, instrument) -> list[str]:
         """Compile a list of all the parameters for a specified instrument."""
         return [parameter for parameter in self._data[instrument]]
 
-    def list_instruments(self) -> List[str]:
+    def list_instruments(self) -> list[str]:
         """Compile a list of all the instruments in the app."""
         if not self._data:
             return []

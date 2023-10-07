@@ -5,7 +5,7 @@ import logging
 from pathlib import Path
 import pickle
 import time
-from typing import Dict, Optional, List
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -353,7 +353,7 @@ class Dataset(QObject):
             value = self.app.get_instrument_parameter(instrument, parameter)
             self.data[f"{instrument}:{parameter}"].append(value)
 
-    def get_columns(self, columns: list) -> Dict:
+    def get_columns(self, columns: list) -> dict:
         """Return a subset of columns.
 
         Parameters
@@ -379,7 +379,7 @@ class Dataset(QObject):
 
     def to_pandas(
         self,
-        columns: Optional[List] = None,
+        columns: Optional[list] = None,
         cleanup: bool = True,
     ) -> pd.DataFrame:
         """Return a subset of columns as a pandas dataframe and optionally clean it up.

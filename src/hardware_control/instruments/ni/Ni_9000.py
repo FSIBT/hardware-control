@@ -16,7 +16,7 @@ with warnings.catch_warnings():
     import nidaqmx
     from nidaqmx.constants import TerminalConfiguration
 
-from typing import Optional, List, Dict
+from typing import Optional
 
 from ...base import Instrument
 
@@ -63,9 +63,9 @@ class Ni_9000(Instrument):
         self,
         instrument_name: str = "NI_9000",
         connection_addr: str = "",
-        modules: Optional[List] = None,
-        analog_channels: Optional[Dict] = None,
-        digital_channels: Optional[Dict] = None,
+        modules: Optional[list] = None,
+        analog_channels: Optional[dict] = None,
+        digital_channels: Optional[dict] = None,
     ):
         # A default port is required for this instrument
         super().__init__(
