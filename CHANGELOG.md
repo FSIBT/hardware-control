@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Fixed
-- Keysight 3600 power supply UI: remove on/off buttons for E3631A mode (only global on/off   available)
+- automatic update in App.py of instrument parameters was not working correctly
+- Keysight 3600 power supply UI: remove on/off buttons for E3631A mode (only global on/off available)
+- Adam6015: detect offline mode in case command times out
+- plotbase: define variables in init
 
 ### Added
 - Keysight 3600 power supply: add readout of persona
