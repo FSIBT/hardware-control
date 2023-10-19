@@ -5,6 +5,7 @@
 """
 
 import logging
+import socket
 
 from .Adam_base import AdamBase
 
@@ -60,6 +61,9 @@ class Adam_6015(AdamBase):
 
     def query(self, cmd: str):
         """Unique 'query' function for querying an Adam 6015."""
-        self.device.sendall(b"#01\r")
-        value = self.device.recv(self.buffer_length)
-        return value
+        try:
+            self.device.sendall(b"#01\r")
+            value = self.device.recv(self.buffer_length)
+            return value
+        except socket.timeout:
+            self._online = False
