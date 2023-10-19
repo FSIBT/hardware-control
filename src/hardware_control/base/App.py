@@ -325,7 +325,7 @@ class App(QApplication):
                 continue
             online = self.get_instrument_parameter(instrument, "ONLINE")
             if online is None or online == "False":
-                return
+                continue
             if callable(parameter_or_function):
                 parameter_or_function()
             else:
