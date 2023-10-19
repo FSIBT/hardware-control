@@ -71,6 +71,11 @@ class PlotBase(QWidget):
         self.used_colors = []
         self.param_colors = {}
 
+        # used in self.update()
+        self.ax_1_labels = []
+        self.ax_2_labels = []
+        self.plot_obj_lst = []
+
         # Set up plotting
         self.fig = plt.figure(
             figsize=(width / self.dpi, height / self.dpi), dpi=self.dpi
