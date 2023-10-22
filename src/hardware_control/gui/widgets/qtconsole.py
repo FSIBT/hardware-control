@@ -37,6 +37,9 @@ class Qtconsole(RichJupyterWidget):
         To execute a command on an instrument:
         app.call_instrument_command(<inst>, <command>)
 
+        To update an instrument parameter:
+        app.update_instrument_parameter(<inst>, <param>)
+
         Note: some commands fail with a logging.error message and will
         just return, which can result in unexpected behavior.
         """
