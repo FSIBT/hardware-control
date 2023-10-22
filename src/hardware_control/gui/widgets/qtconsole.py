@@ -6,6 +6,8 @@ import numpy as np
 from qtconsole.rich_jupyter_widget import RichJupyterWidget
 from qtconsole.inprocess import QtInProcessKernelManager
 
+from ...base.App import App
+
 
 class Qtconsole(RichJupyterWidget):
     """A python interface that allows for interaction with the main app."""
@@ -23,7 +25,10 @@ class Qtconsole(RichJupyterWidget):
 
         app: main app widget
         np:  numpy
+        """
 
+        if isinstance(app, App):
+            self.kernel.shell.banner1 += """
         To see a list of all instruments and parameters use_prefix
         app.list_instruments()
         app.list_instrument_parameters(<instrument name>)
@@ -42,7 +47,7 @@ class Qtconsole(RichJupyterWidget):
 
         Note: some commands fail with a logging.error message and will
         just return, which can result in unexpected behavior.
-        """
+            """
         self.kernel.gui = "qt"
         self.kernel.shell.push({"np": np, "app": app})
         self.kernel_client = self.kernel_manager.client()
