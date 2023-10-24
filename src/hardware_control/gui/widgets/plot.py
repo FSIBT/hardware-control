@@ -51,7 +51,8 @@ class PlotBase(QWidget):
 
         # Plotting parameters
         self.normalize = False
-        self.autoscale = True
+        self.autoscale_X = True
+        self.autoscale_Y = True
         self.fmt = "o-"
         self.plot_set = None
         self.unused_colors = [
@@ -101,13 +102,21 @@ class PlotBase(QWidget):
         for ax in self.ax_lst:
             ax.clear()
 
-    def toggle_autoscale(self):
+    def toggle_autoscale_X(self):
         """Toggle the autoscale function.
 
-        The autoscale function will automatically adjust the axes to fit the
+        The autoscale function will automatically adjust the x axes to fit the
         data. This function toggles the autoscale function on and off.
         """
-        self.autoscale = not self.autoscale
+        self.autoscale_X = not self.autoscale_X
+
+    def toggle_autoscale_Y(self):
+        """Toggle the autoscale function.
+
+        The autoscale function will automatically adjust the y axes to fit the
+        data. This function toggles the autoscale function on and off.
+        """
+        self.autoscale_Y = not self.autoscale_Y
 
     def toggle_normalize(self):
         """Toggle the normalize function.
@@ -140,9 +149,12 @@ class PlotBase(QWidget):
 
         dataset = self.app.data_sets[self.plot_set]
 
-        if not self.autoscale:
+        if not self.autoscale_X:
             # remember window position
             xleft, xright = self.axes.get_xlim()
+
+        if not self.autoscale_Y:
+            # remember window position
             ybottom, ytop = self.axes.get_ylim()
             ybottom2, ytop2 = self.axes_2.get_ylim()
 
@@ -205,9 +217,11 @@ class PlotBase(QWidget):
             )
             self.plot_obj_lst.append(plot_obj[0])
 
-        if not self.autoscale:
+        if not self.autoscale_X:
             # reset to old position
             self.axes.set_xlim([xleft, xright])
+
+        if not self.autoscale_Y:
             self.axes.set_ylim([ybottom, ytop])
             self.axes_2.set_ylim([ybottom2, ytop2])
 
@@ -252,10 +266,14 @@ class PlotTool(PlotBase):
         self.normalizebutton = QPushButton("normalize")
         self.normalizebutton.clicked.connect(self.toggle_normalize)
         self.normalizebutton.setCheckable(True)
-        self.autoscalebutton = QPushButton("autoscale")
-        self.autoscalebutton.clicked.connect(self.toggle_autoscale)
-        self.autoscalebutton.setCheckable(True)
-        self.autoscalebutton.setChecked(True)
+        self.autoscaleXbutton = QPushButton("autoscale X")
+        self.autoscaleXbutton.clicked.connect(self.toggle_autoscale_X)
+        self.autoscaleXbutton.setCheckable(True)
+        self.autoscaleXbutton.setChecked(True)
+        self.autoscaleYbutton = QPushButton("autoscale Y")
+        self.autoscaleYbutton.clicked.connect(self.toggle_autoscale_Y)
+        self.autoscaleYbutton.setCheckable(True)
+        self.autoscaleYbutton.setChecked(True)
         self.select_set_label = QLabel("Dataset:")
         self.select_set_drop = QComboBox()
         self.select_set_drop.addItems(
@@ -265,7 +283,8 @@ class PlotTool(PlotBase):
 
         self.controls = QHBoxLayout()
         self.controls.addWidget(self.normalizebutton)
-        self.controls.addWidget(self.autoscalebutton)
+        self.controls.addWidget(self.autoscaleXbutton)
+        self.controls.addWidget(self.autoscaleYbutton)
         self.controls.addWidget(self.select_set_label)
         self.controls.addWidget(self.select_set_drop)
         self.controls.addStretch(1)
