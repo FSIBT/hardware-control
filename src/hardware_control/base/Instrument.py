@@ -65,7 +65,7 @@ class Instrument:
     When creating an instrument one can pick the pyvisa driver to be
     either the pure python pyvisa one (default or `pyvisa_backend=
     "@py"` or use the National Instrument one by setting
-    `pyvisa_backend = "".`
+    `pyvisa_backend = ""`.
 
     Attributes
     ----------
