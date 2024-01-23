@@ -1,5 +1,6 @@
 from functools import wraps
 import json
+import msgpack
 import logging
 from pathlib import Path
 import threading
@@ -641,10 +642,10 @@ class App(QApplication):
                 self.data_sets[key].autosave()
 
     def save_settings(self, filename: Union[str, Path]) -> None:
-        """Save all settings as JSON.
+        """Save all settings as MessagePack.
 
         Parses out all set_value entries from app._data. The
-        dictionary is then saved to a JSON file.
+        dictionary is then saved to a MessagePack file.
 
         Parameters
         ----------
@@ -660,9 +661,10 @@ class App(QApplication):
                     app_settings[instrument][parameter] = value
 
         try:
-            with open(filename, "w") as file:
-                json.dump(app_settings, file)
-                logger.info(f"Saved all settigns to file '{filename}'")
+            with open(filename, "wb") as file:
+                file.write(msgpack.packb(app_settings))
+                logger.info(f"Saved all settings to MessagePack file '{filename}'")            
+                
         except Exception:
             logger.error(
                 f"Failed to write file '{filename}'. State not saved.", exc_info=True
@@ -673,9 +675,9 @@ class App(QApplication):
         self, instrument: str, filename: Union[str, Path], skip_hooks: bool = True
     ) -> None:
         def hook_function(value):
-            """Reads a JSON file to overwrite instrument's settings.
+            """Reads a MessagePack file to overwrite instrument's settings.
 
-            The JSON file must be a dictionary where the keys are parameter names while
+            The MessagePack file must be a dictionary where the keys are parameter names while
             the values are the new settings values. Parameters in the dictionary that
             do not exist in the instrument's settings dictionary are ignored. If the
             file does not specify a parameter held by the instrument's settings dictionary
@@ -684,13 +686,13 @@ class App(QApplication):
             Parameters
             ----------
             filename
-                Name of JSON file to read settings from.
+                Name of MessagePack file to read settings from.
 
             """
             # Read file
             try:
-                with open(filename) as file:
-                    all_settings = json.load(file)
+                with open(filename, "rb") as file:
+                    all_settings = msgpack.unpackb(file.read(), raw=False)
                     logger.info(
                         f"Settings for instrument '{instrument}' read from file '{filename}'."
                     )
@@ -727,8 +729,8 @@ class App(QApplication):
         Parameters
         ----------
         filename
-            Name of JSON file to read settings from. See load_settings method
-            for details on the formatting of the JSON file.
+            Name of MessagePack file to read settings from. See load_settings method
+            for details on the formatting of the MessagePack file.
         """
         self.add_hook(
             instrument,
