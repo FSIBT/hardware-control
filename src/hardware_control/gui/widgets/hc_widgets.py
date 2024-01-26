@@ -466,7 +466,7 @@ class HCOnOffButton(HCMixin, QPushButton):
         if self.show_icon:
             self.setIcon(self.icon_unknown)
         if self.show_text:
-            self.setText("unkown")
+            self.setText("unknown")
 
     def is_true(self, value: Union[bool, str]) -> bool:
         """Handle multiple versions (of different data type and case) of the option 'True'."""
