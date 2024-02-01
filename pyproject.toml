@@ -25,6 +25,7 @@ requires-python = ">=3.9"
 dependencies = [
     "docopt",
     "matplotlib",
+    "msgpack",
     "nidaqmx >= 0.6.4",
     "numpy",
     "pandas",
