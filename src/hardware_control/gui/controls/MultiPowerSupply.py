@@ -1,6 +1,7 @@
 """
     .. image:: /images/controls/MultiPowerSupply.png
 """
+
 import logging
 from typing import Optional
 
@@ -115,16 +116,19 @@ class MultiPowerSupply(QGroupBox):
         self.channel_box = QGroupBox()
         self.channel_box_layout = QGridLayout()
         for idx, channel in enumerate(self.channels):
+            if channel_names is not None:
+                name = channel_names[idx]
+            else:
+                name = f"Channel {channel}"
             channel_widget = PowerSupplyChannel(
                 self.app,
                 self.instrument,
                 channel,
+                name,
                 self.show_VI_limits,
                 self.show_status_panel,
                 self.enable_power_buttons,
             )
-            if self.channel_names is not None:
-                channel_widget.set_label(self.channel_names[idx])
             self.channel_widgets.append(channel_widget)
             self.channel_box_layout.addWidget(
                 self.channel_widgets[-1],
@@ -166,7 +170,8 @@ class MultiPowerSupply(QGroupBox):
             self.app.set_instrument_parameter(
                 self.instrument, f"CH{channel}_ENABLE", "True"
             )
-            cw.enabled_but.set_btn_state(True)
+            if self.power_button:
+                cw.enabled_but.set_btn_state(True)
 
     def disable_all(self):
         """Disable all channels."""
@@ -174,7 +179,8 @@ class MultiPowerSupply(QGroupBox):
             self.app.set_instrument_parameter(
                 self.instrument, f"CH{channel}_ENABLE", "False"
             )
-            cw.enabled_but.set_btn_state(False)
+            if self.power_button:
+                cw.enabled_but.set_btn_state(False)
 
     def update_readout(self):
         """Query the instrument for current readout data and push it to the GUI."""
@@ -235,12 +241,6 @@ class MultiPowerSupply(QGroupBox):
             self.instrument, f"CH{channel}_V_MAX", str(maxV)
         )
 
-    def set_channel_label(self, channel: int, label: str):
-        """Set a channel label to a new custom label."""
-        for cw in self.channel_widgets:
-            if cw.channel == channel:
-                cw.set_label(label)
-
 
 class PowerSupplyChannel(QWidget):
     """A Qt-widget that implements controls for a single channel of a power supply."""
@@ -250,6 +250,7 @@ class PowerSupplyChannel(QWidget):
         app,
         instrument_name: str,
         channel: int,
+        name: str,
         show_VI_limits: bool = False,
         show_status_panel: bool = False,
         power_button: bool = False,
@@ -271,12 +272,6 @@ class PowerSupplyChannel(QWidget):
             )
         else:
             self.power_button = False
-
-        # Create a header for the channel widget
-        if self.channel <= 20:
-            self.channel_label = HCHeader(f"channel_{self.channel}.png")
-        else:
-            self.set_label(f"Channel {self.channel}")
 
         # Create readout and update parameters for the channel widget
 
@@ -300,7 +295,7 @@ class PowerSupplyChannel(QWidget):
         self.Power_out_value = QLabel("----")
         self.Power_out_value.setAlignment(QtCore.Qt.AlignmentFlag.AlignLeft)
 
-        # Potentially set limits on how hight to set voltage and current
+        # Potentially set limits on how high to set voltage and current
         if self.show_VI_limits:
             self.Voltage_max = HCLabel(
                 self.app,
@@ -337,26 +332,17 @@ class PowerSupplyChannel(QWidget):
             format_float(".3e"),
         )
 
-        self.enabled_but = HCOnOffButton(
-            self.app,
-            self.instrument,
-            f"CH{self.channel}_ENABLE",
-            label_align="right",
-            text_checked="Disable",
-            text_unchecked="Enable",
-            show_set_text=True,
-        )
-        self.enabled_but.setCheckable(False)
-
-        self.enabled_ind = HCOnOffIndicator(
-            self.app,
-            self.instrument,
-            f"CH{self.channel}_ENABLE",
-            label_align="right",
-            show_icon=True,
-            icon_checked="green_ind.svg",
-            icon_unchecked="red_ind.svg",
-        )
+        if self.power_button:
+            self.enabled_but = HCOnOffButton(
+                self.app,
+                self.instrument,
+                f"CH{self.channel}_ENABLE",
+                label=name,
+                text_pretext=name,
+                show_icon=True,
+            )
+        else:
+            self.enabled_but = QLabel(name)
 
         # Qt Layout for a readout and update parameters of the channel widget
         self.readout_grid = QGridLayout()
@@ -383,13 +369,9 @@ class PowerSupplyChannel(QWidget):
         self.readout_grid.addWidget(self.Power_out_label, 3 + added_row, 2)
         self.readout_grid.addWidget(self.Power_out_value, 3 + added_row, 3)
 
-        if self.power_button:
-            self.readout_grid.addWidget(self.enabled_but, 3 + added_row, 0)
-            self.readout_grid.addWidget(self.enabled_ind, 3 + added_row, 1)
-
         # Combine channel header and readout/update parameters in a master channel layout
         self.channel_layout = QGridLayout()
-        self.channel_layout.addWidget(self.channel_label, 0, 0, 1, 1)
+        self.channel_layout.addWidget(self.enabled_but, 0, 0, 1, 1)
         self.channel_layout.addLayout(self.readout_grid, 0, 1, 2, 5)
 
         # Potentially add a status panel to the master channel layout
@@ -423,12 +405,3 @@ class PowerSupplyChannel(QWidget):
             QtCore.Qt.AlignmentFlag.AlignHCenter | QtCore.Qt.AlignmentFlag.AlignTop
         )
         self.setLayout(self.channel_layout)
-
-    def set_label(self, label: str):
-        """Set a label header for the channel."""
-        align_left_center = (
-            QtCore.Qt.AlignmentFlag.AlignLeft | QtCore.Qt.AlignmentFlag.AlignVCenter
-        )
-        self.channel_label.setText(f"{label}")
-        self.channel_label.setFont(QFont("Arial", 20))
-        self.channel_label.setAlignment(align_left_center)
