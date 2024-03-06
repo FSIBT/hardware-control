@@ -299,7 +299,7 @@ class HCLineEdit(HCMixin, QLineEdit):
         label_align: str = "left",
         return_set_value: bool = False,
         default_txt: str = "----",
-        validator=QDoubleValidator,
+        validator="default",
         auto_update=True,
     ):
         super().__init__(
@@ -310,11 +310,15 @@ class HCLineEdit(HCMixin, QLineEdit):
             label_align=label_align,
             auto_update=auto_update,
         )
-        self.validator = validator
+
+        if validator == "default":
+            self.validator = QDoubleValidator()
+        else:
+            self.validator = validator
         self.return_set_value = return_set_value
 
         if self.validator is not None:
-            self.setValidator(validator())
+            self.setValidator(self.validator)
 
         self.setText(default_txt)
 
