@@ -8,7 +8,7 @@ Currently supports 2000, 5000, and 6000 Picoscopes.
 
 """
 
-from functools import partial
+from functools import partial, wraps
 import json
 import logging
 import numpy as np
@@ -27,15 +27,17 @@ from picoscope.ps6000 import PS6000
 def pico_error_check(func):
     """Decorator to log all errors thrown by Picoscope python package."""
 
-    def inner(*args, **kwargs):
+    @wraps(func)
+    def pico_error_wrapper(*args, **kwargs):
         try:
-            func(*args, **kwargs)
+            ret = func(*args, **kwargs)
+            return ret
         except Exception as e:
             logger.error(
                 f"Picoscope {e.__class__.__name__} while calling {func.__name__}: {e}"
             )
 
-    return inner
+    return pico_error_wrapper
 
 
 class Picoscope(Instrument):
@@ -117,17 +119,17 @@ class Picoscope(Instrument):
 
         self.add_parameter(
             "TRIGGER_LEVEL",
-            read_command=None,
+            read_command=self.create_get_trigger_func("trigger_level"),
             set_command=self.create_set_trigger_func("trigger_level"),
         )
         self.add_parameter(
             "TRIGGER_CHANNEL",
-            read_command=None,
+            read_command=self.create_get_trigger_func("channel"),
             set_command=self.create_set_trigger_func("channel"),
         )
         self.add_parameter(
             "TRIGGER_EDGE",
-            read_command=None,
+            read_command=self.create_get_trigger_func("edge"),
             set_command=self.create_set_trigger_func("edge"),
         )
 
@@ -140,22 +142,24 @@ class Picoscope(Instrument):
             }
             self.add_parameter(
                 f"CH{channel}_VOLTS_DIV",
-                read_command=None,
+                read_command=partial(self.create_get_channel_range, channel),
                 set_command=self.create_set_channel_func(channel, "volts_div"),
             )
             self.add_parameter(
                 f"CH{channel}_OFFSET",
-                read_command=None,
+                read_command=partial(self.create_get_channel_offset, channel),
                 set_command=self.create_set_channel_func(channel, "offset"),
             )
             self.add_parameter(
                 f"CH{channel}_COUPLING",
-                read_command=None,
+                read_command=partial(self.create_get_channel_coupling, channel),
                 set_command=self.create_set_channel_func(channel, "coupling"),
             )
             self.add_parameter(
                 f"CH{channel}_PROBE_ATTEN",
-                read_command=None,
+                read_command=partial(
+                    self.create_get_channel_probe_attenuation, channel
+                ),
                 set_command=self.create_set_channel_func(channel, "probe_atten"),
             )
             self.add_parameter(
@@ -189,6 +193,37 @@ class Picoscope(Instrument):
 
         return func
 
+    def create_get_trigger_func(self, param):
+        """Create a function that gets all parameters relating to triggering."""
+
+        @pico_error_check
+        def func():
+            return str(self.trigger_params[param])
+
+        return func
+
+    @pico_error_check
+    def create_get_channel_offset(self, channel):
+        """Return the voltage offset of a given channel."""
+        return str(self.ps.CHOffset[channel])
+
+    @pico_error_check
+    def create_get_channel_coupling(self, channel):
+        """Return the coupling of a given channel."""
+        coupling = int(self.ps.CHCoupling[channel])
+        lookup = {1: "DC", 0: "AC"}
+        return lookup[coupling]
+
+    @pico_error_check
+    def create_get_channel_range(self, channel):
+        """Return the voltage range of a given channel."""
+        return str(self.ps.CHRange[channel])
+
+    @pico_error_check
+    def create_get_channel_probe_attenuation(self, channel):
+        """Return the probe attenuation of a given channel."""
+        return str(self.ps.ProbeAttenuation[channel])
+
     def create_set_channel_func(self, channel, param):
         """Create a channel specific function to set a parameter."""
 
@@ -201,12 +236,6 @@ class Picoscope(Instrument):
                 "coupling": self.channel_params[channel]["coupling"],
                 "probeAttenuation": float(self.channel_params[channel]["probe_atten"]),
             }
-
-            if 5 * kwargs["probeAttenuation"] < kwargs["VRange"]:
-                logger.error(
-                    "Volts/Div must be greater than 5 times the Probe Attenuation."
-                )
-                return
 
             self.ps.setChannel(channel=channel, **kwargs)
 
