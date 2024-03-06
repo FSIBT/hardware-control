@@ -435,6 +435,7 @@ class HCOnOffButton(HCMixin, QPushButton):
         show_icon: bool = False,
         text_checked: str = "On",
         text_unchecked: str = "Off",
+        text_pretext: str = "",
         icon_checked: str = "button-power-on.svg",
         icon_unchecked: str = "button-power-off.svg",
         show_set_text: bool = False,
@@ -460,8 +461,9 @@ class HCOnOffButton(HCMixin, QPushButton):
             self.icon_unknown = load_icon("button-power-unknown.svg")
 
         if self.show_text:
-            self.text_checked = text_checked
-            self.text_unchecked = text_unchecked
+            self.text_checked = f"{text_pretext} {text_checked}"
+            self.text_unchecked = f"{text_pretext} {text_unchecked}"
+            self.text_unknown = f"{text_pretext} Unknown"
 
         self.clicked.connect(self.value_change)
         self.setCheckable(False)
@@ -470,7 +472,7 @@ class HCOnOffButton(HCMixin, QPushButton):
         if self.show_icon:
             self.setIcon(self.icon_unknown)
         if self.show_text:
-            self.setText("unknown")
+            self.setText(self.text_unknown)
 
     def is_true(self, value: Union[bool, str]) -> bool:
         """Handle multiple versions (of different data type and case) of the option 'True'."""
