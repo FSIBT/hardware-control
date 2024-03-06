@@ -2,6 +2,7 @@
     .. image:: /images/controls/MicrowaveController.png
       :height: 150
 """
+
 import logging
 
 from PyQt6.QtWidgets import QGroupBox
@@ -95,12 +96,12 @@ class MicrowaveController(QGroupBox):
             self.app,
             self.instrument,
             parameter="OUTPUT_ON_OFF",
-            label="MW on/off",
-            label_align="right",
+            label="MW",
             show_icon=True,
+            text_pretext="MW",
         )
 
         self.layout = HCGridLayout(
-            [self.online_ind, self.frequency, self.power, self.on_off]
+            [self.on_off, self.power, self.frequency, self.online_ind]
         )
         self.setLayout(self.layout)
