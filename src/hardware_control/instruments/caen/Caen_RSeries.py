@@ -126,6 +126,12 @@ class Caen_RSeries(Instrument):
                 set_command=self._set_I_max(channel),
                 dummy_return="25.0",
             )
+            self.add_parameter(
+                f"CH{channel}_RAMP_UP",
+                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:RUP",
+                set_command=f"$BD:00,CMD:SET,CH:{channel},PAR:RUP,VAL:{{}}",
+                dummy_return="13.0",
+            )
 
             self.add_parameter(
                 f"CH{channel}_V_OUT",
