@@ -4,6 +4,7 @@
 """
 
 import logging
+from typing import Optional
 
 from PyQt6.QtWidgets import QGroupBox
 from PyQt6.QtGui import QIntValidator
@@ -25,6 +26,10 @@ class MicrowaveController(QGroupBox):
 
     Implements setting the frequency, the power level and on/off.
 
+    One can customize the power levels that are available. This can be useful,
+    if the TPI is used together with an amplifier to generate higher output
+    power and one wants these to be shown.
+
     See Also
     --------
     hardware_control.instruments.trinity_power.TDI.TDI
@@ -35,6 +40,7 @@ class MicrowaveController(QGroupBox):
         app,
         instrument_name: str,
         name: str = "Microwave Controller",
+        power_levels: Optional[dict] = None,
     ):
         super().__init__(name)
         self.app = app
@@ -58,37 +64,42 @@ class MicrowaveController(QGroupBox):
             validator=freq_val,
         )
 
+        if power_levels is None:
+            power_levels = {
+                "9 dBm": "9",
+                "8 dBm": "8",
+                "7 dBm": "7",
+                "6 dBm": "6",
+                "5 dBm": "5",
+                "4 dBm": "4",
+                "3 dBm": "3",
+                "2 dBm": "2",
+                "1 dBm": "1",
+                "0 dBm": "0",
+                "-1 dBm": "-1",
+                "-2 dBm": "-2",
+                "-3 dBm": "-3",
+                "-4 dBm": "-4",
+                "-5 dBm": "-5",
+                "-6 dBm": "-6",
+                "-7 dBm": "-7",
+                "-8 dBm": "-8",
+                "-9 dBm": "-9",
+            }
         self.power = HCComboBox(
             self.app,
             self.instrument,
             parameter="OUTPUT_LEVEL",
             label="Power",
-            items=[
-                "210 W (8 dBm)",
-                "205 W (7 dBm)",
-                "200 W (6 dBm)",
-                "160 W (5 dBm)",
-                "130 W (4 dBm)",
-                "100 W (3 dBm)",
-                "80 W (2 dBm)",
-                "60 W (1 dBm)",
-                "35 W (0 dBm)",
-                "20 W (-1 dBm)",
-                "8 W (-2 dBm)",
-            ],
-            lookuptable={
-                "210 W (8 dBm)": "8",
-                "205 W (7 dBm)": "7",
-                "200 W (6 dBm)": "6",
-                "160 W (5 dBm)": "5",
-                "130 W (4 dBm)": "4",
-                "100 W (3 dBm)": "3",
-                "80 W (2 dBm)": "2",
-                "60 W (1 dBm)": "1",
-                "35 W (0 dBm)": "0",
-                "20 W (-1 dBm)": "-1",
-                "8 W (-2 dBm)": "-2",
-            },
+            items=list(power_levels.keys()),
+            lookuptable=power_levels,
+            label_align="right",
+        )
+        self.power_read = HCLabel(
+            self.app,
+            self.instrument,
+            parameter="OUTPUT_LEVEL",
+            label="Power",
             label_align="right",
         )
 
@@ -102,6 +113,6 @@ class MicrowaveController(QGroupBox):
         )
 
         self.layout = HCGridLayout(
-            [self.on_off, self.power, self.frequency, self.online_ind]
+            [self.on_off, self.power, self.power_read, self.frequency, self.online_ind]
         )
         self.setLayout(self.layout)

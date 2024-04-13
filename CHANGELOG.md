@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adam6015: detect offline mode in case command times out
 - plotbase: define variables in init
 - Picoscope: setting larger voltage ranges
+- MWController: added display of actual power level
+- TPI: by default show -9 to +9 dBm, option to override this
+- TPI: fix use in dummy mode
 
 ### Added
 - Keysight 3600 power supply: add readout of persona

@@ -125,7 +125,7 @@ class TPI(Instrument):
         """Overwrite try_connect to always call config when getting online."""
 
         ret = super().try_connect()
-        if self._online:
+        if self._online and not self._dummy:
             self.config()
             self.command("USER_CONTROL")
 
