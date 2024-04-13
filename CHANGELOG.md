@@ -27,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - updated pre-commit versions and run on all files
 - updated pipelines and readthedocs python versions
 - MWController: changed order of widgets
-- MultiPowerSupply: better on/off buttons
+- MultiPowerSupply: better on/off buttons, better status icons
 
 ## [3.0.1] 2023-02-18
 

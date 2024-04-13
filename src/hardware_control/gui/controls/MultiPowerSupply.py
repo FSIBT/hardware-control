@@ -9,6 +9,7 @@ from PyQt6 import QtCore
 from PyQt6.QtCore import QTimer
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
+    QHBoxLayout,
     QPushButton,
     QLabel,
     QWidget,
@@ -34,19 +35,19 @@ LABEL_MIN_WIDTH = 15
 DISP_DECIMAL_PLACES = 1
 
 status_labels = {
-    "RAMPING_UP": "Ramping Up",
-    "RAMPING_DOWN": "Ramping Down",
-    "OVER_CURRENT": "Over Current",
-    "OVER_VOLTAGE": "Over Voltage",
-    "UNDER_VOLTAGE": "Under Voltage",
-    "MAX_VOLTAGE": "Max Voltage",
-    "TRIPPED": "Tripped",
-    "OVER_POWER": "Over Power",
-    "OVER_TEMPERATURE": "Over Temperature",
-    "DISABLED": "Disabled",
-    "KILL": "Kill",
-    "INTERLOCKED": "Interlocked",
-    "CALIBRATION_ERROR": "Calibration Error",
+    "RAMPING_UP": ["Ramping Up", "ramping-up.svg"],
+    "RAMPING_DOWN": ["Ramping Down", "ramping-down.svg"],
+    "OVER_CURRENT": ["Over Current", "over-current.svg"],
+    "OVER_VOLTAGE": ["Over Voltage", "over-voltage.svg"],
+    "UNDER_VOLTAGE": ["Under Voltage", "under-voltage.svg"],
+    "MAX_VOLTAGE": ["Max Voltage", "max-voltage.svg"],
+    "TRIPPED": ["Tripped", "tripped.svg"],
+    "OVER_POWER": ["Over Power", "over-power.svg"],
+    "OVER_TEMPERATURE": ["Over Temperature", "over-temperature.svg"],
+    "DISABLED": ["Disabled", "disabled.svg"],
+    "KILL": ["Kill", "kill.svg"],
+    "INTERLOCKED": ["Interlocked", "interlocked.svg"],
+    "CALIBRATION_ERROR": ["Calibration Error", "calibration-error.svg"],
 }
 
 
@@ -377,10 +378,8 @@ class PowerSupplyChannel(QWidget):
         # Potentially add a status panel to the master channel layout
         if show_status_panel:
             self.status_panel = QGroupBox()
-            self.status_grid = QGridLayout()
-            row_num = 0
-            col_num = 0
-            for parameter, status_label in status_labels.items():
+            self.status_box = QHBoxLayout()
+            for parameter, [status_label, status_icon] in status_labels.items():
                 indicator = HCOnOffIndicator(
                     self.app,
                     self.instrument,
@@ -388,16 +387,13 @@ class PowerSupplyChannel(QWidget):
                     status_label,
                     label_align="right",
                     show_icon=True,
-                    icon_checked="green_ind.svg",
-                    icon_unchecked="red_ind.svg",
+                    icon_checked=status_icon,
+                    icon_unchecked="empty.svg",
                     tooltip=status_label,
                 )
                 indicator.setToolTip(status_label)
-                self.status_grid.addWidget(indicator, row_num, col_num % 4)
-                col_num += 1
-                if col_num != 0 and col_num % 4 == 0:
-                    row_num += 1
-            self.status_panel.setLayout(self.status_grid)
+                self.status_box.addWidget(indicator)
+            self.status_panel.setLayout(self.status_box)
 
             self.channel_layout.addWidget(self.status_panel, 1, 0, 1, 1)
 

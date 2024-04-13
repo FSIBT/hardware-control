@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="1mm"
+   height="1mm"
+   viewBox="0 0 1 1"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.3 (0e150ed, 2023-07-21)"
+   sodipodi:docname="empty.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="1.5040264"
+     inkscape:cx="143.28206"
+     inkscape:cy="171.2071"
+     inkscape:window-width="1440"
+     inkscape:window-height="847"
+     inkscape:window-x="0"
+     inkscape:window-y="25"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="layer1"
+     inkscape:showpageshadow="0"
+     inkscape:deskcolor="#d1d1d1" />
+  <defs
+     id="defs2">
+    <rect
+       x="165.23489"
+       y="272.9968"
+       width="413.08725"
+       height="337.65393"
+       id="rect1975" />
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-56.678398,-76.3992)">
+    <text
+       xml:space="preserve"
+       transform="scale(0.26458333)"
+       id="text1973"
+       style="font-style:normal;font-weight:normal;font-size:40px;line-height:1.25;font-family:sans-serif;white-space:pre;shape-inside:url(#rect1975);fill:#000000;fill-opacity:1;stroke:none" />
+  </g>
+</svg>
