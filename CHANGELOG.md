@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ## [Unreleased]
+
+## [3.1.0] 2024-04-13
+
 ### Fixed
 - automatic update in App.py of instrument parameters was not working correctly
 - Keysight 3600 power supply UI: remove on/off buttons for E3631A mode (only global on/off available)
