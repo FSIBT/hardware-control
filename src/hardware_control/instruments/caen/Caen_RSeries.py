@@ -9,7 +9,8 @@
 
 import logging
 from typing import Union
-from numpy import Infinity
+import numpy as np
+
 
 from ...base import Instrument
 from ...base.hooks import (
@@ -77,8 +78,8 @@ class Caen_RSeries(Instrument):
         )
 
         # Default instrument has 16 channels (0-15)
-        self.max_V = [Infinity] * num_channels
-        self.max_I = [Infinity] * num_channels
+        self.max_V = [np.Infinity] * num_channels
+        self.max_I = [np.Infinity] * num_channels
 
         self.status = {
             "ON_OFF": 1,
@@ -193,8 +194,12 @@ class Caen_RSeries(Instrument):
                     f"CH{channel}_{bit_name}",
                     read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:STAT",
                     post_hooks=[_create_parse_status(bit)],
-                    dummy_return="True",
+                    dummy_return=self.dummy_status_return,
                 )
+
+    def dummy_status_return(self):
+        value = bool(np.random.randint(10))
+        return "True" if value != 1 else "False"
 
     def _read_V_max(self, channel):
         def get_value():
