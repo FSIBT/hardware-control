@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Keysight 3600 power supply: add readout of persona
 - Picoscope: readout of scope parameters
+- Add ZMQ channel to allow other programs to request instrument parameters
 
 ### CHANGED
 - changed to src/ layout

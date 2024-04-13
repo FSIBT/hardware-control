@@ -100,8 +100,12 @@ class App(QApplication):
             self.ipaddress = ipaddress
         self.zmq_publisher_address = f"tcp://{self.ipaddress}:1234"
         self.zmq_context = zmq.Context()
+        # to talk to all the instruments
         self.zmq_publisher = self.zmq_context.socket(zmq.PUB)
         self.zmq_publisher.bind(self.zmq_publisher_address)
+        # to handle queries from other programs
+        self.zmq_info = self.zmq_context.socket(zmq.REP)
+        self.zmq_info.bind(f"tcp://{self.ipaddress}:1235")
 
         self.dummy = dummy
         self.additional_save_formats = {}
@@ -123,6 +127,7 @@ class App(QApplication):
         # a timer to check ZMQ messages
         self.zmq_timer = QTimer(self)
         self.zmq_timer.timeout.connect(self.parse_message_from_instruments)
+        self.zmq_timer.timeout.connect(self.handle_request)
         self.zmq_timer.start(100)
 
         # a timer to requests updates from instruments
@@ -142,6 +147,51 @@ class App(QApplication):
         # wait for all threads to end
         for t in self.threads:
             t.join()
+
+    def handle_request(self):
+        """Handle requests from other programs.
+
+        This provides an interface for other programs to get
+        values. In principle this could also enable remote control in
+        the future.
+
+        To make use of this, the other program has to setup a ZMQ REQ
+        socket. For example using:
+
+        > import zmq
+        > c = zmq.Context()
+        > s = c.socket(zmq.REQ)
+        >
+        > s.connect("tcp://127.0.0.1:1235")
+        > s.send_string('get_instrument_parameter(ADAM_6024,CH0_READ_VOLTAGE)')
+        >
+        > s.recv_string()
+        > '1.0'
+
+        We implement the get_instrument_parameter function and perhaps should
+        also support similar other function in the future.
+
+        The value will be returned directly as a string.
+
+        """
+        while True:
+            try:
+                msg = self.zmq_info.recv_string(flags=zmq.NOBLOCK)
+                logger.debug(f"App got request '{msg}'")
+
+                if msg.startswith("get_instrument_parameter"):
+                    msg = msg.replace("get_instrument_parameter", "")
+                    msg = msg[1:-1]  # remove ()
+
+                    name, parameter = msg.split(",")
+                    name = name.strip().replace("'", "")
+                    parameter = parameter.strip().replace("'", "")
+
+                    value = self.get_instrument_parameter(name, parameter)
+
+                self.zmq_info.send_string(str(value))
+            except zmq.ZMQError:
+                break
 
     @ensure_instrument_exists
     def register_parameters_and_commands(
