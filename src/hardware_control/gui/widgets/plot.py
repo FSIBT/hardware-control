@@ -1,6 +1,7 @@
 """
     .. image:: /images/widgets/plot.png
 """
+
 import logging
 from typing import Optional
 
@@ -231,6 +232,7 @@ class PlotBase(QWidget):
             self.ax_2_labels = ", ".join(self.ax_2_labels)
             self.axes.set_ylabel(self.ax_1_labels, labelpad=13)
             self.axes_2.set_ylabel(self.ax_2_labels, rotation=270, labelpad=19)
+            self.axes_2.yaxis.set_label_position("right")
             self.axes_2.yaxis.tick_right()
         else:
             self.axes_2.get_yaxis().set_ticks([])
