@@ -3,23 +3,14 @@
   :height: 200
 
 """
-from dataclasses import dataclass
 import logging
 from typing import Union
 import numpy as np
 
 
 from ...base import Instrument
-from ...base.hooks import(
-    call_hooks,
-)
-
 
 logger = logging.getLogger(__name__)
-
-@dataclass(frozen=True)
-class Command:
-    command: str
 
 def _parse_instrument_response(value: str) -> Union[str, None]:
     value=value[1:-1].split(',')
@@ -94,16 +85,16 @@ class Spellman_SL(Instrument):
         }
 
         READ_ONLY_COMMANDS = {
-            "READ_VOLTAGE": Command(f"{chr(2)}14,{chr(3)}"),
-            "READ_CURRENT": Command(f"{chr(2)}15,{chr(3)}"),
+            "READ_VOLTAGE": f"{chr(2)}14,{chr(3)}",
+            "READ_CURRENT": f"{chr(2)}15,{chr(3)}",
         }
 
         for k, v in READ_ONLY_COMMANDS.items():
             self.add_parameter(k, v)
 
         COMMANDS = {
-            "CH0_HV_ON":  Command(f"{chr(2)}99,{chr(3)}"),
-            "CH0_HV_OFF":  Command(f"{chr(2)}98,{chr(3)}"),
+            "CH0_HV_ON":  f"{chr(2)}99,{chr(3)}",
+            "CH0_HV_OFF": f"{chr(2)}98,{chr(3)}",
         }
         for k, v in COMMANDS.items():
             self.add_command(k, v)
