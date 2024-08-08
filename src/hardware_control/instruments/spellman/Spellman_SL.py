@@ -7,6 +7,7 @@
 import logging
 from typing import Union
 import numpy as np
+import math
 
 
 from ...base import Instrument
@@ -74,14 +75,14 @@ class Spellman_SL(Instrument):
         self.add_parameter(
             "CH0_V_READ",
             read_command=f"{chr(2)}14,{chr(3)}",
-            post_hooks=[scaling_converter(120 / 4095), format_int],
+            post_hooks=[scaling_converter(120 / 4095), self.roundup()],
             dummy_return="20",
         )
 
         self.add_parameter(
             "CH0_I_READ",
             read_command=f"{chr(2)}15,{chr(3)}",
-            post_hooks=[scaling_converter(2.5 / 4095)],
+            post_hooks=[scaling_converter(2.5 / 4095), self.roundup()],
             dummy_return="1",
         )
 
@@ -155,6 +156,12 @@ class Spellman_SL(Instrument):
     def dummy_status_return(self):
         value = bool(np.random.randint(10))
         return "True" if value != 1 else "False"
+
+    def roundup(self):
+        def round(value):
+            return f"{int(float(math.ceil(value)))}"
+
+        return round
 
     def read_package(self):
         """Read a string from the instrument.

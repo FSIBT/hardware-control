@@ -22,3 +22,4 @@ from .HP import HP_33401A
 from .Keithley import Keithley_2400
 from .Keithley import Keithley_2001
 from .trinity_power import TPI
+from .spellman import Spellman_SL
