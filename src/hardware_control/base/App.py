@@ -92,6 +92,7 @@ class App(QApplication):
         self._data = {}
         self.zmq_subscribers = {}
         self.birth_time = datetime.utcnow().timestamp()
+        self.instrument_names = []
 
         # publisher that announces commands for instruments
         if ipaddress is None:
@@ -243,6 +244,9 @@ class App(QApplication):
             )
             return
 
+        # keep track of instrument names to label buttons in logger tab
+        self.instrument_names.append(str(instrument.name))
+
         instrument._dummy = self.dummy
 
         zmq_instrument = ZMQAdapter(
@@ -303,6 +307,9 @@ class App(QApplication):
                 f"Instrument {name} already exists... instruments names need to be unique"
             )
             return
+
+        # keep track of instrument names to label buttons in logger tab
+        self.instrument_names.append(str(name))
 
         zmq_instrument = ZMQRemoteAdapter(
             name,

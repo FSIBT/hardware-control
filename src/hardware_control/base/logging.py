@@ -6,6 +6,7 @@ from typing import Optional
 
 def setup_logging(
     logger,
+    ui_handler,
     logoutput: Optional[Path] = None,
     loglevel: Optional[int] = None,
 ):
@@ -40,6 +41,9 @@ def setup_logging(
         print(f"Logger configured:\n\tLevel: {loglevelname}\n\tOutput: Console")
     handler.setFormatter(logging.Formatter(format_str))
     handler.setLevel(loglevel)
+    # same settings applied to ui handler
+    ui_handler.setFormatter(logging.Formatter(format_str))
+    ui_handler.setLevel(loglevel)
 
     # Clear all other handlers
     for name in logging.root.manager.loggerDict:
@@ -50,6 +54,7 @@ def setup_logging(
             lgr.setLevel(loglevel)
             lgr.handlers = []
             lgr.addHandler(handler)
+            lgr.addHandler(ui_handler)
         else:
             lgr.setLevel(logging.CRITICAL)
             lgr.handlers = []
@@ -57,9 +62,10 @@ def setup_logging(
     logger.setLevel(loglevel)
     logger.handlers = []
     logger.addHandler(handler)
+    logger.addHandler(ui_handler)
 
 
-def setup_logging_docopt(logger, commands):
+def setup_logging_docopt(logger, commands, ui_handler):
     """Set up logging by parsing the output of a docopt dictionary for certain command line options.
 
     The function recognizes '--debug', '--info', and '--console' to set the log level and the output.
@@ -76,4 +82,4 @@ def setup_logging_docopt(logger, commands):
     else:
         logoutput = Path("hardware-control.log")
 
-    setup_logging(logger, logoutput, loglevel)
+    setup_logging(logger, ui_handler, logoutput, loglevel)
