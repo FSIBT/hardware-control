@@ -24,6 +24,9 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtGui import QPixmap, QIcon, QDoubleValidator, QFont, QFontMetrics
 from PyQt6 import QtCore
+
+from rich import print
+
 from ...base.hooks import call_hooks
 
 
@@ -665,7 +668,13 @@ class HCComboBox(HCMixin, QComboBox):
 
     def widget_update(self, value) -> None:
         if self.lookuptable:
-            value = self.inverse_lookuptable[value]
+            ret = self.inverse_lookuptable.get(value)
+            if ret is None:
+                print(
+                    f"[red]Error[/] Cannot find reverse lookup for {self.instrument} and value {ret}"
+                )
+            else:
+                value = ret
         for i in self.items:
             if value.casefold() == i.casefold():
                 self.setCurrentText(i)
