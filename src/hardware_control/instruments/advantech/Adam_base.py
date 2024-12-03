@@ -41,6 +41,8 @@ class AdamBase(Instrument):
             return
 
         try:
+            if self.device is None:
+                return
             self.device.sendto(
                 (command + self._termination).encode(self._encoding), self.addr
             )
@@ -62,6 +64,8 @@ class AdamBase(Instrument):
             return
 
         try:
+            if self.device is None:
+                return
             self.device.sendto(
                 (command + self._termination).encode(self._encoding), self.addr
             )
