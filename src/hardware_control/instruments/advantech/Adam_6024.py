@@ -24,6 +24,15 @@ def _create_channel_parser(channel):
     return parse_channel
 
 
+def _create_channel_parser_digitial(channel):
+    def parse_channel_digital(value):
+        value = int(value)
+        value = (value >> channel) & 1  # get the Nth bit
+        return str(value)
+
+    return parse_channel_digital
+
+
 def _create_channel_pulse(inst, channel):
     def pulse():
         inst.command(f"CH_DO{channel}_ON")
@@ -81,7 +90,14 @@ class Adam_6024(AdamBase):
                 pre_hooks=[range_validator(0, 10), format_float("06.3f")],
             )
 
-        # turn on
+        for channel in range(self.n_digital_input_channels):
+            self.add_parameter(
+                f"CH_DI{channel}_READ",
+                read_command="$017",
+                post_hooks=[_create_channel_parser_digitial(channel)],
+                dummy_return="0",
+            )
+
         for channel in range(self.n_digital_output_channels):
             self.add_command(
                 command_name=f"CH_DO{channel}_ON",
