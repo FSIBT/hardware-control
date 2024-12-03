@@ -127,10 +127,25 @@ class Caen_RSeries(Instrument):
                 set_command=self._set_I_max(channel),
                 dummy_return="25.0",
             )
+
             self.add_parameter(
                 f"CH{channel}_RAMP_UP",
                 read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:RUP",
                 set_command=f"$BD:00,CMD:SET,CH:{channel},PAR:RUP,VAL:{{}}",
+                dummy_return="13.0",
+            )
+
+            self.add_parameter(
+                f"CH{channel}_RAMP_DOWN",
+                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:RDW",
+                set_command=f"$BD:00,CMD:SET,CH:{channel},PAR:RDW,VAL:{{}}",
+                dummy_return="13.0",
+            )
+
+            self.add_parameter(
+                f"CH{channel}_RAMP_UPDOWN",
+                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:RUP",  # not sure what the best to do here is
+                set_command=self._set_ramp_up_down(channel),
                 dummy_return="13.0",
             )
 
@@ -200,6 +215,18 @@ class Caen_RSeries(Instrument):
     def dummy_status_return(self):
         value = bool(np.random.randint(10))
         return "True" if value != 1 else "False"
+
+    def _set_ramp_up_down(self, channel):
+        """Set both up and down ramp values.
+
+        In Volts/second
+        """
+
+        def set_ramp_value(value):
+            self.set_value(f"CH{channel}_RAMP_UP", value)
+            self.set_value(f"CH{channel}_RAMP_DOWN", value)
+
+        return set_ramp_value
 
     def _read_V_max(self, channel):
         def get_value():
