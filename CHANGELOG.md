@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- plotting data sets: separate autoscaling for X and Y
+- plotting data sets: Ability to select data to be plotted within a dataset
+- New Spellman High Voltage Power Supply driver
+- Adam6024: added readout of digital channels
+- Cean RSeries: added ability to set ramp up/down speed
+
 ## [3.1.0] 2024-04-13
 
 ### Fixed
@@ -24,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Picoscope: readout of scope parameters
 - Add ZMQ channel to allow other programs to request instrument parameters
 
-### CHANGED
+### Changed
 - changed to src/ layout
 - move setup.{cfg,py} into pyproject.toml
 - require python >= 3.9 (minimum version for numpy)
@@ -35,11 +42,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.0.1] 2023-02-18
 
-### CHANGED
+### Changed
 - updated docs
 - Removed auto_update from HCPushButton since it connects to a command not a parameter
 
-### FIXED
+### Fixed
 - HCLabel: force convertion to string, so that call to .rjust works all the time
 - TPI: several fixes
 - Fix quering for a serial device
