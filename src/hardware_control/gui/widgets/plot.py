@@ -1,13 +1,15 @@
 """
-    .. image:: /images/widgets/plot.png
+.. image:: /images/widgets/plot.png
 """
 
 import logging
 from typing import Optional
 
 from PyQt6.QtCore import QTimer
+from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import (
     QWidget,
+    QMenu,
     QSizePolicy,
     QHBoxLayout,
     QPushButton,
@@ -55,6 +57,7 @@ class PlotBase(QWidget):
         self.autoscale_X = True
         self.autoscale_Y = True
         self.fmt = "o-"
+        # name of the dataset
         self.plot_set = None
         self.unused_colors = [
             "b",
@@ -72,6 +75,9 @@ class PlotBase(QWidget):
         ]
         self.used_colors = []
         self.param_colors = {}
+
+        # show data source yes/no within a dataset
+        self.data_enabled = {}
 
         # used in self.update()
         self.ax_1_labels = []
@@ -103,6 +109,15 @@ class PlotBase(QWidget):
         for ax in self.ax_lst:
             ax.clear()
 
+        if self.plot_set not in self.app.data_sets.keys():
+            logger.error(f"{self.plot_set} dataset not in app.")
+            return
+        dataset = self.app.data_sets[self.plot_set]
+        self.data_enabled = {}
+        for inst, parameter, _ in dataset.instruments:
+            key = f"{inst}:{parameter}"
+            self.data_enabled[key] = True
+
     def toggle_autoscale_X(self):
         """Toggle the autoscale function.
 
@@ -129,6 +144,18 @@ class PlotBase(QWidget):
         """
         self.normalize = not self.normalize
 
+    def toggle_data(self, key):
+        """Toggle the visibility of a data source."""
+        if not key in self.data_enabled:
+            logger.error(f"{key} not present in current dataset {self.plot_set}")
+            return
+        self.data_enabled[key] = not self.data_enabled[key]
+
+    def select_all_data(self):
+        """Select all data sources."""
+        for key in self.data_enabled.keys():
+            self.data_enabled[key] = True
+
     def update(self):
         """Update the plot with new data.
 
@@ -145,7 +172,7 @@ class PlotBase(QWidget):
 
         # Check that the dataset exists
         if self.plot_set not in self.app.data_sets:
-            logger.error(f"Unkown data set {self.plot_set} in {self.name}.")
+            logger.error(f"Unkown data set {self.plot_set} in {self.plot_set}.")
             return
 
         dataset = self.app.data_sets[self.plot_set]
@@ -167,6 +194,13 @@ class PlotBase(QWidget):
         self.plot_obj_lst = []
         for idx, instrument_tup in enumerate(dataset.instruments):
             key = f"{instrument_tup[0]}:{instrument_tup[1]}"
+
+            if key not in self.data_enabled:
+                logger.error(f"{key} not in current data set {self.plot_set}.")
+                continue
+            if not self.data_enabled[key]:
+                continue
+
             plot_ax = instrument_tup[2]
 
             df = dataset.to_pandas(columns=["time:time", key], cleanup=True)
@@ -283,12 +317,17 @@ class PlotTool(PlotBase):
         )
         self.select_set_drop.currentIndexChanged.connect(self.selector_changed)
 
+        # Add button for selecting data sources
+        self.data_button = QPushButton("Select Data")
+        self.data_button.clicked.connect(self.show_data_menu)
+
         self.controls = QHBoxLayout()
         self.controls.addWidget(self.normalizebutton)
         self.controls.addWidget(self.autoscaleXbutton)
         self.controls.addWidget(self.autoscaleYbutton)
         self.controls.addWidget(self.select_set_label)
         self.controls.addWidget(self.select_set_drop)
+        self.controls.addWidget(self.data_button)
         self.controls.addStretch(1)
 
         self.vbox = QVBoxLayout()
@@ -335,6 +374,50 @@ class PlotTool(PlotBase):
         self.axes.grid(True)
         plt.locator_params(axis="y", nbins=6)
         self.plot.draw()
+
+    def toggle_data(self, key, checked):
+        """Toggle the visibility of a data source."""
+        super().toggle_data(key)
+        self.update_data_button_color()
+        self.update()
+
+    def select_all_data(self):
+        """Select all data sources."""
+        super().select_all_data()
+        self.update_data_button_color()
+        self.update()
+
+    def show_data_menu(self):
+        """Show a menu with checkboxes to select data sources."""
+        menu = QMenu(self)
+        for key in self.data_enabled.keys():
+            dataset = self.app.data_sets[self.plot_set]
+            if key in dataset.channel_names:
+                name = dataset.channel_names[key]
+            else:
+                name = key
+
+            action = QAction(name, self)
+            action.setCheckable(True)
+            action.setChecked(self.data_enabled[key])
+            action.toggled.connect(
+                lambda checked, key=key: self.toggle_data(key, checked)
+            )
+            menu.addAction(action)
+
+        # Add a select all / deselect all button
+        select_all_action = QAction("Select All", self)
+        select_all_action.triggered.connect(self.select_all_data)
+        menu.addAction(select_all_action)
+
+        menu.exec(self.data_button.mapToGlobal(self.data_button.rect().bottomLeft()))
+
+    def update_data_button_color(self):
+        """Update the color of the data button based on the selected data sources."""
+        if all(self.data_enabled.values()):
+            self.data_button.setStyleSheet("")
+        else:
+            self.data_button.setStyleSheet("background-color: orange")
 
 
 class MiniPlotTool(PlotBase):
