@@ -36,6 +36,7 @@ dependencies = [
     "PyVISA",
     "qtconsole >= 5.3.2",
     "recommonmark",
+    "rich",
     "scipy",
     "setuptools",
     "setuptools-scm",
