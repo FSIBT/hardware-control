@@ -23,6 +23,8 @@ class TempMonitor_Adam(QGroupBox):
         The name of the temperature monitor instrument
     channels : list
         A list of channels to be shown in the control program
+    label_list : list
+        Names to be displayed next to the channels
 
     See Also
     --------
@@ -34,7 +36,8 @@ class TempMonitor_Adam(QGroupBox):
         app,
         instrument: str,
         channel_list: list[int],
-        label_list: list[str] | None = None,
+        label_list: Optional[list[str]] = None,
+        columns=2,
     ):
         super().__init__(instrument)
         self.app = app
@@ -58,8 +61,7 @@ class TempMonitor_Adam(QGroupBox):
                 label_align="right",
             )
             self.widgets.append(temperature)
-
-        self.grid = HCGridLayout(self.widgets, columns=2)
+        self.grid = HCGridLayout(self.widgets, columns=columns)
         self.setLayout(self.grid)
 
         logger.debug("Initalized TempMonitor_Adam")
