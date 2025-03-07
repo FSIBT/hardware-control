@@ -75,10 +75,10 @@ class TPI(Instrument):
 
         READ_ONLY_COMMANDS = {
             "USER_CONTROL_STATUS": Command(b"\x07\x01", 1, np.dtype(bool)),
-            "READ_MODEL_NUMBER": Command(b"\x07\x02", 16, np.dtype("a16")),
-            "READ_SERIAL_NUMBER": Command(b"\x07\x03", 16, np.dtype("a16")),
-            "READ_HARDWARE_VERSION": Command(b"\x07\x04", 16, np.dtype("a16")),
-            "READ_FIRMWARE_VERSION": Command(b"\x07\x05", 16, np.dtype("a16")),
+            "READ_MODEL_NUMBER": Command(b"\x07\x02", 16, np.dtype("S16")),
+            "READ_SERIAL_NUMBER": Command(b"\x07\x03", 16, np.dtype("S16")),
+            "READ_HARDWARE_VERSION": Command(b"\x07\x04", 16, np.dtype("S16")),
+            "READ_FIRMWARE_VERSION": Command(b"\x07\x05", 16, np.dtype("S16")),
             "READ_TPI_LINK_VERSION": Command(b"\x07\x06", 8, np.dtype("<i2")),
             "READ_SUPPLY_VOLTAGE": Command(b"\x07\x07", 24, np.dtype("<f4")),
             "READ_CURRENT_STATE": Command(b"\x07\x08", 2, np.dtype("u1")),
