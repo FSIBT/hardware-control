@@ -78,8 +78,8 @@ class Caen_RSeries(Instrument):
         )
 
         # Default instrument has 16 channels (0-15)
-        self.max_V = [np.Infinity] * num_channels
-        self.max_I = [np.Infinity] * num_channels
+        self.max_V = [np.inf] * num_channels
+        self.max_I = [np.inf] * num_channels
 
         self.status = {
             "ON_OFF": 1,
