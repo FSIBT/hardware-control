@@ -5,7 +5,7 @@ from pathlib import Path
 import threading
 import time
 from typing import Union, Optional, Callable, Any
-from datetime import datetime
+import datetime
 
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import QTimer
@@ -91,7 +91,7 @@ class App(QApplication):
         self.stop_threads_event = threading.Event()
         self._data = {}
         self.zmq_subscribers = {}
-        self.birth_time = datetime.utcnow().timestamp()
+        self.birth_time = datetime.datetime.now(datetime.UTC)
 
         # publisher that announces commands for instruments
         if ipaddress is None:
