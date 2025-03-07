@@ -21,6 +21,7 @@ from PyQt6.QtWidgets import (
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qtagg import NavigationToolbar2QT as NavigationToolbar
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 
 import numpy as np
 import pandas as pd
@@ -208,8 +209,10 @@ class PlotBase(QWidget):
                 return
 
             y_values = df[key].to_numpy()
-            x_values = pd.to_datetime(df["time:time"], unit="s").dt.tz_localize("UTC")
+            x_values = pd.to_datetime(df["time:time"], unit="s", utc=True)
             x_values = x_values.dt.tz_convert("America/Los_Angeles")
+            x_values = x_values.apply(lambda dt: dt.replace(tzinfo=None))
+            x_values = mdates.date2num(x_values)
 
             if self.normalize:
                 mymax = np.abs(y_values).max()
@@ -241,13 +244,12 @@ class PlotBase(QWidget):
                 self.used_colors.append(self.unused_colors[0])
                 self.unused_colors.remove(self.unused_colors[0])
 
-            plot_obj = ax.plot_date(
-                x_values.to_numpy(),
+            plot_obj = ax.plot(
+                x_values,
                 y_values,
                 self.fmt,
                 color=self.param_colors[label_name],
                 label=label_name,
-                tz=self.time_zone,
                 linewidth=self.linewidth,
             )
             self.plot_obj_lst.append(plot_obj[0])
@@ -270,6 +272,11 @@ class PlotBase(QWidget):
             self.axes_2.yaxis.tick_right()
         else:
             self.axes_2.get_yaxis().set_ticks([])
+
+        self.axes.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M:%S"))
+        self.axes_2.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M:%S"))
+
+        self.fig.autofmt_xdate()
 
 
 class PlotTool(PlotBase):
