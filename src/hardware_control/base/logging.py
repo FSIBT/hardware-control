@@ -1,5 +1,6 @@
 import logging
 from pathlib import Path
+import os
 import sys
 from typing import Optional
 
@@ -62,7 +63,11 @@ def setup_logging(
 def setup_logging_docopt(logger, commands):
     """Set up logging by parsing the output of a docopt dictionary for certain command line options.
 
-    The function recognizes '--debug', '--info', and '--console' to set the log level and the output.
+    The function recognizes '--debug', '--info', and '--console' to
+    set the log level and the output.
+
+    The user can also set the logfile name using an environment variable.
+
     """
     if commands["--debug"]:
         loglevel = logging.DEBUG
@@ -74,6 +79,10 @@ def setup_logging_docopt(logger, commands):
     if commands["--console"]:
         logoutput = None
     else:
-        logoutput = Path("hardware-control.log")
+        env_log_path = os.environ.get("HARDWARE_CONTROL_LOGFILE")
+        if env_log_path:
+            logoutput = Path(env_log_path)
+        else:
+            logoutput = Path("hardware-control.log")
 
     setup_logging(logger, logoutput, loglevel)

@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New Spellman High Voltage Power Supply driver
 - Adam6024: added readout of digital channels
 - Cean RSeries: added ability to set ramp up/down speed
+- Ability to change the logfile location using a environement variable
 
 ## [3.1.0] 2024-04-13
 
