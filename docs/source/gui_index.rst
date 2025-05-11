@@ -21,6 +21,7 @@ showing the connection status of all instruments.
    gui/widgets/plot
    gui/widgets/qtconsole
    gui/widgets/scan_widget
+   gui/widgets/alarm_widgets
 
 Controls provide a complete user interface for a certain type of instrument. One example of such a control is a user interface for an oscilloscope that is ready to be used in a more complex app that controls multiple instruments.
 

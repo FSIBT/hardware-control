@@ -8,12 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- plotting data sets: separate autoscaling for X and Y
-- plotting data sets: Ability to select data to be plotted within a dataset
+- Plotting data sets: separate autoscaling for X and Y
+- Plotting data sets: Ability to select data to be plotted within a dataset
 - New Spellman High Voltage Power Supply driver
 - Adam6024: added readout of digital channels
 - Cean RSeries: added ability to set ramp up/down speed
 - Ability to change the logfile location using a environement variable
+- New AlarmManager class to trigger alarms (currently only audio alarms)
 
 ## [3.1.0] 2024-04-13
 

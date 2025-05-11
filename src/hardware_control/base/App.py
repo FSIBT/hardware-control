@@ -16,6 +16,7 @@ from .Instrument import Instrument
 from .ZMQAdapter import ZMQAdapter
 from .ZMQRemoteAdapter import ZMQRemoteAdapter
 from .hooks import call_hooks
+from .alarm_manager import AlarmManager
 
 logger = logging.getLogger(__name__)
 
@@ -92,6 +93,8 @@ class App(QApplication):
         self._data = {}
         self.zmq_subscribers = {}
         self.birth_time = datetime.datetime.now(datetime.UTC)
+
+        self.alarm_manager = AlarmManager(app=self)
 
         # publisher that announces commands for instruments
         if ipaddress is None:
@@ -333,6 +336,8 @@ class App(QApplication):
         """Check for messages from the instruments.
 
         Call any defined hooks and update any widgets.
+        Also check alarms.
+
         """
         for name, sub in self.zmq_subscribers.items():
             # handle all messages in queue
@@ -364,6 +369,10 @@ class App(QApplication):
                 if value is not None:
                     # update value
                     self._data[name][parameter]["read_value"] = value
+
+                    # check alarms
+                    self.alarm_manager.process_update(name, parameter, value)
+
                     # update widgets
                     for w in self._data[name][parameter]["widgets"]:
                         w.hc_update()

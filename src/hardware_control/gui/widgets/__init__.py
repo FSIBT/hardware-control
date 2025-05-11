@@ -1,6 +1,4 @@
-"""A submodule that contains several Qt widgets.
-
-"""
+"""A submodule that contains several Qt widgets."""
 
 from .connection_status import StatusTool
 from .data_widget import DataWidget
@@ -9,6 +7,7 @@ from .plot import PlotTool, MiniPlotTool
 from .qtconsole import Qtconsole
 from .scan_widget import ScanWidget
 from .trace_plotter import TracePlotter
+from .alarm_widgets import AlarmPanel, LED_Widget
 from .hc_widgets import (
     load_icon,
     load_pixmap,

@@ -22,3 +22,5 @@ write instrument drivers and so on.
    base/ZMQRemoteAdapter
    base/hooks
    base/zmq_helper
+   base/alarm
+   base/alarm_manager
