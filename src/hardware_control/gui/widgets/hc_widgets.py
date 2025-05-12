@@ -674,7 +674,7 @@ class HCComboBox(HCMixin, QComboBox):
             ret = self.inverse_lookuptable.get(value)
             if ret is None:
                 print(
-                    f"[red]Error[/] Cannot find reverse lookup for {self.instrument} and value {ret}"
+                    f"[red]Error[/] Cannot find reverse lookup for {self.instrument} and value {value}"
                 )
             else:
                 value = ret
