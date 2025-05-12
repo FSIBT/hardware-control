@@ -8,9 +8,9 @@ This module also provides some more additional widgets that do not
 have equivalent ones in Qt directly.
 """
 
+from importlib import resources
 import logging
 from typing import Optional, Union, Callable, Any
-import pkg_resources
 
 from PyQt6.QtWidgets import (
     QGridLayout,
@@ -45,7 +45,9 @@ def load_icon(name: str) -> QPixmap:
 
 def icon_filename(name: str):
     """Get the icon filename from the installed package location."""
-    return pkg_resources.resource_filename("hardware_control", f"icons/{name}")
+    icon = resources.files("hardware_control").joinpath("icons", name)
+    with resources.as_file(icon) as p:
+        return str(p)
 
 
 def convert_prefix(value: str, decimals: int = 3) -> list[str]:

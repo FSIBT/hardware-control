@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ability to change the logfile location using a environement variable
 - New AlarmManager class to trigger alarms (currently only audio alarms)
 
+### Fixed
+- Replaced pkg_resources with importlib
+
 ## [3.1.0] 2024-04-13
 
 ### Fixed
