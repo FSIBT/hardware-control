@@ -90,6 +90,7 @@ class AlarmManager(QObject):
         player = QMediaPlayer(self)
         audio = QAudioOutput(self)
         player.setAudioOutput(audio)
+        player.setLoops(QMediaPlayer.Loops.Infinite)
 
         player.setSource(QUrl.fromLocalFile(str(filename.absolute())))
         audio.setVolume(1.0)
