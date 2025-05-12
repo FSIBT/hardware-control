@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Replaced pkg_resources with importlib
 
+### Changed
+- require python3.11 (minimum supported numpy version)
+
 ## [3.1.0] 2024-04-13
 
 ### Fixed
