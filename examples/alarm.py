@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
-"""Create custom alarms and play a sound.  Based on hooks.py example. The sound
-files are in the public domain taken from https://soundbible.com.
+"""Create custom alarms and play a sound.
+Based on hooks.py example. The sound files are in the public domain taken from https://soundbible.com
 
 
 
-Usage: hooks.py [--dummy] [--debug] [--console] [--info]
+Usage:
+  hooks.py [--dummy] [--debug] [--console] [--info]
 
-Options: --dummy use dummy connection for instruments that return semi-random
-data so that one run the program away from the test stand --debug allow debug
-print statements --info allow info print statements --console Print logger
-output to console """
+Options:
+  --dummy    use dummy connection for instruments that return semi-random data
+             so that one run the program away from the test stand
+  --debug    allow debug print statements
+  --info     allow info print statements
+  --console  Print logger output to console
+"""
 
 import logging
 import sys
