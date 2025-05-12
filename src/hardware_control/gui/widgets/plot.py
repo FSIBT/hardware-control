@@ -3,7 +3,6 @@
 """
 
 import logging
-from typing import Optional
 
 from PyQt6.QtCore import QTimer
 from PyQt6.QtGui import QAction
@@ -286,7 +285,7 @@ class PlotTool(PlotBase):
         self,
         app,
         name: str = "Plot Tool",
-        skip_datasets: Optional[list[str]] = None,
+        skip_datasets: list[str] | None = None,
         **kwargs,
     ) -> None:
         super().__init__(app, name=name, **kwargs)

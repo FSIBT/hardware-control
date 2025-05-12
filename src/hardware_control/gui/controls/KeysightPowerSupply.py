@@ -1,7 +1,7 @@
 """
-    .. image:: /images/controls/KeysightPowerSupply.png
+.. image:: /images/controls/KeysightPowerSupply.png
 """
-from typing import Optional
+
 from PyQt6.QtWidgets import QGroupBox, QVBoxLayout, QPushButton, QGridLayout
 from ..widgets import (
     HCFixedLabel,
@@ -114,8 +114,8 @@ class KeysightPowerSupply(QGroupBox):
         instrument_name: str,
         channels: list,
         channel_colors: list,
-        set_voltage_channels: Optional[list] = None,
-        set_current_channels: Optional[list] = None,
+        set_voltage_channels: list | None = None,
+        set_current_channels: list | None = None,
         widget_name: str = "Keysight Power Supply",
         persona: str = "3631A",
     ):

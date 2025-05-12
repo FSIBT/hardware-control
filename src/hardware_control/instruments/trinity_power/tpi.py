@@ -61,15 +61,15 @@ class TPI(Instrument):
         )
         self.add_parameter(
             "OUTPUT_LEVEL",
-            read_command=Command(b"\x07\x0A", 1, np.dtype("i1")),
-            set_command=Command(b"\x08\x0A", 1, np.dtype("i1")),
+            read_command=Command(b"\x07\x0a", 1, np.dtype("i1")),
+            set_command=Command(b"\x08\x0a", 1, np.dtype("i1")),
             post_hooks=[lambda x: str(int(x))],
         )
 
         self.add_parameter(
             "OUTPUT_ON_OFF",
-            read_command=Command(b"\x07\x0B", 1, np.dtype(bool)),
-            set_command=Command(b"\x08\x0B", 1, np.dtype(bool)),
+            read_command=Command(b"\x07\x0b", 1, np.dtype(bool)),
+            set_command=Command(b"\x08\x0b", 1, np.dtype(bool)),
             post_hooks=[lambda x: str(bool(x))],
         )
 
@@ -164,7 +164,7 @@ class TPI(Instrument):
 
         if checksum != tmp.to_bytes(1, byteorder="little"):
             print(
-                f"Error in checksum: got {checksum}, expected {tmp}. bytes: {length+body}."
+                f"Error in checksum: got {checksum}, expected {tmp}. bytes: {length + body}."
             )
 
         return body

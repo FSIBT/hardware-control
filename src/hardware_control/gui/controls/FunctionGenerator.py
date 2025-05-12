@@ -1,7 +1,8 @@
 """
-    .. image:: /images/controls/FunctionGenerator.png
-      :height: 350
+.. image:: /images/controls/FunctionGenerator.png
+  :height: 350
 """
+
 import logging
 
 from PyQt6.QtWidgets import QGridLayout, QGroupBox, QPushButton

@@ -1,6 +1,7 @@
 """
-    .. image:: /images/controls/DelayGenerator.png
+.. image:: /images/controls/DelayGenerator.png
 """
+
 import logging
 
 from PyQt6 import QtCore

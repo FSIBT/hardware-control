@@ -1,10 +1,10 @@
+from collections.abc import Callable, Iterable
 from functools import wraps
 import json
 import logging
 import socket
 import time
-from typing import Optional, Any, Callable, Union
-from collections.abc import Iterable
+from typing import Any
 
 import pyvisa
 from pyvisa.constants import StopBits
@@ -87,7 +87,7 @@ class Instrument:
     def __init__(
         self,
         instrument_name: str,
-        connection_addr: Optional[str] = "None",
+        connection_addr: str | None = "None",
         default_port: int = None,
         pyvisa_backend: str = "@py",
     ) -> None:
@@ -96,19 +96,16 @@ class Instrument:
         self.pyvisa_backend = pyvisa_backend
 
         # can be set when defining the instrument
-        self.manufacturer: Optional[str] = None
-        self.model: Optional[str] = None
+        self.manufacturer: str | None = None
+        self.model: str | None = None
 
-        self.device: Union[
-            None,
-            socket.socket,
-            pyvisa.resources.Resource,
-            ModbusClient,
-        ] = None  # This is the physical instrument to write to
+        self.device: None | socket.socket | pyvisa.resources.Resource | ModbusClient = (
+            None  # This is the physical instrument to write to
+        )
         self._dummy: bool = False
 
         self.connection_addr = connection_addr
-        self.connection_type: Optional[str] = None
+        self.connection_type: str | None = None
 
         self.ip_addr = None
         self.port_no = default_port
@@ -134,7 +131,7 @@ class Instrument:
         # which will enable automatic checks using these commands to
         # see if the instrument is still online. For more complicated
         # checks, the user can also overwite check_connections()
-        self.check_connection_commands: Union[None, str, Iterable[str]] = None
+        self.check_connection_commands: None | str | Iterable[str] = None
 
         self.parse_connection_addr()
 
@@ -187,7 +184,7 @@ class Instrument:
         if isinstance(self.check_connection_commands, str):
             self.query(self.check_connection_commands)
             return self._online
-        if isinstance(self.check_connection_commands, (list, tuple)):
+        if isinstance(self.check_connection_commands, list | tuple):
             for cmd in self.check_connection_commands:
                 self.query(cmd)
             return self._online
@@ -195,11 +192,11 @@ class Instrument:
     def add_parameter(
         self,
         parameter: str,
-        read_command: Union[Optional[str], Optional[Callable]] = None,
-        set_command: Union[Optional[str], Optional[Callable]] = None,
-        pre_hooks: Optional[list] = None,
-        post_hooks: Optional[list] = None,
-        dummy_return: Optional[Any] = None,
+        read_command: str | Callable | None = None,
+        set_command: str | Callable | None = None,
+        pre_hooks: list | None = None,
+        post_hooks: list | None = None,
+        dummy_return: Any | None = None,
     ) -> None:
         """Add a new parameter to the instrument.
 
@@ -284,7 +281,7 @@ class Instrument:
 
             self.dummy_returns[parameter] = dummy_return
 
-    def add_command(self, command_name: str, command: Union[str, Callable]) -> None:
+    def add_command(self, command_name: str, command: str | Callable) -> None:
         """Add a command to an instrument."""
         if command_name in self.commands:
             logger.error(
@@ -567,10 +564,10 @@ class Instrument:
 
     def config_serial(
         self,
-        baud_rate: Optional[int] = None,
-        stop_bits: Optional[StopBits] = None,
-        data_bits: Optional[int] = None,
-        parity: Optional[int] = None,
+        baud_rate: int | None = None,
+        stop_bits: StopBits | None = None,
+        data_bits: int | None = None,
+        parity: int | None = None,
     ) -> None:
         """Configure a serial port."""
         if self.device is None:
@@ -650,7 +647,7 @@ class Instrument:
         return reply
 
     @ensure_online
-    def query(self, command: str, delay: Optional[float] = None):
+    def query(self, command: str, delay: float | None = None):
         """Query the insturment directly."""
         if self._dummy:
             logger.debug(f"'{self.name}' sending query command '{command}'")

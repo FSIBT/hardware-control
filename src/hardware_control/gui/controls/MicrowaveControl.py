@@ -1,10 +1,9 @@
 """
-    .. image:: /images/controls/MicrowaveController.png
-      :height: 150
+.. image:: /images/controls/MicrowaveController.png
+  :height: 150
 """
 
 import logging
-from typing import Optional
 
 from PyQt6.QtWidgets import QGroupBox
 from PyQt6.QtGui import QIntValidator
@@ -40,7 +39,7 @@ class MicrowaveController(QGroupBox):
         app,
         instrument_name: str,
         name: str = "Microwave Controller",
-        power_levels: Optional[dict] = None,
+        power_levels: dict | None = None,
     ):
         super().__init__(name)
         self.app = app

@@ -5,9 +5,9 @@
 """
 
 import logging
-from typing import Union
-import numpy as np
 import math
+
+import numpy as np
 
 
 from ...base import Instrument

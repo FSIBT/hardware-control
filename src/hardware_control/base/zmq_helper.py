@@ -1,4 +1,5 @@
 """Functions that are commonly used for ZMQ functionality; these are primarily used in `ZMQAdapter` and `ZMQRemoteAdapter`."""
+
 import logging
 import time
 

@@ -12,6 +12,7 @@ Options:
   --console  Print logger output to console
 
 """
+
 import logging
 import sys
 

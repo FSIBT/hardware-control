@@ -1,14 +1,13 @@
 import logging
-from pathlib import Path
 import os
+from pathlib import Path
 import sys
-from typing import Optional
 
 
 def setup_logging(
     logger,
-    logoutput: Optional[Path] = None,
-    loglevel: Optional[int] = None,
+    logoutput: Path | None = None,
+    loglevel: int | None = None,
 ):
     """Set up the log level and direct the logger output to the console or a file.
 

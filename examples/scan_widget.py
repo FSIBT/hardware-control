@@ -13,6 +13,7 @@ Options:
   --info     allow info print statements
   --console  Print logger output to console
 """
+
 import logging
 import sys
 import random

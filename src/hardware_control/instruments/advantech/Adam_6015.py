@@ -65,5 +65,5 @@ class Adam_6015(AdamBase):
             self.device.sendall(b"#01\r")
             value = self.device.recv(self.buffer_length)
             return value
-        except socket.timeout:
+        except TimeoutError:
             self._online = False

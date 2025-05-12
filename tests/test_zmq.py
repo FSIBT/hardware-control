@@ -1,4 +1,5 @@
 """Test ZMQ related functions"""
+
 from hardware_control.base.zmq_helper import (
     add_ZMQ_message_to_queue,
     handle_ZMQ_message_from_app,

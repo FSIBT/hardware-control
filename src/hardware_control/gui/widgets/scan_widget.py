@@ -1,13 +1,12 @@
 """
-    .. image:: /images/widgets/scan_widget.png
-      :height: 400
+.. image:: /images/widgets/scan_widget.png
+  :height: 400
 """
 
+from collections.abc import Callable
+from datetime import datetime
 import logging
 import time
-from typing import Callable, Optional
-from datetime import datetime
-
 import warnings
 
 with warnings.catch_warnings():
@@ -21,9 +20,8 @@ with warnings.catch_warnings():
     except:
         pass
 
-from scipy.stats import rv_discrete
-
 import numpy as np
+from scipy.stats import rv_discrete
 
 from PyQt6 import QtCore
 from PyQt6.QtCore import QTimer
@@ -178,8 +176,9 @@ class regressor:
         # When measuring a new maximum, clear the kernel parameters and restart optimization.
         # Hopefully, this prevents the kernel from freaking out over the fact that the most recent point
         # is so different from the others
-        if (self.y_measured[-1] == np.max(self.y_measured)) & (
-            len(self.y_measured) >= 5
+        if (
+            (self.y_measured[-1] == np.max(self.y_measured))
+            & (len(self.y_measured) >= 5)
         ):  # For some reason, GPy doesn't like to do restarts if there are very few points
             self.model.optimize_restarts(num_restarts=20, verbose=False)
 
@@ -247,11 +246,11 @@ class ScanWidget(QGroupBox):
         app,
         name: str,
         actions: dict,
-        scan_parameters: Optional[dict] = None,
+        scan_parameters: dict | None = None,
         GP_option: bool = False,
         get_measured_values_fxn: Callable = None,
-        scan_cycle_fxn: Optional[Callable] = None,
-        finish_scan_fxn: Optional[Callable] = None,
+        scan_cycle_fxn: Callable | None = None,
+        finish_scan_fxn: Callable | None = None,
     ):
         super().__init__(name)
 

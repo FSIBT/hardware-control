@@ -6,7 +6,6 @@ The QT instrument frontend for this virtual instrument can be found in hardware_
 
 """
 
-
 import logging
 import random
 

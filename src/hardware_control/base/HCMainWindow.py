@@ -4,7 +4,6 @@ import logging
 import os
 import signal
 from sys import platform
-from typing import Optional
 
 from PyQt6.QtWidgets import (
     QMainWindow,
@@ -31,7 +30,7 @@ class HCMainWindow(QMainWindow):
 
     """
 
-    def __init__(self, app: Optional[App] = None, dummy: bool = False):
+    def __init__(self, app: App | None = None, dummy: bool = False):
         if app is None:
             app = App(dummy=dummy)
         self.app = app

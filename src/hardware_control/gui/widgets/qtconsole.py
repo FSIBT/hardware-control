@@ -1,5 +1,5 @@
 """
-    .. image:: /images/widgets/qtconsole.png
+.. image:: /images/widgets/qtconsole.png
 """
 
 import numpy as np

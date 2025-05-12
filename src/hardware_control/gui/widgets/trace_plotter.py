@@ -1,7 +1,6 @@
 import json
 import pyqtgraph as pg
 import numpy as np
-from typing import Optional
 
 from PyQt6 import QtCore
 from PyQt6.QtWidgets import (
@@ -50,8 +49,8 @@ class TracePlotter(QGroupBox):
         channel_names: list[str],
         units: list[str],
         scalings: list[float] = None,
-        bkg_color: Optional[str] = "w",
-        loading_hooks: Optional[list] = [],
+        bkg_color: str | None = "w",
+        loading_hooks: list | None = [],
     ):
         super().__init__(display_name)
 

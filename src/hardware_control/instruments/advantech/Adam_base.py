@@ -54,7 +54,7 @@ class AdamBase(Instrument):
                 return
             if output == ">\r":
                 return
-        except socket.timeout:
+        except TimeoutError:
             self._online = False
 
     def query(self, command: str) -> None:
@@ -79,7 +79,7 @@ class AdamBase(Instrument):
                 return
             output = output[1:-1]
             return output
-        except socket.timeout:
+        except TimeoutError:
             self._online = False
 
     def try_connect(self) -> None:

@@ -1,8 +1,9 @@
 """
-    .. image:: /images/widgets/function_runner.png
+.. image:: /images/widgets/function_runner.png
 """
+
 import logging
-from typing import Callable
+from collections.abc import Callable
 
 from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import (

@@ -6,6 +6,7 @@
 See class definition for details.
 
 """
+
 from functools import partial
 import logging
 

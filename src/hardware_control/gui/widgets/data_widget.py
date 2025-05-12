@@ -1,8 +1,9 @@
 """
-    .. image:: /images/widgets/data_widget.png
-      :height: 490
-      :width: 700
+.. image:: /images/widgets/data_widget.png
+  :height: 490
+  :width: 700
 """
+
 import logging
 from os import getcwd
 from pathlib import Path
@@ -193,7 +194,7 @@ class DataWidget(QWidget):
                 temp_item = QTableWidgetItem()
 
                 # If value can be converted to a string, do so
-                if isinstance(val, (int, float)):
+                if isinstance(val, int | float):
                     temp_item.setText(f"{val:g}")
                 elif isinstance(val, bool):
                     temp_item.setText(str(val))

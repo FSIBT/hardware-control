@@ -1,7 +1,8 @@
 """
-    .. image:: /images/controls/RGA.png
+.. image:: /images/controls/RGA.png
 
 """
+
 import logging
 
 from PyQt6.QtGui import QIcon, QIntValidator

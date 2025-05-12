@@ -1,10 +1,10 @@
 """
-    .. image:: /images/controls/IOModule.png
-      :height: 350
+.. image:: /images/controls/IOModule.png
+  :height: 350
 """
+
 import json
 import logging
-from typing import Union
 from pathlib import Path
 
 from PyQt6.QtCore import QTimer
@@ -48,17 +48,14 @@ class IOModule(QGroupBox):
     -------
     .. code-block:: python
 
-        channel_data =  {
+        channel_data = {
             "extraction_voltage_out": {
                 "DIR": "OUTPUT",
                 "TYPE": "ANALOG",
                 "ID_STR": "Mod7/ao4",
                 "LABEL": "Extraction Voltage (set)",
                 "UNITS": "V",
-                "OPTIONS": {
-                    "CHX_V_MAX": "10",
-                    "CHX_V_MIN": "-10"
-                }
+                "OPTIONS": {"CHX_V_MAX": "10", "CHX_V_MIN": "-10"},
             },
         }
 
@@ -68,7 +65,7 @@ class IOModule(QGroupBox):
         self,
         app,
         instrument_name,
-        channel_data: Union[dict, str],
+        channel_data: dict | str,
         name: str = "IO Module",
         num_columns: int = 1,
         show_ID_labels=False,
@@ -180,7 +177,7 @@ class IOModule(QGroupBox):
     def read_channel_data(self, channel_data):
         """Set the channel parameters from a JSON file or a dictionary."""
         self.channel_data = channel_data
-        if isinstance(self.channel_data, (Path, str)):
+        if isinstance(self.channel_data, Path | str):
             with open(self.channel_data) as file:
                 self.channel_data = json.load(file)
         else:

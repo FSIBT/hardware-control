@@ -5,9 +5,8 @@
 """
 
 import logging
-import time
 import os
-
+import time
 import warnings
 
 with warnings.catch_warnings():
@@ -16,7 +15,6 @@ with warnings.catch_warnings():
     import nidaqmx
     from nidaqmx.constants import TerminalConfiguration
 
-from typing import Optional
 
 from ...base import Instrument
 
@@ -63,9 +61,9 @@ class Ni_9000(Instrument):
         self,
         instrument_name: str = "NI_9000",
         connection_addr: str = "",
-        modules: Optional[list] = None,
-        analog_channels: Optional[dict] = None,
-        digital_channels: Optional[dict] = None,
+        modules: list | None = None,
+        analog_channels: dict | None = None,
+        digital_channels: dict | None = None,
     ):
         # A default port is required for this instrument
         super().__init__(

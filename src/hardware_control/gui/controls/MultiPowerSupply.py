@@ -1,9 +1,8 @@
 """
-    .. image:: /images/controls/MultiPowerSupply.png
+.. image:: /images/controls/MultiPowerSupply.png
 """
 
 import logging
-from typing import Optional
 
 from PyQt6 import QtCore
 from PyQt6.QtCore import QTimer
@@ -93,7 +92,7 @@ class MultiPowerSupply(QGroupBox):
         instrument_name: str,
         channels: list,
         widget_name: str = "Multi_Channel_PSU",
-        channel_names: Optional[list] = None,
+        channel_names: list | None = None,
         show_VI_limits: bool = False,
         show_status_panel: bool = False,
         enable_power_buttons: str = "none",

@@ -8,7 +8,6 @@
 """
 
 import logging
-from typing import Union
 import numpy as np
 
 
@@ -22,7 +21,7 @@ from ...base.hooks import (
 logger = logging.getLogger(__name__)
 
 
-def _parse_instrument_response(value: str) -> Union[str, None]:
+def _parse_instrument_response(value: str) -> str | None:
     value = value.strip(r"\r")
     if value.endswith("CMD:OK"):
         return None

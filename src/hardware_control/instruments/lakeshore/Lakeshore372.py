@@ -34,7 +34,7 @@ class Lakeshore_372(Instrument):
             connection_addr=connection_addr,
             default_port=7777,
             num_channels=16,
-            active_channels=[f"{i+1}" for i in range(16)],
+            active_channels=[f"{i + 1}" for i in range(16)],
         )
 
         self.model = "372"

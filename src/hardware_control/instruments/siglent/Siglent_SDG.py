@@ -1,4 +1,4 @@
-""" Siglent SDG Series.
+"""Siglent SDG Series.
 
 .. image:: /images/SDG1000X.png
   :height: 200

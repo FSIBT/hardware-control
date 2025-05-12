@@ -1,9 +1,9 @@
 """
-    .. image:: /images/controls/Oscilloscope.png
+.. image:: /images/controls/Oscilloscope.png
 """
+
 import json
 import logging
-from typing import Optional
 
 import pyqtgraph as pg
 

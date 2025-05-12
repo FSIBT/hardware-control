@@ -1,6 +1,7 @@
 """
-    .. image:: /images/controls/TempMonitor.png
+.. image:: /images/controls/TempMonitor.png
 """
+
 import logging
 
 from PyQt6.QtWidgets import QGroupBox

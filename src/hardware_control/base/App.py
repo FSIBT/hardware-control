@@ -4,7 +4,8 @@ import logging
 from pathlib import Path
 import threading
 import time
-from typing import Union, Optional, Callable, Any
+from typing import Any
+from collections.abc import Callable
 import datetime
 
 from PyQt6.QtWidgets import QApplication
@@ -237,7 +238,7 @@ class App(QApplication):
     def add_instrument(
         self,
         instrument: Instrument,
-        ignore_flag: Optional[bool] = False,
+        ignore_flag: bool | None = False,
     ) -> None:
         """Add an instrument object to the app. See the Instrument base class for more details."""
         if instrument.name in self._data:
@@ -562,7 +563,7 @@ class App(QApplication):
     @ensure_parameter_and_instrument_exists
     def get_instrument_parameter(
         self, instrument: str, parameter: str, return_set_value: bool = False
-    ) -> Optional[str]:
+    ) -> str | None:
         """Return the last value read back for the given instrument parameter.
 
         This function does not communicate with the instrument.
@@ -699,7 +700,7 @@ class App(QApplication):
             if self.data_sets[key].autosave_enabled:
                 self.data_sets[key].autosave()
 
-    def save_settings(self, filename: Union[str, Path]) -> None:
+    def save_settings(self, filename: str | Path) -> None:
         """Save all settings as JSON.
 
         Parses out all set_value entries from app._data. The
@@ -729,7 +730,7 @@ class App(QApplication):
 
     @ensure_instrument_exists
     def load_settings_hook(
-        self, instrument: str, filename: Union[str, Path], skip_hooks: bool = True
+        self, instrument: str, filename: str | Path, skip_hooks: bool = True
     ) -> None:
         def hook_function(value):
             """Reads a JSON file to overwrite instrument's settings.
@@ -778,9 +779,7 @@ class App(QApplication):
         return hook_function
 
     @ensure_instrument_exists
-    def add_load_settings_hook(
-        self, instrument: str, filename: Union[str, Path]
-    ) -> None:
+    def add_load_settings_hook(self, instrument: str, filename: str | Path) -> None:
         """Add a hook that loads a file with a dictionary of instrument settings.
 
         Parameters

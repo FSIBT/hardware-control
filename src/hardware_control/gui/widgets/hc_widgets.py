@@ -8,9 +8,10 @@ This module also provides some more additional widgets that do not
 have equivalent ones in Qt directly.
 """
 
+from collections.abc import Callable
 from importlib import resources
 import logging
-from typing import Optional, Union, Callable, Any
+from typing import Any
 
 from PyQt6.QtWidgets import (
     QGridLayout,
@@ -57,21 +58,21 @@ def convert_prefix(value: str, decimals: int = 3) -> list[str]:
     except ValueError:
         return [value, ""]
     if abs(value) < 1e-9:
-        return [f"{round(value*1e12, decimals)}", "p"]
+        return [f"{round(value * 1e12, decimals)}", "p"]
     if abs(value) < 1e-6:
-        return [f"{round(value*1e9, decimals)}", "n"]
+        return [f"{round(value * 1e9, decimals)}", "n"]
     if abs(value) < 1e-3:
-        return [f"{round(value*1e6, decimals)}", "µ"]
+        return [f"{round(value * 1e6, decimals)}", "µ"]
     if abs(value) < 1:
-        return [f"{round(value*1e3, decimals)}", "m"]
+        return [f"{round(value * 1e3, decimals)}", "m"]
     if abs(value) < 1e3:
         return [f"{round(value, decimals)}", ""]
     if abs(value) < 1e6:
-        return [f"{round(value*1e-3, decimals)}", "k"]
+        return [f"{round(value * 1e-3, decimals)}", "k"]
     if abs(value) < 1e9:
-        return [f"{round(value*1e-6, decimals)}", "M"]
+        return [f"{round(value * 1e-6, decimals)}", "M"]
     if abs(value) < 1e12:
-        return [f"{round(value*1e-9, decimals)}", "G"]
+        return [f"{round(value * 1e-9, decimals)}", "G"]
     return [f"{value}", ""]
 
 
@@ -479,7 +480,7 @@ class HCOnOffButton(HCMixin, QPushButton):
         if self.show_text:
             self.setText(self.text_unknown)
 
-    def is_true(self, value: Union[bool, str]) -> bool:
+    def is_true(self, value: bool | str) -> bool:
         """Handle multiple versions (of different data type and case) of the option 'True'."""
         if isinstance(value, bool):
             return value
@@ -587,7 +588,7 @@ class HCOnOffIndicator(HCMixin, QLabel):
             return QtCore.QSize(10, 20)
         return super().sizeHint()
 
-    def is_true(self, value: Union[bool, str]) -> bool:
+    def is_true(self, value: bool | str) -> bool:
         """Handle multiple versions (of different data type and case) of the option 'True'."""
         if isinstance(value, bool):
             return value
@@ -634,7 +635,7 @@ class HCComboBox(HCMixin, QComboBox):
         label: str,
         items: list,
         label_align: str = "left",
-        lookuptable: Optional[dict] = None,
+        lookuptable: dict | None = None,
         upper: bool = False,
         auto_update=True,
     ):

@@ -5,7 +5,6 @@ import logging
 from pathlib import Path
 import pickle
 import time
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -103,9 +102,9 @@ class Dataset(QObject):
     def track_instrument(
         self,
         instrument: str,
-        parameter: Optional[str] = None,
-        alias: Optional[str] = None,
-        plot_ax: Optional[int] = 1,
+        parameter: str | None = None,
+        alias: str | None = None,
+        plot_ax: int | None = 1,
         auto_update=True,
     ) -> None:
         """Add a parameter from an instrument to the dataset.
@@ -218,13 +217,13 @@ class Dataset(QObject):
     def autosave(self) -> None:
         """Autosave data."""
         logger.debug(
-            f"Dataset {self.name} autosaveing to" f" file {self.autosave_filename}"
+            f"Dataset {self.name} autosaveing to file {self.autosave_filename}"
         )
 
         if self.autosave_enabled:
             self.save(self.autosave_filename, self.autosave_format)
 
-    def save_txt(self, filename: Path, header: Optional[str] = None) -> None:
+    def save_txt(self, filename: Path, header: str | None = None) -> None:
         """Save data as a txt file.
 
         Parameters
@@ -379,7 +378,7 @@ class Dataset(QObject):
 
     def to_pandas(
         self,
-        columns: Optional[list] = None,
+        columns: list | None = None,
         cleanup: bool = True,
     ) -> pd.DataFrame:
         """Return a subset of columns as a pandas dataframe and optionally clean it up.

@@ -1,4 +1,5 @@
 """Test internal hooks"""
+
 import hardware_control as hc
 
 

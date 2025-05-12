@@ -1,7 +1,8 @@
 """
-    .. image:: /images/widgets/connection_status.png
-      :height: 400
+.. image:: /images/widgets/connection_status.png
+  :height: 400
 """
+
 import logging
 
 from PyQt6 import QtCore

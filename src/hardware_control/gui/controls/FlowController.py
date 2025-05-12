@@ -1,7 +1,8 @@
 """
-    .. image:: /images/controls/FlowController.png
-      :height: 150
+.. image:: /images/controls/FlowController.png
+  :height: 150
 """
+
 import logging
 
 from PyQt6.QtWidgets import QGroupBox

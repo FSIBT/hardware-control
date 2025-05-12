@@ -9,7 +9,7 @@ from .alarm import Alarm
 
 
 class AlarmManager(QObject):
-    """Handle alarms
+    """Handle alarms.
 
     Keep a list of different alarms and call actions if the alarm triggers.
 
@@ -18,7 +18,10 @@ class AlarmManager(QObject):
     """
 
     alarm_triggered = pyqtSignal(Alarm)
+    """Emitted when an alarm has been triggered."""
+
     alarm_cleared = pyqtSignal(Alarm)
+    """Emitted when an alarm has been cleared."""
 
     def __init__(self, app):
         super().__init__()

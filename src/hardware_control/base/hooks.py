@@ -13,21 +13,22 @@ Example
 >>> def create_hook(arg):
 ...     def hook(value):
 ...         return value + arg
+...
 ...     return hook
 
 
 """
 
+from collections.abc import Callable
 import logging
-from typing import Optional, Callable
-import numpy as np
 
+import numpy as np
 from PyQt6.QtCore import QObject, QTimer
 
 logger = logging.getLogger(__name__)
 
 
-def call_hooks(hooks_list: list[Callable], value: str) -> Optional[str]:
+def call_hooks(hooks_list: list[Callable], value: str) -> str | None:
     """Call a list of functions.
 
     If any of the functions returns None, the final value will be
@@ -130,7 +131,7 @@ def last_n_values_converter(num_of_values: int) -> Callable:
 
 def make_negative(value):
     """Convert to float and multiple by -1."""
-    return f"{-1*float(value)}"
+    return f"{-1 * float(value)}"
 
 
 def max_len_converter(max_length: int) -> Callable:
