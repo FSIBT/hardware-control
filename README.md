@@ -1,7 +1,7 @@
 [![read-the-docs](https://readthedocs.org/projects/hardware-control/badge/?style=flat)](https://readthedocs.org/projects/hardware-control/)
 [![PyPI version](https://badge.fury.io/py/hardware-control.svg)](https://badge.fury.io/py/hardware-control)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v0.json)](https://github.com/charliermarsh/ruff)
 [![DOI](https://joss.theoj.org/papers/10.21105/joss.02688/status.svg)](https://doi.org/10.21105/joss.02688)
 
 ## What is this repository for?

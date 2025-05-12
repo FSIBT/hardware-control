@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - require python3.11 (minimum supported numpy version)
+- switch to ruff (from black and pyupgrade)
 
 ## [3.1.0] 2024-04-13
 

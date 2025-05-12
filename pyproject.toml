@@ -73,30 +73,23 @@ where = ["src"]
 [tool.setuptools_scm]
 write_to = "src/hardware_control/_version.py"
 
-[tool.pylint.FORMAT]
-max-line-length="88"
+[tool.coverage.run]
+branch = true
+source = ["src/hardware_control", "tests"]
 
-[tool.pylint."MESSAGES CONTROL"]
-# bad-continuation: Black does the job, no need to check.
-disable = "bad-continuation, logging-fstring-interpolation, line-too-long"
+[tool.coverage.report]
+skip_covered = true
 
-[tool.pylint.MASTER]
-extension-pkg-whitelist="PyQt6"
-jobs=4
+[tool.ruff]
+line-length = 88
 
-[tool.pylint.TYPECHECK]
-# zmq.{LINGER,REQ,ROUTER,NOBLOCK} are dynamically generated and so pylint
-# doesn't see them, causing false positives.
-generated-members=[
-	"REQ",
-	"REP",
-	"RCVTIMEO",
-	"PUB",
-	"SUB",
-	"NOBLOCK",
-	"AF_INET",
-	"SOCK_STREAM",
-	"TCP_NODELAY",
-	"SOCK_DGRAM",
-	"IPPROTO_TCP",
-	]
+[tool.ruff.lint]
+ignore = ["E741"]
+select = ["UP"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+docstring-code-format = true
+docstring-code-line-length = 80
+
