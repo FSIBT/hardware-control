@@ -28,6 +28,7 @@ class AlarmPanel(QWidget):
             [
                 "Active",
                 "Clear",
+                "Name",
                 "Instrument",
                 "Parameter",
                 "Cmp",
@@ -63,6 +64,7 @@ class AlarmPanel(QWidget):
             # alarm information
             for col, text in enumerate(
                 (
+                    a.alias,
                     a.instrument,
                     a.parameter,
                     a.comparator,

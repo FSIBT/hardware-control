@@ -79,10 +79,12 @@ class Demo(hc.HCMainWindow):
 
         # now we define 2 alarms that will play a sound
         self.app.alarm_manager.add_alarm(
-            hc.Alarm("alicat1", "RATE", ">", 800, 0, action="alarm_clock.wav")
+            hc.Alarm(
+                "alicat1", "RATE", "rate alias 1", ">", 800, 0, action="alarm_clock.wav"
+            )
         )
         self.app.alarm_manager.add_alarm(
-            hc.Alarm("alicat2", "RATE", ">", 8, 0, action="siren.wav")
+            hc.Alarm("alicat2", "RATE", "rate alarm 2", ">", 8, 0, action="siren.wav")
         )
 
         # create QT elements to show both GUIs in the main window

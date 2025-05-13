@@ -14,6 +14,7 @@ COMPARATORS = {
 class Alarm:
     instrument: str
     parameter: str
+    alias: str
     comparator: str  # ">", "≥", "<", "≤"
     threshold: float
     duration: float = 0.0  # seconds the condition must hold

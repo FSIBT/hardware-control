@@ -5,6 +5,8 @@ from pathlib import Path
 from PyQt6.QtCore import QObject, pyqtSignal, QUrl
 from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
 
+from rich import print
+
 from .alarm import Alarm
 
 
@@ -77,6 +79,8 @@ class AlarmManager(QObject):
             file = Path(alarm.action)
             if file.exists():
                 self.play_sound(alarm, file)
+            else:
+                print(f"[red]ALARM[/] {alarm} ... sounds file cannot be found!")
         elif callable(alarm.action):
             alarm.action(alarm)
         self.alarm_triggered.emit(alarm)
