@@ -76,10 +76,6 @@ class Caen_RSeries(Instrument):
             instrument_name=instrument_name, connection_addr=connection_addr
         )
 
-        # Default instrument has 16 channels (0-15)
-        self.max_V = [np.inf] * num_channels
-        self.max_I = [np.inf] * num_channels
-
         self.status = {
             "ON_OFF": 1,
             "RAMPING_UP": 2,
@@ -112,7 +108,7 @@ class Caen_RSeries(Instrument):
 
             self.add_parameter(
                 f"CH{channel}_V_MAX",
-                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:MVMAX",
+                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:MAXV",
                 set_command=f"$BD:00,CMD:SET,CH:{channel},PAR:MAXV,VAL:{{}}",
                 post_hooks=[
                     _parse_instrument_response,
@@ -122,8 +118,8 @@ class Caen_RSeries(Instrument):
 
             self.add_parameter(
                 f"CH{channel}_I_MAX",
-                read_command=self._read_I_max(channel),
-                set_command=self._set_I_max(channel),
+                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:ISET",
+                set_command=f"$BD:00,CMD:SET,CH:{channel},PAR:ISET,VAL:{{}}",
                 dummy_return="25.0",
             )
 
@@ -172,7 +168,6 @@ class Caen_RSeries(Instrument):
                 f"CH{channel}_V_SET",
                 read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:VSET",
                 set_command=f"$BD:00,CMD:SET,CH:{channel},PAR:VSET,VAL:{{}}",
-                # pre_hooks=[self.range_validator(self.max_V, channel)],
                 post_hooks=[_parse_instrument_response, format_float(".3e")],
                 dummy_return="10.0",
             )
@@ -182,7 +177,6 @@ class Caen_RSeries(Instrument):
                 read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:ISET",
                 set_command=f"$BD:00,CMD:SET,CH:{channel},PAR:ISET,VAL:{{}}",
                 pre_hooks=[
-                    self.range_validator(self.max_I, channel),
                     scaling_converter(1e6),
                 ],
                 post_hooks=[
@@ -226,39 +220,6 @@ class Caen_RSeries(Instrument):
             self.set_value(f"CH{channel}_RAMP_DOWN", value)
 
         return set_ramp_value
-
-    def _read_V_max(self, channel):
-        def get_value():
-            return self.max_V[channel]
-
-        return get_value
-
-    def _set_V_max(self, channel):
-        def set_value(value):
-            self.max_V[channel] = float(value)
-
-        return set_value
-
-    def _read_I_max(self, channel):
-        def get_value():
-            return self.max_I[channel]
-
-        return get_value
-
-    def _set_I_max(self, channel):
-        def set_value(value):
-            self.max_I[channel] = float(value)
-
-        return set_value
-
-    def range_validator(self, maxlst, channel):
-        def validator(value):
-            value = float(value)
-            if value < 0:
-                return 0
-            return min(value, maxlst[channel])
-
-        return validator
 
     def _return_status(self, value):
         value = int(value)
