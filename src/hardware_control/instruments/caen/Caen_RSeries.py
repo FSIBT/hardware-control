@@ -120,6 +120,13 @@ class Caen_RSeries(Instrument):
                 f"CH{channel}_I_MAX",
                 read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:ISET",
                 set_command=f"$BD:00,CMD:SET,CH:{channel},PAR:ISET,VAL:{{}}",
+                pre_hooks=[
+                    scaling_converter(1e6),
+                ],
+                post_hooks=[
+                    _parse_instrument_response,
+                    scaling_converter(1e-6),
+                ],
                 dummy_return="25.0",
             )
 
@@ -184,6 +191,16 @@ class Caen_RSeries(Instrument):
                     scaling_converter(1e-6),
                 ],
                 dummy_return="15.0",
+            )
+
+            self.add_parameter(
+                f"CH{channel}_POWER_DOWN",
+                read_command=f"$BD:00,CMD:MON,CH:{channel},PAR:PDWN",
+                set_command=f"$BD:00,CMD:SET,CH:{channel},PAR:PDWN,VAL:{{}}",
+                post_hooks=[
+                    _parse_instrument_response,
+                ],
+                dummy_return="KILL",
             )
 
             self.add_parameter(
