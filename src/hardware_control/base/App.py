@@ -102,14 +102,17 @@ class App(QApplication):
             self.ipaddress = "127.0.0.1"
         else:
             self.ipaddress = ipaddress
-        self.zmq_publisher_address = f"tcp://{self.ipaddress}:1234"
+        self.zmq_publisher_address = f"tcp://{self.ipaddress}"
         self.zmq_context = zmq.Context()
         # to talk to all the instruments
         self.zmq_publisher = self.zmq_context.socket(zmq.PUB)
-        self.zmq_publisher.bind(self.zmq_publisher_address)
+
+        port = self.zmq_publisher.bind_to_random_port(self.zmq_publisher_address)
+        self.zmq_publisher_address = f"{self.zmq_publisher_address}:{port}"
         # to handle queries from other programs
         self.zmq_info = self.zmq_context.socket(zmq.REP)
-        self.zmq_info.bind(f"tcp://{self.ipaddress}:1235")
+        port = self.zmq_info.bind_to_random_port(f"tcp://{self.ipaddress}")
+        self.zmq_info_address = f"tcp://{self.ipaddress}:{port}"
 
         self.dummy = dummy
         self.additional_save_formats = {}
