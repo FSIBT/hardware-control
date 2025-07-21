@@ -45,6 +45,7 @@ dependencies = [
     "Sphinx",
     "sphinx_rtd_theme",
     "pyzmq",
+    "vortran @ git+https://github.com/arunpersaud/Stradus.git",
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
