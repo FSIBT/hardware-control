@@ -375,6 +375,10 @@ class Instrument:
         b = certain_instrument()
         volts = b['voltage']
         """
+
+        if parameter == "_dummy":
+            print("User program potentially did not call super().__init__()")
+
         val = self.get_value(parameter)
         if val is not None:
             return val
