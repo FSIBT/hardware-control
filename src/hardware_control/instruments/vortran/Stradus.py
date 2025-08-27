@@ -84,7 +84,7 @@ class Stradus(Instrument):
         )
 
         self.add_parameter(
-            parameter="power",
+            parameter="POWER",
             read_command=lambda: getattr(self.device, "power")[0],
             set_command=lambda x: setattr(self.device, "power", x),
             dummy_return="0",
