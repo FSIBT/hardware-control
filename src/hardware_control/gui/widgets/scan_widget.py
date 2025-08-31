@@ -9,6 +9,10 @@ import logging
 import time
 import warnings
 
+logger = logging.getLogger(__name__)
+
+# Optional GPy dependency for Gaussian Process features
+HAS_GP_FEATURES = False
 with warnings.catch_warnings():
     # ignore warning in GPy
     # bug report https://github.com/SheffieldML/GPy/issues/950
@@ -17,8 +21,14 @@ with warnings.catch_warnings():
         from GPy.kern import Matern32, Bias
         from GPy.models import GPRegression
         from GPy.core.parameterization.priors import Gamma
-    except:
-        pass
+
+        HAS_GP_FEATURES = True
+    except ImportError:
+        logger.info(
+            "GPy not available - Gaussian Process optimization features disabled"
+        )
+    except Exception as e:
+        logger.warning(f"Error importing GPy: {e} - Gaussian Process features disabled")
 
 import numpy as np
 from scipy.stats import rv_discrete

@@ -1,4 +1,5 @@
 from typing import Any
+import logging
 
 from pathlib import Path
 
@@ -8,6 +9,8 @@ from PyQt6.QtMultimedia import QMediaPlayer, QAudioOutput
 from rich import print
 
 from .alarm import Alarm
+
+logger = logging.getLogger(__name__)
 
 
 class AlarmManager(QObject):
@@ -53,7 +56,7 @@ class AlarmManager(QObject):
         try:
             self.alarms.remove(alarm)
         except ValueError:
-            pass
+            logger.debug(f"Alarm {alarm} not in active list - already removed")
 
     def clear(self, alarm):
         """Clear an alarm.

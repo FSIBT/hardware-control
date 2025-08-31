@@ -797,8 +797,10 @@ class App(QApplication):
                     logger.info(
                         f"Settings for instrument '{instrument}' read from file '{filename}'."
                     )
-            except:
-                logger.error(f"Failed to read file '{filename}'.", exc_info=True)
+            except (OSError, json.JSONDecodeError) as e:
+                logger.error(
+                    f"Failed to read settings file '{filename}': {e}", exc_info=True
+                )
                 return value
             # Try to set instrument settings
             if instrument not in self._data:
