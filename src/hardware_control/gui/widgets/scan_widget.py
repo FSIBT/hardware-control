@@ -4,7 +4,7 @@
 """
 
 from collections.abc import Callable
-from datetime import datetime
+import datetime
 import logging
 import time
 import warnings
@@ -566,7 +566,12 @@ class ScanWidget(QGroupBox):
         """When an instrumnet is selected, update the list of parameterts that can be scanned."""
         if self.instrument_drop.currentText() == "":
             # If within the first two minutes of running, reading data may not yet be configured
-            if not self.app.birth_time - datetime.utcnow().timestamp() <= 2 * 60 * 1000:
+            if (
+                not (
+                    datetime.datetime.now(datetime.UTC) - self.app.birth_time
+                ).total_seconds()
+                <= 2 * 60
+            ):
                 logger.warning("Scan Instrument dropdown is empty.")
             return
         else:
