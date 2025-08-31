@@ -21,3 +21,6 @@ python/.eggs/
 examples/Single_Instrument_Demos/autosave.json
 autosave.json
 *.lock
+.env
+.envx
+CLAUDE.md
