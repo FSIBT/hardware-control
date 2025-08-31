@@ -66,8 +66,9 @@ class ZMQAdapter(threading.Thread):
         Listens for ZMQ requests from the main app and if the
         instrument is not online, tries to reconnect to it.
         """
-        # some time for ZMQ to set up pub/sub
-        time.sleep(1)
+        # Set up ZMQ poller for efficient message handling
+        poller = zmq.Poller()
+        poller.register(self.zmq_subscriber, zmq.POLLIN)
 
         i = -1
         while not self.stop.is_set():
@@ -77,14 +78,18 @@ class ZMQAdapter(threading.Thread):
                 self.instrument.try_connect()
                 check_adapter_online(self)
 
-            # get all ZMQ messages
-            get_messages = True
-            while get_messages:
-                try:
-                    msg = self.zmq_subscriber.recv_string(flags=zmq.NOBLOCK)
-                    add_ZMQ_message_to_queue(self, msg)
-                except zmq.ZMQError:
-                    get_messages = False
+            # get all ZMQ messages using poller
+            # Poll with short timeout to allow checking stop event regularly
+            socks = dict(poller.poll(timeout=100))  # 100ms timeout
+            if self.zmq_subscriber in socks:
+                # Get all available messages
+                get_messages = True
+                while get_messages:
+                    try:
+                        msg = self.zmq_subscriber.recv_string(flags=zmq.NOBLOCK)
+                        add_ZMQ_message_to_queue(self, msg)
+                    except zmq.ZMQError:
+                        get_messages = False
 
             # handle messages in queue
             handle_ZMQ_message_from_app(self)

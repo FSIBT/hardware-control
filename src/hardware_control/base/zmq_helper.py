@@ -1,7 +1,6 @@
 """Functions that are commonly used for ZMQ functionality; these are primarily used in `ZMQAdapter` and `ZMQRemoteAdapter`."""
 
 import logging
-import time
 
 logger = logging.getLogger(__name__)
 
@@ -114,8 +113,7 @@ def handle_ZMQ_message_from_app(adapter) -> None:
             msg = adapter.priority_queue[priority].pop(0)
             break
     else:
-        # nothing to do, let's sleep a bit
-        time.sleep(0.1)
+        # nothing to do, return immediately - polling timeout handles timing
         return
 
     # the different messages are whitespace separated, so we can easily parse them

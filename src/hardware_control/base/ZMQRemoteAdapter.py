@@ -73,9 +73,6 @@ class ZMQSingleInstrument:
             f"Setting up ZMQ publisher at {ipaddress}:{self.zmq_publisher_port}"
         )
 
-        # some time for ZMQ to set up publisher
-        time.sleep(1)
-
         self.instrument.try_connect()
 
         while True:
@@ -93,9 +90,6 @@ class ZMQSingleInstrument:
             self.zmq_subscriber.subscribe(self.name)
             self.zmq_topic_length = len(self.name) + 1
 
-            # some time for ZMQ to set up subscriber
-            time.sleep(1)
-
             # let app know where to subscribe to
             self.zmq_new.send_string(
                 f"{self.name} {ipaddress} {self.zmq_publisher_port}"
@@ -103,6 +97,11 @@ class ZMQSingleInstrument:
             logger.info("Got remote request and sent ZMQ info")
 
             # enter new eventloop that will handle instrument communication
+            # Set up ZMQ poller for efficient message handling
+            poller = zmq.Poller()
+            poller.register(self.zmq_subscriber, zmq.POLLIN)
+            poller.register(self.zmq_new, zmq.POLLIN)
+
             keep_running = True
             i = 0
             while keep_running:
@@ -111,14 +110,18 @@ class ZMQSingleInstrument:
                     self.instrument.try_connect()
                     check_adapter_online(self)
 
-                # get all ZMQ messages
-                get_messages = True
-                while get_messages:
-                    try:
-                        msg = self.zmq_subscriber.recv_string(flags=zmq.NOBLOCK)
-                        add_ZMQ_message_to_queue(self, msg)
-                    except zmq.ZMQError:
-                        get_messages = False
+                # Poll for messages with timeout
+                socks = dict(poller.poll(timeout=100))  # 100ms timeout
+
+                # get all ZMQ messages from subscriber
+                if self.zmq_subscriber in socks:
+                    get_messages = True
+                    while get_messages:
+                        try:
+                            msg = self.zmq_subscriber.recv_string(flags=zmq.NOBLOCK)
+                            add_ZMQ_message_to_queue(self, msg)
+                        except zmq.ZMQError:
+                            get_messages = False
 
                 # handle messages in queue
                 handle_ZMQ_message_from_app(self)
@@ -126,10 +129,12 @@ class ZMQSingleInstrument:
                 print(f"\r{time.time()}", end="")
 
                 # check for message on the REQ/REP socket
-                try:
-                    new_message = self.zmq_new.recv_string(flags=zmq.NOBLOCK)
-                except zmq.ZMQError:
-                    new_message = None
+                new_message = None
+                if self.zmq_new in socks:
+                    try:
+                        new_message = self.zmq_new.recv_string(flags=zmq.NOBLOCK)
+                    except zmq.ZMQError:
+                        new_message = None
                 if new_message == "STOP":
                     logger.info("Got STOP request")
                     keep_running = False
