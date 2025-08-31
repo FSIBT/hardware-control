@@ -147,6 +147,14 @@ class ZMQSingleInstrument:
                     self.zmq_new.send_string(out)
 
             # Clean up remaining resources after loop ends
+            try:
+                poller.unregister(self.zmq_subscriber)
+                poller.unregister(self.zmq_new)
+            except Exception as e:
+                logger.warning(
+                    f"Error unregistering from poller for '{self.name}': {e}"
+                )
+
             self._cleanup_zmq_resources()
 
     def _cleanup_zmq_resources(self):

@@ -95,6 +95,13 @@ class ZMQAdapter(threading.Thread):
             handle_ZMQ_message_from_app(self)
 
         # Clean up ZMQ resources when thread stops
+        try:
+            poller.unregister(self.zmq_subscriber)
+        except Exception as e:
+            logger.warning(
+                f"Error unregistering subscriber from poller for '{self.name}': {e}"
+            )
+
         self._cleanup_zmq_resources()
 
     def _cleanup_zmq_resources(self):
