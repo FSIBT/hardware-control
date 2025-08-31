@@ -133,13 +133,43 @@ class ZMQSingleInstrument:
                 if new_message == "STOP":
                     logger.info("Got STOP request")
                     keep_running = False
-                    self.zmq_subscriber.close()
+                    self._cleanup_zmq_resources()
                     self.zmq_new.send_string("ACK")
                 elif new_message == "LIST_PARAMETERS":
                     logger.info("Got parameter list request")
                     read_set_commands = self.instrument.list_parameters()
                     out = json.dumps(read_set_commands)
                     self.zmq_new.send_string(out)
+
+            # Clean up remaining resources after loop ends
+            self._cleanup_zmq_resources()
+
+    def _cleanup_zmq_resources(self):
+        """Clean up ZMQ sockets and context for the single instrument."""
+        try:
+            if hasattr(self, "zmq_subscriber"):
+                self.zmq_subscriber.close()
+                logger.debug(f"Closed ZMQ subscriber for '{self.name}'")
+        except Exception as e:
+            logger.warning(f"Error closing ZMQ subscriber for '{self.name}': {e}")
+
+        try:
+            self.zmq_publisher.close()
+            logger.debug(f"Closed ZMQ publisher for '{self.name}'")
+        except Exception as e:
+            logger.warning(f"Error closing ZMQ publisher for '{self.name}': {e}")
+
+        try:
+            self.zmq_new.close()
+            logger.debug(f"Closed ZMQ REQ/REP socket for '{self.name}'")
+        except Exception as e:
+            logger.warning(f"Error closing ZMQ REQ/REP socket for '{self.name}': {e}")
+
+        try:
+            self.zmq_context.term()
+            logger.debug(f"Terminated ZMQ context for '{self.name}'")
+        except Exception as e:
+            logger.warning(f"Error terminating ZMQ context for '{self.name}': {e}")
 
 
 class ZMQRemoteAdapter:
@@ -207,5 +237,17 @@ class ZMQRemoteAdapter:
         disconnect the remote instrument from the app.
         """
         logger.info(f"{self.name} stopping remote")
-        self.req_rep_socket.send_string("STOP")
-        self.req_rep_socket.recv_string()
+        try:
+            self.req_rep_socket.send_string("STOP")
+            self.req_rep_socket.recv_string()
+        except Exception as e:
+            logger.warning(f"Error during remote stop for '{self.name}': {e}")
+
+        # Clean up the REQ/REP socket
+        try:
+            self.req_rep_socket.close()
+            logger.debug(f"Closed REQ/REP socket for remote '{self.name}'")
+        except Exception as e:
+            logger.warning(
+                f"Error closing REQ/REP socket for remote '{self.name}': {e}"
+            )

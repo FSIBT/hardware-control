@@ -88,3 +88,20 @@ class ZMQAdapter(threading.Thread):
 
             # handle messages in queue
             handle_ZMQ_message_from_app(self)
+
+        # Clean up ZMQ resources when thread stops
+        self._cleanup_zmq_resources()
+
+    def _cleanup_zmq_resources(self):
+        """Clean up ZMQ sockets when the adapter thread stops."""
+        try:
+            self.zmq_subscriber.close()
+            logger.debug(f"Closed ZMQ subscriber for '{self.name}'")
+        except Exception as e:
+            logger.warning(f"Error closing ZMQ subscriber for '{self.name}': {e}")
+
+        try:
+            self.zmq_publisher.close()
+            logger.debug(f"Closed ZMQ publisher for '{self.name}'")
+        except Exception as e:
+            logger.warning(f"Error closing ZMQ publisher for '{self.name}': {e}")

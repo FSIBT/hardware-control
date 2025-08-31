@@ -151,9 +151,21 @@ class App(QApplication):
         # first set the event which will trigger the while loop in the
         # thread's run function to stop
         self.stop_threads_event.set()
-        # wait for all threads to end
+
+        # wait for all threads to end with timeout
+        timeout_seconds = 5.0
         for t in self.threads:
-            t.join()
+            if hasattr(t, "is_alive"):  # Regular threads (ZMQAdapter)
+                t.join(timeout=timeout_seconds)
+                if t.is_alive():
+                    logger.warning(
+                        f"Thread '{t.name}' did not stop within {timeout_seconds}s timeout"
+                    )
+            else:  # Remote adapters (have join method but not is_alive)
+                try:
+                    t.join()
+                except Exception as e:
+                    logger.warning(f"Error stopping remote adapter '{t.name}': {e}")
 
     def handle_request(self):
         """Handle requests from other programs.
@@ -697,6 +709,34 @@ class App(QApplication):
         any data specified to save automatically before close.
         """
         self.stop()
+
+        # Close all ZMQ subscribers
+        for name, subscriber in self.zmq_subscribers.items():
+            try:
+                subscriber.close()
+                logger.debug(f"Closed ZMQ subscriber for '{name}'")
+            except Exception as e:
+                logger.warning(f"Error closing ZMQ subscriber for '{name}': {e}")
+
+        # Close main ZMQ sockets
+        try:
+            self.zmq_publisher.close()
+            logger.debug("Closed main ZMQ publisher")
+        except Exception as e:
+            logger.warning(f"Error closing main ZMQ publisher: {e}")
+
+        try:
+            self.zmq_info.close()
+            logger.debug("Closed ZMQ info socket")
+        except Exception as e:
+            logger.warning(f"Error closing ZMQ info socket: {e}")
+
+        # Terminate ZMQ context
+        try:
+            self.zmq_context.term()
+            logger.debug("Terminated ZMQ context")
+        except Exception as e:
+            logger.warning(f"Error terminating ZMQ context: {e}")
 
         # Loop through datasets, save all sets to autosave
         for key in self.data_sets:
