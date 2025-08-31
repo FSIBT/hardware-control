@@ -9,3 +9,4 @@ from .ZMQAdapter import ZMQAdapter
 from .ZMQRemoteAdapter import ZMQSingleInstrument, ZMQRemoteAdapter
 from . import hooks
 from .alarm import Alarm
+from . import error_handling

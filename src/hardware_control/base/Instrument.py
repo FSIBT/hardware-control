@@ -11,6 +11,11 @@ from pyvisa.constants import StopBits
 from pymodbus.client import ModbusTcpClient as ModbusClient
 
 from .hooks import create_converter, call_hooks
+from .error_handling import (
+    handle_connection_error,
+    handle_communication_error,
+    log_error,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -479,6 +484,7 @@ class Instrument:
 
         self.device.close()
 
+    @handle_connection_error
     def try_connect(self) -> bool:
         """Checks if the instrument is in communication with the driver and tries to re-establish communication if it not.
 
@@ -590,6 +596,7 @@ class Instrument:
                 self.device.parity = parity
 
     @ensure_online
+    @handle_communication_error
     def write(self, command: str) -> None:
         """Write a command directly to the insturment."""
         if self._dummy:
@@ -651,6 +658,7 @@ class Instrument:
         return reply
 
     @ensure_online
+    @handle_communication_error
     def query(self, command: str, delay: float | None = None):
         """Query the insturment directly."""
         if self._dummy:

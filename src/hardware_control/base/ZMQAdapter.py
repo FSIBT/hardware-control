@@ -9,6 +9,7 @@ from .zmq_helper import (
     check_adapter_online,
     add_ZMQ_message_to_queue,
 )
+from .error_handling import safe_cleanup
 
 logger = logging.getLogger(__name__)
 
@@ -106,14 +107,5 @@ class ZMQAdapter(threading.Thread):
 
     def _cleanup_zmq_resources(self):
         """Clean up ZMQ sockets when the adapter thread stops."""
-        try:
-            self.zmq_subscriber.close()
-            logger.debug(f"Closed ZMQ subscriber for '{self.name}'")
-        except Exception as e:
-            logger.warning(f"Error closing ZMQ subscriber for '{self.name}': {e}")
-
-        try:
-            self.zmq_publisher.close()
-            logger.debug(f"Closed ZMQ publisher for '{self.name}'")
-        except Exception as e:
-            logger.warning(f"Error closing ZMQ publisher for '{self.name}': {e}")
+        safe_cleanup("ZMQ subscriber cleanup", self.zmq_subscriber.close, self.name)
+        safe_cleanup("ZMQ publisher cleanup", self.zmq_publisher.close, self.name)

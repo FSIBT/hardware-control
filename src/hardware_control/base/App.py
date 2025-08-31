@@ -18,6 +18,7 @@ from .ZMQAdapter import ZMQAdapter
 from .ZMQRemoteAdapter import ZMQRemoteAdapter
 from .hooks import call_hooks
 from .alarm_manager import AlarmManager
+from .error_handling import handle_file_operation
 
 logger = logging.getLogger(__name__)
 
@@ -743,6 +744,7 @@ class App(QApplication):
             if self.data_sets[key].autosave_enabled:
                 self.data_sets[key].autosave()
 
+    @handle_file_operation
     def save_settings(self, filename: str | Path) -> None:
         """Save all settings as JSON.
 
@@ -762,14 +764,9 @@ class App(QApplication):
                 if value is not None:
                     app_settings[instrument][parameter] = value
 
-        try:
-            with open(filename, "w") as file:
-                json.dump(app_settings, file)
-                logger.info(f"Saved all settigns to file '{filename}'")
-        except Exception:
-            logger.error(
-                f"Failed to write file '{filename}'. State not saved.", exc_info=True
-            )
+        with open(filename, "w") as file:
+            json.dump(app_settings, file)
+            logger.info(f"Saved all settigns to file '{filename}'")
 
     @ensure_instrument_exists
     def load_settings_hook(
