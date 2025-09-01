@@ -46,7 +46,7 @@ class Stradus(Instrument):
 
         self.add_parameter(
             parameter="CONTROL_MODE",
-            read_command=lambda: getattr(self.device, "control_mode")[0],
+            read_command=lambda: str(getattr(self.device, "control_mode")),
             dummy_return="",
         )
 
@@ -62,14 +62,14 @@ class Stradus(Instrument):
 
         self.add_parameter(
             parameter="CURRENT",
-            read_command=lambda: getattr(self.device, "current")[0],
-            set_command=lambda x: setattr(self.device, "current", x),
+            read_command=lambda: str(getattr(self.device, "current")),
+            set_command=lambda x: setattr(self.device, "current", float(x)),
             dummy_return=lambda: str(random.randint(0, 1000)),
         )
 
         self.add_parameter(
             parameter="ON_OFF",
-            read_command=lambda: getattr(self.device, "on_off")[0],
+            read_command=lambda: str(getattr(self.device, "on_off")),
             dummy_return="0",
         )
 
@@ -85,21 +85,21 @@ class Stradus(Instrument):
 
         self.add_parameter(
             parameter="POWER",
-            read_command=lambda: getattr(self.device, "power")[0],
-            set_command=lambda x: setattr(self.device, "power", x),
+            read_command=lambda: str(getattr(self.device, "power")),
+            set_command=lambda x: setattr(self.device, "power", float(x)),
             dummy_return="0",
         )
 
         self.add_parameter(
             parameter="PULSE_POWER",
-            read_command=lambda: getattr(self.device, "pulse_power")[0],
-            set_command=lambda x: setattr(self.device, "pulse_power", x),
+            read_command=lambda: str(getattr(self.device, "pulse_power")),
+            set_command=lambda x: setattr(self.device, "pulse_power", float(x)),
             dummy_return="0",
         )
 
         self.add_parameter(
             parameter="PULSED_POWER",
-            read_command=lambda: getattr(self.device, "pulsed_power")[0],
+            read_command=lambda: str(getattr(self.device, "pulsed_power")),
             dummy_return="0",
         )
 
@@ -115,13 +115,13 @@ class Stradus(Instrument):
 
         self.add_parameter(
             parameter="BASE_PLATE_TEMPERATURE",
-            read_command=lambda: getattr(self.device, base_plate_temperature)[0],
+            read_command=lambda: str(getattr(self.device, base_plate_temperature)),
             dummy_return="0",
         )
 
         self.add_parameter(
             parameter="COMPUTER_CONTROL",
-            read_command=lambda: getattr(self.device, computer_control)[0],
+            read_command=lambda: str(getattr(self.device, computer_control)),
             dummy_return="1",
         )
 
@@ -157,7 +157,7 @@ class Stradus(Instrument):
 
         self.add_parameter(
             parameter="LASER_HOURS",
-            read_command=lambda: getattr(self.device, laser_hours)[0],
+            read_command=lambda: str(getattr(self.device, laser_hours)),
             dummy_return="0",
         )
 
@@ -169,7 +169,7 @@ class Stradus(Instrument):
 
         self.add_parameter(
             parameter="LASER_POWER_SETTING",
-            read_command=lambda: getattr(self.device, laser_power_setting)[0],
+            read_command=lambda: str(getattr(self.device, laser_power_setting)),
             dummy_return="0",
         )
 
@@ -181,13 +181,13 @@ class Stradus(Instrument):
 
         self.add_parameter(
             parameter="LASER_WAVELENGTH",
-            read_command=lambda: getattr(self.device, laser_wavelength)[0],
+            read_command=lambda: str(getattr(self.device, laser_wavelength)),
             dummy_return="000",
         )
 
         self.add_parameter(
             parameter="LASER_MAX_POWER",
-            read_command=lambda: getattr(self.device, laser_max_power)[0],
+            read_command=lambda: str(getattr(self.device, laser_max_power)),
             dummy_return="0.0",
         )
 
@@ -218,6 +218,7 @@ class Stradus(Instrument):
             logger.info(
                 f"Connection to Vortran Status ID {self.laser_id} was successful"
             )
+            self._online = True
         else:
             logger.error(
                 f"Connection to Vortran Status ID {self.laser_id} was unsuccessful"
