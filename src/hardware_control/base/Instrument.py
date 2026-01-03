@@ -237,6 +237,12 @@ class Instrument:
             )
             return
 
+        if read_command is None and set_command is None:
+            logger.error(
+                f"Parameter '{parameter}' in instrument {self.name} must have at least one of read_command or set_command defined."
+            )
+            return
+
         if read_command is not None:
             if parameter in self.read_commands:
                 logger.error(
