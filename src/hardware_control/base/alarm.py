@@ -44,7 +44,7 @@ class Alarm:
         if is_limit_hit:
             if self._t0 == 0:
                 self._t0 = now
-            if self.duration > 0 and (now - self._t0) < self.duration_s:
+            if self.duration > 0 and (now - self._t0) < self.duration:
                 return False
         else:
             self._t0 = 0
