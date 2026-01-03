@@ -121,6 +121,9 @@ class App(QApplication):
         # keep track of datasets, so that we can autosave, etc.
         self.data_sets = {}
 
+        # keep track of virtual instruments (no hardware connection)
+        self.virtual_instruments = set()
+
         # keep a list of parameters that should be updated periodicaly
         # This is a set of (<instrument name>,<parameters>) combinations
         self.request_updates = set()
@@ -251,6 +254,97 @@ class App(QApplication):
             return
         self.data_sets[name] = dataset
 
+    def add_virtual_instrument(
+        self, instrument_name: str, parameters: list[str]
+    ) -> None:
+        """Add a virtual instrument with no hardware connection.
+
+        Virtual instruments can be used for data sources that don't have
+        physical hardware connections, such as:
+        - Web scraping data
+        - Calculated values
+        - External API data
+        - Manual data entry
+
+        Virtual instruments integrate with the rest of the framework:
+        - Work with HCLabel and other widgets
+        - Can be logged in Datasets
+        - Support post_read_hooks (via add_post_hook)
+        - Trigger alarms via alarm_manager
+
+        Parameters
+        ----------
+        instrument_name : str
+            Name of the virtual instrument
+        parameters : list[str]
+            List of parameter names to create
+        """
+        if instrument_name in self._data:
+            logger.error(
+                f"Instrument {instrument_name} already exists... cannot add virtual instrument"
+            )
+            return
+
+        self.virtual_instruments.add(instrument_name)
+        self._data[instrument_name] = {}
+
+        for param_name in parameters:
+            self._data[instrument_name][param_name] = {
+                "read_value": None,
+                "widgets": [],
+                "post_read_hooks": [],
+            }
+
+        logger.info(
+            f"Added virtual instrument '{instrument_name}' with parameters: {parameters}"
+        )
+
+    def update_virtual_instrument_parameter(
+        self, instrument: str, parameter: str, value: Any
+    ) -> None:
+        """Update a virtual instrument parameter value.
+
+        This will:
+        - Apply post_read_hooks
+        - Update the stored value
+        - Trigger alarm checks
+        - Update all registered widgets
+
+        Parameters
+        ----------
+        instrument : str
+            Virtual instrument name
+        parameter : str
+            Parameter name
+        value : Any
+            New value (will be converted to string after hooks)
+        """
+        # Validate it's a virtual instrument
+        if instrument not in self.virtual_instruments:
+            logger.error(f"{instrument} is not a virtual instrument")
+            return
+
+        if parameter not in self._data[instrument]:
+            logger.error(
+                f"Parameter {parameter} not found in virtual instrument {instrument}"
+            )
+            return
+
+        # Apply hooks
+        post_read_hooks = self._data[instrument][parameter]["post_read_hooks"]
+        value = call_hooks(post_read_hooks, str(value))
+
+        if value is not None:
+            # Update value
+            self._data[instrument][parameter]["read_value"] = value
+
+            # Check alarms
+            self.alarm_manager.process_update(instrument, parameter, value)
+
+            # Update widgets
+            for widget in self._data[instrument][parameter]["widgets"]:
+                widget.hc_update()
+
     def add_instrument(
         self,
         instrument: Instrument,
@@ -260,6 +354,13 @@ class App(QApplication):
         if instrument.name in self._data:
             logger.error(
                 f"Instrument {instrument.name} already exists... instruments names need to be unique"
+            )
+            return
+
+        # Prevent adding hardware instrument if name is used by virtual instrument
+        if instrument.name in self.virtual_instruments:
+            logger.error(
+                f"Cannot add hardware instrument {instrument.name} - name already used by virtual instrument"
             )
             return
 
