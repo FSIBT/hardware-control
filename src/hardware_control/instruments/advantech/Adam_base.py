@@ -82,29 +82,22 @@ class AdamBase(Instrument):
         except TimeoutError:
             self._online = False
 
-    def try_connect(self) -> None:
-        """Unique 'try_connect' function for using sockets with a different option (DGRAM instead of STREAM)."""
+    def establish_connection(self) -> bool:
+        """Establish DGRAM socket connection to ADAM module."""
         # Prevent trying to connect while the program is booting up
         if self.connection_tries < 1:
             self.connection_tries += 1
             return False
 
-        # Use normal hc.base.Instrument.py try_connect() when in dummy mode
-        if self._dummy:
-            super().try_connect()
-
-        # First Check current state
-        if not self._online:  # If not online, try to connect
-            try:
-                self.device = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-                self.device.settimeout(0.950)
-                self.device.connect(self.addr)
-                logger.debug(
-                    f"Opened socket connection to {self.name} at"
-                    f" {self.ip_addr}:{self.port_no}"
-                )
-                self._online = True
-            except Exception as e:
-                logger.error(f"During ADAM try_connect: {e}", exc_info=True)
-                self._online = False
-                return self._online
+        try:
+            self.device = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self.device.settimeout(0.950)
+            self.device.connect(self.addr)
+            logger.debug(
+                f"Opened DGRAM socket connection to {self.name} at "
+                f"{self.ip_addr}:{self.port_no}"
+            )
+            return True
+        except Exception as e:
+            logger.error(f"ADAM connection failed: {e}", exc_info=True)
+            return False

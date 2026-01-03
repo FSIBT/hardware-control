@@ -267,24 +267,8 @@ class Picoscope(Instrument):
         self.ps.runBlock(pretrig=self.offset_position / self.timebase)
         self.ps.waitReady()
 
-    def try_connect(self):
-        """Unique picoscope ‘try_connect’ function."""
-
-        if self._dummy:
-            if self._online:
-                return True
-
-            logger.debug(
-                f"{self.name}: creating dummy connection to {self.connection_addr}"
-            )
-            self._online = True
-            return True
-
-        if self._online:
-            return True
-
-        logger.debug(f"{self.name}: trying to connect")
-
+    def establish_connection(self):
+        """Establish connection to Picoscope based on series."""
         try:
             if self.pico_series == "2000a":
                 self.ps = PS2000a()
@@ -292,22 +276,18 @@ class Picoscope(Instrument):
                 self.ps = PS5000a()
             elif self.pico_series == "6000":
                 self.ps = PS6000()
-            self._online = True
+            else:
+                logger.error(
+                    f"Unknown picoscope series: {self.pico_series}. "
+                    f"Expected '2000a', '5000a', or '6000'."
+                )
+                return False
+            return True
         except Exception as e:
-            self._online = False
-            logger.debug(
-                f"\t({self.name}) ERROR connecting with picoscope: {e}.", exc_info=True
+            logger.error(
+                f"({self.name}) ERROR connecting with picoscope: {e}.", exc_info=True
             )
-            logger.debug(f"{self.name} is offline")
-        else:
-            self._online = True
-
-        # If connection purportedly successful, verify connection
-        if self._online:
-            if not self._check_connection():
-                self._online = False
-
-        return self._online
+            return False
 
     def _check_connection(self):
         """TODO: could use ps.ping() to test"""

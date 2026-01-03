@@ -203,25 +203,22 @@ class Stradus(Instrument):
             dummy_return="000",
         )
 
-    def try_connect(self):
-        if self._dummy:
-            return True
-
+    def establish_connection(self):
+        """Establish connection to Vortran Stradus laser via USB."""
         self.device = vortran.get_lasers()[self.laser_id]
 
         if self.device is None:
-            raise ValueError(f"Laser at ID {self.laser_id} is not availible")
+            raise ValueError(f"Laser at ID {self.laser_id} is not available")
 
         connection_result = self.device.open_connection()
 
-        if connection_result == True:
+        if connection_result:
             logger.info(
-                f"Connection to Vortran Status ID {self.laser_id} was successful"
+                f"Connection to Vortran Stradus ID {self.laser_id} was successful"
             )
-            self._online = True
         else:
             logger.error(
-                f"Connection to Vortran Status ID {self.laser_id} was unsuccessful"
+                f"Connection to Vortran Stradus ID {self.laser_id} was unsuccessful"
             )
 
         return connection_result

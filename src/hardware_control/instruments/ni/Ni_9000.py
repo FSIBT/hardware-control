@@ -196,25 +196,28 @@ class Ni_9000(Instrument):
 
         return _set_term_config_value
 
-    def try_connect(self):
-        if not self._dummy and os.name == "nt":
+    def establish_connection(self):
+        """Establish connection to NI-DAQ device."""
+        # On Windows, verify the DAQ is accessible
+        if os.name == "nt":
             try:
                 with nidaqmx.Task() as task:
                     if task.name:
-                        self._online = True
+                        return True
+                return False
             except nidaqmx.errors.DaqError:
-                self._online = False
                 logger.error(
-                    "Connection failed due to DaqError."
-                    " This could mean the NIDAQ must be reserved"
-                    " in NI-Max Application."
+                    "Connection failed due to DaqError. "
+                    "This could mean the NIDAQ must be reserved "
+                    "in NI-Max Application."
                 )
+                return False
             except Exception:
-                self._online = False
-                logger.error("Connect failed.", exc_info=True)
+                logger.error("Connection failed.", exc_info=True)
+                return False
         else:
-            self._online = True
-        return self._online
+            # Non-Windows: assume connection works
+            return True
 
     def _analog_write(self, channel_string, value):
         with nidaqmx.Task() as task:

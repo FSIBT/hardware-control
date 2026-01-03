@@ -121,15 +121,10 @@ class TPI(Instrument):
         self.device.end_output = False
         self.delay = 0.01
 
-    def try_connect(self) -> bool:
-        """Overwrite try_connect to always call config when getting online."""
-
-        ret = super().try_connect()
-        if self._online and not self._dummy:
-            self.config()
-            self.command("USER_CONTROL")
-
-        return ret
+    def on_connect(self):
+        """Initialize TPI after connection - configure and enable user control."""
+        self.config()
+        self.command("USER_CONTROL")
 
     def read_package(self):
         """Read a full package from the instrument.
