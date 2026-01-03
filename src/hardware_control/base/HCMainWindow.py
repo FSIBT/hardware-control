@@ -91,7 +91,7 @@ class HCMainWindow(QMainWindow):
             dlg = QFileDialog()
             name_tuple = dlg.getSaveFileName()
             filename = name_tuple[0]
-            if not filename:  # If cancel bttonw as hit, name will be null
+            if not filename:  # If cancel button was hit, name will be null
                 return
 
             self.app.save_settings(filename)

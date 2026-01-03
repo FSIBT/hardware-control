@@ -420,7 +420,7 @@ class Instrument:
                 self.write(self.set_commands[parameter].format(value))
             return
         logger.error(
-            f"When calling 'Instrumentset_value': '{parameter}' not available in instrument '{self.name}'"
+            f"When calling 'Instrument.set_value': '{parameter}' not available in instrument '{self.name}'"
         )
 
     def __setitem__(self, parameter, value) -> None:

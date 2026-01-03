@@ -375,7 +375,7 @@ class App(QApplication):
                 assert inst_name == name
 
                 if name not in self._data:
-                    logger.error(f"{name} not available in data modell")
+                    logger.error(f"{name} not available in data model")
                     return
                 if parameter not in self._data[name]:
                     logger.error(f"{parameter} not available for instrument {name}")
@@ -766,7 +766,7 @@ class App(QApplication):
 
         with open(filename, "w") as file:
             json.dump(app_settings, file)
-            logger.info(f"Saved all settigns to file '{filename}'")
+            logger.info(f"Saved all settings to file '{filename}'")
 
     @ensure_instrument_exists
     def load_settings_hook(
