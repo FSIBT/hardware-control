@@ -49,7 +49,7 @@ class HCMainWindow(QMainWindow):
     def ctrl_c(self, signum, frame):
         "Close the app via Ctrl-C."
         self.close()
-        exit(0)
+        sys.exit(0)
 
     def close(self):
         """Close the app."""
