@@ -168,7 +168,7 @@ class App(QApplication):
                 except Exception as e:
                     logger.warning(f"Error stopping remote adapter '{t.name}': {e}")
 
-    def handle_request(self):
+    def handle_request(self) -> None:
         """Handle requests from other programs.
 
         This provides an interface for other programs to get

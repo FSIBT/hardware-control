@@ -326,7 +326,7 @@ class Instrument:
         inverse_lookuptable = {b: a for a, b in lookuptable.items()}
         self.add_post_hook(parameter, create_converter(inverse_lookuptable))
 
-    def list_parameters(self) -> list[str]:
+    def list_parameters(self) -> tuple[list[str], list[str], list[str]]:
         """List all instrument commands, parameter read_commands, and parameter set_commands.
 
         This is mostly used so that the main app can know what commands are available.

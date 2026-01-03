@@ -3,6 +3,7 @@
 import json
 import logging
 import time
+from typing import Any
 
 import zmq
 
@@ -46,7 +47,7 @@ class ZMQSingleInstrument:
         communication with a remote app. Should be in "<ipaddress>:<portnumber>" format
     """
 
-    def __init__(self, instrument: Instrument, address: str):
+    def __init__(self, instrument: Instrument, address: str) -> None:
         self.instrument = instrument
         self.name = instrument.name
         self.online = False
@@ -155,7 +156,7 @@ class ZMQSingleInstrument:
 
             self._cleanup_zmq_resources()
 
-    def _cleanup_zmq_resources(self):
+    def _cleanup_zmq_resources(self) -> None:
         """Clean up ZMQ sockets and context for the single instrument."""
         try:
             if hasattr(self, "zmq_subscriber"):
@@ -207,7 +208,7 @@ class ZMQRemoteAdapter:
        Unsubscribe the remote end and close the connection
     """
 
-    def __init__(self, name, address, context, publisher):
+    def __init__(self, name: str, address: str, context: Any, publisher: str) -> None:
         self.name = name
 
         ipaddress, port = address.split(":")
@@ -227,7 +228,7 @@ class ZMQRemoteAdapter:
                 f"ZMQ remote connected to the wrong instrument. Expected {self.name}, but got {name}."
             )
 
-    def list_parameters(self):
+    def list_parameters(self) -> tuple[list[str], list[str], list[str]]:
         """Get a list of all available parameters from the remote instrument.
 
         Needed so that the instrument can be registered with the `app`
@@ -239,7 +240,7 @@ class ZMQRemoteAdapter:
         read_set_commands = json.loads(message)
         return read_set_commands
 
-    def join(self):
+    def join(self) -> None:
         """Duck type to make this class behave similar to a Thread.
 
         At the end of the app, all instruments running in separate

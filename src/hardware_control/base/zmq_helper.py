@@ -1,11 +1,12 @@
 """Functions that are commonly used for ZMQ functionality; these are primarily used in `ZMQAdapter` and `ZMQRemoteAdapter`."""
 
 import logging
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 
-def check_adapter_online(adapter) -> None:
+def check_adapter_online(adapter: Any) -> None:
     """Report change in online status to app."""
     if adapter.instrument._online != adapter.online:
         adapter.online = adapter.instrument._online
@@ -14,7 +15,7 @@ def check_adapter_online(adapter) -> None:
         )
 
 
-def add_ZMQ_message_to_queue(adapter, msg: str) -> None:
+def add_ZMQ_message_to_queue(adapter: Any, msg: str) -> None:
     """Sort the messages into different queues that have different priorities.
 
     Since instruments can take a while to respond to a request, it can
@@ -75,7 +76,7 @@ def add_ZMQ_message_to_queue(adapter, msg: str) -> None:
     )
 
 
-def handle_ZMQ_message_from_app(adapter) -> None:
+def handle_ZMQ_message_from_app(adapter: Any) -> None:
     """Parse and handle a ZMQ messsage from the main app.
 
     The function first parses the message and then, depending on the message's content,

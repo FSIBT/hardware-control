@@ -4,6 +4,7 @@ import logging
 import os
 import signal
 from sys import platform
+from typing import Any
 
 from PyQt6.QtWidgets import (
     QMainWindow,
@@ -46,16 +47,16 @@ class HCMainWindow(QMainWindow):
         self.app.aboutToQuit.connect(self.close)
         signal.signal(signal.SIGINT, self.ctrl_c)
 
-    def ctrl_c(self, signum, frame):
+    def ctrl_c(self, signum: int, frame: Any) -> None:
         "Close the app via Ctrl-C."
         self.close()
         sys.exit(0)
 
-    def close(self):
+    def close(self) -> None:
         """Close the app."""
         self.app.close()
 
-    def add_menu(self):
+    def add_menu(self) -> None:
         """Add a File menu with an option to exit and save all datasets."""
 
         # self.menuBar() is a function in QMainWindow
@@ -83,7 +84,7 @@ class HCMainWindow(QMainWindow):
             self.close_act.setShortcut("Ctrl+Q")
         self.file_menu.addAction(self.close_act)
 
-    def _process_file_menu(self, q):
+    def _process_file_menu(self, q: QAction) -> None:
         if q.text() == "Save Instrument States":
             filename = ""
 
@@ -105,7 +106,7 @@ class HCMainWindow(QMainWindow):
         else:
             logger.error("function not supported")
 
-    def save_all(self):
+    def save_all(self) -> None:
         """Save all datasets to a file, specified by a file dialog"""
 
         filename = ""
@@ -114,7 +115,7 @@ class HCMainWindow(QMainWindow):
         dlg = QFileDialog()
         name_tuple = dlg.getSaveFileName()
         filename = name_tuple[0]
-        if not filename:  # If cancel bttonw as hit, name will be null
+        if not filename:  # If cancel button was hit, name will be null
             return
 
         all_data = {}

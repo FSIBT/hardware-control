@@ -94,7 +94,7 @@ def create_converter(lookuptable: dict) -> Callable:
     return converter
 
 
-def format_bool(value):
+def format_bool(value: str) -> str:
     """Convert True/False string to 1/0."""
     return str(int(value == "True"))
 
@@ -111,7 +111,7 @@ def format_float(format_type=".17", as_string=True):
     return converter
 
 
-def format_int(value):
+def format_int(value: str) -> str:
     """Convert value to int."""
     return f"{int(float(value))}"
 
@@ -129,7 +129,7 @@ def last_n_values_converter(num_of_values: int) -> Callable:
     return converter
 
 
-def make_negative(value):
+def make_negative(value: str) -> str:
     """Convert to float and multiple by -1."""
     return f"{-1 * float(value)}"
 
@@ -169,7 +169,7 @@ def substring_hook(min_char: int = None, max_char: int = None):
     return converter
 
 
-def uppercase(value):
+def uppercase(value: str) -> str:
     """Convert to uppercase."""
     return value.upper()
 
@@ -281,7 +281,7 @@ class Ramp(QObject):
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.do_step)
 
-    def do_step(self):
+    def do_step(self) -> None:
         """Execute one ramping step.
 
         Calculated the next value in the ramping cycle and set it via the app.

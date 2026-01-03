@@ -28,7 +28,7 @@ class AlarmManager(QObject):
     alarm_cleared = pyqtSignal(Alarm)
     """Emitted when an alarm has been cleared."""
 
-    def __init__(self, app):
+    def __init__(self, app: Any) -> None:
         super().__init__()
         self.app = app
         self.alarms: list[Alarm] = []
@@ -58,7 +58,7 @@ class AlarmManager(QObject):
         except ValueError:
             logger.debug(f"Alarm {alarm} not in active list - already removed")
 
-    def clear(self, alarm):
+    def clear(self, alarm: Alarm) -> None:
         """Clear an alarm.
 
         If a sounds was played, stop playing and clean up.
@@ -88,7 +88,7 @@ class AlarmManager(QObject):
             alarm.action(alarm)
         self.alarm_triggered.emit(alarm)
 
-    def play_sound(self, alarm: Alarm, filename: Path):
+    def play_sound(self, alarm: Alarm, filename: Path) -> None:
         """Play a sound.
 
         We probably should add more error checking here, e.g., if this

@@ -1,6 +1,7 @@
 import logging
 import threading
 import time
+from typing import Any
 
 import zmq
 
@@ -29,7 +30,9 @@ class ZMQAdapter(threading.Thread):
     CONNECTION_CHECK_INTERVAL = 50  # Check connection every N loop iterations
     POLL_TIMEOUT_MS = 100  # ZMQ poll timeout in milliseconds
 
-    def __init__(self, instrument, stopevent, context, publisher):
+    def __init__(
+        self, instrument: Any, stopevent: Any, context: Any, publisher: str
+    ) -> None:
         super().__init__(name=instrument.name)
         self.instrument = instrument
         self.stop = stopevent
@@ -65,7 +68,7 @@ class ZMQAdapter(threading.Thread):
         ip, _ = ip_and_port.split(":")
         return ip
 
-    def run(self):
+    def run(self) -> None:
         """Run custom event loop.
 
         Listens for ZMQ requests from the main app and if the
@@ -109,7 +112,7 @@ class ZMQAdapter(threading.Thread):
 
         self._cleanup_zmq_resources()
 
-    def _cleanup_zmq_resources(self):
+    def _cleanup_zmq_resources(self) -> None:
         """Clean up ZMQ sockets when the adapter thread stops."""
         safe_cleanup("ZMQ subscriber cleanup", self.zmq_subscriber.close, self.name)
         safe_cleanup("ZMQ publisher cleanup", self.zmq_publisher.close, self.name)
