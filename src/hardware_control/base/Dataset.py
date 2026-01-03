@@ -268,22 +268,24 @@ class Dataset(QObject):
                 self.autosave_next_row += 1
 
     def header_get_instruments(self) -> str:
-        """Create a string of all values used in the dataset.
+        """Create a string of all column names used in the dataset.
 
         Use the channel alias if available.
         """
         names = []
 
-        for instrument, parameter, plot_ax in self.instruments:
-            name = f"{instrument}:{parameter}"
-            if name in self.channel_names:
-                names.append(self.channel_names[name])
+        # Add all columns in the same order as they appear in self.data
+        for key in self.data.keys():
+            if key == "time:time":
+                names.append("Time[s]")
+            elif key in self.channel_names:
+                names.append(self.channel_names[key])
             else:
+                # Extract just the parameter name from "instrument:parameter"
+                _, parameter = key.split(":", 1)
                 names.append(parameter)
 
-        result = "Time[s] "
-        result += " ".join(names)
-        return result
+        return " ".join(names)
 
     def save_json(self, filename: Path) -> None:
         """Save data as a json file."""
