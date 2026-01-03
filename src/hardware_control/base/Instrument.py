@@ -5,6 +5,7 @@ import logging
 import socket
 import time
 from typing import Any
+import warnings
 
 import pyvisa
 from pyvisa.constants import StopBits
@@ -88,6 +89,29 @@ class Instrument:
     """Class variable that can be used to specify a socket connection."""
     MODBUS = "modbus"
     """Class variable that can be used to specify a modbus connection."""
+
+    def __init_subclass__(cls, **kwargs):
+        """Called when a subclass is created. Warns if try_connect is overridden."""
+        super().__init_subclass__(**kwargs)
+
+        # Check if try_connect was overridden in this class
+        if "try_connect" in cls.__dict__:
+            warnings.warn(
+                f"\n{cls.__module__}.{cls.__name__} overrides try_connect() which is deprecated.\n"
+                f"Please override establish_connection() and cleanup_connection() instead.\n"
+                f"\n"
+                f"Quick migration:\n"
+                f"  1. Rename your try_connect() to establish_connection()\n"
+                f"  2. Remove self._online checks and setting (now handled automatically)\n"
+                f"  3. Remove connection state management (now handled automatically)\n"
+                f"  4. Just focus on creating self.device and return True/False\n"
+                f"  5. Add cleanup_connection() if you need custom cleanup logic\n"
+                f"  6. Add on_connect() if you need to send initialization commands after connection\n"
+                f"\n"
+                f"The old try_connect() will continue to work for now but will be removed in a future version.\n",
+                DeprecationWarning,
+                stacklevel=2,
+            )
 
     def __init__(
         self,
@@ -490,26 +514,46 @@ class Instrument:
 
         self.device.close()
 
-    @handle_connection_error
-    def try_connect(self) -> bool:
-        """Checks if the instrument is in communication with the driver and tries to re-establish communication if it not.
+    def cleanup_connection(self) -> None:
+        """Clean up connection resources.
 
-        Certain instruments require that this function be overwritten.
+        Called when connection is lost or before reconnecting.
+        Override this for custom cleanup logic (e.g., custom device types).
+
+        Default implementation calls self.device.close() and sets device to None.
         """
-        if self._dummy:
-            if self._online:
-                return True
-            logger.debug(f"{self.name}: creating dummy connection.")
-            self._online = True
-            return True
+        if self.device is not None:
+            try:
+                self.device.close()
+                logger.debug(f"{self.name}: closed device connection")
+            except Exception as e:
+                logger.debug(f"{self.name}: error closing device: {e}")
+            self.device = None
 
-        if self._online:
-            if self.check_connection():
-                return True
-            self._online = False
+    def establish_connection(self) -> bool:
+        """Establish connection to the instrument.
 
-        logger.debug(f"{self.name}: trying to connect")
+        Override this method for custom connection logic.
 
+        This method should:
+        - Create self.device
+        - Configure the connection (termination, timeout, etc.)
+        - Return True on success, False on failure
+
+        This method does NOT need to:
+        - Check if already online (handled by try_connect)
+        - Set self._online (handled by try_connect)
+        - Close old connections (handled by cleanup_connection)
+        - Send initialization commands (use on_connect for that)
+
+        Note: always call try_connect to establish a connection to the
+        instrument and do not call this function directly.
+
+        Returns
+        -------
+        bool
+            True if connection established successfully, False otherwise
+        """
         if self.connection_type == Instrument.VISA:
             try:
                 self.rm = pyvisa.ResourceManager(self.pyvisa_backend)
@@ -529,54 +573,165 @@ class Instrument:
                 logger.debug(
                     f"opened pyvisa connection to {self.name} at {self.connection_addr}"
                 )
+                return True
             except Exception as e:
-                self._online = False
                 logger.error(
                     f"\t({self.name}) received the following error connecting with visa: {e}."
                 )
-                logger.debug(f"{self.name} is offline")
-            else:
-                self._online = True
+                return False
+
         elif self.connection_type == Instrument.SOCKET:
             try:
                 self.device = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.device.settimeout(2)
                 self.device.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 0)
                 self.device.connect((self.ip_addr, int(self.port_no)))
-
                 logger.debug(
                     f"opened socket connection to {self.name} at {self.ip_addr}:{self.port_no}"
                 )
+                return True
             except Exception as e:
-                self._online = False
                 logger.error(
                     f"\t({self.name}) received the following error connecting with sockets: {e}."
                 )
-                logger.debug(f"{self.name} is offline")
-            else:
-                self._online = True
+                return False
+
         elif self.connection_type == Instrument.MODBUS:
             try:
                 self.device = ModbusClient(host=self.connection_addr)
                 if self.device.connect():
-                    self._online = True
                     logger.debug(
                         f"opened modbus connection to {self.name} at {self.connection_addr}"
                     )
+                    return True
+                return False
             except Exception as e:
-                self._online = False
                 logger.error(
                     f"\t({self.name}) received the following error connecting with modbus: {e}."
                 )
-                logger.debug(f"{self.name} is offline")
+                return False
 
-        time.sleep(self.startup_delay)
-        # If connection purportedly successful, verify connection
+        return False
+
+    def on_connect(self) -> None:
+        """Called after successful connection and verification.
+
+        Override this method to send initialization commands to the instrument
+        after the connection has been established and verified.
+
+        This is called AFTER establish_connection() succeeds and AFTER
+        check_connection() verifies the connection works, but BEFORE
+        try_connect() returns True.
+
+        Use this to:
+        - Send initialization commands to the instrument
+        - Configure instrument settings
+        - Query instrument state
+        - Set up instrument modes
+
+        This method does NOT need to:
+        - Create self.device (done in establish_connection)
+        - Set self._online (handled by try_connect)
+        - Handle connection errors (handled by try_connect)
+
+        Example
+        -------
+        >>> def on_connect(self):
+        >>> # Configure laser after connection
+        >>>     self.device.enable_power_control_mode()
+        >>>     self.device.set_startup_mode("safe")
+        """
+        pass  # Default: do nothing
+
+    @handle_connection_error
+    def try_connect(self) -> bool:
+        """Try to connect to the instrument using the template method pattern.
+
+        DEPRECATED: Do not override this method. Override establish_connection()
+        and cleanup_connection() instead.
+
+        This method manages the connection lifecycle:
+        - Handles dummy mode
+        - Checks if already online and verifies connection
+        - Cleans up lost connections
+        - Calls establish_connection() to create new connections
+        - Verifies successful connections
+        - Calls on_connect() after successful connection
+
+        Returns
+        -------
+        bool
+            True if instrument is online, False otherwise
+        """
+        # Check if this method has been overridden in a subclass
+        # If so, call the overridden version for backward compatibility
+        if type(self).try_connect is not Instrument.try_connect:
+            # Get the actual method from the subclass (may or may not be decorated)
+            subclass_method = type(self).try_connect
+            # Try to get the unwrapped version to avoid double error handling
+            # If not available (not decorated), just call it directly
+            unwrapped = getattr(subclass_method, "__wrapped__", subclass_method)
+            return unwrapped(self)
+
+        # === New template method implementation ===
+
+        # Handle dummy mode
+        if self._dummy:
+            if self._online:
+                return True
+            logger.debug(f"{self.name}: creating dummy connection.")
+            self._online = True
+            return True
+
+        # Already online? Verify connection still works
         if self._online:
-            if not self.check_connection():
-                self._online = False
+            if self.check_connection():
+                return True
+            # Connection lost - cleanup before retrying
+            logger.debug(f"{self.name}: connection lost, cleaning up")
+            self.cleanup_connection()
+            self._online = False
 
-        return self._online
+        # Try to establish new connection
+        logger.debug(f"{self.name}: trying to connect")
+
+        try:
+            success = self.establish_connection()
+        except Exception as e:
+            logger.error(f"{self.name}: connection attempt failed: {e}")
+            self.cleanup_connection()
+            self._online = False
+            return False
+
+        if not success:
+            logger.debug(f"{self.name} is offline")
+            self.cleanup_connection()
+            self._online = False
+            return False
+
+        # Connection established, set online flag
+        self._online = True
+
+        # Wait for instrument to be ready
+        time.sleep(self.startup_delay)
+
+        # Verify connection actually works
+        if not self.check_connection():
+            logger.debug(f"{self.name}: connection check failed after establishing")
+            self.cleanup_connection()
+            self._online = False
+            return False
+
+        # Call post-connection hook for initialization
+        try:
+            self.on_connect()
+        except Exception as e:
+            logger.error(f"{self.name}: on_connect() failed: {e}")
+            self.cleanup_connection()
+            self._online = False
+            return False
+
+        return True
 
     def config_serial(
         self,
