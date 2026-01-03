@@ -25,6 +25,10 @@ class ZMQAdapter(threading.Thread):
     and therefore hosts the custom event loop.
     """
 
+    # Class constants for event loop timing
+    CONNECTION_CHECK_INTERVAL = 50  # Check connection every N loop iterations
+    POLL_TIMEOUT_MS = 100  # ZMQ poll timeout in milliseconds
+
     def __init__(self, instrument, stopevent, context, publisher):
         super().__init__(name=instrument.name)
         self.instrument = instrument
@@ -75,13 +79,13 @@ class ZMQAdapter(threading.Thread):
         while not self.stop.is_set():
             i += 1
             # check if we are online and report status back to app
-            if i % 50 == 0:
+            if i % self.CONNECTION_CHECK_INTERVAL == 0:
                 self.instrument.try_connect()
                 check_adapter_online(self)
 
             # get all ZMQ messages using poller
             # Poll with short timeout to allow checking stop event regularly
-            socks = dict(poller.poll(timeout=100))  # 100ms timeout
+            socks = dict(poller.poll(timeout=self.POLL_TIMEOUT_MS))
             if self.zmq_subscriber in socks:
                 # Get all available messages
                 get_messages = True
