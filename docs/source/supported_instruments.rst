@@ -193,3 +193,19 @@ provide a pull request.
      * - `TDKL GenH <https://www.us.lambda.tdk.com/products/programmable-power/genesys.html>`_
        - .. image:: /images/TDKLGenH.jpg
            :height: 100
+
+
+- Lasers:
+
+  There is currently no dedicated control widget for lasers.
+
+  .. list-table::
+     :widths: 50 50
+     :header-rows: 0
+     :align: left
+
+     * - Included instruments:
+       -
+     * - `Vortran Stradus <https://vortranlaser.com/product/stradus-laser-diode-modules/stradus-laser-diode-modules-blue/>`_ (USB)
+       - .. image:: /images/Vortran_laser.jpg
+	   :height: 100

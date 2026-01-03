@@ -8,4 +8,6 @@ How To
    adding_commands.md
    adding_user_interfaces.md
    adding_instruments.md
+   virtual_instruments.md
+   migration_guide.md
 

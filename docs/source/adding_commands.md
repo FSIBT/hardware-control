@@ -46,3 +46,104 @@ post hook to translate the display voltage to the scaled control voltage.
 Hooks can also be used for validation, such as checking that a value is within a
 specified range. If a hook returns `None`, the parameter value will not be set/returned,
 or the command will not be sent.
+
+### 4. Triggering Actions When Instruments Come Online
+
+*New in version 4.0.0*
+
+Every instrument has a special read-only parameter called `ONLINE` that indicates
+whether the instrument is connected and communicating. You can attach a `post_read_hooks`
+to this parameter to trigger custom actions whenever an instrument's online status changes.
+
+This is useful for:
+- Sending initialization commands when an instrument connects
+- Updating UI elements based on connection status
+- Logging connection events
+- Re-configuring settings after reconnection
+
+**Example: Call a function when instrument comes online**
+
+```python
+class Demo(hc.HCMainWindow):
+    def __init__(self, dummy):
+        super().__init__(dummy=dummy)
+
+        # Add instrument
+        power_supply = hc.instruments.Keysight_36300("ps1", "192.168.0.10")
+        self.app.add_instrument(power_supply)
+
+        # Add hook to ONLINE parameter
+        self.app.add_hook(
+            "ps1",
+            "ONLINE",
+            "post_read_hooks",
+            self.on_instrument_online
+        )
+
+    def on_instrument_online(self, online_status):
+        """Called whenever the online status changes."""
+        # online_status is "True" or "False" (as string)
+        if online_status == "True":
+            print("Power supply is now online!")
+            # You could send initialization commands here
+            # Or update GUI elements
+            # Or enable/disable controls
+        else:
+            print("Power supply went offline")
+
+        # IMPORTANT: Always return the value to allow other hooks
+        # and widgets to process it
+        return online_status
+```
+
+**Important Notes:**
+
+- The `ONLINE` parameter is updated automatically by the framework during connection attempts
+- Your hook function receives the online status as a string: `"True"` or `"False"`
+- **Always return the value** from your hook to allow the framework to continue processing
+- The hook is called every time the parameter is read, which happens during connection checks
+- For one-time initialization, you may want to track whether you've already initialized:
+
+```python
+def __init__(self, dummy):
+    super().__init__(dummy=dummy)
+    self.initialized = False
+    # ... rest of init ...
+
+def on_instrument_online(self, online_status):
+    """Only run initialization once when first coming online."""
+    if online_status == "True" and not self.initialized:
+        print("First time online - running initialization")
+        # Send initialization commands
+        self.app.set_instrument_parameter("ps1", "VOLTAGE", 5.0)
+        self.initialized = True
+    return online_status
+```
+
+**Alternative: Using `on_connect()` in Custom Drivers**
+
+If you're writing a custom instrument driver and need to send commands immediately
+after connection, it's better to override the `on_connect()` method in your driver
+class rather than using hooks:
+
+```python
+class MyInstrument(Instrument):
+    def on_connect(self):
+        """Called automatically after connection is established."""
+        # Send initialization commands here
+        self.device.clear_buffer()
+        self.device.set_mode("safe")
+```
+
+See the [Adding Instruments](adding_instruments.md) guide for more details on
+the `on_connect()` method.
+
+**Complete Example**
+
+See `examples/online_hook.py` for a complete working example that demonstrates:
+- Tracking connection/disconnection events
+- Logging timestamps when instruments come online
+- Displaying connection history
+- Updating UI elements based on online status
+
+Note: This example requires a real instrument (does not work in dummy mode).

@@ -13,7 +13,7 @@ run, we normally only deal with a moderate amount of instruments
 this to hundreds of instruments your mileage may vary ;)
 
 The package has been developed to replace LabVIEW for instrument
-control in the [Ion Beam Technology](https://ibt.lbl.gov) group at
+control in the [Ion Beam Technology](https://atap.lbl.gov) group at
 [Lawrence Berkeley National Laboratory](https://lbl.gov).
 
 The main goal is to provide easily re-usable user interfaces to

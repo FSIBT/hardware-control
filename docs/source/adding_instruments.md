@@ -9,6 +9,9 @@ instrument can be relatively straight forward. This step-by-step guide
 is designed to help walk you through the process of creating a new
 driver.
 
+**Note:** If you're migrating from version 3.x, see the [Migration Guide](migration_guide.md)
+for details on the new connection API introduced in version 4.0.0.
+
 ### 1. Start With a Template
 
 Start by duplicating an existing driver for the same type of
@@ -70,7 +73,83 @@ implement the commands and parameters you want to use. There is no
 need to implement every command available to the instrument or the
 widget (although this would be nice).
 
-### 3. Interfacing with the Instrument through Hardware-Control
+**Important:** When using `add_parameter()`, you must provide at least one of
+`read_command` or `set_command`. The base class validates this and will log
+an error if neither is provided.
+
+### 3. Implement Connection Methods (If Needed)
+
+*Changed in version 4.0.0*
+
+Most instruments use the standard connection types (VISA, socket, modbus) and
+don't need custom connection code. However, if your instrument requires special
+connection handling (e.g., USB libraries, custom protocols), you should override
+the connection methods.
+
+**Important:** Do NOT override `try_connect()`. It uses the template method pattern
+and manages connection state automatically. Override these methods instead:
+
+#### `establish_connection()`
+
+Override this to create your device connection. This is called by the base class
+when the instrument is not yet online.
+
+```python
+def establish_connection(self):
+    """Establish connection to the instrument.
+
+    This method should:
+    - Create self.device
+    - Configure the connection
+    - Return True on success, False on failure
+
+    This method does NOT need to:
+    - Check if already online (handled by base class)
+    - Set self._online (handled by base class)
+    - Close old connections (handled by cleanup_connection)
+    """
+    # Example: USB device using custom library
+    self.device = my_usb_library.connect(self.device_id)
+    return True  # or False if failed
+```
+
+#### `cleanup_connection()` (Optional)
+
+Override this only if your device needs custom cleanup beyond calling `.close()`.
+
+```python
+def cleanup_connection(self):
+    """Clean up connection resources."""
+    if self.device is not None:
+        self.device.shutdown()  # Custom cleanup
+        self.device.release_hardware()
+        self.device = None
+```
+
+#### `on_connect()` (Optional)
+
+Override this to send initialization commands after the connection is established
+and verified.
+
+```python
+def on_connect(self):
+    """Send initialization commands after connection."""
+    # Called AFTER establish_connection() succeeds
+    # and AFTER check_connection() verifies it works
+    self.device.clear_buffer()
+    self.device.enable_user_mode()
+```
+
+**Benefits of the new API:**
+- Automatic resource cleanup (no leaks)
+- Automatic state management
+- Automatic dummy mode handling
+- Simpler, more focused code
+
+See the [Migration Guide](migration_guide.md) for detailed examples and the
+rationale behind this change.
+
+### 4. Interfacing with the Instrument through Hardware-Control
 
 To trigger a driver command, use `instance.command(<HC name of the
 command>)`. You can read parameters with `instance[<HC name of

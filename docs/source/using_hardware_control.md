@@ -4,6 +4,8 @@ Hardware Control supplies a collection of widgets and instrument drivers for con
 instruments. This guide will walk you through setting up a simple control
 program using Hardware Control.
 
+**Requirements:** Python 3.11 or higher (Python 3.14 is supported)
+
 ### 1. Import Hardware Control
 
 Once installed (see installation instructions if you need help), you can import
@@ -157,6 +159,35 @@ A complete sample program could look like this:
 Note that we enforce _dummy_ mode in this program, which enables you
 to run and test the program without having the instrument hardware
 actually connected to your computer.
+
+### 7. Virtual Instruments (Optional)
+
+*New in version 4.0.0*
+
+For data sources that don't have physical hardware (web APIs, calculations,
+user input), you can create virtual instruments:
+
+```python
+# Create a virtual instrument for weather data
+app.add_virtual_instrument("Weather", ["temperature", "humidity"])
+
+# Update values (e.g., from a web API)
+app.update_virtual_instrument_parameter("Weather", "temperature", 25.3)
+app.update_virtual_instrument_parameter("Weather", "humidity", 65)
+
+# Use with widgets just like hardware instruments
+weather_label = hc.gui.widgets.HCLabel(
+    app, "Weather", "temperature", "Temperature:"
+)
+
+# Track in datasets
+dataset = hc.Dataset("weather_data", app)
+dataset.track_instrument("Weather", "temperature")
+```
+
+Virtual instruments work seamlessly with all features including widgets,
+datasets, alarms, and hooks. See the [Virtual Instruments Guide](virtual_instruments.md)
+for details and the `examples/virtual_instrument.py` example.
 
 You can find more examples on how to use `hardware control` in the
 example directory.
