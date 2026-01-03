@@ -152,9 +152,7 @@ class Dataset(QObject):
                     if "read_value" in self.app._data[instrument][p].keys():
                         self.instruments.append((instrument, p, plot_ax))
                         if auto_update:
-                            self.app.add_auto_update_instrument_parameter(
-                                instrument, parameter
-                            )
+                            self.app.add_auto_update_instrument_parameter(instrument, p)
 
     def define_alias(self, original_name: str, alias: str) -> None:
         """Define an alias for an original parameter name of format <instrument>:<parameter>.
