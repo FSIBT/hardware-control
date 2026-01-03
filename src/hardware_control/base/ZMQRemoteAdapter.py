@@ -126,8 +126,6 @@ class ZMQSingleInstrument:
                 # handle messages in queue
                 handle_ZMQ_message_from_app(self)
 
-                print(f"\r{time.time()}", end="")
-
                 # check for message on the REQ/REP socket
                 new_message = None
                 if self.zmq_new in socks:
