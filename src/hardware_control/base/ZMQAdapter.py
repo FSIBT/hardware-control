@@ -4,6 +4,7 @@ import time
 from typing import Any
 
 import zmq
+from setproctitle import setproctitle
 
 from .zmq_helper import (
     handle_ZMQ_message_from_app,
@@ -74,6 +75,9 @@ class ZMQAdapter(threading.Thread):
         Listens for ZMQ requests from the main app and if the
         instrument is not online, tries to reconnect to it.
         """
+        # Set process title for easier identification in process lists
+        setproctitle(f"hardware-control-{self.instrument.name}")
+
         # Set up ZMQ poller for efficient message handling
         poller = zmq.Poller()
         poller.register(self.zmq_subscriber, zmq.POLLIN)

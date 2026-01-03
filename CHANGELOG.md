@@ -8,8 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- use setproctitle for better names of the subprocesses
+- Virtual instruments: support for non-hardware data sources (web APIs, calculations, user input)
+  - `App.add_virtual_instrument()` to create virtual instruments
+  - `App.update_virtual_instrument_parameter()` to update values
+  - Full integration with widgets, datasets, alarms, and hooks
+  - New example: `examples/virtual_instrument.py`
+- ONLINE parameter hooks: track instrument connection events
+  - Every instrument has a special `ONLINE` parameter
+  - Attach `post_read_hooks` to trigger actions when instruments connect/disconnect
+  - New example: `examples/online_hook.py` demonstrating connection event tracking
+- Type hints added throughout base directory for better IDE support
+- Python 3.14 support in tests and pyproject.toml
 - Plotting data sets: separate autoscaling for X and Y
 - Plotting data sets: Ability to select data to be plotted within a dataset
+- New Vortran Laser driver
 - New Spellman High Voltage Power Supply driver
 - Adam6024: added readout of digital channels
 - Cean RSeries: added ability to set ramp up/down speed
@@ -17,12 +30,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New AlarmManager class to trigger alarms (currently only audio alarms)
 
 ### Fixed
+- Dataset: header column order now matches data order
+- Dataset: auto update of instrument parameters when parameter=None
+- App: message parsing now continues processing all instruments after errors
+- HCMainWindow: use sys.exit() instead of exit() for proper cleanup
+- ZMQRemoteAdapter: removed debug print statement
+- Alarms: fixed typo in variable name (duration_s → duration)
+- Various typos in comments and docstrings
 - Replaced pkg_resources with importlib
 - CAEN power supply: Setting max current and reading out max voltage
 
 ### Changed
+- **Breaking**: Instrument connection API refactored to prevent resource leaks
+  - `try_connect()` now uses template method pattern (do not override)
+  - Override `establish_connection()` for custom device creation
+  - Override `cleanup_connection()` for custom cleanup logic
+  - Override `on_connect()` for post-connection initialization
+  - Deprecation warnings added for old API (backward compatible for now)
+  - Migrated 6 built-in drivers: Stradus, AdamBase, Ni_9000, Picoscope, SRS_DG535, TPI
+- Instrument: `add_parameter()` now validates at least one command is provided
+- ZMQAdapter: magic numbers moved to class constants (CONNECTION_CHECK_INTERVAL, POLL_TIMEOUT_MS)
 - require python3.11 (minimum supported numpy version)
 - switch to ruff (from black and pyupgrade)
+- updated docs
 
 ## [3.1.0] 2024-04-13
 

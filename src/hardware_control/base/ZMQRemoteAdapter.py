@@ -6,6 +6,7 @@ import time
 from typing import Any
 
 import zmq
+from setproctitle import setproctitle
 
 from .zmq_helper import (
     handle_ZMQ_message_from_app,
@@ -51,6 +52,9 @@ class ZMQSingleInstrument:
         self.instrument = instrument
         self.name = instrument.name
         self.online = False
+
+        # Set process title for easier identification in process lists
+        setproctitle(f"hardware-control-remote-{self.name}")
 
         # priority queues for incoming commands
         self.priority_queue = {0: [], 1: [], 2: []}
