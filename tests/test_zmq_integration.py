@@ -198,8 +198,8 @@ if __name__ == "__main__":
 class TestZMQIntegration:
     """Pytest-compatible test class with proper ZMQ resource management."""
 
-    class TestInstrument(Instrument):
-        """Test instrument for pytest ZMQ integration testing."""
+    class MockInstrument(Instrument):
+        """Mock instrument for pytest ZMQ integration testing."""
 
         def __init__(self, name, address="dummy://127.0.0.1:1234"):
             super().__init__(name, address)
@@ -233,7 +233,7 @@ class TestZMQIntegration:
 
         app = App(dummy=True)
         try:
-            instrument = self.TestInstrument("IsolatedTest1")
+            instrument = self.MockInstrument("IsolatedTest1")
             app.add_instrument(instrument)
 
             time.sleep(0.2)
@@ -262,7 +262,7 @@ class TestZMQIntegration:
 
         app = App(dummy=True)
         try:
-            instrument = self.TestInstrument("PriorityTest")
+            instrument = self.MockInstrument("PriorityTest")
             app.add_instrument(instrument)
 
             time.sleep(0.2)
@@ -299,7 +299,7 @@ class TestZMQIntegration:
 
         app = App(dummy=True)
         try:
-            instrument = self.TestInstrument("CleanupTest")
+            instrument = self.MockInstrument("CleanupTest")
             app.add_instrument(instrument)
 
             time.sleep(0.2)

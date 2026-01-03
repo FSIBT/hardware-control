@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Various typos in comments and docstrings
 - Replaced pkg_resources with importlib
 - CAEN power supply: Setting max current and reading out max voltage
+- pytest warning
 
 ### Changed
 - **Breaking**: Instrument connection API refactored to prevent resource leaks
