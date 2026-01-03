@@ -371,15 +371,21 @@ class App(QApplication):
                     logger.error(
                         f"{msg.split()} has too few or too many values (expected 3)."
                     )
-                    return
-                assert inst_name == name
+                    continue
+
+                if inst_name != name:
+                    logger.error(
+                        f"Message topic mismatch: expected '{name}', got '{inst_name}'"
+                    )
+                    continue
 
                 if name not in self._data:
                     logger.error(f"{name} not available in data model")
-                    return
+                    continue
+
                 if parameter not in self._data[name]:
                     logger.error(f"{parameter} not available for instrument {name}")
-                    return
+                    continue
 
                 post_read_hooks = self._data[name][parameter]["post_read_hooks"]
                 value = call_hooks(post_read_hooks, value)
