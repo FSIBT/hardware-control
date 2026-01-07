@@ -23,4 +23,10 @@ from .Keithley import Keithley_2400
 from .Keithley import Keithley_2001
 from .trinity_power import TPI
 from .spellman import Spellman_SL
-from .vortran import Stradus
+
+# Stradus is optional... mostly since pypi doesn't allow us to link to
+# git+https packages
+try:
+    from .vortran import Stradus
+except ImportError:
+    Stradus = None  # or however you want to handle it

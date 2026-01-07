@@ -47,8 +47,8 @@ dependencies = [
     "Sphinx",
     "sphinx_rtd_theme",
     "pyzmq",
-    "vortran @ git+https://github.com/arunpersaud/Stradus.git",
 ]
+
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
@@ -60,6 +60,9 @@ classifiers = [
     "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering :: Physics",
 ]
+
+[project.optional-dependencies]
+vortran = ["vortran @ git+https://github.com/arunpersaud/Stradus.git"]
 
 [project.urls]
 documentation = "https://hardware-control.readthedocs.io/"
