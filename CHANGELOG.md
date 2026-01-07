@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.0] 2026-01-07
+
 ### Added
 - use setproctitle for better names of the subprocesses
 - Virtual instruments: support for non-hardware data sources (web APIs, calculations, user input)
