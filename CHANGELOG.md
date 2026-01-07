@@ -55,6 +55,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - ZMQAdapter: magic numbers moved to class constants (CONNECTION_CHECK_INTERVAL, POLL_TIMEOUT_MS)
 - require python3.11 (minimum supported numpy version)
 - switch to ruff (from black and pyupgrade)
+- updated how the license is specified in pyproject.toml (PEP 639)
 - updated docs
 
 ## [3.1.0] 2024-04-13

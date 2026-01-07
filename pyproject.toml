@@ -20,7 +20,8 @@ authors = [
    { name = "Schuyler Freeman", email = "skyfreeman@lbl.gov" },
 ]
 readme = "README.md"
-license = {file = "LICENSE"}
+license = "BSD-3-Clause-LBNL"
+license-files = ["LICENSE"]
 requires-python = ">=3.11"
 dependencies = [
     "docopt",
@@ -52,7 +53,6 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
     "Development Status :: 5 - Production/Stable",
-    "License :: OSI Approved :: BSD License",
     "Intended Audience :: Science/Research",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
