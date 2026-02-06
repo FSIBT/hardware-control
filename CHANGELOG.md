@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Remote access system for querying and controlling Apps
+  - Registry-based App discovery in platform-specific cache directories
+  - IPC-based communication via ZMQ REQ/REP sockets
+  - `hc-query` CLI tool for querying/setting parameters with multiple output formats (table, json, markdown, csv, compact)
+  - `hc-mcp` MCP server for LLM access to hardware-control Apps
+  - Python client library (`hardware_control.remote.HardwareControlClient`) for custom integrations
+  - `App` now accepts optional `app_name` parameter for custom naming
+  - New dependencies: `platformdirs >= 4.0.0`, `psutil >= 5.9.0`
+  - Optional dependency: `mcp >= 0.9.0` for MCP server support
+
 ## [4.0.0] 2026-01-07
 
 ### Added

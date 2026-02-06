@@ -9,5 +9,6 @@ How To
    adding_user_interfaces.md
    adding_instruments.md
    virtual_instruments.md
+   remote_access
    migration_guide.md
 

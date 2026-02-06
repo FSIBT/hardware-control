@@ -1,15 +1,20 @@
 from functools import wraps
 import json
 import logging
+import os
 from pathlib import Path
+import platform
+import tempfile
 import threading
 import time
 from typing import Any
 from collections.abc import Callable
 import datetime
 
+from platformdirs import user_cache_dir
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtCore import QTimer
+import psutil
 import zmq
 
 from .Dataset import Dataset
@@ -85,7 +90,9 @@ class App(QApplication):
     and current data.
     """
 
-    def __init__(self, ipaddress=None, dummy: bool = False) -> None:
+    def __init__(
+        self, ipaddress=None, dummy: bool = False, app_name: str | None = None
+    ) -> None:
         # QApplication can take a list of strings, e.g. from sys.argv
         # we currently don't use this
         super().__init__([])
@@ -95,6 +102,9 @@ class App(QApplication):
         self._data = {}
         self.zmq_subscribers = {}
         self.birth_time = datetime.datetime.now(datetime.UTC)
+
+        # Set app name for IPC registry
+        self.app_name = app_name or f"app_{os.getpid()}"
 
         self.alarm_manager = AlarmManager(app=self)
 
@@ -135,10 +145,16 @@ class App(QApplication):
         # This is a set of (<instrument name>,<commands>,<status>) combinations
         self.continuous_commands = set()
 
+        # Create IPC socket for remote access and write registry file
+        self.ipc_address = self._create_ipc_socket()
+        self._cleanup_stale_registry_files()
+        self._write_registry_file()
+
         # a timer to check ZMQ messages
         self.zmq_timer = QTimer(self)
         self.zmq_timer.timeout.connect(self.parse_message_from_instruments)
         self.zmq_timer.timeout.connect(self.handle_request)
+        self.zmq_timer.timeout.connect(self.handle_ipc_request)
         self.zmq_timer.start(100)
 
         # a timer to requests updates from instruments
@@ -810,6 +826,313 @@ class App(QApplication):
             return []
         return [instrument for instrument in self._data]
 
+    def _create_ipc_socket(self) -> str:
+        """Create IPC socket for remote access.
+
+        Returns:
+            IPC address string
+        """
+        pid = os.getpid()
+
+        # Platform-specific IPC address
+        if platform.system() == "Windows":
+            ipc_address = f"ipc://hc_{pid}"
+        else:
+            # Unix/Mac: use temp directory
+            temp_dir = tempfile.gettempdir()
+            ipc_address = f"ipc://{temp_dir}/hc_{pid}.sock"
+
+        # Create ZMQ REP socket for IPC
+        self.zmq_ipc = self.zmq_context.socket(zmq.REP)
+        self.zmq_ipc.bind(ipc_address)
+
+        logger.info(f"IPC socket bound to {ipc_address}")
+        return ipc_address
+
+    def _write_registry_file(self) -> None:
+        """Write registry file with App metadata."""
+        registry_dir = Path(user_cache_dir("hardware-control", "lbnl")) / "apps"
+        registry_dir.mkdir(parents=True, exist_ok=True)
+
+        pid = os.getpid()
+        registry_file = registry_dir / f"app_{pid}.json"
+
+        registry_data = {
+            "app_name": self.app_name,
+            "pid": pid,
+            "ipc_address": self.ipc_address,
+            "birth_time": self.birth_time.isoformat(),
+            "platform": platform.system(),
+        }
+
+        try:
+            with open(registry_file, "w") as f:
+                json.dump(registry_data, f, indent=2)
+            logger.info(f"Registry file written to {registry_file}")
+        except OSError as e:
+            logger.warning(f"Failed to write registry file: {e}")
+
+    def _cleanup_stale_registry_files(self) -> None:
+        """Remove registry files for processes that no longer exist."""
+        registry_dir = Path(user_cache_dir("hardware-control", "lbnl")) / "apps"
+        if not registry_dir.exists():
+            return
+
+        cleaned = []
+        for registry_file in registry_dir.glob("app_*.json"):
+            try:
+                with open(registry_file) as f:
+                    data = json.load(f)
+
+                pid = data.get("pid")
+                if pid is None or not psutil.pid_exists(pid):
+                    registry_file.unlink()
+                    cleaned.append(registry_file)
+            except (json.JSONDecodeError, OSError):
+                # Invalid or inaccessible file, remove it
+                try:
+                    registry_file.unlink()
+                    cleaned.append(registry_file)
+                except OSError:
+                    pass
+
+        if cleaned:
+            logger.info(f"Cleaned up {len(cleaned)} stale registry file(s)")
+
+    def handle_ipc_request(self) -> None:
+        """Handle IPC requests from remote clients (hc-query, hc-mcp).
+
+        This enables remote querying and control of the App via ZMQ IPC.
+        """
+        try:
+            # Non-blocking receive
+            request_json = self.zmq_ipc.recv_string(flags=zmq.NOBLOCK)
+            logger.debug(f"IPC request received: {request_json}")
+
+            try:
+                request = json.loads(request_json)
+                response = self._process_ipc_command(request)
+            except json.JSONDecodeError as e:
+                response = {
+                    "status": "error",
+                    "message": f"Invalid JSON request: {e}",
+                    "timestamp": datetime.datetime.now(datetime.UTC).isoformat(),
+                }
+            except Exception as e:
+                response = {
+                    "status": "error",
+                    "message": f"Internal error: {e}",
+                    "timestamp": datetime.datetime.now(datetime.UTC).isoformat(),
+                }
+
+            # Send response
+            response_json = json.dumps(response)
+            self.zmq_ipc.send_string(response_json)
+
+        except zmq.ZMQError:
+            # No message available, continue
+            pass
+
+    def _process_ipc_command(self, request: dict) -> dict:
+        """Process IPC command and return response.
+
+        Args:
+            request: Dict with version, command, and command-specific fields
+
+        Returns:
+            Response dict with status, timestamp, app_name, and data/message
+        """
+        command = request.get("command")
+
+        # Dispatch to handler
+        if command == "get_parameters":
+            return self._handle_get_parameters(request.get("queries", []))
+        elif command == "set_parameters":
+            return self._handle_set_parameters(request.get("updates", []))
+        elif command == "list_instruments":
+            return self._handle_list_instruments()
+        elif command == "list_parameters":
+            return self._handle_list_parameters(request.get("instrument"))
+        elif command == "app_info":
+            return self._handle_app_info()
+        else:
+            return {
+                "status": "error",
+                "message": f"Unknown command: {command}",
+                "timestamp": datetime.datetime.now(datetime.UTC).isoformat(),
+                "app_name": self.app_name,
+            }
+
+    def _handle_get_parameters(self, queries: list[dict]) -> dict:
+        """Handle get_parameters command.
+
+        Args:
+            queries: List of dicts with instrument and parameter keys
+
+        Returns:
+            Response dict with data array
+        """
+        data = []
+        for query in queries:
+            instrument = query.get("instrument")
+            parameter = query.get("parameter")
+
+            if not instrument or not parameter:
+                data.append(
+                    {
+                        "instrument": instrument,
+                        "parameter": parameter,
+                        "error": "Missing instrument or parameter",
+                    }
+                )
+                continue
+
+            try:
+                value = self.get_instrument_parameter(instrument, parameter)
+                data.append(
+                    {"instrument": instrument, "parameter": parameter, "value": value}
+                )
+            except Exception as e:
+                data.append(
+                    {
+                        "instrument": instrument,
+                        "parameter": parameter,
+                        "error": str(e),
+                    }
+                )
+
+        return {
+            "status": "success",
+            "timestamp": datetime.datetime.now(datetime.UTC).isoformat(),
+            "app_name": self.app_name,
+            "data": data,
+        }
+
+    def _handle_set_parameters(self, updates: list[dict]) -> dict:
+        """Handle set_parameters command.
+
+        Args:
+            updates: List of dicts with instrument, parameter, and value keys
+
+        Returns:
+            Response dict with status array
+        """
+        data = []
+        for update in updates:
+            instrument = update.get("instrument")
+            parameter = update.get("parameter")
+            value = update.get("value")
+
+            if not instrument or not parameter or value is None:
+                data.append(
+                    {
+                        "instrument": instrument,
+                        "parameter": parameter,
+                        "status": "error",
+                        "error": "Missing instrument, parameter, or value",
+                    }
+                )
+                continue
+
+            try:
+                self.set_instrument_parameter(instrument, parameter, value)
+                data.append(
+                    {
+                        "instrument": instrument,
+                        "parameter": parameter,
+                        "status": "success",
+                    }
+                )
+            except Exception as e:
+                data.append(
+                    {
+                        "instrument": instrument,
+                        "parameter": parameter,
+                        "status": "error",
+                        "error": str(e),
+                    }
+                )
+
+        return {
+            "status": "success",
+            "timestamp": datetime.datetime.now(datetime.UTC).isoformat(),
+            "app_name": self.app_name,
+            "data": data,
+        }
+
+    def _handle_list_instruments(self) -> dict:
+        """Handle list_instruments command.
+
+        Returns:
+            Response dict with instruments array
+        """
+        instruments = self.list_instruments()
+
+        return {
+            "status": "success",
+            "timestamp": datetime.datetime.now(datetime.UTC).isoformat(),
+            "app_name": self.app_name,
+            "data": instruments,
+        }
+
+    def _handle_list_parameters(self, instrument: str | None) -> dict:
+        """Handle list_parameters command.
+
+        Args:
+            instrument: Name of instrument
+
+        Returns:
+            Response dict with parameters array
+        """
+        if not instrument:
+            return {
+                "status": "error",
+                "message": "Missing instrument name",
+                "timestamp": datetime.datetime.now(datetime.UTC).isoformat(),
+                "app_name": self.app_name,
+            }
+
+        try:
+            parameters = self.list_instrument_parameters(instrument)
+            return {
+                "status": "success",
+                "timestamp": datetime.datetime.now(datetime.UTC).isoformat(),
+                "app_name": self.app_name,
+                "data": parameters,
+            }
+        except Exception as e:
+            return {
+                "status": "error",
+                "message": str(e),
+                "timestamp": datetime.datetime.now(datetime.UTC).isoformat(),
+                "app_name": self.app_name,
+            }
+
+    def _handle_app_info(self) -> dict:
+        """Handle app_info command.
+
+        Returns:
+            Response dict with app metadata
+        """
+        uptime = datetime.datetime.now(datetime.UTC) - self.birth_time
+        instruments = self.list_instruments()
+
+        info = {
+            "app_name": self.app_name,
+            "pid": os.getpid(),
+            "birth_time": self.birth_time.isoformat(),
+            "uptime_seconds": uptime.total_seconds(),
+            "instrument_count": len(instruments),
+            "instruments": instruments,
+        }
+
+        return {
+            "status": "success",
+            "timestamp": datetime.datetime.now(datetime.UTC).isoformat(),
+            "app_name": self.app_name,
+            "data": info,
+        }
+
     def close(self) -> None:
         """Closes the application.
 
@@ -817,6 +1140,17 @@ class App(QApplication):
         any data specified to save automatically before close.
         """
         self.stop()
+
+        # Delete registry file
+        try:
+            registry_dir = Path(user_cache_dir("hardware-control", "lbnl")) / "apps"
+            pid = os.getpid()
+            registry_file = registry_dir / f"app_{pid}.json"
+            if registry_file.exists():
+                registry_file.unlink()
+                logger.debug(f"Deleted registry file {registry_file}")
+        except Exception as e:
+            logger.warning(f"Error deleting registry file: {e}")
 
         # Close all ZMQ subscribers
         for name, subscriber in self.zmq_subscribers.items():
@@ -838,6 +1172,13 @@ class App(QApplication):
             logger.debug("Closed ZMQ info socket")
         except Exception as e:
             logger.warning(f"Error closing ZMQ info socket: {e}")
+
+        # Close IPC socket
+        try:
+            self.zmq_ipc.close()
+            logger.debug("Closed IPC socket")
+        except Exception as e:
+            logger.warning(f"Error closing IPC socket: {e}")
 
         # Terminate ZMQ context
         try:
