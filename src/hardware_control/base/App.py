@@ -836,7 +836,7 @@ class App(QApplication):
 
         # Platform-specific IPC address
         if platform.system() == "Windows":
-            ipc_address = f"ipc://hc_{pid}"
+            ipc_address = "tcp://127.0.0.1:*"
         else:
             # Unix/Mac: use temp directory
             temp_dir = tempfile.gettempdir()
@@ -846,7 +846,11 @@ class App(QApplication):
         self.zmq_ipc = self.zmq_context.socket(zmq.REP)
         self.zmq_ipc.bind(ipc_address)
 
-        logger.info(f"IPC socket bound to {ipc_address}")
+        if platform.system() == "Windows":
+            port = self.zmq_ipc.getsockopt(zmq.LAST_ENDPOINT)
+            ipc_address = port.decode()
+
+        logger.info(f"IPC socket bound to {ipc_address}:{port}")
         return ipc_address
 
     def _write_registry_file(self) -> None:
