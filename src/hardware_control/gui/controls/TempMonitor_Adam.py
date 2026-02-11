@@ -7,6 +7,7 @@ import logging
 from PyQt6.QtWidgets import QGroupBox
 
 from ..widgets import HCLineEdit, HCLabel, HCGridLayout, HCOnOffButton
+from typing import Optional
 
 logger = logging.getLogger(__name__)
 
