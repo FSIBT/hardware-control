@@ -102,7 +102,7 @@ class App(QApplication):
         self._data = {}
         self.zmq_subscribers = {}
         self.birth_time = datetime.datetime.now(datetime.UTC)
-
+        self.computer = platform.system()
         # Set app name for IPC registry
         self.app_name = app_name or f"app_{os.getpid()}"
 
@@ -835,7 +835,7 @@ class App(QApplication):
         pid = os.getpid()
 
         # Platform-specific IPC address
-        if platform.system() == "Windows":
+        if self.computer == "Windows":
             ipc_address = "tcp://127.0.0.1:*"
         else:
             # Unix/Mac: use temp directory
@@ -846,11 +846,13 @@ class App(QApplication):
         self.zmq_ipc = self.zmq_context.socket(zmq.REP)
         self.zmq_ipc.bind(ipc_address)
 
-        if platform.system() == "Windows":
+        if self.computer == "Windows":
             port = self.zmq_ipc.getsockopt(zmq.LAST_ENDPOINT)
             ipc_address = port.decode()
-
-        logger.info(f"IPC socket bound to {ipc_address}:{port}")
+            logger.info(f"IPC socket bound to {ipc_address}:{port}")
+        else:
+            # Unix/Mac: do not use port
+            logger.info(f"IPC socket bound to {ipc_address}")
         return ipc_address
 
     def _write_registry_file(self) -> None:
@@ -866,7 +868,7 @@ class App(QApplication):
             "pid": pid,
             "ipc_address": self.ipc_address,
             "birth_time": self.birth_time.isoformat(),
-            "platform": platform.system(),
+            "platform": self.computer,
         }
 
         try:
