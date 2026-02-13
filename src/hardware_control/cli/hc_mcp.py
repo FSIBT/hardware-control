@@ -15,6 +15,7 @@ Options:
 """
 
 import sys
+import traceback
 
 from docopt import docopt
 
@@ -181,6 +182,15 @@ def main() -> int:
 
     args = docopt(__doc__, version="hc-mcp 1.0.0")
 
+    async def run_server(server: Server) -> None:
+        """Run MCP server over stdio."""
+        async with stdio_server() as (read_stream, write_stream):
+            await server.run(
+                read_stream,
+                write_stream,
+                server.create_initialization_options(),
+            )
+
     try:
         # Discover App
         app_name_arg = args["--app"]
@@ -207,15 +217,22 @@ def main() -> int:
         # Run stdio server (blocking)
         import asyncio
 
-        asyncio.run(stdio_server(server))
+        asyncio.run(run_server(server))
 
         return 0
 
+    except ExceptionGroup as e:
+        print("Unexpected error: unhandled errors in a TaskGroup", file=sys.stderr)
+        for idx, sub in enumerate(e.exceptions, start=1):
+            print(f"\nSub-exception {idx}:", file=sys.stderr)
+            traceback.print_exception(sub, file=sys.stderr)
+        return 1
     except RuntimeError as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1
     except Exception as e:
         print(f"Unexpected error: {e}", file=sys.stderr)
+        traceback.print_exception(e, file=sys.stderr)
         return 1
     finally:
         if client:
