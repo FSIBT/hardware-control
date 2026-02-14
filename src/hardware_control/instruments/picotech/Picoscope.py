@@ -86,6 +86,8 @@ class Picoscope(Instrument):
         timeout_ms: int = 20_000,
     ):
         super().__init__(instrument_name=instrument_name)
+        self.ps = None
+
         self.pico_series = pico_series
         self.channels = channels
         self.timeout_ms = timeout_ms  # time (in ms) instrument waits for trigger before auto-triggering
@@ -288,6 +290,34 @@ class Picoscope(Instrument):
                 f"({self.name}) ERROR connecting with picoscope: {e}.", exc_info=True
             )
             return False
+
+    def close(self):
+        """Close connection to the instrument."""
+        if self._dummy:
+            logger.debug(f"{self.name}: Dummy connection closed.")
+            return
+
+        if self.ps is None:
+            logger.warning(f"{self.name}: Called close with no device defined.")
+
+        self.ps.stop()
+        self.ps.close()
+
+    def cleanup_connection(self) -> None:
+        """Clean up connection resources.
+
+        Called when connection is lost or before reconnecting.
+        Override this for custom cleanup logic (e.g., custom device types).
+
+        Default implementation calls self.ps.close() and sets device to None.
+        """
+        if self.ps is not None:
+            try:
+                self.ps.close()
+                logger.debug(f"{self.name}: closed device connection")
+            except Exception as e:
+                logger.debug(f"{self.name}: error closing device: {e}")
+            self.ps = None
 
     def _check_connection(self):
         """TODO: could use ps.ping() to test"""
