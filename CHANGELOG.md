@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - New dependencies: `platformdirs >= 4.0.0`, `psutil >= 5.9.0`
   - Optional dependency: `mcp >= 0.9.0` for MCP server support
 
+### Changed
+  - switched from docopt to docopt-ng
+
 ## [4.0.0] 2026-01-07
 
 ### Added

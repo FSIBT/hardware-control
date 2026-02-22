@@ -24,7 +24,7 @@ license = "BSD-3-Clause-LBNL"
 license-files = ["LICENSE"]
 requires-python = ">=3.11"
 dependencies = [
-    "docopt",
+    "docopt-ng",
     "matplotlib",
     "nidaqmx >= 0.6.4",
     "numpy",
