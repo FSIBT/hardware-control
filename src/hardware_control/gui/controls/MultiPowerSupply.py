@@ -6,7 +6,6 @@ import logging
 
 from PyQt6 import QtCore
 from PyQt6.QtCore import QTimer
-from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
     QHBoxLayout,
     QPushButton,
@@ -18,11 +17,11 @@ from PyQt6.QtWidgets import (
     QSizePolicy,
 )
 
+from ...base.gui_control import ValidatedControl
 from ..widgets import (
     HCLineEdit,
     HCLabel,
     HCOnOffButton,
-    HCHeader,
     HCOnOffIndicator,
 )
 
@@ -50,7 +49,7 @@ status_labels = {
 }
 
 
-class MultiPowerSupply(QGroupBox):
+class MultiPowerSupply(ValidatedControl, QGroupBox):
     """A generic control program for a multi-channel power supply.
 
     Parameters
@@ -98,7 +97,8 @@ class MultiPowerSupply(QGroupBox):
         enable_power_buttons: str = "none",
         num_columns: int = -1,
     ):
-        super().__init__(widget_name)
+        # Auto-starts parameter collection
+        super().__init__(app, instrument_name, widget_name)
 
         self.app = app
         self.instrument = instrument_name
@@ -156,6 +156,10 @@ class MultiPowerSupply(QGroupBox):
             self.master_layout.addItem(self.all_spacer, 1, 0, 1, 1)
             self.master_layout.addWidget(self.all_enable_but, 1, 1)
             self.master_layout.addWidget(self.all_disable_but, 1, 2)
+
+        # All parameters auto-registered through HC widgets
+        # IMPORTANT: Validate parameters
+        self._validate_parameters()
 
         self.setLayout(self.master_layout)
 

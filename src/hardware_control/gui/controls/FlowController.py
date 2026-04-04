@@ -7,12 +7,13 @@ import logging
 
 from PyQt6.QtWidgets import QGroupBox
 
+from ...base.gui_control import ValidatedControl
 from ..widgets import HCLabel, HCLineEdit, HCGridLayout
 
 logger = logging.getLogger(__name__)
 
 
-class FlowController(QGroupBox):
+class FlowController(ValidatedControl, QGroupBox):
     """A GUI for gas flow controllers.
 
     Implements setting the gas flow and the type of gas used. The GUI also reads
@@ -29,7 +30,9 @@ class FlowController(QGroupBox):
         instrument_name: str,
         name: str = "Flow Controller",
     ):
-        super().__init__(name)
+        # Auto-starts parameter collection
+        super().__init__(app, instrument_name, name)
+
         self.app = app
         self.instrument = instrument_name
         self.name = name
@@ -66,6 +69,10 @@ class FlowController(QGroupBox):
             use_prefix=False,
             label_align="right",
         )
+
+        # All parameters auto-registered through HC widgets
+        # IMPORTANT: Validate parameters
+        self._validate_parameters()
 
         self.layout = HCGridLayout([self.rate, self.pressure, self.flow])
         self.setLayout(self.layout)

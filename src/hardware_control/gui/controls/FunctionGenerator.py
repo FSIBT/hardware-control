@@ -8,13 +8,14 @@ import logging
 from PyQt6.QtWidgets import QGridLayout, QGroupBox, QPushButton
 from PyQt6.QtCore import QTimer
 
+from ...base.gui_control import ValidatedControl
 from ..widgets.hc_widgets import HCLineEdit, HCComboBox, HCOnOffButton
 
 
 logger = logging.getLogger(__name__)
 
 
-class FunctionGenerator(QGroupBox):
+class FunctionGenerator(ValidatedControl, QGroupBox):
     """A GUI for two-channel Function/Waveform generators.
 
     Note
@@ -36,7 +37,11 @@ class FunctionGenerator(QGroupBox):
         widget_name: str = "",
         set_default_fxn=None,
     ):
-        super().__init__(widget_name)
+        # Auto-starts parameter collection
+        # Pass widget_name to QGroupBox parent
+        super().__init__(
+            app, instrument_name, widget_name if widget_name else "Function Generator"
+        )
         self.app = app
         self.instrument = instrument_name
         self.num_channels = num_channels
@@ -206,6 +211,11 @@ class FunctionGenerator(QGroupBox):
 
                 self.widgets[i].append(self.track2)
                 self.widgets[i].append(self.track1)
+
+        # All parameters auto-registered through HC widgets
+        # No commands or parameters used directly
+        # IMPORTANT: Validate parameters
+        self._validate_parameters()
 
         if self.set_default_fxn is not None:
             default_btn = QPushButton("Set Defaults")

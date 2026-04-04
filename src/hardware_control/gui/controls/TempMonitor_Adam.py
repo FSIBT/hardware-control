@@ -6,13 +6,13 @@ import logging
 
 from PyQt6.QtWidgets import QGroupBox
 
-from ..widgets import HCLineEdit, HCLabel, HCGridLayout, HCOnOffButton
-from typing import Optional
+from ...base.gui_control import ValidatedControl
+from ..widgets import HCLabel, HCGridLayout
 
 logger = logging.getLogger(__name__)
 
 
-class TempMonitor_Adam(QGroupBox):
+class TempMonitor_Adam(ValidatedControl, QGroupBox):
     """
     A control program for temperature monitors.
 
@@ -37,10 +37,12 @@ class TempMonitor_Adam(QGroupBox):
         app,
         instrument: str,
         channel_list: list[int],
-        label_list: Optional[list[str]] = None,
+        label_list: list[str] | None = None,
         columns=2,
     ):
-        super().__init__(instrument)
+        # Auto-starts parameter collection
+        super().__init__(app, instrument, instrument)
+
         self.app = app
         self.instrument = instrument
 
@@ -62,6 +64,11 @@ class TempMonitor_Adam(QGroupBox):
                 label_align="right",
             )
             self.widgets.append(temperature)
+
+        # All parameters auto-registered through HC widgets
+        # IMPORTANT: Validate parameters
+        self._validate_parameters()
+
         self.grid = HCGridLayout(self.widgets, columns=columns)
         self.setLayout(self.grid)
 

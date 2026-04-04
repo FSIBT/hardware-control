@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ...base.gui_control import ValidatedControl
 from ..widgets import (
     load_icon,
     HCLineEdit,
@@ -26,7 +27,7 @@ from ...base.hooks import format_float
 logger = logging.getLogger(__name__)
 
 
-class DelayGenerator(QGroupBox):
+class DelayGenerator(ValidatedControl, QGroupBox):
     """A GUI for delay generators.
 
     This implements many front panel functions of an SRS DG535 and
@@ -39,7 +40,8 @@ class DelayGenerator(QGroupBox):
     """
 
     def __init__(self, app, instrument_name: str, widget_name: str = "Delay Generator"):
-        super().__init__(widget_name)
+        # Auto-starts parameter collection
+        super().__init__(app, instrument_name, widget_name)
 
         self.app = app
         self.instrument = instrument_name
@@ -171,6 +173,10 @@ class DelayGenerator(QGroupBox):
         self.master_layout.addWidget(self.period, 3, 3)
 
         self.master_layout.addWidget(self.channel_box, 4, 0, 1, 4)
+
+        # All parameters auto-registered through HC widgets
+        # IMPORTANT: Validate parameters
+        self._validate_parameters()
 
         self.setLayout(self.master_layout)
 

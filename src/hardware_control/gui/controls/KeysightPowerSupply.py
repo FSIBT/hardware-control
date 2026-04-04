@@ -3,12 +3,13 @@
 """
 
 from PyQt6.QtWidgets import QGroupBox, QVBoxLayout, QPushButton, QGridLayout
+
+from ...base.gui_control import ValidatedControl
 from ..widgets import (
     HCFixedLabel,
     HCLineEdit,
     HCOnOffButton,
     HCGridLayout,
-    HCOnOffIndicator,
 )
 
 
@@ -100,7 +101,7 @@ class ChannelDisplay(QVBoxLayout):
         self.addStretch(1)
 
 
-class KeysightPowerSupply(QGroupBox):
+class KeysightPowerSupply(ValidatedControl, QGroupBox):
     """Control program for a Keysight Power Supply.
 
     See Also
@@ -119,7 +120,8 @@ class KeysightPowerSupply(QGroupBox):
         widget_name: str = "Keysight Power Supply",
         persona: str = "3631A",
     ):
-        super().__init__(widget_name)
+        # Auto-starts parameter collection
+        super().__init__(app, instrument_name, widget_name)
         self.app = app
         self.instrument = instrument_name
         self.channels = channels
@@ -160,6 +162,27 @@ class KeysightPowerSupply(QGroupBox):
                 show_icon=True,
             )
 
+        # Manually add command used directly (not through widgets)
+        self._add_required_parameter("ALLOW_NEG_OUTPUT", param_type="command")
+
+        # Manually add parameters used directly for initialization
+        for channel in [1, 2, 3]:
+            if channel <= len(channels):
+                self._add_required_parameter(
+                    f"CH{channel}_V_PROT", param_type="parameter", access="write"
+                )
+                self._add_required_parameter(
+                    f"CH{channel}_V_SET", param_type="parameter", access="write"
+                )
+                if channel > 1:  # CH2 and CH3 have current settings
+                    self._add_required_parameter(
+                        f"CH{channel}_I_SET", param_type="parameter", access="write"
+                    )
+
+        # IMPORTANT: Validate before using commands/parameters!
+        self._validate_parameters()
+
+        # Now safe to use - validation passed
         # Allow negative outputs
         self.app.call_instrument_command(self.instrument, "ALLOW_NEG_OUTPUT")
         # Set protection levels on channels

@@ -2,10 +2,7 @@
 .. image:: /images/controls/Oscilloscope.png
 """
 
-import json
 import logging
-
-import pyqtgraph as pg
 
 from PyQt6 import QtCore
 from PyQt6.QtWidgets import (
@@ -16,6 +13,7 @@ from PyQt6.QtWidgets import (
     QLabel,
 )
 
+from ...base.gui_control import ValidatedControl
 from ..widgets import (
     HCGridLayout,
     HCLineEdit,
@@ -31,7 +29,7 @@ from ..widgets import (
 logger = logging.getLogger(__name__)
 
 
-class Oscilloscope(QGroupBox):
+class Oscilloscope(ValidatedControl, QGroupBox):
     """A control program for an oscilloscope.
 
     Parameters
@@ -63,7 +61,8 @@ class Oscilloscope(QGroupBox):
         widget_name: str = "Oscilloscope",
         instrument_type: str = "keysight",
     ):
-        super().__init__(widget_name)
+        # Auto-starts parameter collection
+        super().__init__(app, instrument_name, widget_name)
 
         self.app = app
         self.instrument = instrument_name
@@ -100,6 +99,13 @@ class Oscilloscope(QGroupBox):
             self.channel_box_layout.addWidget(self.channel_widgets[-1], 0, widget_col)
             widget_col += 1
         self.channel_box.setLayout(self.channel_box_layout)
+
+        # Manually add command used for picoscope (if applicable)
+        if self.instrument_type == "picoscope":
+            self._add_required_parameter("SINGLE_TRIGGER", param_type="command")
+
+        # IMPORTANT: Validate before using commands!
+        self._validate_parameters()
 
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.disp, 0, 0, 4, 2)

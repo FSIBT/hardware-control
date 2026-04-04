@@ -8,6 +8,7 @@ import logging
 from PyQt6.QtWidgets import QGroupBox
 from PyQt6.QtGui import QIntValidator
 
+from ...base.gui_control import ValidatedControl
 from ..widgets import (
     HCLabel,
     HCLineEdit,
@@ -20,7 +21,7 @@ from ..widgets import (
 logger = logging.getLogger(__name__)
 
 
-class MicrowaveController(QGroupBox):
+class MicrowaveController(ValidatedControl, QGroupBox):
     """A GUI for microwave controllers.
 
     Implements setting the frequency, the power level and on/off.
@@ -41,7 +42,9 @@ class MicrowaveController(QGroupBox):
         name: str = "Microwave Controller",
         power_levels: dict | None = None,
     ):
-        super().__init__(name)
+        # Auto-starts parameter collection
+        super().__init__(app, instrument_name, name)
+
         self.app = app
         self.instrument = instrument_name
         self.name = name
@@ -110,6 +113,10 @@ class MicrowaveController(QGroupBox):
             show_icon=True,
             text_pretext="MW",
         )
+
+        # All parameters auto-registered through HC widgets
+        # IMPORTANT: Validate parameters
+        self._validate_parameters()
 
         self.layout = HCGridLayout(
             [self.on_off, self.power, self.power_read, self.frequency, self.online_ind]

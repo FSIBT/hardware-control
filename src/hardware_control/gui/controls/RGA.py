@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import (
     QPushButton,
 )
 
+from ...base.gui_control import ValidatedControl
 from ..widgets import (
     load_icon,
     HCLineEdit,
@@ -24,7 +25,7 @@ from ..widgets import (
 logger = logging.getLogger(__name__)
 
 
-class RGA(QGroupBox):
+class RGA(ValidatedControl, QGroupBox):
     """A control program for residual gas analyzers (RGAs).
 
     This implements all front panel functions of a SRS CIS200 and
@@ -41,7 +42,8 @@ class RGA(QGroupBox):
         app,
         instrument_name: str,
     ):
-        super().__init__(instrument_name)
+        # Auto-starts parameter collection
+        super().__init__(app, instrument_name, instrument_name)
 
         self.app = app
         self.instrument = instrument_name
@@ -111,6 +113,10 @@ class RGA(QGroupBox):
 
         self.master_layout.addWidget(self.bias.label, 3, 0)
         self.master_layout.addWidget(self.bias, 3, 1)
+
+        # All parameters auto-registered through HC widgets
+        # IMPORTANT: Validate parameters
+        self._validate_parameters()
 
         self.setLayout(self.master_layout)
 

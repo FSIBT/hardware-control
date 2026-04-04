@@ -16,6 +16,7 @@ from PyQt6.QtWidgets import (
     QSizePolicy,
 )
 
+from ...base.gui_control import ValidatedControl
 from ..widgets import load_pixmap, HCLineEdit, HCLabel, HCOnOffButton
 
 logger = logging.getLogger(__name__)
@@ -24,7 +25,7 @@ LABEL_MIN_WIDTH = -15
 DISP_DECIMAL_PLACES = 1
 
 
-class IOModule(QGroupBox):
+class IOModule(ValidatedControl, QGroupBox):
     """A GUI for a generic Input/Output (IO) module.
 
     See Also
@@ -70,7 +71,8 @@ class IOModule(QGroupBox):
         num_columns: int = 1,
         show_ID_labels=False,
     ):
-        super().__init__(name)
+        # Auto-starts parameter collection
+        super().__init__(app, instrument_name, name)
 
         self.app = app
         self.instrument = instrument_name
@@ -166,6 +168,10 @@ class IOModule(QGroupBox):
             10, 10, QSizePolicy.Minimum, QSizePolicy.Expanding
         )
         self.channel_panel.addItem(self.bottom_spacer, int(load_idx / num_columns), 0)
+
+        # All parameters auto-registered through HC widgets
+        # IMPORTANT: Validate parameters
+        self._validate_parameters()
 
         self.setLayout(self.channel_panel)
 
