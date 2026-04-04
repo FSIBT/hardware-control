@@ -1,6 +1,17 @@
 GUI Elements
 ============
 
+Developer Guides
+----------------
+
+.. toctree::
+   :maxdepth: 1
+
+   creating_gui_controls
+
+Widgets
+-------
+
 Widgets that provide extra functionallity that we often use when
 writing control programs for hardware.
 
@@ -12,7 +23,7 @@ showing the connection status of all instruments.
 
 .. toctree::
    :maxdepth: 1
-   :caption: Widgets:
+   :caption: Widget Reference:
 
    gui/widgets/connection_status
    gui/widgets/data_widget
@@ -23,11 +34,14 @@ showing the connection status of all instruments.
    gui/widgets/scan_widget
    gui/widgets/alarm_widgets
 
+Controls
+--------
+
 Controls provide a complete user interface for a certain type of instrument. One example of such a control is a user interface for an oscilloscope that is ready to be used in a more complex app that controls multiple instruments.
 
 .. toctree::
    :maxdepth: 1
-   :caption: Controls:
+   :caption: Control Reference:
 
    gui/controls/DelayGenerator
    gui/controls/FlowController
