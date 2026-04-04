@@ -237,6 +237,13 @@ class App(QApplication):
         self, instrument: str, read_parameters, set_parameters, commands
     ) -> None:
         """Adds all parameter names to a data dictionary and sets default values."""
+        # Store the parameter/command lists for get_instrument_parameters_and_commands()
+        self._data[instrument]["__capabilities__"] = {
+            "read_parameters": list(read_parameters),
+            "set_parameters": list(set_parameters),
+            "commands": list(commands),
+        }
+
         for r in read_parameters:
             p = {
                 "read_value": None,
@@ -303,6 +310,13 @@ class App(QApplication):
 
         self.virtual_instruments.add(instrument_name)
         self._data[instrument_name] = {}
+
+        # Store capabilities (virtual instruments are read-only)
+        self._data[instrument_name]["__capabilities__"] = {
+            "read_parameters": list(parameters),
+            "set_parameters": [],
+            "commands": [],
+        }
 
         for param_name in parameters:
             self._data[instrument_name][param_name] = {
@@ -602,6 +616,38 @@ class App(QApplication):
     def is_parameter(self, instrument: str, parameter: str) -> bool:
         """Check if the app knows about this instrument parameter."""
         return parameter in self._data[instrument]
+
+    def get_instrument_parameters_and_commands(
+        self, instrument: str
+    ) -> tuple[list[str], list[str], list[str]]:
+        """Get instrument's available parameters and commands.
+
+        This is used by ValidatedControl to check that GUI controls have
+        all required parameters/commands available from the instrument.
+
+        Parameters
+        ----------
+        instrument : str
+            Name of the instrument
+
+        Returns
+        -------
+        tuple[list[str], list[str], list[str]]
+            (read_parameters, set_parameters, commands) - lists of parameter/command names
+            that the instrument supports
+        """
+        if instrument not in self._data:
+            return ([], [], [])
+
+        capabilities = self._data[instrument].get("__capabilities__")
+        if capabilities is None:
+            return ([], [], [])
+
+        return (
+            capabilities["read_parameters"],
+            capabilities["set_parameters"],
+            capabilities["commands"],
+        )
 
     @ensure_parameter_and_instrument_exists
     def set_instrument_parameter(
