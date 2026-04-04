@@ -6,7 +6,6 @@
 import logging
 
 from PyQt6.QtWidgets import QGridLayout, QGroupBox, QPushButton
-from PyQt6.QtCore import QTimer
 
 from ...base.gui_control import ValidatedControl
 from ..widgets.hc_widgets import HCLineEdit, HCComboBox, HCOnOffButton
@@ -236,16 +235,15 @@ class FunctionGenerator(ValidatedControl, QGroupBox):
             )
         self.setLayout(self.grid)
 
-        # Create timer to query whether instrument is enabled
-        self.readout_timer = QTimer(self)
-        self.readout_timer.timeout.connect(self.update_readout)
-        self.readout_timer.start(self.app.globalRefreshRate)
+        # Register parameters for automatic updates
+        self.default_update_readout()
 
-    def update_readout(self):
-        """Query the instrument for current readout data and push it to the GUI."""
-        # Update readout data for each parameter
+    def default_update_readout(self):
+        """Register parameters for automatic updates."""
         for channel in self.channels:
-            self.app.update_instrument_parameter(self.instrument, f"CH{channel}_ENABLE")
+            self.app.add_auto_update_instrument_parameter(
+                self.instrument, f"CH{channel}_ENABLE"
+            )
 
     def set_tracking_hook(self, setting, value):
         """Allow one channel to mirror the parameter values of another channel."""
