@@ -5,7 +5,6 @@
 import logging
 
 from PyQt6 import QtCore
-from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import (
     QHBoxLayout,
     QPushButton,
@@ -163,10 +162,8 @@ class MultiPowerSupply(ValidatedControl, QGroupBox):
 
         self.setLayout(self.master_layout)
 
-        # Create timer to query instrument
-        self.readout_timer = QTimer(self)
-        self.readout_timer.timeout.connect(self.update_readout)
-        self.readout_timer.start(self.app.globalRefreshRate)
+        # Register parameters for automatic updates and set up power calculation hooks
+        self.default_update_readout()
 
     def enable_all(self):
         """Enable all channels."""
@@ -186,49 +183,61 @@ class MultiPowerSupply(ValidatedControl, QGroupBox):
             if self.power_button:
                 cw.enabled_but.set_btn_state(False)
 
-    def update_readout(self):
-        """Query the instrument for current readout data and push it to the GUI."""
-        # Update readout data for each parameter
+    def default_update_readout(self):
+        """Register parameters for automatic updates and set up power calculation hooks."""
+        # Register parameters for each channel
         for cw in self.channel_widgets:
-            self.app.update_instrument_parameter(
-                self.instrument, f"CH{cw.channel}_ENABLE"
-            )
-            self.app.update_instrument_parameter(
-                self.instrument, f"CH{cw.channel}_I_SET"
-            )
-            self.app.update_instrument_parameter(
-                self.instrument, f"CH{cw.channel}_V_SET"
-            )
-            self.app.update_instrument_parameter(
-                self.instrument, f"CH{cw.channel}_V_OUT"
-            )
-            self.app.update_instrument_parameter(
-                self.instrument, f"CH{cw.channel}_I_OUT"
-            )
+            # Core parameters
+            params = [
+                f"CH{cw.channel}_ENABLE",
+                f"CH{cw.channel}_I_SET",
+                f"CH{cw.channel}_V_SET",
+                f"CH{cw.channel}_V_OUT",
+                f"CH{cw.channel}_I_OUT",
+            ]
+
+            # Add VI limit parameters if enabled
             if self.show_VI_limits:
-                self.app.update_instrument_parameter(
-                    self.instrument, f"CH{cw.channel}_V_MAX"
-                )
-                self.app.update_instrument_parameter(
-                    self.instrument, f"CH{cw.channel}_I_MAX"
+                params.extend(
+                    [
+                        f"CH{cw.channel}_V_MAX",
+                        f"CH{cw.channel}_I_MAX",
+                    ]
                 )
 
-            # Calculate and update the value of the channel's power out
-            cw.V_out_value = self.app.get_instrument_parameter(
-                self.instrument, f"CH{cw.channel}_V_OUT"
-            )
-            cw.I_out_value = self.app.get_instrument_parameter(
-                self.instrument, f"CH{cw.channel}_I_OUT"
-            )
-            if None not in [cw.V_out_value, cw.I_out_value]:
-                cw.Power_out_value.setText(
-                    f"{round(float(cw.V_out_value) * float(cw.I_out_value), 3)} W"
-                )
+            # Register all parameters for auto-update
+            for param in params:
+                self.app.add_auto_update_instrument_parameter(self.instrument, param)
+
+            # Add widget hooks to calculate power when V_OUT or I_OUT updates
+            # The hook is called after the widget updates, so both values should be available
+            def make_power_calculator(channel_widget):
+                """Create a power calculation hook for a specific channel."""
+
+                def calculate_power(value):
+                    """Calculate and display power from V_OUT and I_OUT."""
+                    v_out = self.app.get_instrument_parameter(
+                        self.instrument, f"CH{channel_widget.channel}_V_OUT"
+                    )
+                    i_out = self.app.get_instrument_parameter(
+                        self.instrument, f"CH{channel_widget.channel}_I_OUT"
+                    )
+                    if None not in [v_out, i_out]:
+                        power = round(float(v_out) * float(i_out), 3)
+                        channel_widget.Power_out_value.setText(f"{power} W")
+                    return value  # Pass through the original value
+
+                return calculate_power
+
+            # Add the hook to both V_OUT and I_OUT widgets
+            # This ensures power is recalculated whenever either value changes
+            cw.Voltage_out.add_widget_hook(make_power_calculator(cw))
+            cw.Current_out.add_widget_hook(make_power_calculator(cw))
 
             # Status parameters
             if self.show_status_panel:
                 for bit_name in status_labels:
-                    self.app.update_instrument_parameter(
+                    self.app.add_auto_update_instrument_parameter(
                         self.instrument,
                         f"CH{cw.channel}_{bit_name}",
                     )
