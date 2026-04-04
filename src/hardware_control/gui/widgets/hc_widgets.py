@@ -156,6 +156,14 @@ class HCMixin:
         self.widget_hooks = []
         self.return_set_value = False
 
+        # AUTO-REGISTER: Register this parameter with ValidatedControl if active
+        if hasattr(app, "_register_widget_parameter"):
+            # Determine access pattern based on widget type
+            access = self._infer_access_pattern()
+            app._register_widget_parameter(
+                instrument, parameter, param_type="parameter", access=access
+            )
+
         super().__init__(**kwargs)
 
         self.name = label
@@ -191,6 +199,25 @@ class HCMixin:
             )
             self.label.hide()
             self.hide()
+
+    def _infer_access_pattern(self) -> str:
+        """Infer if this widget reads, writes, or both based on widget type.
+
+        Returns
+        -------
+        str
+            'read', 'write', or 'read_write'
+        """
+        # Read-only widgets (display only)
+        read_only_widgets = ("HCLabel", "HCFixedLabel", "HCOnOffIndicator")
+        if self.__class__.__name__ in read_only_widgets:
+            return "read"
+
+        # Write-only widgets (rare, mostly unused)
+        # Currently we don't have any widgets that are write-only
+
+        # Most widgets can both read and write
+        return "read_write"
 
     def add_widget_hook(self, function: Callable[[Any], Any]):
         """Add a hook function to be called when a value in a widgets gets updated from app._data."""
