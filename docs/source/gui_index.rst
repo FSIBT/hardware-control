@@ -25,6 +25,7 @@ showing the connection status of all instruments.
    :maxdepth: 1
    :caption: Widget Reference:
 
+   gui/widgets/alarm_widgets
    gui/widgets/connection_status
    gui/widgets/data_widget
    gui/widgets/function_runner
@@ -32,7 +33,7 @@ showing the connection status of all instruments.
    gui/widgets/plot
    gui/widgets/qtconsole
    gui/widgets/scan_widget
-   gui/widgets/alarm_widgets
+   gui/widgets/trace_plotter
 
 Controls
 --------
@@ -48,7 +49,9 @@ Controls provide a complete user interface for a certain type of instrument. One
    gui/controls/FunctionGenerator
    gui/controls/IOModule
    gui/controls/KeysightPowerSupply
-   gui/controls/Oscilloscope
+   gui/controls/MicrowaveControl
    gui/controls/MultiPowerSupply
+   gui/controls/Oscilloscope
    gui/controls/RGA
    gui/controls/TempMonitor
+   gui/controls/TempMonitor_Adam
