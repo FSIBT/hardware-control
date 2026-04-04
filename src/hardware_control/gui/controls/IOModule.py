@@ -7,7 +7,6 @@ import json
 import logging
 from pathlib import Path
 
-from PyQt6.QtCore import QTimer
 from PyQt6.QtWidgets import (
     QLabel,
     QGridLayout,
@@ -175,10 +174,8 @@ class IOModule(ValidatedControl, QGroupBox):
 
         self.setLayout(self.channel_panel)
 
-        # Create timer to query voltages
-        self.readout_timer = QTimer(self)
-        self.readout_timer.timeout.connect(self.update_readout)
-        self.readout_timer.start(self.app.globalRefreshRate)
+        # Register parameters for automatic updates
+        self.default_update_readout()
 
     def read_channel_data(self, channel_data):
         """Set the channel parameters from a JSON file or a dictionary."""
@@ -203,15 +200,15 @@ class IOModule(ValidatedControl, QGroupBox):
 
         return True
 
-    def update_readout(self) -> None:
-        """Update parameter readouts with values from the instrument."""
+    def default_update_readout(self) -> None:
+        """Register parameters for automatic updates."""
         for channel in self.channel_names:
             if "/ai" in channel:
-                self.app.update_instrument_parameter(
+                self.app.add_auto_update_instrument_parameter(
                     self.instrument, "CH" + channel + "_ANALOG"
                 )
             if "/di" in channel:
-                self.app.update_instrument_parameter(
+                self.app.add_auto_update_instrument_parameter(
                     self.instrument, "CH" + channel + "_DIGITAL"
                 )
 
