@@ -7,7 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.1.0] 2026-04-06
+
 ### Added
+- GUI parameter validation system with auto-registration
+  - `ValidatedControl` base class for controls that validate instrument parameters
+  - HC widgets automatically register their parameters during creation
+  - Strict validation with helpful error messages listing missing parameters
+  - Auto-generated parameter documentation in class docstrings
+  - Developer guide: `docs/source/creating_gui_controls.rst`
+  - All 12 GUI controls now use ValidatedControl pattern
 - Remote access system for querying and controlling Apps
   - Registry-based App discovery in platform-specific cache directories
   - IPC-based communication via ZMQ REQ/REP sockets
@@ -17,9 +26,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `App` now accepts optional `app_name` parameter for custom naming
   - New dependencies: `platformdirs >= 4.0.0`, `psutil >= 5.9.0`
   - Optional dependency: `mcp >= 0.9.0` for MCP server support
+- New instrument support
+  - Tenma 72-2710 power supply driver
+- AGENT.md file for AI agent integration guidelines
 
 ### Changed
-  - switched from docopt to docopt-ng
+- GUI controls now use centralized app auto-update system instead of individual timers
+  - FunctionGenerator: removed custom QTimer, uses `add_auto_update_instrument_parameter()`
+  - IOModule: removed custom QTimer, uses `add_auto_update_instrument_parameter()`
+  - MultiPowerSupply: removed custom QTimer, uses widget hooks for power calculation
+- Switched from docopt to docopt-ng
+- `hc-mcp` now runs MCP server asynchronously over stdio
+- TempMonitor_Adam: columns parameter no longer hardcoded
+- updated pyproject.toml for optional dev-dependencies
+
+### Fixed
+- IPC log handling on non-Windows platforms
+- Windows IPC address handling
+- Picoscope: extended close and cleanup connection functions
 
 ## [4.0.0] 2026-01-07
 
