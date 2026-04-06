@@ -41,7 +41,7 @@ class Demo(hc.HCMainWindow):
         self.tabs = QTabWidget()
 
         # Create an flow controller Alicat_M_Series instrument backend and add it to the app
-        self.app.add_instrument(hc.instruments.TPI.TPI("MW", conn_addr))
+        self.app.add_instrument(hc.instruments.TPI("MW", conn_addr))
 
         # Create a FlowController GUI control that connects to the instrument backend
         self.instr_ctrl = hc.gui.MicrowaveController(
