@@ -25,10 +25,10 @@ VQM835 Vacuum Quality Monitor
 
 Residual gas analyzer for vacuum system monitoring and leak detection.
 
-hardware_control.instruments.mks.GP_VQM835 module
+hardware_control.instruments.mks.VQM835 module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. automodule:: hardware_control.instruments.mks.GP_VQM835
+.. automodule:: hardware_control.instruments.mks.VQM835
    :members:
    :undoc-members:
    :show-inheritance:
