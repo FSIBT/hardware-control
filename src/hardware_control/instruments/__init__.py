@@ -24,10 +24,4 @@ from .Keithley import Keithley_2001
 from .tenma import TENMA_72_2710
 from .trinity_power import TPI
 from .spellman import Spellman_SL
-
-# Stradus is optional... mostly since pypi doesn't allow us to link to
-# git+https packages
-try:
-    from .vortran import Stradus
-except ImportError:
-    Stradus = None  # or however you want to handle it
+from .vortran import Stradus
