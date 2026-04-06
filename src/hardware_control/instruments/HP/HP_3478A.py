@@ -1,12 +1,8 @@
 """
 Control class to handle HP 3478A Multimeter readouts.
 
-.. image:: /images/HP_3478A.jpg
+.. image:: /images/HP-3478A.jpg
   :height: 200
-
-Has been tested with HP34401A.
-connection works over proprietary driver, with "tasks"
-https://engineering.purdue.edu/~aae520/hp34401manual.pdf for the manual
 
 
 """
