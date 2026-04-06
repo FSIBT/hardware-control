@@ -820,11 +820,32 @@ class App(QApplication):
         """Compile a list of all the parameters for a specified instrument."""
         return [parameter for parameter in self._data[instrument]]
 
+    @property
+    def instruments(self):
+        """Iterator over all instrument names in the app.
+
+        This is a read-only property that provides a clean interface for
+        iterating over instruments without directly accessing _data.
+
+        Example
+        -------
+        .. code-block:: python
+
+            for inst in app.instruments:
+                print(inst)
+
+        Yields
+        ------
+        str
+            Instrument names
+        """
+        yield from self._data
+
     def list_instruments(self) -> list[str]:
         """Compile a list of all the instruments in the app."""
         if not self._data:
             return []
-        return [instrument for instrument in self._data]
+        return list(self.instruments)
 
     def _create_ipc_socket(self) -> str:
         """Create IPC socket for remote access.
@@ -1211,7 +1232,7 @@ class App(QApplication):
             Name of file to save set_value entries to
         """
         app_settings = {}
-        for instrument in self._data:
+        for instrument in self.instruments:
             app_settings[instrument] = {}
             for parameter in self._data[instrument]:
                 value = self._data[instrument][parameter]["set_value"]
