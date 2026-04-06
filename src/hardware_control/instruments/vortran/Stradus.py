@@ -4,7 +4,7 @@ Control class to handle vortran Stradus lasers.
 
 import logging
 import random
-import vortran
+import vortran_lbl as vortran
 
 from ...base import Instrument
 
