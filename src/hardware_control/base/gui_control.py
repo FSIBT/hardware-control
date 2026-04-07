@@ -209,23 +209,24 @@ class ValidatedControl:
         self.app = app
         self.instrument = instrument_name
 
-        # Collect required parameters from class attributes
+        # Collect required parameters from instance or class attributes
+        # Instance attributes take precedence (allows dynamic parameter lists)
         required_params = {}
 
         # Read/write parameters
-        for param in getattr(self.__class__, "_required_parameters", []):
+        for param in getattr(self, "_required_parameters", []):
             required_params[param] = {"type": "parameter", "access": "read_write"}
 
         # Read-only parameters
-        for param in getattr(self.__class__, "_required_read_only", []):
+        for param in getattr(self, "_required_read_only", []):
             required_params[param] = {"type": "parameter", "access": "read"}
 
         # Write-only parameters
-        for param in getattr(self.__class__, "_required_write_only", []):
+        for param in getattr(self, "_required_write_only", []):
             required_params[param] = {"type": "parameter", "access": "write"}
 
         # Commands
-        for cmd in getattr(self.__class__, "_required_commands", []):
+        for cmd in getattr(self, "_required_commands", []):
             required_params[cmd] = {"type": "command"}
 
         # Validate if there are any requirements

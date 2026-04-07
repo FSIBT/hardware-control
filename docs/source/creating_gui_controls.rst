@@ -215,45 +215,76 @@ Here's a more complete example:
             layout.addWidget(self.enable_button, 2, 0, 1, 4)
             self.setLayout(layout)
 
-Dynamic Parameters
-~~~~~~~~~~~~~~~~~~
+Dynamic Parameters (Multi-Channel Controls)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If your control has dynamic parameter names (e.g., multi-channel), you can build the
-lists programmatically:
+For controls with variable channel counts, use **placeholder patterns in class attributes**
+for documentation, then **expand them as instance attributes** for validation:
 
 .. code-block:: python
 
     class MultiChannelControl(ValidatedControl, QGroupBox):
-        """Control for multiple channels."""
+        """Control for multiple channels.
 
-        def __init_subclass__(cls, channels=None):
-            """Build required parameters based on channels."""
-            super().__init_subclass__()
-            if channels:
-                cls._required_read_only = [
-                    f"CH{ch}_VOLTAGE" for ch in channels
-                ]
+        Channel count is determined at instantiation.
+        """
 
-Or use a class method factory:
+        # Class attributes show the PATTERN (appears in Sphinx docs)
+        _required_parameters = ["CH{ch}_VOLTAGE", "CH{ch}_CURRENT"]
+        _required_read_only = ["CH{ch}_STATUS"]
 
-.. code-block:: python
+        def __init__(self, app, instrument_name, channels, name="Multi-Channel"):
+            # Expand patterns for actual channels BEFORE calling super
+            self._required_parameters = [
+                param.replace("{ch}", str(ch))
+                for param in self.__class__._required_parameters
+                for ch in channels
+            ]
+            self._required_read_only = [
+                param.replace("{ch}", str(ch))
+                for param in self.__class__._required_read_only
+                for ch in channels
+            ]
 
-    @classmethod
-    def for_channels(cls, channels):
-        """Create a control class for specific channels."""
-        # Build parameter lists
-        read_only = [f"CH{ch}_VOLTAGE" for ch in channels]
-        read_write = [f"CH{ch}_ENABLE" for ch in channels]
+            # Validation uses expanded instance attributes
+            super().__init__(app, instrument_name, name)
 
-        # Create new class with those parameters
-        return type(
-            f"Control_{len(channels)}ch",
-            (cls,),
-            {
-                "_required_read_only": read_only,
-                "_required_parameters": read_write,
-            }
-        )
+            self.channels = channels
+
+            # Create widgets for each channel
+            self.voltage_widgets = []
+            for ch in channels:
+                voltage = HCLineEdit(
+                    app, instrument_name, f"CH{ch}_VOLTAGE",
+                    label=f"CH{ch} Voltage"
+                )
+                self.voltage_widgets.append(voltage)
+                # ... more widgets
+
+            # Build layout...
+
+**How it works:**
+
+1. **Class attributes** contain placeholder patterns like ``"CH{ch}_VOLTAGE"``
+2. Sphinx sees these and shows them in docs: ``CH{ch}_VOLTAGE`` (clear for users!)
+3. **Instance attributes** are set before ``super().__init__()`` with expanded lists
+4. Validation reads **instance attributes first** (if they exist), falling back to class attributes
+5. For a 3-channel control, validation checks ``CH1_VOLTAGE``, ``CH2_VOLTAGE``, ``CH3_VOLTAGE``
+
+**Sphinx documentation will show:**
+
+.. code-block:: text
+
+    **Required Instrument Parameters**
+
+    Read/Write Parameters:
+      - ``CH{ch}_VOLTAGE``
+      - ``CH{ch}_CURRENT``
+
+    Read-only Parameters:
+      - ``CH{ch}_STATUS``
+
+Much clearer than listing all possible channels!
 
 Important Notes
 ~~~~~~~~~~~~~~~

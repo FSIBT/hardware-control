@@ -210,3 +210,43 @@ class TestValidatedControl:
         assert ControlWithParameters._required_read_only == ["STATUS"]
         assert ControlWithParameters._required_write_only == ["MODE"]
         assert ControlWithParameters._required_commands == ["RESET"]
+
+    def test_instance_attributes_override_class_attributes(self):
+        """Test that instance attributes can override class attributes for dynamic parameters."""
+
+        class DynamicControl(ValidatedControl, MockWidget):
+            """Control with dynamic parameters (e.g., multi-channel)."""
+
+            # Class attributes show pattern in docs
+            _required_parameters = ["CH{ch}_VOLTAGE"]
+
+            def __init__(self, app, instrument_name, channels):
+                # Expand pattern for actual channels before calling super
+                self._required_parameters = [
+                    param.replace("{ch}", str(ch))
+                    for param in self.__class__._required_parameters
+                    for ch in channels
+                ]
+
+                # Validation uses expanded instance attributes
+                super().__init__(app, instrument_name)
+                self.channels = channels
+
+        # Create app with expanded parameters
+        app = MockApp(
+            read_params=["CH1_VOLTAGE", "CH2_VOLTAGE", "CH3_VOLTAGE"],
+            set_params=["CH1_VOLTAGE", "CH2_VOLTAGE", "CH3_VOLTAGE"],
+        )
+
+        # Should validate successfully with expanded parameters
+        control = DynamicControl(app, "TEST_INST", channels=[1, 2, 3])
+
+        # Class attribute still has pattern (for docs)
+        assert DynamicControl._required_parameters == ["CH{ch}_VOLTAGE"]
+
+        # Instance attribute has expanded list (for validation)
+        assert control._required_parameters == [
+            "CH1_VOLTAGE",
+            "CH2_VOLTAGE",
+            "CH3_VOLTAGE",
+        ]
