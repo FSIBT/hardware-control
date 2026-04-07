@@ -39,8 +39,58 @@ class DelayGenerator(ValidatedControl, QGroupBox):
     hardware_control.instruments.srs.SRS_DG535.SRS_DG535
     """
 
+    # Required instrument parameters (validated automatically in __init__)
+    _required_parameters = [
+        "TRIGGER_MODE",
+        "TRIGGER_EDGE",
+        "TRIGGER_LEVEL",
+        "PULSES_PER_BURST",
+        "TRIGGER_PERIOD",
+        "BURST_TRIGGER_RATE",
+        "INTERNAL_TRIGGER_RATE",
+        # Channel A parameters
+        "CHA_DELAY",
+        "CHA_RELATIVE_TO",
+        "CHA_OUTPUT_MODE",
+        "CHA_OUTPUT_AMPLITUDE",
+        "CHA_OUTPUT_OFFSET",
+        "CHA_TRIGGER_IMPEDANCE",
+        # Channel B parameters
+        "CHB_DELAY",
+        "CHB_RELATIVE_TO",
+        "CHB_OUTPUT_MODE",
+        "CHB_OUTPUT_AMPLITUDE",
+        "CHB_OUTPUT_OFFSET",
+        "CHB_TRIGGER_IMPEDANCE",
+        # Channel C parameters (4-channel only)
+        "CHC_DELAY",
+        "CHC_RELATIVE_TO",
+        "CHC_OUTPUT_MODE",
+        "CHC_OUTPUT_AMPLITUDE",
+        "CHC_OUTPUT_OFFSET",
+        "CHC_TRIGGER_IMPEDANCE",
+        # Channel D parameters (4-channel only)
+        "CHD_DELAY",
+        "CHD_RELATIVE_TO",
+        "CHD_OUTPUT_MODE",
+        "CHD_OUTPUT_AMPLITUDE",
+        "CHD_OUTPUT_OFFSET",
+        "CHD_TRIGGER_IMPEDANCE",
+        # Combined channel AB parameters
+        "CHAB_OUTPUT_MODE",
+        "CHAB_OUTPUT_AMPLITUDE",
+        "CHAB_OUTPUT_OFFSET",
+        "CHAB_TRIGGER_IMPEDANCE",
+        # Combined channel CD parameters (4-channel only)
+        "CHCD_OUTPUT_MODE",
+        "CHCD_OUTPUT_AMPLITUDE",
+        "CHCD_OUTPUT_OFFSET",
+        "CHCD_TRIGGER_IMPEDANCE",
+    ]
+    _required_commands = ["SINGLE_TRIGGER"]
+
     def __init__(self, app, instrument_name: str, widget_name: str = "Delay Generator"):
-        # Auto-starts parameter collection
+        # Validation happens automatically in super().__init__
         super().__init__(app, instrument_name, widget_name)
 
         self.app = app
@@ -173,10 +223,6 @@ class DelayGenerator(ValidatedControl, QGroupBox):
         self.master_layout.addWidget(self.period, 3, 3)
 
         self.master_layout.addWidget(self.channel_box, 4, 0, 1, 4)
-
-        # All parameters auto-registered through HC widgets
-        # IMPORTANT: Validate parameters
-        self._validate_parameters()
 
         self.setLayout(self.master_layout)
 

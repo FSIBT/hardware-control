@@ -109,6 +109,28 @@ class KeysightPowerSupply(ValidatedControl, QGroupBox):
     hardware_control.instruments.keysight.Keysight_36300
     """
 
+    # Required instrument parameters (validated automatically in __init__)
+    _required_parameters = [
+        "CH1_V_OUT",
+        "CH1_I_OUT",
+        "CH1_ENABLE",
+        "CH1_V_PROT",
+        "CH1_V_SET",
+        "CH2_V_OUT",
+        "CH2_I_OUT",
+        "CH2_ENABLE",
+        "CH2_V_PROT",
+        "CH2_V_SET",
+        "CH2_I_SET",
+        "CH3_V_OUT",
+        "CH3_I_OUT",
+        "CH3_ENABLE",
+        "CH3_V_PROT",
+        "CH3_V_SET",
+        "CH3_I_SET",
+    ]
+    _required_commands = ["ALLOW_NEG_OUTPUT"]
+
     def __init__(
         self,
         app,
@@ -120,7 +142,7 @@ class KeysightPowerSupply(ValidatedControl, QGroupBox):
         widget_name: str = "Keysight Power Supply",
         persona: str = "3631A",
     ):
-        # Auto-starts parameter collection
+        # Validation happens automatically in super().__init__
         super().__init__(app, instrument_name, widget_name)
         self.app = app
         self.instrument = instrument_name
@@ -161,26 +183,6 @@ class KeysightPowerSupply(ValidatedControl, QGroupBox):
                 label=None,
                 show_icon=True,
             )
-
-        # Manually add command used directly (not through widgets)
-        self._add_required_parameter("ALLOW_NEG_OUTPUT", param_type="command")
-
-        # Manually add parameters used directly for initialization
-        for channel in [1, 2, 3]:
-            if channel <= len(channels):
-                self._add_required_parameter(
-                    f"CH{channel}_V_PROT", param_type="parameter", access="write"
-                )
-                self._add_required_parameter(
-                    f"CH{channel}_V_SET", param_type="parameter", access="write"
-                )
-                if channel > 1:  # CH2 and CH3 have current settings
-                    self._add_required_parameter(
-                        f"CH{channel}_I_SET", param_type="parameter", access="write"
-                    )
-
-        # IMPORTANT: Validate before using commands/parameters!
-        self._validate_parameters()
 
         # Now safe to use - validation passed
         # Allow negative outputs

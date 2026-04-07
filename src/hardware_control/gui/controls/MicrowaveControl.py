@@ -35,6 +35,10 @@ class MicrowaveController(ValidatedControl, QGroupBox):
     hardware_control.instruments.trinity_power.TDI.TDI
     """
 
+    # Required instrument parameters (validated automatically in __init__)
+    _required_parameters = ["FREQUENCY", "OUTPUT_LEVEL", "OUTPUT_ON_OFF"]
+    _required_read_only = ["ONLINE"]
+
     def __init__(
         self,
         app,
@@ -42,7 +46,7 @@ class MicrowaveController(ValidatedControl, QGroupBox):
         name: str = "Microwave Controller",
         power_levels: dict | None = None,
     ):
-        # Auto-starts parameter collection
+        # Validation happens automatically in super().__init__
         super().__init__(app, instrument_name, name)
 
         self.app = app
@@ -115,8 +119,6 @@ class MicrowaveController(ValidatedControl, QGroupBox):
         )
 
         # All parameters auto-registered through HC widgets
-        # IMPORTANT: Validate parameters
-        self._validate_parameters()
 
         self.layout = HCGridLayout(
             [self.on_off, self.power, self.power_read, self.frequency, self.online_ind]

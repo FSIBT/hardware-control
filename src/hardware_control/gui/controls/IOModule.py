@@ -61,6 +61,8 @@ class IOModule(ValidatedControl, QGroupBox):
 
     """
 
+    # No class-level required parameters - they're dynamically determined from channel_data
+
     def __init__(
         self,
         app,
@@ -70,7 +72,7 @@ class IOModule(ValidatedControl, QGroupBox):
         num_columns: int = 1,
         show_ID_labels=False,
     ):
-        # Auto-starts parameter collection
+        # Validation happens automatically in super().__init__
         super().__init__(app, instrument_name, name)
 
         self.app = app
@@ -169,8 +171,6 @@ class IOModule(ValidatedControl, QGroupBox):
         self.channel_panel.addItem(self.bottom_spacer, int(load_idx / num_columns), 0)
 
         # All parameters auto-registered through HC widgets
-        # IMPORTANT: Validate parameters
-        self._validate_parameters()
 
         self.setLayout(self.channel_panel)
 
