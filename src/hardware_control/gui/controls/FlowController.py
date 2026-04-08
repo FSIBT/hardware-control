@@ -25,7 +25,8 @@ class FlowController(ValidatedControl, QGroupBox):
     """
 
     # Required instrument parameters (validated automatically in __init__)
-    _required_parameters = ["RATE", "PRESSURE"]
+    _required_parameters = ["RATE"]
+    _required_read_only = ["PRESSURE"]
 
     def __init__(
         self,

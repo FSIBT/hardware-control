@@ -211,22 +211,32 @@ class ValidatedControl:
 
         # Collect required parameters from instance or class attributes
         # Instance attributes take precedence (allows dynamic parameter lists)
+        # Note: We access attributes via self.__dict__ and self.__class__ to avoid
+        # triggering Qt's attribute access checks before parent __init__ is called
         required_params = {}
 
+        # Helper to get attribute from instance dict or class, avoiding Qt checks
+        def get_params(attr_name):
+            # Check instance attributes first (for dynamic controls)
+            if attr_name in self.__dict__:
+                return self.__dict__[attr_name]
+            # Fall back to class attributes
+            return getattr(self.__class__, attr_name, [])
+
         # Read/write parameters
-        for param in getattr(self, "_required_parameters", []):
+        for param in get_params("_required_parameters"):
             required_params[param] = {"type": "parameter", "access": "read_write"}
 
         # Read-only parameters
-        for param in getattr(self, "_required_read_only", []):
+        for param in get_params("_required_read_only"):
             required_params[param] = {"type": "parameter", "access": "read"}
 
         # Write-only parameters
-        for param in getattr(self, "_required_write_only", []):
+        for param in get_params("_required_write_only"):
             required_params[param] = {"type": "parameter", "access": "write"}
 
         # Commands
-        for cmd in getattr(self, "_required_commands", []):
+        for cmd in get_params("_required_commands"):
             required_params[cmd] = {"type": "command"}
 
         # Validate if there are any requirements
