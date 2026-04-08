@@ -111,23 +111,27 @@ class KeysightPowerSupply(ValidatedControl, QGroupBox):
 
     # Required instrument parameters (validated automatically in __init__)
     _required_parameters = [
-        "CH1_V_OUT",
-        "CH1_I_OUT",
         "CH1_ENABLE",
-        "CH1_V_PROT",
         "CH1_V_SET",
-        "CH2_V_OUT",
-        "CH2_I_OUT",
         "CH2_ENABLE",
-        "CH2_V_PROT",
         "CH2_V_SET",
         "CH2_I_SET",
-        "CH3_V_OUT",
-        "CH3_I_OUT",
         "CH3_ENABLE",
-        "CH3_V_PROT",
         "CH3_V_SET",
         "CH3_I_SET",
+    ]
+    _required_read_only = [
+        "CH1_V_OUT",
+        "CH1_I_OUT",
+        "CH2_V_OUT",
+        "CH2_I_OUT",
+        "CH3_V_OUT",
+        "CH3_I_OUT",
+    ]
+    _required_write_only = [
+        "CH1_V_PROT",
+        "CH2_V_PROT",
+        "CH3_V_PROT",
     ]
     _required_commands = ["ALLOW_NEG_OUTPUT"]
 
