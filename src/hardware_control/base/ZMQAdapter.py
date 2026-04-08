@@ -106,6 +106,9 @@ class ZMQAdapter(threading.Thread):
             # handle messages in queue
             handle_ZMQ_message_from_app(self)
 
+        logger.debug(f"Closing the Instrument: {self.instrument.name}")
+        self.instrument.close()
+
         # Clean up ZMQ resources when thread stops
         try:
             poller.unregister(self.zmq_subscriber)

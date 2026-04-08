@@ -6,7 +6,6 @@ from pathlib import Path
 import platform
 import tempfile
 import threading
-import time
 from typing import Any
 from collections.abc import Callable
 import datetime
@@ -172,6 +171,11 @@ class App(QApplication):
         # thread's run function to stop
         self.stop_threads_event.set()
 
+        # stop timers during shutdown so it stops communicating with already closed sockets
+        if hasattr(self, "zmq_timer"):
+            self.zmq_timer.stop()
+        if hasattr(self, "update_instrument_timer"):
+            self.update_instrument_timer.stop()
         # wait for all threads to end with timeout
         timeout_seconds = 5.0
         for t in self.threads:
@@ -425,9 +429,6 @@ class App(QApplication):
         # register an ignore flag for the instrument
         self._data[zmq_instrument.name]["IGNORE"] = ignore_flag
 
-        # some time for ZMQ to set things up
-        time.sleep(1)
-
         # start thread
         self.threads.append(zmq_instrument)
         zmq_instrument.start()
@@ -533,6 +534,9 @@ class App(QApplication):
 
     def update_instruments(self) -> None:
         """Update the app's dictionary of instrument parameter values in a desginated set of parameters."""
+        if self.stop_threads_event.is_set():
+            return
+
         for instrument, parameter_or_function in self.request_updates:
             if (instrument, parameter_or_function) in self.skip_request_updates:
                 continue
@@ -573,6 +577,8 @@ class App(QApplication):
 
     def call_continuous_commands(self, priority=0) -> None:
         """Call all commands that are to be called continuously."""
+        if self.stop_threads_event.is_set():
+            return
         for instrument, command, status in self.continuous_commands:
             online = self.get_instrument_parameter(instrument, "ONLINE")
             if online is None or online == "False" or status == False:
@@ -716,6 +722,8 @@ class App(QApplication):
         priority
            The priority of the message. See: :func:`.base.zmq_helper.add_ZMQ_message_to_queue`
         """
+        if self.stop_threads_event.is_set() or self.zmq_publisher.closed:
+            return
         self.zmq_publisher.send_string(f"{instrument} {priority} get {parameter}")
 
     @ensure_parameter_and_instrument_exists
@@ -736,6 +744,8 @@ class App(QApplication):
         priority
            The priority of the message. See: :func:`.base.zmq_helper.add_ZMQ_message_to_queue`
         """
+        if self.stop_threads_event.is_set() or self.zmq_publisher.closed:
+            return
         try:
             pre_call_hooks = self._data[instrument][command]["pre_call_hooks"]
             value = call_hooks(pre_call_hooks, command)
