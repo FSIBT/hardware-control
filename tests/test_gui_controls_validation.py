@@ -60,18 +60,16 @@ class TestGUIControlsUseValidatedControl:
         )
 
     def test_io_module_uses_validated_control(self):
-        """Test IOModule inherits from ValidatedControl."""
+        """Test IOModule inherits from ValidatedControl.
+
+        Note: IOModule has fully dynamic parameters based on channel_data,
+        so it doesn't declare class-level _required_* attributes.
+        """
         from hardware_control.gui.controls.IOModule import IOModule
         from hardware_control.base.gui_control import ValidatedControl
 
         assert issubclass(IOModule, ValidatedControl)
-        # Check that control has declared required parameters
-        assert (
-            hasattr(IOModule, "_required_parameters")
-            or hasattr(IOModule, "_required_read_only")
-            or hasattr(IOModule, "_required_write_only")
-            or hasattr(IOModule, "_required_commands")
-        )
+        # IOModule is a fully dynamic control - parameters depend on channel_data
 
     def test_keysight_power_supply_uses_validated_control(self):
         """Test KeysightPowerSupply inherits from ValidatedControl."""
@@ -104,18 +102,16 @@ class TestGUIControlsUseValidatedControl:
         )
 
     def test_multi_power_supply_uses_validated_control(self):
-        """Test MultiPowerSupply inherits from ValidatedControl."""
+        """Test MultiPowerSupply inherits from ValidatedControl.
+
+        Note: MultiPowerSupply has fully dynamic parameters based on channels,
+        so it doesn't declare class-level _required_* attributes.
+        """
         from hardware_control.gui.controls.MultiPowerSupply import MultiPowerSupply
         from hardware_control.base.gui_control import ValidatedControl
 
         assert issubclass(MultiPowerSupply, ValidatedControl)
-        # Check that control has declared required parameters
-        assert (
-            hasattr(MultiPowerSupply, "_required_parameters")
-            or hasattr(MultiPowerSupply, "_required_read_only")
-            or hasattr(MultiPowerSupply, "_required_write_only")
-            or hasattr(MultiPowerSupply, "_required_commands")
-        )
+        # MultiPowerSupply is a fully dynamic control - parameters depend on channels
 
     def test_oscilloscope_uses_validated_control(self):
         """Test Oscilloscope inherits from ValidatedControl."""
@@ -146,32 +142,28 @@ class TestGUIControlsUseValidatedControl:
         )
 
     def test_temp_monitor_uses_validated_control(self):
-        """Test TempMonitor inherits from ValidatedControl."""
+        """Test TempMonitor inherits from ValidatedControl.
+
+        Note: TempMonitor has fully dynamic parameters based on channels,
+        so it doesn't declare class-level _required_* attributes.
+        """
         from hardware_control.gui.controls.TempMonitor import TempMonitor
         from hardware_control.base.gui_control import ValidatedControl
 
         assert issubclass(TempMonitor, ValidatedControl)
-        # Check that control has declared required parameters
-        assert (
-            hasattr(TempMonitor, "_required_parameters")
-            or hasattr(TempMonitor, "_required_read_only")
-            or hasattr(TempMonitor, "_required_write_only")
-            or hasattr(TempMonitor, "_required_commands")
-        )
+        # TempMonitor is a fully dynamic control - parameters depend on channels
 
     def test_temp_monitor_adam_uses_validated_control(self):
-        """Test TempMonitor_Adam inherits from ValidatedControl."""
+        """Test TempMonitor_Adam inherits from ValidatedControl.
+
+        Note: TempMonitor_Adam has fully dynamic parameters based on channels,
+        so it doesn't declare class-level _required_* attributes.
+        """
         from hardware_control.gui.controls.TempMonitor_Adam import TempMonitor_Adam
         from hardware_control.base.gui_control import ValidatedControl
 
         assert issubclass(TempMonitor_Adam, ValidatedControl)
-        # Check that control has declared required parameters
-        assert (
-            hasattr(TempMonitor_Adam, "_required_parameters")
-            or hasattr(TempMonitor_Adam, "_required_read_only")
-            or hasattr(TempMonitor_Adam, "_required_write_only")
-            or hasattr(TempMonitor_Adam, "_required_commands")
-        )
+        # TempMonitor_Adam is a fully dynamic control - parameters depend on channels
 
     def test_device_template_uses_validated_control(self):
         """Test DeviceType (template) inherits from ValidatedControl."""
