@@ -32,6 +32,8 @@ class TempMonitor_Adam(ValidatedControl, QGroupBox):
     hardware_control.instruments.advantech.Adam_6015
     """
 
+    # No class-level required parameters - they're dynamically determined from channel_list
+
     def __init__(
         self,
         app,
@@ -40,7 +42,7 @@ class TempMonitor_Adam(ValidatedControl, QGroupBox):
         label_list: list[str] | None = None,
         columns=2,
     ):
-        # Auto-starts parameter collection
+        # Validation happens automatically in super().__init__
         super().__init__(app, instrument, instrument)
 
         self.app = app
@@ -66,8 +68,6 @@ class TempMonitor_Adam(ValidatedControl, QGroupBox):
             self.widgets.append(temperature)
 
         # All parameters auto-registered through HC widgets
-        # IMPORTANT: Validate parameters
-        self._validate_parameters()
 
         self.grid = HCGridLayout(self.widgets, columns=columns)
         self.setLayout(self.grid)

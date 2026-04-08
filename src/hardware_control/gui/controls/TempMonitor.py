@@ -30,13 +30,15 @@ class TempMonitor(ValidatedControl, QGroupBox):
     hardware_control.instruments.lakeshore.Lakeshore224
     """
 
+    # No class-level required parameters - they're dynamically determined from channel_list
+
     def __init__(
         self,
         app,
         instrument: str,
         channel_list,
     ):
-        # Auto-starts parameter collection
+        # Validation happens automatically in super().__init__
         super().__init__(app, instrument, instrument)
 
         self.app = app
@@ -78,8 +80,6 @@ class TempMonitor(ValidatedControl, QGroupBox):
             self.widgets.append(on_off_but)
 
         # All parameters auto-registered through HC widgets
-        # IMPORTANT: Validate parameters
-        self._validate_parameters()
 
         self.grid = HCGridLayout(self.widgets)
         self.setLayout(self.grid)

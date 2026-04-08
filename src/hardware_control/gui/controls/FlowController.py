@@ -24,13 +24,17 @@ class FlowController(ValidatedControl, QGroupBox):
     hardware_control.instruments.alicat.Alicat_M_Series.Alicat_M_Series
     """
 
+    # Required instrument parameters (validated automatically in __init__)
+    _required_parameters = ["RATE"]
+    _required_read_only = ["PRESSURE"]
+
     def __init__(
         self,
         app,
         instrument_name: str,
         name: str = "Flow Controller",
     ):
-        # Auto-starts parameter collection
+        # Validation happens automatically in super().__init__
         super().__init__(app, instrument_name, name)
 
         self.app = app
@@ -69,10 +73,6 @@ class FlowController(ValidatedControl, QGroupBox):
             use_prefix=False,
             label_align="right",
         )
-
-        # All parameters auto-registered through HC widgets
-        # IMPORTANT: Validate parameters
-        self._validate_parameters()
 
         self.layout = HCGridLayout([self.rate, self.pressure, self.flow])
         self.setLayout(self.layout)

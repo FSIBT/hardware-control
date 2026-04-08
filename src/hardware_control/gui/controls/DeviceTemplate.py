@@ -21,6 +21,9 @@ class DeviceType(ValidatedControl, QGroupBox):
     5. Call _validate_parameters() before setLayout()
     """
 
+    # Required instrument parameters (validated automatically in __init__)
+    _required_parameters = ["CH1_VOLT", "CH2_VOLT"]
+
     def __init__(
         self,
         app,
@@ -30,7 +33,7 @@ class DeviceType(ValidatedControl, QGroupBox):
         initialize_with: str = "INSTRUMENT",
     ):
         # STEP 1: Pass app, instrument_name, and widget_name to super().__init__()
-        # This auto-starts parameter collection via ValidatedControl
+        # Validation happens automatically in super().__init__
         super().__init__(app, instrument_name, name)
 
         self.app = app
@@ -54,14 +57,12 @@ class DeviceType(ValidatedControl, QGroupBox):
 
         # STEP 3: Manually add parameters used directly (not through widgets)
         # Example: if you called app.set_instrument_parameter() or app.call_instrument_command()
-        # self._add_required_parameter("RESET", param_type='command')
-        # self._add_required_parameter("STATUS", param_type='parameter', access='read')
+        # Add them to the class attributes above:
+        # _required_parameters = ["CH1_VOLT", "CH2_VOLT", "STATUS"]
+        # _required_commands = ["RESET"]
+        # _required_read_only = ["STATUS"]
 
-        # STEP 4: IMPORTANT - Validate parameters before using them!
-        # This ensures the instrument provides all required parameters/commands
-        self._validate_parameters()
-
-        # STEP 5: Build the layout
+        # STEP 4: Build the layout
         # After validation passes, you can safely use the instrument
         self.layout = QGridLayout()
 

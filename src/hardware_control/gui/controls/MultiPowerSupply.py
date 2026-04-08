@@ -84,6 +84,8 @@ class MultiPowerSupply(ValidatedControl, QGroupBox):
     hardware_control.instruments.keysight.Keysight_36300
     """
 
+    # No class-level required parameters - they're dynamically determined from channels
+
     def __init__(
         self,
         app,
@@ -96,7 +98,7 @@ class MultiPowerSupply(ValidatedControl, QGroupBox):
         enable_power_buttons: str = "none",
         num_columns: int = -1,
     ):
-        # Auto-starts parameter collection
+        # Validation happens automatically in super().__init__
         super().__init__(app, instrument_name, widget_name)
 
         self.app = app
@@ -157,8 +159,6 @@ class MultiPowerSupply(ValidatedControl, QGroupBox):
             self.master_layout.addWidget(self.all_disable_but, 1, 2)
 
         # All parameters auto-registered through HC widgets
-        # IMPORTANT: Validate parameters
-        self._validate_parameters()
 
         self.setLayout(self.master_layout)
 

@@ -27,6 +27,42 @@ class FunctionGenerator(ValidatedControl, QGroupBox):
     hardware_control.instruments.siglent.Siglent_SDG
     """
 
+    # Required instrument parameters (validated automatically in __init__)
+    _required_parameters = [
+        "CH1_ENABLE",
+        "CH1_FREQUENCY",
+        "CH1_AMPLITUDE",
+        "CH1_OFFSET",
+        "CH1_WAVEFORM",
+        "CH1_ENABLE_BURST",
+        "CH1_BURST_MODE",
+        "CH1_BURST_CYCLES",
+        "CH1_BURST_PER",
+        "CH1_TRIGGER_CHANNEL",
+        "CH1_TRIGGER_LEVEL",
+        "CH1_TRIGGER_EDGE",
+        "CH1_TRIGGER_DELAY",
+        "CH1_IMPEDANCE",
+        "CH1_POLARITY",
+        "CH2_ENABLE",
+        "CH2_FREQUENCY",
+        "CH2_AMPLITUDE",
+        "CH2_OFFSET",
+        "CH2_WAVEFORM",
+        "CH2_ENABLE_BURST",
+        "CH2_BURST_MODE",
+        "CH2_BURST_CYCLES",
+        "CH2_BURST_PER",
+        "CH2_TRIGGER_CHANNEL",
+        "CH2_TRIGGER_LEVEL",
+        "CH2_TRIGGER_EDGE",
+        "CH2_TRIGGER_DELAY",
+        "CH2_IMPEDANCE",
+        "CH2_POLARITY",
+        "CH2_TRACK",
+        "CH1_TRACK",
+    ]
+
     def __init__(
         self,
         app,
@@ -36,7 +72,7 @@ class FunctionGenerator(ValidatedControl, QGroupBox):
         widget_name: str = "",
         set_default_fxn=None,
     ):
-        # Auto-starts parameter collection
+        # Validation happens automatically in super().__init__
         # Pass widget_name to QGroupBox parent
         super().__init__(
             app, instrument_name, widget_name if widget_name else "Function Generator"
@@ -213,8 +249,6 @@ class FunctionGenerator(ValidatedControl, QGroupBox):
 
         # All parameters auto-registered through HC widgets
         # No commands or parameters used directly
-        # IMPORTANT: Validate parameters
-        self._validate_parameters()
 
         if self.set_default_fxn is not None:
             default_btn = QPushButton("Set Defaults")

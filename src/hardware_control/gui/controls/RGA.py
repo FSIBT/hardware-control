@@ -37,12 +37,21 @@ class RGA(ValidatedControl, QGroupBox):
     hardware_control.instruments.srs.CIS200
     """
 
+    # Required instrument parameters (validated automatically in __init__)
+    _required_parameters = [
+        "FILAMENT_EMISSION",
+        "EXTRACT_VOLTAGE",
+        "ELECTRON_ENERGY",
+        "ION_ENERGY",
+        "EM_VOLTAGE",
+    ]
+
     def __init__(
         self,
         app,
         instrument_name: str,
     ):
-        # Auto-starts parameter collection
+        # Validation happens automatically in super().__init__
         super().__init__(app, instrument_name, instrument_name)
 
         self.app = app
@@ -115,8 +124,6 @@ class RGA(ValidatedControl, QGroupBox):
         self.master_layout.addWidget(self.bias, 3, 1)
 
         # All parameters auto-registered through HC widgets
-        # IMPORTANT: Validate parameters
-        self._validate_parameters()
 
         self.setLayout(self.master_layout)
 

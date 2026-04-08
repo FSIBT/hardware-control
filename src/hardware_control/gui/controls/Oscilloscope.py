@@ -52,6 +52,60 @@ class Oscilloscope(ValidatedControl, QGroupBox):
     hardware_control.instruments.picotech.Picotech_6000
     """
 
+    # Required instrument parameters (validated automatically in __init__)
+    _required_parameters = [
+        "TIMEBASE",
+        "TIME_OFFSET",
+        "TRIGGER_EDGE",
+        "TRIGGER_LEVEL",
+        "TRIGGER_CHANNEL",
+        "LABELS_ENABLED",
+        "TRIGGER_COUPLING",
+        "NUM_POINTS",
+        # Channel parameters (for up to 4 channels)
+        "CH1_VOLTS_DIV",
+        "CH1_OFFSET",
+        "CH1_COUPLING",
+        "CH1_PROBE_ATTEN",
+        "CH1_WAVEFORM",
+        "CH1_BW_LIM",
+        "CH1_LABEL",
+        "CH1_ON-OFF",
+        "CH1_INVERT",
+        "CH1_IMPEDANCE",
+        "CH2_VOLTS_DIV",
+        "CH2_OFFSET",
+        "CH2_COUPLING",
+        "CH2_PROBE_ATTEN",
+        "CH2_WAVEFORM",
+        "CH2_BW_LIM",
+        "CH2_LABEL",
+        "CH2_ON-OFF",
+        "CH2_INVERT",
+        "CH2_IMPEDANCE",
+        "CH3_VOLTS_DIV",
+        "CH3_OFFSET",
+        "CH3_COUPLING",
+        "CH3_PROBE_ATTEN",
+        "CH3_WAVEFORM",
+        "CH3_BW_LIM",
+        "CH3_LABEL",
+        "CH3_ON-OFF",
+        "CH3_INVERT",
+        "CH3_IMPEDANCE",
+        "CH4_VOLTS_DIV",
+        "CH4_OFFSET",
+        "CH4_COUPLING",
+        "CH4_PROBE_ATTEN",
+        "CH4_WAVEFORM",
+        "CH4_BW_LIM",
+        "CH4_LABEL",
+        "CH4_ON-OFF",
+        "CH4_INVERT",
+        "CH4_IMPEDANCE",
+    ]
+    _required_commands = ["SINGLE_TRIGGER", "RUN", "STOP"]
+
     def __init__(
         self,
         app,
@@ -61,7 +115,7 @@ class Oscilloscope(ValidatedControl, QGroupBox):
         widget_name: str = "Oscilloscope",
         instrument_type: str = "keysight",
     ):
-        # Auto-starts parameter collection
+        # Validation happens automatically in super().__init__
         super().__init__(app, instrument_name, widget_name)
 
         self.app = app
@@ -99,13 +153,6 @@ class Oscilloscope(ValidatedControl, QGroupBox):
             self.channel_box_layout.addWidget(self.channel_widgets[-1], 0, widget_col)
             widget_col += 1
         self.channel_box.setLayout(self.channel_box_layout)
-
-        # Manually add command used for picoscope (if applicable)
-        if self.instrument_type == "picoscope":
-            self._add_required_parameter("SINGLE_TRIGGER", param_type="command")
-
-        # IMPORTANT: Validate before using commands!
-        self._validate_parameters()
 
         self.master_layout = QGridLayout()
         self.master_layout.addWidget(self.disp, 0, 0, 4, 2)

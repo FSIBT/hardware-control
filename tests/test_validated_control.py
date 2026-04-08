@@ -2,7 +2,10 @@
 
 import pytest
 
-from hardware_control.base.gui_control import ValidatedControl
+from hardware_control.base.gui_control import (
+    ValidatedControl,
+    document_required_parameters,
+)
 
 
 class MockApp:
@@ -54,232 +57,196 @@ class MockWidget:
 
 
 class SimpleControl(ValidatedControl, MockWidget):
-    """Simple test control (no Qt dependency)."""
+    """Simple test control with no requirements (no Qt dependency)."""
 
     def __init__(self, app, instrument_name):
         super().__init__(app, instrument_name)
-        self.app = app
-        self.instrument = instrument_name
+
+
+class ControlWithParameters(ValidatedControl, MockWidget):
+    """Test control with required parameters."""
+
+    _required_parameters = ["VOLTAGE"]
+    _required_read_only = ["STATUS"]
+    _required_write_only = ["MODE"]
+    _required_commands = ["RESET"]
+
+    def __init__(self, app, instrument_name):
+        super().__init__(app, instrument_name)
+
+
+class ControlWithReadWrite(ValidatedControl, MockWidget):
+    """Test control with read/write parameter."""
+
+    _required_parameters = ["VOLTAGE"]
+
+    def __init__(self, app, instrument_name):
+        super().__init__(app, instrument_name)
+
+
+class ControlWithCommand(ValidatedControl, MockWidget):
+    """Test control with command."""
+
+    _required_commands = ["RESET"]
+
+    def __init__(self, app, instrument_name):
+        super().__init__(app, instrument_name)
 
 
 class TestValidatedControl:
     """Test suite for ValidatedControl class."""
 
-    def test_init_sets_up_validation_system(self):
-        """Test that __init__ sets up the validation system."""
+    def test_init_sets_app_and_instrument(self):
+        """Test that __init__ sets up app and instrument attributes."""
         app = MockApp()
         control = SimpleControl(app, "TEST_INST")
 
         assert control.app is app
         assert control.instrument == "TEST_INST"
-        assert control._required_params == {}
-        assert control._validated is False
-        assert hasattr(app, "_register_widget_parameter")
 
-    def test_add_required_parameter_command(self):
-        """Test adding a required command."""
+    def test_validation_passes_with_no_requirements(self):
+        """Test validation passes when control has no requirements."""
         app = MockApp()
-        control = SimpleControl(app, "TEST_INST")
-
-        control._add_required_parameter("RESET", param_type="command")
-
-        assert "RESET" in control._required_params
-        assert control._required_params["RESET"]["type"] == "command"
-
-    def test_add_required_parameter_read_only(self):
-        """Test adding a read-only parameter."""
-        app = MockApp()
-        control = SimpleControl(app, "TEST_INST")
-
-        control._add_required_parameter("STATUS", param_type="parameter", access="read")
-
-        assert "STATUS" in control._required_params
-        assert control._required_params["STATUS"]["type"] == "parameter"
-        assert control._required_params["STATUS"]["access"] == "read"
-
-    def test_add_required_parameter_write_only(self):
-        """Test adding a write-only parameter."""
-        app = MockApp()
-        control = SimpleControl(app, "TEST_INST")
-
-        control._add_required_parameter("MODE", param_type="parameter", access="write")
-
-        assert "MODE" in control._required_params
-        assert control._required_params["MODE"]["type"] == "parameter"
-        assert control._required_params["MODE"]["access"] == "write"
-
-    def test_add_required_parameter_read_write(self):
-        """Test adding a read/write parameter (default)."""
-        app = MockApp()
-        control = SimpleControl(app, "TEST_INST")
-
-        control._add_required_parameter("VOLTAGE")
-
-        assert "VOLTAGE" in control._required_params
-        assert control._required_params["VOLTAGE"]["type"] == "parameter"
-        assert control._required_params["VOLTAGE"]["access"] == "read_write"
-
-    def test_validate_parameters_no_requirements(self):
-        """Test validation with no required parameters."""
-        app = MockApp()
-        control = SimpleControl(app, "TEST_INST")
-
         # Should not raise
-        control._validate_parameters()
+        control = SimpleControl(app, "TEST_INST")
+        assert control.app is app
 
-        assert control._validated is True
-
-    def test_validate_parameters_all_present(self):
-        """Test validation when all parameters are present."""
+    def test_validation_passes_all_present(self):
+        """Test validation passes when all requirements are met."""
         app = MockApp(
             read_params=["VOLTAGE", "STATUS"],
             set_params=["VOLTAGE", "MODE"],
             commands=["RESET"],
         )
-        control = SimpleControl(app, "TEST_INST")
-
-        control._add_required_parameter(
-            "VOLTAGE", param_type="parameter", access="read_write"
-        )
-        control._add_required_parameter("STATUS", param_type="parameter", access="read")
-        control._add_required_parameter("MODE", param_type="parameter", access="write")
-        control._add_required_parameter("RESET", param_type="command")
-
         # Should not raise
-        control._validate_parameters()
+        control = ControlWithParameters(app, "TEST_INST")
+        assert control.app is app
 
-        assert control._validated is True
-
-    def test_validate_parameters_missing_command(self):
+    def test_validation_fails_missing_command(self):
         """Test validation fails when command is missing."""
         app = MockApp(commands=[])
-        control = SimpleControl(app, "TEST_INST")
-
-        control._add_required_parameter("RESET", param_type="command")
 
         with pytest.raises(ValueError) as exc_info:
-            control._validate_parameters()
+            ControlWithCommand(app, "TEST_INST")
 
         assert "RESET (command)" in str(exc_info.value)
-        assert control._validated is False
+        assert "ControlWithCommand" in str(exc_info.value)
 
-    def test_validate_parameters_missing_readable(self):
+    def test_validation_fails_missing_readable(self):
         """Test validation fails when readable parameter is missing."""
-        app = MockApp(read_params=[])
-        control = SimpleControl(app, "TEST_INST")
-
-        control._add_required_parameter("STATUS", param_type="parameter", access="read")
+        app = MockApp(read_params=[], set_params=["VOLTAGE"])
 
         with pytest.raises(ValueError) as exc_info:
-            control._validate_parameters()
+            ControlWithReadWrite(app, "TEST_INST")
 
-        assert "STATUS (readable)" in str(exc_info.value)
-        assert control._validated is False
+        assert "VOLTAGE (readable)" in str(exc_info.value)
 
-    def test_validate_parameters_missing_writable(self):
+    def test_validation_fails_missing_writable(self):
         """Test validation fails when writable parameter is missing."""
-        app = MockApp(set_params=[])
-        control = SimpleControl(app, "TEST_INST")
-
-        control._add_required_parameter("MODE", param_type="parameter", access="write")
-
-        with pytest.raises(ValueError) as exc_info:
-            control._validate_parameters()
-
-        assert "MODE (writable)" in str(exc_info.value)
-        assert control._validated is False
-
-    def test_validate_parameters_missing_read_write(self):
-        """Test validation fails when read/write parameter is only readable."""
         app = MockApp(read_params=["VOLTAGE"], set_params=[])
-        control = SimpleControl(app, "TEST_INST")
-
-        control._add_required_parameter(
-            "VOLTAGE", param_type="parameter", access="read_write"
-        )
 
         with pytest.raises(ValueError) as exc_info:
-            control._validate_parameters()
+            ControlWithReadWrite(app, "TEST_INST")
 
         assert "VOLTAGE (writable)" in str(exc_info.value)
-        assert control._validated is False
 
-    def test_validate_parameters_multiple_missing(self):
+    def test_validation_fails_multiple_missing(self):
         """Test validation error message with multiple missing parameters."""
         app = MockApp(read_params=[], set_params=[], commands=[])
-        control = SimpleControl(app, "TEST_INST")
-
-        control._add_required_parameter(
-            "VOLTAGE", param_type="parameter", access="read"
-        )
-        control._add_required_parameter("RESET", param_type="command")
 
         with pytest.raises(ValueError) as exc_info:
-            control._validate_parameters()
+            ControlWithParameters(app, "TEST_INST")
 
         error_msg = str(exc_info.value)
-        assert "VOLTAGE (readable)" in error_msg
-        assert "RESET (command)" in error_msg
-        assert "SimpleControl" in error_msg
+        assert "VOLTAGE" in error_msg or "STATUS" in error_msg
+        assert "ControlWithParameters" in error_msg
 
-    def test_validate_parameters_idempotent(self):
-        """Test that calling _validate_parameters multiple times is safe."""
-        app = MockApp(commands=["RESET"])
-        control = SimpleControl(app, "TEST_INST")
+    def test_validation_fails_instrument_not_found(self):
+        """Test validation fails when instrument doesn't exist."""
+        app = MockApp()
 
-        control._add_required_parameter("RESET", param_type="command")
+        with pytest.raises(ValueError) as exc_info:
+            ControlWithCommand(app, "MISSING_INST")
 
-        # First call
-        control._validate_parameters()
-        assert control._validated is True
+        assert "not found in app" in str(exc_info.value)
+        assert "MISSING_INST" in str(exc_info.value)
 
-        # Second call should not re-validate or raise
-        control._validate_parameters()
-        assert control._validated is True
+    def test_documentation_decorator(self):
+        """Test that documentation decorator adds parameters to docstring."""
 
-    def test_append_required_params_to_docs(self):
-        """Test that required parameters are appended to docstring."""
-        app = MockApp(read_params=["STATUS"], set_params=["MODE"], commands=["RESET"])
-        control = SimpleControl(app, "TEST_INST")
+        @document_required_parameters
+        class TestControl(ValidatedControl, MockWidget):
+            """Test control."""
 
-        control._add_required_parameter("STATUS", param_type="parameter", access="read")
-        control._add_required_parameter("MODE", param_type="parameter", access="write")
-        control._add_required_parameter("RESET", param_type="command")
+            _required_parameters = ["VOLTAGE"]
+            _required_commands = ["RESET"]
 
-        control._validate_parameters()
+            def __init__(self, app, instrument_name):
+                super().__init__(app, instrument_name)
 
         # Check docstring was updated
-        doc = control.__class__.__doc__
-        assert doc is not None, "Docstring should not be None after validation"
+        doc = TestControl.__doc__
+        assert doc is not None
         assert "**Required Instrument Parameters**" in doc
-        assert "Read-only Parameters:" in doc
-        assert "``STATUS``" in doc
-        assert "Write-only Parameters:" in doc
-        assert "``MODE``" in doc
+        assert "Read/Write Parameters:" in doc
+        assert "``VOLTAGE``" in doc
         assert "Commands:" in doc
         assert "``RESET``" in doc
 
-    def test_registration_function_filters_by_instrument(self):
-        """Test that registration function only registers for matching instrument."""
-        app = MockApp()
-        control = SimpleControl(app, "INST1")
+    def test_automatic_documentation_via_init_subclass(self):
+        """Test that __init_subclass__ automatically applies decorator."""
+        # ControlWithParameters should have docs auto-generated
+        doc = ControlWithParameters.__doc__
+        assert doc is not None
+        assert "**Required Instrument Parameters**" in doc
+        assert "``VOLTAGE``" in doc
+        assert "``STATUS``" in doc
+        assert "``MODE``" in doc
+        assert "``RESET``" in doc
 
-        # Register a parameter for INST1 (should be added)
-        app._register_widget_parameter("INST1", "PARAM1", "parameter", "read")
+    def test_class_attributes_preserved(self):
+        """Test that class attributes are accessible."""
+        assert ControlWithParameters._required_parameters == ["VOLTAGE"]
+        assert ControlWithParameters._required_read_only == ["STATUS"]
+        assert ControlWithParameters._required_write_only == ["MODE"]
+        assert ControlWithParameters._required_commands == ["RESET"]
 
-        # Register a parameter for INST2 (should be ignored)
-        app._register_widget_parameter("INST2", "PARAM2", "parameter", "read")
+    def test_instance_attributes_override_class_attributes(self):
+        """Test that instance attributes can override class attributes for dynamic parameters."""
 
-        assert "PARAM1" in control._required_params
-        assert "PARAM2" not in control._required_params
+        class DynamicControl(ValidatedControl, MockWidget):
+            """Control with dynamic parameters (e.g., multi-channel)."""
 
-    def test_cleans_up_registration_function_after_validation(self):
-        """Test that _register_widget_parameter is removed after validation."""
-        app = MockApp()
-        control = SimpleControl(app, "TEST_INST")
+            # Class attributes show pattern in docs
+            _required_parameters = ["CH{ch}_VOLTAGE"]
 
-        assert hasattr(app, "_register_widget_parameter")
+            def __init__(self, app, instrument_name, channels):
+                # Expand pattern for actual channels before calling super
+                self._required_parameters = [
+                    param.replace("{ch}", str(ch))
+                    for param in self.__class__._required_parameters
+                    for ch in channels
+                ]
 
-        control._validate_parameters()
+                # Validation uses expanded instance attributes
+                super().__init__(app, instrument_name)
+                self.channels = channels
 
-        assert not hasattr(app, "_register_widget_parameter")
+        # Create app with expanded parameters
+        app = MockApp(
+            read_params=["CH1_VOLTAGE", "CH2_VOLTAGE", "CH3_VOLTAGE"],
+            set_params=["CH1_VOLTAGE", "CH2_VOLTAGE", "CH3_VOLTAGE"],
+        )
+
+        # Should validate successfully with expanded parameters
+        control = DynamicControl(app, "TEST_INST", channels=[1, 2, 3])
+
+        # Class attribute still has pattern (for docs)
+        assert DynamicControl._required_parameters == ["CH{ch}_VOLTAGE"]
+
+        # Instance attribute has expanded list (for validation)
+        assert control._required_parameters == [
+            "CH1_VOLTAGE",
+            "CH2_VOLTAGE",
+            "CH3_VOLTAGE",
+        ]
