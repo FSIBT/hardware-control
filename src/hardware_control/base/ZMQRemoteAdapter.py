@@ -254,6 +254,7 @@ class ZMQRemoteAdapter:
         """
         logger.info(f"{self.name} stopping remote")
         try:
+            self.req_rep_socket.setsockopt(zmq.RCVTIMEO, 5000)  # 5 s timeout
             self.req_rep_socket.send_string("STOP")
             self.req_rep_socket.recv_string()
         except Exception as e:
