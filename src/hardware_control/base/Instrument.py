@@ -427,6 +427,13 @@ class Instrument:
         Example Usage:
         b = certain_instrument()
         volts = b.voltage
+
+        Note: __getattr__ is only called when normal attribute lookup fails.
+        Because it calls get_value(), which accesses self._dummy and
+        self.read_commands, be careful not to trigger attribute access on
+        those names before super().__init__() has been called in a subclass,
+        or this will recurse. The _dummy sentinel check below is a guard for
+        that case.
         """
         val = self.get_value(parameter)
         if val is not None:
