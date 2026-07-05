@@ -40,7 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The repository moved from Bitbucket to https://github.com/FSIBT/hardware-control
 - CI now runs on GitHub Actions and releases are published on `v*` tags
 
-## [4.1.0] 2026-04-06
+## [4.1.0] 2026-04-07
 
 ### Added
 - GUI parameter validation system with auto-registration
