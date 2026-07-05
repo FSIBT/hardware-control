@@ -160,11 +160,8 @@ class Dataset(QObject):
         The alias will be used when saving and plotting.
         """
         instrument, parameter = original_name.split(":")
-        instrument_lst = np.array(self.instruments)[:, :2].tolist()
-        # Need second if condition for when instrument_lst only contains one embedded list
-        if ([instrument, parameter] not in instrument_lst) and (
-            [instrument, parameter] != instrument_lst
-        ):
+        instrument_lst = [(inst, param) for inst, param, _ in self.instruments]
+        if (instrument, parameter) not in instrument_lst:
             logger.warning(
                 f"'{original_name}' is not available in dataset '{self.name}'."
             )
