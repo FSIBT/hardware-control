@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- `App.handle_request`: avoid `NameError` (and deadlocked REQ socket) when an
+  unrecognised ZMQ command is received; `value` is now initialised to a safe
+  error string before the command-dispatch branch
+- `App.save_settings`: prevent `KeyError` when iterating `_data` entries that
+  have no `set_value` key (commands and the internal `__capabilities__` entry)
+- `Alarm.alarm_id`: replaced `id(self)` with a class-level monotonic counter so
+  that IDs are unique for the lifetime of the process; `id()` can be reused
+  after garbage collection, causing `AlarmManager` to mis-match sound players
+- `ZMQRemoteAdapter.join`: added a 5 s receive timeout on the STOP/ACK exchange
+  so that a hung or unreachable remote process no longer blocks app shutdown
+  indefinitely
+- `Dataset.define_alias`: replaced `np.array(self.instruments)[:, :2]` slice
+  with a plain list comprehension; the numpy slice raised `IndexError` when
+  `self.instruments` was empty and required a fragile workaround for the
+  single-element case
+- `logging.py`: third-party loggers (zmq, pyvisa, …) are now silenced at
+  `WARNING` instead of `CRITICAL`, so their warnings are no longer hidden
+- Various typos in docstrings: "Currenlty" → "Currently" (`AlarmManager`),
+  "autosaveing" → "autosaving" (`Dataset`)
+
+### Docs
+- `Alarm.evaluate`: document the intentional manual-clear (latch) behaviour —
+  a latched alarm stays latched until `clear()` is called explicitly
+- `Instrument.__getattr__`: add a comment explaining the recursion risk if
+  subclass code accesses instrument attributes before `super().__init__()`
+
 ## [4.1.1] 2026-11-01
 
 ### Changed
