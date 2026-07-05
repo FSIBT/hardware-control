@@ -1292,6 +1292,8 @@ class App(QApplication):
         for instrument in self.instruments:
             app_settings[instrument] = {}
             for parameter in self._data[instrument]:
+                if "set_value" not in self._data[instrument][parameter]:
+                    continue  # skip commands and internal keys (e.g. __capabilities__)
                 value = self._data[instrument][parameter]["set_value"]
                 if value is not None:
                     app_settings[instrument][parameter] = value
