@@ -1,6 +1,6 @@
 import time
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, ClassVar
 
 COMPARATORS = {
     ">": lambda v, t: v > t,
@@ -23,11 +23,20 @@ class Alarm:
     _t0: float = 0.0  # private – when the limit was first crossed
     alarm_id: int = field(init=False)
 
+    _next_id: ClassVar[int] = 0
+
     def __post_init__(self) -> None:
-        self.alarm_id = id(self)
+        Alarm._next_id += 1
+        self.alarm_id = Alarm._next_id
 
     def evaluate(self, value: Any) -> bool:
-        """Returns True when alarm becomes *newly* active"""
+        """Returns True when alarm becomes *newly* active.
+
+        Note: once an alarm latches (``latched=True``), it stays latched even
+        if the condition clears. It must be explicitly reset by calling
+        :meth:`clear`. This is intentional — it ensures alarms are
+        acknowledged by the user rather than silently auto-clearing.
+        """
 
         try:
             v = float(value)
