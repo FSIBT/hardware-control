@@ -222,6 +222,7 @@ class App(QApplication):
                 msg = self.zmq_info.recv_string(flags=zmq.NOBLOCK)
                 logger.debug(f"App got request '{msg}'")
 
+                value = "ERROR: unknown command"
                 if msg.startswith("get_instrument_parameter"):
                     msg = msg.replace("get_instrument_parameter", "")
                     msg = msg[1:-1]  # remove ()
