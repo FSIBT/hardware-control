@@ -51,7 +51,7 @@ def setup_logging(
             lgr.handlers = []
             lgr.addHandler(handler)
         else:
-            lgr.setLevel(logging.CRITICAL)
+            lgr.setLevel(logging.WARNING)
             lgr.handlers = []
 
     logger.setLevel(loglevel)

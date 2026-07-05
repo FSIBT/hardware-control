@@ -18,7 +18,7 @@ class AlarmManager(QObject):
 
     Keep a list of different alarms and call actions if the alarm triggers.
 
-    Currenlty only playing sound is implemented, although other actions
+    Currently only playing sound is implemented, although other actions
     should be easy to add.
     """
 

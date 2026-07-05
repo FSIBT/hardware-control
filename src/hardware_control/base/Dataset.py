@@ -211,9 +211,7 @@ class Dataset(QObject):
 
     def autosave(self) -> None:
         """Autosave data."""
-        logger.debug(
-            f"Dataset {self.name} autosaveing to file {self.autosave_filename}"
-        )
+        logger.debug(f"Dataset {self.name} autosaving to file {self.autosave_filename}")
 
         if self.autosave_enabled:
             self.save(self.autosave_filename, self.autosave_format)
