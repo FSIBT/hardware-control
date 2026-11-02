@@ -11,6 +11,7 @@ import zmq
 from hardware_control.base.App import App
 from hardware_control.base.hooks import call_hooks, call_hooks_traced, Ramp
 from hardware_control.base.Instrument import Instrument
+from hardware_control.base.remote_access import RemoteAccess
 from hardware_control.base.ZMQRemoteAdapter import ZMQSingleInstrument
 from hardware_control.remote import formatters, HardwareControlClient
 
@@ -31,6 +32,7 @@ class FakeApp:
     """Use the App methods without a QApplication and ZMQ sockets."""
 
     app_name = "fake"
+    WRITE_COMMANDS = App.WRITE_COMMANDS
     get_instrument_parameters_and_commands = App.get_instrument_parameters_and_commands
     get_instrument_parameter = App.get_instrument_parameter
     set_instrument_parameter = App.set_instrument_parameter
@@ -44,9 +46,15 @@ class FakeApp:
     _handle_get_parameters = App._handle_get_parameters
     _handle_set_parameters = App._handle_set_parameters
     _handle_list_parameters = App._handle_list_parameters
+    _handle_list_instruments = App._handle_list_instruments
+    _handle_app_info = App._handle_app_info
+    _handle_access_info = App._handle_access_info
+    _check_access = App._check_access
+    _process_ipc_command = App._process_ipc_command
 
-    def __init__(self, dummy=False):
+    def __init__(self, dummy=False, directory=None):
         self.dummy = dummy
+        self.remote_access = RemoteAccess(self.app_name, directory)
         self.zmq_publisher = Publisher()
         self.stop_threads_event = threading.Event()
         self.continuous_commands = set()
@@ -239,9 +247,10 @@ def rep_socket():
     context.term()
 
 
-def test_handle_request_always_replies(rep_socket):
+def test_handle_request_always_replies(rep_socket, tmp_path):
     sock, address = rep_socket
-    app = FakeApp()
+    app = FakeApp(directory=tmp_path)
+    app.remote_access.configure("read-only")
     app.zmq_info = sock
 
     context = zmq.Context()

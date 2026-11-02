@@ -23,6 +23,7 @@ from .ZMQRemoteAdapter import ZMQRemoteAdapter
 from .hooks import call_hooks, call_hooks_traced, list_hook_names
 from .alarm_manager import AlarmManager
 from .error_handling import handle_file_operation
+from .remote_access import AccessMode, RemoteAccess
 
 logger = logging.getLogger(__name__)
 
@@ -89,6 +90,9 @@ class App(QApplication):
     and current data.
     """
 
+    # remote requests that change something, needing the full access mode
+    WRITE_COMMANDS = ("set_parameters",)
+
     def __init__(
         self, ipaddress=None, dummy: bool = False, app_name: str | None = None
     ) -> None:
@@ -106,6 +110,9 @@ class App(QApplication):
         self.app_name = app_name or f"app_{os.getpid()}"
 
         self.alarm_manager = AlarmManager(app=self)
+
+        # what other programs are allowed to do, off unless saved otherwise
+        self.remote_access = RemoteAccess(self.app_name)
 
         # publisher that announces commands for instruments
         if ipaddress is None:
@@ -160,6 +167,8 @@ class App(QApplication):
         self.update_instrument_timer = QTimer(self)
         self.update_instrument_timer.timeout.connect(self.update_instruments)
         self.update_instrument_timer.timeout.connect(self.call_continuous_commands)
+        # going through the mode applies the time limit
+        self.update_instrument_timer.timeout.connect(lambda: self.remote_access.mode)
         self.update_instrument_timer.start(1000)
 
         # default refresh rate used by many GUI elements
@@ -227,7 +236,11 @@ class App(QApplication):
             # a REP socket must reply to every request, otherwise it stops
             # working for all clients
             value = "ERROR: unknown command"
-            if msg.startswith("get_instrument_parameter"):
+            if self.remote_access.token_required:
+                value = "ERROR: a token is required, which this socket does not support"
+            elif self.remote_access.mode is AccessMode.OFF:
+                value = "ERROR: remote access is off"
+            elif msg.startswith("get_instrument_parameter"):
                 try:
                     msg = msg.replace("get_instrument_parameter", "")
                     msg = msg[1:-1]  # remove ()
@@ -281,6 +294,30 @@ class App(QApplication):
                 "widgets": [],
             }
             self._data[instrument][c] = p
+
+    def set_remote_access(
+        self,
+        mode: AccessMode | str,
+        duration: str | int = 0,
+        persist: bool = False,
+        token: str | None = None,
+    ) -> None:
+        """Set what other programs are allowed to do, e.g. hc-query and hc-mcp.
+
+        Parameters
+        ----------
+        mode
+            "off", "read-only" or "full"
+        duration
+            Go back to off after this time, in minutes or in a format like
+            "2d8h4m". 0 means no time limit.
+        persist
+            Keep these settings after a restart of the program
+        token
+            Require this token. An empty string removes it and None keeps
+            the current one.
+        """
+        self.remote_access.configure(mode, duration, persist, token)
 
     def add_dataset(self, dataset: Dataset) -> None:
         """Add a dataset object to the app. See the Dataset base class for more details."""
@@ -1028,7 +1065,6 @@ class App(QApplication):
         try:
             # Non-blocking receive
             request_json = self.zmq_ipc.recv_string(flags=zmq.NOBLOCK)
-            logger.debug(f"IPC request received: {request_json}")
 
             try:
                 request = json.loads(request_json)
@@ -1064,6 +1100,14 @@ class App(QApplication):
             Response dict with status, timestamp, app_name, and data/message
         """
         command = request.get("command")
+        logger.debug(f"IPC request received: {command}")
+
+        if command == "access_info":
+            return self._handle_access_info(request.get("token"))
+
+        denied = self._check_access(command, request.get("token"))
+        if denied:
+            return denied
 
         # Dispatch to handler
         if command == "get_parameters":
@@ -1083,6 +1127,42 @@ class App(QApplication):
                 "timestamp": datetime.datetime.now(datetime.UTC).isoformat(),
                 "app_name": self.app_name,
             }
+
+    def _check_access(self, command: str | None, token: str | None) -> dict | None:
+        """Return an error response if the request is not allowed, or None if it is."""
+        access = self.remote_access
+        message = None
+        if not access.check_token(token):
+            logger.warning(f"Remote request '{command}' refused: invalid token")
+            message = "Invalid or missing token, set HC_TOKEN"
+        elif access.mode is AccessMode.OFF:
+            message = "Remote access is off"
+        elif access.mode is AccessMode.READ_ONLY and command in self.WRITE_COMMANDS:
+            message = "Remote access is read-only"
+
+        if message is None:
+            return None
+        return {
+            "status": "error",
+            "message": message,
+            "timestamp": datetime.datetime.now(datetime.UTC).isoformat(),
+            "app_name": self.app_name,
+        }
+
+    def _handle_access_info(self, token: str | None) -> dict:
+        """Report the access mode, which is the only request allowed when off."""
+        access = self.remote_access
+        valid = access.check_token(token)
+        return {
+            "status": "success",
+            "timestamp": datetime.datetime.now(datetime.UTC).isoformat(),
+            "app_name": self.app_name,
+            "data": {
+                "access_mode": str(access.mode) if valid else None,
+                "token_required": access.token_required,
+                "token_valid": valid,
+            },
+        }
 
     def _check_readable(self, instrument: str, parameter: str) -> str | None:
         """Return why a parameter cannot be read, or None if it can."""
@@ -1225,6 +1305,7 @@ class App(QApplication):
                 }
                 item["error" if status == "error" else "message"] = message
                 data.append(item)
+                logger.info(f"Remote set {instrument}.{parameter}={value}: {status}")
             except Exception as e:
                 data.append(
                     {

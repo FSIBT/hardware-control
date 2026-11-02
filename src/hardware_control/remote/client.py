@@ -1,6 +1,7 @@
 """Client library for communicating with hardware-control Apps via IPC."""
 
 import json
+import os
 
 import zmq
 
@@ -21,7 +22,12 @@ class HardwareControlClient:
     """
 
     def __init__(
-        self, ipc_address: str, pid: int, timeout: int = 5000, app_name: str = ""
+        self,
+        ipc_address: str,
+        pid: int,
+        timeout: int = 5000,
+        app_name: str = "",
+        token: str | None = None,
     ):
         """Initialize client connection to App.
 
@@ -30,11 +36,14 @@ class HardwareControlClient:
             pid: Process ID of the App
             timeout: Timeout in milliseconds for send/receive operations
             app_name: Name of the App (for error messages)
+            token: Token for Apps that require one (default: HC_TOKEN from
+                the environment)
         """
         self.ipc_address = ipc_address
         self.pid = pid
         self.timeout = timeout
         self.app_name = app_name or f"app_{pid}"
+        self.token = token if token is not None else os.environ.get("HC_TOKEN")
 
         # Create ZMQ context and REQ socket
         self.context = zmq.Context()
@@ -72,6 +81,9 @@ class HardwareControlClient:
             raise RuntimeError(
                 f"App '{self.app_name}' (pid: {self.pid}) is no longer running"
             )
+
+        if self.token:
+            request = {**request, "token": self.token}
 
         try:
             # Send request
@@ -229,6 +241,17 @@ class HardwareControlClient:
         """
         request = {"version": "1.0", "command": "app_info"}
         return self._send_request(request)
+
+    def get_access_info(self) -> dict:
+        """Get the access mode of the App.
+
+        This is the only request that works when remote access is off.
+
+        Returns:
+            Response dict whose data dict contains access_mode, token_required
+            and token_valid. access_mode is None if the token is not valid.
+        """
+        return self._send_request({"version": "1.0", "command": "access_info"})
 
     def close(self):
         """Clean up resources and close connection."""
