@@ -1,7 +1,7 @@
 Remote Access
 =============
 
-Hardware-control Apps can be queried and controlled remotely using IPC-based communication. This enables:
+Hardware-control Apps can be queried and controlled remotely using IPC-based communication once remote access is turned on (see `Access Control`_). This enables:
 
 * Command-line access via ``hc-query`` CLI tool
 * LLM access via ``hc-mcp`` MCP server
@@ -40,6 +40,56 @@ Each running App creates a registry file (``app_<pid>.json``) containing:
    }
 
 Registry files are automatically cleaned up when the App exits or when stale files are detected.
+
+Access Control
+--------------
+
+Remote access is **off** by default, so nothing can read from or control an
+App until someone turns it on. There are three modes:
+
+* **Off**: all requests are refused, including reads from ``hc-query``. The
+  only exception is ``access_info``, which reports the mode.
+* **Read-only**: reads and lists are allowed.
+* **Full control**: settable parameters can be set and commands can be called.
+  Pre-set and pre-call hooks still apply, so limits and interlocks should be
+  implemented as hooks.
+
+In an :class:`~hardware_control.base.HCMainWindow.HCMainWindow`, use the
+*Remote Access* menu or click the indicator in the status bar. The indicator
+appears if the program uses a status bar. The popup has these settings:
+
+* **Keep after restart**: otherwise the App starts with access off again.
+  Settings are saved per ``app_name``.
+* **Time limit**: ``0`` for no limit, a number of minutes, or a time like
+  ``2d8h4m``. Access goes back to off afterwards. A saved time limit keeps its
+  end time, so a restart does not extend it.
+* **Token**: if set, clients need to provide it. Use *Generate* to create a
+  random one, and copy it right away, since only a hash is stored.
+
+The same settings are available without a window:
+
+.. code-block:: python
+
+   app.set_remote_access("read-only", duration="8h", persist=True, token="...")
+
+Clients read the token from the ``HC_TOKEN`` environment variable:
+
+.. code-block:: bash
+
+   export HC_TOKEN=<token>
+   hc-query get PSU1.VOLTAGE
+
+Mode changes, remote writes and commands, and refused tokens are logged. The
+older ``get_instrument_parameter`` socket also follows the mode, and refuses
+all requests if a token is set, since it cannot provide one.
+
+.. warning::
+
+   Access control does not protect against programs running under the same
+   user account: an AI with file or shell access could read the token from its
+   configuration or change the saved settings. To keep an AI limited to these
+   modes, only give it the MCP tools, or run it as a different user or on a
+   different computer.
 
 Using the CLI Tool (hc-query)
 ------------------------------
@@ -202,7 +252,8 @@ Add to your Claude Desktop config (``~/Library/Application Support/Claude/claude
      "mcpServers": {
        "hardware-control": {
          "command": "hc-mcp",
-         "args": ["--app", "BeamLineControl"]
+         "args": ["--app", "BeamLineControl"],
+         "env": {"HC_TOKEN": "<token, if the App requires one>"}
        }
      }
    }
@@ -210,12 +261,17 @@ Add to your Claude Desktop config (``~/Library/Application Support/Claude/claude
 Available MCP Tools
 ^^^^^^^^^^^^^^^^^^^
 
-The MCP server exposes these tools to LLMs:
+The MCP server exposes these tools to LLMs, depending on the access mode:
 
-* **list_instruments**: List all instruments in the App
-* **get_parameters**: Query parameter values (batch)
-* **set_parameters**: Set parameter values (batch)
-* **list_parameters**: List parameters for a specific instrument
+* **get_access_status**: Show the access mode (always available)
+* **list_instruments**: List all instruments in the App (read-only and full)
+* **list_parameters**: List parameters and commands of an instrument (read-only and full)
+* **get_parameters**: Query parameter values (read-only and full)
+* **set_parameters**: Set parameter values (full)
+* **call_commands**: Call instrument commands (full)
+
+The App checks every request, so changing the mode takes effect immediately,
+even if an MCP client still shows an older list of tools.
 
 Using the Python Client Library
 --------------------------------
@@ -291,7 +347,9 @@ Apps automatically support remote access. Just provide an ``app_name``:
    # Add instruments as usual
    # ...
 
-   # The App is now discoverable via hc-query and hc-mcp
+   # The App is now discoverable via hc-query and hc-mcp, but they can only
+   # use it after remote access is turned on, see Access Control
+   app.set_remote_access("read-only")
 
 If you don't provide an ``app_name``, the App will use ``app_<pid>`` as the default name.
 
@@ -307,9 +365,11 @@ Request Format
 
    {
      "version": "1.0",
-     "command": "get_parameters|set_parameters|list_instruments|list_parameters|app_info",
+     "command": "get_parameters|set_parameters|call_commands|list_instruments|list_parameters|app_info|access_info",
+     "token": "...",
      "queries": [...],
      "updates": [...],
+     "commands": [...],
      "instrument": "..."
    }
 
@@ -338,6 +398,16 @@ Available Commands
 
   * Request: ``{"command": "set_parameters", "updates": [{"instrument": "PSU1", "parameter": "VOLTAGE", "value": "50.0"}]}``
   * Response: ``{"status": "success", "data": [{"instrument": "PSU1", "parameter": "VOLTAGE", "status": "success"}]}``
+
+* **call_commands**: Call instrument commands
+
+  * Request: ``{"command": "call_commands", "commands": [{"instrument": "PSU1", "command": "RESET"}]}``
+  * Response: ``{"status": "success", "data": [{"instrument": "PSU1", "command": "RESET", "status": "success"}]}``
+
+* **access_info**: Get the access mode, the only request that works when access is off
+
+  * Request: ``{"command": "access_info"}``
+  * Response: ``{"status": "success", "data": {"access_mode": "off", "token_required": false, "token_valid": true}}``
 
 * **list_instruments**: List all instruments
 
@@ -422,10 +492,11 @@ Security Considerations
    The remote access system is designed for **local-only** access:
 
    * IPC sockets are local to the machine (not network-accessible)
-   * No authentication or authorization is implemented
-   * Anyone with local user access can control Apps
+   * Access is off by default, and an optional token can be required
+   * If access is on without a token, anyone with local user access can
+     use it, up to the current mode
    * On Windows the socket is a TCP port on localhost, so any local
-     program can connect to it
+     program can connect to it, so use a token
 
    :class:`~hardware_control.base.ZMQRemoteAdapter.ZMQSingleInstrument`
    is network-accessible and has no authentication either: anyone who can
@@ -469,7 +540,7 @@ Required Dependencies
 Optional Dependencies
 ^^^^^^^^^^^^^^^^^^^^^
 
-* ``mcp >= 0.9.0`` - Model Context Protocol server (for ``hc-mcp``)
+* ``mcp >= 2.3.0`` - Model Context Protocol server (for ``hc-mcp``)
 
 Install optional dependencies with:
 
