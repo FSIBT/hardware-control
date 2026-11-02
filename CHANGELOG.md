@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Breaking changes
+- Remote access is now off by default. `hc-query` and other clients get an
+  error, also for reads, until it is turned on in the App with the new menu
+  or status bar indicator, or with `app.set_remote_access()`
+
+### Added
+- Remote access modes: off, read-only and full control, with an optional time
+  limit, an option to keep the settings after a restart, and an optional token
+  that clients provide with `HC_TOKEN`
+- `HCMainWindow`: Remote Access menu, and an indicator in the status bar if
+  the program uses one, which both open a small popup with these settings
+- `call_commands` remote request and `HardwareControlClient.call_commands`
+- `access_info` remote request and `HardwareControlClient.get_access_info`
+
+### Changed
+- `hc-mcp` rewritten for `mcp >= 2.3.0`, supporting the 2026-07-28 protocol. It
+  returns JSON, adds `call_commands` and `get_access_status`, and only offers
+  the tools that the access mode allows
+
+### Fixed
+- `hc-mcp` crashed on startup with current versions of `mcp`
+- Remote requests are no longer written to the debug log, since they can
+  contain a token
+
 ## [4.1.2] 2026-11-01
 
 ### Changed
