@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- The repository moved from Bitbucket to https://github.com/FSIBT/hardware-control
+- CI now runs on GitHub Actions and releases are published on `v*` tags
+
 ## [4.1.0] 2026-04-06
 
 ### Added

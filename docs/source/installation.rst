@@ -17,9 +17,9 @@ Running pip install will also install all the required packages that
 *hardware control* is relying on.
 
 If you want to also work on the code, e.g. add new instruments or
-supply bug fixes, you can clone the code from bitbucket using::
+supply bug fixes, you can clone the code from GitHub using::
 
-  git clone https://bitbucket.org/berkeleylab/hardware-control.git
+  git clone https://github.com/FSIBT/hardware-control.git
 
 and then cd into the repository and use::
 

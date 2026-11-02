@@ -23,11 +23,7 @@ from hardware_control.base.App import App
 from hardware_control.base.Instrument import Instrument
 
 # Skip Qt-dependent tests in CI environments where display may be problematic
-CI_ENVIRONMENT = bool(
-    os.getenv("CI")
-    or os.getenv("CONTINUOUS_INTEGRATION")
-    or os.getenv("BITBUCKET_BUILD_NUMBER")
-)
+CI_ENVIRONMENT = bool(os.getenv("CI") or os.getenv("CONTINUOUS_INTEGRATION"))
 # Skip Qt tests in CI regardless of DISPLAY setting, as xvfb may not work reliably with QApplication
 SKIP_QT_TESTS = CI_ENVIRONMENT
 
