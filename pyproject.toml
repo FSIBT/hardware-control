@@ -86,9 +86,9 @@ hc-mcp = "hardware_control.cli.hc_mcp:main"
 
 [project.urls]
 documentation = "https://hardware-control.readthedocs.io/"
-homepage = "https://bitbucket.org/berkeleylab/hardware-control"
-issues = "https://bitbucket.org/berkeleylab/hardware-control/issues"
-changelog = "https://bitbucket.org/berkeleylab/hardware-control/src/main/CHANGELOG.md"
+homepage = "https://github.com/FSIBT/hardware-control"
+issues = "https://github.com/FSIBT/hardware-control/issues"
+changelog = "https://github.com/FSIBT/hardware-control/blob/main/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
 where = ["src"]

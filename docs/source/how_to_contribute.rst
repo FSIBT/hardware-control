@@ -3,7 +3,7 @@ How to contribute
 
 The source code can be found at::
 
-  https://bitbucket.org/berkeleylab/hardware-control/
+  https://github.com/FSIBT/hardware-control/
 
 We use `pre-commit <https://pre-commit.com/>`_ to run checks and
 format the code, so please install *pre-commit* using::
@@ -42,3 +42,16 @@ Also, please add tests if feasible and make sure that the old tests
 still run. Tests can be run using::
 
    python -m pytest
+
+Making a release
+----------------
+
+Move the entries in ``CHANGELOG.md`` from *Unreleased* to a new section
+for the version, commit this to ``main``, and then create and push a
+tag that starts with ``v``::
+
+  git tag -a v4.2.0 -m "Release 4.2.0"
+  git push origin v4.2.0
+
+The tag runs the tests, publishes the package on PyPI and creates a
+GitHub release that uses the changelog section as release notes.
