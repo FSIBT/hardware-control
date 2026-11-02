@@ -7,7 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.1.2] 2026-11-01
+
+### Changed
+- Remote access: `set_parameters` now reports what happened for each entry
+  (`success`, `deferred`, `skipped` or `error`) instead of always reporting
+  `success`. Unknown parameters, read-only parameters, commands, offline
+  instruments, values with whitespace and values rejected by a hook are now
+  errors, so `hc-query set` exits with 1 for them
+- Remote access: `get_parameters` and `list_parameters` report unknown
+  instruments and parameters as errors instead of returning `None`
+- Python 3.15 added to CI and the classifiers
+
 ### Fixed
+- `App.handle_request`: always reply, since one malformed request stopped the
+  socket from answering any client
+- `HardwareControlClient`: reconnect after a timeout, since all later
+  requests failed otherwise
+- `ZMQSingleInstrument`: reply to `STOP` before closing the socket and exit
+  cleanly, and answer malformed `APP` requests
+- `App.call_continuous_commands`: an offline instrument no longer skips the
+  commands of all other instruments
+- `Stradus`: read parameters raised `NameError`, and `LASER_STATUS` read the
+  wrong attribute
+- Scan widget: Gaussian process scans used the step size as start and end
+- `TracePlotter`: no longer shares a mutable default for `loading_hooks`
+- Replaced bare `except:` clauses
 - `App.handle_request`: avoid `NameError` (and deadlocked REQ socket) when an
   unrecognised ZMQ command is received; `value` is now initialised to a safe
   error string before the command-dispatch branch
