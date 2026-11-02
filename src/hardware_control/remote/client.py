@@ -38,11 +38,15 @@ class HardwareControlClient:
 
         # Create ZMQ context and REQ socket
         self.context = zmq.Context()
+        self._connect()
+
+    def _connect(self) -> None:
+        """Create the REQ socket and connect it to the App."""
         self.socket = self.context.socket(zmq.REQ)
-        self.socket.setsockopt(zmq.RCVTIMEO, timeout)
-        self.socket.setsockopt(zmq.SNDTIMEO, timeout)
+        self.socket.setsockopt(zmq.RCVTIMEO, self.timeout)
+        self.socket.setsockopt(zmq.SNDTIMEO, self.timeout)
         self.socket.setsockopt(zmq.LINGER, 0)
-        self.socket.connect(ipc_address)
+        self.socket.connect(self.ipc_address)
 
     def is_alive(self) -> bool:
         """Check if the App process is still running.
@@ -81,6 +85,10 @@ class HardwareControlClient:
             return response
 
         except zmq.error.Again:
+            # a REQ socket cannot send again without receiving a reply, so
+            # we need a new socket for the next request
+            self.socket.close()
+            self._connect()
             raise RuntimeError(
                 f"Timeout waiting for response from App '{self.app_name}' "
                 f"after {self.timeout}ms"

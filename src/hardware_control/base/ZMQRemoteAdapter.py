@@ -36,8 +36,11 @@ class ZMQSingleInstrument:
     can use to establish connection. It then creates the standard ZMQ
     publisher and subscriber to talk to the remote App.
 
-    Currently there is no way to end a :class:`ZMQSingleInstrument`
-    instance and one needs to exit via Ctrl-C.
+    A :class:`ZMQSingleInstrument` instance ends when the connected app
+    sends a STOP request. Before an app connects, one needs to exit via Ctrl-C.
+
+    There is no authentication: anyone who can reach the address can
+    connect and control the instrument, so only use it on a trusted network.
 
     Parameters
     ----------
@@ -87,7 +90,11 @@ class ZMQSingleInstrument:
                 self.zmq_new.send_string("Unknown command")
                 continue
 
-            _, self.app_publisher = message.split()
+            try:
+                _, self.app_publisher = message.split()
+            except ValueError:
+                self.zmq_new.send_string("Unknown command")
+                continue
 
             # subscribe to remote app
             self.zmq_subscriber = self.zmq_context.socket(zmq.SUB)
@@ -141,7 +148,6 @@ class ZMQSingleInstrument:
                 if new_message == "STOP":
                     logger.info("Got STOP request")
                     keep_running = False
-                    self._cleanup_zmq_resources()
                     self.zmq_new.send_string("ACK")
                 elif new_message == "LIST_PARAMETERS":
                     logger.info("Got parameter list request")
@@ -159,6 +165,7 @@ class ZMQSingleInstrument:
                 )
 
             self._cleanup_zmq_resources()
+            return
 
     def _cleanup_zmq_resources(self) -> None:
         """Clean up ZMQ sockets and context for the single instrument."""

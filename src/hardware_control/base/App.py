@@ -221,9 +221,14 @@ class App(QApplication):
             try:
                 msg = self.zmq_info.recv_string(flags=zmq.NOBLOCK)
                 logger.debug(f"App got request '{msg}'")
+            except zmq.ZMQError:
+                break
 
-                value = "ERROR: unknown command"
-                if msg.startswith("get_instrument_parameter"):
+            # a REP socket must reply to every request, otherwise it stops
+            # working for all clients
+            value = "ERROR: unknown command"
+            if msg.startswith("get_instrument_parameter"):
+                try:
                     msg = msg.replace("get_instrument_parameter", "")
                     msg = msg[1:-1]  # remove ()
 
@@ -232,7 +237,10 @@ class App(QApplication):
                     parameter = parameter.strip().replace("'", "")
 
                     value = self.get_instrument_parameter(name, parameter)
+                except Exception as e:
+                    value = f"ERROR: {e}"
 
+            try:
                 self.zmq_info.send_string(str(value))
             except zmq.ZMQError:
                 break
