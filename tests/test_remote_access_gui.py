@@ -1,5 +1,6 @@
 """Tests for the widgets that change the remote access settings."""
 
+import os
 from unittest.mock import MagicMock
 
 import pytest
@@ -16,6 +17,8 @@ from hardware_control.base.remote_access_gui import (
 
 @pytest.fixture(scope="module")
 def qapp():
+    # no display is needed, e.g. in CI
+    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
     yield QApplication.instance() or QApplication([])
 
 
