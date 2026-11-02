@@ -412,7 +412,7 @@ The remote access system works on:
 
 * **Linux**: Full support (Unix domain sockets)
 * **macOS**: Full support (Unix domain sockets)
-* **Windows**: Full support (named pipes)
+* **Windows**: Full support (TCP on localhost)
 
 Security Considerations
 -----------------------
@@ -424,6 +424,13 @@ Security Considerations
    * IPC sockets are local to the machine (not network-accessible)
    * No authentication or authorization is implemented
    * Anyone with local user access can control Apps
+   * On Windows the socket is a TCP port on localhost, so any local
+     program can connect to it
+
+   :class:`~hardware_control.base.ZMQRemoteAdapter.ZMQSingleInstrument`
+   is network-accessible and has no authentication either: anyone who can
+   reach its address can control the instrument. Only use it on a trusted
+   network.
 
    For remote access across networks, you would need to add:
 
