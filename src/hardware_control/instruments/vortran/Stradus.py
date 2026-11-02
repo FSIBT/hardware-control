@@ -115,91 +115,91 @@ class Stradus(Instrument):
 
         self.add_parameter(
             parameter="BASE_PLATE_TEMPERATURE",
-            read_command=lambda: str(getattr(self.device, base_plate_temperature)),
+            read_command=lambda: str(getattr(self.device, "base_plate_temperature")),
             dummy_return="0",
         )
 
         self.add_parameter(
             parameter="COMPUTER_CONTROL",
-            read_command=lambda: str(getattr(self.device, computer_control)),
+            read_command=lambda: str(getattr(self.device, "computer_control")),
             dummy_return="1",
         )
 
         self.add_parameter(
             parameter="FAULT_CODE",
-            read_command=lambda: getattr(self.device, fault_code)[0],
+            read_command=lambda: getattr(self.device, "fault_code")[0],
             dummy_return="0",
         )
 
         self.add_parameter(
             parameter="FAULT_TEXT",
-            read_command=lambda: " ".join(getattr(self.device, fault_text)),
+            read_command=lambda: " ".join(getattr(self.device, "fault_text")),
             dummy_return="DUMMY",
         )
 
         self.add_parameter(
             parameter="FIRMWARE_PROTOCAL",
-            read_command=lambda: getattr(self.device, firmware_protocal)[0],
+            read_command=lambda: getattr(self.device, "firmware_protocol")[0],
             dummy_return="0.00.00",
         )
 
         self.add_parameter(
             parameter="FIRMWARE_VERSION",
-            read_command=lambda: getattr(self.device, firmware_version)[0],
+            read_command=lambda: getattr(self.device, "firmware_version")[0],
             dummy_return="0.00.00",
         )
 
         self.add_parameter(
             parameter="INTERLOCK_STATUS",
-            read_command=lambda: getattr(self.device, interlock_status)[0],
+            read_command=lambda: getattr(self.device, "interlock_status")[0],
             dummy_return="1",
         )
 
         self.add_parameter(
             parameter="LASER_HOURS",
-            read_command=lambda: str(getattr(self.device, laser_hours)),
+            read_command=lambda: str(getattr(self.device, "laser_hours")),
             dummy_return="0",
         )
 
         self.add_parameter(
             parameter="LASER_ID",
-            read_command=lambda: " ".join(getattr(self.device, laser_id)),
+            read_command=lambda: " ".join(getattr(self.device, "laser_id")),
             dummy_return="",
         )
 
         self.add_parameter(
             parameter="LASER_POWER_SETTING",
-            read_command=lambda: str(getattr(self.device, laser_power_setting)),
+            read_command=lambda: str(getattr(self.device, "laser_power_setting")),
             dummy_return="0",
         )
 
         self.add_parameter(
             parameter="LASER_STATUS",
-            read_command=lambda: " ".join(getattr(self.device, laser_power_setting)),
+            read_command=lambda: " ".join(getattr(self.device, "laser_status")),
             dummy_return="",
         )
 
         self.add_parameter(
             parameter="LASER_WAVELENGTH",
-            read_command=lambda: str(getattr(self.device, laser_wavelength)),
+            read_command=lambda: str(getattr(self.device, "laser_wavelength")),
             dummy_return="000",
         )
 
         self.add_parameter(
             parameter="LASER_MAX_POWER",
-            read_command=lambda: str(getattr(self.device, laser_max_power)),
+            read_command=lambda: str(getattr(self.device, "laser_max_power")),
             dummy_return="0.0",
         )
 
         self.add_parameter(
             parameter="OPTICAL_BLOCK_TEMPERATURE",
-            read_command=lambda: getattr(self.device, optical_block_temperature)[0],
+            read_command=lambda: getattr(self.device, "optical_block_temperature")[0],
             dummy_return="0.0",
         )
 
         self.add_parameter(
             parameter="RATED_POWER",
-            read_command=lambda: getattr(self.device, rated_power)[0],
+            read_command=lambda: getattr(self.device, "rated_power")[0],
             dummy_return="000",
         )
 

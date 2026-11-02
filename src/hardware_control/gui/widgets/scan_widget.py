@@ -646,7 +646,7 @@ class ScanWidget(QGroupBox):
                 start = float(self.range_start_edit.text())
                 end = float(self.range_end_edit.text())
                 step_size = float(self.range_step_edit.text())
-            except:
+            except ValueError:
                 logger.error(
                     "Scan Widget: Invalid values for Range Scan start, end, or step."
                 )
@@ -688,10 +688,10 @@ class ScanWidget(QGroupBox):
                 )
                 return False
             try:
-                start = float(self.GP_step_edit.text())
-                end = float(self.GP_step_edit.text())
+                start = float(self.GP_start_edit.text())
+                end = float(self.GP_end_edit.text())
                 step_size = float(self.GP_step_edit.text())
-            except:
+            except ValueError:
                 logger.error(
                     "Scan Widget: Invalid values for GP Scan start, end, or step."
                 )

@@ -8,6 +8,11 @@ from rich.console import Console
 from rich.table import Table
 
 
+def _all_keys(items: list[dict]) -> list[str]:
+    """List the keys of all entries, since e.g. only failed entries have an error."""
+    return list(dict.fromkeys(key for item in items for key in item))
+
+
 def format_table(data: dict) -> str:
     """Format response as a Rich table (human-readable).
 
@@ -32,7 +37,7 @@ def format_table(data: dict) -> str:
             table = Table(show_header=True, header_style="bold magenta")
 
             # Determine columns from first item
-            keys = list(response_data[0].keys())
+            keys = _all_keys(response_data)
             for key in keys:
                 table.add_column(key.replace("_", " ").title())
 
@@ -104,7 +109,7 @@ def format_markdown(data: dict) -> str:
     if isinstance(response_data, list) and len(response_data) > 0:
         if isinstance(response_data[0], dict):
             # List of dicts
-            keys = list(response_data[0].keys())
+            keys = _all_keys(response_data)
 
             # Header
             header = "| " + " | ".join(k.replace("_", " ").title() for k in keys) + " |"
@@ -155,7 +160,7 @@ def format_sheets(data: dict) -> str:
     if isinstance(response_data, list) and len(response_data) > 0:
         if isinstance(response_data[0], dict):
             # List of dicts
-            keys = list(response_data[0].keys())
+            keys = _all_keys(response_data)
             writer.writerow(keys)
             for item in response_data:
                 writer.writerow([item.get(k, "") for k in keys])
@@ -196,7 +201,7 @@ def format_csv(data: dict) -> str:
     if isinstance(response_data, list) and len(response_data) > 0:
         if isinstance(response_data[0], dict):
             # List of dicts
-            keys = list(response_data[0].keys())
+            keys = _all_keys(response_data)
             writer.writerow(keys)
             for item in response_data:
                 writer.writerow([item.get(k, "") for k in keys])
@@ -239,7 +244,9 @@ def format_compact(data: dict) -> str:
                 if "instrument" in item and "parameter" in item:
                     inst = item["instrument"]
                     param = item["parameter"]
-                    if "value" in item:
+                    if "error" in item:
+                        parts.append(f"{inst}.{param}:error:{item['error']}")
+                    elif "value" in item:
                         parts.append(f"{inst}.{param}={item['value']}")
                     elif "status" in item:
                         parts.append(f"{inst}.{param}:{item['status']}")

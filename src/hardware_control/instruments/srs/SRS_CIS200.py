@@ -54,7 +54,7 @@ class SRS_CIS200(Instrument):
         for i in range(3):
             try:
                 self.device.query("ID?\r")
-            except:
+            except Exception:
                 pass
         # self.check_connection_commands = ["ID?", "IN0"]
 

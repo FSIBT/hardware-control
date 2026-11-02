@@ -29,7 +29,17 @@ logger = logging.getLogger(__name__)
 
 
 def call_hooks(hooks_list: list[Callable], value: str) -> str | None:
-    """Call a list of functions.
+    """Call a list of functions and return the final value.
+
+    See :func:`call_hooks_traced` for details.
+    """
+    return call_hooks_traced(hooks_list, value)[0]
+
+
+def call_hooks_traced(
+    hooks_list: list[Callable], value: str
+) -> tuple[str | None, Callable | None]:
+    """Call a list of functions and report which one stopped the value.
 
     If any of the functions returns None, the final value will be
     ignored and no further hooks will be called.
@@ -51,16 +61,21 @@ def call_hooks(hooks_list: list[Callable], value: str) -> str | None:
        A list of functions or callable objects
     values
        The value to be manipulated
+
+    Returns
+    -------
+    The final value and the hook that returned None. Both are None if
+    the value was already None, and the hook is None if all hooks passed.
     """
     if value is None or value == "None":
-        return None
+        return None, None
 
     for hook in hooks_list:
         if callable(hook):
             value = hook(value)
             if value is None:
-                return None
-    return value
+                return None, hook
+    return value, None
 
 
 def list_hook_names(hooks_list: list[Callable]) -> list[str]:
@@ -251,6 +266,10 @@ class Ramp(QObject):
         Stop when we are within epsilon of target value
 
     """
+
+    # returning None from this hook means that the value will be set
+    # later by the ramp, not that it was rejected
+    defers_set = True
 
     def __init__(
         self,

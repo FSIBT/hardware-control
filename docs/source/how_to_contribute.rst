@@ -18,7 +18,7 @@ from within the git repository of hardware control before creating
 any commits that you want to share.
 
 Using pre-commit ensures that the code will be formatted according to
-the styl we expect, i.e., it will run black over the new code and some
+the styl we expect, i.e., it will run ruff over the new code and some
 other programs to ensure the code matches the coding style in the
 repository.
 

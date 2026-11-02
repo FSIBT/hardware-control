@@ -135,7 +135,7 @@ class DataWidget(QWidget):
 
         try:
             self.app.data_sets[self.current_dataset].clear()
-        except:
+        except Exception:
             logger.error("Failed to delete dataset data", exc_info=True)
 
         self.update_table()

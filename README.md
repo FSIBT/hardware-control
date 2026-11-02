@@ -46,7 +46,7 @@ To run the tests use:
 
 Feel free to contribute new drivers for hardware or other changes.
 
-We use black to format the code, so please format your code
+We use ruff to format the code, so please format your code
 accordingly. The easiest way to achieve this is to install pre-commit
 and use the config file we provide:
 
