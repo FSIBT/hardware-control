@@ -302,7 +302,7 @@ class HCLabel(HCMixin, QLabel):
             else:
                 try:
                     text = f"{float(text):.3g} {self.unit}"
-                except:
+                except (TypeError, ValueError):
                     text = f"{text} {self.unit}"
         else:
             text = str(text)
@@ -892,6 +892,6 @@ class HCFixedLabel(HCMixin, QLabel):
             else:
                 try:
                     text = f"{float(text):.3g} {self.unit}"
-                except:
+                except (TypeError, ValueError):
                     text = f"{text} {self.unit}"
         super().setText(text)

@@ -50,7 +50,7 @@ class TracePlotter(QGroupBox):
         units: list[str],
         scalings: list[float] = None,
         bkg_color: str | None = "w",
-        loading_hooks: list | None = [],
+        loading_hooks: list | None = None,
     ):
         super().__init__(display_name)
 
@@ -58,7 +58,7 @@ class TracePlotter(QGroupBox):
         self.instrument = instrument_name
         self.channels = channels
         self.channel_names = channel_names
-        self.loading_hooks = loading_hooks
+        self.loading_hooks = loading_hooks or []
         self.units = units
         self.scalings = scalings
         if self.scalings is None:
