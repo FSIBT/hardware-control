@@ -591,7 +591,7 @@ class App(QApplication):
         for instrument, command, status in self.continuous_commands:
             online = self.get_instrument_parameter(instrument, "ONLINE")
             if online is None or online == "False" or status == False:
-                return
+                continue
             self.call_instrument_command(instrument, command, priority)
 
     @ensure_instrument_exists
