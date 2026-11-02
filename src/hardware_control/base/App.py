@@ -91,7 +91,7 @@ class App(QApplication):
     """
 
     # remote requests that change something, needing the full access mode
-    WRITE_COMMANDS = ("set_parameters",)
+    WRITE_COMMANDS = ("set_parameters", "call_commands")
 
     def __init__(
         self, ipaddress=None, dummy: bool = False, app_name: str | None = None
@@ -819,16 +819,33 @@ class App(QApplication):
         priority
            The priority of the message. See: :func:`.base.zmq_helper.add_ZMQ_message_to_queue`
         """
+        self._send_command_request(instrument, command, priority)
+
+    def _send_command_request(
+        self, instrument: str, command: str, priority: int = 1
+    ) -> tuple[str, str]:
+        """Run the pre_call_hooks and send the command to the instrument thread.
+
+        Returns
+        -------
+        tuple[str, str]
+            A status, "success" or "error", and a message explaining it.
+        """
         if self.stop_threads_event.is_set() or self.zmq_publisher.closed:
-            return
+            return "error", "App is stopping"
+        hook = None
         try:
             pre_call_hooks = self._data[instrument][command]["pre_call_hooks"]
-            value = call_hooks(pre_call_hooks, command)
+            value, hook = call_hooks_traced(pre_call_hooks, command)
         except KeyError:
             value = str(command)
 
         if value:
             self.zmq_publisher.send_string(f"{instrument} {priority} command {command}")
+            return "success", "Sent to instrument"
+        if hook is not None:
+            return "error", f"Blocked by pre-call hook '{list_hook_names([hook])[0]}'"
+        return "error", "Command was not sent"
 
     @ensure_parameter_and_instrument_exists
     def get_instrument_parameter(
@@ -1114,6 +1131,8 @@ class App(QApplication):
             return self._handle_get_parameters(request.get("queries", []))
         elif command == "set_parameters":
             return self._handle_set_parameters(request.get("updates", []))
+        elif command == "call_commands":
+            return self._handle_call_commands(request.get("commands", []))
         elif command == "list_instruments":
             return self._handle_list_instruments()
         elif command == "list_parameters":
@@ -1198,6 +1217,21 @@ class App(QApplication):
             return f"Unknown parameter '{parameter}' for instrument '{instrument}'"
         if len(str(value).split()) != 1:
             return f"Value '{value}' is empty or contains whitespace"
+        if (
+            not self.dummy
+            and "ONLINE" in self._data[instrument]
+            and self.get_instrument_parameter(instrument, "ONLINE") == "False"
+        ):
+            return f"Instrument '{instrument}' is offline"
+        return None
+
+    def _check_callable(self, instrument: str, command: str) -> str | None:
+        """Return why a command cannot be called, or None if it can."""
+        if instrument not in self._data:
+            return f"Unknown instrument '{instrument}'"
+        _, _, commands = self.get_instrument_parameters_and_commands(instrument)
+        if command not in commands:
+            return f"Unknown command '{command}' for instrument '{instrument}'"
         if (
             not self.dummy
             and "ONLINE" in self._data[instrument]
@@ -1315,6 +1349,41 @@ class App(QApplication):
                         "error": str(e),
                     }
                 )
+
+        return {
+            "status": "success",
+            "timestamp": datetime.datetime.now(datetime.UTC).isoformat(),
+            "app_name": self.app_name,
+            "data": data,
+        }
+
+    def _handle_call_commands(self, commands: list[dict]) -> dict:
+        """Handle call_commands command.
+
+        Args:
+            commands: List of dicts with instrument and command keys
+
+        Returns:
+            Response dict with status array
+        """
+        data = []
+        for item in commands:
+            instrument = item.get("instrument")
+            command = item.get("command")
+            entry = {"instrument": instrument, "command": command}
+
+            error = self._check_callable(instrument, command)
+            if error:
+                data.append({**entry, "status": "error", "error": error})
+                continue
+
+            try:
+                status, message = self._send_command_request(instrument, command)
+                key = "error" if status == "error" else "message"
+                data.append({**entry, "status": status, key: message})
+                logger.info(f"Remote command {instrument}.{command}: {status}")
+            except Exception as e:
+                data.append({**entry, "status": "error", "error": str(e)})
 
         return {
             "status": "success",

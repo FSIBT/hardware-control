@@ -41,6 +41,9 @@ class FakeApp:
     list_instrument_parameters = App.list_instrument_parameters
     handle_request = App.handle_request
     _send_set_request = App._send_set_request
+    _send_command_request = App._send_command_request
+    _check_callable = App._check_callable
+    _handle_call_commands = App._handle_call_commands
     _check_readable = App._check_readable
     _check_settable = App._check_settable
     _handle_get_parameters = App._handle_get_parameters

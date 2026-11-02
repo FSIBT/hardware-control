@@ -168,6 +168,19 @@ class HardwareControlClient:
         request = {"version": "1.0", "command": "set_parameters", "updates": updates}
         return self._send_request(request)
 
+    def call_commands(self, commands: list[dict]) -> dict:
+        """Call multiple instrument commands.
+
+        Args:
+            commands: List of dicts with keys: instrument, command
+                    Example: [{"instrument": "PSU1", "command": "RESET"}]
+
+        Returns:
+            Response dict with status, timestamp, app_name, and data array
+        """
+        request = {"version": "1.0", "command": "call_commands", "commands": commands}
+        return self._send_request(request)
+
     def list_instruments(self) -> dict:
         """Get list of all instruments in the App.
 

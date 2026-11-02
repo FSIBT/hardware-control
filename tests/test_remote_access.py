@@ -157,7 +157,9 @@ def test_turning_off_removes_saved_settings(tmp_path):
     assert not access.filename.exists()
 
 
-@pytest.mark.parametrize("content", ["not json", "{}", '{"mode": "everything"}', "[]", BAD_TIME])
+@pytest.mark.parametrize(
+    "content", ["not json", "{}", '{"mode": "everything"}', "[]", BAD_TIME]
+)
 def test_invalid_saved_settings_leave_it_off(tmp_path, content):
     access = RemoteAccess("test", tmp_path)
     access.configure("full", persist=True)
@@ -228,3 +230,64 @@ def test_access_info_hides_mode_without_token(app):
     info = app._process_ipc_command({"command": "access_info"})["data"]
     assert info["access_mode"] is None
     assert info["token_valid"] is False
+
+
+CALL = {
+    "command": "call_commands",
+    "commands": [{"instrument": "PSU", "command": "ON"}],
+}
+
+
+def call(app, **kwargs):
+    item = {"instrument": "PSU", "command": "ON", **kwargs}
+    return app._process_ipc_command({"command": "call_commands", "commands": [item]})
+
+
+def test_commands_need_full_access(app):
+    assert "off" in app._process_ipc_command(CALL)["message"]
+    app.remote_access.configure("read-only")
+    assert "read-only" in app._process_ipc_command(CALL)["message"]
+    assert app.zmq_publisher.messages == []
+
+
+def test_call_command(app):
+    app.remote_access.configure("full")
+    assert call(app)["data"][0]["status"] == "success"
+    assert app.zmq_publisher.messages == ["PSU 1 command ON"]
+
+
+@pytest.mark.parametrize(
+    "kwargs, reason",
+    [
+        ({"instrument": "NOPE"}, "Unknown instrument"),
+        ({"command": "NOPE"}, "Unknown command"),
+        ({"command": "V_SET"}, "Unknown command"),
+    ],
+)
+def test_call_command_rejected(app, kwargs, reason):
+    app.remote_access.configure("full")
+    entry = call(app, **kwargs)["data"][0]
+    assert entry["status"] == "error"
+    assert reason in entry["error"]
+    assert app.zmq_publisher.messages == []
+
+
+def test_call_command_offline(app):
+    app.remote_access.configure("full")
+    app._data["PSU"]["ONLINE"]["read_value"] = "False"
+    assert "offline" in call(app)["data"][0]["error"]
+
+
+def test_call_command_blocked_by_hook(app):
+    def interlock(value):
+        return None
+
+    app.remote_access.configure("full")
+    app._data["PSU"]["ON"]["pre_call_hooks"].append(interlock)
+    assert "interlock" in call(app)["data"][0]["error"]
+    assert app.zmq_publisher.messages == []
+
+
+def test_public_call_is_unchanged(app):
+    assert app.call_instrument_command("PSU", "ON") is None
+    assert app.zmq_publisher.messages == ["PSU 1 command ON"]
