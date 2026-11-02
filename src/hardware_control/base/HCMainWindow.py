@@ -10,9 +10,10 @@ from PyQt6.QtWidgets import (
     QMainWindow,
     QFileDialog,
 )
-from PyQt6.QtGui import QAction
+from PyQt6.QtGui import QAction, QCursor
 
 from .App import App
+from .remote_access_gui import RemoteAccessIndicator, RemoteAccessPopup
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +39,9 @@ class HCMainWindow(QMainWindow):
 
         super().__init__()
 
+        self.remote_access_indicator = None
+        self.remote_access_popup = RemoteAccessPopup(self.app, self)
+
         # Make the main window object into an app class variable
         # This allows access to the main window through the app object
         self.app.main_window = self
@@ -55,6 +59,30 @@ class HCMainWindow(QMainWindow):
     def close(self) -> None:
         """Close the app."""
         self.app.close()
+
+    def setStatusBar(self, statusbar) -> None:
+        """Set the status bar and show the remote access mode in it."""
+        super().setStatusBar(statusbar)
+        if statusbar is not None:
+            self._add_remote_access_indicator(statusbar)
+
+    def statusBar(self):
+        """Return the status bar, which shows the remote access mode."""
+        statusbar = super().statusBar()
+        self._add_remote_access_indicator(statusbar)
+        return statusbar
+
+    def _add_remote_access_indicator(self, statusbar) -> None:
+        """Add the indicator, which only exists if the program uses a status bar."""
+        indicator = self.remote_access_indicator
+        if indicator is not None and indicator.parent() is statusbar:
+            return
+        self.remote_access_indicator = RemoteAccessIndicator(self.app, statusbar)
+        statusbar.addPermanentWidget(self.remote_access_indicator)
+
+    def show_remote_access(self) -> None:
+        """Open the popup to change the remote access settings."""
+        self.remote_access_popup.show_at(QCursor.pos())
 
     def add_menu(self) -> None:
         """Add a File menu with an option to exit and save all datasets."""
@@ -83,6 +111,12 @@ class HCMainWindow(QMainWindow):
             self.close_act = QAction("Exit", self)
             self.close_act.setShortcut("Ctrl+Q")
         self.file_menu.addAction(self.close_act)
+
+        # Remote access menu
+        self.remote_menu = self.bar.addMenu("Remote Access")
+        self.remote_access_act = QAction("Settings...", self)
+        self.remote_access_act.triggered.connect(self.show_remote_access)
+        self.remote_menu.addAction(self.remote_access_act)
 
     def _process_file_menu(self, q: QAction) -> None:
         if q.text() == "Save Instrument States":
