@@ -432,6 +432,21 @@ Security Considerations
    * Rate limiting for set operations
    * Access control lists
 
+Status of Set Requests
+----------------------
+
+Each entry in a ``set_parameters`` response has a ``status``:
+
+* ``success``: the value was sent to the instrument. This does not confirm
+  that the instrument applied it, so read the value back to check.
+* ``deferred``: a hook, e.g. a ramp, will set the value later.
+* ``skipped``: the App is running in dummy mode and nothing was set.
+* ``error``: nothing was set and ``error`` gives the reason, e.g. an unknown
+  or read-only parameter, an offline instrument, a value that contains
+  whitespace, or a pre-set hook that rejected the value.
+
+``hc-query`` exits with 1 if any entry has the status ``error``.
+
 Dependencies
 ------------
 

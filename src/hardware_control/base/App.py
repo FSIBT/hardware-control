@@ -20,7 +20,7 @@ from .Dataset import Dataset
 from .Instrument import Instrument
 from .ZMQAdapter import ZMQAdapter
 from .ZMQRemoteAdapter import ZMQRemoteAdapter
-from .hooks import call_hooks
+from .hooks import call_hooks, call_hooks_traced, list_hook_names
 from .alarm_manager import AlarmManager
 from .error_handling import handle_file_operation
 
@@ -692,27 +692,56 @@ class App(QApplication):
            If True, don't call the available hooks (usefull when
            loading settings from a file for example)
         """
+        self._send_set_request(instrument, parameter, value, priority, skip_hooks)
+
+    def _send_set_request(
+        self,
+        instrument: str,
+        parameter: str,
+        value: Any,
+        priority: int = 1,
+        skip_hooks: bool = False,
+    ) -> tuple[str, str]:
+        """Run the pre_set_hooks and send the value to the instrument thread.
+
+        Returns
+        -------
+        tuple[str, str]
+            A status and a message explaining it. The status is one of
+            "success" (sent to the instrument), "skipped" (dummy mode),
+            "deferred" (a hook, e.g. a ramp, will set the value later) or
+            "error".
+        """
         logger.debug(f"app: updating value '{value}' for '{instrument}-{parameter}'")
 
         # Don't try to set parameters in dummy mode
         if self.dummy:
-            return
+            return "skipped", "App is running in dummy mode"
 
         if not skip_hooks:
             if "pre_set_hooks" not in self._data[instrument][parameter]:
                 logger.error(
                     f"'{instrument}-{parameter}' seems to be a command instead of a parameter."
                 )
-                return
+                return "error", f"'{parameter}' is not a settable parameter"
             pre_set_hooks = self._data[instrument][parameter]["pre_set_hooks"]
-            value = call_hooks(pre_set_hooks, value)
+            value, hook = call_hooks_traced(pre_set_hooks, value)
+            if hook is not None and getattr(hook, "defers_set", False):
+                return "deferred", "Value will be set by a hook, e.g. a ramp"
+            if hook is not None:
+                logger.info(
+                    f"Hook blocked setting of parameter '{instrument}-{parameter}'"
+                )
+                name = list_hook_names([hook])[0]
+                return "error", f"Blocked by pre-set hook '{name}'"
         if value is None:
             logger.info(f"Hook blocked setting of parameter '{instrument}-{parameter}'")
-            return
+            return "error", "No value to set"
         self._data[instrument][parameter]["set_value"] = value
         self.zmq_publisher.send_string(
             f"{instrument} {priority} set {parameter} {value}"
         )
+        return "success", "Sent to instrument"
 
     @ensure_parameter_and_instrument_exists
     def update_instrument_parameter(
@@ -1018,7 +1047,7 @@ class App(QApplication):
                 }
 
             # Send response
-            response_json = json.dumps(response)
+            response_json = json.dumps(response, default=str)
             self.zmq_ipc.send_string(response_json)
 
         except zmq.ZMQError:
@@ -1055,6 +1084,48 @@ class App(QApplication):
                 "app_name": self.app_name,
             }
 
+    def _check_readable(self, instrument: str, parameter: str) -> str | None:
+        """Return why a parameter cannot be read, or None if it can."""
+        if instrument not in self._data:
+            return f"Unknown instrument '{instrument}'"
+        if parameter == "IGNORE":
+            return None
+        reads, sets, commands = self.get_instrument_parameters_and_commands(instrument)
+        if parameter in commands:
+            return f"'{parameter}' is a command, not a parameter"
+        if parameter not in reads and parameter not in sets:
+            return f"Unknown parameter '{parameter}' for instrument '{instrument}'"
+        return None
+
+    def _check_settable(
+        self, instrument: str, parameter: str, value: Any
+    ) -> str | None:
+        """Return why a parameter cannot be set, or None if it can.
+
+        This is only used for requests from other programs, which should get
+        an error instead of having the request silently dropped. Instrument
+        messages are whitespace separated, so a value with whitespace would
+        be ignored by the instrument thread.
+        """
+        if instrument not in self._data:
+            return f"Unknown instrument '{instrument}'"
+        reads, sets, commands = self.get_instrument_parameters_and_commands(instrument)
+        if parameter in commands:
+            return f"'{parameter}' is a command, not a parameter"
+        if parameter not in sets:
+            if parameter in reads:
+                return f"'{parameter}' is read-only"
+            return f"Unknown parameter '{parameter}' for instrument '{instrument}'"
+        if len(str(value).split()) != 1:
+            return f"Value '{value}' is empty or contains whitespace"
+        if (
+            not self.dummy
+            and "ONLINE" in self._data[instrument]
+            and self.get_instrument_parameter(instrument, "ONLINE") == "False"
+        ):
+            return f"Instrument '{instrument}' is offline"
+        return None
+
     def _handle_get_parameters(self, queries: list[dict]) -> dict:
         """Handle get_parameters command.
 
@@ -1076,6 +1147,13 @@ class App(QApplication):
                         "parameter": parameter,
                         "error": "Missing instrument or parameter",
                     }
+                )
+                continue
+
+            error = self._check_readable(instrument, parameter)
+            if error:
+                data.append(
+                    {"instrument": instrument, "parameter": parameter, "error": error}
                 )
                 continue
 
@@ -1126,15 +1204,27 @@ class App(QApplication):
                 )
                 continue
 
-            try:
-                self.set_instrument_parameter(instrument, parameter, value)
+            error = self._check_settable(instrument, parameter, value)
+            if error:
                 data.append(
                     {
                         "instrument": instrument,
                         "parameter": parameter,
-                        "status": "success",
+                        "status": "error",
+                        "error": error,
                     }
                 )
+                continue
+
+            try:
+                status, message = self._send_set_request(instrument, parameter, value)
+                item = {
+                    "instrument": instrument,
+                    "parameter": parameter,
+                    "status": status,
+                }
+                item["error" if status == "error" else "message"] = message
+                data.append(item)
             except Exception as e:
                 data.append(
                     {
@@ -1184,8 +1274,20 @@ class App(QApplication):
                 "app_name": self.app_name,
             }
 
+        if instrument not in self._data:
+            return {
+                "status": "error",
+                "message": f"Unknown instrument '{instrument}'",
+                "timestamp": datetime.datetime.now(datetime.UTC).isoformat(),
+                "app_name": self.app_name,
+            }
+
         try:
-            parameters = self.list_instrument_parameters(instrument)
+            parameters = [
+                p
+                for p in self.list_instrument_parameters(instrument)
+                if p != "__capabilities__"
+            ]
             return {
                 "status": "success",
                 "timestamp": datetime.datetime.now(datetime.UTC).isoformat(),
