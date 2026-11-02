@@ -2,6 +2,9 @@
 
 Provides LLM access to hardware-control Apps via the Model Context Protocol (MCP).
 
+The App decides what is allowed: remote access needs to be turned on in the App
+and its token, if it has one, needs to be set in the HC_TOKEN environment variable.
+
 Usage:
   hc-mcp [--app=<name>] [--pid=<pid>]
   hc-mcp (-h | --help)
@@ -14,211 +17,221 @@ Options:
   --version         Show version
 """
 
+import asyncio
+import json
 import sys
+import threading
 import traceback
+from importlib.metadata import version
+from typing import Any
 
 from docopt import docopt
 
 try:
+    from mcp import types
     from mcp.server import Server
     from mcp.server.stdio import stdio_server
-    from mcp.types import TextContent, Tool
 except ImportError:
     print(
-        "Error: MCP package not installed. Install with: pip install -e '.[mcp]'",
+        "Error: MCP package not installed. Install with: pip install 'hardware-control[mcp]'",
         file=sys.stderr,
     )
     sys.exit(1)
 
 from ..remote import HardwareControlClient, discover_app
 
-# Global client instance
-client = None
-app_name = ""
+VALUE_SCHEMA = {"type": ["string", "number", "boolean"]}
+INSTRUMENT_SCHEMA = {"type": "string", "description": "Instrument name"}
 
 
-def create_server() -> Server:
-    """Create and configure MCP server with tools.
+def schema(properties: dict | None = None) -> dict:
+    """Create the input schema of a tool, where all properties are required."""
+    properties = properties or {}
+    return {"type": "object", "properties": properties, "required": list(properties)}
 
-    Returns:
-        Configured MCP Server instance
+
+def list_schema(name: str, description: str, properties: dict) -> dict:
+    """Create the input schema of a tool that takes a list of objects."""
+    items = schema(properties)
+    return schema({name: {"type": "array", "description": description, "items": items}})
+
+
+READ_ANNOTATIONS = types.ToolAnnotations(read_only_hint=True, open_world_hint=False)
+WRITE_ANNOTATIONS = types.ToolAnnotations(
+    read_only_hint=False, destructive_hint=True, open_world_hint=True
+)
+
+STATUS_TOOL = types.Tool(
+    name="get_access_status",
+    description="Show the access mode of the App: off, read-only or full. Only a person at the App can change it.",
+    input_schema=schema(),
+    annotations=READ_ANNOTATIONS,
+)
+READ_TOOLS = [
+    types.Tool(
+        name="list_instruments",
+        description="List all instruments in the App.",
+        input_schema=schema(),
+        annotations=READ_ANNOTATIONS,
+    ),
+    types.Tool(
+        name="list_parameters",
+        description="List the parameters and commands of an instrument.",
+        input_schema=schema({"instrument": INSTRUMENT_SCHEMA}),
+        annotations=READ_ANNOTATIONS,
+    ),
+    types.Tool(
+        name="get_parameters",
+        description="Get the last values read from instruments. Values can be null if nothing was read yet.",
+        input_schema=list_schema(
+            "queries",
+            "Parameters to read",
+            {
+                "instrument": INSTRUMENT_SCHEMA,
+                "parameter": {"type": "string", "description": "Parameter name"},
+            },
+        ),
+        annotations=READ_ANNOTATIONS,
+    ),
+]
+WRITE_TOOLS = [
+    types.Tool(
+        name="set_parameters",
+        description=(
+            "Set parameters on real hardware. Each entry reports success (sent, "
+            "not confirmed, so read the value back), deferred (e.g. ramping), "
+            "skipped (dummy mode) or error."
+        ),
+        input_schema=list_schema(
+            "updates",
+            "Parameters to set",
+            {
+                "instrument": INSTRUMENT_SCHEMA,
+                "parameter": {"type": "string", "description": "Parameter name"},
+                "value": VALUE_SCHEMA,
+            },
+        ),
+        annotations=WRITE_ANNOTATIONS,
+    ),
+    types.Tool(
+        name="call_commands",
+        description="Call commands on real hardware. Each entry reports success or error.",
+        input_schema=list_schema(
+            "commands",
+            "Commands to call",
+            {
+                "instrument": INSTRUMENT_SCHEMA,
+                "command": {"type": "string", "description": "Command name"},
+            },
+        ),
+        annotations=WRITE_ANNOTATIONS,
+    ),
+]
+
+
+def tools_for_mode(mode: str | None) -> list[types.Tool]:
+    """List the tools that the access mode allows."""
+    if mode == "read-only":
+        return [STATUS_TOOL, *READ_TOOLS]
+    if mode == "full":
+        return [STATUS_TOOL, *READ_TOOLS, *WRITE_TOOLS]
+    return [STATUS_TOOL]
+
+
+def call_client(client: HardwareControlClient, name: str, arguments: dict) -> dict:
+    """Run a tool with the client and return the response of the App."""
+    if name == "get_access_status":
+        return client.get_access_info()
+    if name == "list_instruments":
+        return client.list_instruments()
+    if name == "list_parameters":
+        return client.list_parameters(arguments.get("instrument"))
+    if name == "get_parameters":
+        return client.get_parameters(arguments.get("queries", []))
+    if name == "set_parameters":
+        return client.set_parameters(arguments.get("updates", []))
+    if name == "call_commands":
+        return client.call_commands(arguments.get("commands", []))
+    return {"status": "error", "message": f"Unknown tool: {name}"}
+
+
+def create_server(client: HardwareControlClient) -> Server:
+    """Create the MCP server for a client that is connected to an App.
+
+    The App enforces the access mode for each request, the list of tools only
+    keeps the LLM from trying what will be refused.
     """
-    server = Server("hardware-control")
+    # a ZMQ socket cannot be used by two threads at the same time
+    lock = threading.Lock()
 
-    @server.list_tools()
-    async def list_tools() -> list[Tool]:
-        """List available tools for hardware control."""
-        return [
-            Tool(
-                name="list_instruments",
-                description="List all instruments in the hardware-control App",
-                inputSchema={
-                    "type": "object",
-                    "properties": {},
-                },
-            ),
-            Tool(
-                name="get_parameters",
-                description="Query parameter values from instruments. Returns current values for specified parameters.",
-                inputSchema={
-                    "type": "object",
-                    "properties": {
-                        "queries": {
-                            "type": "array",
-                            "description": "List of queries to execute",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "instrument": {
-                                        "type": "string",
-                                        "description": "Instrument name",
-                                    },
-                                    "parameter": {
-                                        "type": "string",
-                                        "description": "Parameter name",
-                                    },
-                                },
-                                "required": ["instrument", "parameter"],
-                            },
-                        }
-                    },
-                    "required": ["queries"],
-                },
-            ),
-            Tool(
-                name="set_parameters",
-                description="Set parameter values on instruments. Use this to control hardware settings.",
-                inputSchema={
-                    "type": "object",
-                    "properties": {
-                        "updates": {
-                            "type": "array",
-                            "description": "List of parameter updates to execute",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "instrument": {
-                                        "type": "string",
-                                        "description": "Instrument name",
-                                    },
-                                    "parameter": {
-                                        "type": "string",
-                                        "description": "Parameter name",
-                                    },
-                                    "value": {
-                                        "type": "string",
-                                        "description": "Value to set (as string)",
-                                    },
-                                },
-                                "required": ["instrument", "parameter", "value"],
-                            },
-                        }
-                    },
-                    "required": ["updates"],
-                },
-            ),
-            Tool(
-                name="list_parameters",
-                description="List all parameters available for a specific instrument",
-                inputSchema={
-                    "type": "object",
-                    "properties": {
-                        "instrument": {
-                            "type": "string",
-                            "description": "Instrument name",
-                        }
-                    },
-                    "required": ["instrument"],
-                },
-            ),
-        ]
+    def request(function, *args) -> Any:
+        with lock:
+            return function(*args)
 
-    @server.call_tool()
-    async def call_tool(name: str, arguments: dict) -> list[TextContent]:
-        """Handle tool calls from LLM."""
-        global client
+    async def in_thread(function, *args) -> Any:
+        return await asyncio.to_thread(request, function, *args)
 
-        # Check if App is still alive
-        if not client.is_alive():
-            return [
-                TextContent(
-                    type="text",
-                    text=f"Error: App '{app_name}' is no longer running. Please restart the hardware-control App.",
-                )
-            ]
-
+    async def list_tools(ctx, params) -> types.ListToolsResult:
+        """List the available tools, which can change with the access mode."""
         try:
-            if name == "list_instruments":
-                response = client.list_instruments()
-                return [TextContent(type="text", text=str(response))]
+            response = await in_thread(client.get_access_info)
+            mode = response["data"]["access_mode"]
+        except (RuntimeError, KeyError, TypeError):
+            mode = None
+        return types.ListToolsResult(tools=tools_for_mode(mode))
 
-            elif name == "get_parameters":
-                queries = arguments.get("queries", [])
-                response = client.get_parameters(queries)
-                return [TextContent(type="text", text=str(response))]
+    async def call_tool(ctx, params) -> types.CallToolResult:
+        """Run a tool and return the response of the App as JSON."""
+        try:
+            response = await in_thread(
+                call_client, client, params.name, params.arguments or {}
+            )
+        except RuntimeError as e:
+            response = {"status": "error", "message": str(e)}
 
-            elif name == "set_parameters":
-                updates = arguments.get("updates", [])
-                response = client.set_parameters(updates)
-                return [TextContent(type="text", text=str(response))]
+        entries = response.get("data")
+        failed = response.get("status") == "error" or (
+            isinstance(entries, list)
+            and any(isinstance(e, dict) and "error" in e for e in entries)
+        )
+        return types.CallToolResult(
+            content=[types.TextContent(type="text", text=json.dumps(response))],
+            structured_content=response,
+            is_error=failed,
+        )
 
-            elif name == "list_parameters":
-                instrument = arguments.get("instrument")
-                response = client.list_parameters(instrument)
-                return [TextContent(type="text", text=str(response))]
+    return Server(
+        "hardware-control",
+        version=version("hardware-control"),
+        on_list_tools=list_tools,
+        on_call_tool=call_tool,
+    )
 
-            else:
-                return [TextContent(type="text", text=f"Error: Unknown tool: {name}")]
 
-        except Exception as e:
-            return [TextContent(type="text", text=f"Error: {e}")]
-
-    return server
+async def run_server(server: Server) -> None:
+    """Run MCP server over stdio."""
+    async with stdio_server() as (read_stream, write_stream):
+        await server.run(
+            read_stream, write_stream, server.create_initialization_options()
+        )
 
 
 def main() -> int:
     """Main entry point for hc-mcp server."""
-    global client, app_name
+    args = docopt(__doc__, version=f"hc-mcp {version('hardware-control')}")
 
-    args = docopt(__doc__, version="hc-mcp 1.0.0")
-
-    async def run_server(server: Server) -> None:
-        """Run MCP server over stdio."""
-        async with stdio_server() as (read_stream, write_stream):
-            await server.run(
-                read_stream,
-                write_stream,
-                server.create_initialization_options(),
-            )
-
+    client = None
     try:
-        # Discover App
-        app_name_arg = args["--app"]
         pid = int(args["--pid"]) if args["--pid"] else None
-        app_info = discover_app(app_name_arg, pid)
+        app_info = discover_app(args["--app"], pid)
 
-        app_name = app_info["app_name"]
-
-        # Create client
         client = HardwareControlClient(
             ipc_address=app_info["ipc_address"],
             pid=app_info["pid"],
             app_name=app_info["app_name"],
         )
 
-        # Verify App is alive
-        if not client.is_alive():
-            print(f"Error: App '{app_name}' is not running", file=sys.stderr)
-            return 1
-
-        # Create and run server
-        server = create_server()
-
-        # Run stdio server (blocking)
-        import asyncio
-
-        asyncio.run(run_server(server))
-
+        asyncio.run(run_server(create_server(client)))
         return 0
 
     except ExceptionGroup as e:
@@ -229,10 +242,6 @@ def main() -> int:
         return 1
     except RuntimeError as e:
         print(f"Error: {e}", file=sys.stderr)
-        return 1
-    except Exception as e:
-        print(f"Unexpected error: {e}", file=sys.stderr)
-        traceback.print_exception(e, file=sys.stderr)
         return 1
     finally:
         if client:
