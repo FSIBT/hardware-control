@@ -90,6 +90,7 @@ dev = [
 [project.scripts]
 hc-query = "hardware_control.cli.hc_query:main"
 hc-mcp = "hardware_control.cli.hc_mcp:main"
+hc-web = "hc_web.cli:main"
 
 [project.urls]
 documentation = "https://hardware-control.readthedocs.io/"
