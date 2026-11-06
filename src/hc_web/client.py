@@ -191,10 +191,18 @@ class WebClient:
         """Online state, latest values and latched alarms of all experiments."""
         return self._request("/api/v1/status")
 
-    def events(self, since: float) -> dict:
-        """Alarm events since ``since`` (unix time), oldest first."""
-        query = urllib.parse.urlencode({"since": repr(float(since))})
-        return self._request("/api/v1/events?" + query)
+    def events(self, since: float, after_id: int | None = None) -> dict:
+        """Alarm events since ``since`` (unix time), oldest first.
+
+        Every event has an ``id``, growing in the order the events reached the
+        server. With ``after_id`` you get only the events with a greater id (in
+        id order), so nothing is missed that arrived late with an older time;
+        ``last_id`` in the answer is the newest id to remember.
+        """
+        query = {"since": repr(float(since))}
+        if after_id is not None:
+            query["after_id"] = str(int(after_id))
+        return self._request("/api/v1/events?" + urllib.parse.urlencode(query))
 
     def send(self, points: list[tuple[str, float, object]]) -> dict:
         """Push ``(channel, t, value)`` tuples with the minimal push body.

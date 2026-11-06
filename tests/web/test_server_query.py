@@ -374,6 +374,7 @@ def test_events_since_sorted(client, conn, exp, clock):
     assert body["now"] == 1000.0
     assert body["events"] == [
         {
+            "id": 2,
             "experiment": "C",
             "t": 10.0,
             "alarm": "Door",
@@ -381,6 +382,7 @@ def test_events_since_sorted(client, conn, exp, clock):
             "message": None,
         },
         {
+            "id": 3,
             "experiment": "B",
             "t": 20.0,
             "alarm": "HV",
@@ -388,6 +390,7 @@ def test_events_since_sorted(client, conn, exp, clock):
             "message": None,
         },
         {
+            "id": 1,
             "experiment": "B",
             "t": 30.0,
             "alarm": "HV",
@@ -395,6 +398,7 @@ def test_events_since_sorted(client, conn, exp, clock):
             "message": "psu:V > 30000",
         },
     ]
+    assert body["last_id"] == 4
 
 
 def test_events_without_since_returns_all(client, conn, exp, clock):
@@ -402,6 +406,79 @@ def test_events_without_since_returns_all(client, conn, exp, clock):
     token = create_token(conn, "B", "viewer", scope="read")
     r = client.get("/api/v1/events", headers=auth(token))
     assert [e["t"] for e in r.get_json()["events"]] == [5.0]
+
+
+def event_ids(response):
+    return [e["id"] for e in response.get_json()["events"]]
+
+
+def test_events_after_id_returns_late_events_with_old_times(client, conn, exp, clock):
+    """A late event (older t than one already announced) is found by its id."""
+    other = get_or_create_experiment(conn, "C")
+    token = create_token(conn, "B", "viewer", scope="read")
+    add_event(conn, exp, 100.0, "HV", "triggered")
+    first = client.get("/api/v1/events?since=0", headers=auth(token)).get_json()
+    assert first["last_id"] == 1
+    add_event(conn, other, 50.0, "Door", "triggered")  # arrives late, t is older
+    r = client.get(f"/api/v1/events?after_id={first['last_id']}", headers=auth(token))
+    assert [(e["experiment"], e["t"]) for e in r.get_json()["events"]] == [("C", 50.0)]
+    assert r.get_json()["last_id"] == 2
+    # the old way, "newer than the newest t seen", misses it
+    r = client.get("/api/v1/events?since=100.0001", headers=auth(token))
+    assert r.get_json()["events"] == []
+
+
+def test_events_after_id_is_in_id_order_and_combines_with_since(
+    client, conn, exp, clock
+):
+    token = create_token(conn, "B", "viewer", scope="read")
+    for t in (30.0, 10.0, 20.0):
+        add_event(conn, exp, t, alarm=f"a{t}")
+    r = client.get("/api/v1/events?after_id=1", headers=auth(token))
+    assert event_ids(r) == [2, 3]
+    r = client.get("/api/v1/events?after_id=1&since=15", headers=auth(token))
+    assert event_ids(r) == [3]
+    r = client.get("/api/v1/events?after_id=3", headers=auth(token))
+    assert r.get_json()["events"] == [] and r.get_json()["last_id"] == 3
+    r = client.get("/api/v1/events?after_id=9007199254740991", headers=auth(token))
+    assert r.get_json()["events"] == [] and r.get_json()["last_id"] == 3
+
+
+def test_events_last_id_is_zero_without_events(client, conn, exp, clock):
+    token = create_token(conn, "B", "viewer", scope="read")
+    body = client.get("/api/v1/events", headers=auth(token)).get_json()
+    assert body["events"] == [] and body["last_id"] == 0
+
+
+def test_event_ids_are_not_reused_after_retention(client, conn, exp, clock):
+    from hc_web.retention import cleanup
+
+    add_event(conn, exp, 1.0)
+    add_event(conn, exp, 2.0)
+    cleanup(conn, now=100 * 86400.0, retention_days=7)  # deletes both
+    add_event(conn, exp, 100 * 86400.0)
+    token = create_token(conn, "B", "viewer", scope="read")
+    r = client.get("/api/v1/events", headers=auth(token))
+    assert event_ids(r) == [3]
+
+
+def test_last_id_survives_retention_of_the_newest_events(client, conn, exp, clock):
+    from hc_web.retention import cleanup
+
+    add_event(conn, exp, 1.0)
+    add_event(conn, exp, 2.0)
+    cleanup(conn, now=100 * 86400.0, retention_days=7)
+    token = create_token(conn, "B", "viewer", scope="read")
+    body = client.get("/api/v1/events", headers=auth(token)).get_json()
+    assert body["events"] == [] and body["last_id"] == 2
+
+
+@pytest.mark.parametrize("after_id", ["abc", "-1", "1.5", "nan", "1e3", ""])
+def test_events_bad_after_id_is_400(client, conn, exp, clock, after_id):
+    token = create_token(conn, "B", "viewer", scope="read")
+    r = client.get(f"/api/v1/events?after_id={after_id}", headers=auth(token))
+    assert r.status_code == 400
+    assert "after_id" in r.get_json()["error"]
 
 
 @pytest.mark.parametrize("since", ["abc", "nan", "inf", "1e999", ""])

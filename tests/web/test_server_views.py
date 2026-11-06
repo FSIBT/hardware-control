@@ -496,3 +496,76 @@ def test_overview_puts_values_on_the_page_as_text_only():
     text = (STATIC / "overview.js").read_text()
     assert "innerHTML" not in text and "insertAdjacentHTML" not in text
     assert "view.text" in text and "value.title" in text
+
+
+def run_notify(tmp_path, body: str):
+    """Evaluate ``body`` with ``N`` = window.hcNotify of notify.js and a fake storage."""
+    if NODE is None:
+        pytest.skip("node is not installed")
+    script = tmp_path / "notify_check.js"
+    script.write_text(
+        'const vm = require("vm"), fs = require("fs");\n'
+        "const store = {};\n"
+        "const localStorage = {\n"
+        "  getItem(k) { return k in store ? store[k] : null; },\n"
+        "  setItem(k, v) { store[k] = String(v); },\n"
+        "};\n"
+        "const ctx = { window: { localStorage }, document: { addEventListener() {} },\n"
+        "  Date, Math, String, Number };\n"
+        "vm.createContext(ctx);\n"
+        f"vm.runInContext(fs.readFileSync({str(STATIC / 'notify.js')!r}, 'utf8'), ctx);\n"
+        "const N = ctx.window.hcNotify;\n"
+        f"console.log(JSON.stringify((function () {{ {body} }})()));\n"
+    )
+    done = subprocess.run(
+        [NODE, str(script)], capture_output=True, text=True, timeout=60, check=True
+    )
+    return json.loads(done.stdout)
+
+
+def test_notify_first_load_starts_at_the_newest_id(tmp_path):
+    out = run_notify(
+        tmp_path,
+        "return N.planEvents(null, {last_id: 7, events: [{id: 7, t: 1}]});",
+    )
+    assert out == {"next": 7, "fresh": []}  # history is not replayed
+
+
+def test_notify_announces_late_events_with_older_times(tmp_path):
+    out = run_notify(
+        tmp_path,
+        """const first = N.planEvents(5, {last_id: 6, events: [
+          {id: 6, t: 100, experiment: 'B', action: 'triggered'}]});
+        // an event of another experiment arrives later, with an older t
+        const second = N.planEvents(first.next, {last_id: 7, events: [
+          {id: 7, t: 50, experiment: 'C', action: 'triggered'}]});
+        return [first, second];""",
+    )
+    assert [[e["id"] for e in plan["fresh"]] for plan in out] == [[6], [7]]
+    assert [plan["next"] for plan in out] == [6, 7]
+
+
+def test_notify_does_not_repeat_and_follows_a_reset_database(tmp_path):
+    out = run_notify(
+        tmp_path,
+        """return [
+          N.planEvents(7, {last_id: 7, events: []}),
+          N.planEvents(7, {last_id: 7, events: [{id: 7}]}),  // seen in another tab
+          N.planEvents(40, {last_id: 3, events: []}),  // the server's ids restarted
+        ];""",
+    )
+    assert out == [
+        {"next": 7, "fresh": []},
+        {"next": 7, "fresh": []},
+        {"next": 3, "fresh": []},
+    ]
+
+
+def test_notify_remembers_the_id_in_local_storage(tmp_path):
+    out = run_notify(
+        tmp_path,
+        """const before = N.readLastId();
+        N.writeLastId(12);
+        return [before, N.readLastId()];""",
+    )
+    assert out == [None, 12]

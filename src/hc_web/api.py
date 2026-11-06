@@ -66,6 +66,16 @@ def _number_arg(name: str, default: float | None = None) -> float | None:
     return value
 
 
+def _id_arg(name: str) -> int | None:
+    """A non-negative integer query parameter, or None if absent (400 if bad)."""
+    raw = request.args.get(name)
+    if raw is None:
+        return None
+    if not (raw.isascii() and raw.isdigit()) or int(raw) > 2**63 - 1:
+        abort(_error(400, f"{name} must be a non-negative integer"))
+    return int(raw)
+
+
 @bp.post("/push")
 def push():
     token = require_token("write")
@@ -171,7 +181,22 @@ def status():
 
 @bp.get("/events")
 def events():
+    """Alarm events with ``t >= since`` (oldest ``t`` first).
+
+    With ``after_id``, only events whose ``id`` is greater, in id order: ids
+    grow in the order events reach the server, so a client that remembers the
+    last id misses nothing that arrives late with an older ``t``. ``last_id``
+    is the newest id of all events (0 if there is none).
+    """
     require_reader()
     now = time.time()
     since = _number_arg("since", default=0.0)
-    return jsonify({"now": now, "events": query.get_events(get_db(), since)})
+    after_id = _id_arg("after_id")
+    conn = get_db()
+    return jsonify(
+        {
+            "now": now,
+            "last_id": query.last_event_id(conn),
+            "events": query.get_events(conn, since, after_id),
+        }
+    )

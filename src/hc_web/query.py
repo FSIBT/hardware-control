@@ -224,12 +224,34 @@ def get_status(conn: sqlite3.Connection, now: float) -> dict:
     return {"now": now, "experiments": experiments}
 
 
-def get_events(conn: sqlite3.Connection, since: float) -> list[dict]:
-    """Events with ``t >= since`` of all experiments, oldest first."""
-    rows = conn.execute(
-        "SELECT e.name AS experiment, v.t, v.alarm, v.action, v.message "
+def get_events(
+    conn: sqlite3.Connection, since: float, after_id: int | None = None
+) -> list[dict]:
+    """Events with ``t >= since`` of all experiments.
+
+    Oldest ``t`` first. With ``after_id``, only events with a greater ``id``,
+    in id order (the order in which they reached the server).
+    """
+    sql = (
+        "SELECT v.id, e.name AS experiment, v.t, v.alarm, v.action, v.message "
         "FROM events v JOIN experiments e ON e.id = v.experiment_id "
-        "WHERE v.t >= ? ORDER BY v.t, v.id",
-        (since,),
+        "WHERE v.t >= ?"
     )
-    return [dict(r) for r in rows]
+    args: list = [since]
+    if after_id is not None:
+        sql += " AND v.id > ? ORDER BY v.id"
+        args.append(after_id)
+    else:
+        sql += " ORDER BY v.t, v.id"
+    return [dict(r) for r in conn.execute(sql, args)]
+
+
+def last_event_id(conn: sqlite3.Connection) -> int:
+    """The newest event id ever given, 0 if there never was an event.
+
+    Taken from the AUTOINCREMENT counter, so it does not fall back when
+    retention deletes the newest events.
+    """
+    row = conn.execute("SELECT seq FROM sqlite_sequence WHERE name = 'events'")
+    row = row.fetchone()
+    return row[0] if row else 0

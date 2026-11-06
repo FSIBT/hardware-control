@@ -390,6 +390,10 @@ def test_alarm_events_and_latched(app, live_server, make_publisher):
         ("triggered", "psu:V > 30000"),
         ("cleared", "psu:V > 30000"),
     ]
+    # the client can follow the events by id
+    answer = web.events(0, after_id=events[0]["id"])
+    assert [e["action"] for e in answer["events"]] == ["cleared"]
+    assert answer["last_id"] == events[-1]["id"]
 
 
 def test_stop_sends_shutdown(app, live_server, make_publisher):

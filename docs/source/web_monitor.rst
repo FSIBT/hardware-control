@@ -341,7 +341,11 @@ The endpoints (``/api/v1/``), for tokens of any scope except where noted:
 * ``GET /data.csv?channels=...&since=<t>``: the same points as a CSV download.
 * ``GET /status``: online state, newest values and latched alarms of all
   experiments.
-* ``GET /events?since=<t>``: alarm events.
+* ``GET /events?since=<t>[&after_id=<n>]``: alarm events, each with an ``id``.
+  The ids grow in the order the events reach the server. To follow the events
+  without missing late ones, remember ``last_id`` of the answer and ask for
+  ``after_id=<last_id>`` next time (the overview page does this for its
+  notifications).
 
 A logged-in browser session may use the ``GET`` endpoints without a token.
 Channel and experiment names use ``A-Z a-z 0-9 _ . -`` (up to 64 characters).
