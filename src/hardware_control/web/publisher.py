@@ -377,7 +377,6 @@ class WebPublisher(QObject):
 
         self._channels: list[dict] = []  # declared to the server, read by the worker
         self._sources: list[tuple[str, str, str, str]] = []  # inst, param, name, kind
-        self._last_state: dict[str, str | None] = {}
         self._latched: tuple = ()
         self._queue: queue.Queue | None = None
         self._thread: threading.Thread | None = None
@@ -409,7 +408,8 @@ class WebPublisher(QObject):
 
         The channel defaults to ``<instrument>_<parameter>``. ``kind`` is
         "sampled" (a number, e.g. a voltage) or "state" (a string such as
-        "on", sent when it changes).
+        "on", sent at every interval like the others; the server keeps only the
+        changes).
         """
         if channel is None:
             channel = f"{instrument}_{parameter}"
@@ -442,7 +442,6 @@ class WebPublisher(QObject):
                 "wait a moment before start()"
             )
         self.run_id = uuid.uuid4().hex
-        self._last_state = {}
         self._queue = queue.Queue()
         self._stopping = threading.Event()
         self._worker = _Worker(
@@ -508,11 +507,11 @@ class WebPublisher(QObject):
             if kind == "sampled":
                 points.append({"channel": channel, "t": t, "v": _sampled_value(raw)})
                 continue
-            value = _state_value(raw)
-            if channel in self._last_state and self._last_state[channel] == value:
-                continue
-            self._last_state[channel] = value
-            points.append({"channel": channel, "t": t, "v": value})
+            # Every tick, not only on a change: the server stores a value only
+            # if it differs from the stored one or the time in between has a
+            # gap, so a repeat costs nothing, while after a gap (a restart, a
+            # long outage) the state is known again from the next tick.
+            points.append({"channel": channel, "t": t, "v": _state_value(raw)})
         self._latched = self._latched_aliases()
         queue_.put((points, [t], [], self._latched))
 

@@ -593,3 +593,23 @@ def test_rejected_run_does_not_count_as_heard(client, conn, clock, write_token):
     clock.now = 1010.0
     assert push(client, write_token, run="B", ticks=[1010.0]).status_code == 409
     assert conn.execute("SELECT last_heard FROM experiments").fetchone()[0] == 1000.0
+
+
+def test_repeated_state_value_adds_no_row_while_covered(
+    client, conn, clock, write_token
+):
+    """A publisher sends its state at every tick; the server keeps the changes."""
+    state = [{"name": "ng", "kind": "state"}]
+    for i, v in enumerate(["1", "1", "1", "0", "0"]):
+        clock.now = 10.0 * (i + 1)
+        r = push(
+            client,
+            write_token,
+            channels=state,
+            sent_at=clock.now,
+            ticks=[clock.now],
+            points=[{"channel": "ng", "t": clock.now, "v": v}],
+        )
+        assert r.status_code == 200
+    rows = conn.execute("SELECT t, v FROM points ORDER BY t").fetchall()
+    assert [tuple(r) for r in rows] == [(10.0, "1"), (40.0, "0")]

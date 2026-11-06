@@ -184,9 +184,11 @@ alarms of the App. Use a write token of the experiment:
    # in a main window, show the state in the status bar
    self.statusBar().addPermanentWidget(WebPublisherIndicator(publisher))
 
-* A channel is ``sampled`` (a number, sent at every interval) or ``state`` (a
-  string such as ``on`` or ``<5V``, sent when it changes). Values that are
-  not numbers in a sampled channel, ``nan`` and ``None`` are unknown.
+* A channel is ``sampled`` (a number) or ``state`` (a string such as ``on`` or
+  ``<5V``). Both are sent at every interval; the server stores a state only
+  when it changes, or when the experiment was offline in between, so that the
+  state is known again right after a gap. Values that are not numbers in a
+  sampled channel, ``nan`` and ``None`` are unknown.
 * The server does not convert units. ``unit`` and ``label`` are only for the
   plots. Convert in your own code (see below).
 * The publisher stops when the App quits, after a last push that tells the

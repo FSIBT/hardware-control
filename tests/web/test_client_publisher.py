@@ -178,7 +178,8 @@ def test_non_numeric_sampled_values_sent_as_null(app, live_server, make_publishe
     assert pub.status[0] == "connected"
 
 
-def test_state_sent_only_on_change(app, restartable_server, make_publisher):
+def test_state_sent_on_every_tick(app, restartable_server, make_publisher):
+    """The server drops repeats it already covers; after a gap they are needed."""
     server, write_token, _ = restartable_server
     server.stop()  # nothing is pushed: what is queued stays in the backlog
     pub = make_publisher(server.url, write_token, interval=60)
@@ -192,9 +193,35 @@ def test_state_sent_only_on_change(app, restartable_server, make_publisher):
     assert wait_until(lambda: len(backlog_rows(pub.backlog)[1]) == 8)
     points, ticks, _events = backlog_rows(pub.backlog)
     states = [p["v"] for p in points if p["channel"] == "ng_on"]
-    # first tick, then each change; "None" and "nan" are both unknown
-    assert states == ["0", "1", None, "0"]
+    # every tick; "None" and "nan" are both unknown
+    assert states == ["0", "0", "1", "1", None, None, "0", "0"]
     assert len([p for p in points if p["channel"] == "psu_V"]) == 8
+
+
+def test_unchanged_state_is_in_every_batch_but_stored_once(
+    app, live_server, make_publisher
+):
+    url, write_token, _ = live_server
+    pub = make_publisher(url, write_token, interval=60)
+    pub.publish("ng", "on", kind="state")
+    app.values = {("ng", "on"): "1"}
+    batches = []
+    original = pub.client.push
+
+    def spy(body):
+        result = original(body)  # stored by the server when this returns
+        batches.append([p["v"] for p in body["points"] if p["channel"] == "ng_on"])
+        return result
+
+    pub.client.push = spy
+    start_manual(pub)
+    for _ in range(3):
+        tick(pub)
+    # the unchanged value of every tick was pushed (maybe several in a batch)
+    assert wait_until(lambda: [v for b in batches for v in b] == ["1", "1", "1"])
+    web = reader(live_server)
+    points = web.data(["B/ng_on"], 0)["channels"]["B/ng_on"]["points"]
+    assert [p[1] for p in points] == ["1"]  # one row, not three
 
 
 def test_server_down_then_up_no_loss(app, restartable_server, make_publisher):
