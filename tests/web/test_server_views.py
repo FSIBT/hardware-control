@@ -440,3 +440,59 @@ def test_merge_gaps_joins_what_touches(tmp_path):
         "return [S.mergeGaps([[0,50],[60,null]],[[70,null]],70), S.mergeGaps([[0,50],[80,null]],[[70,null]],70)];",
     )
     assert out == [[[0, 50], [60, None]], [[0, 50], [70, None]]]
+
+
+def run_overview(tmp_path, body: str):
+    """Evaluate ``body`` with ``O`` = window.hcOverview of overview.js (no DOM)."""
+    if NODE is None:
+        pytest.skip("node is not installed")
+    script = tmp_path / "overview_check.js"
+    script.write_text(
+        'const vm = require("vm"), fs = require("fs");\n'
+        "const ctx = { window: {}, document: { addEventListener() {} }, Date, Math,\n"
+        "  String, Number };\n"
+        "vm.createContext(ctx);\n"
+        f"for (const f of ['common.js', 'overview.js'])\n"
+        f"  vm.runInContext(fs.readFileSync({str(STATIC)!r} + '/' + f, 'utf8'), ctx);\n"
+        "ctx.window.hc.formatTime = function (t) { return 'T' + t; };\n"
+        "const O = ctx.window.hcOverview;\n"
+        f"console.log(JSON.stringify((function () {{ {body} }})()));\n"
+    )
+    done = subprocess.run(
+        [NODE, str(script)], capture_output=True, text=True, timeout=60, check=True
+    )
+    return json.loads(done.stdout)
+
+
+def test_overview_shows_values_of_an_online_experiment(tmp_path):
+    out = run_overview(
+        tmp_path,
+        "return O.valueView({last: [100, 12.5], unit: 'V'}, true);",
+    )
+    assert out == {"text": "12.5 V", "title": "at T100"}
+
+
+def test_overview_shows_an_offline_experiment_as_unknown(tmp_path):
+    out = run_overview(
+        tmp_path,
+        """return [
+          O.valueView({last: [100, 12.5], unit: 'V'}, false),
+          O.valueView({last: [100, '<b>on</b>'], unit: null}, false),
+          O.valueView({last: [100, null], unit: 'V'}, false),
+          O.valueView({last: null, unit: 'V'}, false),
+          O.valueView({last: null, unit: 'V'}, true),
+        ];""",
+    )
+    assert out == [
+        {"text": "unknown", "title": "Last known: 12.5 V at T100"},
+        {"text": "unknown", "title": "Last known: <b>on</b> at T100"},  # as text only
+        {"text": "unknown", "title": "Last known: unknown at T100"},
+        {"text": "no data", "title": ""},
+        {"text": "no data", "title": ""},
+    ]
+
+
+def test_overview_puts_values_on_the_page_as_text_only():
+    text = (STATIC / "overview.js").read_text()
+    assert "innerHTML" not in text and "insertAdjacentHTML" not in text
+    assert "view.text" in text and "value.title" in text

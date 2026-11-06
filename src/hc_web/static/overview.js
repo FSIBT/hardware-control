@@ -30,19 +30,27 @@
     banner.hidden = list.childElementCount === 0;
   }
 
+  // What a channel's cell shows: {text, title}. The newest point of an offline
+  // experiment is old, so it is not shown as the value; it is only the tooltip.
+  function valueView(ch, live) {
+    if (ch.last === null) return { text: "no data", title: "" };
+    const known =
+      window.hc.formatValue(ch.last[1]) + (ch.unit && ch.last[1] !== null ? " " + ch.unit : "");
+    const when = window.hc.formatTime(ch.last[0]);
+    if (!live) {
+      return { text: "unknown", title: "Last known: " + known + " at " + when };
+    }
+    return { text: known, title: "at " + when };
+  }
+
   function channelRows(exp) {
     const body = el("tbody");
     exp.channels.forEach(function (ch) {
       const row = el("tr");
       row.append(el("td", ch.label || ch.name));
-      const value = el("td", null, "value");
-      if (ch.last === null) {
-        value.textContent = "no data";
-      } else {
-        value.textContent =
-          window.hc.formatValue(ch.last[1]) + (ch.unit && ch.last[1] !== null ? " " + ch.unit : "");
-        value.title = "at " + window.hc.formatTime(ch.last[0]);
-      }
+      const view = valueView(ch, exp.online);
+      const value = el("td", view.text, exp.online ? "value" : "value stale");
+      if (view.title) value.title = view.title;
       row.append(value);
       body.append(row);
     });
@@ -91,6 +99,9 @@
     }
     return card;
   }
+
+  // for the tests of the rendering without a browser
+  window.hcOverview = { valueView: valueView };
 
   async function refresh() {
     try {

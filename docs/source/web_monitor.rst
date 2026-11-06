@@ -163,7 +163,12 @@ at the server**, or at once when the App says that it is shutting down. This
 is judged on the clock of the server, so a publisher with a wrong clock is
 still shown as online (and gets a warning), and a push can never keep an
 experiment online by claiming a time in the future. The data of the time
-when it was offline is shown as unknown, never as a line.
+when it was offline is shown as unknown, never as a line. The values on the
+overview card of an offline experiment are shown as *unknown* too; the last
+known value is only in the tooltip. Likewise the publisher sends *unknown*
+for the parameters of an instrument that the App has marked as offline
+(``ONLINE`` is ``False``), instead of the last value it read, unless the App
+runs in dummy mode.
 
 Publish from an App
 -------------------

@@ -52,6 +52,7 @@ td button {
 .card.alarm { outline: 3px solid var(--pico-del-color); }
 .card.offline { opacity: 0.55; filter: grayscale(1); }
 .latched strong { color: var(--pico-del-color); }
+.cards td.value.stale { font-style: italic; }
 .latched.stale { font-style: italic; }
 .latched.stale strong { color: inherit; }
 

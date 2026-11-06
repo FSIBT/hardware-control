@@ -491,6 +491,22 @@ class WebPublisher(QObject):
     def _latched_aliases(self) -> tuple:
         return tuple(_alarm_name(a) for a in self.app.alarm_manager.alarms if a.latched)
 
+    def _instrument_offline(self, instrument: str) -> bool:
+        """True if the App knows that ``instrument`` is offline.
+
+        Then the value the App still holds is the last one read, not current.
+        Not in dummy mode (no hardware is contacted) and not for a virtual
+        instrument (no ONLINE parameter, its values are set by the program).
+        """
+        app = self.app
+        if app.dummy or instrument in app.virtual_instruments:
+            return False
+        try:
+            return app.get_instrument_parameter(instrument, "ONLINE") == "False"
+        except Exception as e:
+            logger.debug(f"cannot read {instrument}:ONLINE: {e}")
+            return False
+
     def tick(self) -> None:
         """Read the published parameters and queue them for the worker."""
         queue_ = self._queue
@@ -498,12 +514,17 @@ class WebPublisher(QObject):
             return
         t = time.time()
         points = []
+        offline: dict[str, bool] = {}
         for instrument, parameter, channel, kind in self._sources:
+            if instrument not in offline:
+                offline[instrument] = self._instrument_offline(instrument)
             try:
                 raw = self.app.get_instrument_parameter(instrument, parameter)
             except Exception as e:
                 logger.debug(f"cannot read {instrument}:{parameter}: {e}")
                 raw = None
+            if offline[instrument]:
+                raw = None  # the stored value is old: unknown, not current
             if kind == "sampled":
                 points.append({"channel": channel, "t": t, "v": _sampled_value(raw)})
                 continue

@@ -56,11 +56,19 @@ class FakeApp:
     def __init__(self):
         self.values = {}
         self.app_name = "publisher test"
+        self.dummy = False
+        self.virtual_instruments = set()
+        self.reads = []  # (instrument, parameter) in the order they were read
         self.aboutToQuit = MagicMock()
         self.auto_updates = []
         self.alarm_manager = AlarmManager(app=self)
 
     def get_instrument_parameter(self, instrument, parameter, return_set_value=False):
+        self.reads.append((instrument, parameter))
+        if parameter == "ONLINE" and (instrument, parameter) not in self.values:
+            if instrument in self.virtual_instruments:
+                raise KeyError("virtual instruments have no ONLINE parameter")
+            return "True"
         return self.values[(instrument, parameter)]
 
     def add_auto_update_instrument_parameter(self, instrument, parameter):
@@ -196,6 +204,73 @@ def test_state_sent_on_every_tick(app, restartable_server, make_publisher):
     # every tick; "None" and "nan" are both unknown
     assert states == ["0", "0", "1", "1", None, None, "0", "0"]
     assert len([p for p in points if p["channel"] == "psu_V"]) == 8
+
+
+def queued_points(pub):
+    """The points of everything that ``tick`` queued so far (no worker running)."""
+    points = []
+    while not pub._queue.empty():
+        points += pub._queue.get_nowait()[0]
+    return {p["channel"]: p["v"] for p in points}
+
+
+@pytest.fixture
+def offline_pub(app, make_publisher):
+    """A publisher that is not started, with a queue that the test reads."""
+    pub = make_publisher("http://localhost:1", "1.secret")
+    pub.publish("psu", "V")
+    pub.publish("ng", "on", kind="state")
+    pub._queue = queue.Queue()
+    app.values = {("psu", "V"): "12.5", ("ng", "on"): "1"}
+    return pub
+
+
+def test_offline_instrument_publishes_unknown(app, offline_pub):
+    """The stale read_value of an instrument that is offline is not current."""
+    pub = offline_pub
+    pub.tick()
+    assert queued_points(pub) == {"psu_V": 12.5, "ng_on": "1"}
+    app.values[("psu", "ONLINE")] = "False"
+    pub.tick()
+    assert queued_points(pub) == {"psu_V": None, "ng_on": "1"}
+    app.values[("ng", "ONLINE")] = "False"
+    pub.tick()
+    assert queued_points(pub) == {"psu_V": None, "ng_on": None}
+    app.values[("psu", "ONLINE")] = "True"
+    app.values[("ng", "ONLINE")] = "True"
+    pub.tick()
+    assert queued_points(pub) == {"psu_V": 12.5, "ng_on": "1"}
+
+
+def test_offline_flag_is_ignored_in_dummy_mode(app, offline_pub):
+    app.dummy = True
+    app.values[("psu", "ONLINE")] = "False"
+    offline_pub.tick()
+    assert queued_points(offline_pub) == {"psu_V": 12.5, "ng_on": "1"}
+
+
+def test_virtual_instrument_is_not_asked_for_online(app, make_publisher):
+    pub = make_publisher("http://localhost:1", "1.secret")
+    app.virtual_instruments.add("derived")
+    app.values = {("derived", "hv"): 3.0}
+    pub.publish("derived", "hv")
+    pub._queue = queue.Queue()
+    pub.tick()
+    assert queued_points(pub) == {"derived_hv": 3.0}
+    assert ("derived", "ONLINE") not in app.reads
+
+
+def test_unreadable_online_parameter_keeps_the_value(app, offline_pub):
+    """Not knowing whether it is online is not a reason to hide the value."""
+
+    def broken(instrument, parameter, return_set_value=False):
+        if parameter == "ONLINE":
+            raise RuntimeError("boom")
+        return app.values[(instrument, parameter)]
+
+    app.get_instrument_parameter = broken
+    offline_pub.tick()
+    assert queued_points(offline_pub) == {"psu_V": 12.5, "ng_on": "1"}
 
 
 def test_unchanged_state_is_in_every_batch_but_stored_once(
