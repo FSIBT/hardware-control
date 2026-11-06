@@ -791,18 +791,112 @@ def test_programming_errors_in_verify_are_logged_as_warnings(
     assert all("TypeError" in r.getMessage() for r in warnings)
 
 
-def test_expected_library_errors_stay_at_info(client, conn, monkeypatch, caplog):
+def client_data(origin: str, **extra) -> str:
+    import json
+
+    return b64u(
+        json.dumps({"type": "webauthn.get", "origin": origin, **extra}).encode()
+    )
+
+
+def test_library_rejections_are_warnings_with_both_origins(
+    client, conn, monkeypatch, caplog
+):
     from webauthn.helpers.exceptions import InvalidAuthenticationResponse
 
     def rejected(**kwargs):
-        raise InvalidAuthenticationResponse("bad signature")
+        raise InvalidAuthenticationResponse("Unexpected client data origin")
+
+    monkeypatch.setattr("hc_web.auth.verify_authentication_response", rejected)
+    add_user(conn, cred_id=b64u(b"cred-b"))
+    body = {
+        "id": b64u(b"cred-b"),
+        "response": {
+            "clientDataJSON": client_data(
+                "https://wrong.example.org", challenge="s3cret"
+            )
+        },
+    }
+    with caplog.at_level(logging.INFO, logger="hc_web.auth"):
+        post(client, "/auth/login/options")
+        post(client, "/auth/login/verify", body)
+    assert [r.levelno for r in caplog.records] == [logging.WARNING]
+    message = caplog.records[0].getMessage()
+    assert "InvalidAuthenticationResponse" in message
+    assert "expected origin 'http://localhost'" in message
+    assert "reported origin 'https://wrong.example.org'" in message
+    assert "s3cret" not in message  # the challenge is not logged
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        None,
+        "text",
+        {},
+        {"clientDataJSON": 5},
+        {"clientDataJSON": "!!!not base64!!!"},
+        {"clientDataJSON": b64u(b"not json")},
+        {"clientDataJSON": b64u(b"[1, 2]")},
+        {"clientDataJSON": b64u(b'{"origin": 7}')},
+    ],
+)
+def test_an_unreadable_client_data_is_logged_as_unknown(
+    client, conn, monkeypatch, caplog, response
+):
+    from webauthn.helpers.exceptions import InvalidAuthenticationResponse
+
+    def rejected(**kwargs):
+        raise InvalidAuthenticationResponse("bad")
 
     monkeypatch.setattr("hc_web.auth.verify_authentication_response", rejected)
     add_user(conn, cred_id=b64u(b"cred-b"))
     with caplog.at_level(logging.INFO, logger="hc_web.auth"):
         post(client, "/auth/login/options")
-        post(client, "/auth/login/verify", {"id": b64u(b"cred-b")})
-    assert [r.levelno for r in caplog.records] == [logging.INFO]
+        r = post(
+            client, "/auth/login/verify", {"id": b64u(b"cred-b"), "response": response}
+        )
+    assert r.status_code == 401
+    assert "reported origin unknown" in caplog.records[-1].getMessage()
+
+
+def test_a_reported_origin_cannot_inject_log_lines(client, conn, monkeypatch, caplog):
+    from webauthn.helpers.exceptions import InvalidAuthenticationResponse
+
+    def rejected(**kwargs):
+        raise InvalidAuthenticationResponse("bad")
+
+    monkeypatch.setattr("hc_web.auth.verify_authentication_response", rejected)
+    add_user(conn, cred_id=b64u(b"cred-b"))
+    evil = "https://x.org\nERROR forged line" + "A" * 1000
+    body = {"id": b64u(b"cred-b"), "response": {"clientDataJSON": client_data(evil)}}
+    with caplog.at_level(logging.INFO, logger="hc_web.auth"):
+        post(client, "/auth/login/options")
+        post(client, "/auth/login/verify", body)
+    message = caplog.records[-1].getMessage()
+    assert "\n" not in message
+    assert len(message) < 500
+
+
+def test_registration_failures_report_the_origin_too(client, conn, monkeypatch, caplog):
+    from webauthn.helpers.exceptions import InvalidRegistrationResponse
+
+    def rejected(**kwargs):
+        raise InvalidRegistrationResponse("bad")
+
+    monkeypatch.setattr("hc_web.auth.verify_registration_response", rejected)
+    code = invite(conn)
+    body = {
+        "id": "x",
+        "response": {"clientDataJSON": client_data("https://wrong.example.org")},
+    }
+    with caplog.at_level(logging.INFO, logger="hc_web.auth"):
+        post(client, "/auth/register/options", {"code": code, "name": "alice"})
+        assert post(client, "/auth/register/verify", body).status_code == 400
+    assert [r.levelno for r in caplog.records] == [logging.WARNING]
+    assert (
+        "reported origin 'https://wrong.example.org'" in caplog.records[0].getMessage()
+    )
 
 
 # --- server-side challenge store -------------------------------------------

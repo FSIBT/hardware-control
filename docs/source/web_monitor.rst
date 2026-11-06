@@ -50,6 +50,16 @@ accepts ``--config=<file>``.
 Only ``origin`` and ``database`` are required. A relative ``database`` is
 relative to the directory of the config file.
 
+The file is checked when it is read. ``origin`` must be ``http://`` or
+``https://`` followed by a host name (and optionally a port), without a path,
+query, fragment or user name; a trailing ``/`` is removed and the host is
+lower-cased. ``proxy_hops`` must be a whole number, 0 or more. Unknown
+settings and values of the wrong type are refused with a message naming the
+file and the setting (``hc-web`` prints it and exits with status 1). A failed
+passkey login or registration is logged as a warning that shows the origin
+the server expected next to the origin the browser reported, which is the
+usual way to find a wrong ``origin``.
+
 .. note::
 
    Passkeys are bound to the hostname in ``origin``. If you change the

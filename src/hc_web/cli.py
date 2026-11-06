@@ -39,7 +39,7 @@ from pathlib import Path
 from docopt import docopt
 
 from . import db, retention, tokens, users
-from .config import load_config
+from .config import ConfigError, load_config
 
 
 def _fmt_time(t: float | None) -> str:
@@ -219,6 +219,9 @@ def main(argv: list[str] | None = None) -> int:
             return cmd_serve(args)
     except FileNotFoundError as e:
         print(f"Error: cannot read config: {e}", file=sys.stderr)
+        return 1
+    except (ConfigError, db.SchemaVersionError) as e:
+        print(f"Error: {e}", file=sys.stderr)
         return 1
     print("Error: No command specified", file=sys.stderr)
     return 1

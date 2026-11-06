@@ -6,7 +6,9 @@ CORS preflight that this server never approves; together with the
 ``SameSite=Lax`` cookie that is the CSRF guard.
 """
 
+import base64
 import functools
+import json
 import logging
 import secrets
 import sqlite3
@@ -140,11 +142,39 @@ def _log_in(user_id: int) -> None:
     session["user_id"] = user_id
 
 
-def _log_verify_failure(what: str, e: Exception) -> None:
-    """Log a failed verification; only the library's own rejections are routine."""
-    expected = (InvalidRegistrationResponse, InvalidAuthenticationResponse)
-    level = logging.INFO if isinstance(e, expected) else logging.WARNING
-    log.log(level, "passkey %s failed: %s: %s", what, type(e).__name__, e)
+def _reported_origin(body: object) -> str:
+    """The origin the browser put into ``clientDataJSON``, safe to log.
+
+    Only that one field is read; the challenge and everything else in the
+    client data stay out of the log. ``repr`` and the length cap keep a
+    hostile value from forging log lines. ``unknown`` if it can't be read.
+    """
+    try:
+        raw = body["response"]["clientDataJSON"]
+        padded = raw + "=" * (-len(raw) % 4)
+        origin = json.loads(base64.urlsafe_b64decode(padded))["origin"]
+    except Exception:  # untrusted input of any shape
+        return "unknown"
+    if not isinstance(origin, str):
+        return "unknown"
+    return repr(origin[:100])
+
+
+def _log_verify_failure(what: str, e: Exception, body: object, config) -> None:
+    """Warn about a failed verification.
+
+    A wrong ``origin`` in the config is the usual cause and otherwise shows
+    up only as "login failed" in the browser, so the log gives the origin
+    the server expected next to the one the browser reported.
+    """
+    log.warning(
+        "passkey %s failed: %s: %s (expected origin %r, reported origin %s)",
+        what,
+        type(e).__name__,
+        e,
+        config.origin,
+        _reported_origin(body),
+    )
 
 
 def _options_response(options):
@@ -276,7 +306,7 @@ def register_verify():
         )
         cred_id = bytes_to_base64url(verified.credential_id)
     except Exception as e:
-        _log_verify_failure("registration", e)
+        _log_verify_failure("registration", e, body, config)
         return _error(400, "registration failed")
     if len(cred_id) > MAX_CREDENTIAL_ID_LENGTH:
         return _error(400, "registration failed")
@@ -369,7 +399,7 @@ def login_verify():
             credential_current_sign_count=cred["sign_count"] or 0,
         )
     except Exception as e:
-        _log_verify_failure("login", e)
+        _log_verify_failure("login", e, body, config)
         return failed()
 
     users.touch_credential(conn, cred_id, verified.new_sign_count, time.time())
