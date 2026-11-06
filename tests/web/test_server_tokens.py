@@ -43,6 +43,7 @@ def test_wrong_and_revoked_tokens(conn):
     assert check_token(conn, "") is None
     assert check_token(conn, "garbage") is None
     assert check_token(conn, "999.abc") is None
+    assert check_token(conn, "99999999999999999999.x") is None
     assert check_token(conn, token) is not None
     assert revoke_token(conn, int(token_id)) is True
     assert check_token(conn, token) is None

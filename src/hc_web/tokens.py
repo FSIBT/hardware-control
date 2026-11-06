@@ -73,7 +73,8 @@ def check_token(conn: sqlite3.Connection, token: str | None) -> TokenInfo | None
     if not token or "." not in token:
         return None
     id_part, secret = token.split(".", 1)
-    if not id_part.isascii() or not id_part.isdigit():
+    # Cap the length: ids beyond 18 digits overflow SQLite's 64-bit INTEGER.
+    if not id_part.isascii() or not id_part.isdigit() or len(id_part) > 18:
         return None
     row = conn.execute(
         "SELECT t.id, t.experiment_id, t.scope, t.salt, t.hash, e.name AS experiment "
