@@ -53,4 +53,8 @@ def create_app(config: Config | None = None) -> Flask:
         conn.close()
 
     app.teardown_appcontext(_close_db)
+
+    from . import api  # imported here: api needs get_db from this module
+
+    app.register_blueprint(api.bp)
     return app
