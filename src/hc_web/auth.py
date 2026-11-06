@@ -31,6 +31,10 @@ from webauthn import (
     verify_registration_response,
 )
 from webauthn.helpers import base64url_to_bytes, bytes_to_base64url
+from webauthn.helpers.exceptions import (
+    InvalidAuthenticationResponse,
+    InvalidRegistrationResponse,
+)
 from webauthn.helpers.structs import (
     AuthenticatorSelectionCriteria,
     PublicKeyCredentialDescriptor,
@@ -38,14 +42,15 @@ from webauthn.helpers.structs import (
     UserVerificationRequirement,
 )
 
-from . import users
+from . import challenges, users
 from .app import get_db
 
 log = logging.getLogger(__name__)
 
 bp = Blueprint("auth", __name__)
 
-MAX_CREDENTIAL_ID_LENGTH = 1024
+# Credential ids are at most 1023 bytes, 1364 base64url characters.
+MAX_CREDENTIAL_ID_LENGTH = 1400
 
 
 def _error(status: int, message: str):
@@ -121,6 +126,13 @@ def _log_in(user_id: int) -> None:
     session["user_id"] = user_id
 
 
+def _log_verify_failure(what: str, e: Exception) -> None:
+    """Log a failed verification; only the library's own rejections are routine."""
+    expected = (InvalidRegistrationResponse, InvalidAuthenticationResponse)
+    level = logging.INFO if isinstance(e, expected) else logging.WARNING
+    log.log(level, "passkey %s failed: %s: %s", what, type(e).__name__, e)
+
+
 def _options_response(options):
     response = make_response(options_to_json(options))
     response.mimetype = "application/json"
@@ -157,12 +169,12 @@ def invite_page(code: str):
 @bp.post("/auth/register/options")
 def register_options():
     config = current_app.config["HC"]
-    session.pop("reg", None)
+    session.pop("challenge_id", None)
     body = _json_body()
     if body is None:
         return _error(400, "body must be a JSON object")
 
-    state = {}
+    pending = {}
     exclude = []
     if "code" in body:
         # New user with an invite. The invite is checked but not redeemed yet.
@@ -179,14 +191,14 @@ def register_options():
             return _error(400, "invite is invalid or has expired")
         if conn.execute("SELECT 1 FROM users WHERE name = ?", (name,)).fetchone():
             return _error(400, "that name is already taken")
-        state.update(code=code, name=name)
+        pending.update(invite_hash=users.hash_code(code), name=name)
         user_name = name
     else:
         # A logged-in user adds another passkey to their own account.
         user = current_user()
         if user is None:
             return _error(401, "login required")
-        state["user_id"] = user["id"]
+        pending["user_id"] = user["id"]
         user_name = user["name"]
         exclude = [
             PublicKeyCredentialDescriptor(id=base64url_to_bytes(c["id"]))
@@ -206,38 +218,51 @@ def register_options():
         ),
         exclude_credentials=exclude,
     )
-    state["challenge"] = bytes_to_base64url(options.challenge)
-    session["reg"] = state
+    session["challenge_id"] = challenges.create_challenge(
+        get_db(), "register", options.challenge, time.time(), **pending
+    )
     return _options_response(options)
 
 
 @bp.post("/auth/register/verify")
 def register_verify():
     config = current_app.config["HC"]
-    state = session.pop("reg", None)  # single use, whatever the outcome
+    conn = get_db()
+    # Single use, whatever the outcome: the row is deleted by this call.
+    pending = challenges.consume_challenge(
+        conn, session.pop("challenge_id", None), "register", time.time()
+    )
     body = _json_body()
-    if not state or body is None:
+    if pending is None or body is None:
         return _error(400, "no registration in progress")
+
+    user = None
+    if pending["invite_hash"] is None:
+        # Adding a passkey: the challenge was issued to this very user.
+        user = current_user()
+        if user is None or user["id"] != pending["user_id"]:
+            return _error(400, "no registration in progress")
 
     try:
         verified = verify_registration_response(
             credential=body,
-            expected_challenge=base64url_to_bytes(state["challenge"]),
+            expected_challenge=bytes(pending["challenge"]),
             expected_rp_id=config.rp_id,
             expected_origin=config.origin,
         )
         cred_id = bytes_to_base64url(verified.credential_id)
     except Exception as e:
-        log.info("passkey registration failed: %r", e)
+        _log_verify_failure("registration", e)
+        return _error(400, "registration failed")
+    if len(cred_id) > MAX_CREDENTIAL_ID_LENGTH:
         return _error(400, "registration failed")
 
-    conn = get_db()
-    if "code" in state:
+    if pending["invite_hash"] is not None:
         try:
             user_id = users.register_with_invite(
                 conn,
-                state["code"],
-                state["name"],
+                pending["invite_hash"],
+                pending["name"],
                 cred_id,
                 verified.credential_public_key,
                 verified.sign_count,
@@ -248,9 +273,6 @@ def register_verify():
         _log_in(user_id)
         return jsonify({"ok": True})
 
-    user = current_user()
-    if user is None or user["id"] != state.get("user_id"):
-        return _error(400, "no registration in progress")
     try:
         users.add_credential(
             conn,
@@ -271,23 +293,29 @@ def register_verify():
 @bp.post("/auth/login/options")
 def login_options():
     config = current_app.config["HC"]
-    session.pop("login_challenge", None)
+    session.pop("challenge_id", None)
     options = generate_authentication_options(
         rp_id=config.rp_id,
         # Discoverable credentials: the passkey itself says who is logging in.
         allow_credentials=[],
         user_verification=UserVerificationRequirement.PREFERRED,
     )
-    session["login_challenge"] = bytes_to_base64url(options.challenge)
+    session["challenge_id"] = challenges.create_challenge(
+        get_db(), "login", options.challenge, time.time()
+    )
     return _options_response(options)
 
 
 @bp.post("/auth/login/verify")
 def login_verify():
     config = current_app.config["HC"]
-    challenge = session.pop("login_challenge", None)  # single use
+    conn = get_db()
+    # Single use, whatever the outcome: the row is deleted by this call.
+    pending = challenges.consume_challenge(
+        conn, session.pop("challenge_id", None), "login", time.time()
+    )
     body = _json_body()
-    if not challenge or body is None:
+    if pending is None or body is None:
         return _error(400, "no login in progress")
 
     def failed():
@@ -302,14 +330,13 @@ def login_verify():
         or body.get("rawId", cred_id) != cred_id
     ):
         return failed()
-    conn = get_db()
     cred = users.get_credential(conn, cred_id)
     if cred is None:
         return failed()
     try:
         verified = verify_authentication_response(
             credential=body,
-            expected_challenge=base64url_to_bytes(challenge),
+            expected_challenge=bytes(pending["challenge"]),
             expected_rp_id=config.rp_id,
             expected_origin=config.origin,
             credential_public_key=bytes(cred["public_key"]),
@@ -318,7 +345,7 @@ def login_verify():
             credential_current_sign_count=cred["sign_count"] or 0,
         )
     except Exception as e:
-        log.info("passkey login failed: %r", e)
+        _log_verify_failure("login", e)
         return failed()
 
     users.touch_credential(conn, cred_id, verified.new_sign_count, time.time())

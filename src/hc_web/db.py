@@ -106,6 +106,16 @@ CREATE TABLE IF NOT EXISTS invites (
     expires REAL,
     used_at REAL
 );
+
+CREATE TABLE IF NOT EXISTS challenges (
+    id TEXT PRIMARY KEY,
+    challenge BLOB NOT NULL,
+    purpose TEXT NOT NULL,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    invite_hash TEXT,
+    name TEXT,
+    expires REAL NOT NULL
+);
 """
 
 

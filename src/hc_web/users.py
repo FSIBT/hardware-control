@@ -36,7 +36,7 @@ def _check_role(role: str) -> None:
         raise ValueError(f"Invalid role {role!r}: expected one of {ROLES}")
 
 
-def _code_hash(code: str) -> str:
+def hash_code(code: str) -> str:
     return hashlib.sha256(code.encode()).hexdigest()
 
 
@@ -59,7 +59,7 @@ def create_invite(
         conn.execute(
             "INSERT INTO invites (code_hash, role, created_by, created, expires) "
             "VALUES (?, ?, ?, ?, ?)",
-            (_code_hash(code), role, created_by, now, now + expires_s),
+            (hash_code(code), role, created_by, now, now + expires_s),
         )
     return code
 
@@ -72,14 +72,16 @@ def invite_is_valid(conn: sqlite3.Connection, code: str, now: float) -> bool:
     """Whether ``code`` is unused and unexpired. Does not redeem it."""
     row = conn.execute(
         "SELECT 1 FROM invites WHERE code_hash = ? AND used_at IS NULL AND expires > ?",
-        (_code_hash(code), now),
+        (hash_code(code), now),
     ).fetchone()
     return row is not None
 
 
-def _redeem(conn: sqlite3.Connection, code: str, now: float) -> str | None:
-    """Mark the invite used (no commit). One UPDATE, so only one caller wins."""
-    h = _code_hash(code)
+def _redeem(conn: sqlite3.Connection, h: str, now: float) -> str | None:
+    """Mark the invite with code hash ``h`` used (no commit).
+
+    One UPDATE, so only one caller wins.
+    """
     cur = conn.execute(
         "UPDATE invites SET used_at = ? "
         "WHERE code_hash = ? AND used_at IS NULL AND expires > ?",
@@ -95,12 +97,12 @@ def _redeem(conn: sqlite3.Connection, code: str, now: float) -> str | None:
 def redeem_invite(conn: sqlite3.Connection, code: str, now: float) -> str | None:
     """Mark ``code`` used and return its role; None if unknown, used or expired."""
     with conn:
-        return _redeem(conn, code, now)
+        return _redeem(conn, hash_code(code), now)
 
 
 def register_with_invite(
     conn: sqlite3.Connection,
-    code: str,
+    invite_hash: str,
     name: str,
     cred_id: str,
     public_key: bytes,
@@ -113,7 +115,7 @@ def register_with_invite(
     no longer valid, the name is taken or the credential id is already known.
     """
     with conn:  # one transaction: rolled back on any exception
-        role = _redeem(conn, code, now)
+        role = _redeem(conn, invite_hash, now)
         if role is None:
             raise RegistrationError("invite is invalid or has expired")
         try:

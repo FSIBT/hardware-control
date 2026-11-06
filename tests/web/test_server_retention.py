@@ -164,6 +164,17 @@ def test_events_warnings_invites(conn, exp):
     assert deleted["invites"] == 1
 
 
+def test_expired_challenges_deleted(conn):
+    with conn:
+        conn.executemany(
+            "INSERT INTO challenges (id, challenge, purpose, expires) "
+            "VALUES (?, x'00', 'login', ?)",
+            [("expired", NOW - 1), ("live", NOW + 1)],
+        )
+    assert cleanup(conn, NOW, 7)["challenges"] == 1
+    assert [r[0] for r in conn.execute("SELECT id FROM challenges")] == ["live"]
+
+
 def test_coverage_deleted_and_clamped(conn, exp):
     cutoff = NOW - 7 * DAY
     add_coverage(conn, exp, cutoff - 3 * DAY, cutoff - 2 * DAY)
@@ -202,6 +213,7 @@ def test_returns_count_per_table_and_is_idempotent(conn, exp):
         "coverage": 1,
         "warnings": 0,
         "invites": 0,
+        "challenges": 0,
     }
     assert cleanup(conn, NOW, 7) == dict.fromkeys(first, 0)
 

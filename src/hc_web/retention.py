@@ -17,7 +17,7 @@ def cleanup(
     Points older than the cutoff (``now - retention_days`` days) go, except the
     newest one before the cutoff of every state channel: it is the value the
     channel still had when the retained window starts. Coverage that straddles
-    the cutoff is clamped to start there. Invites go one day after they expire.
+    the cutoff is clamped to start there. Invites go one day after they expire; expired login challenges go at once.
     """
     cutoff = now - retention_days * DAY
     deleted = {}
@@ -41,6 +41,9 @@ def cleanup(
         ).rowcount
         deleted["invites"] = conn.execute(
             "DELETE FROM invites WHERE expires < ?", (now - INVITE_GRACE,)
+        ).rowcount
+        deleted["challenges"] = conn.execute(
+            "DELETE FROM challenges WHERE expires < ?", (now,)
         ).rowcount
     return deleted
 

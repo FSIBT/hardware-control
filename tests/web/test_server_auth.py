@@ -1,4 +1,6 @@
 import base64
+import inspect
+import logging
 import threading
 import time
 from types import SimpleNamespace
@@ -6,7 +8,7 @@ from types import SimpleNamespace
 import pytest
 
 pytest.importorskip("flask")
-pytest.importorskip("webauthn")
+webauthn = pytest.importorskip("webauthn")
 
 from hc_web import db, users  # noqa: E402
 from hc_web.auth import admin_required, login_required  # noqa: E402
@@ -45,6 +47,8 @@ class Verifier:
         self.new_sign_count = 1
 
     def verify_registration_response(self, **kwargs):
+        # a wrong or missing keyword must fail here, as it would in production
+        inspect.signature(webauthn.verify_registration_response).bind(**kwargs)
         self.reg_calls.append(kwargs)
         if self.fail:
             raise ValueError("bad attestation")
@@ -55,6 +59,7 @@ class Verifier:
         )
 
     def verify_authentication_response(self, **kwargs):
+        inspect.signature(webauthn.verify_authentication_response).bind(**kwargs)
         self.auth_calls.append(kwargs)
         if self.fail:
             raise ValueError("bad assertion")
@@ -71,6 +76,10 @@ def verifier(monkeypatch):
         "hc_web.auth.verify_authentication_response", v.verify_authentication_response
     )
     return v
+
+
+def unb64u(text: str) -> bytes:
+    return base64.urlsafe_b64decode(text + "=" * (-len(text) % 4))
 
 
 def post(client, url, body=None):
@@ -204,9 +213,7 @@ def test_register_with_invite_creates_user_and_session(client, conn, verifier):
     call = verifier.reg_calls[0]
     assert call["expected_origin"] == "http://localhost"
     assert call["expected_rp_id"] == "localhost"
-    assert call["expected_challenge"] == base64.urlsafe_b64decode(
-        opts["challenge"] + "=="
-    )
+    assert call["expected_challenge"] == unb64u(opts["challenge"])
 
     user = conn.execute("SELECT * FROM users").fetchone()
     assert (user["name"], user["role"]) == ("alice", "admin")
@@ -423,6 +430,7 @@ def test_login_sets_30_day_permanent_session(client, server_app, conn, verifier)
     r = post(client, "/auth/login/verify", {"id": b64u(b"cred-b"), "type": "x"})
     assert r.status_code == 200
     call = verifier.auth_calls[0]
+    assert call["expected_challenge"] == unb64u(opts["challenge"])
     assert call["expected_origin"] == "http://localhost"
     assert call["expected_rp_id"] == "localhost"
     assert call["credential_public_key"] == b"pk"
@@ -480,7 +488,7 @@ def test_login_unknown_credential_generic_failure(client, conn, verifier):
     add_user(conn, cred_id=b64u(b"cred-b"))
     post(client, "/auth/login/options")
     unknown = post(client, "/auth/login/verify", {"id": b64u(b"nobody")})
-    assert unknown.status_code in (400, 401)
+    assert unknown.status_code == 401
     assert verifier.auth_calls == []
 
     verifier.fail = True
@@ -492,11 +500,14 @@ def test_login_unknown_credential_generic_failure(client, conn, verifier):
         assert "user_id" not in s
 
 
-@pytest.mark.parametrize("body", [{}, {"id": 5}, {"id": None}, [], "x"])
-def test_login_malformed_credential(client, conn, verifier, body):
+@pytest.mark.parametrize(
+    "body, status",
+    [({}, 401), ({"id": 5}, 401), ({"id": None}, 401), ([], 400), ("x", 400)],
+)
+def test_login_malformed_credential(client, conn, verifier, body, status):
     post(client, "/auth/login/options")
     r = client.post("/auth/login/verify", json=body)
-    assert r.status_code in (400, 401)
+    assert r.status_code == status
     assert verifier.auth_calls == []
 
 
@@ -530,7 +541,7 @@ def test_login_clears_old_session(client, conn, verifier):
     )
     with client.session_transaction() as s:
         assert "junk" not in s
-        assert "login_challenge" not in s
+        assert "challenge_id" not in s
         assert s["user_id"] == new
 
 
@@ -735,3 +746,234 @@ def test_real_verifiers_reject_garbage_cleanly(client, conn):
     post(client, "/auth/login/options")
     r = post(client, "/auth/login/verify", {"id": b64u(b"cred-b"), "response": {}})
     assert r.status_code == 401
+
+
+# --- verifier arguments, challenge source, logging --------------------------
+
+
+def test_register_challenge_comes_from_store_not_body(client, conn, verifier):
+    code = invite(conn)
+    r = post(client, "/auth/register/options", {"code": code, "name": "alice"})
+    stored = unb64u(r.get_json()["challenge"])
+    r = post(client, "/auth/register/verify", {"id": "x", "challenge": b64u(b"evil")})
+    assert r.status_code == 200
+    assert verifier.reg_calls[0]["expected_challenge"] == stored
+
+
+def test_login_challenge_comes_from_store_not_body(client, conn, verifier):
+    add_user(conn, cred_id=b64u(b"cred-b"))
+    r = post(client, "/auth/login/options")
+    stored = unb64u(r.get_json()["challenge"])
+    body = {"id": b64u(b"cred-b"), "challenge": b64u(b"evil")}
+    assert post(client, "/auth/login/verify", body).status_code == 200
+    assert verifier.auth_calls[0]["expected_challenge"] == stored
+
+
+def test_programming_errors_in_verify_are_logged_as_warnings(
+    client, conn, monkeypatch, caplog
+):
+    def broken(**kwargs):
+        raise TypeError("unexpected keyword")
+
+    monkeypatch.setattr("hc_web.auth.verify_registration_response", broken)
+    monkeypatch.setattr("hc_web.auth.verify_authentication_response", broken)
+    code = invite(conn)
+    add_user(conn, cred_id=b64u(b"cred-b"))
+    with caplog.at_level(logging.INFO, logger="hc_web.auth"):
+        post(client, "/auth/register/options", {"code": code, "name": "alice"})
+        assert post(client, "/auth/register/verify", {"id": "x"}).status_code == 400
+        post(client, "/auth/login/options")
+        r = post(client, "/auth/login/verify", {"id": b64u(b"cred-b")})
+        assert r.status_code == 401
+    warnings = [r for r in caplog.records if r.levelno == logging.WARNING]
+    assert len(warnings) == 2
+    assert all("TypeError" in r.getMessage() for r in warnings)
+
+
+def test_expected_library_errors_stay_at_info(client, conn, monkeypatch, caplog):
+    from webauthn.helpers.exceptions import InvalidAuthenticationResponse
+
+    def rejected(**kwargs):
+        raise InvalidAuthenticationResponse("bad signature")
+
+    monkeypatch.setattr("hc_web.auth.verify_authentication_response", rejected)
+    add_user(conn, cred_id=b64u(b"cred-b"))
+    with caplog.at_level(logging.INFO, logger="hc_web.auth"):
+        post(client, "/auth/login/options")
+        post(client, "/auth/login/verify", {"id": b64u(b"cred-b")})
+    assert [r.levelno for r in caplog.records] == [logging.INFO]
+
+
+# --- server-side challenge store -------------------------------------------
+
+
+def session_cookie(client) -> str:
+    return client.get_cookie("session").value
+
+
+def replayed_client(server_app, cookie: str):
+    c = server_app.test_client()
+    c.set_cookie("session", cookie, domain="localhost")
+    return c
+
+
+def test_session_holds_only_a_challenge_id(server_app, client, conn, verifier):
+    code = invite(conn)
+    post(client, "/auth/register/options", {"code": code, "name": "alice"})
+    serializer = server_app.session_interface.get_signing_serializer(server_app)
+    data = serializer.loads(session_cookie(client))
+    assert list(data) == ["challenge_id"]
+    assert code not in str(data)
+    # the table holds only the hash of the code
+    row = conn.execute("SELECT * FROM challenges").fetchone()
+    assert code not in [str(v) for v in tuple(row)]
+    assert row["invite_hash"] == users.hash_code(code)
+    assert row["name"] == "alice"
+    assert row["purpose"] == "register"
+    assert row["expires"] == pytest.approx(time.time() + 300, abs=5)
+
+
+def test_register_verify_replay_with_old_cookie_fails(
+    server_app, client, conn, verifier
+):
+    code = invite(conn)
+    post(client, "/auth/register/options", {"code": code, "name": "alice"})
+    old = session_cookie(client)
+    assert post(client, "/auth/register/verify", {"id": "x"}).status_code == 200
+    replay = replayed_client(server_app, old)
+    assert post(replay, "/auth/register/verify", {"id": "x"}).status_code == 400
+    assert len(verifier.reg_calls) == 1
+    assert user_count(conn) == 1
+    assert conn.execute("SELECT COUNT(*) FROM challenges").fetchone()[0] == 0
+
+
+def test_login_verify_replay_with_old_cookie_fails(server_app, client, conn, verifier):
+    uid = add_user(conn, cred_id=b64u(b"cred-b"))
+    post(client, "/auth/login/options")
+    old = session_cookie(client)
+    body = {"id": b64u(b"cred-b")}
+    assert post(client, "/auth/login/verify", body).status_code == 200
+    replay = replayed_client(server_app, old)
+    assert post(replay, "/auth/login/verify", body).status_code == 400
+    assert len(verifier.auth_calls) == 1
+    with replay.session_transaction() as s:
+        assert "user_id" not in s
+    assert uid
+
+
+def test_failed_verify_consumes_challenge_even_when_cookie_replayed(
+    server_app, client, conn, verifier
+):
+    add_user(conn, cred_id=b64u(b"cred-b"))
+    post(client, "/auth/login/options")
+    old = session_cookie(client)
+    verifier.fail = True
+    assert post(client, "/auth/login/verify", {"id": "z"}).status_code == 401
+    verifier.fail = False
+    replay = replayed_client(server_app, old)
+    assert (
+        post(replay, "/auth/login/verify", {"id": b64u(b"cred-b")}).status_code == 400
+    )
+    assert verifier.auth_calls == []
+
+
+def test_expired_challenge_rejected(client, conn, verifier, monkeypatch):
+    now = [time.time()]
+    monkeypatch.setattr("hc_web.auth.time.time", lambda: now[0])
+    code = invite(conn)
+    add_user(conn, cred_id=b64u(b"cred-b"))
+
+    post(client, "/auth/register/options", {"code": code, "name": "alice"})
+    now[0] += 301
+    assert post(client, "/auth/register/verify", {"id": "x"}).status_code == 400
+    assert verifier.reg_calls == []
+
+    post(client, "/auth/login/options")
+    now[0] += 301
+    assert (
+        post(client, "/auth/login/verify", {"id": b64u(b"cred-b")}).status_code == 400
+    )
+    assert verifier.auth_calls == []
+
+    # inside the lifetime it still works, and the invite was never burnt
+    post(client, "/auth/register/options", {"code": code, "name": "alice"})
+    now[0] += 299
+    assert post(client, "/auth/register/verify", {"id": "x"}).status_code == 200
+
+
+def test_challenge_purpose_mismatch(server_app, client, conn, verifier):
+    add_user(conn, cred_id=b64u(b"cred-b"))
+    # a login challenge is useless at register/verify
+    post(client, "/auth/login/options")
+    cookie = session_cookie(client)
+    assert post(client, "/auth/register/verify", {"id": "x"}).status_code == 400
+    assert verifier.reg_calls == []
+    # ... and it was consumed by the attempt
+    replay = replayed_client(server_app, cookie)
+    assert (
+        post(replay, "/auth/login/verify", {"id": b64u(b"cred-b")}).status_code == 400
+    )
+
+    # a register challenge is useless at login/verify
+    code = invite(conn)
+    post(client, "/auth/register/options", {"code": code, "name": "alice"})
+    assert (
+        post(client, "/auth/login/verify", {"id": b64u(b"cred-b")}).status_code == 400
+    )
+    assert verifier.auth_calls == []
+    assert user_count(conn) == 1
+
+
+def test_add_passkey_challenge_bound_to_user_in_store(server_app, conn, verifier):
+    uid = add_user(conn, "bob")
+    other = add_user(conn, "carol", cred_id="cred-c")
+    c = server_app.test_client()
+    login_as(c, uid)
+    post(c, "/auth/register/options", {})
+    row = conn.execute("SELECT * FROM challenges").fetchone()
+    assert row["user_id"] == uid
+    assert row["invite_hash"] is None
+    login_as(c, other)
+    assert post(c, "/auth/register/verify", {"id": "x"}).status_code == 400
+    assert verifier.reg_calls == []
+
+
+def test_expired_challenges_deleted_when_new_one_is_created(client, conn, verifier):
+    with conn:
+        conn.execute(
+            "INSERT INTO challenges (id, challenge, purpose, expires) "
+            "VALUES ('old', x'00', 'login', ?)",
+            (time.time() - 1,),
+        )
+    post(client, "/auth/login/options")
+    ids = [r[0] for r in conn.execute("SELECT id FROM challenges")]
+    assert "old" not in ids
+    assert len(ids) == 1
+
+
+# --- credential id length ---------------------------------------------------
+
+
+@pytest.mark.parametrize("size, status", [(1023, 200), (1050, 200), (1051, 400)])
+def test_register_credential_id_length_cap(client, conn, verifier, size, status):
+    from hc_web.auth import MAX_CREDENTIAL_ID_LENGTH
+
+    assert MAX_CREDENTIAL_ID_LENGTH == 1400
+    cred = b"\x01" * size
+    verifier.cred_id = cred
+    code = invite(conn)
+    r = register(client, code, cred_id=cred)
+    assert r.status_code == status
+    if status == 400:
+        assert user_count(conn) == 0
+        assert conn.execute("SELECT used_at FROM invites").fetchone()[0] is None
+
+
+def test_longest_registrable_credential_id_can_log_in(server_app, conn, verifier):
+    cred = b"\x02" * 1050  # 1400 base64url characters
+    verifier.cred_id = cred
+    c = server_app.test_client()
+    assert register(c, invite(conn), cred_id=cred).status_code == 200
+    c2 = server_app.test_client()
+    post(c2, "/auth/login/options")
+    assert post(c2, "/auth/login/verify", {"id": b64u(cred)}).status_code == 200
