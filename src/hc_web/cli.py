@@ -5,6 +5,7 @@ Usage:
   hc-web token list [--config=<file>]
   hc-web token revoke <id> [--config=<file>]
   hc-web status [--config=<file>]
+  hc-web cleanup [--config=<file>]
   hc-web serve [--port=<port>] [--config=<file>]
   hc-web (-h | --help)
   hc-web --version
@@ -14,6 +15,7 @@ Commands:
   token list    List tokens (never shows the secrets)
   token revoke  Revoke a token by id
   status        Show database and usage summary
+  cleanup       Delete data older than retention_days now
   serve         Run the Flask development server (local testing only)
 
 Options:
@@ -30,7 +32,7 @@ from pathlib import Path
 
 from docopt import docopt
 
-from . import db, tokens
+from . import db, retention, tokens
 from .config import load_config
 
 
@@ -125,6 +127,18 @@ def cmd_status(args: dict) -> int:
     return 0
 
 
+def cmd_cleanup(args: dict) -> int:
+    config = _load(args)
+    conn = db.connect(config.database)
+    try:
+        deleted = retention.cleanup(conn, time.time(), config.retention_days)
+    finally:
+        conn.close()
+    for table, n in deleted.items():
+        print(f"{table}: {n}")
+    return 0
+
+
 def cmd_serve(args: dict) -> int:
     from .app import create_app
 
@@ -156,6 +170,8 @@ def main(argv: list[str] | None = None) -> int:
                 return cmd_token_revoke(args)
         if args["status"]:
             return cmd_status(args)
+        if args["cleanup"]:
+            return cmd_cleanup(args)
         if args["serve"]:
             return cmd_serve(args)
     except FileNotFoundError as e:

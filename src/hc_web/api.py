@@ -1,14 +1,18 @@
 """JSON API under /api/v1."""
 
+import logging
 import math
 import time
 
-from flask import Blueprint, abort, jsonify, make_response, request
+from flask import Blueprint, abort, current_app, jsonify, make_response, request
 
 from . import auth, query
 from .app import get_db
 from .ingest import PushError, ingest_push
+from .retention import maybe_cleanup
 from .tokens import TokenInfo, check_token
+
+log = logging.getLogger(__name__)
 
 bp = Blueprint("api", __name__, url_prefix="/api/v1")
 
@@ -63,6 +67,10 @@ def _number_arg(name: str, default: float | None = None) -> float | None:
 def push():
     token = require_token("write")
     now = time.time()
+    try:
+        maybe_cleanup(get_db(), now, current_app.config["HC"].retention_days)
+    except Exception:
+        log.exception("retention cleanup failed")
     body = request.get_json(force=True, silent=True)
     if not isinstance(body, dict):
         return _error(400, "body must be a JSON object")
