@@ -36,8 +36,13 @@ Errors raise ``WebClientError``. Its ``status`` is the HTTP status, or
 (another run of this experiment is live) raises the subclass
 ``WebClientConflict``. The token is never part of an exception message or
 of ``repr()``.
+
+Proxy settings of the environment (``https_proxy`` and so on) are honoured, as
+with any urllib program; to reach the server directly, add its host to
+``no_proxy``.
 """
 
+import http.client
 import json
 import math
 import ssl
@@ -91,9 +96,18 @@ class WebClient:
         parts = urllib.parse.urlsplit(url)
         if parts.scheme not in ("http", "https") or not parts.netloc:
             raise ValueError(f"url must start with http:// or https://, got {url!r}")
-        if not token or any(c.isspace() or not c.isprintable() for c in token):
+        if parts.username is not None or parts.password is not None:
+            # not echoed: it would show the password
+            raise ValueError("url must not contain user:password@")
+        if (
+            not token
+            or not token.isascii()
+            or any(c.isspace() or not c.isprintable() for c in token)
+        ):
             # not echoed: it may be a secret
-            raise ValueError("token is empty or has whitespace or control characters")
+            raise ValueError(
+                "token is empty or has non-ASCII, whitespace or control characters"
+            )
         self.url = url.rstrip("/")
         self.timeout = timeout
         self._token = token
@@ -138,19 +152,25 @@ class WebClient:
             raise cls(f"HTTP {e.code}: {message}", e.code) from None
         except urllib.error.URLError as e:
             raise WebClientError(f"cannot reach {self.url}: {e.reason}") from None
-        except (OSError, ValueError) as e:  # timeouts, resets, bad responses
+        except http.client.HTTPException:
+            # BadStatusLine, IncompleteRead, ...: their text can carry server data
+            raise WebClientError(f"bad or incomplete answer from {self.url}") from None
+        except (OSError, ValueError) as e:  # timeouts, resets
             raise WebClientError(f"request to {self.url} failed: {e}") from None
         try:
-            return json.loads(raw)
+            result = json.loads(raw)
         except ValueError:
             raise WebClientError("the answer is not JSON", status) from None
+        if not isinstance(result, dict):
+            raise WebClientError("the answer is not a JSON object", status)
+        return result
 
     @staticmethod
     def _error_message(error: urllib.error.HTTPError) -> str:
         """The server's ``{"error": ...}`` text, else the HTTP reason."""
         try:
             message = json.loads(error.read()).get("error")
-        except (OSError, ValueError, AttributeError):
+        except (OSError, ValueError, AttributeError, http.client.HTTPException):
             message = None
         return str(message) if message else str(error.reason)
 
@@ -173,7 +193,8 @@ class WebClient:
 
     def events(self, since: float) -> dict:
         """Alarm events since ``since`` (unix time), oldest first."""
-        return self._request(f"/api/v1/events?since={float(since)!r}")
+        query = urllib.parse.urlencode({"since": repr(float(since))})
+        return self._request("/api/v1/events?" + query)
 
     def send(self, points: list[tuple[str, float, object]]) -> dict:
         """Push ``(channel, t, value)`` tuples with the minimal push body.

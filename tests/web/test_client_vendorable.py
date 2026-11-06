@@ -17,8 +17,6 @@ def test_client_file_is_vendorable(tmp_path):
 
     code = (
         "import importlib.util, sys\n"
-        f"assert not any(m.split('.')[0] in ('hc_web', 'hardware_control', 'flask', "
-        "'PyQt6') for m in sys.modules)\n"
         "spec = importlib.util.spec_from_file_location('client', "
         f"{str(vendored / 'client.py')!r})\n"
         "mod = importlib.util.module_from_spec(spec)\n"
@@ -31,7 +29,7 @@ def test_client_file_is_vendorable(tmp_path):
     )
     env = {k: v for k, v in os.environ.items() if k != "PYTHONPATH"}
     result = subprocess.run(
-        [sys.executable, "-I", "-c", code],
+        [sys.executable, "-I", "-S", "-c", code],
         cwd=vendored,
         env=env,
         capture_output=True,
@@ -46,6 +44,7 @@ def test_client_file_is_vendorable(tmp_path):
         [
             sys.executable,
             "-I",
+            "-S",
             "-c",
             f"import sys; sys.path.insert(0, {str(vendored)!r}); import client",
         ],

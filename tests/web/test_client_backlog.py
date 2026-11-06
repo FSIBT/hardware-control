@@ -1,4 +1,7 @@
+import contextlib
+import math
 import socket
+import threading
 import time
 
 import pytest
@@ -128,8 +131,6 @@ def test_client_errors(live_server):
 
 
 def test_client_timeout_has_no_status():
-    import threading
-
     with socket.socket() as listener:  # accepts, never answers
         listener.bind(("127.0.0.1", 0))
         listener.listen(1)
@@ -148,6 +149,103 @@ def test_client_timeout_has_no_status():
         done.set()
         thread.join()
     assert info.value.status is None
+
+
+@contextlib.contextmanager
+def raw_server(reply: bytes):
+    """A listener that answers the first request with the bytes ``reply``."""
+    with socket.socket() as listener:
+        listener.bind(("127.0.0.1", 0))
+        listener.listen(1)
+
+        def serve():
+            conn, _ = listener.accept()
+            with conn:
+                conn.settimeout(2)
+                with contextlib.suppress(OSError):
+                    conn.recv(65536)
+                    conn.sendall(reply)
+
+        thread = threading.Thread(target=serve, daemon=True)
+        thread.start()
+        yield f"http://127.0.0.1:{listener.getsockname()[1]}"
+        thread.join()
+
+
+def http_reply(status: str, body: bytes, length=None, **headers) -> bytes:
+    headers = {
+        "Content-Length": str(len(body) if length is None else length),
+        "Connection": "close",
+        **headers,
+    }
+    head = "".join(f"{k}: {v}\r\n" for k, v in headers.items())
+    return f"HTTP/1.1 {status}\r\n{head}\r\n".encode() + body
+
+
+def test_client_garbage_reply_is_a_client_error():
+    with raw_server(b"hello world, this is not http\r\n\r\n") as url:
+        with pytest.raises(WebClientError) as info:
+            WebClient(url, "1.x", 2).status()
+    assert info.value.status is None
+    assert "hello world" not in str(info.value)
+
+
+def test_client_truncated_reply_is_a_client_error():
+    reply = http_reply("200 OK", b"abcd", length=100)
+    with raw_server(reply) as url:
+        with pytest.raises(WebClientError) as info:
+            WebClient(url, "1.x", 2).status()
+    assert info.value.status is None
+
+
+def test_client_redirect_is_not_followed():
+    reply = http_reply("302 Found", b"", Location="http://127.0.0.1:1/elsewhere")
+    with raw_server(reply) as url:
+        with pytest.raises(WebClientError) as info:
+            WebClient(url, "1.secret", 2).status()
+    assert info.value.status == 302
+    assert "secret" not in str(info.value)
+
+
+def test_client_html_error_from_a_proxy():
+    reply = http_reply("502 Bad Gateway", b"<html><body>Bad gateway</body></html>")
+    with raw_server(reply) as url:
+        with pytest.raises(WebClientError) as info:
+            WebClient(url, "1.x", 2).status()
+    assert info.value.status == 502
+    assert "<html>" not in str(info.value)
+
+
+def test_client_success_without_json():
+    with raw_server(http_reply("200 OK", b"<html>captive portal</html>")) as url:
+        with pytest.raises(WebClientError, match="not JSON") as info:
+            WebClient(url, "1.x", 2).status()
+    assert info.value.status == 200
+
+
+def test_client_success_with_json_that_is_not_an_object():
+    with raw_server(http_reply("200 OK", b"[1, 2]")) as url:
+        with pytest.raises(WebClientError, match="not a JSON object") as info:
+            WebClient(url, "1.x", 2).status()
+    assert info.value.status == 200
+
+
+def test_client_rejects_bad_token_and_userinfo():
+    with pytest.raises(ValueError) as info:
+        WebClient("http://example.org", "1.s\u00e9cret")
+    assert "cret" not in str(info.value)
+    with pytest.raises(ValueError) as info:
+        WebClient("http://alice:hunter2@example.org", "1.x")
+    assert "hunter2" not in str(info.value)
+    assert "alice" not in str(info.value)
+    with pytest.raises(ValueError):
+        WebClient("http://alice@example.org", "1.x")
+
+
+def test_client_events_query_is_encoded():
+    reply = http_reply("200 OK", b'{"now": 1.0, "events": []}')
+    with raw_server(reply) as url:
+        assert WebClient(url, "1.x", 2).events(12.5) == {"now": 1.0, "events": []}
 
 
 def test_client_validation_and_no_token_leak():
@@ -259,5 +357,30 @@ def test_backlog_prune(tmp_path):
         assert b.count() == 3
         assert b.take().points == [point("a", 950.0, 2.0)]
         assert b.prune(now=1000.0) == 0
+    finally:
+        b.close()
+
+
+def test_backlog_nan_value_becomes_unknown(backlog):
+    backlog.add(
+        [
+            point("a", 1.0, math.nan),
+            point("a", 2.0, math.inf),
+            point("a", 3.0, -math.inf),
+            point("a", 4.0, 1.5),
+        ],
+        [],
+        [],
+    )
+    assert [p["v"] for p in backlog.take().points] == [None, None, None, 1.5]
+
+
+def test_backlog_prune_boundary(tmp_path):
+    b = Backlog(tmp_path / "backlog.sqlite", max_age=100.0)
+    try:
+        b.add([point("a", 900.0, 1.0)], [900.0], [event(900.0)])  # t == now - max_age
+        assert b.prune(now=1000.0) == 0
+        assert b.count() == 3
+        assert b.prune(now=1000.5) == 3
     finally:
         b.close()

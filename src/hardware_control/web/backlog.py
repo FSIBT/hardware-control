@@ -6,6 +6,7 @@ from the creating thread only. No Qt in this module.
 """
 
 import json
+import math
 import sqlite3
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -23,6 +24,19 @@ CREATE INDEX IF NOT EXISTS events_t ON events (t);
 """
 
 TABLES = ("points", "ticks", "events")
+
+
+def _finite(point: dict) -> dict:
+    """``point`` with a NaN or infinite value (unknown) replaced by None."""
+    v = point.get("v")
+    if isinstance(v, float) and not math.isfinite(v):
+        return {**point, "v": None}
+    return point
+
+
+def _dumps(row: dict) -> str:
+    """Strict JSON: a stored row must always be sendable."""
+    return json.dumps(row, allow_nan=False)
 
 
 @dataclass
@@ -61,14 +75,14 @@ class Backlog:
         with self._conn:
             self._conn.executemany(
                 "INSERT INTO points (t, data) VALUES (?, ?)",
-                [(p["t"], json.dumps(p)) for p in points],
+                [(p["t"], _dumps(_finite(p))) for p in points],
             )
             self._conn.executemany(
                 "INSERT INTO ticks (t) VALUES (?)", [(t,) for t in ticks]
             )
             self._conn.executemany(
                 "INSERT INTO events (t, data) VALUES (?, ?)",
-                [(e["t"], json.dumps(e)) for e in events],
+                [(e["t"], _dumps(e)) for e in events],
             )
 
     def take(self, limit: int = 500) -> Batch:
