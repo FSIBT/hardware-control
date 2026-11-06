@@ -101,3 +101,69 @@ def test_get_db_one_per_request(server_app):
     response = server_app.test_client().get("/_probe")
     assert response.status_code == 200
     assert seen[0] is seen[1]
+
+
+def _scheme_app(config):
+    """An app with a route that reports what Flask sees of the request."""
+    from flask import jsonify, request, url_for
+
+    app = create_app(config)
+
+    @app.get("/_seen")
+    def seen():
+        return jsonify(
+            scheme=request.scheme,
+            host=request.host,
+            remote_addr=request.remote_addr,
+            url=url_for("seen", _external=True),
+        )
+
+    return app
+
+
+FORWARDED = {
+    "X-Forwarded-Proto": "https",
+    "X-Forwarded-Host": "monitor.example.org",
+    "X-Forwarded-For": "203.0.113.7",
+}
+
+
+def test_proxy_headers_are_trusted_by_default(config):
+    client = _scheme_app(config).test_client()
+    seen = client.get("/_seen", headers=FORWARDED).get_json()
+    assert seen["scheme"] == "https"
+    assert seen["host"] == "monitor.example.org"
+    assert seen["remote_addr"] == "203.0.113.7"
+    assert seen["url"] == "https://monitor.example.org/_seen"
+
+
+def test_without_proxy_headers_the_request_is_unchanged(config):
+    seen = _scheme_app(config).test_client().get("/_seen").get_json()
+    assert seen["scheme"] == "http"
+    assert seen["url"] == "http://localhost/_seen"
+
+
+def test_only_the_configured_number_of_hops_is_trusted(config):
+    config.proxy_hops = 1
+    client = _scheme_app(config).test_client()
+    # the proxy appended the real client; an address the client made up comes first
+    seen = client.get(
+        "/_seen", headers={"X-Forwarded-For": "198.51.100.1, 203.0.113.7"}
+    ).get_json()
+    assert seen["remote_addr"] == "203.0.113.7"
+
+
+def test_proxy_headers_are_ignored_with_zero_hops(config):
+    config.proxy_hops = 0
+    seen = _scheme_app(config).test_client().get("/_seen", headers=FORWARDED).get_json()
+    assert seen["scheme"] == "http"
+    assert seen["host"] == "localhost"
+    assert seen["url"] == "http://localhost/_seen"
+
+
+def test_proxy_hops_from_the_config_file(tmp_path):
+    path = tmp_path / "config.toml"
+    path.write_text(
+        'origin = "https://mon.example.org"\ndatabase = "x.sqlite"\nproxy_hops = 0\n'
+    )
+    assert load_config(path).proxy_hops == 0

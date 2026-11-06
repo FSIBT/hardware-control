@@ -5,6 +5,7 @@ import sqlite3
 from datetime import timedelta
 
 from flask import Flask, current_app, g
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from . import db
 from .config import Config, load_config
@@ -42,6 +43,15 @@ def create_app(config: Config | None = None) -> Flask:
         config = load_config()
     app = Flask(__name__)
     app.config["HC"] = config
+    if config.proxy_hops > 0:
+        # behind Apache: believe its X-Forwarded-* headers, so that the scheme
+        # and host seen by Flask are the public ones
+        app.wsgi_app = ProxyFix(
+            app.wsgi_app,
+            x_for=config.proxy_hops,
+            x_proto=config.proxy_hops,
+            x_host=config.proxy_hops,
+        )
     app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
     app.config["SESSION_COOKIE_SECURE"] = config.secure_cookies
     app.config["SESSION_COOKIE_HTTPONLY"] = True

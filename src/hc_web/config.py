@@ -16,6 +16,9 @@ class Config:
     retention_days: float = 7
     site_name: str = "HC monitor"
     secure_cookies: bool = True
+    # Reverse proxies in front of the app whose X-Forwarded-For/-Proto/-Host
+    # headers are trusted (the documented Apache setup is one hop); 0 trusts none
+    proxy_hops: int = 1
 
     @property
     def rp_id(self) -> str:
