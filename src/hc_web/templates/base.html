@@ -4,14 +4,26 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}{{ site_name }}{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='pico.min.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='hcweb.css') }}">
 </head>
 <body>
-  <header class="topbar"><span class="brand">{{ site_name }}</span></header>
-  <main class="{% block main_class %}card{% endblock %}">
+  <header class="container">
+    <nav>
+      <ul><li><strong>{{ site_name }}</strong></li></ul>
+      <ul>
+        {% if nav_user %}
+        {% if nav_user["role"] == "admin" %}<li><a href="{{ url_for('admin.admin_page') }}">Admin</a></li>{% endif %}
+        <li><button id="logout-button" type="button" class="outline secondary">Log out</button></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </header>
+  <main class="container">
     {% block content %}{% endblock %}
     <p id="error" class="error" role="alert" hidden></p>
   </main>
+  {% if nav_user %}<script src="{{ url_for('static', filename='nav.js') }}"></script>{% endif %}
   {% block scripts %}{% endblock %}
 </body>
 </html>

@@ -1,43 +1,29 @@
-:root { color-scheme: light dark; }
-body {
-  margin: 0;
-  font: 16px/1.5 system-ui, sans-serif;
-  background: Canvas;
-  color: CanvasText;
-}
-.topbar { padding: 0.75rem 1.25rem; border-bottom: 1px solid #8884; }
-.brand { font-weight: 600; }
-.card { max-width: 26rem; margin: 3rem auto; padding: 0 1.25rem; }
-label { display: block; margin: 1rem 0 0.25rem; }
-input[type="text"] {
-  box-sizing: border-box;
-  width: 100%;
-  padding: 0.5rem;
-  font: inherit;
-}
-button {
-  margin-top: 1rem;
-  padding: 0.5rem 1rem;
-  font: inherit;
-  cursor: pointer;
-}
-button:disabled { cursor: default; opacity: 0.6; }
-.hint { color: GrayText; font-size: 0.9rem; }
-.error { color: #b00020; font-weight: 600; }
-@media (prefers-color-scheme: dark) { .error { color: #ff6b81; } }
+/* What Pico (pico.min.css) does not provide. Colours come from Pico variables
+   so that everything follows the browser's light/dark setting. */
 
-/* admin page */
-.card.wide { max-width: 64rem; }
-.card.wide h2 { margin-top: 2rem; font-size: 1.15rem; }
-.card.wide h1 { margin-bottom: 0; }
-.inline-form { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: end; }
-.inline-form label { margin: 0 0 0.25rem; }
-.inline-form button { margin-top: 0; }
-select { padding: 0.5rem; font: inherit; }
-table { width: 100%; border-collapse: collapse; margin-top: 0.75rem; font-size: 0.95rem; }
-th, td { text-align: left; padding: 0.35rem 0.5rem; border-bottom: 1px solid #8884; vertical-align: top; }
-td button { margin: 0 0.25rem 0 0; padding: 0.15rem 0.5rem; }
-.secret-box { margin-top: 1rem; padding: 0.75rem; border: 2px solid #b00020; border-radius: 4px; }
-.secret-box code { display: block; word-break: break-all; margin: 0.5rem 0; user-select: all; }
-.secret-box button { margin-top: 0; }
-.muted { color: GrayText; }
+/* error line under the page content (shown by the scripts) */
+.error { color: var(--pico-del-color); font-weight: 600; }
+
+/* delete / revoke buttons: Pico has no danger variant. Re-point the variables
+   its button rules read, so hover and focus states stay Pico's own. */
+button.danger {
+  --pico-primary: var(--pico-del-color);
+  --pico-primary-hover: var(--pico-del-color);
+  --pico-primary-background: var(--pico-del-color);
+  --pico-primary-hover-background: var(--pico-del-color);
+  --pico-primary-border: var(--pico-del-color);
+  --pico-primary-hover-border: var(--pico-del-color);
+}
+
+/* compact buttons inside table cells */
+td button {
+  --pico-form-element-spacing-vertical: 0.2rem;
+  --pico-form-element-spacing-horizontal: 0.6rem;
+  width: auto;
+  margin: 0 0.25rem 0 0;
+  font-size: 0.875rem;
+}
+
+/* show-once secret (invite link, new token): distinct border, wrapping text */
+.secret { border: 2px solid var(--pico-del-color); }
+.secret code { display: block; word-break: break-all; user-select: all; }

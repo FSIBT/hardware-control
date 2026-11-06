@@ -72,7 +72,7 @@
     body.replaceChildren();
     if (rows.length === 0) {
       const tr = el("tr");
-      const td = el("td", emptyText, "muted");
+      const td = el("td", emptyText);
       td.colSpan = columns;
       tr.appendChild(td);
       body.appendChild(tr);
@@ -81,8 +81,8 @@
     return body;
   }
 
-  function button(label, onClick) {
-    const b = el("button", label);
+  function button(label, onClick, className) {
+    const b = el("button", label, className);
     b.type = "button";
     b.addEventListener("click", function () {
       b.disabled = true;
@@ -129,8 +129,10 @@
       const other = user.role === "admin" ? "viewer" : "admin";
       actions.appendChild(button("Make " + other, function () {
         return changeRole(user, other);
-      }));
-      actions.appendChild(button("Delete", function () { return removeUser(user); }));
+      }, "outline secondary"));
+      actions.appendChild(button("Delete", function () {
+        return removeUser(user);
+      }, "outline danger"));
       tr.appendChild(actions);
       body.appendChild(tr);
     });
@@ -182,7 +184,9 @@
       tr.appendChild(el("td", token.revoked ? "revoked" : "active"));
       const actions = el("td");
       if (!token.revoked) {
-        actions.appendChild(button("Revoke", function () { return revoke(token); }));
+        actions.appendChild(button("Revoke", function () {
+          return revoke(token);
+        }, "outline danger"));
       }
       tr.appendChild(actions);
       body.appendChild(tr);

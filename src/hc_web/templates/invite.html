@@ -1,19 +1,21 @@
 {% extends "base.html" %}
 {% block title %}Accept invite - {{ site_name }}{% endblock %}
 {% block content %}
+<article>
 {% if valid %}
-<h1>Create your account</h1>
-<p>Choose a display name, then create a passkey on this device.</p>
-<form id="invite-form" data-code="{{ code }}">
-  <label for="name">Display name</label>
-  <input id="name" name="name" type="text" maxlength="64" required autocomplete="name">
-  <button type="submit">Create passkey</button>
-</form>
+  <h1>Create your account</h1>
+  <p>Choose a display name, then create a passkey on this device.</p>
+  <form id="invite-form" data-code="{{ code }}">
+    <label for="name">Display name</label>
+    <input id="name" name="name" type="text" maxlength="64" required autocomplete="name">
+    <button type="submit">Create passkey</button>
+  </form>
 {% else %}
-<h1>Invite not valid</h1>
-<p>This invite link is invalid or has expired, or it has already been used.
-Ask an administrator for a new one.</p>
+  <h1>Invite not valid</h1>
+  <p>This invite link is invalid or has expired, or it has already been used.
+  Ask an administrator for a new one.</p>
 {% endif %}
+</article>
 {% endblock %}
 {% block scripts %}
 {% if valid %}<script src="{{ url_for('static', filename='webauthn.js') }}"></script>{% endif %}

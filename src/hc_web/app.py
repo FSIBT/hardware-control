@@ -58,7 +58,10 @@ def create_app(config: Config | None = None) -> Flask:
 
     @app.context_processor
     def _site_context():
-        return {"site_name": config.site_name}
+        from .auth import current_user
+
+        # nav_user decides which links the navigation bar shows
+        return {"site_name": config.site_name, "nav_user": current_user()}
 
     # imported here: these modules need get_db from this module
     from . import api, auth, views
