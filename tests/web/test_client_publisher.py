@@ -443,6 +443,18 @@ def test_stop_does_not_hang_on_a_silent_server(app, make_publisher):
         assert time.monotonic() - begin < 2.5
 
 
+@pytest.mark.parametrize("name", ["hv\n", "\nhv", "h\nv", "a" * 65, ""])
+def test_publish_rejects_names_the_server_would_reject(
+    app, live_server, make_publisher, name
+):
+    # "$" matches before a final newline; the server refuses such a name, and
+    # a batch that gets a 400 is dropped, so it has to fail here instead
+    url, write_token, _ = live_server
+    pub = make_publisher(url, write_token)
+    with pytest.raises(ValueError, match="channel name"):
+        pub.publish("psu", "V", channel=name)
+
+
 def test_publish_checks(app, live_server, make_publisher):
     url, write_token, _ = live_server
     pub = make_publisher(url, write_token)

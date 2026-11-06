@@ -22,8 +22,8 @@ from hc_web.client import WebClient, WebClientError
 
 logger = logging.getLogger(__name__)
 
-CHANNEL_PATTERN = re.compile(r"^[A-Za-z0-9_.-]{1,64}/[A-Za-z0-9_.-]{1,64}$")
-PARAMETER_PATTERN = re.compile(r"^[A-Za-z0-9_.-]+$")
+CHANNEL_PATTERN = re.compile(r"[A-Za-z0-9_.-]{1,64}/[A-Za-z0-9_.-]{1,64}")
+PARAMETER_PATTERN = re.compile(r"[A-Za-z0-9_.-]+")
 RESERVED_PARAMETERS = ("ONLINE", "IGNORE")
 OVERLAP = 60.0  # seconds of data that are fetched again, to not miss a point
 RETRY_INTERVAL = 60.0  # seconds before a failed poll is tried again, at most
@@ -58,12 +58,12 @@ def parse_channels(channels) -> dict[str, str]:
 
     result: dict[str, str] = {}
     for parameter, channel in items:
-        if not isinstance(channel, str) or not CHANNEL_PATTERN.match(channel):
+        if not isinstance(channel, str) or not CHANNEL_PATTERN.fullmatch(channel):
             raise ValueError(
                 f"channel {channel!r} must look like experiment/channel, using "
                 "A-Z a-z 0-9 _ . - (up to 64 characters each)"
             )
-        if not isinstance(parameter, str) or not PARAMETER_PATTERN.match(parameter):
+        if not isinstance(parameter, str) or not PARAMETER_PATTERN.fullmatch(parameter):
             raise ValueError(
                 f"parameter name {parameter!r} may only use A-Z a-z 0-9 _ . -"
             )

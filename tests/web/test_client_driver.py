@@ -273,6 +273,9 @@ def test_channel_names_become_parameters(tmp_path):
         (["B/"], "experiment/channel"),
         (["a/b/c"], "experiment/channel"),
         (["B/h v"], "experiment/channel"),
+        (["B/hv\n"], "experiment/channel"),  # $ would accept a final newline
+        (["B\n/hv"], "experiment/channel"),
+        ({"hv\n": "B/hv"}, "parameter name"),
         ([3], "experiment/channel"),
         ([], "no channels"),
         ({}, "no channels"),

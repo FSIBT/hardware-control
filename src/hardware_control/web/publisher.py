@@ -27,7 +27,7 @@ from hc_web.client import WebClient, WebClientConflict, WebClientError
 
 logger = logging.getLogger(__name__)
 
-CHANNEL_PATTERN = re.compile(r"^[A-Za-z0-9_.-]{1,64}$")
+CHANNEL_PATTERN = re.compile(r"[A-Za-z0-9_.-]{1,64}")
 KINDS = ("sampled", "state")
 MAX_BACKOFF = 300.0
 BATCH_SIZE = 500
@@ -413,7 +413,7 @@ class WebPublisher(QObject):
         """
         if channel is None:
             channel = f"{instrument}_{parameter}"
-        if not CHANNEL_PATTERN.match(channel):
+        if not CHANNEL_PATTERN.fullmatch(channel):
             raise ValueError(
                 f"channel name {channel!r} must be 1-64 characters of "
                 "A-Z a-z 0-9 _ . -; pass channel= to choose another one"
