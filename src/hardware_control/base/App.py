@@ -586,6 +586,8 @@ class App(QApplication):
         for instrument, parameter_or_function in self.request_updates:
             if (instrument, parameter_or_function) in self.skip_request_updates:
                 continue
+            if instrument in self.virtual_instruments:
+                continue  # nothing to query, and they have no ONLINE parameter
             online = self.get_instrument_parameter(instrument, "ONLINE")
             if online is None or online == "False":
                 continue

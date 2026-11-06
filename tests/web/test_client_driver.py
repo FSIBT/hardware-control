@@ -682,7 +682,7 @@ def test_history_is_closed_with_the_driver_and_still_readable(live_server, make_
 # -- HCWebServer in an App -----------------------------------------------------
 
 
-def test_driver_in_app_dummy_mode(tmp_path):
+def test_driver_in_app_dummy_mode(tmp_path, caplog):
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
     from hardware_control.base.App import App
 
@@ -704,6 +704,14 @@ def test_driver_in_app_dummy_mode(tmp_path):
         assert driver.get_value("B_online") == "nan"
         driver.command("refresh")  # a dummy command does nothing
         assert not (tmp_path / "h.sqlite").exists()  # and nothing was polled
+
+        # a virtual instrument can be auto-updated (the web publisher does it
+        # for what it publishes): there is nothing to query and no error
+        app.add_virtual_instrument("source", ["hv"])
+        app.add_auto_update_instrument_parameter("source", "hv")
+        with caplog.at_level(logging.ERROR):
+            app.update_instruments()
+        assert "ONLINE" not in caplog.text
     finally:
         app.close()
     assert not [t for t in threading.enumerate() if t.name == "web"]
