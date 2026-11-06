@@ -1,9 +1,14 @@
 """Tests for WebPublisher and its status indicator against a real server."""
 
+import logging
+import math
 import os
+import queue
 import socket
+import sqlite3
 import threading
 import time
+from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
@@ -15,9 +20,14 @@ from PyQt6.QtWidgets import QApplication  # noqa: E402
 from hardware_control.base.alarm import Alarm  # noqa: E402
 from hardware_control.base.alarm_manager import AlarmManager  # noqa: E402
 from hardware_control.base.remote_access import RemoteAccess  # noqa: E402
-from hardware_control.web import WebClient, WebPublisher  # noqa: E402
+from hardware_control.web import WebClient, WebClientError, WebPublisher  # noqa: E402
 from hardware_control.web.backlog import Backlog  # noqa: E402
-from hardware_control.web.publisher import default_backlog_file  # noqa: E402
+from hardware_control.web import publisher as publisher_module  # noqa: E402
+from hardware_control.web.publisher import (  # noqa: E402
+    _Worker,
+    _sampled_value,
+    default_backlog_file,
+)
 from hardware_control.web.status_gui import WebPublisherIndicator  # noqa: E402
 
 
@@ -342,13 +352,13 @@ def test_publish_checks(app, live_server, make_publisher):
         WebPublisher(app, url, write_token, interval=0)
 
 
-def test_default_backlog_file(app):
+def test_default_backlog_file(app, tmp_path):
     pub = WebPublisher(app, "http://localhost:1", "token")
     path = pub.backlog_file
     assert path.parent.name == "web_backlog"
     assert path.suffix == ".sqlite"
     assert path == default_backlog_file("publisher test")
-    assert path.stem == RemoteAccess("publisher test").filename.stem
+    assert path.stem == RemoteAccess("publisher test", tmp_path).filename.stem
     assert path.stem.startswith("publisher_test-")
 
 
@@ -368,3 +378,238 @@ def test_indicator_text_follows_status(app, qapp):
     assert indicator.toolTip() == "HTTP 409: another run is active"
     assert "red" in indicator.styleSheet()
     assert pub.status == ("error", 3, "HTTP 409: another run is active")
+
+
+# -- fix round 1 -------------------------------------------------------------
+
+
+def test_client_timeout_is_not_changed_by_stop(app, live_server, make_publisher):
+    url, write_token, _ = live_server
+    pub = make_publisher(url, write_token)
+    pub.client.timeout = 7.0
+    pub.publish("psu", "V")
+    app.values = {("psu", "V"): 1.0}
+    start_manual(pub)
+    tick(pub)
+    assert wait_until(lambda: pub.status[0] == "connected")
+    pub.stop()
+    assert pub.client.timeout == 7.0
+    start_manual(pub)
+    assert pub.client.timeout == 7.0
+    pub.stop()
+    assert pub.client.timeout == 7.0
+
+
+def test_rejected_400_batch_is_dropped(
+    app, live_server, make_publisher, caplog, monkeypatch
+):
+    monkeypatch.setattr(publisher_module, "BATCH_SIZE", 1)
+    url, write_token, _ = live_server
+    pub = make_publisher(url, write_token)
+    pub.publish("psu", "V")
+    app.values = {("psu", "V"): 2.0}
+    # a text value of a channel the server does not know: it answers 400
+    backlog = Backlog(pub.backlog)
+    backlog.add([{"channel": "ghost", "t": time.time() - 100, "v": "text"}], [], [])
+    backlog.close()
+    with caplog.at_level(logging.WARNING, logger=publisher_module.__name__):
+        start_manual(pub)
+        tick(pub)
+        web = reader(live_server)
+        assert wait_until(lambda: last_values(web) == {"psu_V": 2.0})
+        assert wait_until(lambda: pub.status[0] == "error")
+    assert "HTTP 400" in pub.status[2]
+    assert backlog_rows(pub.backlog) == ([], [], [])
+    warnings = [r for r in caplog.records if r.levelno == logging.WARNING]
+    assert any("HTTP 400" in r.getMessage() for r in warnings)
+    assert not any(write_token in r.getMessage() for r in caplog.records)
+    # the next good push clears the error
+    tick(pub)
+    assert wait_until(lambda: pub.status[0] == "connected")
+
+
+def test_unauthorized_keeps_backlog(app, live_server, make_publisher):
+    url, _write_token, _ = live_server
+    pub = make_publisher(url, "not-a-token", interval=60)
+    pub.publish("psu", "V")
+    app.values = {("psu", "V"): 1.0}
+    start_manual(pub)
+    tick(pub)
+    assert wait_until(lambda: pub.status[0] == "error")
+    assert "401" in pub.status[2]
+    points, ticks, _ = backlog_rows(pub.backlog)
+    assert len(points) == 1 and len(ticks) == 1
+
+
+def test_latched_alarm_with_empty_alias(app, live_server, make_publisher):
+    url, write_token, _ = live_server
+    pub = make_publisher(url, write_token)
+    pub.publish("psu", "V")
+    app.values = {("psu", "V"): 1.0}
+    alarm = Alarm("psu", "V", "", ">", 30000, action=lambda a: None)
+    app.alarm_manager.add_alarm(alarm)
+    start_manual(pub)
+    app.alarm_manager.process_update("psu", "V", 31000)
+    tick(pub)
+    web = reader(live_server)
+    assert wait_until(
+        lambda: web.status()["experiments"].get("B", {}).get("latched") == ["psu:V"]
+    )
+    assert pub.status[0] == "connected"
+    tick(pub)  # publishing goes on
+    assert wait_until(
+        lambda: len(web.data(["B/psu_V"], 0)["channels"]["B/psu_V"]["points"]) == 2
+    )
+    assert pub.status[0] == "connected"
+
+
+def test_publish_checks_unit_and_label(app, live_server, make_publisher):
+    url, write_token, _ = live_server
+    pub = make_publisher(url, write_token)
+    with pytest.raises(TypeError, match="unit"):
+        pub.publish("psu", "V", unit=5)
+    with pytest.raises(TypeError, match="label"):
+        pub.publish("psu", "V", label=["HV"])
+    assert app.auto_updates == []  # nothing was registered
+
+
+def test_backlog_error_keeps_worker_alive(
+    app, live_server, make_publisher, monkeypatch
+):
+    original = Backlog.add
+    calls = []
+
+    def flaky(self, points, ticks, events):
+        calls.append(1)
+        if len(calls) == 1:
+            raise sqlite3.OperationalError("disk is full")
+        return original(self, points, ticks, events)
+
+    monkeypatch.setattr(Backlog, "add", flaky)
+    url, write_token, _ = live_server
+    pub = make_publisher(url, write_token, interval=0.1)
+    pub.publish("psu", "V")
+    app.values = {("psu", "V"): 4.0}
+    start_manual(pub)
+    tick(pub)
+    assert wait_until(lambda: pub.status[0] == "error")
+    assert "disk is full" in pub.status[2]
+    web = reader(live_server)
+    # the item was kept in memory and stored on the retry
+    assert wait_until(lambda: last_values(web) == {"psu_V": 4.0})
+    assert wait_until(lambda: pub.status[0] == "connected")
+
+
+def test_start_refused_while_old_worker_is_alive(app, make_publisher):
+    with socket.socket() as listener:  # accepts, never answers
+        listener.bind(("127.0.0.1", 0))
+        listener.listen()
+        url = f"http://127.0.0.1:{listener.getsockname()[1]}"
+        pub = make_publisher(url, "token")
+        pub.client.timeout = 1.0
+        pub.publish("psu", "V")
+        app.values = {("psu", "V"): 1.0}
+        start_manual(pub)
+        tick(pub)
+        assert wait_until(lambda: listener.fileno() >= 0)  # worker is pushing
+        time.sleep(0.2)  # let the push block on the silent server
+        pub.stop(timeout=0.2)
+        with pytest.raises(RuntimeError, match="still"):
+            pub.start()
+        assert wait_until(
+            lambda: not [t for t in threading.enumerate() if t.name == "web-publisher"]
+        )
+        start_manual(pub)  # fine once the old worker has ended
+        pub.stop()
+
+
+@pytest.mark.parametrize(
+    "raw, expected",
+    [
+        ("ERROR", None),
+        ("None", None),
+        ("nan", None),
+        ("inf", None),
+        ("-inf", None),
+        ("", None),
+        (None, None),
+        (float("nan"), None),
+        (float("inf"), None),
+        ("2.5", 2.5),
+        (3, 3.0),
+        (4.5, 4.5),
+    ],
+)
+def test_sampled_value(raw, expected):
+    assert _sampled_value(raw) == expected
+
+
+def test_non_numeric_sampled_values_are_null_in_backlog(
+    app, restartable_server, make_publisher
+):
+    server, write_token, _ = restartable_server
+    server.stop()
+    pub = make_publisher(server.url, write_token, interval=60)
+    pub.publish("psu", "V")
+    values = ["ERROR", "None", "nan", "inf", "", "1.5", 2]
+    start_manual(pub)
+    for value in values:
+        app.values = {("psu", "V"): value}
+        tick(pub)
+    assert wait_until(lambda: len(backlog_rows(pub.backlog)[0]) == len(values))
+    sent = [p["v"] for p in backlog_rows(pub.backlog)[0]]
+    assert sent == [None, None, None, None, None, 1.5, 2.0]
+    assert not any(isinstance(v, float) and not math.isfinite(v) for v in sent)
+
+
+def test_state_is_sent_again_after_restart(app, restartable_server, make_publisher):
+    server, write_token, _ = restartable_server
+    server.stop()
+    pub = make_publisher(server.url, write_token, interval=60)
+    pub.publish("ng", "on", kind="state")
+    app.values = {("ng", "on"): "1"}
+    start_manual(pub)
+    tick(pub)
+    assert wait_until(lambda: len(backlog_rows(pub.backlog)[1]) == 1)
+    pub.stop()
+    start_manual(pub)
+    tick(pub)
+    assert wait_until(lambda: len(backlog_rows(pub.backlog)[1]) == 2)
+    states = [p["v"] for p in backlog_rows(pub.backlog)[0]]
+    assert states == ["1", "1"]
+
+
+def test_publish_after_start(app, live_server, make_publisher):
+    url, write_token, _ = live_server
+    pub = make_publisher(url, write_token)
+    pub.publish("psu", "V")
+    app.values = {("psu", "V"): 1.0, ("psu", "I"): 0.5}
+    start_manual(pub)
+    pub.publish("psu", "I")  # allowed while running: sent from the next tick
+    tick(pub)
+    web = reader(live_server)
+    assert wait_until(lambda: last_values(web) == {"psu_V": 1.0, "psu_I": 0.5})
+
+
+def test_worker_survives_a_deleted_qobject():
+    """The status signal raises RuntimeError once its QObject is gone."""
+
+    class Client:
+        timeout = 1.0
+        url = "http://nowhere"
+
+        def push(self, body):
+            raise WebClientError("down")
+
+    def emit(state, count, message):
+        raise RuntimeError("wrapped C/C++ object has been deleted")
+
+    items = queue.Queue()
+    items.put(([], [time.time()], [], ()))
+    worker = _Worker(
+        Client(), Path(":memory:"), "run", 0.1, [], items, threading.Event(), emit
+    )
+    thread = threading.Thread(target=worker.run)
+    thread.start()
+    thread.join(5)
+    assert not thread.is_alive()

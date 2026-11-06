@@ -7,6 +7,7 @@ the ``status_changed`` signal. The worker never touches a Qt object other than
 emitting that signal.
 """
 
+import collections
 import hashlib
 import logging
 import math
@@ -30,6 +31,7 @@ KINDS = ("sampled", "state")
 MAX_BACKOFF = 300.0
 BATCH_SIZE = 500
 PRUNE_INTERVAL = 3600.0
+MAX_PENDING = 10000  # items the worker keeps in memory if the backlog fails
 _STOP = object()  # queue marker: the worker should finish
 _UNKNOWN_STATES = ("None", "nan")
 
@@ -60,6 +62,11 @@ def _state_value(raw) -> str | None:
     return str(raw)
 
 
+def _alarm_name(alarm) -> str:
+    """The name of an alarm on the server: its alias, else instrument:parameter."""
+    return alarm.alias or f"{alarm.instrument}:{alarm.parameter}"
+
+
 class _Worker:
     """What the worker thread does. Owns the backlog; no Qt except ``emit``."""
 
@@ -82,12 +89,15 @@ class _Worker:
         self.items = items
         self.stopping = stopping
         self.emit = emit
-        self.push_timeout = client.timeout
         self.deadline = 0.0  # monotonic, set by stop() for the final push
         self.latched: tuple = ()
         self.failures = 0
         self.next_attempt = 0.0  # monotonic
         self.backlog: Backlog | None = None
+        # items taken from the queue that the backlog could not store yet
+        self.pending: collections.deque = collections.deque()
+        self.last_count = 0
+        self.store_retry_at = 0.0  # monotonic, after a backlog error
 
     # -- thread -------------------------------------------------------------
 
@@ -97,13 +107,20 @@ class _Worker:
             self._loop()
         except Exception:
             logger.exception("web publisher worker failed")
-            self.emit("error", 0, "web publisher worker failed, see the log")
+            self._emit("error", 0, "web publisher worker failed, see the log")
         finally:
             if self.backlog is not None:
                 try:
                     self.backlog.close()
                 except Exception:
                     logger.exception("cannot close the web backlog")
+
+    def _emit(self, state: str, count: int, message: str) -> None:
+        """Report the status. If the QObject is gone, ask the worker to stop."""
+        try:
+            self.emit(state, count, message)
+        except RuntimeError:
+            self.stopping.set()
 
     def _open_backlog(self) -> None:
         try:
@@ -115,10 +132,9 @@ class _Worker:
                 "buffering in memory only"
             )
             self.backlog = Backlog(Path(":memory:"))
-            self.emit("error", 0, f"cannot open {self.backlog_file}: {e}")
+            self._emit("error", 0, f"cannot open {self.backlog_file}: {e}")
 
     def _loop(self) -> None:
-        backlog = self.backlog
         next_prune = time.monotonic() + PRUNE_INTERVAL
         while True:
             now = time.monotonic()
@@ -130,23 +146,28 @@ class _Worker:
                 item = None
             if item is _STOP:
                 break
+            stop_seen = False
             if item is not None:
-                self._add(item)
-                if self._drain():
-                    break
-            if self.stopping.is_set():
+                self._keep(item)
+                stop_seen = self._drain()
+            if stop_seen or self.stopping.is_set():
                 break
             now = time.monotonic()
-            if now >= self.next_attempt and backlog.count() > 0:
-                self._flush()
+            if self._store_pending() and now >= self.next_attempt:
+                ok, count = self._guard(self.backlog.count)
+                if ok and count > 0:
+                    self._flush()
+                elif ok:
+                    self.failures = 0  # nothing waits: no failure to retry
             if now >= next_prune:
-                backlog.prune(time.time())
-                next_prune = now + PRUNE_INTERVAL
+                if self._guard(self.backlog.prune, time.time())[0]:
+                    next_prune = now + PRUNE_INTERVAL
         self._drain()
+        self._store_pending()
         self._final_push()
 
     def _drain(self) -> bool:
-        """Add everything queued to the backlog. True if the stop marker came."""
+        """Take everything queued. True if the stop marker came."""
         while True:
             try:
                 item = self.items.get_nowait()
@@ -154,12 +175,56 @@ class _Worker:
                 return False
             if item is _STOP:
                 return True
-            self._add(item)
+            self._keep(item)
 
-    def _add(self, item) -> None:
+    def _keep(self, item) -> None:
         points, ticks, events, latched = item
         self.latched = latched
-        self.backlog.add(points, ticks, events)
+        self.pending.append((points, ticks, events))
+        while len(self.pending) > MAX_PENDING:
+            self.pending.popleft()
+            logger.warning(
+                f"web backlog cannot store rows, dropped the oldest of {MAX_PENDING}"
+            )
+
+    def _store_pending(self) -> bool:
+        """Add the kept items to the backlog. False if that failed (kept)."""
+        if self.pending and time.monotonic() < self.store_retry_at:
+            return False
+        while self.pending:
+            try:
+                self.backlog.add(*self.pending[0])
+            except Exception as e:
+                self._storage_failed(e)
+                return False
+            self.pending.popleft()
+        return True
+
+    def _guard(self, function, *args):
+        """``(True, result)``, or ``(False, None)`` after a backlog error."""
+        try:
+            return True, function(*args)
+        except Exception as e:
+            self._storage_failed(e)
+            return False, None
+
+    def _backoff(self) -> None:
+        delay = min(self.interval * 2**self.failures, MAX_BACKOFF)
+        self.failures = min(self.failures + 1, 30)
+        self.next_attempt = time.monotonic() + delay
+
+    def _storage_failed(self, error: Exception) -> None:
+        logger.warning(f"web backlog error: {error}")
+        self._backoff()
+        self.store_retry_at = self.next_attempt
+        self._emit("error", self.last_count + len(self.pending), f"backlog: {error}")
+
+    def _count(self) -> int:
+        try:
+            self.last_count = self.backlog.count()
+        except Exception as e:
+            logger.warning(f"cannot count the web backlog: {e}")
+        return self.last_count
 
     # -- pushing ------------------------------------------------------------
 
@@ -177,67 +242,87 @@ class _Worker:
         }
 
     def _flush(self) -> None:
-        """Push the backlog batch by batch; on a failure back off."""
+        """Push the backlog batch by batch; on a failure back off.
+
+        A batch the server rejects with 400 will never be accepted, so it is
+        dropped and the next one is tried. Any other failure keeps the rows.
+        """
         backlog = self.backlog
         pushed = False
+        rejected = None
         while not self.stopping.is_set():
-            batch = backlog.take(BATCH_SIZE)
+            ok, batch = self._guard(backlog.take, BATCH_SIZE)
+            if not ok:
+                return
             if not (batch.points or batch.ticks or batch.events):
                 break
             try:
                 self.client.push(self._body(batch, shutdown=False))
             except WebClientError as e:
-                self._failed(e)
-                return
-            except Exception as e:  # e.g. a database error: keep rows, back off
+                if e.status != 400:
+                    self._failed(e)
+                    return
+                rows = len(batch.points) + len(batch.ticks) + len(batch.events)
+                logger.warning(f"web server rejected {rows} rows, dropped them: {e}")
+                rejected = str(e)
+            except Exception as e:  # not a request error: keep rows, back off
                 logger.exception("web push failed")
                 self._failed(e)
                 return
-            backlog.remove(batch)
-            pushed = True
-        if pushed:
+            else:
+                pushed = True
+            if not self._guard(backlog.remove, batch)[0]:
+                return
+        if pushed or rejected is not None:
             self.failures = 0
             self.next_attempt = 0.0
-            self.emit("connected", backlog.count(), f"Connected to {self.client.url}")
+            count = self._count()
+            if rejected is not None:
+                self._emit("error", count, rejected)
+            else:
+                self._emit("connected", count, f"Connected to {self.client.url}")
 
     def _failed(self, error: Exception) -> None:
-        count = self.backlog.count()
-        delay = min(self.interval * 2**self.failures, MAX_BACKOFF)
-        self.failures = min(self.failures + 1, 30)
-        self.next_attempt = time.monotonic() + delay
+        count = self._count()
+        self._backoff()
         status = getattr(error, "status", None)
         if isinstance(error, WebClientConflict) or not (
             isinstance(error, WebClientError) and (status is None or status >= 500)
         ):
             logger.warning(f"web push rejected: {error}")
-            self.emit("error", count, str(error))
+            self._emit("error", count, str(error))
         else:
             logger.warning(f"web push failed, buffering {count} rows: {error}")
-            self.emit("buffering", count, str(error))
+            self._emit("buffering", count, str(error))
 
     def _final_push(self) -> None:
-        """Best effort: send what is left, the last batch with ``shutdown``."""
+        """Best effort: send what is left, the last batch with ``shutdown``.
+
+        The client's timeout is lowered for this and put back afterwards.
+        """
         backlog = self.backlog
-        while True:
-            remaining = self.deadline - time.monotonic()
-            if remaining <= 0:
-                return
-            self.client.timeout = min(self.push_timeout, remaining)
-            batch = backlog.take(BATCH_SIZE)
-            last = backlog.count() <= len(batch.points) + len(batch.ticks) + len(
-                batch.events
-            )
-            try:
-                self.client.push(self._body(batch, shutdown=last))
-            except WebClientError as e:
-                logger.warning(f"final web push failed: {e}")
-                return
-            except Exception:
-                logger.exception("final web push failed")
-                return
-            backlog.remove(batch)
-            if last:
-                return
+        timeout = self.client.timeout
+        try:
+            while True:
+                remaining = self.deadline - time.monotonic()
+                if remaining <= 0:
+                    return
+                self.client.timeout = min(timeout, remaining)
+                batch = backlog.take(BATCH_SIZE)
+                rows = len(batch.points) + len(batch.ticks) + len(batch.events)
+                last = backlog.count() <= rows
+                try:
+                    self.client.push(self._body(batch, shutdown=last))
+                except WebClientError as e:
+                    logger.warning(f"final web push failed: {e}")
+                    return
+                backlog.remove(batch)
+                if last:
+                    return
+        except Exception:
+            logger.exception("final web push failed")
+        finally:
+            self.client.timeout = timeout
 
 
 class WebPublisher(QObject):
@@ -289,6 +374,7 @@ class WebPublisher(QObject):
         self._queue: queue.Queue | None = None
         self._thread: threading.Thread | None = None
         self._worker: _Worker | None = None
+        self._old_thread: threading.Thread | None = None  # one stop() did not end
         self._stopping: threading.Event | None = None
         self._quit_connected = False
         self._timer = QTimer(self)
@@ -326,6 +412,9 @@ class WebPublisher(QObject):
             )
         if kind not in KINDS:
             raise ValueError(f"kind must be one of {KINDS}, got {kind!r}")
+        for name, text in (("unit", unit), ("label", label)):
+            if text is not None and not isinstance(text, str):
+                raise TypeError(f"{name} must be a string or None, got {text!r}")
         if any(c["name"] == channel for c in self._channels):
             raise ValueError(f"channel {channel!r} is already published")
         self.app.add_auto_update_instrument_parameter(instrument, parameter)
@@ -339,6 +428,11 @@ class WebPublisher(QObject):
         if self._thread is not None:
             logger.warning("web publisher is already running")
             return
+        if self._old_thread is not None and self._old_thread.is_alive():
+            raise RuntimeError(
+                "the worker of the previous run is still finishing; "
+                "wait a moment before start()"
+            )
         self.run_id = uuid.uuid4().hex
         self._last_state = {}
         self._queue = queue.Queue()
@@ -380,6 +474,7 @@ class WebPublisher(QObject):
         thread.join(timeout)
         if thread.is_alive():
             logger.warning("web publisher worker did not finish in time")
+            self._old_thread = thread
 
     # -- main thread slots --------------------------------------------------
 
@@ -387,7 +482,7 @@ class WebPublisher(QObject):
         self.status = (state, count, message)
 
     def _latched_aliases(self) -> tuple:
-        return tuple(a.alias for a in self.app.alarm_manager.alarms if a.latched)
+        return tuple(_alarm_name(a) for a in self.app.alarm_manager.alarms if a.latched)
 
     def tick(self) -> None:
         """Read the published parameters and queue them for the worker."""
@@ -420,7 +515,7 @@ class WebPublisher(QObject):
         t = time.time()
         event = {
             "t": t,
-            "alarm": alarm.alias or f"{alarm.instrument}:{alarm.parameter}",
+            "alarm": _alarm_name(alarm),
             "action": action,
             "message": (
                 f"{alarm.instrument}:{alarm.parameter} "
