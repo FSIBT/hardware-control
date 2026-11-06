@@ -84,6 +84,11 @@ class WebClient:
 
     ``url`` is the base URL (http or https). With ``verify_tls=False`` the
     certificate of an https server is not checked (self-signed setups).
+
+    Some Python builds (for example the uv-managed ones) ship without CA
+    certificates. When the certificate check fails there and the ``certifi``
+    package is installed, the request is retried once with its CA bundle; the
+    certificate is still verified.
     """
 
     def __init__(
@@ -112,16 +117,35 @@ class WebClient:
         self.timeout = timeout
         self._token = token
         self._context = None
+        self._ca_fallback = False  # may still try certifi's CA bundle
         if parts.scheme == "https" and not verify_tls:
             self._context = ssl.create_default_context()
             self._context.check_hostname = False
             self._context.verify_mode = ssl.CERT_NONE
         elif parts.scheme == "https":
             self._context = ssl.create_default_context()
+            self._ca_fallback = True
+        self._opener = self._build_opener(self._context)
+
+    @staticmethod
+    def _build_opener(context):
         handlers = [_NoRedirect()]
-        if self._context is not None:
-            handlers.append(urllib.request.HTTPSHandler(context=self._context))
-        self._opener = urllib.request.build_opener(*handlers)
+        if context is not None:
+            handlers.append(urllib.request.HTTPSHandler(context=context))
+        return urllib.request.build_opener(*handlers)
+
+    def _use_certifi(self) -> bool:
+        """Switch to certifi's CA bundle, once. False if it is not available."""
+        self._ca_fallback = False
+        try:
+            import certifi
+
+            context = ssl.create_default_context(cafile=certifi.where())
+        except (ImportError, OSError, ssl.SSLError):
+            return False
+        self._context = context
+        self._opener = self._build_opener(context)
+        return True
 
     def __repr__(self) -> str:
         return f"WebClient({self.url!r}, token=<hidden>)"
@@ -142,15 +166,32 @@ class WebClient:
             headers["Content-Type"] = "application/json"
         request = urllib.request.Request(self.url + path, data=data, headers=headers)
         try:
-            with self._opener.open(request, timeout=self.timeout) as response:
-                raw = response.read()
-                status = response.status
+            try:
+                with self._opener.open(request, timeout=self.timeout) as response:
+                    raw = response.read()
+                    status = response.status
+            except urllib.error.URLError as e:
+                if not (
+                    self._ca_fallback
+                    and isinstance(e.reason, ssl.SSLCertVerificationError)
+                    and self._use_certifi()
+                ):
+                    raise
+                with self._opener.open(request, timeout=self.timeout) as response:
+                    raw = response.read()
+                    status = response.status
         except urllib.error.HTTPError as e:
             with e:
                 message = self._error_message(e)
             cls = WebClientConflict if e.code == 409 else WebClientError
             raise cls(f"HTTP {e.code}: {message}", e.code) from None
         except urllib.error.URLError as e:
+            if isinstance(e.reason, ssl.SSLCertVerificationError):
+                raise WebClientError(
+                    f"cannot reach {self.url}: certificate verification failed "
+                    f"({getattr(e.reason, 'verify_message', None) or e.reason}). Python may lack CA "
+                    "certificates: install certifi or set SSL_CERT_FILE"
+                ) from None
             raise WebClientError(f"cannot reach {self.url}: {e.reason}") from None
         except http.client.HTTPException:
             # BadStatusLine, IncompleteRead, ...: their text can carry server data

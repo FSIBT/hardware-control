@@ -67,6 +67,7 @@ def test_client_imports_only_the_standard_library():
             assert node.level == 0, "relative import"
             found.add(node.module.split(".")[0])
     assert found, "no imports found"
+    found.discard("certifi")  # optional, imported lazily as a CA bundle fallback
     assert found <= set(sys.stdlib_module_names), found - set(sys.stdlib_module_names)
 
 

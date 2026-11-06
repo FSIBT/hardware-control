@@ -274,6 +274,83 @@ def test_client_verify_tls(monkeypatch):
     assert WebClient("http://example.org", "1.x", verify_tls=False)._context is None
 
 
+class _FakeResponse:
+    status = 200
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def read(self):
+        return b'{"ok": true}'
+
+
+class _FakeOpener:
+    def __init__(self, error=None):
+        self.error = error
+        self.calls = 0
+
+    def open(self, request, timeout=None):
+        import urllib.error
+
+        self.calls += 1
+        if self.error:
+            raise urllib.error.URLError(self.error)
+        return _FakeResponse()
+
+
+def _cert_error():
+    import ssl
+
+    return ssl.SSLCertVerificationError(1, "unable to get local issuer certificate")
+
+
+def test_client_falls_back_to_certifi_on_cert_failure():
+    pytest.importorskip("certifi")
+    client = WebClient("https://example.org", "1.x")
+    client._opener = _FakeOpener(_cert_error())
+    good = _FakeOpener()
+    client._build_opener = lambda context: good
+    assert client._request("/x") == {"ok": True}
+    assert good.calls == 1
+    assert client._ca_fallback is False
+    assert client._context.cert_store_stats()["x509_ca"] > 0
+    assert client._context.verify_mode.name == "CERT_REQUIRED"
+
+
+def test_client_cert_failure_without_certifi(monkeypatch):
+    monkeypatch.setitem(__import__("sys").modules, "certifi", None)  # ImportError
+    client = WebClient("https://example.org", "1.x")
+    opener = _FakeOpener(_cert_error())
+    client._opener = opener
+    for _ in range(2):  # the fallback is tried once, then the plain error
+        with pytest.raises(WebClientError) as info:
+            client._request("/x")
+        assert "certificate verification failed" in str(info.value)
+        assert "SSL_CERT_FILE" in str(info.value)
+    assert opener.calls == 2
+
+
+def test_client_cert_failure_still_failing_after_certifi():
+    pytest.importorskip("certifi")
+    client = WebClient("https://example.org", "1.x")
+    client._opener = _FakeOpener(_cert_error())
+    still_bad = _FakeOpener(_cert_error())
+    client._build_opener = lambda context: still_bad
+    with pytest.raises(WebClientError, match="certificate verification failed"):
+        client._request("/x")
+    assert still_bad.calls == 1  # one retry, no loop
+
+
+def test_client_no_certifi_fallback_when_unverified_or_http():
+    assert (
+        WebClient("https://example.org", "1.x", verify_tls=False)._ca_fallback is False
+    )
+    assert WebClient("http://example.org", "1.x")._ca_fallback is False
+
+
 # ---------------------------------------------------------------------------
 # Backlog
 # ---------------------------------------------------------------------------

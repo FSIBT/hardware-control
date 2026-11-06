@@ -24,6 +24,7 @@ license = "BSD-3-Clause-LBNL"
 license-files = ["LICENSE"]
 requires-python = ">=3.11"
 dependencies = [
+    "certifi",  # CA bundle for the web monitor client on Pythons without one
     "docopt-ng",
     "matplotlib",
     "nidaqmx >= 0.6.4",
