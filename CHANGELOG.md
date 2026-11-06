@@ -21,12 +21,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `call_commands` remote request and `HardwareControlClient.call_commands`
 - `access_info` remote request and `HardwareControlClient.get_access_info`
 
+- Web monitor: the `hc_web` server (install with `hardware-control[server]`,
+  run with the new `hc-web` command) shows the state, plots of the last days
+  and alarms of several experiments in a browser, with passkey login, API
+  tokens and desktop notifications. Behind a reverse proxy it trusts
+  `proxy_hops` proxies (default 1)
+- `hardware_control.web.WebPublisher` publishes chosen parameters and the
+  alarms of an App to the server, with a backlog while the server is not
+  reachable, and `WebPublisherIndicator` for the status bar
+- `src/hc_web/client.py`, a standard library only client that can be copied
+  into projects that do not use hardware-control
+- `HCWebServer` driver and `ChannelHistory` to read channels of other
+  experiments from the server into an App, including gaps and `to_pandas`
+- `examples/web_monitor_demo.py` and `examples/web_client_standalone.py`
+
 ### Changed
 - `hc-mcp` rewritten for `mcp >= 2.3.0`, supporting the 2026-07-28 protocol. It
   returns JSON, adds `call_commands` and `get_access_status`, and only offers
   the tools that the access mode allows
 
 ### Fixed
+- Virtual instruments are no longer queried for the `ONLINE` parameter in the
+  update loop, which logged an error for each of them
 - `hc-mcp` crashed on startup with current versions of `mcp`
 - Remote requests are no longer written to the debug log, since they can
   contain a token

@@ -1,0 +1,25 @@
+# Configuration of the hc_web monitor server.
+# Install as /etc/hc-web/config.toml, or point HC_WEB_CONFIG at the file.
+
+# The public address of the server, as users type it in the browser. Passkeys
+# are bound to its hostname: changing the hostname invalidates all passkeys.
+origin = "https://monitor.example.org"
+
+# The SQLite file. A relative path is relative to this config file. The
+# directory must be writable by the user that runs the server.
+database = "/var/lib/hc-web/hc_web.sqlite"
+
+# Days of data to keep (default 7).
+retention_days = 7
+
+# The name shown in the title and navigation bar (default "HC monitor").
+site_name = "HC monitor"
+
+# Send the session cookie over https only (default true). Set it to false only
+# for tests on http://localhost.
+secure_cookies = true
+
+# Number of reverse proxies in front of the server whose X-Forwarded-For,
+# -Proto and -Host headers are trusted (default 1: Apache). Use 0 if clients
+# reach gunicorn directly.
+proxy_hops = 1

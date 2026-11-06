@@ -10,6 +10,10 @@ The goal is to provide reusable code for hardware control using python and Qt.
 
 Documentation can be found at [Read the Docs](https://readthedocs.org/projects/hardware-control/).
 
+A web monitor (`pip install hardware-control[server]`, then `hc-web`) shows the
+state, plots and alarms of your experiments in a browser, from anywhere. See
+the "Web monitor" page of the documentation.
+
 ## How do I get set up?
 
 The easiest way is to pip install the software:

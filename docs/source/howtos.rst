@@ -10,5 +10,6 @@ How To
    adding_instruments.md
    virtual_instruments.md
    remote_access
+   web_monitor
    migration_guide.md
 

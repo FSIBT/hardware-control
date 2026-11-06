@@ -1,0 +1,29 @@
+# /etc/systemd/system/hc-web.service
+#
+#   sudo useradd --system --home /var/lib/hc-web --create-home hc-web
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now hc-web
+#
+# Adjust the path of gunicorn to where hardware-control[server] is installed.
+
+[Unit]
+Description=hc_web monitor for hardware-control experiments
+After=network.target
+
+[Service]
+User=hc-web
+Group=hc-web
+Environment=HC_WEB_CONFIG=/etc/hc-web/config.toml
+ExecStart=/opt/hc-web/venv/bin/gunicorn --workers 2 --bind 127.0.0.1:8000 'hc_web.app:create_app()'
+Restart=on-failure
+RestartSec=5
+
+# only the data directory is writable
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/hc-web
+
+[Install]
+WantedBy=multi-user.target
