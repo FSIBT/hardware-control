@@ -33,7 +33,13 @@ def _bad(message: str) -> PushError:
 
 
 def _is_number(x) -> bool:
-    return isinstance(x, int | float) and not isinstance(x, bool) and math.isfinite(x)
+    """True for a finite JSON number that converts to a float (no overflow)."""
+    if not isinstance(x, int | float) or isinstance(x, bool):
+        return False
+    try:
+        return math.isfinite(float(x))
+    except OverflowError:  # an int too large for a float
+        return False
 
 
 def _optional_str(value, what: str) -> str | None:
@@ -94,9 +100,9 @@ def _parse(body, now: float) -> dict:
         if not _is_number(p.get("t")):
             raise _bad("point t must be a number")
         v = p.get("v")
-        if v is not None and not isinstance(v, str):
-            if not _is_number(v):
-                raise _bad("point v must be a number, string or null")
+        # Kind-specific checks follow in _normalize_points; here only the type.
+        if v is not None and not isinstance(v, str | int | float):
+            raise _bad("point v must be a number, string or null")
         points.append((p["channel"], float(p["t"]), v))
 
     ticks = _list(body, "ticks", [sent_at])
@@ -224,19 +230,40 @@ def _channel_kinds(conn, experiment_id, declared) -> dict:
     return kinds
 
 
-def _check_points(points, kinds) -> None:
-    """Check each point's value against its channel kind (400 on mismatch)."""
-    for name, _t, v in points:
-        if v is None:
-            continue
-        numeric = not isinstance(v, str)
-        if name not in kinds:
-            if not numeric:
-                raise _bad(
-                    "undeclared channel needs a numeric value; declare it in channels"
-                )
-        elif kinds[name] == "sampled" and not numeric:
-            raise _bad(f"channel {name} is sampled: v must be a number or null")
+_INT64_MAX = 2**63 - 1
+
+
+def _normalize_points(points, kinds) -> list:
+    """Check and normalise each point's value according to its channel kind.
+
+    - Declared sampled channel: any non-number (string, bool, NaN, inf, an int
+      too large for a float) becomes NULL, so a bad reading never rejects the
+      batch. Numbers are stored as floats.
+    - State channel: null, a string, or a finite number (ints beyond SQLite's
+      64-bit range are stored as floats); bool, NaN and inf give 400.
+    - Undeclared channel (created as sampled): null or a finite number; any
+      other value gives 400, because the kind is unknown.
+    """
+    out = []
+    for name, t, v in points:
+        if v is not None:
+            numeric = _is_number(v)
+            if name not in kinds:
+                if not numeric:
+                    raise _bad(
+                        "undeclared channel needs a numeric value; "
+                        "declare it in channels"
+                    )
+                v = float(v)
+            elif kinds[name] == "sampled":
+                v = float(v) if numeric else None
+            elif not isinstance(v, str):
+                if not numeric:
+                    raise _bad(f"channel {name} is a state: v must be finite")
+                if isinstance(v, int) and abs(v) > _INT64_MAX:
+                    v = float(v)
+        out.append((name, t, v))
+    return out
 
 
 def _store_points(conn, experiment_id, points, kinds) -> None:
@@ -274,7 +301,7 @@ def _apply(conn, token: TokenInfo, p: dict, now: float) -> None:
     ).fetchone()
 
     kinds = _channel_kinds(conn, experiment_id, p["channels"])
-    _check_points(p["points"], kinds)
+    points = _normalize_points(p["points"], kinds)
 
     # Run conflict: only one live run per experiment.
     current = exp["current_run"]
@@ -292,19 +319,22 @@ def _apply(conn, token: TokenInfo, p: dict, now: float) -> None:
         "UPDATE experiments SET current_run = ? WHERE id = ?", (run, experiment_id)
     )
 
+    # A constant message, so the once-per-hour dedupe holds while the skew
+    # jitters; the current offset lives in clock_offset (NULL when in sync).
     skew = now - p["sent_at"]
-    if abs(skew) > SKEW_THRESHOLD:
+    skewed = abs(skew) > SKEW_THRESHOLD
+    if skewed:
         _warn(
             conn,
             experiment_id,
             now,
-            f"Clock skew: client clock differs from the server by {skew:+.1f} s",
+            f"clock skew exceeds {SKEW_THRESHOLD:g} s",
             once_per=WARNING_INTERVAL,
         )
-        conn.execute(
-            "UPDATE experiments SET clock_offset = ? WHERE id = ?",
-            (skew, experiment_id),
-        )
+    conn.execute(
+        "UPDATE experiments SET clock_offset = ? WHERE id = ?",
+        (skew if skewed else None, experiment_id),
+    )
 
     conn.execute(
         "UPDATE experiments SET interval = ? WHERE id = ?",
@@ -317,7 +347,7 @@ def _apply(conn, token: TokenInfo, p: dict, now: float) -> None:
             "kind = excluded.kind, unit = excluded.unit, label = excluded.label",
             (experiment_id, ch["name"], ch["kind"], ch["unit"], ch["label"]),
         )
-    for name in {name for name, _t, _v in p["points"]} - set(
+    for name in {name for name, _t, _v in points} - set(
         ch["name"] for ch in p["channels"]
     ):
         conn.execute(  # undeclared: created as sampled, kept if it exists
@@ -329,7 +359,7 @@ def _apply(conn, token: TokenInfo, p: dict, now: float) -> None:
 
     # Ticks go first: the state rule needs to know where the gaps are.
     _store_ticks(conn, experiment_id, run, p["ticks"], p["interval"])
-    _store_points(conn, experiment_id, p["points"], kinds)
+    _store_points(conn, experiment_id, points, kinds)
 
     for t, alarm, action, message in p["events"]:
         conn.execute(

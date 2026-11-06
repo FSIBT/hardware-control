@@ -175,9 +175,27 @@ def test_auth_errors(client, conn, clock, write_token):
     [
         {"points": [{"channel": "temp", "t": "x", "v": 1}]},
         {"points": [{"channel": "bad name!", "t": 1.0, "v": 1}]},
-        {"points": [{"channel": "temp", "t": 1.0, "v": "warm"}]},
-        {"points": [{"channel": "temp", "t": 1.0, "v": True}]},
         {"points": [{"channel": "temp", "t": float("nan"), "v": 1}]},
+        {"points": [{"channel": "temp", "t": float("inf"), "v": 1}]},
+        {"points": [{"channel": "temp", "t": 10**400, "v": 1}]},
+        {"points": [{"channel": "temp", "t": 1.0, "v": [1]}]},
+        {"points": [{"channel": "temp", "t": 1.0, "v": {"a": 1}}]},
+        {"sent_at": 10**400},
+        {"interval": 10**400},
+        {"ticks": [10**400]},
+        {"events": [{"t": 10**400, "alarm": "HV", "action": "triggered"}]},
+        {
+            "channels": [{"name": "ng", "kind": "state"}],
+            "points": [{"channel": "ng", "t": 1.0, "v": True}],
+        },
+        {
+            "channels": [{"name": "ng", "kind": "state"}],
+            "points": [{"channel": "ng", "t": 1.0, "v": float("nan")}],
+        },
+        {
+            "channels": [{"name": "ng", "kind": "state"}],
+            "points": [{"channel": "ng", "t": 1.0, "v": 10**400}],
+        },
         {"points": [{"t": 1.0, "v": 1}]},
         {"points": ["x"]},
         {"channels": [{"name": "c", "kind": "weird"}]},
@@ -213,14 +231,81 @@ def test_body_must_be_json_object(client, clock, write_token):
     assert push(client, write_token, raw=b"{}").status_code == 400  # no points
 
 
-def test_sampled_channel_rejects_string_value(client, conn, clock, write_token):
+@pytest.mark.parametrize(
+    "bad",
+    ["warm", True, float("nan"), float("inf"), float("-inf"), 10**400],
+    ids=["string", "bool", "nan", "inf", "-inf", "huge-int"],
+)
+def test_declared_sampled_channel_stores_non_numbers_as_null(
+    client, conn, clock, write_token, bad
+):
+    """A bad reading never rejects the batch: it is stored as NULL."""
     r = push(
         client,
         write_token,
-        points=[{"channel": "temp", "t": 1.0, "v": "warm"}],
+        points=[
+            {"channel": "temp", "t": 1.0, "v": 20.0},
+            {"channel": "temp", "t": 2.0, "v": bad},
+            {"channel": "temp", "t": 3.0, "v": 22},
+        ],
+        ticks=[3.0],
     )
-    assert r.status_code == 400
-    assert count(conn, "points") == 0
+    assert r.status_code == 200
+    rows = conn.execute("SELECT t, v FROM points ORDER BY t").fetchall()
+    assert [tuple(r) for r in rows] == [(1.0, 20.0), (2.0, None), (3.0, 22.0)]
+
+
+def test_stored_sampled_channel_also_nulls_non_numbers(
+    client, conn, clock, write_token
+):
+    """The kind may come from an earlier push rather than this body."""
+    push(client, write_token)
+    r = push(
+        client,
+        write_token,
+        channels=[],
+        points=[{"channel": "temp", "t": 1.0, "v": float("nan")}],
+    )
+    assert r.status_code == 200
+    assert conn.execute("SELECT v FROM points").fetchone()[0] is None
+
+
+def test_large_numbers_do_not_overflow_sqlite(client, conn, clock, write_token):
+    state = [{"name": "ng", "kind": "state"}]
+    r = push(
+        client,
+        write_token,
+        channels=state + [{"name": "temp", "kind": "sampled"}],
+        points=[
+            {"channel": "temp", "t": 1.0, "v": 2**64},
+            {"channel": "ng", "t": 1.0, "v": 2**64},
+            {"channel": "ng", "t": 2.0, "v": 5},
+        ],
+        ticks=[2.0],
+    )
+    assert r.status_code == 200
+    temp = conn.execute(
+        "SELECT v FROM points p JOIN channels c ON c.id = p.channel_id "
+        "WHERE c.name = 'temp'"
+    ).fetchone()[0]
+    assert temp == float(2**64)
+    ng = conn.execute(
+        "SELECT t, v FROM points p JOIN channels c ON c.id = p.channel_id "
+        "WHERE c.name = 'ng' ORDER BY t"
+    ).fetchall()
+    assert [tuple(r) for r in ng] == [(1.0, float(2**64)), (2.0, 5)]
+
+
+def test_undeclared_channel_rejects_bad_numbers(client, conn, clock, write_token):
+    for bad in (True, float("nan"), float("inf"), 10**400):
+        r = push(
+            client,
+            write_token,
+            channels=[],
+            points=[{"channel": "mystery", "t": 1.0, "v": bad}],
+        )
+        assert r.status_code == 400
+    assert count(conn, "channels") == 0
 
 
 def test_restart_within_timeout_rejected_then_accepted(
@@ -303,6 +388,28 @@ def test_clock_skew_warning(client, conn, clock, write_token):
     clock.now = 1000.0 + 3601.0
     push(client, write_token, sent_at=clock.now - 60, ticks=[clock.now - 60])
     assert count(conn, "warnings") == 2
+
+
+def test_clock_skew_jitter_does_not_flood_warnings(client, conn, clock, write_token):
+    clock.now = 1000.0
+    for i in range(5):
+        skew = 60.0 + 0.1 * i
+        r = push(
+            client, write_token, sent_at=clock.now - skew, ticks=[clock.now - skew]
+        )
+        assert r.status_code == 200
+        clock.now += 10
+    assert count(conn, "warnings") == 1
+    offset = conn.execute("SELECT clock_offset FROM experiments").fetchone()[0]
+    assert offset == pytest.approx(60.4)
+
+
+def test_clock_offset_cleared_when_clock_fixed(client, conn, clock, write_token):
+    push(client, write_token, sent_at=940.0, ticks=[940.0])
+    assert conn.execute("SELECT clock_offset FROM experiments").fetchone()[0] == 60.0
+    clock.now = 1010.0
+    push(client, write_token, sent_at=1009.0, ticks=[1009.0])
+    assert conn.execute("SELECT clock_offset FROM experiments").fetchone()[0] is None
 
 
 def test_small_skew_gives_no_warning(client, conn, clock, write_token):
