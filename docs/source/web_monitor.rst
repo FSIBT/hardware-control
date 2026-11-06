@@ -90,7 +90,9 @@ chosen when the token is created (1 to 64 characters of ``A-Z a-z 0-9 _ . -``):
    hc-web token create B "beamline PC"            # may write channels of B
    hc-web token create B viewer --read-only       # may only read
    hc-web token list
-   hc-web token revoke 3
+   hc-web token revoke 3                          # stops working, row stays
+   hc-web token delete 3                          # removes the row for good
+   hc-web experiment delete B --yes               # B with all its data and tokens
 
 The token is printed once and only a salted hash is stored. A token may write
 only the channels of its own experiment, but **any token, also a read-only

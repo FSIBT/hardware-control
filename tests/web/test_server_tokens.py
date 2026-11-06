@@ -133,3 +133,29 @@ def test_cli_config_from_environment(config, cfg, capsys, monkeypatch):
     monkeypatch.setenv("HC_WEB_CONFIG", cfg)
     assert main(["status"]) == 0
     assert str(config.database) in capsys.readouterr().out
+
+
+def test_cli_token_and_experiment_delete(config, cfg, capsys):
+    main(["token", "create", "B", "pc", "--config", cfg])
+    main(["token", "create", "C", "pc", "--config", cfg])
+    assert main(["token", "delete", "1", "--config", cfg]) == 0
+    assert main(["token", "delete", "1", "--config", cfg]) == 1
+    assert main(["token", "delete", "x", "--config", cfg]) == 1
+    capsys.readouterr()
+    main(["token", "list", "--config", cfg])
+    listing = capsys.readouterr().out
+    assert " B " not in listing
+    assert " C " in listing
+
+    # without --yes nothing is removed
+    assert main(["experiment", "delete", "C", "--config", cfg]) == 1
+    assert "--yes" in capsys.readouterr().out
+    assert main(["experiment", "delete", "nope", "--yes", "--config", cfg]) == 1
+    assert main(["experiment", "delete", "C", "--yes", "--config", cfg]) == 0
+    main(["token", "list", "--config", cfg])
+    assert " C " not in capsys.readouterr().out
+    c = db.connect(config.database)
+    try:
+        assert c.execute("SELECT COUNT(*) FROM tokens").fetchone()[0] == 0
+    finally:
+        c.close()

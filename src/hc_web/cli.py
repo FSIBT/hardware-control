@@ -4,6 +4,8 @@ Usage:
   hc-web token create <experiment> <name> [--read-only] [--config=<file>]
   hc-web token list [--config=<file>]
   hc-web token revoke <id> [--config=<file>]
+  hc-web token delete <id> [--config=<file>]
+  hc-web experiment delete <name> [--yes] [--config=<file>]
   hc-web invite [--admin] [--expires=<duration>] [--config=<file>]
   hc-web status [--config=<file>]
   hc-web cleanup [--config=<file>]
@@ -14,7 +16,10 @@ Usage:
 Commands:
   token create  Create an API token for an experiment (printed once)
   token list    List tokens (never shows the secrets)
-  token revoke  Revoke a token by id
+  token revoke  Revoke a token by id (the row stays, listed as revoked)
+  token delete  Remove a token from the database for good
+  experiment delete
+                Remove an experiment with all its data, events and tokens
   invite        Create a single-use invite link (the first admin starts here)
   status        Show database and usage summary
   cleanup       Delete data older than retention_days now
@@ -22,6 +27,7 @@ Commands:
 
 Options:
   --read-only       Create a read-only token (default: write)
+  --yes             Really delete the experiment (else only show what would go)
   --admin           The invited user becomes an admin (default: viewer)
   --expires=<duration>
                     Invite lifetime as Nd, Nh or Nm [default: 3d]
@@ -126,6 +132,50 @@ def cmd_token_revoke(args: dict) -> int:
     return 0
 
 
+def cmd_token_delete(args: dict) -> int:
+    try:
+        token_id = int(args["<id>"])
+    except ValueError:
+        print(f"Error: invalid token id {args['<id>']!r}", file=sys.stderr)
+        return 1
+    conn = db.connect(_load(args).database)
+    try:
+        ok = tokens.delete_token(conn, token_id)
+    finally:
+        conn.close()
+    if not ok:
+        print(f"Error: no token with id {token_id}", file=sys.stderr)
+        return 1
+    print(f"Deleted token {token_id}")
+    return 0
+
+
+def cmd_experiment_delete(args: dict) -> int:
+    name = args["<name>"]
+    conn = db.connect(_load(args).database)
+    try:
+        row = conn.execute(
+            "SELECT e.id, "
+            "(SELECT COUNT(*) FROM tokens WHERE experiment_id = e.id) AS tokens, "
+            "(SELECT COUNT(*) FROM points p JOIN channels c ON c.id = p.channel_id "
+            "WHERE c.experiment_id = e.id) AS points "
+            "FROM experiments e WHERE e.name = ?",
+            (name,),
+        ).fetchone()
+        if row is None:
+            print(f"Error: no experiment {name!r}", file=sys.stderr)
+            return 1
+        summary = f"experiment {name!r}: {row['points']} points, {row['tokens']} tokens"
+        if not args["--yes"]:
+            print(f"Would delete {summary}. Run again with --yes to do it.")
+            return 1
+        tokens.delete_experiment(conn, name)
+    finally:
+        conn.close()
+    print(f"Deleted {summary}")
+    return 0
+
+
 def cmd_invite(args: dict) -> int:
     try:
         expires_s = parse_duration(args["--expires"])
@@ -209,6 +259,10 @@ def main(argv: list[str] | None = None) -> int:
                 return cmd_token_list(args)
             if args["revoke"]:
                 return cmd_token_revoke(args)
+            if args["delete"]:
+                return cmd_token_delete(args)
+        if args["experiment"]:
+            return cmd_experiment_delete(args)
         if args["invite"]:
             return cmd_invite(args)
         if args["status"]:

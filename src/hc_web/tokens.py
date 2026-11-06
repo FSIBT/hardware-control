@@ -113,3 +113,17 @@ def revoke_token(conn: sqlite3.Connection, token_id: int) -> bool:
     with conn:
         cur = conn.execute("UPDATE tokens SET revoked = 1 WHERE id = ?", (token_id,))
     return cur.rowcount > 0
+
+
+def delete_token(conn: sqlite3.Connection, token_id: int) -> bool:
+    """Remove a token's row for good. Returns False if no such token exists."""
+    with conn:
+        cur = conn.execute("DELETE FROM tokens WHERE id = ?", (token_id,))
+    return cur.rowcount > 0
+
+
+def delete_experiment(conn: sqlite3.Connection, name: str) -> bool:
+    """Remove an experiment with its data, events and tokens (cascading)."""
+    with conn:
+        cur = conn.execute("DELETE FROM experiments WHERE name = ?", (name,))
+    return cur.rowcount > 0
