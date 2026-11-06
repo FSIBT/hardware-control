@@ -10,6 +10,7 @@ KINDS = ("sampled", "state")
 DEFAULT_RUN = "external"
 MAX_RUN_LENGTH = 128
 SKEW_THRESHOLD = 5.0
+MAX_INTERVAL = 86400  # seconds; a day is already a very slow publisher
 MIN_FUTURE_LIMIT = 60.0  # seconds a time may be ahead of the server's clock
 WARNING_INTERVAL = 3600.0
 
@@ -87,8 +88,10 @@ def _parse(body, now: float) -> dict:
         raise _bad("sent_at must be a number")
 
     interval = body.get("interval", DEFAULT_INTERVAL)
-    if not _is_number(interval) or interval <= 0:
-        raise _bad("interval must be a positive number")
+    if not _is_number(interval) or not 0 < interval <= MAX_INTERVAL:
+        raise _bad(
+            f"interval must be a number of seconds above 0, up to {MAX_INTERVAL}"
+        )
 
     shutdown = body.get("shutdown", False)
     if not isinstance(shutdown, bool):
@@ -371,7 +374,10 @@ def ingest_push(
     """Store a push in one transaction. Raises ``PushError`` (400, 403, 409)."""
     if token.scope != "write":
         raise PushError(403, "token is read-only")
-    parsed = _parse(body, now)
+    try:
+        parsed = _parse(body, now)
+    except RecursionError:
+        raise _bad("push is nested too deeply") from None
     # Take the write lock up front, so the run-conflict check cannot race.
     conn.execute("BEGIN IMMEDIATE")
     try:

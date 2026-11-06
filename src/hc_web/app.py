@@ -4,11 +4,14 @@ import secrets
 import sqlite3
 from datetime import timedelta
 
-from flask import Flask, current_app, g
+from flask import Flask, current_app, g, jsonify, request
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from . import db
 from .config import Config, load_config
+
+
+MAX_BODY_BYTES = 16 * 1024 * 1024  # a push of 500 points is a few hundred kB
 
 
 def get_db() -> sqlite3.Connection:
@@ -52,6 +55,7 @@ def create_app(config: Config | None = None) -> Flask:
             x_proto=config.proxy_hops,
             x_host=config.proxy_hops,
         )
+    app.config["MAX_CONTENT_LENGTH"] = MAX_BODY_BYTES
     app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
     app.config["SESSION_COOKIE_SECURE"] = config.secure_cookies
     app.config["SESSION_COOKIE_HTTPONLY"] = True
@@ -65,6 +69,12 @@ def create_app(config: Config | None = None) -> Flask:
         conn.close()
 
     app.teardown_appcontext(_close_db)
+
+    @app.errorhandler(413)
+    def _too_large(e):
+        if request.path.startswith(("/api/", "/auth/")):
+            return jsonify({"error": "request body too large"}), 413
+        return e
 
     @app.context_processor
     def _site_context():

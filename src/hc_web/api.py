@@ -84,7 +84,10 @@ def push():
         maybe_cleanup(get_db(), now, current_app.config["HC"].retention_days)
     except Exception:
         log.exception("retention cleanup failed")
-    body = request.get_json(force=True, silent=True)
+    try:
+        body = request.get_json(force=True, silent=True)
+    except RecursionError:  # the JSON decoder gives up on deep nesting
+        return _error(400, "body is nested too deeply")
     if not isinstance(body, dict):
         return _error(400, "body must be a JSON object")
     try:

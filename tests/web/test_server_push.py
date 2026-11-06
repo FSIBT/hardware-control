@@ -201,6 +201,8 @@ def test_auth_errors(client, conn, clock, write_token):
         {"channels": [{"name": "c", "kind": "weird"}]},
         {"channels": "x"},
         {"interval": 0},
+        {"interval": -1},
+        {"interval": 86401},
         {"interval": "10"},
         {"sent_at": "now"},
         {"run": ""},
@@ -223,6 +225,55 @@ def test_malformed_bodies_rejected(client, conn, clock, write_token, overrides):
     assert "error" in r.get_json()
     assert count(conn, "points") == 0
     assert count(conn, "coverage") == 0
+
+
+def test_interval_up_to_a_day_is_accepted(client, conn, clock, write_token):
+    assert push(client, write_token, interval=86400).status_code == 200
+    assert conn.execute("SELECT interval FROM experiments").fetchone()[0] == 86400
+
+
+@pytest.mark.parametrize("depth", [100_000, 2_000_000])
+def test_deeply_nested_json_is_a_400_not_a_500(client, conn, clock, write_token, depth):
+    raw = b"[" * depth + b"]" * depth
+    r = push(client, write_token, raw=raw)
+    assert r.status_code == 400
+    assert "error" in r.get_json()
+
+
+def test_deep_nesting_inside_a_field_is_a_400(client, conn, clock, write_token):
+    nested = '{"points": [{"channel": "temp", "t": 1.0, "v": ' + "[" * 500_000
+    nested += "]" * 500_000 + "}]}"
+    r = push(client, write_token, raw=nested.encode())
+    assert r.status_code == 400
+    assert count(conn, "points") == 0
+
+
+def test_recursion_while_validating_is_a_400(
+    client, conn, clock, write_token, monkeypatch
+):
+    def too_deep(body, now):
+        raise RecursionError("maximum recursion depth exceeded")
+
+    monkeypatch.setattr("hc_web.ingest._parse", too_deep)
+    r = push(client, write_token)
+    assert r.status_code == 400
+    assert "nested" in r.get_json()["error"]
+
+
+def test_an_oversized_body_gets_a_json_413(client, conn, clock, write_token):
+    limit = client.application.config["MAX_CONTENT_LENGTH"]
+    assert limit == 16 * 1024 * 1024
+    r = push(client, write_token, raw=b" " * (limit + 1))
+    assert r.status_code == 413
+    assert r.is_json and "too large" in r.get_json()["error"]
+    assert count(conn, "points") == 0
+
+
+def test_a_body_at_the_limit_is_read(client, conn, clock, write_token):
+    limit = client.application.config["MAX_CONTENT_LENGTH"]
+    r = push(client, write_token, raw=b"[]" + b" " * (limit - 2))
+    assert r.status_code == 400  # read, and then not an object
+    assert "JSON object" in r.get_json()["error"]
 
 
 def test_body_must_be_json_object(client, clock, write_token):

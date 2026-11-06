@@ -335,10 +335,13 @@ header. A minimal push, with a write token:
 is required: unknown channels are created as numeric (``sampled``) channels,
 and every push is also a heartbeat. Without an ``interval`` the server expects
 a push every 60 s and shows the experiment as offline after three times that.
-Times more than 60 s ahead of the server's clock are rejected with 400.
+Times more than 60 s ahead of the server's clock are rejected with 400, and
+so is an ``interval`` above 86400 s or a body nested too deeply to parse. A
+body larger than 16 MiB gets 413.
 The answer is ``{"ok": true}``, or an error: 400 for a malformed body, 401
 for a missing or unknown token, 403 for a read-only token, 409 if an App
-publishes the same experiment (use an experiment of its own for scripts).
+publishes the same experiment (use an experiment of its own for scripts),
+413 for a body that is too large.
 
 The endpoints (``/api/v1/``), for tokens of any scope except where noted:
 
