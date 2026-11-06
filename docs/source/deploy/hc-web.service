@@ -17,6 +17,8 @@ Environment=HC_WEB_CONFIG=/etc/hc-web/config.toml
 ExecStart=/opt/hc-web/venv/bin/gunicorn --workers 2 --bind 127.0.0.1:8000 'hc_web.app:create_app()'
 Restart=on-failure
 RestartSec=5
+# the database holds the session secret key: files are private to hc-web
+UMask=0077
 
 # only the data directory is writable
 NoNewPrivileges=true

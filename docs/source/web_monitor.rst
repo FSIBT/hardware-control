@@ -114,6 +114,10 @@ As a service, use this systemd unit (adjust the paths):
 .. literalinclude:: deploy/hc-web.service
    :language: ini
 
+The database holds the key that signs the session cookies, so the server
+creates it readable by its owner only (mode 0600), and the unit sets
+``UMask=0077`` for the files it writes.
+
 Apache terminates TLS and forwards requests to gunicorn. Apache needs
 ``ProxyPreserveHost On`` and has to say that the original request was
 ``https``:

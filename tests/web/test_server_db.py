@@ -1,6 +1,9 @@
 """Schema version and migration of the hc_web database."""
 
+import os
 import sqlite3
+import stat
+import sys
 import threading
 
 import pytest
@@ -233,3 +236,40 @@ def test_connecting_a_current_database_does_not_write(tmp_path):
         assert conn.execute("PRAGMA data_version").fetchone()[0] == before
     finally:
         conn.close()
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX file modes")
+def test_a_new_database_is_private_whatever_the_umask(tmp_path):
+    # the database holds the session secret key
+    path = tmp_path / "new.sqlite"
+    old = os.umask(0o022)
+    try:
+        conn = db.connect(path)
+        conn.execute("INSERT INTO meta (key, value) VALUES ('x', 'y')")
+        conn.commit()
+        modes = {
+            f.name: stat.S_IMODE(f.stat().st_mode) for f in tmp_path.glob("new.sqlite*")
+        }
+        conn.close()
+    finally:
+        os.umask(old)
+    assert modes["new.sqlite"] == 0o600
+    assert all(mode == 0o600 for mode in modes.values()), modes  # -wal and -shm
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX file modes")
+def test_an_existing_database_keeps_its_mode(tmp_path):
+    path = tmp_path / "old.sqlite"
+    db.connect(path).close()
+    path.chmod(0o640)
+    db.connect(path).close()
+    assert stat.S_IMODE(path.stat().st_mode) == 0o640
+
+
+def test_a_database_that_cannot_be_chmodded_still_opens(tmp_path, monkeypatch):
+    def refuse(*args, **kwargs):
+        raise PermissionError("not here")
+
+    monkeypatch.setattr("hc_web.db.os.open", refuse)
+    db.connect(tmp_path / "x.sqlite").close()
+    assert (tmp_path / "x.sqlite").exists()

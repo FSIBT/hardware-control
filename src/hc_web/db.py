@@ -6,6 +6,7 @@ a database of an older version is brought up to date by ``_migrate`` in one
 transaction, one numbered step at a time.
 """
 
+import os
 import sqlite3
 import time
 from pathlib import Path
@@ -228,11 +229,27 @@ def _enable_wal(conn: sqlite3.Connection) -> None:
             time.sleep(0.01)
 
 
+def _create_private(path: Path) -> None:
+    """Create an empty database file readable by its owner only.
+
+    The database holds the session ``secret_key``. SQLite gives the ``-wal``
+    and ``-shm`` files the mode of the main file. An existing file is left
+    alone, and a failure (a platform without modes, a read-only directory) is
+    ignored: ``sqlite3.connect`` then creates the file as it always did.
+    """
+    try:
+        os.close(os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600))
+    except OSError:
+        pass
+
+
 def connect(path: Path) -> sqlite3.Connection:
     """Open the database (WAL mode); create or migrate the schema if needed.
 
-    Raises ``SchemaVersionError`` for a database of a newer version.
+    A new file is created with mode 0600. Raises ``SchemaVersionError`` for a
+    database of a newer version.
     """
+    _create_private(path)
     conn = sqlite3.connect(path)
     try:
         conn.row_factory = sqlite3.Row

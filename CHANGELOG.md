@@ -25,10 +25,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   run with the new `hc-web` command) shows the state, plots of the last days
   and alarms of several experiments in a browser, with passkey login, API
   tokens and desktop notifications. Behind a reverse proxy it trusts
-  `proxy_hops` proxies (default 1)
+  `proxy_hops` proxies (default 1). Online state follows the server's clock
+  (a push dated far ahead gets 400), the config file is validated, and the
+  database is versioned and created with mode 0600
 - `hardware_control.web.WebPublisher` publishes chosen parameters and the
   alarms of an App to the server, with a backlog while the server is not
-  reachable, and `WebPublisherIndicator` for the status bar
+  reachable (one file per server and token, kept across restarts), and
+  `WebPublisherIndicator` for the status bar
 - `src/hc_web/client.py`, a standard library only client that can be copied
   into projects that do not use hardware-control
 - `HCWebServer` driver and `ChannelHistory` to read channels of other
