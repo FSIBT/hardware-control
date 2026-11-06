@@ -37,24 +37,20 @@ def _clean(v):
 def is_live(conn: sqlite3.Connection, experiment_id: int, now: float) -> bool:
     """True if the experiment's current run is still publishing.
 
-    A run is live unless it was shut down cleanly or its newest coverage ends
-    more than ``3 * interval`` before ``now``.
+    A run is live unless it was shut down cleanly or the server has not heard
+    from it for ``3 * interval``. Both are judged on the server's clock
+    (``experiments.last_heard``), never on the times the publisher sent.
     """
     exp = conn.execute(
-        "SELECT interval, current_run, shutdown_run FROM experiments WHERE id = ?",
+        "SELECT interval, current_run, shutdown_run, last_heard FROM experiments "
+        "WHERE id = ?",
         (experiment_id,),
     ).fetchone()
-    if exp is None or exp["current_run"] is None:
+    if exp is None or exp["current_run"] is None or exp["last_heard"] is None:
         return False
     if exp["current_run"] == exp["shutdown_run"]:
         return False
-    last = conn.execute(
-        "SELECT MAX(end) FROM coverage WHERE experiment_id = ? AND run = ?",
-        (experiment_id, exp["current_run"]),
-    ).fetchone()[0]
-    if last is None:
-        return False
-    return last >= now - timeout(exp["interval"])
+    return exp["last_heard"] >= now - timeout(exp["interval"])
 
 
 def gaps(
@@ -178,8 +174,9 @@ def _latched(conn: sqlite3.Connection, experiment_id: int) -> list[str]:
 
 
 def _last_seen(conn: sqlite3.Connection, experiment_id: int) -> float | None:
+    """When the server last accepted a push of the experiment (its own clock)."""
     return conn.execute(
-        "SELECT MAX(end) FROM coverage WHERE experiment_id = ?", (experiment_id,)
+        "SELECT last_heard FROM experiments WHERE id = ?", (experiment_id,)
     ).fetchone()[0]
 
 

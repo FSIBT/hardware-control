@@ -493,3 +493,103 @@ def test_events_with_same_key_not_duplicated(client, conn, clock, write_token):
     push(client, write_token, events=[ev, ev])
     push(client, write_token, events=[ev])
     assert count(conn, "events") == 1
+
+
+# -- liveness follows the server clock ---------------------------------------
+
+
+def status_of(client, conn):
+    """The ``B`` entry of /api/v1/status, read with a read token."""
+    token = create_token(conn, "B", "viewer", scope="read")
+    r = client.get("/api/v1/status", headers={"Authorization": f"Bearer {token}"})
+    return r.get_json()["experiments"]["B"]
+
+
+def test_publisher_clock_behind_stays_online(client, conn, clock, write_token):
+    """Liveness is judged on when the server heard, not on the publisher's t."""
+    clock.now = 1000.0
+    r = push(client, write_token, sent_at=960.0, ticks=[960.0])  # 40 s behind
+    assert r.status_code == 200
+    info = status_of(client, conn)
+    assert info["online"] is True
+    assert info["last_seen"] == 1000.0
+    assert info["timeout"] == 30.0
+    clock.now = 1029.0
+    assert status_of(client, conn)["online"] is True
+    clock.now = 1031.0
+    assert status_of(client, conn)["online"] is False
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"sent_at": 1000.0 + 3600.0},
+        {"ticks": [1000.0, 1000.0 + 3600.0]},
+        {"points": [{"channel": "temp", "t": 1000.0 + 3600.0, "v": 1.0}]},
+        {"events": [{"t": 1000.0 + 3600.0, "alarm": "a", "action": "triggered"}]},
+        {"sent_at": 1010.0 + 61.0, "interval": 10.0},
+    ],
+)
+def test_future_dated_push_is_rejected_and_not_heard(
+    client, conn, clock, write_token, overrides
+):
+    clock.now = 1000.0
+    assert push(client, write_token, ticks=[1000.0]).status_code == 200
+    clock.now = 1010.0
+    r = push(client, write_token, **overrides)
+    assert r.status_code == 400
+    assert "ahead" in r.get_json()["error"]
+    assert "clock" in r.get_json()["error"]
+    assert count(conn, "points") == 0 and count(conn, "events") == 0
+    assert conn.execute("SELECT last_heard FROM experiments").fetchone()[0] == 1000.0
+    assert status_of(client, conn)["last_seen"] == 1000.0
+    # the bad push neither pins the experiment live nor blocks another run
+    clock.now = 1100.0
+    assert status_of(client, conn)["online"] is False
+    r = push(client, write_token, run="B", sent_at=1100.0, ticks=[1100.0])
+    assert r.status_code == 200
+
+
+def test_slightly_future_push_is_accepted(client, conn, clock, write_token):
+    clock.now = 1000.0
+    r = push(client, write_token, sent_at=1059.0, ticks=[1059.0])
+    assert r.status_code == 200
+    # a long interval widens the allowance: max(60, interval)
+    r = push(client, write_token, interval=300.0, sent_at=1250.0, ticks=[1250.0])
+    assert r.status_code == 200
+    r = push(client, write_token, interval=300.0, sent_at=1301.0, ticks=[1301.0])
+    assert r.status_code == 400
+
+
+def test_last_heard_survives_an_offline_period_longer_than_retention(
+    client, conn, clock, write_token
+):
+    from hc_web.retention import cleanup
+
+    clock.now = 1000.0
+    push(client, write_token, ticks=[1000.0])
+    clock.now = 1000.0 + 30 * 86400.0
+    cleanup(conn, clock.now, retention_days=7)
+    assert count(conn, "coverage") == 0
+    info = status_of(client, conn)
+    assert info["online"] is False
+    assert info["last_seen"] == 1000.0
+
+
+def test_shutdown_marks_offline_at_once(client, conn, clock, write_token):
+    clock.now = 1000.0
+    push(client, write_token, ticks=[1000.0])
+    assert status_of(client, conn)["online"] is True
+    clock.now = 1001.0
+    push(client, write_token, ticks=[1001.0], shutdown=True)
+    info = status_of(client, conn)
+    assert info["online"] is False
+    assert info["last_seen"] == 1001.0
+
+
+def test_rejected_run_does_not_count_as_heard(client, conn, clock, write_token):
+    clock.now = 1000.0
+    push(client, write_token, run="A", ticks=[1000.0])
+    clock.now = 1010.0
+    assert push(client, write_token, run="B", ticks=[1010.0]).status_code == 409
+    assert conn.execute("SELECT last_heard FROM experiments").fetchone()[0] == 1000.0

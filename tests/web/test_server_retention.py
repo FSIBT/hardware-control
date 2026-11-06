@@ -194,6 +194,8 @@ def test_coverage_deleted_and_clamped(conn, exp):
 def test_gaps_after_clamp_are_not_spurious(conn, exp):
     cutoff = NOW - 7 * DAY
     add_coverage(conn, exp, cutoff - DAY, NOW)
+    with conn:
+        conn.execute("UPDATE experiments SET last_heard = ?", (NOW,))
     add_channel(conn, exp, "ng_on", "state", [(cutoff - DAY, "0")])
     before = gaps(conn, exp, cutoff, NOW, NOW)
     cleanup(conn, NOW, 7)

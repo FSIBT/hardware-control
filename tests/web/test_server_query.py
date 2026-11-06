@@ -49,6 +49,14 @@ def add_coverage(conn, experiment_id, start, end, run="A"):
         )
 
 
+def hear(conn, experiment_id, t):
+    """The server last accepted a push of the experiment at (its clock) ``t``."""
+    with conn:
+        conn.execute(
+            "UPDATE experiments SET last_heard = ? WHERE id = ?", (t, experiment_id)
+        )
+
+
 def add_channel(conn, experiment_id, name, kind, points=(), unit=None, label=None):
     with conn:
         cur = conn.execute(
@@ -85,12 +93,21 @@ def test_gaps_between_runs(conn, exp):
     add_coverage(conn, exp, 200, 300, run="B")
     with conn:
         conn.execute("UPDATE experiments SET current_run = 'B' WHERE id = ?", (exp,))
+    hear(conn, exp, 300)
     assert gaps(conn, exp, since=0, until=305, now=305) == [(100, 200)]
 
 
 def test_gap_open_when_offline(conn, exp):
     add_coverage(conn, exp, 0, 100)
+    hear(conn, exp, 100)  # nothing for 400 s: more than the timeout of 30 s
     assert gaps(conn, exp, since=0, until=500, now=500) == [(100, None)]
+
+
+def test_no_tail_gap_while_heard_even_if_the_coverage_lags(conn, exp):
+    """A publisher clock 40 s behind: the coverage ends before now - timeout."""
+    add_coverage(conn, exp, 0, 960)
+    hear(conn, exp, 1000)
+    assert gaps(conn, exp, since=0, until=1000, now=1000) == []
 
 
 def test_gap_open_after_clean_shutdown(conn, exp):
@@ -102,6 +119,7 @@ def test_gap_open_after_clean_shutdown(conn, exp):
 
 def test_gap_before_first_coverage(conn, exp):
     add_coverage(conn, exp, 0, 100)
+    hear(conn, exp, 105)
     assert gaps(conn, exp, since=-50, until=105, now=105) == [(-50, 0)]
 
 
@@ -161,6 +179,7 @@ def test_data_sampled_has_no_before(client, conn, exp, clock):
         label="T",
     )
     add_coverage(conn, exp, 0, 995)
+    hear(conn, exp, 995)
     token = create_token(conn, "B", "viewer", scope="read")
     r = client.get(
         "/api/v1/data?channels=B/temp&since=20&until=55", headers=auth(token)
@@ -293,6 +312,7 @@ def test_status_lists_channels_with_last(client, conn, exp, clock):
     )
     add_channel(conn, exp, "ng", "state")
     add_coverage(conn, exp, 0, 990)
+    hear(conn, exp, 990)
     with conn:
         conn.execute(
             "INSERT INTO latched (experiment_id, alarm) VALUES (?, 'HV')", (exp,)

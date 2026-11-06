@@ -10,6 +10,7 @@ KINDS = ("sampled", "state")
 DEFAULT_RUN = "external"
 MAX_RUN_LENGTH = 128
 SKEW_THRESHOLD = 5.0
+MIN_FUTURE_LIMIT = 60.0  # seconds a time may be ahead of the server's clock
 WARNING_INTERVAL = 3600.0
 
 
@@ -52,6 +53,22 @@ def _list(body: dict, key: str, default):
     if not isinstance(value, list):
         raise _bad(f"{key} must be a list")
     return value
+
+
+def _check_not_future(now: float, limit: float, groups: list) -> None:
+    """400 if a time is more than ``limit`` seconds ahead of the server's clock.
+
+    A time far in the future would be taken as the newest data, and a
+    publisher with such a clock needs to be told, not silently corrected.
+    """
+    for what, times in groups:
+        ahead = max((t - now for t in times), default=0.0)
+        if ahead > limit:
+            raise _bad(
+                f"{what} is {ahead:.0f} s ahead of the server's clock (at most "
+                f"{limit:.0f} s are accepted); check the clock of the sending "
+                "computer"
+            )
 
 
 def _parse(body, now: float) -> dict:
@@ -124,6 +141,13 @@ def _parse(body, now: float) -> dict:
     latched = _list(body, "latched", [])
     if not all(isinstance(a, str) and a for a in latched):
         raise _bad("latched must be a list of alarm names")
+
+    _check_not_future(
+        now,
+        max(MIN_FUTURE_LIMIT, float(interval)),
+        [("sent_at", [sent_at]), ("tick", ticks)]
+        + [("point t", [p[1] for p in points]), ("event t", [e[0] for e in events])],
+    )
 
     return {
         "run": run,
@@ -275,8 +299,9 @@ def _apply(conn, token: TokenInfo, p: dict, now: float) -> None:
         )
         conn.commit()  # keep the warning although the push is rejected
         raise PushError(409, "another run is active")
-    conn.execute(
-        "UPDATE experiments SET current_run = ? WHERE id = ?", (run, experiment_id)
+    conn.execute(  # heard now, by the server's clock
+        "UPDATE experiments SET current_run = ?, last_heard = ? WHERE id = ?",
+        (run, now, experiment_id),
     )
 
     # A constant message, so the once-per-hour dedupe holds while the skew

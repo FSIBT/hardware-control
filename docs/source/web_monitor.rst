@@ -138,7 +138,9 @@ Clocks and retention
 All machines (the server and every computer that publishes) need accurate
 clocks, e.g. with NTP. Points keep the time of the publisher. The server only
 warns on the administrator page if a publisher's clock differs by more than
-5 s, and does not correct the data.
+5 s, and does not correct the data. A push that contains a time more than 60 s
+(or one push interval, if that is longer) ahead of the server's clock is
+rejected with HTTP 400, because it cannot be right.
 
 Data older than ``retention_days`` (7 by default) is deleted, at most once an
 hour while data arrives. ``hc-web cleanup`` does it right away, and
@@ -156,9 +158,12 @@ What the pages show
   experiment was offline are shaded. State channels show their values as text.
 
 An experiment is online as long as it keeps sending: it is shown as offline
-after three times the push interval of the publisher without news, or at once
-when the App says that it is shutting down. The data of that time is shown as
-unknown, never as a line.
+after three times the push interval of the publisher without a push **arriving
+at the server**, or at once when the App says that it is shutting down. This
+is judged on the clock of the server, so a publisher with a wrong clock is
+still shown as online (and gets a warning), and a push can never keep an
+experiment online by claiming a time in the future. The data of the time
+when it was offline is shown as unknown, never as a line.
 
 Publish from an App
 -------------------
@@ -313,6 +318,7 @@ header. A minimal push, with a write token:
 is required: unknown channels are created as numeric (``sampled``) channels,
 and every push is also a heartbeat. Without an ``interval`` the server expects
 a push every 60 s and shows the experiment as offline after three times that.
+Times more than 60 s ahead of the server's clock are rejected with 400.
 The answer is ``{"ok": true}``, or an error: 400 for a malformed body, 401
 for a missing or unknown token, 403 for a read-only token, 409 if an App
 publishes the same experiment (use an experiment of its own for scripts).
