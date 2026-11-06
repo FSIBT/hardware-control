@@ -187,8 +187,10 @@ alarms of the App. Use a write token of the experiment:
 * The publisher stops when the App quits, after a last push that tells the
   server that the shutdown is clean. You can also call ``publisher.stop()``.
 * While the server cannot be reached, nothing is lost: the data is kept in a
-  backlog file (in the user data directory of the App, under ``web_backlog``)
-  and sent later, oldest first. The indicator reads *Web ✓* (green), *Web:
+  backlog file and sent later, oldest first. The file is in the user data
+  directory, under ``web_backlog``, and is named after the server URL and the
+  id of the token (never the secret), not after the App, so a restarted App
+  sends what was left. Pass ``backlog_file=`` to choose another file. The indicator reads *Web ✓* (green), *Web:
   buffering N* (orange) or *Web: error* (red, hover for the reason, e.g. a
   refused token).
 * Only one App can publish an experiment. If a second one starts while the

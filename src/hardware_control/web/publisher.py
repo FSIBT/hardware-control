@@ -15,6 +15,7 @@ import queue
 import re
 import threading
 import time
+import urllib.parse
 import uuid
 from pathlib import Path
 
@@ -36,12 +37,19 @@ _STOP = object()  # queue marker: the worker should finish
 _UNKNOWN_STATES = ("None", "nan")
 
 
-def default_backlog_file(app_name: str) -> Path:
-    """The backlog file of an App, named like ``RemoteAccess.filename``."""
-    digest = hashlib.sha256(app_name.encode()).hexdigest()[:16]
-    safe_name = re.sub(r"[^A-Za-z0-9_-]", "_", app_name)
+def default_backlog_file(url: str, token: str) -> Path:
+    """The default backlog file for pushing to ``url`` with ``token``.
+
+    It depends on the target only (the server and the id of the token, never
+    the secret), not on the App: a restarted App finds the rows that were still
+    waiting when the previous run ended.
+    """
+    parts = urllib.parse.urlsplit(url)
+    target = f"{parts.scheme.lower()}://{parts.netloc.lower()}{parts.path.rstrip('/')}"
+    token_id = token.split(".", 1)[0] if "." in token else ""
+    digest = hashlib.sha256(f"{target}|{token_id}".encode()).hexdigest()[:16]
     directory = Path(user_data_dir("hardware-control", "lbnl")) / "web_backlog"
-    return directory / f"{safe_name}-{digest}.sqlite"
+    return directory / f"{digest}.sqlite"
 
 
 def _sampled_value(raw) -> float | None:
@@ -357,7 +365,7 @@ class WebPublisher(QObject):
         self.backlog_file = (
             Path(backlog_file)
             if backlog_file is not None
-            else default_backlog_file(app.app_name)
+            else default_backlog_file(url, token)
         )
         self.client = WebClient(url, token, verify_tls=verify_tls)
         self.status: tuple[str, int, str] = (

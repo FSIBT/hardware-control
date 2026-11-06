@@ -19,7 +19,6 @@ from PyQt6.QtWidgets import QApplication  # noqa: E402
 
 from hardware_control.base.alarm import Alarm  # noqa: E402
 from hardware_control.base.alarm_manager import AlarmManager  # noqa: E402
-from hardware_control.base.remote_access import RemoteAccess  # noqa: E402
 from hardware_control.web import WebClient, WebClientError, WebPublisher  # noqa: E402
 from hardware_control.web.backlog import Backlog  # noqa: E402
 from hardware_control.web import publisher as publisher_module  # noqa: E402
@@ -352,14 +351,44 @@ def test_publish_checks(app, live_server, make_publisher):
         WebPublisher(app, url, write_token, interval=0)
 
 
-def test_default_backlog_file(app, tmp_path):
-    pub = WebPublisher(app, "http://localhost:1", "token")
+def test_default_backlog_file_is_stable_per_target(app, tmp_path):
+    """The default file does not depend on the App, so a restart finds its rows."""
+    url, token = "http://localhost:1", "7.secret-a"
+    pub = WebPublisher(app, url, token)
     path = pub.backlog_file
     assert path.parent.name == "web_backlog"
     assert path.suffix == ".sqlite"
-    assert path == default_backlog_file("publisher test")
-    assert path.stem == RemoteAccess("publisher test", tmp_path).filename.stem
-    assert path.stem.startswith("publisher_test-")
+    assert path == default_backlog_file(url, token)
+    app.app_name = "another_name_1234"  # e.g. the next run gets a new pid
+    assert WebPublisher(app, url, token).backlog_file == path
+    # the secret is not part of the name, nor of the hash; the URL is normalised
+    assert default_backlog_file(url, "7.other-secret") == path
+    assert default_backlog_file("HTTP://LocalHost:1/", token) == path
+    assert "secret" not in path.name
+    # another token id or another server is another file
+    assert default_backlog_file(url, "8.secret-a") != path
+    assert default_backlog_file("http://localhost:2", token) != path
+    assert default_backlog_file("http://localhost:1/hc", token) != path
+
+
+def test_default_backlog_rows_survive_a_restart(app, tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        publisher_module, "user_data_dir", lambda *args, **kwargs: str(tmp_path)
+    )
+    url, token = "http://localhost:1", "7.secret"
+    first = WebPublisher(app, url, token)
+    first.backlog_file.parent.mkdir(parents=True)
+    backlog = Backlog(first.backlog_file)
+    backlog.add([{"channel": "hv", "t": 5.0, "v": 1.0}], [5.0], [])
+    backlog.close()
+    app.app_name = "app_99999"
+    second = WebPublisher(app, url, token)
+    assert second.backlog_file == first.backlog_file
+    backlog = Backlog(second.backlog_file)
+    try:
+        assert backlog.take().points == [{"channel": "hv", "t": 5.0, "v": 1.0}]
+    finally:
+        backlog.close()
 
 
 def test_indicator_text_follows_status(app, qapp):
