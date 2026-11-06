@@ -71,8 +71,13 @@ def current_user() -> sqlite3.Row | None:
     return user
 
 
+def wants_json() -> bool:
+    """Whether the current route is a JSON route (errors are JSON, not HTML)."""
+    return request.path.startswith(("/api/", "/admin/api/"))
+
+
 def _deny():
-    if request.path.startswith("/api/"):
+    if wants_json():
         return _error(401, "login required")
     # No ``next`` parameter: nothing user-controlled ends up in the redirect.
     return redirect(url_for("auth.login_page"))
@@ -99,7 +104,7 @@ def admin_required(view):
         if user is None:
             return _deny()
         if user["role"] != "admin":
-            if request.path.startswith("/api/"):
+            if wants_json():
                 return _error(403, "admin required")
             return make_response("admin required", 403)
         return view(*args, **kwargs)
@@ -107,15 +112,24 @@ def admin_required(view):
     return wrapper
 
 
-@bp.before_request
-def _require_json():
-    if request.method == "POST" and request.path.startswith("/auth/"):
-        if not request.is_json:
-            return _error(415, "Content-Type must be application/json")
+def require_json_post():
+    """``before_request`` guard: a POST must be ``application/json`` (else 415).
+
+    Shared by every blueprint with browser-driven POST routes.
+    """
+    if request.method == "POST" and not request.is_json:
+        return _error(415, "Content-Type must be application/json")
     return None
 
 
-def _json_body() -> dict | None:
+@bp.before_request
+def _require_json():
+    if request.path.startswith("/auth/"):
+        return require_json_post()
+    return None
+
+
+def json_body() -> dict | None:
     body = request.get_json(silent=True)
     return body if isinstance(body, dict) else None
 
@@ -142,7 +156,7 @@ def _options_response(options):
 # --- pages -----------------------------------------------------------------
 
 
-def _page(template: str, **context):
+def render_page(template: str, **context):
     response = make_response(render_template(template, **context))
     response.headers["Cache-Control"] = "no-store"
     response.headers["Referrer-Policy"] = "no-referrer"
@@ -154,13 +168,13 @@ def _page(template: str, **context):
 
 @bp.get("/login")
 def login_page():
-    return _page("login.html")
+    return render_page("login.html")
 
 
 @bp.get("/invite/<code>")
 def invite_page(code: str):
     valid = users.invite_is_valid(get_db(), code, time.time())
-    return _page("invite.html", code=code, valid=valid)
+    return render_page("invite.html", code=code, valid=valid)
 
 
 # --- registration ----------------------------------------------------------
@@ -170,7 +184,7 @@ def invite_page(code: str):
 def register_options():
     config = current_app.config["HC"]
     session.pop("challenge_id", None)
-    body = _json_body()
+    body = json_body()
     if body is None:
         return _error(400, "body must be a JSON object")
 
@@ -232,7 +246,7 @@ def register_verify():
     pending = challenges.consume_challenge(
         conn, session.pop("challenge_id", None), "register", time.time()
     )
-    body = _json_body()
+    body = json_body()
     if pending is None or body is None:
         return _error(400, "no registration in progress")
 
@@ -314,7 +328,7 @@ def login_verify():
     pending = challenges.consume_challenge(
         conn, session.pop("challenge_id", None), "login", time.time()
     )
-    body = _json_body()
+    body = json_body()
     if pending is None or body is None:
         return _error(400, "no login in progress")
 

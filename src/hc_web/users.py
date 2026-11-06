@@ -5,6 +5,7 @@ the code is stored, like the API tokens. The code carries 256 bits of entropy,
 so a plain unsalted hash is enough and lets us look the invite up by hash.
 """
 
+import contextlib
 import hashlib
 import secrets
 import sqlite3
@@ -19,6 +20,10 @@ MAX_NAME_LENGTH = 64
 
 class RegistrationError(Exception):
     """Registration could not be completed; nothing was created."""
+
+
+class LastAdminError(Exception):
+    """The change would leave the server without an administrator."""
 
 
 def valid_name(name) -> bool:
@@ -170,6 +175,65 @@ def delete_user(conn: sqlite3.Connection, user_id: int) -> bool:
         conn.execute("DELETE FROM credentials WHERE user_id = ?", (user_id,))
         cur = conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
     return cur.rowcount == 1
+
+
+@contextlib.contextmanager
+def _write_transaction(conn: sqlite3.Connection):
+    """One transaction that holds the write lock from its first statement.
+
+    Unlike ``with conn:`` the lock is taken before anything is read, so a check
+    made inside cannot be invalidated by another writer before the change.
+    """
+    conn.execute("BEGIN IMMEDIATE")
+    try:
+        yield
+    except BaseException:
+        conn.rollback()
+        raise
+    conn.commit()
+
+
+def _guard_last_admin(conn: sqlite3.Connection, user_id: int, new_role: str | None):
+    """Return the user row; raise ``LastAdminError`` if they are the last admin.
+
+    ``new_role`` is the role they are about to get, None when being deleted.
+    Must run inside ``_write_transaction``. Returns None for an unknown user.
+    """
+    user = get_user(conn, user_id)
+    if user is None or user["role"] != "admin" or new_role == "admin":
+        return user
+    admins = conn.execute("SELECT COUNT(*) FROM users WHERE role = 'admin'").fetchone()
+    if admins[0] <= 1:
+        raise LastAdminError("cannot remove the last administrator")
+    return user
+
+
+def set_role_keeping_an_admin(
+    conn: sqlite3.Connection, user_id: int, role: str
+) -> bool:
+    """``set_role``, refusing to demote the last admin (``LastAdminError``).
+
+    The check and the change are one transaction. False for an unknown user.
+    """
+    _check_role(role)
+    with _write_transaction(conn):
+        if _guard_last_admin(conn, user_id, role) is None:
+            return False
+        conn.execute("UPDATE users SET role = ? WHERE id = ?", (role, user_id))
+    return True
+
+
+def delete_user_keeping_an_admin(conn: sqlite3.Connection, user_id: int) -> bool:
+    """``delete_user``, refusing to delete the last admin (``LastAdminError``).
+
+    The check and the change are one transaction. False for an unknown user.
+    """
+    with _write_transaction(conn):
+        if _guard_last_admin(conn, user_id, None) is None:
+            return False
+        conn.execute("DELETE FROM credentials WHERE user_id = ?", (user_id,))
+        conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
+    return True
 
 
 # --- credentials -----------------------------------------------------------

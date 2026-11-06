@@ -8,7 +8,7 @@
 </head>
 <body>
   <header class="topbar"><span class="brand">{{ site_name }}</span></header>
-  <main class="card">
+  <main class="{% block main_class %}card{% endblock %}">
     {% block content %}{% endblock %}
     <p id="error" class="error" role="alert" hidden></p>
   </main>

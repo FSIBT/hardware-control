@@ -25,3 +25,19 @@ button:disabled { cursor: default; opacity: 0.6; }
 .hint { color: GrayText; font-size: 0.9rem; }
 .error { color: #b00020; font-weight: 600; }
 @media (prefers-color-scheme: dark) { .error { color: #ff6b81; } }
+
+/* admin page */
+.card.wide { max-width: 64rem; }
+.card.wide h2 { margin-top: 2rem; font-size: 1.15rem; }
+.card.wide h1 { margin-bottom: 0; }
+.inline-form { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: end; }
+.inline-form label { margin: 0 0 0.25rem; }
+.inline-form button { margin-top: 0; }
+select { padding: 0.5rem; font: inherit; }
+table { width: 100%; border-collapse: collapse; margin-top: 0.75rem; font-size: 0.95rem; }
+th, td { text-align: left; padding: 0.35rem 0.5rem; border-bottom: 1px solid #8884; vertical-align: top; }
+td button { margin: 0 0.25rem 0 0; padding: 0.15rem 0.5rem; }
+.secret-box { margin-top: 1rem; padding: 0.75rem; border: 2px solid #b00020; border-radius: 4px; }
+.secret-box code { display: block; word-break: break-all; margin: 0.5rem 0; user-select: all; }
+.secret-box button { margin-top: 0; }
+.muted { color: GrayText; }

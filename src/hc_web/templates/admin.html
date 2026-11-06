@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Admin - {{ site_name }}{% endblock %}
+{% block main_class %}card wide{% endblock %}
+{% block content %}
+<h1>Administration</h1>
+
+<section id="invite-section">
+  <h2>Invite a user</h2>
+  <form id="invite-form" class="inline-form">
+    <div>
+      <label for="invite-role">Role</label>
+      <select id="invite-role">
+        <option value="viewer">viewer</option>
+        <option value="admin">admin</option>
+      </select>
+    </div>
+    <button type="submit">Create invite link</button>
+  </form>
+  <div id="invite-result" class="secret-box" hidden>
+    <strong>Invite link (shown once, valid for 3 days, works once)</strong>
+    <code id="invite-url"></code>
+    <button id="invite-copy" type="button">Copy</button>
+  </div>
+</section>
+
+<section id="users-section">
+  <h2>Users</h2>
+  <table>
+    <thead><tr><th>Name</th><th>Role</th><th>Passkeys</th><th>Actions</th></tr></thead>
+    <tbody id="users-body"></tbody>
+  </table>
+</section>
+
+<section id="tokens-section">
+  <h2>API tokens</h2>
+  <form id="token-form" class="inline-form">
+    <div>
+      <label for="token-experiment">Experiment</label>
+      <input id="token-experiment" type="text" maxlength="64" required pattern="[A-Za-z0-9_.\-]{1,64}">
+    </div>
+    <div>
+      <label for="token-name">Name</label>
+      <input id="token-name" type="text" maxlength="64" required placeholder="e.g. lab pc">
+    </div>
+    <div>
+      <label for="token-scope">Scope</label>
+      <select id="token-scope">
+        <option value="write">write (publisher)</option>
+        <option value="read">read</option>
+      </select>
+    </div>
+    <button type="submit">Create token</button>
+  </form>
+  <div id="token-result" class="secret-box" hidden>
+    <strong>New token. Copy it now: it is shown only once.</strong>
+    <code id="token-value"></code>
+    <button id="token-copy" type="button">Copy</button>
+  </div>
+  <table>
+    <thead><tr><th>Experiment</th><th>Name</th><th>Scope</th><th>Created</th><th>Last used</th><th>Status</th><th></th></tr></thead>
+    <tbody id="tokens-body"></tbody>
+  </table>
+</section>
+
+<section id="warnings-section">
+  <h2>Warnings</h2>
+  <table>
+    <thead><tr><th>Time</th><th>Experiment</th><th>Message</th></tr></thead>
+    <tbody id="warnings-body"></tbody>
+  </table>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='admin.js') }}"></script>
+{% endblock %}

@@ -61,8 +61,9 @@ def create_app(config: Config | None = None) -> Flask:
         return {"site_name": config.site_name}
 
     # imported here: these modules need get_db from this module
-    from . import api, auth
+    from . import api, auth, views
 
     app.register_blueprint(api.bp)
     app.register_blueprint(auth.bp)
+    app.register_blueprint(views.admin)
     return app
