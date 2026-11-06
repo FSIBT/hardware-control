@@ -25,3 +25,4 @@ from .tenma import TENMA_72_2710
 from .trinity_power import TPI
 from .spellman import Spellman_SL
 from .vortran import Stradus
+from .hc_web import HCWebServer
