@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Log in - {{ site_name }}{% endblock %}
+{% block content %}
+<h1>Log in</h1>
+<p>Use the passkey registered for your account.</p>
+<button id="login-button" type="button">Log in with a passkey</button>
+<p class="hint">Access is by invitation. Ask an administrator for an invite link.</p>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='webauthn.js') }}"></script>
+{% endblock %}

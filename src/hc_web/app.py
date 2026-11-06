@@ -2,6 +2,7 @@
 
 import secrets
 import sqlite3
+from datetime import timedelta
 
 from flask import Flask, current_app, g
 
@@ -41,6 +42,7 @@ def create_app(config: Config | None = None) -> Flask:
         config = load_config()
     app = Flask(__name__)
     app.config["HC"] = config
+    app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=30)
     app.config["SESSION_COOKIE_SECURE"] = config.secure_cookies
     app.config["SESSION_COOKIE_HTTPONLY"] = True
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
@@ -54,7 +56,13 @@ def create_app(config: Config | None = None) -> Flask:
 
     app.teardown_appcontext(_close_db)
 
-    from . import api  # imported here: api needs get_db from this module
+    @app.context_processor
+    def _site_context():
+        return {"site_name": config.site_name}
+
+    # imported here: these modules need get_db from this module
+    from . import api, auth
 
     app.register_blueprint(api.bp)
+    app.register_blueprint(auth.bp)
     return app

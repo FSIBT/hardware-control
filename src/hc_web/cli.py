@@ -4,6 +4,7 @@ Usage:
   hc-web token create <experiment> <name> [--read-only] [--config=<file>]
   hc-web token list [--config=<file>]
   hc-web token revoke <id> [--config=<file>]
+  hc-web invite [--admin] [--expires=<duration>] [--config=<file>]
   hc-web status [--config=<file>]
   hc-web cleanup [--config=<file>]
   hc-web serve [--port=<port>] [--config=<file>]
@@ -14,25 +15,30 @@ Commands:
   token create  Create an API token for an experiment (printed once)
   token list    List tokens (never shows the secrets)
   token revoke  Revoke a token by id
+  invite        Create a single-use invite link (the first admin starts here)
   status        Show database and usage summary
   cleanup       Delete data older than retention_days now
   serve         Run the Flask development server (local testing only)
 
 Options:
   --read-only       Create a read-only token (default: write)
+  --admin           The invited user becomes an admin (default: viewer)
+  --expires=<duration>
+                    Invite lifetime as Nd, Nh or Nm [default: 3d]
   --port=<port>     Port for the development server [default: 5000]
   --config=<file>   Config file (else $HC_WEB_CONFIG, else /etc/hc-web/config.toml)
   -h --help         Show this help message
   --version         Show version
 """
 
+import re
 import sys
 import time
 from pathlib import Path
 
 from docopt import docopt
 
-from . import db, retention, tokens
+from . import db, retention, tokens, users
 from .config import load_config
 
 
@@ -40,6 +46,23 @@ def _fmt_time(t: float | None) -> str:
     if t is None:
         return "-"
     return time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(t))
+
+
+_DURATION_RE = re.compile(r"(\d{1,6})([dhm])", re.ASCII)
+_DURATION_UNITS = {"d": 86400, "h": 3600, "m": 60}
+
+
+def parse_duration(text: str) -> float:
+    """Parse ``Nd``, ``Nh`` or ``Nm`` (days, hours, minutes) into seconds."""
+    match = _DURATION_RE.fullmatch(text)
+    if match is None:
+        raise ValueError(
+            f"invalid duration {text!r}: use a number and a unit, e.g. 3d, 12h or 90m"
+        )
+    seconds = int(match[1]) * _DURATION_UNITS[match[2]]
+    if seconds <= 0:
+        raise ValueError(f"invalid duration {text!r}: must be greater than zero")
+    return float(seconds)
 
 
 def _load(args: dict):
@@ -100,6 +123,24 @@ def cmd_token_revoke(args: dict) -> int:
         print(f"Error: no token with id {token_id}", file=sys.stderr)
         return 1
     print(f"Revoked token {token_id}")
+    return 0
+
+
+def cmd_invite(args: dict) -> int:
+    try:
+        expires_s = parse_duration(args["--expires"])
+    except ValueError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+    config = _load(args)
+    conn = db.connect(config.database)
+    try:
+        code = users.create_invite(
+            conn, "admin" if args["--admin"] else "viewer", None, expires_s
+        )
+    finally:
+        conn.close()
+    print(users.invite_url(config, code))
     return 0
 
 
@@ -168,6 +209,8 @@ def main(argv: list[str] | None = None) -> int:
                 return cmd_token_list(args)
             if args["revoke"]:
                 return cmd_token_revoke(args)
+        if args["invite"]:
+            return cmd_invite(args)
         if args["status"]:
             return cmd_status(args)
         if args["cleanup"]:

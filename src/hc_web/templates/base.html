@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ site_name }}{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='hcweb.css') }}">
+</head>
+<body>
+  <header class="topbar"><span class="brand">{{ site_name }}</span></header>
+  <main class="card">
+    {% block content %}{% endblock %}
+    <p id="error" class="error" role="alert" hidden></p>
+  </main>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
