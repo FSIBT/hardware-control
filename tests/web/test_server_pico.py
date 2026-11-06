@@ -82,7 +82,7 @@ def test_pages_keep_the_strict_csp(client, conn):
     }.items():
         assert (
             r.headers["Content-Security-Policy"]
-            == "default-src 'self'; frame-ancestors 'none'"
+            == "default-src 'self'; img-src 'self' data:; frame-ancestors 'none'"
         ), name
 
 

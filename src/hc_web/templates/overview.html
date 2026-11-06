@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Overview - {{ site_name }}{% endblock %}
+{% block content %}
+<h1>Overview</h1>
+
+<article id="alarm-banner" class="alarm-banner" role="alert" hidden>
+  <strong>Active alarms</strong>
+  <ul id="alarm-list"></ul>
+</article>
+
+<p><button id="notify-button" type="button" class="outline secondary" hidden>Enable notifications</button></p>
+
+<div id="cards" class="cards"></div>
+<p id="empty" hidden>No experiment has reported yet.</p>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='common.js') }}"></script>
+<script src="{{ url_for('static', filename='notify.js') }}"></script>
+<script src="{{ url_for('static', filename='overview.js') }}"></script>
+{% endblock %}

@@ -1,8 +1,11 @@
 """JSON API under /api/v1."""
 
+import csv
+import io
 import logging
 import math
 import time
+from datetime import UTC, datetime
 
 from flask import Blueprint, abort, current_app, jsonify, make_response, request
 
@@ -81,23 +84,80 @@ def push():
     return jsonify({"ok": True})
 
 
+def _data_params() -> tuple[list[str], float, float | None]:
+    """The ``channels``, ``since`` and ``until`` of a data request (400 if bad)."""
+    names = [c for c in request.args.get("channels", "").split(",") if c]
+    if not names:
+        abort(_error(400, "channels is required"))
+    since = _number_arg("since")
+    if since is None:
+        abort(_error(400, "since is required"))
+    until = _number_arg("until")
+    if until is not None and since > until:
+        abort(_error(400, "since must not be after until"))
+    return names, since, until
+
+
 @bp.get("/data")
 def data():
     require_reader()
     now = time.time()
-    names = [c for c in request.args.get("channels", "").split(",") if c]
-    if not names:
-        return _error(400, "channels is required")
-    since = _number_arg("since")
-    if since is None:
-        return _error(400, "since is required")
-    until = _number_arg("until")
-    if until is not None and since > until:
-        return _error(400, "since must not be after until")
+    names, since, until = _data_params()
     try:
         return jsonify(query.get_data(get_db(), names, since, until, now))
     except query.UnknownChannel as e:
         return _error(404, f"unknown channel {e.args[0]}")
+
+
+def _iso(t: float) -> str:
+    try:
+        moment = datetime.fromtimestamp(t, tz=UTC)
+    except (OverflowError, OSError, ValueError):
+        return ""
+    return moment.isoformat(timespec="milliseconds").replace("+00:00", "Z")
+
+
+def _csv_cell(v):
+    """A value for a CSV cell: unknown is empty, text cannot become a formula."""
+    if v is None:
+        return ""
+    if isinstance(v, str) and v[:1] in ("=", "+", "-", "@"):
+        try:
+            float(v)  # a number such as "-5" is data, not a formula
+        except ValueError:
+            return "'" + v
+    return v
+
+
+@bp.get("/data.csv")
+def data_csv():
+    """The points of ``/data`` as a download: ``time,time_iso,channel,value``.
+
+    Channel by channel in the requested order, each oldest first. ``time`` is
+    unix seconds, an unknown value is an empty cell. Over ``MAX_CSV_POINTS``
+    points the answer is 413: the file is built in memory.
+    """
+    require_reader()
+    names, since, until = _data_params()
+    try:
+        result = query.get_data(
+            get_db(), names, since, until, time.time(), max_points=query.MAX_CSV_POINTS
+        )
+    except query.UnknownChannel as e:
+        return _error(404, f"unknown channel {e.args[0]}")
+    except query.TooManyPoints:
+        return _error(413, "too many points to export; narrow the time range")
+    out = io.StringIO()
+    writer = csv.writer(out)
+    writer.writerow(["time", "time_iso", "channel", "value"])
+    for name, channel in result["channels"].items():
+        for t, v in channel["points"]:
+            writer.writerow([t, _iso(t), name, _csv_cell(v)])
+    response = make_response(out.getvalue())
+    response.headers["Content-Type"] = "text/csv; charset=utf-8"
+    response.headers["Content-Disposition"] = 'attachment; filename="hc_web_data.csv"'
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 
 @bp.get("/status")

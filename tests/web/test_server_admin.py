@@ -139,7 +139,9 @@ def test_admin_page(client, admin):
     r = client.get("/admin")
     assert r.status_code == 200
     assert r.headers["Cache-Control"] == "no-store"
-    assert "default-src 'self'" in r.headers["Content-Security-Policy"]
+    assert r.headers["Content-Security-Policy"] == (
+        "default-src 'self'; img-src 'self' data:; frame-ancestors 'none'"
+    )
     html = r.get_data(as_text=True)
     assert "/static/admin.js" in html
     # no inline scripts, handlers or styles: the CSP forbids them

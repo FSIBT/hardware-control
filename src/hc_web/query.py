@@ -10,8 +10,16 @@ DEFAULT_INTERVAL = 60.0
 OFFLINE_FACTOR = 3
 
 
+# Most points one CSV export may contain (it is built in memory).
+MAX_CSV_POINTS = 500_000
+
+
 class UnknownChannel(LookupError):
     """A requested ``experiment/channel`` does not exist."""
+
+
+class TooManyPoints(Exception):
+    """The requested range holds more points than the caller accepts."""
 
 
 def timeout(interval: float | None) -> float:
@@ -95,10 +103,13 @@ def get_data(
     since: float,
     until: float | None,
     now: float,
+    max_points: int | None = None,
 ) -> dict:
     """Points and gaps for ``experiment/channel`` names, in the wire format.
 
-    Raises ``UnknownChannel``. Without ``until`` the points are not capped at
+    Raises ``UnknownChannel``, and ``TooManyPoints`` if ``max_points`` is given
+    and the channels together hold more (never more than ``max_points + 1`` are
+    read). Without ``until`` the points are not capped at
     ``now`` (a skewed publisher clock must not hide its newest points), while
     the gaps cover ``[since, now]``.
     """
@@ -119,15 +130,20 @@ def get_data(
     upper = math.inf if until is None else until
     out_channels = {}
     experiments = {}
+    remaining = -1 if max_points is None else max_points  # -1: no LIMIT
     for full, row in found:
         points = [
             [r["t"], _clean(r["v"])]
             for r in conn.execute(
                 "SELECT t, v FROM points WHERE channel_id = ? AND t >= ? AND t <= ? "
-                "ORDER BY t",
-                (row["id"], since, upper),
+                "ORDER BY t LIMIT ?",
+                (row["id"], since, upper, -1 if remaining < 0 else remaining + 1),
             )
         ]
+        if remaining >= 0:
+            remaining -= len(points)
+            if remaining < 0:
+                raise TooManyPoints(max_points)
         before = None
         if row["kind"] == "state":
             prev = conn.execute(

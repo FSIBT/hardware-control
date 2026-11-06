@@ -13,6 +13,7 @@
       <ul><li><strong>{{ site_name }}</strong></li></ul>
       <ul>
         {% if nav_user %}
+        <li><a href="{{ url_for('viewer.overview') }}">Overview</a></li>
         {% if nav_user["role"] == "admin" %}<li><a href="{{ url_for('admin.admin_page') }}">Admin</a></li>{% endif %}
         <li><button id="logout-button" type="button" class="outline secondary">Log out</button></li>
         {% endif %}

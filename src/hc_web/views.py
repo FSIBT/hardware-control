@@ -1,12 +1,27 @@
 """Browser pages and the JSON routes behind them.
 
+``viewer`` holds the pages every logged-in user may see: the overview, the
+plots of one experiment and the bundled Plotly script.
+
 ``admin`` is the administrator surface: ``GET /admin`` and the JSON routes
 under ``/admin/api/``. Every route in it requires a logged-in admin session; an
 API token never grants access. Every POST must be ``application/json`` (the
 CSRF guard described in ``auth``), and that is checked before anything else.
 """
 
-from flask import Blueprint, current_app, jsonify, make_response, request
+import functools
+import importlib.resources
+from pathlib import Path
+
+from flask import (
+    Blueprint,
+    abort,
+    current_app,
+    jsonify,
+    make_response,
+    request,
+    send_file,
+)
 
 from . import tokens, users
 from .app import get_db
@@ -14,12 +29,54 @@ from .auth import (
     admin_required,
     current_user,
     json_body,
+    login_required,
     render_page,
     require_json_post,
 )
 
 WARNING_LIMIT = 200
 MAX_TOKEN_NAME_LENGTH = users.MAX_NAME_LENGTH
+
+# --- viewer pages ------------------------------------------------------------
+
+viewer = Blueprint("viewer", __name__)
+
+
+@viewer.get("/")
+@login_required
+def overview():
+    return render_page("overview.html")
+
+
+@viewer.get("/experiment/<name>")
+@login_required
+def experiment_page(name: str):
+    found = get_db().execute("SELECT 1 FROM experiments WHERE name = ?", (name,))
+    if found.fetchone() is None:
+        abort(404)
+    # Plotly injects a <style> element at runtime: this page alone allows inline styles.
+    return render_page("experiment.html", experiment=name, inline_styles=True)
+
+
+@functools.cache
+def _plotly_bundle() -> Path | None:
+    """The bundle of the installed ``plotly`` package, or None if it is missing."""
+    try:
+        bundle = importlib.resources.files("plotly") / "package_data" / "plotly.min.js"
+    except ImportError:
+        return None
+    # plotly is installed as a regular directory, so this is a real file path
+    return Path(str(bundle)) if bundle.is_file() else None
+
+
+@viewer.get("/static/plotly.min.js")
+def plotly_bundle():
+    """Plotly.js from the ``plotly`` package; it is not in ``static/``."""
+    path = _plotly_bundle()
+    if path is None:
+        abort(404)
+    return send_file(path, mimetype="text/javascript", max_age=86400)
+
 
 # --- administrator surface ---------------------------------------------------
 

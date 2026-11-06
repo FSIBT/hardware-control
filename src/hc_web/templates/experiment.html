@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{{ experiment }} - {{ site_name }}{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('viewer.overview') }}">&larr; Overview</a></p>
+<h1><span id="status-dot" class="dot"></span>{{ experiment }}</h1>
+<p id="status-text"></p>
+
+<article id="alarm-banner" class="alarm-banner" role="alert" hidden>
+  <strong>Active alarms</strong>
+  <ul id="alarm-list"></ul>
+</article>
+
+<div class="controls">
+  <div id="range-buttons" role="group" aria-label="Time range">
+    <button type="button" data-seconds="3600" class="outline">1 h</button>
+    <button type="button" data-seconds="86400" class="outline">1 day</button>
+    <button type="button" data-seconds="604800" class="outline">1 week</button>
+  </div>
+  <a id="csv-link" role="button" class="outline secondary" href="#" download>Download CSV</a>
+  <button id="notify-button" type="button" class="outline secondary" hidden>Enable notifications</button>
+</div>
+
+<div id="plots" data-experiment="{{ experiment }}"></div>
+<p id="empty" hidden>This experiment has no channels yet.</p>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='common.js') }}"></script>
+<script src="{{ url_for('static', filename='notify.js') }}"></script>
+<script src="{{ url_for('static', filename='plotly.min.js') }}"></script>
+<script src="{{ url_for('static', filename='plots.js') }}"></script>
+{% endblock %}

@@ -156,13 +156,23 @@ def _options_response(options):
 # --- pages -----------------------------------------------------------------
 
 
-def render_page(template: str, **context):
+def render_page(template: str, *, inline_styles: bool = False, **context):
+    """Render an HTML page with the security headers every page gets.
+
+    The policy is ``default-src 'self'`` (so scripts, styles and connections
+    are same-origin only, with no inline code and no ``eval``). Pico draws
+    select chevrons and checkbox ticks as ``data:`` backgrounds, hence
+    ``img-src``. ``inline_styles`` is for the experiment page alone: Plotly
+    injects a ``<style>`` element at runtime. Scripts are never widened.
+    """
+    csp = ["default-src 'self'", "img-src 'self' data:"]
+    if inline_styles:
+        csp.append("style-src 'self' 'unsafe-inline'")
+    csp.append("frame-ancestors 'none'")
     response = make_response(render_template(template, **context))
     response.headers["Cache-Control"] = "no-store"
     response.headers["Referrer-Policy"] = "no-referrer"
-    response.headers["Content-Security-Policy"] = (
-        "default-src 'self'; frame-ancestors 'none'"
-    )
+    response.headers["Content-Security-Policy"] = "; ".join(csp)
     return response
 
 

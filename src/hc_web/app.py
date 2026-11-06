@@ -68,5 +68,6 @@ def create_app(config: Config | None = None) -> Flask:
 
     app.register_blueprint(api.bp)
     app.register_blueprint(auth.bp)
+    app.register_blueprint(views.viewer)
     app.register_blueprint(views.admin)
     return app

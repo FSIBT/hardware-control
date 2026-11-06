@@ -27,3 +27,53 @@ td button {
 /* show-once secret (invite link, new token): distinct border, wrapping text */
 .secret { border: 2px solid var(--pico-del-color); }
 .secret code { display: block; word-break: break-all; user-select: all; }
+
+/* --- viewer pages ---------------------------------------------------------- */
+
+/* red banner of latched alarms: Pico's card, recoloured */
+.alarm-banner {
+  --pico-card-background-color: var(--pico-del-color);
+  --pico-card-border-color: var(--pico-del-color);
+  --pico-color: #fff;
+  --pico-card-sectioning-background-color: transparent;
+  color: #fff;
+}
+.alarm-banner ul { margin-bottom: 0; }
+.alarm-banner a { color: inherit; }
+
+/* overview: one card per experiment */
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+  gap: var(--pico-grid-column-gap);
+}
+.cards > article { margin: 0; }
+.cards td.value { text-align: right; white-space: nowrap; }
+.card.alarm { outline: 3px solid var(--pico-del-color); }
+.card.offline { opacity: 0.55; filter: grayscale(1); }
+.latched strong { color: var(--pico-del-color); }
+.latched.stale { font-style: italic; }
+.latched.stale strong { color: inherit; }
+
+/* online / offline dot */
+.dot {
+  display: inline-block;
+  width: 0.7em;
+  height: 0.7em;
+  margin-right: 0.4em;
+  border-radius: 50%;
+  background: var(--pico-muted-color);
+}
+.dot.online { background: var(--pico-ins-color); }
+
+/* experiment page: controls row and plots */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: var(--pico-spacing);
+}
+.controls > * { margin: 0; width: auto; }
+.plot-title { font-size: 1rem; margin: var(--pico-spacing) 0 0; }
+.plot { width: 100%; min-height: 12rem; }
