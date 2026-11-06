@@ -59,3 +59,64 @@ def live_server(config):
         server.shutdown()
         thread.join()
         server.server_close()
+
+
+class RestartableServer:
+    """A live server that can be stopped and started again on the same port."""
+
+    def __init__(self, app):
+        self.app = app
+        self.port = 0
+        self._server = None
+        self._thread = None
+
+    @property
+    def url(self):
+        return f"http://127.0.0.1:{self.port}"
+
+    @property
+    def running(self):
+        return self._server is not None
+
+    def start(self):
+        import threading
+
+        from werkzeug.serving import make_server
+
+        self._server = make_server("127.0.0.1", self.port, self.app)
+        self.port = self._server.server_port  # the free port chosen the first time
+        self._thread = threading.Thread(target=self._server.serve_forever, daemon=True)
+        self._thread.start()
+
+    def stop(self):
+        if self._server is None:
+            return
+        self._server.shutdown()
+        self._thread.join()
+        self._server.server_close()
+        self._server = self._thread = None
+
+
+@pytest.fixture
+def restartable_server(config):
+    """Like ``live_server``, but a ``RestartableServer`` with ``start``/``stop``.
+
+    Yields ``(server, write_token, read_token)``; the same port is reused.
+    """
+    from hc_web import db
+    from hc_web.app import create_app
+    from hc_web.tokens import create_token
+
+    app = create_app(config)
+    conn = db.connect(config.database)
+    try:
+        write_token = create_token(conn, "B", "lab pc")
+        read_token = create_token(conn, "B", "viewer", scope="read")
+    finally:
+        conn.close()
+    server = RestartableServer(app)
+    server.start()
+    try:
+        yield server, write_token, read_token
+    finally:
+        server.stop()
