@@ -163,6 +163,9 @@ class Demo(hc.HCMainWindow):
     def close(self):
         if self.tmp is not None:  # closing can be asked for more than once
             self.report()
+            # end the publisher's worker first: it still uses the backlog file
+            # in the temporary directory
+            self.publisher.stop()
             super().close()
             self.tmp.cleanup()
             self.tmp = None
