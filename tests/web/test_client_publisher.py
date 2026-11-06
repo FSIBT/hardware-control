@@ -455,12 +455,12 @@ def test_latched_alarm_with_empty_alias(app, live_server, make_publisher):
     assert wait_until(
         lambda: web.status()["experiments"].get("B", {}).get("latched") == ["psu:V"]
     )
-    assert pub.status[0] == "connected"
+    assert wait_until(lambda: pub.status[0] == "connected")
     tick(pub)  # publishing goes on
     assert wait_until(
         lambda: len(web.data(["B/psu_V"], 0)["channels"]["B/psu_V"]["points"]) == 2
     )
-    assert pub.status[0] == "connected"
+    assert wait_until(lambda: pub.status[0] == "connected")
 
 
 def test_publish_checks_unit_and_label(app, live_server, make_publisher):

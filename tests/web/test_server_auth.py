@@ -658,8 +658,9 @@ def test_login_page(client):
     assert r.status_code == 200
     assert b"webauthn.js" in r.data
     assert b'type="password"' not in r.data
-    assert client.get("/static/webauthn.js").status_code == 200
-    assert client.get("/static/hcweb.css").status_code == 200
+    for path in ("/static/webauthn.js", "/static/hcweb.css"):
+        with client.get(path) as static:  # closing frees the served file
+            assert static.status_code == 200
 
 
 def test_invite_page(client, conn):

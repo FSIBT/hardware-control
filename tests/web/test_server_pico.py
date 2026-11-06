@@ -37,12 +37,13 @@ def pages(client, conn):
 
 
 def test_pico_is_served(client):
-    r = client.get("/static/pico.min.css")
-    assert r.status_code == 200
-    assert r.mimetype == "text/css"
-    assert 10_000 < len(r.data) < 150_000
-    assert b"Pico CSS" in r.data[:200]
-    assert b"v2." in r.data[:200]
+    # closing the response closes the file that was opened to serve it
+    with client.get("/static/pico.min.css") as r:
+        assert r.status_code == 200
+        assert r.mimetype == "text/css"
+        assert 10_000 < len(r.data) < 150_000
+        assert b"Pico CSS" in r.data[:200]
+        assert b"v2." in r.data[:200]
 
 
 def test_licence_ships_in_the_package():
@@ -105,7 +106,8 @@ def test_nav_follows_the_current_user(client, conn):
 
 
 def test_nav_script_is_served(client):
-    assert client.get("/static/nav.js").status_code == 200
+    with client.get("/static/nav.js") as r:  # closing frees the served file
+        assert r.status_code == 200
 
 
 def test_admin_keeps_the_ids_the_script_uses(client, conn):
