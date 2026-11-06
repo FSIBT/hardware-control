@@ -3,15 +3,14 @@
 import math
 import sqlite3
 
+from .query import DEFAULT_INTERVAL, OFFLINE_FACTOR, covered, is_live
 from .tokens import TokenInfo, valid_name
 
 KINDS = ("sampled", "state")
 DEFAULT_RUN = "external"
-DEFAULT_INTERVAL = 60.0
 MAX_RUN_LENGTH = 128
 SKEW_THRESHOLD = 5.0
 WARNING_INTERVAL = 3600.0
-OFFLINE_FACTOR = 3
 
 
 class PushError(Exception):
@@ -140,45 +139,6 @@ def _parse(body, now: float) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Coverage helpers (Task 4 moves these into query.py)
-# ---------------------------------------------------------------------------
-
-
-def is_live(conn: sqlite3.Connection, experiment_id: int, now: float) -> bool:
-    """True if the experiment's current run is still publishing.
-
-    A run is live unless it was shut down cleanly or its newest coverage ends
-    more than ``3 * interval`` before ``now``.
-    """
-    exp = conn.execute(
-        "SELECT interval, current_run, shutdown_run FROM experiments WHERE id = ?",
-        (experiment_id,),
-    ).fetchone()
-    if exp is None or exp["current_run"] is None:
-        return False
-    if exp["current_run"] == exp["shutdown_run"]:
-        return False
-    last = conn.execute(
-        "SELECT MAX(end) FROM coverage WHERE experiment_id = ? AND run = ?",
-        (experiment_id, exp["current_run"]),
-    ).fetchone()[0]
-    if last is None:
-        return False
-    interval = exp["interval"] or DEFAULT_INTERVAL
-    return last >= now - OFFLINE_FACTOR * interval
-
-
-def _covered(conn: sqlite3.Connection, experiment_id: int, t0: float, t1: float):
-    """True if one coverage row spans ``[t0, t1]`` (no gap in between)."""
-    row = conn.execute(
-        "SELECT 1 FROM coverage WHERE experiment_id = ? AND start <= ? AND end >= ? "
-        "LIMIT 1",
-        (experiment_id, t0, t1),
-    ).fetchone()
-    return row is not None
-
-
-# ---------------------------------------------------------------------------
 # Ingest
 # ---------------------------------------------------------------------------
 
@@ -284,7 +244,7 @@ def _store_points(conn, experiment_id, points, kinds) -> None:
             if (
                 prev is not None
                 and prev["v"] == v
-                and _covered(conn, experiment_id, prev["t"], t)
+                and covered(conn, experiment_id, prev["t"], t)
             ):
                 continue  # unchanged, with no gap in between
         conn.execute(

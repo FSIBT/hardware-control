@@ -1,9 +1,11 @@
 """JSON API under /api/v1."""
 
+import math
 import time
 
 from flask import Blueprint, abort, jsonify, make_response, request
 
+from . import auth, query
 from .app import get_db
 from .ingest import PushError, ingest_push
 from .tokens import TokenInfo, check_token
@@ -34,6 +36,29 @@ def require_token(scope: str) -> TokenInfo:
     return info
 
 
+def require_reader() -> None:
+    """Allow a token of any scope or a logged-in session; else abort with 401."""
+    if check_token(get_db(), _bearer_token()) is not None:
+        return
+    if auth.current_user() is not None:
+        return
+    abort(_error(401, "missing or invalid token", **{"WWW-Authenticate": "Bearer"}))
+
+
+def _number_arg(name: str, default: float | None = None) -> float | None:
+    """A finite float query parameter, or ``default`` if absent (400 if bad)."""
+    raw = request.args.get(name)
+    if raw is None:
+        return default
+    try:
+        value = float(raw)
+    except ValueError:
+        value = math.nan
+    if not math.isfinite(value):
+        abort(_error(400, f"{name} must be a finite number"))
+    return value
+
+
 @bp.post("/push")
 def push():
     token = require_token("write")
@@ -46,3 +71,36 @@ def push():
     except PushError as e:
         return _error(e.status, e.message)
     return jsonify({"ok": True})
+
+
+@bp.get("/data")
+def data():
+    require_reader()
+    now = time.time()
+    names = [c for c in request.args.get("channels", "").split(",") if c]
+    if not names:
+        return _error(400, "channels is required")
+    since = _number_arg("since")
+    if since is None:
+        return _error(400, "since is required")
+    until = _number_arg("until")
+    if until is not None and since > until:
+        return _error(400, "since must not be after until")
+    try:
+        return jsonify(query.get_data(get_db(), names, since, until, now))
+    except query.UnknownChannel as e:
+        return _error(404, f"unknown channel {e.args[0]}")
+
+
+@bp.get("/status")
+def status():
+    require_reader()
+    return jsonify(query.get_status(get_db(), time.time()))
+
+
+@bp.get("/events")
+def events():
+    require_reader()
+    now = time.time()
+    since = _number_arg("since", default=0.0)
+    return jsonify({"now": now, "events": query.get_events(get_db(), since)})
