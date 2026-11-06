@@ -121,11 +121,14 @@ def _csv_cell(v):
     """A value for a CSV cell: unknown is empty, text cannot become a formula."""
     if v is None:
         return ""
-    if isinstance(v, str) and v[:1] in ("=", "+", "-", "@"):
-        try:
-            float(v)  # a number such as "-5" is data, not a formula
-        except ValueError:
+    if isinstance(v, str):
+        if v[:1] in ("\t", "\r"):
             return "'" + v
+        if v[:1] in ("=", "+", "-", "@"):
+            try:
+                float(v)  # a number such as "-5" is data, not a formula
+            except ValueError:
+                return "'" + v
     return v
 
 

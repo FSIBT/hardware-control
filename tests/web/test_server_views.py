@@ -2,7 +2,11 @@
 
 import csv
 import io
+import json
 import re
+import shutil
+import subprocess
+from pathlib import Path
 
 import pytest
 
@@ -79,6 +83,20 @@ def test_experiment_page_renders(client, viewer, exp):
     assert html.index("plotly.min.js") < html.index("plots.js")
 
 
+def test_anonymous_unknown_experiment_redirects_to_login(client):
+    r = client.get("/experiment/nope")
+    assert r.status_code == 302
+    assert r.headers["Location"].endswith("/login")
+
+
+def test_csv_link_never_downloads_the_page(client, viewer, exp):
+    html = client.get("/experiment/B").get_data(as_text=True)
+    link = re.search(r"<a id=\"csv-link\"[^>]*>", html).group(0)
+    assert "download" not in link  # the attachment header forces the download
+    assert "href" not in link  # set by the script after the first load
+    assert 'aria-disabled="true"' in link
+
+
 def test_unknown_experiment_404(client, viewer):
     assert client.get("/experiment/nope").status_code == 404
 
@@ -108,6 +126,29 @@ def test_plotly_served(client):
     assert "javascript" in r.mimetype
     assert len(r.data) > 1_000_000
     r.close()
+
+
+@pytest.fixture
+def no_plotly():
+    from hc_web import views
+
+    views._plotly_bundle.cache_clear()  # it is cached
+    with pytest.MonkeyPatch.context() as m:
+        yield m
+    views._plotly_bundle.cache_clear()
+
+
+def test_plotly_404_when_the_package_is_missing(client, no_plotly):
+    def files(name):
+        raise ModuleNotFoundError(name)
+
+    no_plotly.setattr("hc_web.views.importlib.resources.files", files)
+    assert client.get("/static/plotly.min.js").status_code == 404
+
+
+def test_plotly_404_when_the_file_is_missing(client, no_plotly, tmp_path):
+    no_plotly.setattr("hc_web.views.importlib.resources.files", lambda name: tmp_path)
+    assert client.get("/static/plotly.min.js").status_code == 404
 
 
 def test_page_scripts_served(client):
@@ -280,12 +321,122 @@ def test_csv_refuses_more_than_the_row_cap(client, viewer, data, monkeypatch):
 
 
 def test_csv_does_not_turn_state_values_into_formulas(client, viewer, conn, exp):
-    add_channel(conn, exp, "s", "state", [(1.0, "=1+1"), (2.0, "-5"), (3.0, "@x")])
+    values = ["=1+1", "-5", "@x", "\tx", "\rx", "\t5", "+cmd", "ok"]
+    add_channel(conn, exp, "s", "state", [(float(i), v) for i, v in enumerate(values)])
     r = client.get("/api/v1/data.csv?channels=B/s&since=0")
-    assert [row[3] for row in rows(r)[1:]] == ["'=1+1", "-5", "'@x"]
+    assert [row[3] for row in rows(r)[1:]] == [
+        "'=1+1",
+        "-5",
+        "'@x",
+        "'\tx",
+        "'\rx",
+        "'\t5",
+        "'+cmd",
+        "ok",
+    ]
 
 
 def test_json_data_endpoint_is_unchanged(client, viewer, data):
     r = client.get("/api/v1/data?channels=B/hv&since=0")
     assert r.status_code == 200
     assert r.get_json()["channels"]["B/hv"]["points"][1] == [20.0, None]
+
+
+# --- the series code of plots.js, run with node (skipped without it) ------------
+
+NODE = shutil.which("node")
+STATIC = Path(__file__).parents[2] / "src" / "hc_web" / "static"
+
+
+def run_series(tmp_path, body: str):
+    """Evaluate ``body`` with ``S`` = window.hcSeries of plots.js; return its JSON."""
+    if NODE is None:
+        pytest.skip("node is not installed")
+    script = tmp_path / "check.js"
+    script.write_text(
+        'const vm = require("vm"), fs = require("fs");\n'
+        "const ctx = { window: {}, document: undefined, Date, Math, String, Number };\n"
+        "vm.createContext(ctx);\n"
+        f"vm.runInContext(fs.readFileSync({str(STATIC / 'plots.js')!r}, 'utf8'), ctx);\n"
+        "const S = ctx.window.hcSeries;\n"
+        f"console.log(JSON.stringify((function () {{ {body} }})()));\n"
+    )
+    done = subprocess.run(
+        [NODE, str(script)], capture_output=True, text=True, timeout=60, check=True
+    )
+    return json.loads(done.stdout)
+
+
+def test_state_values_reach_plotly_escaped(tmp_path):
+    out = run_series(
+        tmp_path,
+        """return {
+          plain: S.plain('<b>x</b> & <a href="u">y</a>'),
+          steps: S.stateSeries([0, '<5V'], [[10, '<b>x</b>'], [20, null]], [], 5, 30),
+        };""",
+    )
+    assert out["plain"] == '&lt;b&gt;x&lt;/b&gt; &amp; &lt;a href="u"&gt;y&lt;/a&gt;'
+    values = [v for _, v in out["steps"] if v is not None]
+    assert values == ["&lt;5V", "&lt;b&gt;x&lt;/b&gt;", "&lt;b&gt;x&lt;/b&gt;"]
+    assert not any("<" in v for v in values)
+
+
+def test_categories_and_trace_use_the_same_escaped_strings():
+    # string-level: the category list is built with plain(), like stateSeries
+    text = (STATIC / "plots.js").read_text()
+    assert "const text = plain(v)" in text
+    assert "plain(before[1])" in text
+    assert "plain(p[1])" in text
+    assert "categoryarray = ch.categories" in text
+
+
+def test_decimate_keeps_extremes_order_and_nulls(tmp_path):
+    out = run_series(
+        tmp_path,
+        """const pts = [];
+        for (let i = 0; i < 1000; i++) pts.push([i, i === 500 ? 99 : (i === 501 ? -99 : 0)]);
+        pts.splice(300, 0, [299.5, null]);
+        const d = S.decimate(pts, 100);
+        return {d: d, n: pts.length};""",
+    )
+    d = out["d"]
+    assert len(d) < out["n"] / 4
+    assert [p[0] for p in d] == sorted(p[0] for p in d)  # still in time order
+    assert sum(1 for p in d if p[1] is None) == 1  # the unknown value survives
+    values = [p[1] for p in d if p[1] is not None]
+    assert max(values) == 99 and min(values) == -99
+    short = run_series(tmp_path, "return S.decimate([[1, 1], [2, 2]], 100);")
+    assert short == [[1, 1], [2, 2]]
+
+
+def test_sampled_series_breaks_at_gaps_and_unknowns(tmp_path):
+    out = run_series(
+        tmp_path,
+        "return S.sampledSeries([[1,1],[2,2],[5,5],[6,null],[7,7],[10,10]], [[3,5],[8,null]]);",
+    )
+    assert out == [
+        [1, 1],
+        [2, 2],
+        [3, None],
+        [5, 5],
+        [6, None],
+        [7, 7],
+        [8, None],
+        [10, 10],
+    ]
+
+
+def test_state_series_holds_value_up_to_a_gap(tmp_path):
+    out = run_series(
+        tmp_path,
+        "return S.stateSeries(null, [[10, 'a']], [[20, 30]], 0, 50);",
+    )
+    assert out == [[10, "a"], [20, "a"], [20, None]]
+
+
+def test_merge_gaps_joins_what_touches(tmp_path):
+    out = run_series(
+        tmp_path,
+        "return [S.mergeGaps([[0,50],[60,null]],[[70,null]],70), S.mergeGaps([[0,50],[80,null]],[[70,null]],70)];",
+    )
+    assert out == [[[0, 50], [60, None]], [[0, 50], [70, None]]]

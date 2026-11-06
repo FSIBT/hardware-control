@@ -20,6 +20,13 @@
 
   // --- series building (no DOM) ----------------------------------------------
 
+  // Plotly renders a small HTML subset (<b>, <br>, <a href>) in tick labels,
+  // titles and hover text: show text from the server literally. Every server
+  // string that reaches Plotly goes through this exactly once.
+  function plain(text) {
+    return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
   function pad(n, width) {
     return String(n).padStart(width, "0");
   }
@@ -119,15 +126,16 @@
     return out;
   }
 
-  // A state channel as [t, "value"] steps up to `endT`. `before` is the value
+  // A state channel as [t, "value"] steps up to `endT`. The values come out
+  // escaped with plain(), ready for Plotly. `before` is the value
   // in force at `since`. Where the value becomes unknown (a null point or the
   // start of a gap) the previous value is held up to that moment, then null
   // breaks the line.
   function stateSeries(before, points, gaps, since, endT) {
     const items = [];
-    if (before && before[1] !== null) items.push([since, String(before[1]), 0]);
+    if (before && before[1] !== null) items.push([since, plain(before[1]), 0]);
     points.forEach(function (p) {
-      items.push([p[0], p[1] === null ? null : String(p[1]), 0]);
+      items.push([p[0], p[1] === null ? null : plain(p[1]), 0]);
     });
     gaps.forEach(function (g) {
       items.push([g[0], null, 1]);
@@ -152,6 +160,7 @@
   }
 
   window.hcSeries = {
+    plain: plain,
     toX: toX,
     mergeGaps: mergeGaps,
     sampledSeries: sampledSeries,
@@ -187,12 +196,6 @@
     return value || fallback;
   }
 
-  // Plotly renders a small HTML subset in titles and hover text: show server
-  // text literally.
-  function plain(text) {
-    return String(text).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  }
-
   function windowStart() {
     return serverNow() - model.range;
   }
@@ -211,7 +214,7 @@
 
   function noteCategory(ch, v) {
     if (v === null || v === undefined) return;
-    const text = String(v);
+    const text = plain(v); // the same string as in stateSeries' output
     if (ch.categories.indexOf(text) < 0) ch.categories.push(text);
   }
 
@@ -497,13 +500,15 @@
     const channels = model.channels.map(function (c) {
       return experiment + "/" + c.name;
     });
-    document.getElementById("csv-link").href =
+    const link = document.getElementById("csv-link");
+    link.href =
       "/api/v1/data.csv?channels=" +
       encodeURIComponent(channels.join(",")) +
       "&since=" +
       windowStart().toFixed(3) +
       "&until=" +
       serverNow().toFixed(3);
+    link.removeAttribute("aria-disabled");
   }
 
   function drawRangeButtons() {
