@@ -99,6 +99,10 @@ homepage = "https://github.com/FSIBT/hardware-control"
 issues = "https://github.com/FSIBT/hardware-control/issues"
 changelog = "https://github.com/FSIBT/hardware-control/blob/main/CHANGELOG.md"
 
+[tool.uv]
+# only use releases that are at least a week old (supply-chain cooldown)
+exclude-newer = "7 days"
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
